@@ -531,7 +531,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 SupportLevel response = SupportLevel.UNSUPPORTED;
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        final IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
+                        final IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes());
 
                         final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName, providers);
                         if (support != null && support.isDefinitelySupported()) {
@@ -578,7 +578,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
+                        IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes());
 
                         if (iev.verifyEvidence(evidence, providers)) {
                             return true;
@@ -662,7 +662,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try (Stream<SearchResult> resultsStream = ldapSearch.search(dirContext)) {
                 SearchResult result = resultsStream.findFirst().orElse(null);
                 if (result != null) {
-                    LdapIdentity identity = new LdapIdentity(name, ldapSearchFinal.getContext(), result.getNameInNamespace(), result);
+                    LdapIdentity identity = new LdapIdentity(name, ldapSearchFinal.getContext(), result.getNameInNamespace(), result.isRelative() ? null : result.getName(), result);
                     log.debugf("Identity for principal [%s] found at [%s].", name, identity.getDistinguishedName());
                     return identity;
                 } else {
@@ -942,12 +942,14 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             private final String name;
             private final DirContext dirContext;
             private final String distinguishedName;
+            private final String url;
             private final SearchResult entry;
 
-            LdapIdentity(String name, DirContext dirContext, String distinguishedName, SearchResult entry) {
+            LdapIdentity(String name, DirContext dirContext, String distinguishedName, String url, SearchResult entry) {
                 this.name = name;
                 this.dirContext = dirContext;
                 this.distinguishedName = distinguishedName;
+                this.url = url;
                 this.entry = entry;
             }
 
@@ -961,6 +963,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
             String getDistinguishedName() {
                 return this.distinguishedName;
+            }
+
+            String getUrl() {
+                return this.url;
             }
 
             SearchResult getEntry() {

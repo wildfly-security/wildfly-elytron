@@ -36,6 +36,7 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.ExtendedRequest;
 import javax.naming.ldap.ExtendedResponse;
+import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import javax.net.SocketFactory;
 import java.util.Hashtable;
@@ -53,16 +54,12 @@ import java.util.Hashtable;
  */
 class DelegatingLdapContext implements LdapContext {
 
-    final DirContext delegating;
-    final CloseHandler closeHandler;
-    final SocketFactory socketFactory;
+    private final DirContext delegating;
+    private final CloseHandler closeHandler;
+    private final SocketFactory socketFactory;
 
     interface CloseHandler {
         void handle(DirContext context) throws NamingException;
-    }
-
-    interface Handler {
-        void handle() throws NamingException;
     }
 
     DelegatingLdapContext(DirContext delegating, CloseHandler closeHandler, SocketFactory socketFactory) throws NamingException {
@@ -76,6 +73,15 @@ class DelegatingLdapContext implements LdapContext {
         this.delegating = delegating;
         this.closeHandler = null; // close handler should not be applied to copy
         this.socketFactory = socketFactory;
+    }
+
+    public LdapContext newInitialLdapContext(Hashtable<?,?> environment, Control[] connCtls) throws NamingException {
+        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        try {
+            return new InitialLdapContext(environment, null);
+        } finally {
+            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+        }
     }
 
     @Override

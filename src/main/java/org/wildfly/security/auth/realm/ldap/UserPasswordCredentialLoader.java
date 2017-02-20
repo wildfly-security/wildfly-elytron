@@ -94,8 +94,8 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             }
 
             @Override
-            public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName, Attributes attributes) throws RealmUnavailableException {
-                return new ForIdentityLoader(context, distinguishedName, attributes);
+            public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName, final String url, Attributes attributes) throws RealmUnavailableException {
+                return new ForIdentityLoader(dirContext, distinguishedName, attributes);
             }
 
             @Override

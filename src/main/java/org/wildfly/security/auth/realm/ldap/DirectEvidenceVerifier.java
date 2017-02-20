@@ -19,13 +19,17 @@ package org.wildfly.security.auth.realm.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Provider;
+import java.util.Properties;
 import java.util.function.Supplier;
 
+import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
+import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -52,7 +56,7 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName, Attributes attributes) throws RealmUnavailableException {
+    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName, final String url, Attributes attributes) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
             @Override
             public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName, final Supplier<Provider[]> providers) throws RealmUnavailableException {
@@ -68,14 +72,36 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
                             log.debugf("Credential direct evidence verification does not allow blank password.");
                             return false;
                         }
-                        LdapContext userContext = ((LdapContext) dirContext).newInstance(null);
-                        userContext.addToEnvironment(InitialDirContext.SECURITY_PRINCIPAL, distinguishedName);
-                        userContext.addToEnvironment(InitialDirContext.SECURITY_CREDENTIALS, password);
-                        userContext.reconnect(null);
-                        userContext.close();
+
+                        if (url != null) { // different server - create new context
+                            URI uri = new URI(url);
+                            String namingProviderURL = uri.getScheme() + "://" + uri.getAuthority();
+
+                            Properties props = new Properties();
+                            dirContext.getEnvironment().forEach(props::put);
+                            props.put(LdapContext.PROVIDER_URL, namingProviderURL);
+                            props.put(LdapContext.SECURITY_PRINCIPAL, distinguishedName);
+                            props.put(LdapContext.SECURITY_CREDENTIALS, password);
+
+                            LdapContext userContext;
+                            if (dirContext instanceof DelegatingLdapContext) {
+                                userContext = ((DelegatingLdapContext) dirContext).newInitialLdapContext(props, null);
+                            } else {
+                                userContext = new InitialLdapContext(props, null);
+                            }
+                            userContext.close();
+                        } else { // the same context - copy context
+                            LdapContext userContext = ((LdapContext) dirContext).newInstance(null);
+                            userContext.addToEnvironment(LdapContext.SECURITY_PRINCIPAL, distinguishedName);
+                            userContext.addToEnvironment(LdapContext.SECURITY_CREDENTIALS, password);
+                            userContext.reconnect(null);
+                            userContext.close();
+                        }
                         return true;
-                    } catch (NamingException e) {
+                    } catch (AuthenticationException e) {
                         log.debugf("Credential direct evidence verification failed. DN: [%s]", distinguishedName, e);
+                    } catch (NamingException | URISyntaxException e) {
+                        throw log.directLdapVerificationFailed(distinguishedName, url, e);
                     } finally {
                         ((PasswordGuessEvidence) evidence).destroy();
                     }
