@@ -19,6 +19,8 @@ package org.wildfly.security.auth.server.event;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 
+import java.security.Principal;
+
 /**
  * An event to represent a failed authentication.
  *
@@ -26,13 +28,20 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  */
 public final class SecurityAuthenticationFailedEvent extends SecurityAuthenticationEvent {
 
+    private final Principal principal;
+
     /**
      * Constructor for a new instance.
      *
      * @param securityIdentity the {@link SecurityIdentity} that failed authentication.
      */
-    public SecurityAuthenticationFailedEvent(SecurityIdentity securityIdentity) {
+    public SecurityAuthenticationFailedEvent(SecurityIdentity securityIdentity, Principal principal) {
         super(securityIdentity, false);
+        this.principal = principal;
+    }
+
+    public Principal getPrincipal() {
+        return principal;
     }
 
     @Override
