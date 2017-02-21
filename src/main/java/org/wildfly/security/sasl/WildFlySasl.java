@@ -122,7 +122,7 @@ public final class WildFlySasl {
      * A property used to directly limit the set of supported ciphers for SASL mechanisms.  The list items should be
      * separated by a comma character (",").
      */
-    public static final String SUPPORTED_CIPHER_NAMES = "org.jboss.security.sasl.digest.ciphers";
+    public static final String SUPPORTED_CIPHER_NAMES = "wildfly.security.sasl.digest.ciphers";
 
     /**
      * A property used to supply a separated list (space, comma, tab, new line) of alternative protocols to be acceptable in responses received from the client.
