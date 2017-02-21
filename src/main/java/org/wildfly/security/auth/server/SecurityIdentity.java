@@ -661,7 +661,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         }
 
         final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
-        if (! context.authorizeAnonymous(false)) {
+        if (! context.authorizeAnonymous(authorize)) {
             throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
         }
         return context.getAuthorizedIdentity();
