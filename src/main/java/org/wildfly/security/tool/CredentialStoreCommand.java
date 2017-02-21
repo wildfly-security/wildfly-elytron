@@ -53,8 +53,8 @@ class CredentialStoreCommand extends Command {
     public static int GENERAL_CONFIGURATION_ERROR = 7;
 
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
-    final String DEFAULT_ALGORITHM = "PBEWithMD5AndDES";
-    final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
+    static final String DEFAULT_ALGORITHM = "PBEWithMD5AndDES";
+    static final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
 
     public static final String STORE_LOCATION_PARAM = "location";
     public static final String CONFIGURATION_URI_PARAM = "uri";
@@ -144,12 +144,14 @@ class CredentialStoreCommand extends Command {
         credentialStoreConfigurationOptions.putIfAbsent("modifiable", Boolean.TRUE.toString());
         credentialStoreConfigurationOptions.putIfAbsent("create", Boolean.valueOf(createKeyStore).toString());
         credentialStoreConfigurationOptions.putIfAbsent("keyStoreType", "JCEKS");
-        credentialStore.initialize(credentialStoreConfigurationOptions,
-                new CredentialStore.CredentialSourceProtectionParameter(
-                        IdentityCredentials.NONE.withCredential(
-                                new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, csPassword.toCharArray())))));
-
-        final String masked = computeMasked(csPassword, salt, iterationCount);
+        if (csPassword != null) {
+            credentialStore.initialize(credentialStoreConfigurationOptions,
+                    new CredentialStore.CredentialSourceProtectionParameter(
+                            IdentityCredentials.NONE.withCredential(
+                                    new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, csPassword.toCharArray())))));
+        } else {
+            credentialStore.initialize(credentialStoreConfigurationOptions);
+        }
 
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
@@ -192,9 +194,9 @@ class CredentialStoreCommand extends Command {
             com.append(uri).append("\"");
             com.append(",relative-to=jboss.server.data.dir,credential-reference={");
             com.append("clear-text=\"");
-            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null) {
-                com.append(masked);
-            } else {
+            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+                com.append(computeMasked(csPassword, salt, iterationCount));
+            } else if (csPassword != null) {
                 com.append(csPassword);
             }
             com.append("\"})");
