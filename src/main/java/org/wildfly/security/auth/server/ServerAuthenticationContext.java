@@ -1720,8 +1720,12 @@ public final class ServerAuthenticationContext {
             authorizedIdentity = authorizedIdentity.withPublicCredentials(publicCredentials).withPrivateCredentials(privateCredentials);
             if (log.isTraceEnabled()) {
                 log.tracef("Authorizing principal %s.", authenticationPrincipal.getName());
-                log.tracef("Authorizing against the following attributes: %s => %s",
-                        authorizationIdentity.getAttributes().keySet(), authorizationIdentity.getAttributes().values());
+                if (authorizationIdentity != null) {
+                    log.tracef("Authorizing against the following attributes: %s => %s",
+                            authorizationIdentity.getAttributes().keySet(), authorizationIdentity.getAttributes().values());
+                } else {
+                    log.tracef("Authorizing against the following attributes: Cannot obtain the attributes. Authorization Identity is null.");
+                }
             }
             if (requireLoginPermission) {
                 if (! authorizedIdentity.implies(LoginPermission.getInstance())) {
