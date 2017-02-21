@@ -605,6 +605,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1150, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
     NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
 
+    @Message(id = 1151, value = "Evidence Verification Failed.")
+    SecurityException authenticationFailedEvidenceVerification();
+
+    @Message(id = 1152, value = "Authorization Check Failed.")
+    SecurityException authenticationFailedAuthorization();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

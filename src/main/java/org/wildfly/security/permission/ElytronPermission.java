@@ -46,6 +46,7 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
     private static final long serialVersionUID = 6124294238228442419L;
 
     private static final StringEnumeration strings = StringEnumeration.of(
+        "authenticate",
         "createAuthenticator",
         "createAuthenticationContextConfigurationClient",
         "createSecurityDomain",

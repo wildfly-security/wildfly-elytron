@@ -70,6 +70,7 @@ public final class SecurityDomain {
 
     private static final ConcurrentHashMap<ClassLoader, SecurityDomain> CLASS_LOADER_DOMAIN_MAP = new ConcurrentHashMap<>();
 
+    static final ElytronPermission AUTHENTICATE = ElytronPermission.forName("authenticate");
     static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
     static final ElytronPermission REGISTER_SECURITY_DOMAIN = ElytronPermission.forName("registerSecurityDomain");
     static final ElytronPermission GET_SECURITY_DOMAIN = ElytronPermission.forName("getSecurityDomain");
@@ -219,6 +220,53 @@ public final class SecurityDomain {
     ServerAuthenticationContext createNewAuthenticationContext(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector) {
         assert capturedIdentity.getSecurityDomain() == this;
         return new ServerAuthenticationContext(capturedIdentity, mechanismConfigurationSelector);
+    }
+
+    /**
+     * Perform an authentication based on {@link Evidence} alone.
+     *
+     * Note:  It is the caller's responsibility to destroy any evidence passed into this method.
+     *
+     * @param evidence the {@link Evidence} to use for authentication.
+     * @return the authenticated identity.
+     * @throws RealmUnavailableException if the requires {@link SecurityRealm} is not available.
+     * @throws SecurityException if authentication fails.
+     */
+    public SecurityIdentity authenticate(Evidence evidence) throws RealmUnavailableException, SecurityException {
+        return authenticate(null, evidence);
+    }
+
+    /**
+     * Perform an authentication based on {@link Evidence} for the specified identity name.
+     *
+     * Note:  It is the caller's responsibility to destroy any evidence passed into this method.
+     *
+     * @param name the name of the identity to authenticate or {@code null} if the identity is to be derived from the evidence.
+     * @param evidence the {@link Evidence} to use for authentication.
+     * @return the authenticated identity.
+     * @throws RealmUnavailableException if the requires {@link SecurityRealm} is not available.
+     * @throws SecurityException if authentication fails.
+     */
+    public SecurityIdentity authenticate(String name, Evidence evidence) throws RealmUnavailableException, SecurityException {
+        final SecurityManager securityManager = System.getSecurityManager();
+        if (securityManager != null) {
+            securityManager.checkPermission(AUTHENTICATE);
+        }
+
+        ServerAuthenticationContext serverAuthenticationContext = new ServerAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
+        if (name != null) serverAuthenticationContext.setAuthenticationName(name);
+        if (serverAuthenticationContext.verifyEvidence(evidence)) {
+            if (serverAuthenticationContext.authorize()) {
+                serverAuthenticationContext.succeed();
+                return serverAuthenticationContext.getAuthorizedIdentity();
+            } else {
+                serverAuthenticationContext.fail();
+                throw log.authenticationFailedAuthorization();
+            }
+        } else {
+            serverAuthenticationContext.fail();
+            throw log.authenticationFailedEvidenceVerification();
+        }
     }
 
     /**
