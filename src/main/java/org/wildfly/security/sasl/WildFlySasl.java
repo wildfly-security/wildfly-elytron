@@ -125,6 +125,19 @@ public final class WildFlySasl {
     public static final String SUPPORTED_CIPHER_NAMES = "org.jboss.security.sasl.digest.ciphers";
 
     /**
+     * A property used to supply a separated list (space, comma, tab, new line) of alternative protocols to be acceptable in responses received from the client.
+     *
+     *  @deprecated See {@link WildFlySasl#ALTERNATIVE_PROTOCOLS}
+     */
+    @Deprecated
+    public static final String LEGACY_ALTERNATIVE_PROTOCOLS = "org.jboss.sasl.digest.alternative_protocols";
+
+    /**
+     * A property used to supply a separated list (space, comma, tab, new line) of alternative protocols to be acceptable in responses received from the client.
+     */
+    public static final String ALTERNATIVE_PROTOCOLS = "wildfly.sasl.digest.alternative_protocols";
+
+    /**
      * A property used to provide an alternate dictionary to the OTP SASL mechanism. Each dictionary word should
      * be separated by a space character (U+0020).
      *
@@ -137,4 +150,6 @@ public final class WildFlySasl {
      * is 150 seconds.
      */
     public static final String AUTHENTICATION_TIMEOUT = "wildfly.sasl.authentication-timeout";
+
+
 }

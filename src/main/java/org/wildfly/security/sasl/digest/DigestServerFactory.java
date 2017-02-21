@@ -24,7 +24,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
@@ -94,7 +99,22 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, providers);
+        final String defaultDigestUri = (protocol + "/" + serverName).toLowerCase(Locale.ROOT);
+        Predicate<String> digestUriTest = defaultDigestUri::equals;
+
+        String alternativeProtocols = (String)props.get(WildFlySasl.ALTERNATIVE_PROTOCOLS);
+        if (alternativeProtocols == null) alternativeProtocols = (String)props.get(WildFlySasl.ALTERNATIVE_PROTOCOLS);
+        if (alternativeProtocols != null) {
+            final Set<String> acceptableUris = new HashSet<>();
+            StringTokenizer parser = new StringTokenizer(alternativeProtocols, ", \t\n");
+            while (parser.hasMoreTokens()) {
+                String digestUri = (parser.nextToken().trim() + "/" + serverName).toLowerCase(Locale.ROOT);
+                acceptableUris.add(digestUri);
+            }
+            digestUriTest = digestUriTest.or(acceptableUris::contains);
+        }
+
+        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, digestUriTest, providers);
         server.init();
         return server;
     }

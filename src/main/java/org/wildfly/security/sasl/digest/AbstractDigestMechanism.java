@@ -86,7 +86,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
 
     private FORMAT format;
-    protected String digestURI;
+    protected final String digestURI;
     protected Charset charset = StandardCharsets.ISO_8859_1;
     protected MessageDigest digest;
 
