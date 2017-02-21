@@ -1579,8 +1579,8 @@ public final class ServerAuthenticationContext {
         @Override
         void setMechanismInformation(MechanismInformation mechanismInformation) {
             InactiveState inactiveState = new InactiveState(capturedIdentity, mechanismConfigurationSelector, mechanismInformation, privateCredentials, publicCredentials);
-            InitialState nextState = inactiveState.selectMechanismConfiguration();
-            if (! stateRef.compareAndSet(this, nextState)) {
+            InitialState newState = inactiveState.selectMechanismConfiguration();
+            if (! stateRef.compareAndSet(this, newState)) {
                 stateRef.get().setMechanismInformation(mechanismInformation);
             }
         }
@@ -1747,12 +1747,11 @@ public final class ServerAuthenticationContext {
                 return false;
             }
             final AtomicReference<State> stateRef = getStateRef();
-            if (stateRef.compareAndSet(this, newState)) {
-                if (newState != authzState) getRealmIdentity().dispose();
-                return true;
-            } else {
+            if (! stateRef.compareAndSet(this, newState)) {
                 return stateRef.get().authorize(authorizationId, authorizeRunAs);
             }
+            if (newState != authzState) getRealmIdentity().dispose();
+            return true;
         }
 
         @Override
@@ -1779,11 +1778,14 @@ public final class ServerAuthenticationContext {
 
         @Override
         void fail() {
+            final SecurityIdentity capturedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
                 stateRef.get().fail();
                 return;
             }
+            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
+            SecurityDomain.safeHandleSecurityEvent(capturedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(capturedIdentity));
             realmIdentity.dispose();
         }
 
@@ -2124,26 +2126,26 @@ public final class ServerAuthenticationContext {
         void succeed() {
             final SecurityIdentity authorizedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
-            if (stateRef.compareAndSet(this, new CompleteState(authorizedIdentity))) {
-                SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizedIdentity.getAuthorizationIdentity(), null, null));
-                SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationSuccessfulEvent(authorizedIdentity));
-                realmIdentity.dispose();
+            if (! stateRef.compareAndSet(this, new CompleteState(authorizedIdentity))) {
+                stateRef.get().succeed();
                 return;
             }
-            stateRef.get().succeed();
+            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizedIdentity.getAuthorizationIdentity(), null, null));
+            SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationSuccessfulEvent(authorizedIdentity));
+            realmIdentity.dispose();
         }
 
         @Override
         void fail() {
             final SecurityIdentity authorizedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
-            if (stateRef.compareAndSet(this, FAILED)) {
-                SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
-                SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(getSourceIdentity()));
-                realmIdentity.dispose();
+            if (! stateRef.compareAndSet(this, FAILED)) {
+                stateRef.get().fail();
                 return;
             }
-            stateRef.get().fail();
+            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
+            SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(authorizedIdentity));
+            realmIdentity.dispose();
         }
 
         @Override
