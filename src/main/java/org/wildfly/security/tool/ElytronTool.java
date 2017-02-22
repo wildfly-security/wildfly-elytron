@@ -39,6 +39,10 @@ public class ElytronTool {
      */
     public static int ElytronToolExitStatus_OK = 0;
 
+    /**
+     *
+     */
+    public static final String TOOL_JAR = "wildfly-elytron-tool.jar";
 
     private Map<String, Command> commandRegistry = new HashMap<>();
 
@@ -48,6 +52,7 @@ public class ElytronTool {
      */
     public ElytronTool() {
         commandRegistry.put(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, new CredentialStoreCommand()); // assigned exit codes 5 - 10
+        commandRegistry.put(MaskCommand.MASK_COMMAND, new MaskCommand()); // uses exit code 7
     }
 
     /**

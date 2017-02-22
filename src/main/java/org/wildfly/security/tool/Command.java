@@ -21,9 +21,15 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * Base command class
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
 public abstract class Command {
+
+    /**
+     * General configuration error exit code.
+     */
+    public static int GENERAL_CONFIGURATION_ERROR = 7;
 
     private int status = 255;
 

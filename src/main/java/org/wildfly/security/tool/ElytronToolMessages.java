@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.tool;
 
+import org.apache.commons.cli.MissingArgumentException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Message;
@@ -52,7 +53,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = Message.NONE, value = "Salt to apply for final masked password of the credential store")
     String cmdLineSaltDesc();
 
-    @Message(id = Message.NONE, value = "Iteration count for for final masked password of the credential store")
+    @Message(id = Message.NONE, value = "Iteration count for final masked password of the credential store")
     String cmdLineIterationCountDesc();
 
     @Message(id = Message.NONE, value = "Password credential value")
@@ -114,5 +115,21 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 4, value = "Parameter name expected, but is missing '%s'")
     IllegalArgumentException credentialStoreURIParameterNameExpected(String uri);
+
+    // mask command
+    @Message(id = Message.NONE, value = "\"mask\" command is used to get MASK- string encrypted using %s in PicketBox compatible way.")
+    String cmdMaskHelpHeader(String algorithm);
+
+    @Message(id = Message.NONE, value = "Salt to apply to masked string")
+    String cmdMaskSaltDesc();
+
+    @Message(id = Message.NONE, value = "Iteration count for masked string")
+    String cmdMaskIterationCountDesc();
+
+    @Message(id = Message.NONE, value = "Secret to be encrypted")
+    String cmdMaskSecretDesc();
+
+    @Message(id = 5, value = "Nothing to encrypt. Secret not specified.")
+    MissingArgumentException secretNotSpecified();
 
 }

@@ -18,7 +18,6 @@
 package org.wildfly.security.tool;
 
 import java.net.URI;
-import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -38,8 +37,6 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.util.Alphabet;
-import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
 /**
  * Credential Store Command
@@ -53,8 +50,6 @@ class CredentialStoreCommand extends Command {
     public static int GENERAL_CONFIGURATION_ERROR = 7;
 
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
-    static final String DEFAULT_ALGORITHM = "PBEWithMD5AndDES";
-    static final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
 
     public static final String STORE_LOCATION_PARAM = "location";
     public static final String CONFIGURATION_URI_PARAM = "uri";
@@ -112,6 +107,7 @@ class CredentialStoreCommand extends Command {
         if (cmdLine.hasOption(HELP_PARAM)) {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            return;
         }
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
@@ -195,7 +191,7 @@ class CredentialStoreCommand extends Command {
             com.append(",relative-to=jboss.server.data.dir,credential-reference={");
             com.append("clear-text=\"");
             if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                com.append(computeMasked(csPassword, salt, iterationCount));
+                com.append(MaskCommand.computeMasked(csPassword, salt, iterationCount));
             } else if (csPassword != null) {
                 com.append(csPassword);
             }
@@ -207,22 +203,6 @@ class CredentialStoreCommand extends Command {
 
     private Credential createCredential(final String secret) {
         return new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret.toCharArray()));
-    }
-
-    private String computeMasked(String secret, String salt, int iteration) throws GeneralSecurityException {
-        PasswordBasedEncryptionUtil encryptUtil = new PasswordBasedEncryptionUtil.Builder()
-                .alphabet(Alphabet.Base64Alphabet.PICKETBOX_COMPATIBILITY)
-                .keyAlgorithm(DEFAULT_ALGORITHM)
-                .password(DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL)
-                .salt(salt)
-                .iteration(iteration)
-                .encryptMode()
-                .build();
-        StringBuilder sb = new StringBuilder().append("MASK-")
-                .append(encryptUtil.encryptAndEncode(secret.toCharArray()))
-                .append(";")
-                .append(salt).append(";").append(iteration);
-        return sb.toString();
     }
 
     @Override
@@ -315,6 +295,6 @@ class CredentialStoreCommand extends Command {
     @Override
     public void help() {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp("java -jar wildfly-elytron-tool.jar " + CREDENTIAL_STORE_COMMAND + " <sub-command> <options>", options, true);
+        help.printHelp("java -jar " + ElytronTool.TOOL_JAR + " " + CREDENTIAL_STORE_COMMAND + " <sub-command> <options>", options, true);
     }
 }
