@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -52,11 +54,14 @@ import org.wildfly.security.util.ByteStringBuilder;
  */
 class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
-    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Supplier<Provider[]> providers) throws SaslException {
+    private final Predicate<String> digestUriAccepted;
+
+    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriAccepted, Supplier<Provider[]> providers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers, providers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
+        this.digestUriAccepted = digestUriAccepted;
     }
 
     private static final byte STEP_ONE = 1;
@@ -230,8 +235,8 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         String clientDigestURI;
         if (parsedDigestResponse.get("digest-uri") != null) {
             clientDigestURI = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
-            if (!clientDigestURI.equalsIgnoreCase(digestURI)) {
-                throw log.mechMismatchedWrongDigestUri(getMechanismName(), clientDigestURI, digestURI).toSaslException();
+            if (! digestUriAccepted.test(clientDigestURI.toLowerCase(Locale.ROOT))) {
+                throw log.mechMismatchedWrongDigestUri(getMechanismName(), clientDigestURI).toSaslException();
             }
         } else {
             throw log.mechMissingDirective(getMechanismName(), "digest-uri").toSaslException();
@@ -264,7 +269,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
+        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, clientDigestURI, true);
 
         // check response
         if (parsedDigestResponse.get("response") == null) {

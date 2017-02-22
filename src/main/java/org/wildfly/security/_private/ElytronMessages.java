@@ -1148,8 +1148,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5087, value = "[%s] Client selected realm not offered by server (%s)")
     AuthenticationMechanismException mechDisallowedClientRealm(String mechName, String clientRealm);
 
-    @Message(id = 5088, value = "[%s] Mismatched digest-uri \"%s\" Expected: \"%s\"")
-    AuthenticationMechanismException mechMismatchedWrongDigestUri(String mechName, String actual, String expected);
+    @Message(id = 5088, value = "[%s] digest-uri \"%s\" not accepted")
+    AuthenticationMechanismException mechMismatchedWrongDigestUri(String mechName, String actual);
 
     @Message(id = 5089, value = "[%s] Unexpected qop value: \"%s\"")
     AuthenticationMechanismException mechUnexpectedQop(String mechName, String qop);
