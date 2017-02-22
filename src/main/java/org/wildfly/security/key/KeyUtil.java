@@ -106,8 +106,9 @@ public final class KeyUtil {
             return paramSpecClass.cast(((DHKey) key).getParams());
         } else if (key instanceof PBEKey && paramSpecClass.isAssignableFrom(PBEParameterSpec.class)) {
             final PBEKey pbeKey = (PBEKey) key;
+            final byte[] salt = pbeKey.getSalt();
             // TODO: we miss the IV here
-            return paramSpecClass.cast(new PBEParameterSpec(pbeKey.getSalt(), pbeKey.getIterationCount()));
+            return salt == null ? null : paramSpecClass.cast(new PBEParameterSpec(salt, pbeKey.getIterationCount()));
         } else {
             return null;
         }
