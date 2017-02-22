@@ -25,13 +25,14 @@ import static org.wildfly.security.http.HttpConstants.CONFIG_ERROR_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_LOGIN_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_POST_LOCATION;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
+import static org.wildfly.security.http.HttpConstants.FOUND;
 import static org.wildfly.security.http.HttpConstants.LOCATION;
 import static org.wildfly.security.http.HttpConstants.POST;
-import static org.wildfly.security.http.HttpConstants.SEE_OTHER;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -268,7 +269,23 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
         HttpScope session = getSessionScope(request, true);
         if (session.supportsAttachments()) {
-            session.setAttachment(LOCATION_KEY, request.getRequestURI().getPath());
+            URI requestURI = request.getRequestURI();
+            StringBuilder sb = new StringBuilder();
+            sb.append(requestURI.getScheme());
+            sb.append("://");
+            sb.append(requestURI.getHost());
+            sb.append(requestURI.getPath());
+            if(requestURI.getRawQuery() != null) {
+                sb.append("?");
+                sb.append(requestURI.getRawQuery());
+            }
+            if(requestURI.getRawFragment() != null) {
+                sb.append("#");
+                sb.append(requestURI.getRawFragment());
+            }
+            //TODO: we need to have some way up updating the jsessionid path parameter if the session ID changes
+            //see UNDERTOW-958 for more details
+            session.setAttachment(LOCATION_KEY, sb.toString());
             request.suspendRequest();
         }
 
@@ -306,7 +323,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
     private void sendRedirect(HttpServerResponse response, String location) {
         response.addResponseHeader(LOCATION, location);
-        response.setStatusCode(SEE_OTHER);
+        response.setStatusCode(FOUND);
     }
 
     private HttpScope getSessionScope(HttpServerRequest request, boolean createSession) {

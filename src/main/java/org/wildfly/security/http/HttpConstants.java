@@ -100,6 +100,7 @@ public class HttpConstants {
      */
 
     public static final int OK = 200;
+    public static final int FOUND = 302;
     public static final int SEE_OTHER = 303;
     public static final int TEMPORARY_REDIRECT = 307;
     public static final int UNAUTHORIZED = 401;
