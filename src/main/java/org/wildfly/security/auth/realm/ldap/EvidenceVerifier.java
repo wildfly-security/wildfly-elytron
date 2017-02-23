@@ -52,10 +52,11 @@ interface EvidenceVerifier {
      *
      * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param distinguishedName the distinguished name of the identity entry.
+     * @param url the absolute distinguished name of identity LDAP entry as URL string (when identity is not in realm context)
      * @param attributes the identity attributes requested by {@link #addRequiredIdentityAttributes(Collection)}.
      * @return An {@link IdentityEvidenceVerifier} for the specified identity identified by their distinguished name.
      */
-    IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes) throws RealmUnavailableException;
+    IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, String url, Attributes attributes) throws RealmUnavailableException;
 
     /**
      * Construct set of LDAP attributes, which should be loaded as part of the identity from identity entry.

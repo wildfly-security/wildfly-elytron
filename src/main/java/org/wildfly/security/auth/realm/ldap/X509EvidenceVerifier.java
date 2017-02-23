@@ -207,7 +207,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName, Attributes attributes) throws RealmUnavailableException {
+    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName, final String url, Attributes attributes) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
 
             @Override
