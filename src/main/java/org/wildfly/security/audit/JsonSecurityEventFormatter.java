@@ -29,6 +29,7 @@ import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
 import org.wildfly.security.auth.server.event.SecurityDefiniteOutcomeEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
@@ -83,6 +84,19 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     private void handleDefiniteOutcomeEvent(SecurityDefiniteOutcomeEvent event, JsonObjectBuilder objectBuilder) {
         handleUnknownEvent(event, objectBuilder);
         objectBuilder.add("success", event.isSuccessful());
+    }
+
+    @Override
+    public String handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, Void param) {
+        checkNotNullParam("event", event);
+        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        handleAuthenticationFailedEvent(event, objectBuilder);
+        return objectBuilder.build().toString();
+    }
+
+    private void handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, JsonObjectBuilder objectBuilder) {
+        handleDefiniteOutcomeEvent(event, objectBuilder);
+        objectBuilder.add("principal", event.getPrincipal() != null ? event.getPrincipal().toString() : null);
     }
 
     @Override
