@@ -30,17 +30,31 @@ import java.util.Map;
  */
 public class ElytronTool {
 
+    /**
+     * status code for unrecognized command
+     */
     public static int ElytronToolExitStatus_unrecognizedCommand = 1;
+    /**
+     * status code for no problems
+     */
     public static int ElytronToolExitStatus_OK = 0;
 
 
     private Map<String, Command> commandRegistry = new HashMap<>();
 
 
+    /**
+     * Construct ElytronTool with registration of all supported commands.
+     */
     public ElytronTool() {
         commandRegistry.put(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, new CredentialStoreCommand()); // assigned exit codes 5 - 10
     }
 
+    /**
+     * Main method to call from scripts.
+     *
+     * @param args parameters to pass farther. The first parameter is name or alias of the command.
+     */
     public static void main(String[] args) {
 
         Security.addProvider(new WildFlyElytronProvider());
@@ -77,7 +91,7 @@ public class ElytronTool {
         }
     }
 
-    private Command findCommand(String commandName) {
+    Command findCommand(String commandName) {
         Command command = commandRegistry.get(commandName);
         if (command != null) {
             return command;

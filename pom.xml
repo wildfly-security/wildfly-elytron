@@ -130,6 +130,7 @@
                                 <goal>shade</goal>
                             </goals>
                             <configuration>
+                                <createDependencyReducedPom>false</createDependencyReducedPom>
                                 <artifactSet>
                                     <excludes>
                                         <exclude>junit:junit</exclude>
