@@ -181,8 +181,17 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                         if (originalPath != null) {
                             postAuthenticationPath = originalPath;
                         } else {
-                            String currentPath = request.getRequestURI().getPath();
-                            postAuthenticationPath = currentPath.substring(0, currentPath.indexOf(DEFAULT_POST_LOCATION));
+                            URI requestUri = request.getRequestURI();
+                            String currentPath = requestUri.getPath();
+
+                            StringBuilder sb = new StringBuilder();
+                            sb.append(requestUri.getScheme());
+                            sb.append("://");
+                            sb.append(requestUri.getHost());
+                            sb.append(':').append(requestUri.getPort());
+                            sb.append(currentPath.substring(0, currentPath.indexOf(DEFAULT_POST_LOCATION)));
+
+                            postAuthenticationPath = sb.toString();
                         }
                         session.setAttachment(LOCATION_KEY, null);
                         responder = (response) -> sendRedirect(response, postAuthenticationPath);
@@ -266,14 +275,14 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
     void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
         // Save the current request.
-
+        URI requestURI = request.getRequestURI();
         HttpScope session = getSessionScope(request, true);
         if (session.supportsAttachments()) {
-            URI requestURI = request.getRequestURI();
             StringBuilder sb = new StringBuilder();
             sb.append(requestURI.getScheme());
             sb.append("://");
             sb.append(requestURI.getHost());
+            sb.append(':').append(requestURI.getPort());
             sb.append(requestURI.getPath());
             if(requestURI.getRawQuery() != null) {
                 sb.append("?");
@@ -289,7 +298,13 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             request.suspendRequest();
         }
 
-        sendPage(loginPage, request, response);
+        StringBuilder sb = new StringBuilder();
+        sb.append(requestURI.getScheme());
+        sb.append("://");
+        sb.append(requestURI.getHost());
+        sb.append(':').append(requestURI.getPort());
+        sb.append(loginPage);
+        sendPage(sb.toString(), request, response);
     }
 
     void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
