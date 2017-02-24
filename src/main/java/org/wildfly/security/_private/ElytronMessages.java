@@ -614,6 +614,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
     RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
 
+    @Message(id = 1154, value = "Failed to read key store")
+    RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
