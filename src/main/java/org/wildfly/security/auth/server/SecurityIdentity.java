@@ -40,6 +40,12 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionBiConsumer;
+import org.wildfly.common.function.ExceptionBiFunction;
+import org.wildfly.common.function.ExceptionConsumer;
+import org.wildfly.common.function.ExceptionFunction;
+import org.wildfly.common.function.ExceptionObjIntConsumer;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
@@ -425,13 +431,118 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAsSupplier(Supplier<T> action) {
         if (action == null) return null;
+        return runAsFunction(Supplier::get, action);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <R> the action return type
+     * @param <T> the action parameter type
+     * @param <E> the action exception type
+     * @return the action result (may be {@code null})
+     * @throws E if the action throws this exception
+     */
+    public <T, R, E extends Exception> R runAsFunctionEx(ExceptionFunction<T, R, E> action, T parameter) throws E {
+        if (action == null) return null;
+        return runAsFunctionEx(ExceptionFunction::apply, action, parameter);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <R> the action return type
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @param <E> the action exception type
+     * @return the action result (may be {@code null})
+     * @throws E if the action throws this exception
+     */
+    public <T, U, R, E extends Exception> R runAsFunctionEx(ExceptionBiFunction<T, U, R, E> action, T parameter1, U parameter2) throws E {
+        if (action == null) return null;
         SecurityIdentity[] toRestore = establishIdentities();
 
         try {
-            return action.get();
+            return action.apply(parameter1, parameter2);
         } finally {
             restoreIdentities(toRestore);
         }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action parameter type
+     * @param <E> the action exception type
+     * @throws E if the action throws this exception
+     */
+    public <T, E extends Exception> void runAsConsumerEx(ExceptionConsumer<T, E> action, T parameter) throws E {
+        if (action == null) return;
+        runAsConsumerEx(ExceptionConsumer::accept, action, parameter);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @param <E> the action exception type
+     * @throws E if the action throws this exception
+     */
+    public <T, U, E extends Exception> void runAsConsumerEx(ExceptionBiConsumer<T, U, E> action, T parameter1, U parameter2) throws E {
+        if (action == null) return;
+        SecurityIdentity[] toRestore = establishIdentities();
+
+        try {
+            action.accept(parameter1, parameter2);
+        } finally {
+            restoreIdentities(toRestore);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <E> the action exception type
+     * @throws E if the action throws this exception
+     */
+    public <T, E extends Exception> void runAsObjIntConsumerEx(ExceptionObjIntConsumer<T, E> action, T parameter1, int parameter2) throws E {
+        if (action == null) return;
+        SecurityIdentity[] toRestore = establishIdentities();
+
+        try {
+            action.accept(parameter1, parameter2);
+        } finally {
+            restoreIdentities(toRestore);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the action to run
+     * @param <T> the action return type
+     * @param <E> the action exception type
+     * @return the action result (may be {@code null})
+     * @throws E if the action throws this exception
+     */
+    public <T, E extends Exception> T runAsSupplierEx(ExceptionSupplier<T, E> action) throws E {
+        if (action == null) return null;
+        return runAsFunctionEx(ExceptionSupplier::get, action);
     }
 
     /**
