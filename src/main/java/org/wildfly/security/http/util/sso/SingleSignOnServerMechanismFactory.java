@@ -160,6 +160,28 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                     }
 
                     @Override
+                    public void authenticationComplete(HttpServerMechanismsResponder responder, Runnable logoutHandler) {
+                        request.authenticationComplete(response -> {
+                            try {
+                                String id = singleSignOnSession.getId();
+                                if (id != null) {
+                                    HttpServerCookie cookie = getCookie(request);
+
+                                    if (cookie == null) {
+                                        response.setResponseCookie(createCookie(id, -1));
+                                    }
+                                }
+
+                                if (responder != null) {
+                                    responder.sendResponse(response);
+                                }
+                            } finally {
+                                singleSignOnSession.close();
+                            }
+                        }, logoutHandler);
+                    }
+
+                    @Override
                     public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
                         request.authenticationFailed(message, response -> {
                             try {

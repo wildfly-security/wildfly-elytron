@@ -170,7 +170,8 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         char[] passwordChars = password.toCharArray();
         try {
             if (authenticate(null, username, passwordChars)) {
-                if (authorize(username, request)) {
+                IdentityCache identityCache = createIdentityCache(request, true);
+                if (authorize(username, request, identityCache)) {
                     log.debugf("User %s authenticated successfully using FormAuthenticationMechanism!", username);
                     succeed();
                     HttpScope session = getSessionScope(request, true);
@@ -197,7 +198,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                         responder = (response) -> sendRedirect(response, postAuthenticationPath);
                     }
 
-                    request.authenticationComplete(responder);
+                    request.authenticationComplete(responder, identityCache::remove);
                     return;
                 } else {
                     failAndRedirectToErrorPage(request, username);
@@ -215,10 +216,9 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         }
     }
 
-    private boolean authorize(String username, HttpServerRequest request) throws HttpAuthenticationException {
+    private boolean authorize(String username, HttpServerRequest request, IdentityCache identityCache) throws HttpAuthenticationException {
         log.tracef("Authorizing username: [%s], Request URI: [%s], Context path: [%s]", username, request.getRequestURI(), this.contextPath);
 
-        IdentityCache identityCache = createIdentityCache(request, true);
         if (identityCache != null) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(username, identityCache);
             try {
@@ -257,7 +257,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                 } catch (IOException | UnsupportedCallbackException e) {
                     throw new HttpAuthenticationException(e);
                 }
-                request.authenticationComplete();
+                request.authenticationComplete(null, identityCache::remove);
                 return true;
             }
         }
@@ -305,7 +305,6 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         if (response.forward(page)) {
             return;
         }
-
         // Work out how and send the login page.
         HttpScope application = request.getScope(Scope.APPLICATION);
         if (application != null && application.supportsResources()) {
@@ -327,7 +326,15 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             }
         }
 
-        sendRedirect(response, contextPath + page);
+        URI requestURI = request.getRequestURI();
+        StringBuilder sb = new StringBuilder();
+        sb.append(requestURI.getScheme());
+        sb.append("://");
+        sb.append(requestURI.getHost());
+        sb.append(':').append(requestURI.getPort());
+        sb.append(contextPath);
+        sb.append(page);
+        sendRedirect(response, sb.toString());
     }
 
     private void sendRedirect(HttpServerResponse response, String location) {
