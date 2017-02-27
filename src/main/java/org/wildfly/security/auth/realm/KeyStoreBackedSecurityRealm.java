@@ -25,7 +25,12 @@ import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
 import java.security.UnrecoverableEntryException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.function.Supplier;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -38,6 +43,7 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.x500.X500PrincipalUtil;
 
 /**
  * A {@link KeyStore} backed {@link SecurityRealm} implementation.
@@ -72,7 +78,31 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
-        return principal instanceof NamePrincipal ? new KeyStoreRealmIdentity(principal.getName()) : RealmIdentity.NON_EXISTENT;
+        if (principal instanceof NamePrincipal) {
+            return new KeyStoreRealmIdentity(principal.getName());
+        } else {
+            final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
+            if (x500Principal == null) {
+                return RealmIdentity.NON_EXISTENT;
+            } else {
+                final KeyStore keyStore = this.keyStore;
+                try {
+                    final Enumeration<String> aliases = keyStore.aliases();
+                    while (aliases.hasMoreElements()) {
+                        final String alias = aliases.nextElement();
+                        if (keyStore.isCertificateEntry(alias)) {
+                            final Certificate certificate = keyStore.getCertificate(alias);
+                            if (certificate instanceof X509Certificate && x500Principal.equals(X500PrincipalUtil.asX500Principal(((X509Certificate) certificate).getSubjectX500Principal()))) {
+                                return new KeyStoreRealmIdentity(alias);
+                            }
+                        }
+                    }
+                } catch (KeyStoreException e) {
+                    throw ElytronMessages.log.failedToReadKeyStore(e);
+                }
+                return RealmIdentity.NON_EXISTENT;
+            }
+        }
     }
 
     @Override
