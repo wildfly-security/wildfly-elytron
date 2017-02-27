@@ -8,7 +8,9 @@ An "elytron" (ĕl´·ĭ·trŏn, plural "elytra") is the hard, protective casing 
 Building From Source
 --------------------
 
-> git clone git@github.com:wildfly-security/wildfly-elytron.git
+```console
+$ git clone git@github.com:wildfly-security/wildfly-elytron.git
+```
 
 Setup the JBoss Maven Repository
 --------------------------------
@@ -20,9 +22,9 @@ Build with Maven
 
 The command below builds the project and runs the embedded suite.
 
-<pre>
+```console
 $ mvn clean install
-</pre>
+```
 
 Issue Tracking
 --------------
