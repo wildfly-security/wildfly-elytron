@@ -298,13 +298,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             request.suspendRequest();
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(requestURI.getScheme());
-        sb.append("://");
-        sb.append(requestURI.getHost());
-        sb.append(':').append(requestURI.getPort());
-        sb.append(loginPage);
-        sendPage(sb.toString(), request, response);
+        sendPage(loginPage, request, response);
     }
 
     void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
