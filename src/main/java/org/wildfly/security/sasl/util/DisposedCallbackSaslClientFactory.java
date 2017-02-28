@@ -26,6 +26,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
 import org.wildfly.security.auth.callback.SecurityLayerDisposedCallback;
 
 /**
@@ -59,5 +60,24 @@ public final class DisposedCallbackSaslClientFactory extends AbstractDelegatingS
                 }
             }
         };
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof DisposedCallbackSaslClientFactory && equals((DisposedCallbackSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof DisposedCallbackSaslClientFactory && equals((DisposedCallbackSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final DisposedCallbackSaslClientFactory other) {
+        return super.equals(other);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode());
     }
 }

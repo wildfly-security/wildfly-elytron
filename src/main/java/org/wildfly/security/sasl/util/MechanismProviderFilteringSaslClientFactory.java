@@ -28,6 +28,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 
+import org.wildfly.common.Assert;
+import org.wildfly.common.math.HashMath;
+
 /**
  * A SASL client factory which filters mechanisms based on the combination of mechanism name and security provider.
  * Mechanisms which do not come from a security provider are not filtered.
@@ -45,6 +48,7 @@ public final class MechanismProviderFilteringSaslClientFactory extends AbstractD
      */
     public MechanismProviderFilteringSaslClientFactory(final SaslClientFactory delegate, final BiPredicate<String, Provider> predicate) {
         super(delegate);
+        Assert.checkNotNullParam("predicate", predicate);
         this.predicate = predicate;
     }
 
@@ -69,5 +73,24 @@ public final class MechanismProviderFilteringSaslClientFactory extends AbstractD
             newProps.put(SaslFactories.PROVIDER_FILTER_KEY, predicate);
         }
         return super.getMechanismNames(newProps);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof MechanismProviderFilteringSaslClientFactory && equals((MechanismProviderFilteringSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof MechanismProviderFilteringSaslClientFactory && equals((MechanismProviderFilteringSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final MechanismProviderFilteringSaslClientFactory other) {
+        return super.equals(other) && predicate.equals(other.predicate);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), predicate.hashCode());
     }
 }

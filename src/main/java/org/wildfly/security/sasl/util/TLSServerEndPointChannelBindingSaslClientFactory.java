@@ -38,6 +38,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
 
@@ -94,5 +95,24 @@ public final class TLSServerEndPointChannelBindingSaslClientFactory extends Abst
                 }
             }
         });
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof TLSServerEndPointChannelBindingSaslClientFactory && equals((TLSServerEndPointChannelBindingSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof TLSServerEndPointChannelBindingSaslClientFactory && equals((TLSServerEndPointChannelBindingSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final TLSServerEndPointChannelBindingSaslClientFactory other) {
+        return super.equals(other);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode());
     }
 }

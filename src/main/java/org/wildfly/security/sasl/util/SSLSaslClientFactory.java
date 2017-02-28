@@ -18,7 +18,10 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.util.Map;
+import java.util.Objects;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -71,5 +74,24 @@ public final class SSLSaslClientFactory extends AbstractDelegatingSaslClientFact
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SSLQueryCallbackHandler newHandler = sslEngine != null ? new SSLQueryCallbackHandler(cbh, sslContext, sslEngine) : new SSLQueryCallbackHandler(cbh, sslContext, sslSocket);
         return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, newHandler);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof SSLSaslClientFactory && equals((SSLSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof SSLSaslClientFactory && equals((SSLSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final SSLSaslClientFactory other) {
+        return super.equals(other) && sslContext.equals(other.sslContext) && Objects.equals(sslSocket, other.sslSocket) && Objects.equals(sslEngine, other.sslEngine);
+    }
+
+    protected int calculateHashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), sslContext.hashCode()), Objects.hashCode(sslEngine)), Objects.hashCode(sslSocket));
     }
 }

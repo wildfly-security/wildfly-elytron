@@ -31,6 +31,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.math.HashMath;
 
 /**
  * A {@link SaslClientFactory} which filters available mechanisms (either inclusively or exclusively) from a delegate
@@ -110,5 +111,24 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
             }
         }
         return list.toArray(new String[list.size()]);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof FilterMechanismSaslClientFactory && equals((FilterMechanismSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof FilterMechanismSaslClientFactory && equals((FilterMechanismSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final FilterMechanismSaslClientFactory other) {
+        return super.equals(other) && predicate.equals(other.predicate);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), predicate.hashCode());
     }
 }

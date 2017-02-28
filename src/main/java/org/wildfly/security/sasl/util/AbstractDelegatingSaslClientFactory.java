@@ -37,6 +37,8 @@ public abstract class AbstractDelegatingSaslClientFactory implements SaslClientF
      */
     protected final SaslClientFactory delegate;
 
+    private int hashCode;
+
     /**
      * Construct a new instance.
      *
@@ -66,5 +68,32 @@ public abstract class AbstractDelegatingSaslClientFactory implements SaslClientF
 
     public String[] getMechanismNames(final Map<String, ?> props) {
         return delegate.getMechanismNames(props);
+    }
+
+    public boolean equals(final Object other) {
+        return other instanceof AbstractDelegatingSaslClientFactory && equals((AbstractDelegatingSaslClientFactory) other);
+    }
+
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return this == other || other != null && delegate.equals(other.delegate);
+    }
+
+    public final int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = calculateHashCode();
+            if (hashCode == 0) hashCode = 1;
+            return this.hashCode = hashCode;
+        }
+        return hashCode;
+    }
+
+    /**
+     * Perform the calculation of the hash code of this factory.
+     *
+     * @return the calculated hash code
+     */
+    protected int calculateHashCode() {
+        return delegate.hashCode();
     }
 }

@@ -25,6 +25,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
+
 /**
  * @author Kabir Khan
  */
@@ -57,5 +59,24 @@ public class PropertiesSaslClientFactory extends AbstractDelegatingSaslClientFac
         combined.putAll( configured);
 
         return combined;
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof PropertiesSaslClientFactory && equals((PropertiesSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof PropertiesSaslClientFactory && equals((PropertiesSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final PropertiesSaslClientFactory other) {
+        return super.equals(other) && properties.equals(other.properties);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), properties.hashCode());
     }
 }
