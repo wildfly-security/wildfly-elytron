@@ -50,10 +50,14 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.cache.RealmIdentityCache;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -62,6 +66,8 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
 
     private CountDownLatch waitServerNotification = new CountDownLatch(1);
     private AtomicInteger realmHitCount = new AtomicInteger();
+    private AtomicInteger credentialHitCount = new AtomicInteger();
+    private AtomicInteger attributesHitCount = new AtomicInteger();
 
     @Test
     public void testCacheUpdateAfterChangeNotificationFromServer() throws Exception {
@@ -72,6 +78,8 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         for (int i = 0; i < 10; i++) {
             assertAuthenticationAndAuthorization("plainUser", securityDomain);
             assertEquals(1, realmHitCount.get());
+            assertEquals(1, credentialHitCount.get());
+            assertEquals(1, attributesHitCount.get());
         }
 
         ExceptionSupplier<DirContext, NamingException> supplier = LdapTestSuite.dirContextFactory.create();
@@ -87,6 +95,8 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         assertAuthenticationAndAuthorization("plainUser", securityDomain);
 
         assertEquals(2, realmHitCount.get());
+        assertEquals(2, credentialHitCount.get());
+        assertEquals(2, attributesHitCount.get());
         dirContext.close();
     }
 
@@ -117,10 +127,14 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         ServerAuthenticationContext sac = createServerAuthenticationContext(username, securityDomain);
 
         assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, sac.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
+        assertEquals("plainPassword", new String(sac.getCredential(PasswordCredential.class).getPassword().castAs(ClearPassword.class, ClearPassword.ALGORITHM_CLEAR).getPassword()));
+
         assertTrue(sac.authorize(username));
 
         SecurityIdentity securityIdentity = sac.getAuthorizedIdentity();
         assertNotNull(securityIdentity);
+        assertNotNull(securityIdentity.getAttributes());
         assertEquals(username, securityIdentity.getPrincipal().getName());
     }
 
@@ -137,9 +151,11 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
                 LdapSecurityRealmBuilder.builder()
                         .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                         .identityMapping()
-                        .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                        .setRdnIdentifier("uid")
-                        .build()
+                            .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                            .setRdnIdentifier("uid")
+                            .build()
+                        .userPasswordCredentialLoader()
+                            .build()
                         .addDirectEvidenceVerification()
                         .build()
         ), createRealmIdentitySimpleJavaMapCache());
@@ -163,7 +179,53 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         @Override
         public RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
             realmHitCount.incrementAndGet();
-            return realm.getRealmIdentity(principal);
+            return new RealmIdentity() {
+                RealmIdentity identity = realm.getRealmIdentity(principal);
+
+                @Override
+                public Principal getRealmIdentityPrincipal() {
+                    return identity.getRealmIdentityPrincipal();
+                }
+
+                @Override
+                public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+                    credentialHitCount.incrementAndGet();
+                    return identity.getCredentialAcquireSupport(credentialType, algorithmName);
+                }
+
+                @Override
+                public <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+                    credentialHitCount.incrementAndGet();
+                    return identity.getCredential(credentialType);
+                }
+
+                @Override
+                public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                    return identity.getEvidenceVerifySupport(evidenceType, algorithmName);
+                }
+
+                @Override
+                public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                    return identity.verifyEvidence(evidence);
+                }
+
+                @Override
+                public boolean exists() throws RealmUnavailableException {
+                    return identity.exists();
+                }
+
+                @Override
+                public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                    attributesHitCount.incrementAndGet();
+                    return identity.getAuthorizationIdentity();
+                }
+
+                @Override
+                public Attributes getAttributes() throws RealmUnavailableException {
+                    attributesHitCount.incrementAndGet();
+                    return identity.getAttributes();
+                }
+            };
         }
 
         @Override
