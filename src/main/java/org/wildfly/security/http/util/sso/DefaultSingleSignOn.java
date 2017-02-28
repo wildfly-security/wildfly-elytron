@@ -66,10 +66,13 @@ public class DefaultSingleSignOn implements SingleSignOn {
     }
 
     @Override
-    public synchronized void setIdentity(SecurityIdentity identity) {
-        CachedIdentity cached = this.entry.getCachedIdentity();
-        if (cached.getSecurityIdentity() == null) {
-            this.entry.setCachedIdentity(new CachedIdentity(cached.getMechanismName(), identity));
+    public void setIdentity(SecurityIdentity identity) {
+        // Only set cached identity if it has not already been set
+        synchronized (this.entry) {
+            CachedIdentity cached = this.entry.getCachedIdentity();
+            if (cached.getSecurityIdentity() == null) {
+                this.entry.setCachedIdentity(new CachedIdentity(cached.getMechanismName(), identity));
+            }
         }
     }
 
