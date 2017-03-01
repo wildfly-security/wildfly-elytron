@@ -71,6 +71,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
+    private static final SecurityIdentity[] NO_IDENTITIES = new SecurityIdentity[0];
+
     private final SecurityDomain securityDomain;
     private final Principal principal;
     private final AuthorizationIdentity authorizationIdentity;
@@ -194,15 +196,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     private SecurityIdentity[] establishIdentities() {
-        SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : new SecurityIdentity[] {};
+        SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : NO_IDENTITIES;
+        if (withIdentities.length == 0) {
+            return NO_IDENTITIES;
+        }
 
-        SecurityIdentity[] oldIdentities = new SecurityIdentity[withIdentities.length + 1];
-        SecurityDomain securityDomain = this.securityDomain;
-        oldIdentities[0] = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] oldIdentities = new SecurityIdentity[withIdentities.length];
         for (int i = 0; i < withIdentities.length; i++) {
             SecurityIdentity securityIdentity = withIdentities[i];
-            securityDomain = securityIdentity.getSecurityDomain();
-            oldIdentities[i + 1] = securityDomain.getAndSetCurrentSecurityIdentity(securityIdentity);
+            oldIdentities[i] = securityIdentity.getSecurityDomain().getAndSetCurrentSecurityIdentity(securityIdentity);
         }
 
         return oldIdentities;
@@ -221,13 +223,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public void runAs(Runnable action) {
         if (action == null) return;
-        SecurityIdentity[] toRestore = establishIdentities();
-
-        try {
-            action.run();
-        } finally {
-            restoreIdentities(toRestore);
-        }
+        runAsConsumer(Runnable::run, action);
     }
 
     /**
@@ -240,13 +236,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(Callable<T> action) throws Exception {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
-        try {
-            return action.call();
-        } finally {
-            restoreIdentities(toRestore);
-        }
+        return runAsFunctionEx(Callable::call, action);
     }
 
     /**
@@ -258,13 +248,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(PrivilegedAction<T> action) {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
-        try {
-            return action.run();
-        } finally {
-            restoreIdentities(toRestore);
-        }
+        return runAs(action, (ParametricPrivilegedAction<T, PrivilegedAction<T>>) PrivilegedAction::run);
     }
 
     /**
@@ -277,17 +261,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
-        try {
-            return action.run();
-        } catch (RuntimeException | PrivilegedActionException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new PrivilegedActionException(e);
-        } finally {
-            restoreIdentities(toRestore);
-        }
+        return runAs(action, (ParametricPrivilegedExceptionAction<T, PrivilegedExceptionAction<T>>) PrivilegedExceptionAction::run);
     }
 
     /**
@@ -301,12 +275,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, P> T runAs(P parameter, ParametricPrivilegedAction<T, P> action) {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.run(parameter);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -322,8 +297,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, P> T runAs(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.run(parameter);
         } catch (RuntimeException | PrivilegedActionException e) {
@@ -331,7 +306,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -362,12 +338,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, R> R runAsFunction(BiFunction<T, U, R> action, T parameter1, U parameter2) {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.apply(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -394,12 +371,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U> void runAsConsumer(BiConsumer<T, U> action, T parameter1, U parameter2) {
         if (action == null) return;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -413,12 +391,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> void runAsObjIntConsumer(ObjIntConsumer<T> action, T parameter1, int parameter2) {
         if (action == null) return;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -465,12 +444,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, R, E extends Exception> R runAsFunctionEx(ExceptionBiFunction<T, U, R, E> action, T parameter1, U parameter2) throws E {
         if (action == null) return null;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.apply(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -501,12 +481,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, E extends Exception> void runAsConsumerEx(ExceptionBiConsumer<T, U, E> action, T parameter1, U parameter2) throws E {
         if (action == null) return;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -522,12 +503,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, E extends Exception> void runAsObjIntConsumerEx(ExceptionObjIntConsumer<T, E> action, T parameter1, int parameter2) throws E {
         if (action == null) return;
-        SecurityIdentity[] toRestore = establishIdentities();
-
+        final SecurityIdentity[] oldWithIdentities = establishIdentities();
+        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            restoreIdentities(toRestore);
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
         }
     }
 
@@ -600,13 +582,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
 
 
     /**
-     * Attempt to create a new identity that is the same as this identity but with a {@link Supplier<SecurityIdentity[]>} to supply identities that will be associated with all 'run' calls.
+     * Attempt to create a new identity that is the same as this identity but with a {@link Supplier Supplier<SecurityIdentity[]>} to supply identities that will be associated with all 'run' calls.
      *
      * Any existing individual identities associated with this identity will be dropped.
      *
      * The supplier will be called for each run call so were possible should handle it's own optimisation.
      *
-     * @param securityIdentities a {@link Supplier<SecurityIdentity[]>} for identities to be associated with every run call.
+     * @param securityIdentities a {@link Supplier Supplier<SecurityIdentity[]>} for identities to be associated with every run call.
      * @return the new identity
      * @throws IllegalArgumentException if the supplied identity
      */
@@ -623,7 +605,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * Attempt to create a new identity that is the same as this identity but with an additional identity from a different
      * security domain that will be associated with all 'run' calls.
      *
-     * If a {@link Supplier<SecurityIdentity[]>} has previously been associated with this identity it will be dropped.
+     * If a {@link Supplier Supplier<SecurityIdentity[]>} has previously been associated with this identity it will be dropped.
      *
      * @param securityIdentity the {@link SecurityIdentity} to also be associated with all run calls made to this identity.
      * @return the new identity
