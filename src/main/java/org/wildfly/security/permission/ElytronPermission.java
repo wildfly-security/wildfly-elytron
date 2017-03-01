@@ -57,7 +57,8 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
         "createServerAuthenticationContext",
         "getPrivateCredentials",
         "getIdentity",
-        "getIdentityForUpdate"
+        "getIdentityForUpdate",
+        "createAdHocIdentity"
     );
 
     static final StringMapping<ElytronPermission> mapping = new StringMapping<>(strings, ElytronPermission::new);
