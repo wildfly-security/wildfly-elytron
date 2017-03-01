@@ -221,7 +221,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param action the action to run
      * @param <T> the action return type
      * @return the action result (may be {@code null})
+     * @deprecated Use {@link #runAsSupplier(Supplier)} instead.
      */
+    @Deprecated
     public <T> T runAs(PrivilegedAction<T> action) {
         if (action == null) return null;
         return runAs(action, (ParametricPrivilegedAction<T, PrivilegedAction<T>>) PrivilegedAction::run);
@@ -234,7 +236,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <T> the action return type
      * @return the action result (may be {@code null})
      * @throws PrivilegedActionException if the action fails
+     * @deprecated Use {@link #runAsSupplierEx(ExceptionSupplier)} instead.
      */
+    @Deprecated
     public <T> T runAs(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         if (action == null) return null;
         return runAs(action, (ParametricPrivilegedExceptionAction<T, PrivilegedExceptionAction<T>>) PrivilegedExceptionAction::run);
@@ -248,7 +252,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <T> the action return type
      * @param <P> the action parameter type
      * @return the action result (may be {@code null})
+     * @deprecated Use {@link #runAsFunction(Function, Object)} instead.
      */
+    @Deprecated
     public <T, P> T runAs(P parameter, ParametricPrivilegedAction<T, P> action) {
         if (action == null) return null;
         final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
@@ -270,7 +276,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <P> the action parameter type
      * @return the action result (may be {@code null})
      * @throws PrivilegedActionException if the action fails
+     * @deprecated Use {@link #runAsFunctionEx(ExceptionFunction, Object)} instead.
      */
+    @Deprecated
     public <T, P> T runAs(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         if (action == null) return null;
         final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
