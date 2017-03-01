@@ -28,6 +28,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
+
 /**
  * A delegating {@link SaslClientFactory} which will sort the mechanism names using a supplied {@link Comparator<String>}.
  *
@@ -56,4 +58,22 @@ public class SortedMechanismClientServerFactory extends AbstractDelegatingSaslCl
         return mechanismNames;
     }
 
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof SortedMechanismClientServerFactory && equals((SortedMechanismClientServerFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof SortedMechanismClientServerFactory && equals((SortedMechanismClientServerFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final SortedMechanismClientServerFactory other) {
+        return super.equals(other) && mechanismNameComparator.equals(other.mechanismNameComparator);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), mechanismNameComparator.hashCode());
+    }
 }

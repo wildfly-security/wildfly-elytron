@@ -29,6 +29,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
+import org.wildfly.common.math.HashMath;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 
 /**
@@ -49,6 +51,8 @@ public final class ChannelBindingSaslClientFactory extends AbstractDelegatingSas
      */
     public ChannelBindingSaslClientFactory(final SaslClientFactory delegate, final String bindingType, final byte[] bindingData) {
         super(delegate);
+        Assert.checkNotNullParam("bindingType", bindingType);
+        Assert.checkNotNullParam("bindingData", bindingData);
         this.bindingType = bindingType;
         this.bindingData = bindingData;
     }
@@ -69,5 +73,24 @@ public final class ChannelBindingSaslClientFactory extends AbstractDelegatingSas
                 cbh.handle(list.toArray(new Callback[list.size()]));
             }
         });
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof ChannelBindingSaslClientFactory && equals((ChannelBindingSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof ChannelBindingSaslClientFactory && equals((ChannelBindingSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final ChannelBindingSaslClientFactory other) {
+        return super.equals(other) && bindingType.equals(other.bindingType) && Arrays.equals(bindingData, other.bindingData);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), bindingType.hashCode()), Arrays.hashCode(bindingData));
     }
 }

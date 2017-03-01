@@ -18,8 +18,11 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -52,5 +55,24 @@ public final class SocketAddressCallbackSaslClientFactory extends AbstractDelega
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         return delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, new SocketAddressQueryCallbackHandler(cbh, localAddress, peerAddress));
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof SocketAddressCallbackSaslClientFactory && equals((SocketAddressCallbackSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof SocketAddressCallbackSaslClientFactory && equals((SocketAddressCallbackSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final SocketAddressCallbackSaslClientFactory other) {
+        return super.equals(other) && Objects.equals(localAddress, other.localAddress) && Objects.equals(peerAddress, other.peerAddress);
+    }
+
+    protected int calculateHashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), Objects.hashCode(localAddress)), Objects.hashCode(peerAddress));
     }
 }

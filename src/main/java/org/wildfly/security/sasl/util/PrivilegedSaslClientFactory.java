@@ -27,6 +27,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
+
 /**
  * A {@code SaslClientFactory} whose {@code SaslClient} instances evaluate challenges and wrap/unwrap requests in a
  * privileged context.
@@ -54,5 +56,24 @@ public final class PrivilegedSaslClientFactory extends AbstractDelegatingSaslCli
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslClient saslClient = delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
         return saslClient == null ? null : new PrivilegedSaslClient(saslClient, context);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof PrivilegedSaslClientFactory && equals((PrivilegedSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof PrivilegedSaslClientFactory && equals((PrivilegedSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final PrivilegedSaslClientFactory other) {
+        return super.equals(other) && context.equals(other.context);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), context.hashCode());
     }
 }

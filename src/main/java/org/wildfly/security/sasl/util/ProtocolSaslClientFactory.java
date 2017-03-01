@@ -25,6 +25,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.math.HashMath;
+
 /**
  * A {@code SaslClientFactory} which sets the protocol name to a fixed value, disregarding the passed in value.
  *
@@ -46,5 +48,24 @@ public final class ProtocolSaslClientFactory extends AbstractDelegatingSaslClien
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         return super.createSaslClient(mechanisms, authorizationId, this.protocol, serverName, props, cbh);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final Object other) {
+        return other instanceof ProtocolSaslClientFactory && equals((ProtocolSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final AbstractDelegatingSaslClientFactory other) {
+        return other instanceof ProtocolSaslClientFactory && equals((ProtocolSaslClientFactory) other);
+    }
+
+    @SuppressWarnings("checkstyle:equalshashcode")
+    public boolean equals(final ProtocolSaslClientFactory other) {
+        return super.equals(other) && protocol.equals(other.protocol);
+    }
+
+    protected int calculateHashCode() {
+        return HashMath.multiHashOrdered(HashMath.multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), protocol.hashCode());
     }
 }
