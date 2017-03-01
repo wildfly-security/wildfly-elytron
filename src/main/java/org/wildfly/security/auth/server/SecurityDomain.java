@@ -233,7 +233,7 @@ public final class SecurityDomain {
      * @throws SecurityException if authentication fails.
      */
     public SecurityIdentity authenticate(Evidence evidence) throws RealmUnavailableException, SecurityException {
-        return authenticate(null, evidence);
+        return authenticate((Principal) null, evidence);
     }
 
     /**
@@ -248,13 +248,28 @@ public final class SecurityDomain {
      * @throws SecurityException if authentication fails.
      */
     public SecurityIdentity authenticate(String name, Evidence evidence) throws RealmUnavailableException, SecurityException {
+        return authenticate(name != null ? new NamePrincipal(name) : null, evidence);
+    }
+
+    /**
+     * Perform an authentication based on {@link Evidence} for the specified identity {@link Principal}.
+     *
+     * Note:  It is the caller's responsibility to destroy any evidence passed into this method.
+     *
+     * @param principal the principal of the identity to authenticate or {@code null} if the identity is to be derived from the evidence.
+     * @param evidence the {@link Evidence} to use for authentication.
+     * @return the authenticated identity.
+     * @throws RealmUnavailableException if the requires {@link SecurityRealm} is not available.
+     * @throws SecurityException if authentication fails.
+     */
+    public SecurityIdentity authenticate(Principal principal, Evidence evidence) throws RealmUnavailableException, SecurityException {
         final SecurityManager securityManager = System.getSecurityManager();
         if (securityManager != null) {
             securityManager.checkPermission(AUTHENTICATE);
         }
 
         ServerAuthenticationContext serverAuthenticationContext = new ServerAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
-        if (name != null) serverAuthenticationContext.setAuthenticationName(name);
+        if (principal != null) serverAuthenticationContext.setAuthenticationPrincipal(principal);
         if (serverAuthenticationContext.verifyEvidence(evidence)) {
             if (serverAuthenticationContext.authorize()) {
                 serverAuthenticationContext.succeed();
