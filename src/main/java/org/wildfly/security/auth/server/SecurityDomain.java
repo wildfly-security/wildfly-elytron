@@ -69,6 +69,7 @@ import org.wildfly.security.permission.PermissionVerifier;
 public final class SecurityDomain {
 
     private static final ConcurrentHashMap<ClassLoader, SecurityDomain> CLASS_LOADER_DOMAIN_MAP = new ConcurrentHashMap<>();
+    private static final RealmInfo EMPTY_REALM_INFO = new RealmInfo();
 
     static final ElytronPermission AUTHENTICATE = ElytronPermission.forName("authenticate");
     static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
@@ -78,6 +79,7 @@ public final class SecurityDomain {
     static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
     static final ElytronPermission GET_IDENTITY = ElytronPermission.forName("getIdentity");
     static final ElytronPermission GET_IDENTITY_FOR_UPDATE = ElytronPermission.forName("getIdentityForUpdate");
+    static final ElytronPermission CREATE_AD_HOC_IDENTITY = ElytronPermission.forName("createAdHocIdentity");
 
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
@@ -116,8 +118,7 @@ public final class SecurityDomain {
         }
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
-        final RealmInfo realmInfo = new RealmInfo();
-        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers, IdentityCredentials.NONE, IdentityCredentials.NONE)));
+        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), EMPTY_REALM_INFO, AuthorizationIdentity.EMPTY, copiedRoleMappers, IdentityCredentials.NONE, IdentityCredentials.NONE)));
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
@@ -528,6 +529,34 @@ public final class SecurityDomain {
      */
     public SecurityIdentity getAnonymousSecurityIdentity() {
         return anonymousIdentity;
+    }
+
+    /**
+     * Create an empty ad-hoc identity.  The identity will have no authorization information and no credentials associated
+     * with it.
+     *
+     * @param name the identity name (must not be {@code null})
+     * @return the ad-hoc identity
+     */
+    public SecurityIdentity createAdHocIdentity(String name) {
+        checkNotNullParam("name", name);
+        return createAdHocIdentity(new NamePrincipal(name));
+    }
+
+    /**
+     * Create an empty ad-hoc identity.  The identity will have no authorization information and no credentials associated
+     * with it.
+     *
+     * @param principal the identity principal (must not be {@code null})
+     * @return the ad-hoc identity
+     */
+    public SecurityIdentity createAdHocIdentity(Principal principal) {
+        checkNotNullParam("principal", principal);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AD_HOC_IDENTITY);
+        }
+        return new SecurityIdentity(this, principal, EMPTY_REALM_INFO, AuthorizationIdentity.EMPTY, emptyMap(), IdentityCredentials.NONE, IdentityCredentials.NONE);
     }
 
     SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
