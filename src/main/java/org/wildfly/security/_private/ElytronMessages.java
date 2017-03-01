@@ -617,6 +617,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1154, value = "Failed to read key store")
     RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
 
+    @Message(id = 1155, value = "Security domain mismatch")
+    IllegalArgumentException securityDomainMismatch();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

@@ -796,6 +796,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return this;
     }
 
+    /**
+     * Create a new flexible identity association, initializing it with this identity.
+     *
+     * @return the new flexible identity association (not {@code null})
+     */
+    public FlexibleIdentityAssociation createFlexibleAssociation() {
+        return new FlexibleIdentityAssociation(securityDomain, this);
+    }
+
     IdentityCredentials getPrivateCredentialsPrivate() {
         return privateCredentials;
     }
