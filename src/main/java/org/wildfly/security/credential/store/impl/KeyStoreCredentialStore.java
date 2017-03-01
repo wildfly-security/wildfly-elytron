@@ -655,6 +655,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     }
                 }
             }
+            cache.remove(credentialAlias);
             // done!
         } catch (KeyStoreException e) {
             throw log.cannotRemoveCredentialFromStore(e);

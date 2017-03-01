@@ -24,6 +24,7 @@ import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -204,6 +205,9 @@ public class KeystorePasswordStoreTest {
 
         // remove test
         cs.remove(passwordAlias2, PasswordCredential.class);
+
+        Set<String> aliases = cs.getAliases();
+        Assert.assertFalse("Alias \"" + passwordAlias2 + "\" should be removed.", aliases.contains(passwordAlias2));
 
         if (!cs.exists("db-password", PasswordCredential.class)) {
             Assert.fail("'db-password'" + " has to exist");
