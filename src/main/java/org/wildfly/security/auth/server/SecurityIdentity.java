@@ -31,10 +31,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
@@ -42,7 +40,6 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
-import org.wildfly.common.function.ExceptionConsumer;
 import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
 import org.wildfly.common.function.ExceptionSupplier;
@@ -67,7 +64,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentity implements PermissionVerifier, PermissionMappable, Supplier<SecurityIdentity> {
+public final class SecurityIdentity implements PermissionVerifier, PermissionMappable, Supplier<SecurityIdentity>, Scoped {
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
@@ -222,29 +219,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * Run an action under this identity.
      *
      * @param action the action to run
-     */
-    public void runAs(Runnable action) {
-        if (action == null) return;
-        runAsConsumer(Runnable::run, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @return the action result (may be {@code null})
-     * @throws Exception if the action fails
-     */
-    public <T> T runAs(Callable<T> action) throws Exception {
-        if (action == null) return null;
-        return runAsFunctionEx(Callable::call, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
      * @param <T> the action return type
      * @return the action result (may be {@code null})
      */
@@ -316,20 +290,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Run an action under this identity.
      *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <R> the action return type
-     * @param <T> the action parameter type
-     * @return the action result (may be {@code null})
-     */
-    public <T, R> R runAsFunction(Function<T, R> action, T parameter) {
-        if (action == null) return null;
-        return runAsFunction(Function::apply, action, parameter);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
      * @param parameter1 the first parameter to pass to the action
      * @param parameter2 the second parameter to pass to the action
      * @param action the action to run
@@ -348,18 +308,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <T> the action parameter type
-     */
-    public <T> void runAsConsumer(Consumer<T> action, T parameter) {
-        if (action == null) return;
-        runAsConsumer(Consumer::accept, action, parameter);
     }
 
     /**
@@ -406,34 +354,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Run an action under this identity.
      *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @return the action result (may be {@code null})
-     */
-    public <T> T runAsSupplier(Supplier<T> action) {
-        if (action == null) return null;
-        return runAsFunction(Supplier::get, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <R> the action return type
-     * @param <T> the action parameter type
-     * @param <E> the action exception type
-     * @return the action result (may be {@code null})
-     * @throws E if the action throws this exception
-     */
-    public <T, R, E extends Exception> R runAsFunctionEx(ExceptionFunction<T, R, E> action, T parameter) throws E {
-        if (action == null) return null;
-        return runAsFunctionEx(ExceptionFunction::apply, action, parameter);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
      * @param parameter1 the first parameter to pass to the action
      * @param parameter2 the second parameter to pass to the action
      * @param action the action to run
@@ -454,20 +374,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <T> the action parameter type
-     * @param <E> the action exception type
-     * @throws E if the action throws this exception
-     */
-    public <T, E extends Exception> void runAsConsumerEx(ExceptionConsumer<T, E> action, T parameter) throws E {
-        if (action == null) return;
-        runAsConsumerEx(ExceptionConsumer::accept, action, parameter);
     }
 
     /**
@@ -513,20 +419,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @param <E> the action exception type
-     * @return the action result (may be {@code null})
-     * @throws E if the action throws this exception
-     */
-    public <T, E extends Exception> T runAsSupplierEx(ExceptionSupplier<T, E> action) throws E {
-        if (action == null) return null;
-        return runAsFunctionEx(ExceptionSupplier::get, action);
     }
 
     /**
