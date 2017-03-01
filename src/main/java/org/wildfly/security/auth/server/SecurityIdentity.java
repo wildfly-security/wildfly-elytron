@@ -67,7 +67,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentity implements PermissionVerifier, PermissionMappable {
+public final class SecurityIdentity implements PermissionVerifier, PermissionMappable, Supplier<SecurityIdentity> {
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
@@ -883,6 +883,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(PRIVATE_CREDENTIALS_PERMISSION);
         }
         return getPrivateCredentialsPrivate();
+    }
+
+    /**
+     * Get this identity.
+     *
+     * @return this identity
+     */
+    public SecurityIdentity get() {
+        return this;
     }
 
     IdentityCredentials getPrivateCredentialsPrivate() {
