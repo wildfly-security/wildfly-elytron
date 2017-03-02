@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -82,9 +83,10 @@ public class CredentialStoreCommandTest extends BaseToolTest {
     }
 
     /**
-     * basic test withot --password option.
+     * basic test without --password option.
      * @throws Exception if something goes wrong
      */
+    @Ignore("Issue #15 - bypass prompting using callback handler")
     @Test(expected = CredentialStoreException.class)
     public void noPasswordSpecified() throws Exception {
         ElytronTool tool = new ElytronTool();

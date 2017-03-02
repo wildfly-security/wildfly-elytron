@@ -73,7 +73,7 @@ class MaskCommand extends Command {
     @Override
     public void execute(String[] args) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
-        cmdLine = parser.parse(options, args, true);
+        cmdLine = parser.parse(options, args, false);
         if (cmdLine.hasOption(HELP_PARAM)) {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
