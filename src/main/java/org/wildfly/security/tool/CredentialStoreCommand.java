@@ -88,6 +88,7 @@ class CredentialStoreCommand extends Command {
         options.addOption("i", ITERATION_PARAM, true, ElytronToolMessages.msg.cmdLineIterationCountDesc());
         opt = new Option("x", PASSWORD_CREDENTIAL_VALUE_PARAM, true, ElytronToolMessages.msg.cmdLinePasswordCredentialValueDesc());
         opt.setArgName("secret to store");
+        opt.setOptionalArg(true);
         options.addOption(opt);
         options.addOption("c", CREATE_CREDENTIAL_STORE_PARAM, false, ElytronToolMessages.msg.cmdLineCreateCredentialStoreDesc());
         opt = new Option("t", CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStoreTypeDesc());
@@ -153,6 +154,11 @@ class CredentialStoreCommand extends Command {
         credentialStoreConfigurationOptions.putIfAbsent("modifiable", Boolean.TRUE.toString());
         credentialStoreConfigurationOptions.putIfAbsent("create", Boolean.valueOf(createKeyStore).toString());
         credentialStoreConfigurationOptions.putIfAbsent("keyStoreType", "JCEKS");
+
+        if (csPassword == null) {
+            // prompt for password
+            csPassword = prompt(false, ElytronToolMessages.msg.credentialStorePasswordPrompt(), true, ElytronToolMessages.msg.credentialStorePasswordPromptConfirm());
+        }
         if (csPassword != null) {
             credentialStore.initialize(credentialStoreConfigurationOptions,
                     new CredentialStore.CredentialSourceProtectionParameter(
@@ -165,6 +171,10 @@ class CredentialStoreCommand extends Command {
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
             String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
+            if (secret == null) {
+                // prompt for secret
+                secret = prompt(false, ElytronToolMessages.msg.secretToStorePrompt(), true, ElytronToolMessages.msg.secretToStorePromptConfirm());
+            }
             credentialStore.store(alias, createCredential(secret));
             credentialStore.flush();
             System.out.println(ElytronToolMessages.msg.aliasStored(alias));
