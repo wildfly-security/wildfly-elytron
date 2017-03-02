@@ -54,11 +54,10 @@ public class ExternalSaslClientTest extends BaseTestCase {
     private static final String EXTERNAL = "EXTERNAL";
 
     private static final String[] MECHANISMS_EXTERNAL_ONLY = new String[] { EXTERNAL };
-    private static final String[] MECHANISMS_WITH_EXTERNAL = new String[] { "DIGEST-MD5", EXTERNAL, "TEST" };
-    private static final String[] MECHANISMS_WITHOUT_EXTERNAL = new String[] { "DIGEST-MD5", "TEST" };
+    private static final String[] MECHANISMS_WITH_EXTERNAL = new String[] { EXTERNAL, "TEST" };
+    private static final String[] MECHANISMS_WITHOUT_EXTERNAL = new String[] { "TEST" };
 
     @Test
-    @Ignore("ELY-788")
     public void testMechanismNames() throws Exception {
         SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
@@ -77,18 +76,11 @@ public class ExternalSaslClientTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-800")
     public void testCreateSaslClientUsingRegistry() throws Exception {
         assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_FORWARD_SECRECY), null));
-        assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE),
-                null));
         assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_NOANONYMOUS), null));
-        assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
-                setProps(Sasl.POLICY_NODICTIONARY), null));
-        assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
-                setProps(Sasl.POLICY_NOPLAINTEXT), null));
         assertNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_PASS_CREDENTIALS), null));
 
@@ -98,18 +90,16 @@ public class ExternalSaslClientTest extends BaseTestCase {
         assertNotNull(saslClient);
         assertEquals(ExternalSaslClient.class, saslClient.getClass());
 
-        saslClient = Sasl.createSaslClient(MECHANISMS_WITH_EXTERNAL, null, "test", "localhost", setProps(),
+        saslClient = Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", setProps(),
                 null);
         assertNotNull(saslClient);
         assertEquals(ExternalSaslClient.class, saslClient.getClass());
 
         assertNull(Sasl.createSaslClient(MECHANISMS_WITHOUT_EXTERNAL, null, "test", "localhost", setProps(), null));
-
         assertNotNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", null, null));
     }
 
     @Test
-    @Ignore("ELY-800")
     public void testCreateSaslClientUsingFactory() throws Exception {
         final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
         assertNotNull("SaslClientFactory not registered", factory);
@@ -117,22 +107,47 @@ public class ExternalSaslClientTest extends BaseTestCase {
         assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_FORWARD_SECRECY), null));
         assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
-                setProps(Sasl.POLICY_NOACTIVE), null));
-        assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_NOANONYMOUS), null));
-        assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
-                setProps(Sasl.POLICY_NODICTIONARY), null));
-        assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
-                setProps(Sasl.POLICY_NOPLAINTEXT), null));
         assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
                 setProps(Sasl.POLICY_PASS_CREDENTIALS), null));
 
-        final SaslClient saslClient = factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", setProps(),
+        final SaslClient saslClient = factory.createSaslClient(MECHANISMS_WITH_EXTERNAL, null, "test", "localhost", setProps(),
                 null);
         assertNotNull(saslClient);
         assertEquals(ExternalSaslClient.class, saslClient.getClass());
 
         assertNotNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", null, null));
+    }
+
+    @Test
+    @Ignore("ELY-983")
+    public void testDontUseQueryAllPolicyInCreateMethod() throws Exception {
+        final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
+        assertNotNull("SaslClientFactory not registered", factory);
+
+        assertNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_PASS_CREDENTIALS, WildFlySasl.MECHANISM_QUERY_ALL), null));
+    }
+
+    @Test
+    @Ignore("ELY-982")
+    public void testCreateSaslClientWithValidFiltering() throws Exception {
+        assertNotNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE),
+                null));
+        assertNotNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_NODICTIONARY), null));
+        assertNotNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_NOPLAINTEXT), null));
+
+        final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
+        assertNotNull("SaslClientFactory not registered", factory);
+
+        assertNotNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_NOACTIVE), null));
+        assertNotNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_NODICTIONARY), null));
+        assertNotNull(factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost",
+                setProps(Sasl.POLICY_NOPLAINTEXT), null));
     }
 
     @Test
