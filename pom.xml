@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-tool</artifactId>
-    <version>1.0.0.Alpha3</version>
+    <version>1.0.0.Alpha4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>WildFly Elytron Tool</name>
