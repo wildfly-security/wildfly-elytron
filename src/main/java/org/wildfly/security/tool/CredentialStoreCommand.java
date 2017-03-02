@@ -75,20 +75,33 @@ class CredentialStoreCommand extends Command {
 
     CredentialStoreCommand() {
         options = new Options();
-        options.addOption("l", STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLineStoreLocationDesc());
-        options.addOption("u", CONFIGURATION_URI_PARAM, true, ElytronToolMessages.msg.cmdLineURIDesc());
-        options.addOption("p", CREDENTIAL_STORE_PASSWORD_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStorePassword());
+        Option opt = new Option("l", STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLineStoreLocationDesc());
+        opt.setArgName("loc");
+        options.addOption(opt);
+        opt = new Option("u", CONFIGURATION_URI_PARAM, true, ElytronToolMessages.msg.cmdLineURIDesc());
+        opt.setArgName("uri");
+        options.addOption(opt);
+        opt = new Option("p", CREDENTIAL_STORE_PASSWORD_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStorePassword());
+        opt.setArgName("pwd");
+        options.addOption(opt);
         options.addOption("s", SALT_PARAM, true, ElytronToolMessages.msg.cmdLineSaltDesc());
         options.addOption("i", ITERATION_PARAM, true, ElytronToolMessages.msg.cmdLineIterationCountDesc());
-        options.addOption("x", PASSWORD_CREDENTIAL_VALUE_PARAM, true, ElytronToolMessages.msg.cmdLinePasswordCredentialValueDesc());
+        opt = new Option("x", PASSWORD_CREDENTIAL_VALUE_PARAM, true, ElytronToolMessages.msg.cmdLinePasswordCredentialValueDesc());
+        opt.setArgName("secret to store");
+        options.addOption(opt);
         options.addOption("c", CREATE_CREDENTIAL_STORE_PARAM, false, ElytronToolMessages.msg.cmdLineCreateCredentialStoreDesc());
-        options.addOption("t", CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStoreTypeDesc());
+        opt = new Option("t", CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStoreTypeDesc());
+        opt.setArgName("type");
+        options.addOption(opt);
         options.addOption("f", PRINT_SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLinePrintSummary());
 
         OptionGroup og = new OptionGroup();
         Option a = new Option("a", ADD_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdLineAddAliasDesc());
+        a.setArgName("alias");
         Option e = new Option("e", CHECK_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdLineCheckAliasDesc());
+        e.setArgName("alias");
         Option r = new Option("r", REMOVE_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdLineRemoveAliasDesc());
+        r.setArgName("alias");
         Option v = new Option("v", ALIASES_PARAM, false, ElytronToolMessages.msg.cmdLineAliasesDesc());
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         og.addOption(a);
@@ -295,6 +308,7 @@ class CredentialStoreCommand extends Command {
     @Override
     public void help() {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp("java -jar " + ElytronTool.TOOL_JAR + " " + CREDENTIAL_STORE_COMMAND + " <sub-command> <options>", options, true);
+        help.setWidth(WIDTH);
+        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND), options, true);
     }
 }

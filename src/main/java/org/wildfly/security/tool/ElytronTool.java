@@ -74,11 +74,11 @@ public class ElytronTool {
                     command.execute(newArgs);
                     System.exit(command.getStatus());
                 } catch (Exception e) {
-                    System.err.printf(e.getLocalizedMessage());
+                    System.err.println(e.getLocalizedMessage());
                     System.exit(command.getStatus());
                 }
             } else {
-                System.err.print(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
+                System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
                 System.exit(ElytronToolExitStatus_unrecognizedCommand);
             }
         } else {

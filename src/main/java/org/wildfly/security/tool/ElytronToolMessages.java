@@ -44,7 +44,13 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = Message.NONE, value = "Location of credential store storage file")
     String cmdLineStoreLocationDesc();
 
-    @Message(id = Message.NONE, value = "Configuration URI for credential store")
+    @Message(id = Message.NONE, value = "Configuration URI for credential store. URI basic form: \"cr-store://store_name?parameter1=value1; ... ;parameterN=valueN\"\n" +
+            "Supported parameters are dependent on credential store type\n" +
+            "Generally supported parameters for default credential store implementation:\n" +
+            "create - automatically creates credential store file\n" +
+            "modifiable - is the credential modifiable\n" +
+            "location - file location of credential store\n" +
+            "keyStoreType - specify the key store type to use")
     String cmdLineURIDesc();
 
     @Message(id = Message.NONE, value = "Password for credential store")
@@ -103,6 +109,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = Message.NONE, value = "Action to perform on the credential store is not defined")
     Exception actionToPerformNotDefined();
+
+    @Message(id = Message.NONE, value = "java -jar %s %s")
+    String cmdHelp(String jarFile, String commandName);
 
     @Message(id = 1, value = "Opening quote has to be the first character in parameter value '%s'")
     IllegalArgumentException credentialStoreURIParameterOpeningQuote(String uri);

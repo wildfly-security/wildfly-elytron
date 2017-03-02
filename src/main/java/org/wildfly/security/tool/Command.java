@@ -35,6 +35,10 @@ public abstract class Command {
 
     public abstract void execute(String[] args) throws Exception;
 
+    /**
+     * Default help line width.
+     */
+    public static int WIDTH = 160;
 
     /**
      * Display help to the command.

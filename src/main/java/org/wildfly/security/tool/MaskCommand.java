@@ -59,6 +59,7 @@ class MaskCommand extends Command {
         Option iteration = new Option("i", ITERATION_PARAM, true, ElytronToolMessages.msg.cmdMaskIterationCountDesc());
         OptionGroup og = new OptionGroup();
         Option x = new Option("x", SECRET_PARAM, true, ElytronToolMessages.msg.cmdMaskSecretDesc());
+        x.setArgName("to encrypt");
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         og.addOption(x);
         og.addOption(h);
@@ -120,8 +121,11 @@ class MaskCommand extends Command {
     @Override
     public void help() {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp("java -jar " + ElytronTool.TOOL_JAR + " " + MASK_COMMAND + " <options>",
+        help.setWidth(WIDTH);
+        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, MASK_COMMAND),
                 ElytronToolMessages.msg.cmdMaskHelpHeader(DEFAULT_ALGORITHM),
-                options, "",true);
+                options,
+                "",
+                true);
     }
 }
