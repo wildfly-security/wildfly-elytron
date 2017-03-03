@@ -18,13 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.function.Function;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 
 /**
@@ -35,31 +30,9 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ServerCredentialCallback implements ExtendedCallback, Serializable {
+public final class ServerCredentialCallback extends AbstractCredentialCallback {
 
     private static final long serialVersionUID = 3831781691370154509L;
-
-    /**
-     * @serial The type of the supported credential.
-     */
-    private final Class<? extends Credential> credentialType;
-
-    /**
-     * @serial The algorithm of the required credential, or {@code null} if any algorithm is suitable or the credential
-     *  type does not use algorithm names.
-     */
-    private final String algorithm;
-
-    /**
-     * @serial The parameter specification, or {@code null} if the credential does not use an algorithm or does not use
-     *  parameters.
-     */
-    private final AlgorithmParameterSpec parameterSpec;
-
-    /**
-     * @serial The credential itself.
-     */
-    private Credential credential;
 
     /**
      * Construct a new instance.
@@ -70,11 +43,7 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      * @param parameterSpec the parameters to use or {@code null} for no parameters
      */
     public ServerCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm, final AlgorithmParameterSpec parameterSpec) {
-        Assert.checkNotNullParam("credentialType", credentialType);
-        if (parameterSpec != null) Assert.checkNotNullParam("algorithm", algorithm);
-        this.credentialType = credentialType;
-        this.algorithm = algorithm;
-        this.parameterSpec = parameterSpec;
+        super(credentialType, algorithm, parameterSpec);
     }
 
     /**
@@ -97,179 +66,7 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
         this(credentialType, null, null);
     }
 
-    /**
-     * Get the acquired credential.
-     *
-     * @return the acquired credential, or {@code null} if it wasn't set yet.
-     */
-    public Credential getCredential() {
-        return credential;
-    }
-
-    /**
-     * Get the acquired credential, if it is set and of the given type, and if so, return the credential cast to the type.
-     *
-     * @param credentialType the credential type class (must not be {@code null})
-     * @param <C> the credential type
-     * @return the credential, or {@code null} if the criteria wasn't met
-     */
-    public <C extends Credential> C getCredential(Class<C> credentialType) {
-        return applyToCredential(credentialType, Function.identity());
-    }
-
-    /**
-     * Get the acquired credential, if it is set and of the given type and algorithm, and if so, return the credential cast to the type.
-     *
-     * @param credentialType the credential type class (must not be {@code null})
-     * @param algorithmName the algorithm name
-     * @param <C> the credential type
-     * @return the credential, or {@code null} if the criteria are not met
-     */
-    public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) {
-        return applyToCredential(credentialType, algorithmName, Function.identity());
-    }
-
-    /**
-     * Apply the given function to the acquired credential, if it is set and of the given type.  By calling this method,
-     * it is possible to apply transformations to the stored credential without failing if the credential was not set.
-     *
-     * @param credentialType the credential type class (must not be {@code null})
-     * @param function the function to apply (must not be {@code null})
-     * @param <C> the credential type
-     * @param <R> the return type
-     * @return the result of the function, or {@code null} if the criteria are not met
-     */
-    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) {
-        final Credential credential = this.credential;
-        return credential == null ? null : credential.castAndApply(credentialType, function);
-    }
-
-    /**
-     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.  By calling this method,
-     * it is possible to apply transformations to the stored credential without failing if the credential was not set.
-     *
-     * @param credentialType the credential type class (must not be {@code null})
-     * @param algorithmName the algorithm name
-     * @param function the function to apply (must not be {@code null})
-     * @param <C> the credential type
-     * @param <R> the return type
-     * @return the result of the function, or {@code null} if the criteria are not met
-     */
-    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) {
-        final Credential credential = this.credential;
-        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
-    }
-
-    /**
-     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm with the given parameters.
-     * By calling this method, it is possible to apply transformations to the stored credential without failing if the credential was not set.
-     *
-     * @param credentialType the credential type class (must not be {@code null})
-     * @param algorithmName the algorithm name
-     * @param parameterSpec the algorithm parameters
-     * @param function the function to apply (must not be {@code null})
-     * @param <C> the credential type
-     * @param <R> the return type
-     * @return the result of the function, or {@code null} if the criteria are not met
-     */
-    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
-        final Credential credential = this.credential;
-        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
-    }
-
-    /**
-     * Set the credential.  The credential must be of the supported type and algorithm.
-     *
-     * @param credential the credential, or {@code null} to indicate that no credential is available
-     * @throws IllegalArgumentException if the given credential is not supported
-     */
-    public void setCredential(final Credential credential) {
-        if (credential != null && ! isCredentialSupported(credential)) {
-            throw ElytronMessages.log.credentialNotSupported();
-        }
-        this.credential = credential;
-    }
-
-    /**
-     * Determine whether the given credential type is supported.  Will be {@code false} if the credential type requires
-     * an algorithm name; in this case, use {@link #isCredentialTypeSupported(Class, String)} instead.
-     *
-     * @param credentialType the credential type (must not be {@code null})
-     * @return {@code true} if the credential type is supported, {@code false} otherwise
-     */
-    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType) {
-        return isCredentialTypeSupported(credentialType, null);
-    }
-
-    /**
-     * Determine whether the given credential type is supported for the given algorithm name.
-     *
-     * @param credentialType the credential type (must not be {@code null})
-     * @param algorithmName the algorithm name, or {@code null} to indicate that no algorithm name will be available
-     * @return {@code true} if the credential type is supported, {@code false} otherwise
-     */
-    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType, final String algorithmName) {
-        Assert.checkNotNullParam("credentialType", credentialType);
-        return isCredentialTypeSupported(credentialType) && (algorithm == null || AlgorithmCredential.class.isAssignableFrom(credentialType) && algorithm.equals(algorithmName));
-    }
-
-    /**
-     * Determine whether the given credential type is supported for the given algorithm name.
-     *
-     * @param credentialType the credential type (must not be {@code null})
-     * @param algorithmName the algorithm name, or {@code null} to indicate that no algorithm name will be available
-     * @param parameterSpec the parameters, or {@code null} if no parameters are present in the credential
-     * @return {@code true} if the credential type is supported, {@code false} otherwise
-     */
-    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-        Assert.checkNotNullParam("credentialType", credentialType);
-        return isCredentialTypeSupported(credentialType, algorithmName) && (this.parameterSpec == null || this.parameterSpec.equals(parameterSpec));
-    }
-
-    /**
-     * Determine whether the given credential can be set on this callback.
-     *
-     * @param credential the credential (must not be {@code null})
-     * @return {@code true} if the credential matches the type and optional algorithm of this callback, {@code false} otherwise
-     */
-    public boolean isCredentialSupported(final Credential credential) {
-        Assert.checkNotNullParam("credential", credential);
-        return credential.matches(credentialType, algorithm, parameterSpec);
-    }
-
-    /**
-     * Get the supported credential type.
-     *
-     * @return the supported credential type (not {@code null})
-     */
-    public Class<? extends Credential> getCredentialType() {
-        return credentialType;
-    }
-
-    /**
-     * Get the algorithm name, if any.
-     *
-     * @return the algorithm name, or {@code null} if any algorithm is suitable or the credential
-     *  type does not use algorithm names
-     */
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    /**
-     * Get the algorithm parameters, if any.
-     *
-     * @return the algorithm parameters, or {@code null} if no parameters are specified
-     */
-    public AlgorithmParameterSpec getParameterSpec() {
-        return parameterSpec;
-    }
-
     public boolean isOptional() {
         return false;
-    }
-
-    public boolean needsInformation() {
-        return true;
     }
 }
