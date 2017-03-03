@@ -22,9 +22,9 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -41,7 +41,6 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
@@ -73,6 +72,7 @@ import org.wildfly.security.auth.server.event.SecurityAuthenticationSuccessfulEv
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -832,24 +832,25 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof ServerCredentialCallback) {
                     final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
 
-                    SecurityFactory<Credential> serverCredentialFactory = stateRef.get().getMechanismConfiguration().getServerCredentialFactory();
-                    if (serverCredentialFactory != null) {
-                        try {
-                            final Credential credential = serverCredentialFactory.create();
-                            if (serverCredentialCallback.isCredentialSupported(credential)) {
-                                log.tracef("Handling ServerCredentialCallback: obtained successfully");
-                                serverCredentialCallback.setCredential(credential);
-                                handleOne(callbacks, idx + 1);
-                                return;
-                            }
-                        } catch (GeneralSecurityException e) {
-                            // skip this credential
-                            log.trace(e);
+                    CredentialSource serverCredentialSource = stateRef.get().getMechanismConfiguration().getServerCredentialSource();
+
+                    final Class<? extends Credential> credentialType = serverCredentialCallback.getCredentialType();
+                    final String algorithm = serverCredentialCallback.getAlgorithm();
+                    final AlgorithmParameterSpec parameterSpec = serverCredentialCallback.getParameterSpec();
+
+                    // optimize for some cases
+                    if (serverCredentialSource.getCredentialAcquireSupport(credentialType, algorithm, parameterSpec).mayBeSupported()) {
+                        final Credential credential = serverCredentialSource.getCredential(credentialType, algorithm, parameterSpec);
+                        if (credential != null) {
+                            log.tracef("Handling ServerCredentialCallback: successfully obtained credential type type=%s, algorithm=%s, params=%s", credentialType, algorithm, parameterSpec);
+                            serverCredentialCallback.setCredential(credential);
+                            handleOne(callbacks, idx + 1);
+                            // return here so we don't double-log, or double-handle callbacks
+                            return;
                         }
                     }
-
-                    log.tracef("Handling ServerCredentialCallback: failed to obtain credential");
-                    throw new FastUnsupportedCallbackException(callback);
+                    log.tracef("Handling ServerCredentialCallback: skipping credential type type=%s, algorithm=%s, params=%s", credentialType, algorithm, parameterSpec);
+                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
