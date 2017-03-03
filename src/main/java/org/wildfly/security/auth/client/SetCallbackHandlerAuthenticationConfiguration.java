@@ -20,12 +20,9 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
 import java.util.Objects;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
@@ -39,10 +36,6 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
     SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
         super(parent.without(HandlesCallbacks.class));
         this.callbackHandler = callbackHandler;
-    }
-
-    void handleCallbacks(final AuthenticationConfiguration config, final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-        callbackHandler.handle(callbacks);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
