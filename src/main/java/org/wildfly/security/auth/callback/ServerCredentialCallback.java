@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
@@ -50,6 +51,12 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
     private final String algorithm;
 
     /**
+     * @serial The parameter specification, or {@code null} if the credential does not use an algorithm or does not use
+     *  parameters.
+     */
+    private final AlgorithmParameterSpec parameterSpec;
+
+    /**
      * @serial The credential itself.
      */
     private Credential credential;
@@ -60,11 +67,25 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      * @param credentialType the desired credential type (must not be {@code null})
      * @param algorithm the algorithm name, or {@code null} if any algorithm is suitable or the credential
      *  type does not use algorithm names
+     * @param parameterSpec the parameters to use or {@code null} for no parameters
      */
-    public ServerCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm) {
+    public ServerCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm, final AlgorithmParameterSpec parameterSpec) {
         Assert.checkNotNullParam("credentialType", credentialType);
+        if (parameterSpec != null) Assert.checkNotNullParam("algorithm", algorithm);
         this.credentialType = credentialType;
         this.algorithm = algorithm;
+        this.parameterSpec = parameterSpec;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param credentialType the desired credential type (must not be {@code null})
+     * @param algorithm the algorithm name, or {@code null} if any algorithm is suitable or the credential
+     *  type does not use algorithm names
+     */
+    public ServerCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm) {
+        this(credentialType, algorithm, null);
     }
 
     /**
@@ -73,7 +94,7 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      * @param credentialType the desired credential type (must not be {@code null})
      */
     public ServerCredentialCallback(final Class<? extends Credential> credentialType) {
-        this(credentialType, null);
+        this(credentialType, null, null);
     }
 
     /**
@@ -140,6 +161,23 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
     }
 
     /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm with the given parameters.
+     * By calling this method, it is possible to apply transformations to the stored credential without failing if the credential was not set.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param parameterSpec the algorithm parameters
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
+        final Credential credential = this.credential;
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
+    }
+
+    /**
      * Set the credential.  The credential must be of the supported type and algorithm.
      *
      * @param credential the credential, or {@code null} to indicate that no credential is available
@@ -172,7 +210,20 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      */
     public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType, final String algorithmName) {
         Assert.checkNotNullParam("credentialType", credentialType);
-        return this.credentialType.isAssignableFrom(credentialType) && (algorithm == null || AlgorithmCredential.class.isAssignableFrom(credentialType) && algorithm.equals(algorithmName));
+        return isCredentialTypeSupported(credentialType) && (algorithm == null || AlgorithmCredential.class.isAssignableFrom(credentialType) && algorithm.equals(algorithmName));
+    }
+
+    /**
+     * Determine whether the given credential type is supported for the given algorithm name.
+     *
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} to indicate that no algorithm name will be available
+     * @param parameterSpec the parameters, or {@code null} if no parameters are present in the credential
+     * @return {@code true} if the credential type is supported, {@code false} otherwise
+     */
+    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return isCredentialTypeSupported(credentialType, algorithmName) && (this.parameterSpec == null || this.parameterSpec.equals(parameterSpec));
     }
 
     /**
@@ -183,7 +234,7 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      */
     public boolean isCredentialSupported(final Credential credential) {
         Assert.checkNotNullParam("credential", credential);
-        return credentialType.isInstance(credential) && (algorithm == null || credential instanceof AlgorithmCredential && algorithm.equals(((AlgorithmCredential) credential).getAlgorithm()));
+        return credential.matches(credentialType, algorithm, parameterSpec);
     }
 
     /**
@@ -203,6 +254,15 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      */
     public String getAlgorithm() {
         return algorithm;
+    }
+
+    /**
+     * Get the algorithm parameters, if any.
+     *
+     * @return the algorithm parameters, or {@code null} if no parameters are specified
+     */
+    public AlgorithmParameterSpec getParameterSpec() {
+        return parameterSpec;
     }
 
     public boolean isOptional() {
