@@ -620,6 +620,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1155, value = "Security domain mismatch")
     IllegalArgumentException securityDomainMismatch();
 
+    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
+    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
@@ -1825,5 +1828,4 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11002, value = "Invalid EventPriority '%s' passed to AuditEndpoint.")
     IllegalArgumentException invalidEventPriority(EventPriority eventPriority);
-
 }

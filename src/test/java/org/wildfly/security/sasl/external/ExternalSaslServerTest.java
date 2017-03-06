@@ -69,7 +69,6 @@ public class ExternalSaslServerTest extends BaseTestCase {
     };
 
     @Test
-    @Ignore("ELY-788")
     public void testMechanismNames() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
@@ -89,13 +88,9 @@ public class ExternalSaslServerTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-800,ELY-788")
     public void testCreateSaslServerUsingRegistry() throws Exception {
         assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_FORWARD_SECRECY), null));
-        assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE), null));
         assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOANONYMOUS), null));
-        assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NODICTIONARY), null));
-        assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOPLAINTEXT), null));
         assertNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_PASS_CREDENTIALS), null));
 
         SaslServer server = Sasl.createSaslServer(EXTERNAL, "test", "localhost", null, null);
@@ -104,18 +99,12 @@ public class ExternalSaslServerTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-800,ELY-788")
     public void testCreateSaslServerUsingFactory() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
 
         assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_FORWARD_SECRECY), null));
-        assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE), null));
         assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOANONYMOUS), null));
-        assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NODICTIONARY), null));
-        assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOPLAINTEXT), null));
-        assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost",
-                setProps(Sasl.POLICY_NOPLAINTEXT, WildFlySasl.MECHANISM_QUERY_ALL), null));
         assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_PASS_CREDENTIALS), null));
 
         SaslServer server = factory.createSaslServer(EXTERNAL, "test", "localhost", null, null);
@@ -123,8 +112,33 @@ public class ExternalSaslServerTest extends BaseTestCase {
         assertEquals(ExternalSaslServer.class, server.getClass());
     }
 
+
     @Test
-    @Ignore("ELY-803")
+    @Ignore("ELY-983")
+    public void testDontUseQueryAllPolicyInCreateMethod() throws Exception {
+        SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
+        assertNotNull("SaslServerFactory not registered", factory);
+        assertNull(factory.createSaslServer(EXTERNAL, "test", "localhost",
+                setProps(Sasl.POLICY_PASS_CREDENTIALS, WildFlySasl.MECHANISM_QUERY_ALL), null));
+    }
+
+    @Test
+    @Ignore("ELY-982")
+    public void testCreateSaslServerWithValidPolicy() throws Exception {
+        assertNotNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE), null));
+        assertNotNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NODICTIONARY), null));
+        assertNotNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOPLAINTEXT), null));
+
+        SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
+        assertNotNull("SaslServerFactory not registered", factory);
+        assertNotNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE), null));
+        assertNotNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOPLAINTEXT), null));
+        assertNotNull(factory.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NODICTIONARY), null));
+        assertNotNull(factory.createSaslServer(EXTERNAL, "test", "localhost",
+                setProps(Sasl.POLICY_NOPLAINTEXT, WildFlySasl.MECHANISM_QUERY_ALL), null));
+    }
+
+    @Test
     public void testAuthnClientData() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);

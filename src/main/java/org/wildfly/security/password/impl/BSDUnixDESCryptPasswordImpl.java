@@ -172,8 +172,8 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     private static final int[][] ipMaskRight = new int[8][256];
     private static final int[][] fpMaskLeft = new int[8][256];
     private static final int[][] fpMaskRight = new int[8][256];
-    private static final byte[] initPerm = new byte[64];
-    private static final byte[] finalPerm = new byte[64];
+    private static final int[] initPerm = new int[64];
+    private static final int[] finalPerm = new int[64];
 
     private static final byte[] keyShifts = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
 
@@ -183,7 +183,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         63, 55, 47, 39, 31, 23, 15,  7, 62, 54, 46, 38, 30, 22,
         14,  6, 61, 53, 45, 37, 29, 21, 13,  5, 28, 20, 12,  4
     };
-    private static final byte[] invKeyPerm = new byte[64];
+    private static final int[] invKeyPerm = new int[64];
     private static final int[][] keyPermMaskLeft = new int[8][128];
     private static final int[][] keyPermMaskRight = new int[8][128];
 
@@ -293,20 +293,20 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
         // Compute the initial and final permutations and also initialize the inverted key permutation
         for (int i = 0; i < 64; i++) {
-            finalPerm[i] = (byte) (IP[i] - 1);
-            initPerm[finalPerm[i]] = (byte) i;
-            invKeyPerm[i] = (byte) 255;
+            finalPerm[i] = (IP[i] - 1) & 0xff;
+            initPerm[finalPerm[i]] = i;
+            invKeyPerm[i] = 255;
         }
 
         // Invert the key permutation and initialize the inverted key compression permutation
         for (int i = 0; i < 56; i++) {
-            invKeyPerm[keyPerm[i] - 1] = (byte) i;
-            invCompPerm[i] = 255 & 0xff;
+            invKeyPerm[(keyPerm[i] - 1) & 0xff] = i;
+            invCompPerm[i] = 255;
         }
 
         // Invert the key compression permutation
         for (int i = 0; i < 48; i++) {
-            invCompPerm[compPerm[i] - 1] = i;
+            invCompPerm[(compPerm[i] - 1) & 0xff] = i;
         }
 
         // Set up mask arrays
@@ -372,7 +372,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
         // Invert the P-box permutation
         for (int i = 0; i < 32; i++) {
-            invPBox[PBox[i] - 1] = (byte) i;
+            invPBox[(PBox[i] - 1) & 0xff] = (byte) i;
         }
 
         for (int i = 0; i < 4; i++) {
@@ -380,7 +380,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
                 PSBox[i][j] = 0;
                 for (int k = 0; k < 8; k++) {
                     if ((j & bits32[bits8Offset + k]) != 0) {
-                        PSBox[i][j] |= bits32[invPBox[8 * i + k]];
+                        PSBox[i][j] |= bits32[invPBox[8 * i + k] & 0xff];
                     }
                 }
             }

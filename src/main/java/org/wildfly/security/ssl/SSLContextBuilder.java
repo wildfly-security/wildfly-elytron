@@ -299,8 +299,10 @@ public final class SSLContextBuilder {
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
             SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
-            sessionContext.setSessionCacheSize(sessionCacheSize);
-            sessionContext.setSessionTimeout(sessionTimeout);
+            if (sessionContext != null) {
+                sessionContext.setSessionCacheSize(sessionCacheSize);
+                sessionContext.setSessionTimeout(sessionTimeout);
+            }
             final X509KeyManager x509KeyManager = keyManagerSecurityFactory == null ? null : keyManagerSecurityFactory.create();
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
