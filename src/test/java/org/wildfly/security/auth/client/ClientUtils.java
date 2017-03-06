@@ -32,6 +32,6 @@ public class ClientUtils {
     public static CallbackHandler getCallbackHandler(URI uri, AuthenticationContext context) {
         AuthenticationConfiguration config = AUTH_CONFIGURATION_CLIENT.getAuthenticationConfiguration(uri, context);
         final CallbackHandler callbackHandler = config.getCallbackHandler();
-        return callbackHandler == null ? config::defaultHandleCallbacks : callbackHandler;
+        return callbackHandler == null ? config.createCallbackHandler() : callbackHandler;
     }
 }

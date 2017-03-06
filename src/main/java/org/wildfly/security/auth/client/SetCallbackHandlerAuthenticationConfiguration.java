@@ -20,7 +20,9 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -32,18 +34,34 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallb
 class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
 
     private final CallbackHandler callbackHandler;
+    private final EnumSet<CallbackKind> callbackKinds;
 
-    SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
-        super(parent.without(HandlesCallbacks.class));
+    SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler, final EnumSet<CallbackKind> callbackKinds) {
+        super(parent.without(callbackKinds));
         this.callbackHandler = callbackHandler;
+        this.callbackKinds = callbackKinds;
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler);
+        return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler, callbackKinds);
+    }
+
+    Set<CallbackKind> getUserCallbackKinds() {
+        return callbackKinds;
     }
 
     CallbackHandler getCallbackHandler() {
         return callbackHandler;
+    }
+
+    boolean isFullyMatchedBy(final Set<CallbackKind> callbackKinds) {
+        return callbackKinds.containsAll(this.callbackKinds);
+    }
+
+    AuthenticationConfiguration reparentWithout(final Set<CallbackKind> callbackKinds, final AuthenticationConfiguration newParent) {
+        final EnumSet<CallbackKind> newCallbackKinds = this.callbackKinds.clone();
+        newCallbackKinds.removeAll(callbackKinds);
+        return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler, newCallbackKinds);
     }
 
     @Override

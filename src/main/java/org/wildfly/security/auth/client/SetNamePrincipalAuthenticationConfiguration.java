@@ -20,12 +20,7 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
 import java.security.Principal;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -40,15 +35,6 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
     SetNamePrincipalAuthenticationConfiguration(final AuthenticationConfiguration parent, final NamePrincipal principal) {
         super(parent.without(UserSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.principal = principal;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
-        Callback callback = callbacks[index];
-        if (callback instanceof NameCallback) {
-            ((NameCallback) callback).setName(doRewriteUser(principal.getName()));
-        } else {
-            super.handleCallback(callbacks, index);
-        }
     }
 
     Principal getPrincipal() {

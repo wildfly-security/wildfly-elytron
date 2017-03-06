@@ -23,16 +23,10 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import org.wildfly.security.auth.callback.ParameterCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
 /**
@@ -41,29 +35,9 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallb
 class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
     private final List<AlgorithmParameterSpec> parameterSpecs;
 
-    SetParameterSpecAuthenticationConfiguration(final AuthenticationConfiguration parent, final AlgorithmParameterSpec parameterSpec) {
-        this(parent, Collections.singletonList(parameterSpec));
-    }
-
     SetParameterSpecAuthenticationConfiguration(final AuthenticationConfiguration parent, final List<AlgorithmParameterSpec> parameterSpecs) {
         super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.parameterSpecs = parameterSpecs;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
-        Callback callback = callbacks[index];
-        if (callback instanceof ParameterCallback) {
-            ParameterCallback parameterCallback = (ParameterCallback) callback;
-            if (parameterCallback.getParameterSpec() == null) {
-                for (AlgorithmParameterSpec parameterSpec : parameterSpecs) {
-                    if (parameterCallback.isParameterSupported(parameterSpec)) {
-                        parameterCallback.setParameterSpec(parameterSpec);
-                        return;
-                    }
-                }
-            }
-        }
-        super.handleCallback(callbacks, index);
     }
 
     @Override

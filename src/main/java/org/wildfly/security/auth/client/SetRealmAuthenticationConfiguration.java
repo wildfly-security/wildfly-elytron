@@ -20,13 +20,6 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.RealmCallback;
-import javax.security.sasl.RealmChoiceCallback;
-
 import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
 /**
@@ -39,30 +32,6 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration im
     SetRealmAuthenticationConfiguration(final AuthenticationConfiguration parent, final String realm) {
         super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.realm = realm;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
-        Callback callback = callbacks[index];
-        if (callback instanceof RealmCallback) {
-            RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm != null ? realm : realmCallback.getDefaultText());
-            return;
-        } else if (callback instanceof RealmChoiceCallback) {
-            RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callback;
-            if (realm == null) {
-                realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
-            } else {
-                String[] choices = realmChoiceCallback.getChoices();
-                for (int i = 0; i < choices.length; i++) {
-                    if (realm.equals(choices[i])) {
-                        realmChoiceCallback.setSelectedIndex(i);
-                        break;
-                    }
-                }
-            }
-            return;
-        }
-        super.handleCallback(callbacks, index);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {

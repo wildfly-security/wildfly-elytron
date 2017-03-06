@@ -53,6 +53,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -64,8 +65,11 @@ import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.security.auth.callback.PasswordResetCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.CallbackKind;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -1000,9 +1004,19 @@ public class OTPTest extends BaseTestCase {
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
-                                .usePassword(password, MATCH_PASSWORD)
+                                .usePassword(password)
                                 .useChoice(MATCH_NEW_PASSWORD_FORMAT_CHOICE, DIRECT_OTP)
                                 .useParameterSpec(getOTPParameterSpec(newAlgorithm, newSeed, newSequenceNumber))
+                                .useCallbackHandler(callbacks -> {
+                                    if (callbacks.length > 0) {
+                                        final Callback callback = callbacks[0];
+                                        if (callback instanceof PasswordResetCallback) {
+                                            ((PasswordResetCallback) callback).setPassword(newPassword.toCharArray());
+                                        } else {
+                                            CallbackUtil.unsupported(callback);
+                                        }
+                                    }
+                                }, CallbackKind.CREDENTIAL_RESET)
                                 .usePassword(newPassword, MATCH_NEW_PASSWORD)
                                 .allowSaslMechanisms(algorithm));
 
