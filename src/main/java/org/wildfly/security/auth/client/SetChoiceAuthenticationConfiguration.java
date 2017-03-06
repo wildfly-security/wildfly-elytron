@@ -23,14 +23,10 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.ChoiceCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.RealmChoiceCallback;
 
 import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
@@ -44,16 +40,6 @@ class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration i
     SetChoiceAuthenticationConfiguration(final AuthenticationConfiguration parent, final Predicate<ChoiceCallback> operation) {
         super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.operation = operation;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
-        Callback callback = callbacks[index];
-        if (callback instanceof ChoiceCallback && ! (callback instanceof RealmChoiceCallback)) {
-            if (operation.test((ChoiceCallback) callback)) {
-                return;
-            }
-        }
-        super.handleCallback(callbacks, index);
     }
 
     @Override

@@ -21,24 +21,13 @@ package org.wildfly.security.auth.client;
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import org.wildfly.security.credential.AlgorithmCredential;
-import org.wildfly.security.credential.source.CredentialSource;
-import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
+import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.TwoWayPassword;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
@@ -51,37 +40,6 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
     SetCredentialsConfiguration(final AuthenticationConfiguration parent, final CredentialSource credentialSource) {
         super(parent.without(CredentialSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.credentialSource = credentialSource;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
-        Callback callback = callbacks[index];
-        if (callback instanceof CredentialCallback) {
-            final CredentialCallback credentialCallback = (CredentialCallback) callback;
-            final Credential credential = credentialSource.getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm());
-            if (credential != null && credentialCallback.isCredentialSupported(credential)) {
-                credentialCallback.setCredential(credential);
-                return;
-            }
-        } else if (callback instanceof PasswordCallback) {
-            final PasswordCallback passwordCallback = (PasswordCallback) callback;
-            CredentialSource credentials = credentialSource;
-            if (credentials != null) {
-                final TwoWayPassword password = credentials.applyToCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, c -> c.getPassword(TwoWayPassword.class));
-                if (password instanceof ClearPassword) {
-                    // shortcut
-                    passwordCallback.setPassword(((ClearPassword) password).getPassword());
-                    return;
-                } else if (password != null) try {
-                    PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                    ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), ClearPasswordSpec.class);
-                    passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
-                    return;
-                } catch (GeneralSecurityException e) {
-                    // fall out
-                }
-            }
-        }
-        super.handleCallback(callbacks, index);
     }
 
     boolean saslSupportedByConfiguration(final String mechanismName) {

@@ -21,27 +21,17 @@ package org.wildfly.security.auth.client;
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
-import java.io.IOException;
 import java.security.AccessControlContext;
 import java.security.Principal;
 import java.security.PrivilegedAction;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.Objects;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
 import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
@@ -58,38 +48,6 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
         this.context = context;
     }
 
-    void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
-        Callback callback = callbacks[index];
-        final SecurityIdentity identity = sourceDomain.getCurrentSecurityIdentity();
-        if (! identity.isAnonymous()) {
-            if (callback instanceof NameCallback) {
-                ((NameCallback) callback).setName(doRewriteUser(identity.getPrincipal().getName()));
-            } else if (callback instanceof CredentialCallback) {
-                final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                final Class<? extends Credential> credentialType = credentialCallback.getCredentialType();
-                final String algorithm = credentialCallback.getAlgorithm();
-                final AlgorithmParameterSpec parameterSpec = credentialCallback.getParameterSpec();
-                final IdentityCredentials privateCredentials = getPrivateCredentials(identity, context);
-                final Credential credential = privateCredentials.getCredential(credentialType, algorithm, parameterSpec);
-                if (credential != null) {
-                    credentialCallback.setCredential(credential);
-                }
-            } else if (callback instanceof PasswordCallback) {
-                final IdentityCredentials privateCredentials = getPrivateCredentials(identity, context);
-                final PasswordCredential credential = privateCredentials.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
-                if (credential != null) {
-                    final ClearPassword clearPassword = credential.getPassword(ClearPassword.class);
-                    if (clearPassword != null) {
-                        // likely always true, but just to be safe...
-                        ((PasswordCallback) callback).setPassword(clearPassword.getPassword());
-                    }
-                }
-            } else {
-                super.handleCallback(callbacks, index);
-            }
-        }
-    }
-
     private IdentityCredentials getPrivateCredentials(SecurityIdentity identity, AccessControlContext context) {
         return doPrivileged((PrivilegedAction<IdentityCredentials>) identity::getPrivateCredentials, context);
     }
@@ -100,6 +58,10 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
 
     Principal getPrincipal() {
         return sourceDomain.getCurrentSecurityIdentity().getPrincipal();
+    }
+
+    CredentialSource getCredentialSource() {
+        return getPrivateCredentials(sourceDomain.getCurrentSecurityIdentity(), context);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {

@@ -19,20 +19,11 @@
 package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
-import static org.wildfly.security._private.ElytronMessages.log;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.cert.CertificateException;
 
 import javax.net.ssl.X509TrustManager;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
-import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -52,29 +43,6 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
 
     SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
         return trustManagerFactory;
-    }
-
-    void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
-        final Callback callback = callbacks[index];
-        if (callback instanceof EvidenceVerifyCallback) {
-            final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
-            final X509PeerCertificateChainEvidence peerCertificateChainEvidence = evidenceVerifyCallback.getEvidence(X509PeerCertificateChainEvidence.class);
-            if (peerCertificateChainEvidence != null) {
-                X509TrustManager trustManager;
-                try {
-                    trustManager = trustManagerFactory.create();
-                } catch (GeneralSecurityException e) {
-                    throw log.unableToCreateTrustManager(e);
-                }
-                try {
-                    trustManager.checkServerTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
-                    evidenceVerifyCallback.setVerified(true);
-                } catch (CertificateException e) {
-                }
-                return;
-            }
-        }
-        super.handleCallback(callbacks, index);
     }
 
     boolean halfEqual(final AuthenticationConfiguration other) {

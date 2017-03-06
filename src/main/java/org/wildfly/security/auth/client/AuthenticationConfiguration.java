@@ -31,12 +31,14 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,14 +51,17 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.ChoiceCallback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.TextInputCallback;
+import javax.security.auth.callback.TextOutputCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
@@ -67,6 +72,11 @@ import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.ParameterCallback;
+import org.wildfly.security.auth.callback.PasswordResetCallback;
+import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.credential.source.CallbackHandlerCredentialSource;
@@ -82,8 +92,12 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
@@ -91,11 +105,10 @@ import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
-import org.wildfly.security.ssl.CipherSuiteSelector;
-import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.x500.TrustedAuthority;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -106,40 +119,16 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 public abstract class AuthenticationConfiguration {
     // constants
 
+    private static final Principal[] NO_PRINCIPALS = new Principal[0];
+    private static final Callback[] NO_CALLBACKS = new Callback[0];
+
+    private static final EnumSet<CallbackKind> NO_CALLBACK_KINDS = EnumSet.noneOf(CallbackKind.class);
+
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
      * remapping of any kind, and always uses an anonymous principal.
      */
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration() {
-        void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException {
-            // always choose the default realm suggestion, or else choose "no realm"
-            if (callbacks[index] instanceof RealmCallback) {
-                final RealmCallback realmCallback = (RealmCallback) callbacks[index];
-                if (realmCallback.getText() != null) {
-                    return;
-                }
-                final String defaultText = realmCallback.getDefaultText();
-                if (defaultText != null) {
-                    realmCallback.setText(defaultText);
-                }
-                return;
-            } else if (callbacks[index] instanceof RealmChoiceCallback) {
-                final RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callbacks[index];
-                final int[] selectedIndexes = realmChoiceCallback.getSelectedIndexes();
-                if (selectedIndexes == null || selectedIndexes.length == 0) {
-                    realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
-                }
-                return;
-            }
-            CallbackUtil.unsupported(callbacks[index]);
-        }
-
-        void handleCallbacks(final AuthenticationConfiguration config, final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            final int length = callbacks.length;
-            for (int i = 0; i < length; i ++) {
-                config.handleCallback(callbacks, i);
-            }
-        }
 
         void configureSaslProperties(final Map<String, Object> properties) {
         }
@@ -169,12 +158,24 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
+        AuthenticationConfiguration without(final Set<CallbackKind> callbackKinds) {
+            return this;
+        }
+
         AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
             return this;
         }
 
         AuthenticationConfiguration without(final Class<?> clazz1, final Class<?> clazz2, final Class<?> clazz3) {
             return this;
+        }
+
+        CallbackHandler getCallbackHandler() {
+            return null;
+        }
+
+        EnumSet<CallbackKind> getUserCallbackKinds() {
+            return NO_CALLBACK_KINDS;
         }
 
         String getHost() {
@@ -201,29 +202,12 @@ public abstract class AuthenticationConfiguration {
             return SSLContext.getDefault();
         }
 
-        void configureSslEngine(final SSLEngine sslEngine) {
-        }
-
-        void configureSslSocket(final SSLSocket sslSocket) {
-        }
-
-        ProtocolSelector getProtocolSelector() {
-            return ProtocolSelector.defaultProtocols();
-        }
-
-        CipherSuiteSelector getCipherSuiteSelector() {
-            return CipherSuiteSelector.openSslDefault();
-        }
-
         SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
             return SSLUtils.getDefaultX509TrustManagerSecurityFactory();
         }
 
         SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
             return null;
-        }
-
-        void configureKeyManager(final ConfigurationKeyManager.Builder builder) {
         }
 
         Supplier<Provider[]> getProviderSupplier() {
@@ -341,14 +325,6 @@ public abstract class AuthenticationConfiguration {
 
     // internal actions
 
-    void handleCallback(Callback[] callbacks, int index) throws IOException, UnsupportedCallbackException {
-        parent.handleCallback(callbacks, index);
-    }
-
-    void handleCallbacks(AuthenticationConfiguration config, Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-        parent.handleCallbacks(config, callbacks);
-    }
-
     void configureSaslProperties(Map<String, Object> properties) {
         parent.configureSaslProperties(properties);
     }
@@ -391,22 +367,6 @@ public abstract class AuthenticationConfiguration {
         return parent.getSslContext();
     }
 
-    void configureSslEngine(final SSLEngine sslEngine) {
-        parent.configureSslEngine(sslEngine);
-    }
-
-    void configureSslSocket(final SSLSocket sslSocket) {
-        parent.configureSslSocket(sslSocket);
-    }
-
-    ProtocolSelector getProtocolSelector() {
-        return parent.getProtocolSelector();
-    }
-
-    CipherSuiteSelector getCipherSuiteSelector() {
-        return parent.getCipherSuiteSelector();
-    }
-
     Supplier<Provider[]> getProviderSupplier() {
         return parent.getProviderSupplier();
     }
@@ -423,10 +383,6 @@ public abstract class AuthenticationConfiguration {
         return parent.getX509KeyManagerFactory();
     }
 
-    void configureKeyManager(ConfigurationKeyManager.Builder builder) throws GeneralSecurityException {
-        parent.configureKeyManager(builder);
-    }
-
     CredentialSource getCredentialSource() {
         return parent.getCredentialSource();
     }
@@ -441,6 +397,21 @@ public abstract class AuthenticationConfiguration {
         AuthenticationConfiguration newParent = parent.without(clazz);
         if (clazz.isInstance(this)) return newParent;
         if (parent == newParent) return this;
+        return reparent(newParent);
+    }
+
+    AuthenticationConfiguration without(Set<CallbackKind> callbackKinds) {
+        AuthenticationConfiguration newParent = parent.without(callbackKinds);
+        if (isFullyMatchedBy(callbackKinds)) return newParent;
+        if (parent == newParent) return this;
+        return reparentWithout(callbackKinds, newParent).reparent(newParent);
+    }
+
+    boolean isFullyMatchedBy(Set<CallbackKind> callbackKinds) {
+        return false;
+    }
+
+    AuthenticationConfiguration reparentWithout(final Set<CallbackKind> callbackKinds, final AuthenticationConfiguration newParent) {
         return reparent(newParent);
     }
 
@@ -585,30 +556,6 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given password regardless of the prompt
      * @return the new configuration
      */
-    public final AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
-        return usePassword(password);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
-     *
-     * @param password the password to use
-     * @param matchPredicate the predicate to determine if a password callback prompt is relevant for the given password or
-     *                       {@code null} to use the given password regardless of the prompt
-     * @return the new configuration
-     */
-    public final AuthenticationConfiguration usePassword(char[] password, Predicate<String> matchPredicate) {
-        return usePassword(password);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
-     *
-     * @param password the password to use
-     * @param matchPredicate the predicate to determine if a password callback prompt is relevant for the given password or
-     *                       {@code null} to use the given password regardless of the prompt
-     * @return the new configuration
-     */
     public final AuthenticationConfiguration usePassword(String password, Predicate<String> matchPredicate) {
         return usePassword(password);
     }
@@ -643,7 +590,30 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
-        return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+        return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler, EnumSet.allOf(CallbackKind.class));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given callback handler
+     * to authenticate.
+     * <p>
+     * <em>Important notes:</em> It is important to ensure that each distinct client identity uses a distinct {@code CallbackHandler}
+     * instance in order to avoid mis-pooling of connections, identity crossovers, and other potentially serious problems.
+     * It is not recommended that a {@code CallbackHandler} implement {@code equals()} and {@code hashCode()}, however if it does,
+     * it is important to ensure that these methods consider equality based on an authenticating identity that does not
+     * change between instances.  In particular, a callback handler which requests user input on each usage is likely to cause
+     * a problem if the user name can change on each authentication request.
+     * <p>
+     * Because {@code CallbackHandler} instances are unique per identity, it is often useful for instances to cache
+     * identity information, credentials, and/or other authentication-related information in order to facilitate fast
+     * re-authentication.
+     *
+     * @param callbackHandler the callback handler to use
+     * @param callbackKinds the kinds of callbacks that the handler should use
+     * @return the new configuration
+     */
+    public final AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler, Set<CallbackKind> callbackKinds) {
+        return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler, EnumSet.copyOf(callbackKinds));
     }
 
     /**
@@ -1034,7 +1004,11 @@ public abstract class AuthenticationConfiguration {
     // client methods
 
     CallbackHandler getCallbackHandler() {
-        return null;
+        return parent.getCallbackHandler();
+    }
+
+    EnumSet<CallbackKind> getUserCallbackKinds() {
+        return parent.getUserCallbackKinds();
     }
 
     /**
@@ -1072,11 +1046,11 @@ public abstract class AuthenticationConfiguration {
 
         final CallbackHandler callbackHandler = getCallbackHandler();
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
-                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), callbackHandler == null ? this::defaultHandleCallbacks : callbackHandler);
+                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), callbackHandler == null ? createCallbackHandler() : callbackHandler);
     }
 
-    void defaultHandleCallbacks(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-        handleCallbacks(this, callbacks);
+    CallbackHandler createCallbackHandler() {
+        return new ClientCallbackHandler(this);
     }
 
     // equality
@@ -1195,4 +1169,267 @@ public abstract class AuthenticationConfiguration {
     interface UserSetting extends HandlesCallbacks {}
     interface CredentialSetting extends HandlesCallbacks {}
     interface HandlesCallbacks {}
+
+    static class ClientCallbackHandler implements CallbackHandler {
+        private final AuthenticationConfiguration config;
+        private final CallbackHandler userCallbackHandler;
+        private List<TrustedAuthority> trustedAuthorities;
+
+        ClientCallbackHandler(final AuthenticationConfiguration config) {
+            this.config = config;
+            userCallbackHandler = config.getCallbackHandler();
+        }
+
+        @SuppressWarnings("UnnecessaryContinue")
+        public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+            final AuthenticationConfiguration config = this.config;
+            final ArrayList<Callback> userCallbacks = new ArrayList<>(callbacks.length);
+            for (final Callback callback : callbacks) {
+                if (callback instanceof NameCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PRINCIPAL)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final NameCallback nameCallback = (NameCallback) callback;
+                    // populate with our authentication name
+                    final Principal principal = config.getPrincipal();
+                    if (principal == null) {
+                        final String defaultName = nameCallback.getDefaultName();
+                        if (defaultName == null) {
+                            CallbackUtil.unsupported(nameCallback);
+                            continue;
+                        }
+                        nameCallback.setName(defaultName);
+                        continue;
+                    } else {
+                        nameCallback.setName(config.doRewriteUser(principal.getName()));
+                        continue;
+                    }
+                } else if (callback instanceof PasswordCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final PasswordCallback passwordCallback = (PasswordCallback) callback;
+                    final CredentialSource credentials = config.getCredentialSource();
+                    if (credentials != null) {
+                        final TwoWayPassword password = credentials.applyToCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, c -> c.getPassword(TwoWayPassword.class));
+                        if (password instanceof ClearPassword) {
+                            // shortcut
+                            passwordCallback.setPassword(((ClearPassword) password).getPassword());
+                            continue;
+                        } else if (password != null) try {
+                            PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                            ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), ClearPasswordSpec.class);
+                            passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+                            continue;
+                        } catch (GeneralSecurityException e) {
+                            // not supported
+                            CallbackUtil.unsupported(passwordCallback);
+                            continue;
+                        }
+                        else {
+                            // supported but no credentials
+                            continue;
+                        }
+                    } else {
+                        // supported but no credentials
+                        continue;
+                    }
+                } else if (callback instanceof PasswordResetCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL_RESET)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    // not supported
+                    CallbackUtil.unsupported(callback);
+                    continue;
+                } else if (callback instanceof CredentialCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    // special handling for X.509 when a key manager factory is set
+                    final SecurityFactory<X509KeyManager> keyManagerFactory = config.getX509KeyManagerFactory();
+                    if (keyManagerFactory != null) {
+                        final String allowedAlgorithm = credentialCallback.getAlgorithm();
+                        if (allowedAlgorithm != null && credentialCallback.isCredentialTypeSupported(X509CertificateChainPrivateCredential.class, allowedAlgorithm)) {
+                            final X509KeyManager keyManager;
+                            try {
+                                keyManager = keyManagerFactory.create();
+                            } catch (GeneralSecurityException e) {
+                                throw log.unableToCreateKeyManager(e);
+                            }
+                            Principal[] acceptableIssuers;
+                            if (trustedAuthorities != null) {
+                                List<Principal> issuers = new ArrayList<Principal>();
+                                for (TrustedAuthority trustedAuthority : trustedAuthorities) {
+                                    if (trustedAuthority instanceof TrustedAuthority.CertificateTrustedAuthority) {
+                                        final X509Certificate authorityCertificate = ((TrustedAuthority.CertificateTrustedAuthority) trustedAuthority).getIdentifier();
+                                        issuers.add(authorityCertificate.getSubjectX500Principal());
+                                    } else if (trustedAuthority instanceof TrustedAuthority.NameTrustedAuthority) {
+                                        final String authorityName = ((TrustedAuthority.NameTrustedAuthority) trustedAuthority).getIdentifier();
+                                        issuers.add(new X500Principal(authorityName));
+                                    }
+                                }
+                                acceptableIssuers = issuers.toArray(NO_PRINCIPALS);
+                            } else {
+                                acceptableIssuers = null;
+                            }
+                            final String alias = keyManager.chooseClientAlias(new String[] { allowedAlgorithm }, acceptableIssuers, null);
+                            if (alias != null) {
+                                final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
+                                final PrivateKey privateKey = keyManager.getPrivateKey(alias);
+                                credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+                                continue;
+                            }
+                            // otherwise fall out to normal handling
+                        }
+                    }
+                    // normal handling
+                    final Credential credential = config.getCredentialSource().getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm(), credentialCallback.getParameterSpec());
+                    if (credential != null && credentialCallback.isCredentialSupported(credential)) {
+                        credentialCallback.setCredential(credential);
+                        continue;
+                    } else {
+                        // supported but no credentials
+                        continue;
+                    }
+                } else if (callback instanceof RealmChoiceCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callback;
+                    // find our realm
+                    final String realm = config.getMechanismRealm();
+                    if (realm == null) {
+                        realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
+                        continue;
+                    } else {
+                        String[] choices = realmChoiceCallback.getChoices();
+                        for (int i = 0; i < choices.length; i++) {
+                            if (realm.equals(choices[i])) {
+                                realmChoiceCallback.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                        // no choice matches, so just fall out and choose nothing
+                        continue;
+                    }
+                } else if (callback instanceof RealmCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    RealmCallback realmCallback = (RealmCallback) callback;
+                    final String realm = config.getMechanismRealm();
+                    realmCallback.setText(realm != null ? realm : realmCallback.getDefaultText());
+                    continue;
+                } else if (callback instanceof ParameterCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PARAMETERS)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    ParameterCallback parameterCallback = (ParameterCallback) callback;
+                    if (parameterCallback.getParameterSpec() == null) {
+                        for (AlgorithmParameterSpec parameterSpec : config.getParameterSpecs()) {
+                            if (parameterCallback.isParameterSupported(parameterSpec)) {
+                                parameterCallback.setParameterSpec(parameterSpec);
+                                break; // inner loop break
+                            }
+                        }
+                    }
+                    continue;
+                } else if (callback instanceof ChoiceCallback) { // Must come AFTER RealmChoiceCallback
+                    if (config.getUserCallbackKinds().contains(CallbackKind.CHOICE)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final ChoiceCallback choiceCallback = (ChoiceCallback) callback;
+                    final int defaultChoice = choiceCallback.getDefaultChoice();
+                    final Predicate<ChoiceCallback> choiceOperation = config.getChoiceOperation();
+                    if (! choiceOperation.test(choiceCallback)) {
+                        choiceCallback.setSelectedIndex(defaultChoice);
+                    }
+                    continue;
+                } else if (callback instanceof TrustedAuthoritiesCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.SERVER_TRUSTED_AUTHORITIES)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final TrustedAuthoritiesCallback trustedAuthoritiesCallback = (TrustedAuthoritiesCallback) callback;
+                    if (trustedAuthorities == null) {
+                        trustedAuthorities = new ArrayList<>(trustedAuthoritiesCallback.getTrustedAuthorities());
+                    } else {
+                        final List<TrustedAuthority> authorities = new ArrayList<>(trustedAuthoritiesCallback.getTrustedAuthorities());
+                        authorities.removeIf(trustedAuthorities::contains);
+                        trustedAuthorities.addAll(authorities);
+                    }
+                    continue;
+                } else if (callback instanceof EvidenceVerifyCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PEER_CREDENTIAL)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
+                    // special handling for X.509
+                    final SecurityFactory<X509TrustManager> trustManagerFactory = config.getX509TrustManagerFactory();
+                    if (trustManagerFactory != null) {
+                        final X509PeerCertificateChainEvidence peerCertificateChainEvidence = evidenceVerifyCallback.getEvidence(X509PeerCertificateChainEvidence.class);
+                        if (peerCertificateChainEvidence != null) {
+                            X509TrustManager trustManager;
+                            try {
+                                trustManager = trustManagerFactory.create();
+                            } catch (GeneralSecurityException e) {
+                                throw log.unableToCreateTrustManager(e);
+                            }
+                            try {
+                                trustManager.checkServerTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
+                                evidenceVerifyCallback.setVerified(true);
+                            } catch (CertificateException e) {
+                            }
+                            continue;
+                        }
+                    }
+                    continue;
+                } else if (callback instanceof TextOutputCallback) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.GENERAL_OUTPUT)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    // ignore
+                    continue;
+                } else if (callback instanceof TextInputCallback) { // must come after RealmCallback
+                    if (config.getUserCallbackKinds().contains(CallbackKind.GENERAL_INPUT)) {
+                        userCallbacks.add(callback);
+                        continue;
+                    }
+                    // always choose the default
+                    final TextInputCallback inputCallback = (TextInputCallback) callback;
+                    final String text = inputCallback.getText();
+                    if (text == null) {
+                        final String defaultText = inputCallback.getDefaultText();
+                        if (defaultText != null) {
+                            inputCallback.setText(defaultText);
+                        } else {
+                            CallbackUtil.unsupported(callback);
+                            continue;
+                        }
+                    }
+                    continue;
+                } else {
+                    CallbackUtil.unsupported(callback);
+                    continue;
+                }
+            }
+            if (! userCallbacks.isEmpty()) {
+                // pass on to the user callback handler
+                assert userCallbackHandler != null; // otherwise userCallbacks would be empty
+                final Callback[] userCallbackArray = userCallbacks.toArray(NO_CALLBACKS);
+                userCallbackHandler.handle(userCallbackArray);
+            }
+        }
+    }
 }
