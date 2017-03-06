@@ -19,10 +19,14 @@
 package org.wildfly.security.credential.source;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.OneTimeSecurityFactory;
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
@@ -300,4 +304,30 @@ public interface CredentialSource {
             return null;
         }
     };
+
+    /**
+     * Get a credential source from the given security factory.  The factory is queried on each request.  If the value
+     * should be cached after the first request, use {@link OneTimeSecurityFactory}.
+     *
+     * @param credentialFactory the credential factory (must not be {@code null})
+     * @return the credential source (not {@code null})
+     */
+    static CredentialSource fromSecurityFactory(SecurityFactory<Credential> credentialFactory) {
+        Assert.checkNotNullParam("credentialFactory", credentialFactory);
+        return new CredentialSource() {
+            public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+                return SupportLevel.POSSIBLY_SUPPORTED;
+            }
+
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+                final Credential credential;
+                try {
+                    credential = credentialFactory.create();
+                } catch (GeneralSecurityException e) {
+                    throw ElytronMessages.log.cannotObtainCredentialFromFactory(e);
+                }
+                return credential.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential) : null;
+            }
+        };
+    }
 }

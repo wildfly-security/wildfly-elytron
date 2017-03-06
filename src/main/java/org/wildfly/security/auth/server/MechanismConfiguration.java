@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * A configuration that applies to an authentication mechanism.
@@ -48,9 +48,9 @@ public final class MechanismConfiguration {
     private final Function<Principal, Principal> finalRewriter;
     private final RealmMapper realmMapper;
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
-    private final SecurityFactory<Credential> serverCredentialFactory;
+    private final CredentialSource serverCredentialSource;
 
-    MechanismConfiguration(final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final SecurityFactory<Credential> serverCredentialFactory) {
+    MechanismConfiguration(final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final CredentialSource serverCredentialSource) {
         checkNotNullParam("mechanismRealms", mechanismRealms);
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
@@ -76,7 +76,7 @@ public final class MechanismConfiguration {
                 this.mechanismRealms = Collections.unmodifiableMap(map);
             }
         }
-        this.serverCredentialFactory = serverCredentialFactory;
+        this.serverCredentialSource = serverCredentialSource;
     }
 
     /**
@@ -126,12 +126,12 @@ public final class MechanismConfiguration {
     }
 
     /**
-     * Get the server credential factory.
+     * Get the server credential source.
      *
-     * @return the server credential factory.
+     * @return the server credential source
      */
-    public SecurityFactory<Credential> getServerCredentialFactory() {
-        return serverCredentialFactory;
+    public CredentialSource getServerCredentialSource() {
+        return serverCredentialSource;
     }
 
     /**
@@ -163,7 +163,7 @@ public final class MechanismConfiguration {
         private Function<Principal, Principal> finalRewriter = Function.identity();
         private RealmMapper realmMapper;
         private List<MechanismRealmConfiguration> mechanismRealms;
-        private SecurityFactory<Credential> serverCredentialFactory;
+        private CredentialSource serverCredentialSource = CredentialSource.NONE;
 
         /**
          * Construct a new instance.
@@ -205,26 +205,36 @@ public final class MechanismConfiguration {
         }
 
         /**
-         * Set the server credential.
+         * Set a single server credential.  Any previously set credential source will be overwritten.
          *
          * @param credential the credential to set (must not be {@code null})
          * @return this builder
          */
         public Builder setServerCredential(Credential credential) {
             checkNotNullParam("credential", credential);
-            this.serverCredentialFactory = new FixedSecurityFactory<>(credential);
-            return this;
+            return setServerCredentialSource(IdentityCredentials.NONE.withCredential(credential));
         }
 
         /**
-         * Set the server credential factory.
+         * Set a single server credential factory.  Any previously set credential source will be overwritten.
          *
          * @param credentialFactory the credential factory to set (must not be {@code null})
          * @return this builder
          */
         public Builder setServerCredential(SecurityFactory<Credential> credentialFactory) {
             checkNotNullParam("credential", credentialFactory);
-            this.serverCredentialFactory = credentialFactory;
+            return setServerCredentialSource(CredentialSource.fromSecurityFactory(credentialFactory));
+        }
+
+        /**
+         * Set the server credential source.  Any previously set credential source will be overwritten.
+         *
+         * @param serverCredentialSource the server credential source (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setServerCredentialSource(final CredentialSource serverCredentialSource) {
+            checkNotNullParam("serverCredentialSource", serverCredentialSource);
+            this.serverCredentialSource = serverCredentialSource;
             return this;
         }
 
@@ -240,12 +250,12 @@ public final class MechanismConfiguration {
             } else {
                 mechanismRealms = unmodifiableList(asList(mechanismRealms.toArray(NO_REALM_CONFIGS)));
             }
-            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentialFactory);
+            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentialSource);
         }
     }
 
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(Function.identity(), Function.identity(), Function.identity(), null, emptyList(), null);
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(Function.identity(), Function.identity(), Function.identity(), null, emptyList(), CredentialSource.NONE);
 }
