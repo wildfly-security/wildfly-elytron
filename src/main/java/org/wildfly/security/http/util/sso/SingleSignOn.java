@@ -29,7 +29,7 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 public interface SingleSignOn extends ImmutableSingleSignOn, AutoCloseable {
 
     /**
-     * Re-associates a security identity with this single sign-on entry
+     * Associates a security identity with this single sign-on entry, only if no association exists.
      * @param identity a security identity
      */
     void setIdentity(SecurityIdentity identity);
