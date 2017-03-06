@@ -18,6 +18,7 @@
 
 package org.wildfly.security.key;
 
+import java.io.Serializable;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Objects;
@@ -25,7 +26,10 @@ import java.util.Objects;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class RawKey {
+abstract class RawKey implements Serializable {
+
+    private static final long serialVersionUID = -5953606815393608941L;
+
     private final String algorithm;
     private final String format;
     private final byte[] encoded;
