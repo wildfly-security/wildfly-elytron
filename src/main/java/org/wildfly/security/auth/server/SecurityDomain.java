@@ -86,7 +86,7 @@ public final class SecurityDomain {
     private final Function<Principal, Principal> preRealmPrincipalRewriter;
     private final RealmMapper realmMapper;
     private final Function<Principal, Principal> postRealmPrincipalRewriter;
-    private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
+    private final ThreadLocal<Supplier<SecurityIdentity>> currentSecurityIdentity;
     private final RoleMapper roleMapper;
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
@@ -533,7 +533,7 @@ public final class SecurityDomain {
      * @return the current security identity for this domain (not {@code null})
      */
     public SecurityIdentity getCurrentSecurityIdentity() {
-        final SecurityIdentity identity = currentSecurityIdentity.get();
+        final SecurityIdentity identity = currentSecurityIdentity.get().get();
         return identity == null ? anonymousIdentity : identity;
     }
 
@@ -574,9 +574,9 @@ public final class SecurityDomain {
         return new SecurityIdentity(this, principal, EMPTY_REALM_INFO, AuthorizationIdentity.EMPTY, emptyMap(), IdentityCredentials.NONE, IdentityCredentials.NONE);
     }
 
-    SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+    Supplier<SecurityIdentity> getAndSetCurrentSecurityIdentity(Supplier<SecurityIdentity> newIdentity) {
         try {
-            final SecurityIdentity oldIdentity = currentSecurityIdentity.get();
+            final Supplier<SecurityIdentity> oldIdentity = currentSecurityIdentity.get();
             return oldIdentity == null ? anonymousIdentity : oldIdentity;
         } finally {
             if (newIdentity == anonymousIdentity) {
@@ -587,7 +587,7 @@ public final class SecurityDomain {
         }
     }
 
-    void setCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+    void setCurrentSecurityIdentity(Supplier<SecurityIdentity> newIdentity) {
         if (newIdentity == anonymousIdentity) {
             currentSecurityIdentity.remove();
         } else {

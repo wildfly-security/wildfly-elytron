@@ -31,10 +31,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
@@ -42,7 +40,6 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
-import org.wildfly.common.function.ExceptionConsumer;
 import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
 import org.wildfly.common.function.ExceptionSupplier;
@@ -67,7 +64,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentity implements PermissionVerifier, PermissionMappable {
+public final class SecurityIdentity implements PermissionVerifier, PermissionMappable, Supplier<SecurityIdentity>, Scoped {
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
@@ -195,24 +192,26 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return authorizationIdentity;
     }
 
-    private SecurityIdentity[] establishIdentities() {
+    @SuppressWarnings("rawtypes")
+    private Supplier<SecurityIdentity>[] establishIdentities() {
         SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : NO_IDENTITIES;
         if (withIdentities.length == 0) {
             return NO_IDENTITIES;
         }
 
-        SecurityIdentity[] oldIdentities = new SecurityIdentity[withIdentities.length];
+        Supplier<SecurityIdentity>[] oldIdentities = new Supplier[withIdentities.length];
         for (int i = 0; i < withIdentities.length; i++) {
-            SecurityIdentity securityIdentity = withIdentities[i];
-            oldIdentities[i] = securityIdentity.getSecurityDomain().getAndSetCurrentSecurityIdentity(securityIdentity);
+            Supplier<SecurityIdentity> securityIdentity = withIdentities[i];
+            oldIdentities[i] = securityIdentity.get().getSecurityDomain().getAndSetCurrentSecurityIdentity(securityIdentity);
         }
 
         return oldIdentities;
     }
 
-    private void restoreIdentities(SecurityIdentity[] securityIdentities) {
-        for (SecurityIdentity currentIdentity : securityIdentities) {
-            currentIdentity.securityDomain.setCurrentSecurityIdentity(currentIdentity);
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private void restoreIdentities(Supplier[] securityIdentities) {
+        for (Supplier<SecurityIdentity> currentIdentity : securityIdentities) {
+            currentIdentity.get().securityDomain.setCurrentSecurityIdentity(currentIdentity);
         }
     }
 
@@ -220,32 +219,11 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * Run an action under this identity.
      *
      * @param action the action to run
-     */
-    public void runAs(Runnable action) {
-        if (action == null) return;
-        runAsConsumer(Runnable::run, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
      * @param <T> the action return type
      * @return the action result (may be {@code null})
-     * @throws Exception if the action fails
+     * @deprecated Use {@link #runAsSupplier(Supplier)} instead.
      */
-    public <T> T runAs(Callable<T> action) throws Exception {
-        if (action == null) return null;
-        return runAsFunctionEx(Callable::call, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @return the action result (may be {@code null})
-     */
+    @Deprecated
     public <T> T runAs(PrivilegedAction<T> action) {
         if (action == null) return null;
         return runAs(action, (ParametricPrivilegedAction<T, PrivilegedAction<T>>) PrivilegedAction::run);
@@ -258,7 +236,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <T> the action return type
      * @return the action result (may be {@code null})
      * @throws PrivilegedActionException if the action fails
+     * @deprecated Use {@link #runAsSupplierEx(ExceptionSupplier)} instead.
      */
+    @Deprecated
     public <T> T runAs(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         if (action == null) return null;
         return runAs(action, (ParametricPrivilegedExceptionAction<T, PrivilegedExceptionAction<T>>) PrivilegedExceptionAction::run);
@@ -272,11 +252,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <T> the action return type
      * @param <P> the action parameter type
      * @return the action result (may be {@code null})
+     * @deprecated Use {@link #runAsFunction(Function, Object)} instead.
      */
+    @Deprecated
     public <T, P> T runAs(P parameter, ParametricPrivilegedAction<T, P> action) {
         if (action == null) return null;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.run(parameter);
         } finally {
@@ -294,11 +276,13 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @param <P> the action parameter type
      * @return the action result (may be {@code null})
      * @throws PrivilegedActionException if the action fails
+     * @deprecated Use {@link #runAsFunctionEx(ExceptionFunction, Object)} instead.
      */
+    @Deprecated
     public <T, P> T runAs(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         if (action == null) return null;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.run(parameter);
         } catch (RuntimeException | PrivilegedActionException e) {
@@ -314,20 +298,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Run an action under this identity.
      *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <R> the action return type
-     * @param <T> the action parameter type
-     * @return the action result (may be {@code null})
-     */
-    public <T, R> R runAsFunction(Function<T, R> action, T parameter) {
-        if (action == null) return null;
-        return runAsFunction(Function::apply, action, parameter);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
      * @param parameter1 the first parameter to pass to the action
      * @param parameter2 the second parameter to pass to the action
      * @param action the action to run
@@ -338,26 +308,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, R> R runAsFunction(BiFunction<T, U, R> action, T parameter1, U parameter2) {
         if (action == null) return null;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.apply(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <T> the action parameter type
-     */
-    public <T> void runAsConsumer(Consumer<T> action, T parameter) {
-        if (action == null) return;
-        runAsConsumer(Consumer::accept, action, parameter);
     }
 
     /**
@@ -371,8 +329,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U> void runAsConsumer(BiConsumer<T, U> action, T parameter1, U parameter2) {
         if (action == null) return;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
@@ -391,42 +349,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> void runAsObjIntConsumer(ObjIntConsumer<T> action, T parameter1, int parameter2) {
         if (action == null) return;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @return the action result (may be {@code null})
-     */
-    public <T> T runAsSupplier(Supplier<T> action) {
-        if (action == null) return null;
-        return runAsFunction(Supplier::get, action);
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <R> the action return type
-     * @param <T> the action parameter type
-     * @param <E> the action exception type
-     * @return the action result (may be {@code null})
-     * @throws E if the action throws this exception
-     */
-    public <T, R, E extends Exception> R runAsFunctionEx(ExceptionFunction<T, R, E> action, T parameter) throws E {
-        if (action == null) return null;
-        return runAsFunctionEx(ExceptionFunction::apply, action, parameter);
     }
 
     /**
@@ -444,28 +374,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, R, E extends Exception> R runAsFunctionEx(ExceptionBiFunction<T, U, R, E> action, T parameter1, U parameter2) throws E {
         if (action == null) return null;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             return action.apply(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param parameter the parameter to pass to the action
-     * @param action the action to run
-     * @param <T> the action parameter type
-     * @param <E> the action exception type
-     * @throws E if the action throws this exception
-     */
-    public <T, E extends Exception> void runAsConsumerEx(ExceptionConsumer<T, E> action, T parameter) throws E {
-        if (action == null) return;
-        runAsConsumerEx(ExceptionConsumer::accept, action, parameter);
     }
 
     /**
@@ -481,8 +397,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, E extends Exception> void runAsConsumerEx(ExceptionBiConsumer<T, U, E> action, T parameter1, U parameter2) throws E {
         if (action == null) return;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
@@ -503,28 +419,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, E extends Exception> void runAsObjIntConsumerEx(ExceptionObjIntConsumer<T, E> action, T parameter1, int parameter2) throws E {
         if (action == null) return;
-        final SecurityIdentity[] oldWithIdentities = establishIdentities();
-        final SecurityIdentity oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
         }
-    }
-
-    /**
-     * Run an action under this identity.
-     *
-     * @param action the action to run
-     * @param <T> the action return type
-     * @param <E> the action exception type
-     * @return the action result (may be {@code null})
-     * @throws E if the action throws this exception
-     */
-    public <T, E extends Exception> T runAsSupplierEx(ExceptionSupplier<T, E> action) throws E {
-        if (action == null) return null;
-        return runAsFunctionEx(ExceptionSupplier::get, action);
     }
 
     /**
@@ -539,10 +441,10 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     public static <T> T runAsAll(PrivilegedExceptionAction<T> action, SecurityIdentity... identities) throws PrivilegedActionException {
         if (action == null) return null;
         int length = identities.length;
-        SecurityIdentity[] oldIdentities = new SecurityIdentity[length];
+        Supplier<SecurityIdentity>[] oldIdentities = new Supplier[length];
         for (int i = 0; i < length; i++) {
-            SecurityIdentity securityIdentity = identities[i];
-            SecurityDomain securityDomain = securityIdentity.getSecurityDomain();
+            Supplier<SecurityIdentity> securityIdentity = identities[i];
+            SecurityDomain securityDomain = securityIdentity.get().getSecurityDomain();
             oldIdentities[i] = securityDomain.getAndSetCurrentSecurityIdentity(securityIdentity);
         }
         try {
@@ -553,8 +455,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             throw new PrivilegedActionException(e);
         } finally {
             for (int i = 0; i < length; i++) {
-                SecurityIdentity oldIdentity = oldIdentities[i];
-                SecurityDomain securityDomain = oldIdentity.getSecurityDomain();
+                Supplier<SecurityIdentity> oldIdentity = oldIdentities[i];
+                SecurityDomain securityDomain = oldIdentity.get().getSecurityDomain();
                 securityDomain.setCurrentSecurityIdentity(oldIdentity);
             }
         }
@@ -883,6 +785,24 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(PRIVATE_CREDENTIALS_PERMISSION);
         }
         return getPrivateCredentialsPrivate();
+    }
+
+    /**
+     * Get this identity.
+     *
+     * @return this identity
+     */
+    public SecurityIdentity get() {
+        return this;
+    }
+
+    /**
+     * Create a new flexible identity association, initializing it with this identity.
+     *
+     * @return the new flexible identity association (not {@code null})
+     */
+    public FlexibleIdentityAssociation createFlexibleAssociation() {
+        return new FlexibleIdentityAssociation(securityDomain, this);
     }
 
     IdentityCredentials getPrivateCredentialsPrivate() {
