@@ -428,7 +428,7 @@ public final class SecurityDomain {
     }
 
     /**
-     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
      * @param credentialType the exact credential type (must not be {@code null})
@@ -448,7 +448,7 @@ public final class SecurityDomain {
     }
 
     /**
-     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
      * @param credentialType the exact credential type (must not be {@code null})
