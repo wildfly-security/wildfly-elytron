@@ -18,11 +18,11 @@
 package org.wildfly.security.authz.jacc;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.manager.WildFlySecurityManager;
-import org.wildfly.security.permission.PermissionVerifier;
 
 import javax.security.jacc.EJBMethodPermission;
 import javax.security.jacc.EJBRoleRefPermission;
@@ -39,6 +39,7 @@ import java.security.Policy;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -119,13 +120,27 @@ public class JaccDelegatingPolicy extends Policy {
     @Override
     public PermissionCollection getPermissions(ProtectionDomain domain) {
         log.getPermissionsNotSupported();
-        return PermissionVerifier.from(this, domain).toPermissionCollection();
+        return new PermissionCollection() {
+            @Override
+            public void add(Permission permission) {
+                throw ElytronMessages.log.readOnlyPermissionCollection();
+            }
+
+            @Override
+            public boolean implies(Permission permission) {
+                return JaccDelegatingPolicy.this.implies(domain, permission);
+            }
+
+            @Override
+            public Enumeration<Permission> elements() {
+                return delegate.getPermissions(domain).elements();
+            }
+        };
     }
 
     @Override
     public PermissionCollection getPermissions(CodeSource codeSource) {
-        log.getPermissionsNotSupported();
-        return codeSource == null ? Policy.UNSUPPORTED_EMPTY_COLLECTION : PermissionVerifier.from(this, new ProtectionDomain(codeSource, null)).toPermissionCollection();
+        return codeSource == null ? Policy.UNSUPPORTED_EMPTY_COLLECTION : getPermissions(new ProtectionDomain(codeSource, null));
     }
 
     @Override
