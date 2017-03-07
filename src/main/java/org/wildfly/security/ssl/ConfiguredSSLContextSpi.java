@@ -30,32 +30,34 @@ import javax.net.ssl.SSLSocketFactory;
 final class ConfiguredSSLContextSpi extends AbstractDelegatingSSLContextSpi {
 
     private final SSLConfigurator sslConfigurator;
+    private final boolean wrap;
 
-    ConfiguredSSLContextSpi(final SSLContext delegate, final SSLConfigurator sslConfigurator) {
+    ConfiguredSSLContextSpi(final SSLContext delegate, final SSLConfigurator sslConfigurator, final boolean wrap) {
         super(delegate);
         this.sslConfigurator = sslConfigurator;
+        this.wrap = wrap;
     }
 
     protected SSLSocketFactory engineGetSocketFactory() {
-        return new ConfiguredSSLSocketFactory(super.engineGetSocketFactory(), getDelegate(), sslConfigurator);
+        return new ConfiguredSSLSocketFactory(super.engineGetSocketFactory(), getDelegate(), sslConfigurator, wrap);
     }
 
     protected SSLServerSocketFactory engineGetServerSocketFactory() {
-        return new ConfiguredSSLServerSocketFactory(super.engineGetServerSocketFactory(), getDelegate(), sslConfigurator);
+        return new ConfiguredSSLServerSocketFactory(super.engineGetServerSocketFactory(), getDelegate(), sslConfigurator, wrap);
     }
 
     protected SSLEngine engineCreateSSLEngine() {
         final SSLEngine sslEngine = super.engineCreateSSLEngine();
         final SSLConfigurator sslConfigurator = this.sslConfigurator;
         sslConfigurator.configure(getDelegate(), sslEngine);
-        return new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator);
+        return wrap ? new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator) : sslEngine;
     }
 
     protected SSLEngine engineCreateSSLEngine(final String host, final int port) {
         final SSLEngine sslEngine = super.engineCreateSSLEngine(host, port);
         final SSLConfigurator sslConfigurator = this.sslConfigurator;
         sslConfigurator.configure(getDelegate(), sslEngine);
-        return new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator);
+        return wrap ? new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator) : sslEngine;
     }
 
     protected SSLParameters engineGetDefaultSSLParameters() {

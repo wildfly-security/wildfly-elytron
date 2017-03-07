@@ -32,11 +32,13 @@ import javax.net.ssl.SSLServerSocketFactory;
 final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServerSocketFactory {
     private final SSLContext sslContext;
     private final SSLConfigurator sslConfigurator;
+    private final boolean wrap;
 
-    ConfiguredSSLServerSocketFactory(final SSLServerSocketFactory delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
+    ConfiguredSSLServerSocketFactory(final SSLServerSocketFactory delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator, final boolean wrap) {
         super(delegate);
         this.sslContext = sslContext;
         this.sslConfigurator = sslConfigurator;
+        this.wrap = wrap;
     }
 
     public ServerSocket createServerSocket() throws IOException {
@@ -61,7 +63,7 @@ final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServer
             final SSLContext sslContext = this.sslContext;
             final SSLConfigurator sslConfigurator = this.sslConfigurator;
             sslConfigurator.configure(sslContext, sslServerSocket);
-            return new ConfiguredSSLServerSocket(sslServerSocket, sslContext, sslConfigurator);
+            return wrap ? new ConfiguredSSLServerSocket(sslServerSocket, sslContext, sslConfigurator) : sslServerSocket;
         } else {
             return original;
         }

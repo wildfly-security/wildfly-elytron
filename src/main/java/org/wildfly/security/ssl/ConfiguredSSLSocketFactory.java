@@ -34,11 +34,13 @@ final class ConfiguredSSLSocketFactory extends AbstractDelegatingSSLSocketFactor
 
     private final SSLContext sslContext;
     private final SSLConfigurator sslConfigurator;
+    private final boolean wrap;
 
-    ConfiguredSSLSocketFactory(final SSLSocketFactory delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
+    ConfiguredSSLSocketFactory(final SSLSocketFactory delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator, final boolean wrap) {
         super(delegate);
         this.sslContext = sslContext;
         this.sslConfigurator = sslConfigurator;
+        this.wrap = wrap;
     }
 
     public Socket createSocket(final Socket s, final String host, final int port, final boolean autoClose) throws IOException {
@@ -75,7 +77,7 @@ final class ConfiguredSSLSocketFactory extends AbstractDelegatingSSLSocketFactor
             final SSLContext sslContext = this.sslContext;
             final SSLConfigurator sslConfigurator = this.sslConfigurator;
             sslConfigurator.configure(sslContext, sslSocket);
-            return new ConfiguredSSLSocket(sslSocket, sslContext, sslConfigurator);
+            return wrap ? new ConfiguredSSLSocket(sslSocket, sslContext, sslConfigurator) : sslSocket;
         } else {
             return orig;
         }

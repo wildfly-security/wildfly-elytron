@@ -71,6 +71,7 @@ public final class SSLContextBuilder {
     private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = SSLUtils.getDefaultX509TrustManagerSecurityFactory();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
     private String providerName;
+    private boolean wrap = true;
 
     /**
      * Set the security domain to use to authenticate clients.
@@ -275,6 +276,19 @@ public final class SSLContextBuilder {
     }
 
     /**
+     * Set if the configured SSL engine and sockets created using the SSL context should be wrapped to prevent modification to the configuration.
+     *
+     * Defaults to {@code true}.
+     *
+     * @param wrap should the engine or socket created by the SSL context be wrapped to prevent modification to the configuration.
+     * @return this builder
+     */
+    public SSLContextBuilder setWrap(final boolean wrap) {
+        this.wrap = wrap;
+        return this;
+    }
+
+    /**
      * Build a security factory for the new context.  The factory will cache the constructed instance.
      *
      * @return the security factory
@@ -293,6 +307,7 @@ public final class SSLContextBuilder {
         final boolean wantClientAuth = this.wantClientAuth;
         final boolean needClientAuth = this.needClientAuth;
         final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
+        final boolean wrap  = this.wrap;
 
         return new OneTimeSecurityFactory<>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier, providerName);
@@ -322,10 +337,11 @@ public final class SSLContextBuilder {
                                 "    sessionTimeout = %s%n" +
                                 "    wantClientAuth = %s%n" +
                                 "    needClientAuth = %s%n" +
-                                "    useCipherSuitesOrder = %s%n",
+                                "    useCipherSuitesOrder = %s%n" +
+                                "    wrap = %s%n",
                         securityDomain, canAuthPeers, cipherSuiteSelector, protocolSelector, x509TrustManager,
                         x509KeyManager, providerSupplier, clientMode, authenticationOptional, sessionCacheSize,
-                        sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder);
+                        sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder, wrap);
             }
 
             sslContext.init(x509KeyManager == null ? null : new KeyManager[]{
@@ -340,7 +356,7 @@ public final class SSLContextBuilder {
             final SSLConfigurator sslConfigurator = clientMode ?
                     new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, useCipherSuitesOrder) :
                     new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth, useCipherSuitesOrder);
-            final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator);
+            final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator, wrap);
             return new DelegatingSSLContext(contextSpi);
         });
     }

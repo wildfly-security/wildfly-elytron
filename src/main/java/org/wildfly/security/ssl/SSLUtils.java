@@ -146,7 +146,19 @@ public final class SSLUtils {
      * @return the configured SSL context
      */
     public static SSLContext createConfiguredSslContext(SSLContext original, final SSLConfigurator sslConfigurator) {
-        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, sslConfigurator));
+        return createConfiguredSslContext(original, sslConfigurator, true);
+    }
+
+    /**
+     * Create a configured SSL context from an outside SSL context.
+     *
+     * @param original the original SSL context
+     * @param sslConfigurator the SSL configurator
+     * @param wrap should the resulting SSLEngine, SSLSocket, and SSLServerSocket instances be wrapped using the configurator.
+     * @return the configured SSL context
+     */
+    public static SSLContext createConfiguredSslContext(SSLContext original, final SSLConfigurator sslConfigurator, final boolean wrap) {
+        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, sslConfigurator, wrap));
     }
 
     /**
