@@ -30,8 +30,6 @@ public class ClientUtils {
     private static final AuthenticationContextConfigurationClient AUTH_CONFIGURATION_CLIENT = doPrivileged(AuthenticationContextConfigurationClient.ACTION);
 
     public static CallbackHandler getCallbackHandler(URI uri, AuthenticationContext context) {
-        AuthenticationConfiguration config = AUTH_CONFIGURATION_CLIENT.getAuthenticationConfiguration(uri, context);
-        final CallbackHandler callbackHandler = config.getCallbackHandler();
-        return callbackHandler == null ? config.createCallbackHandler() : callbackHandler;
+        return AUTH_CONFIGURATION_CLIENT.getAuthenticationConfiguration(uri, context).createCallbackHandler();
     }
 }
