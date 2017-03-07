@@ -58,7 +58,13 @@ public class FileAuditEndpoint implements AuditEndpoint {
         this.syncOnAccept = builder.syncOnAccept;
 
         FileOutputStream fos = new FileOutputStream(builder.location.toFile(), true);
-        this.fileDescriptor = fos.getFD();
+        try {
+            this.fileDescriptor = fos.getFD();
+        } catch (IOException e) {
+            fos.close();
+            throw e;
+        }
+
         this.outputStream = new BufferedOutputStream(fos);
     }
 
