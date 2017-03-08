@@ -369,6 +369,10 @@ public final class AuthenticationConfiguration {
         if (getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             return false;
         }
+        // if a mechanism was explicitly disallowed, we do not support it no matter what
+        if (deniedSasl.contains(mechanismName)) {
+            return false;
+        }
         // if we have a credential-providing callback handler, we support any mechanism
         if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
             return true;
