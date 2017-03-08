@@ -365,6 +365,10 @@ public final class AuthenticationConfiguration {
      * @return {@code true} if supported, {@code false} otherwise
      */
     boolean saslSupportedByConfiguration(String mechanismName) {
+        // anonymous is special!
+        if (getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
+            return false;
+        }
         // if we have a credential-providing callback handler, we support any mechanism
         if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
             return true;
