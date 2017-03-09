@@ -57,31 +57,26 @@
                         <resource-owner-credentials name="jdoe" password="dont_tell_me"/>
                     </oauth2-bearer-token>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="test2.org">
                 <credentials>
                     <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token"/>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="test3.org">
                 <credentials>
                     <bearer-token value="invalid_token"/>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="test4.org">
                 <credentials>
                     <oauth2-bearer-token token-endpoint-uri="http://127.0.0.1:50831/token"/>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="test5.org">
                 <credentials>
                     <bearer-token value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"/>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="test6">
                 <credentials>
@@ -89,7 +84,6 @@
                         <resource-owner-credentials name="alice" password="bad_password"/>
                     </oauth2-bearer-token>
                 </credentials>
-                <allow-sasl-mechanisms names="OAUTHBEARER"/>
             </configuration>
             <configuration name="authorization-server-a">
                 <set-user-name name="elytron-client"/>
