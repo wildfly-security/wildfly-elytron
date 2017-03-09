@@ -172,8 +172,9 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             if (authenticate(null, username, passwordChars)) {
                 IdentityCache identityCache = createIdentityCache(request, true);
                 if (authorize(username, request, identityCache)) {
-                    log.debugf("User %s authenticated successfully using FormAuthenticationMechanism!", username);
+                    log.debugf("User [%s] authenticated successfully using FormAuthenticationMechanism", username);
                     succeed();
+
                     HttpScope session = getSessionScope(request, true);
                     HttpServerMechanismsResponder responder = null;
                     if (session.exists()) {
@@ -181,6 +182,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
                             postAuthenticationPath = originalPath;
+                            log.tracef("User redirected to original path [%s]", postAuthenticationPath);
                         } else {
                             URI requestUri = request.getRequestURI();
                             String currentPath = requestUri.getPath();
@@ -193,19 +195,23 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                             sb.append(currentPath.substring(0, currentPath.indexOf(DEFAULT_POST_LOCATION)));
 
                             postAuthenticationPath = sb.toString();
+                            log.tracef("User redirected to default path [%s]", postAuthenticationPath);
                         }
                         session.setAttachment(LOCATION_KEY, null);
                         responder = (response) -> sendRedirect(response, postAuthenticationPath);
                     }
 
                     request.authenticationComplete(responder, identityCache::remove);
+                    // no resumeRequest here, need to redirect first
                     return;
                 } else {
+                    log.debugf("User [%s] authorization failed", username);
                     failAndRedirectToErrorPage(request, username);
                     return;
                 }
 
             } else {
+                log.debugf("User [%s] authentication failed", username);
                 failAndRedirectToErrorPage(request, username);
                 return;
             }
@@ -258,6 +264,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                     throw new HttpAuthenticationException(e);
                 }
                 request.authenticationComplete(null, identityCache::remove);
+                request.resumeRequest();
                 return true;
             }
         }
