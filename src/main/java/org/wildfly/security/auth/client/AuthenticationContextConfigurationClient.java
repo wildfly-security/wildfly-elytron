@@ -129,7 +129,8 @@ public final class AuthenticationContextConfigurationClient {
         }
         int port = uri.getPort();
         if (port == -1) port = protocolDefaultPort;
-        if (port != -1 && configuration.setPort != -1) {
+        if (port != -1 && configuration.setPort == -1) {
+            // use the URI port in this configuration
             configuration = configuration.usePort(port);
         }
         final String userInfo = uri.getUserInfo();
