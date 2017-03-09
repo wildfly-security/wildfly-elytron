@@ -70,6 +70,7 @@ import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
+import org.wildfly.common.annotation.NotNull;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -157,7 +158,7 @@ public final class AuthenticationConfiguration {
     private String toString;
 
     final AccessControlContext capturedAccessContext;
-    final Principal principal;
+    @NotNull final Principal principal;
     final String setHost;
     final String setProtocol;
     final String setRealm;
@@ -185,7 +186,7 @@ public final class AuthenticationConfiguration {
      */
     private AuthenticationConfiguration() {
         this.capturedAccessContext = null;
-        this.principal = null;
+        this.principal = AnonymousPrincipal.getInstance();
         this.setHost = null;
         this.setProtocol = null;
         this.setRealm = null;
@@ -307,7 +308,7 @@ public final class AuthenticationConfiguration {
 
     private AuthenticationConfiguration(final AuthenticationConfiguration original, final AuthenticationConfiguration other) {
         this.capturedAccessContext = getOrDefault(other.capturedAccessContext, original.capturedAccessContext);
-        this.principal = getOrDefault(other.principal, original.principal);
+        this.principal = other.principal instanceof AnonymousPrincipal ? original.principal : other.principal;
         this.setHost = getOrDefault(other.setHost, original.setHost);
         this.setProtocol = getOrDefault(other.setProtocol, original.setProtocol);
         this.setRealm = getOrDefault(other.setRealm, original.setRealm);
@@ -1208,7 +1209,7 @@ public final class AuthenticationConfiguration {
         if (toString == null) {
             StringBuilder b = new StringBuilder(64);
             b.append("AuthenticationConfiguration:");
-            if (principal != null) b.append("principal=").append(principal).append(',');
+            b.append("principal=").append(principal).append(',');
             if (setAuthzName != null) b.append("authorization-id=").append(setAuthzName).append(',');
             if (setHost != null) b.append("set-host=").append(setHost).append(',');
             if (setProtocol != null) b.append("set-protocol=").append(setProtocol).append(',');
