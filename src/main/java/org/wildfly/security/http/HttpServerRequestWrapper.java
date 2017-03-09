@@ -18,16 +18,18 @@
 
 package org.wildfly.security.http;
 
-import org.wildfly.common.Assert;
-
-import javax.net.ssl.SSLSession;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.net.ssl.SSLSession;
+
+import org.wildfly.common.Assert;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -69,6 +71,11 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     @Override
     public SSLSession getSSLSession() {
         return delegate.getSSLSession();
+    }
+
+    @Override
+    public Certificate[] getPeerCertificates() {
+        return delegate.getPeerCertificates();
     }
 
     @Override
