@@ -998,7 +998,11 @@ public final class AuthenticationConfiguration {
      * @return the new configuration.
      */
     public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
-        return mechanismProperties == null || mechanismProperties.isEmpty() ? this : new AuthenticationConfiguration(this, SET_MECH_PROPS, new HashMap<>(mechanismProperties));
+        if (mechanismProperties == null || mechanismProperties.isEmpty()) return this;
+        final HashMap<String, Object> newMap = new HashMap<>(mechanismProperties);
+        newMap.putAll(this.mechanismProperties);
+        newMap.values().removeIf(Objects::isNull);
+        return new AuthenticationConfiguration(this, SET_MECH_PROPS, optimizeMap(newMap));
     }
 
     /**
@@ -1016,6 +1020,15 @@ public final class AuthenticationConfiguration {
     private static <T> Set<T> optimizeSet(Set<T> orig) {
         if (orig.isEmpty()) return Collections.emptySet();
         if (orig.size() == 1) return Collections.singleton(orig.iterator().next());
+        return orig;
+    }
+
+    private static <K, V> Map<K, V> optimizeMap(Map<K, V> orig) {
+        if (orig.isEmpty()) return Collections.emptyMap();
+        if (orig.size() == 1) {
+            final Map.Entry<K, V> entry = orig.entrySet().iterator().next();
+            return Collections.singletonMap(entry.getKey(), entry.getValue());
+        }
         return orig;
     }
 
