@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSession;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -159,5 +160,15 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     @Override
     public boolean resumeRequest() {
         return delegate.resumeRequest();
+    }
+
+    @Override
+    public boolean isAuthenticationRequired() {
+        return delegate.isAuthenticationRequired();
+    }
+
+    @Override
+    public Certificate[] renegotiateForClientCertAuth() {
+        return delegate.renegotiateForClientCertAuth();
     }
 }

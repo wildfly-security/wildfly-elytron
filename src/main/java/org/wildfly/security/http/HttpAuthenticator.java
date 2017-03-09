@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -326,6 +327,16 @@ public class HttpAuthenticator {
         @Override
         public boolean resumeRequest() {
             return httpExchangeSpi.resumeRequest();
+        }
+
+        @Override
+        public boolean isAuthenticationRequired() {
+            return required;
+        }
+
+        @Override
+        public Certificate[] renegotiateForClientCertAuth() {
+            return httpExchangeSpi.renegotiateForClientCertAuth();
         }
 
     }
