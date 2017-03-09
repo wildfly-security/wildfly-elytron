@@ -100,6 +100,8 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.localuser.LocalUserClient;
+import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
@@ -373,12 +375,21 @@ public final class AuthenticationConfiguration {
         if (allowedSasl.contains(mechanismName)) {
             return true;
         }
+        // special case for local, quiet auth
+        boolean isLocalQuietAuth = mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER) && (
+            Boolean.parseBoolean(getOrDefault(String.valueOf(mechanismProperties.get(LocalUserClient.QUIET_AUTH)), "false")) ||
+            Boolean.parseBoolean(getOrDefault(String.valueOf(mechanismProperties.get(LocalUserClient.LEGACY_QUIET_AUTH)), "false"))
+        );
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
-        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && ! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
+        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && ! isLocalQuietAuth && ! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             return false;
         }
         // if we have a credential-providing callback handler, we support any mechanism from here on out
         if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
+            return true;
+        }
+        // mechanisms that do not need credentials are probably supported
+        if (SaslMechanismInformation.doesNotUseClientCredentials(mechanismName)) {
             return true;
         }
         // if we have a key manager factory, we definitely support IEC/ISO 9798
@@ -420,8 +431,8 @@ public final class AuthenticationConfiguration {
                 }
             }
         }
-        // mechanisms that do not need credentials are probably supported
-        return SaslMechanismInformation.doesNotUseClientCredentials(mechanismName);
+        // no apparent way to support the mechanism
+        return false;
     }
 
     /**
