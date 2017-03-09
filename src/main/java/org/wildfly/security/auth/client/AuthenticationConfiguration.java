@@ -205,7 +205,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
         this.trustManagerFactory = null;
-        this.mechanismProperties = Collections.emptyMap();
+        this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
     }
 
