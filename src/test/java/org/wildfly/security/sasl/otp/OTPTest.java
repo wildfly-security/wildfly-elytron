@@ -31,9 +31,7 @@ import static org.wildfly.security.sasl.otp.OTP.DIRECT_OTP;
 import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_WORD_RESPONSE;
-import static org.wildfly.security.sasl.otp.OTP.MATCH_NEW_PASSWORD;
 import static org.wildfly.security.sasl.otp.OTP.MATCH_NEW_PASSWORD_FORMAT_CHOICE;
-import static org.wildfly.security.sasl.otp.OTP.MATCH_PASSWORD;
 import static org.wildfly.security.sasl.otp.OTP.MATCH_PASSWORD_FORMAT_CHOICE;
 import static org.wildfly.security.sasl.otp.OTP.MATCH_RESPONSE_CHOICE;
 import static org.wildfly.security.sasl.otp.OTP.PASS_PHRASE;
@@ -45,6 +43,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -53,6 +52,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -64,8 +64,11 @@ import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.security.auth.callback.PasswordResetCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.CallbackKind;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -1000,10 +1003,19 @@ public class OTPTest extends BaseTestCase {
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
-                                .usePassword(password, MATCH_PASSWORD)
+                                .usePassword(password)
                                 .useChoice(MATCH_NEW_PASSWORD_FORMAT_CHOICE, DIRECT_OTP)
                                 .useParameterSpec(getOTPParameterSpec(newAlgorithm, newSeed, newSequenceNumber))
-                                .usePassword(newPassword, MATCH_NEW_PASSWORD)
+                                .useCallbackHandler(callbacks -> {
+                                    if (callbacks.length > 0) {
+                                        final Callback callback = callbacks[0];
+                                        if (callback instanceof PasswordResetCallback) {
+                                            ((PasswordResetCallback) callback).setPassword(newPassword.toCharArray());
+                                        } else {
+                                            CallbackUtil.unsupported(callback);
+                                        }
+                                    }
+                                }, EnumSet.of(CallbackKind.CREDENTIAL_RESET))
                                 .allowSaslMechanisms(algorithm));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
@@ -1017,9 +1029,18 @@ public class OTPTest extends BaseTestCase {
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
-                                .usePassword(password, MATCH_PASSWORD)
+                                .usePassword(password)
                                 .useChoice(MATCH_NEW_PASSWORD_FORMAT_CHOICE, PASS_PHRASE)
-                                .usePassword(newPassPhrase, MATCH_NEW_PASSWORD)
+                                .useCallbackHandler(callbacks -> {
+                                    if (callbacks.length > 0) {
+                                        final Callback callback = callbacks[0];
+                                        if (callback instanceof PasswordResetCallback) {
+                                            ((PasswordResetCallback) callback).setPassword(newPassPhrase.toCharArray());
+                                        } else {
+                                            CallbackUtil.unsupported(callback);
+                                        }
+                                    }
+                                }, EnumSet.of(CallbackKind.CREDENTIAL_RESET))
                                 .allowSaslMechanisms(algorithm));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);

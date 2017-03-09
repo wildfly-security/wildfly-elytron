@@ -124,12 +124,13 @@ public final class AuthenticationContextConfigurationClient {
         final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority, purpose);
         AuthenticationConfiguration configuration = node != null ? node.getConfiguration() : AuthenticationConfiguration.EMPTY;
         final String uriHost = uri.getHost();
-        if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
+        if (uriHost != null && configuration.setHost == null) {
             configuration = configuration.useHost(uriHost);
         }
         int port = uri.getPort();
         if (port == -1) port = protocolDefaultPort;
-        if (port != -1 && ! configuration.delegatesThrough(SetPortAuthenticationConfiguration.class)) {
+        if (port != -1 && configuration.setPort == -1) {
+            // use the URI port in this configuration
             configuration = configuration.usePort(port);
         }
         final String userInfo = uri.getUserInfo();
@@ -207,8 +208,8 @@ public final class AuthenticationContextConfigurationClient {
      */
     public CallbackHandler getCallbackHandler(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
-        final CallbackHandler callbackHandler = configuration.getCallbackHandler();
-        return callbackHandler == null ? configuration::defaultHandleCallbacks : callbackHandler;
+        final CallbackHandler callbackHandler = configuration.getUserCallbackHandler();
+        return callbackHandler == null ? configuration.createCallbackHandler() : callbackHandler;
     }
 
     /**
