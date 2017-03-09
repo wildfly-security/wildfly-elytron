@@ -374,10 +374,10 @@ public final class AuthenticationConfiguration {
             return true;
         }
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
-        if (! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
+        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && ! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             return false;
         }
-        // if we have a credential-providing callback handler, we support any mechanism
+        // if we have a credential-providing callback handler, we support any mechanism from here on out
         if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
             return true;
         }
