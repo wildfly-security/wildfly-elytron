@@ -23,7 +23,10 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -89,7 +92,7 @@ public final class SSLUtils {
      */
     public static SecurityFactory<SSLContext> createSslContextFactory(ProtocolSelector protocolSelector, Supplier<Provider[]> providerSupplier, String providerName) {
         Provider[] providers = providerSupplier.get();
-        Map<String, Provider> preferredProviderByAlgorithm = new IdentityHashMap<>();
+        final Map<String, List<Provider>> preferredProviderByAlgorithm = new IdentityHashMap<>();
 
         // compile all the providers that support SSLContext.
 
@@ -103,23 +106,29 @@ public final class SSLUtils {
                 for (Provider.Service service : services) {
                     if (serviceType.equals(service.getType())) {
                         String protocolName = service.getAlgorithm();
-                        if (!preferredProviderByAlgorithm.containsKey(protocolName)) {
-                            preferredProviderByAlgorithm.put(protocolName, provider);
-                        }
+                        List<Provider> providerList = preferredProviderByAlgorithm.computeIfAbsent(protocolName, s -> new ArrayList<>());
+                        providerList.add(provider);
                     }
                 }
             }
         }
 
-        // now figure out the supported protocol set.
-
-        String[] supportedProtocols = protocolSelector.evaluate(preferredProviderByAlgorithm.keySet().toArray(NO_STRINGS));
-        for (String supportedProtocol : supportedProtocols) {
-            Provider provider = preferredProviderByAlgorithm.get(supportedProtocol);
-            if (provider != null) {
-                return createSimpleSslContextFactory(supportedProtocol, provider);
-            }
+        // now return a factory that will return the best match is can create.
+        final String[] supportedProtocols = protocolSelector.evaluate(preferredProviderByAlgorithm.keySet().toArray(NO_STRINGS));
+        if (supportedProtocols.length > 0) {
+            return () -> {
+                for (String protocol : supportedProtocols) {
+                    List<Provider> providerList = preferredProviderByAlgorithm.getOrDefault(protocol, Collections.emptyList());
+                        for (Provider provider : providerList) {
+                            try {
+                                return SSLContext.getInstance(protocol, provider);
+                            } catch (NoSuchAlgorithmException ignored) {}
+                        }
+                }
+                throw ElytronMessages.log.noAlgorithmForSslProtocol();
+            };
         }
+
         return SSLUtils::throwIt;
     }
 
