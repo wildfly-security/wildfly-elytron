@@ -100,7 +100,6 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
@@ -366,12 +365,16 @@ public final class AuthenticationConfiguration {
      * @return {@code true} if supported, {@code false} otherwise
      */
     boolean saslSupportedByConfiguration(String mechanismName) {
-        // anonymous is special!
-        if (getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
-            return false;
-        }
         // if a mechanism was explicitly disallowed, we do not support it no matter what
         if (deniedSasl.contains(mechanismName)) {
+            return false;
+        }
+        // if a mechanism was explicitly allowed, we support it no matter what
+        if (allowedSasl.contains(mechanismName)) {
+            return true;
+        }
+        // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
+        if (! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             return false;
         }
         // if we have a credential-providing callback handler, we support any mechanism
@@ -380,10 +383,6 @@ public final class AuthenticationConfiguration {
         }
         // if we have a key manager factory, we definitely support IEC/ISO 9798
         if (keyManagerFactory != null && SaslMechanismInformation.IEC_ISO_9798.test(mechanismName)) {
-            return true;
-        }
-        // if a mechanism was explicitly allowed, we support it no matter what
-        if (allowedSasl.contains(mechanismName)) {
             return true;
         }
         // otherwise, use mechanism information and our credential set
@@ -421,8 +420,8 @@ public final class AuthenticationConfiguration {
                 }
             }
         }
-        // TODO: this is probably still wrong; revisit
-        return mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER);
+        // mechanisms that do not need credentials are probably supported
+        return SaslMechanismInformation.doesNotUseClientCredentials(mechanismName);
     }
 
     /**
@@ -1264,7 +1263,7 @@ public final class AuthenticationConfiguration {
                     final NameCallback nameCallback = (NameCallback) callback;
                     // populate with our authentication name
                     final Principal principal = config.getPrincipal();
-                    if (principal == null) {
+                    if (principal instanceof AnonymousPrincipal) {
                         final String defaultName = nameCallback.getDefaultName();
                         if (defaultName == null) {
                             CallbackUtil.unsupported(nameCallback);

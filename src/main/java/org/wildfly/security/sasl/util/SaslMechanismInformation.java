@@ -23,6 +23,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableSet;
 
+import java.security.Principal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -675,6 +676,43 @@ public final class SaslMechanismInformation {
             }
             default: {
                 return true;
+            }
+        }
+    }
+
+    /**
+     * Determine whether the given mechanism name is known to not use any sort of {@link Principal} for authentication.
+     *
+     * @param mechName the mechanism name (must not be {@code null})
+     * @return {@code true} if the mechanism does not use a principal, {@code false} if it does or it is not known
+     */
+    public static boolean doesNotUsePrincipal(final String mechName) {
+        switch (mechName) {
+            case Names.ANONYMOUS:
+            case Names.OAUTHBEARER: {
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Determine whether a mechanism does not need the client to present credentials.
+     *
+     * @param mechName the mechanism name
+     * @return {@code true} if the mechanism does not present client credentials, {@code false} if it it does or it is not known
+     */
+    public static boolean doesNotUseClientCredentials(final String mechName) {
+        switch (mechName) {
+            case LocalUserSaslFactory.JBOSS_LOCAL_USER:
+            case Names.ANONYMOUS:
+            case Names.EXTERNAL: {
+                return true;
+            }
+            default: {
+                return false;
             }
         }
     }
