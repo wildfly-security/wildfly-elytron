@@ -27,8 +27,6 @@ import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
-import org.wildfly.security.auth.server.SecurityIdentity;
-
 /**
  * Server side representation of a HTTP request.
  *
@@ -115,7 +113,6 @@ public interface HttpServerRequest extends HttpServerScopes {
      *
      * If this form is called no response is expected from this mechanism.
      *
-     * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
      */
     default void authenticationComplete() {
         authenticationComplete(null);
@@ -251,4 +248,16 @@ public interface HttpServerRequest extends HttpServerScopes {
      */
     boolean resumeRequest();
 
+    /**
+     *
+     * @return <code>true</code> If this request requires authentication to proceed
+     */
+    boolean isAuthenticationRequired();
+
+    /**
+     * Attempts to renegotiate the HTTPS connection to get a client certificate, and returns the renegotiated
+     * certificate
+     * @return the certificates if successful, null otherwise
+     */
+    java.security.cert.Certificate[] renegotiateForClientCertAuth();
 }

@@ -27,6 +27,7 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -251,6 +252,16 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         @Override
         public boolean resumeRequest() {
             return wrapped.resumeRequest();
+        }
+
+        @Override
+        public boolean isAuthenticationRequired() {
+            return wrapped.isAuthenticationRequired();
+        }
+
+        @Override
+        public Certificate[] renegotiateForClientCertAuth() {
+            return wrapped.renegotiateForClientCertAuth();
         }
 
 

@@ -41,6 +41,7 @@ import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,13 +96,21 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
     }
 
     private boolean attemptAuthentication(HttpServerRequest request, SSLSession sslSession) throws HttpAuthenticationException {
-        X509Certificate[] x509Certificates;
+        X509Certificate[] x509Certificates = null;
         try {
             x509Certificates = X500.asX509CertificateArray(sslSession.getPeerCertificates());
         } catch (SSLPeerUnverifiedException e) {
-            log.trace("CLIENT-CERT Peer Unverified");
-            request.noAuthenticationInProgress();
-            return true;
+            if(request.isAuthenticationRequired()) {
+                Certificate[] certs = request.renegotiateForClientCertAuth();
+                if(certs != null) {
+                    x509Certificates = X500.asX509CertificateArray(certs);
+                }
+            }
+            if(x509Certificates == null) {
+                log.trace("CLIENT-CERT Peer Unverified");
+                request.noAuthenticationInProgress();
+                return true;
+            }
         }
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
 

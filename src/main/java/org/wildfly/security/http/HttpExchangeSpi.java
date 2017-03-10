@@ -244,4 +244,12 @@ public interface HttpExchangeSpi extends HttpServerScopes {
          return false;
      }
 
+    /**
+     * Attempts to renegotiate the HTTPS connection to get a client certificate, and returns the renegotiated
+     * certificate
+     * @return the certificates if successful, null otherwise
+     */
+    default java.security.cert.Certificate[] renegotiateForClientCertAuth() {
+        return null;
+    }
 }
