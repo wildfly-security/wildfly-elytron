@@ -110,27 +110,27 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     }
 
     public void setWantClientAuth(final SSLContext context, final SSLSocket sslSocket, final boolean value) {
-        // ignored
+        if (value) sslSocket.setWantClientAuth(value);
     }
 
     public void setWantClientAuth(final SSLContext context, final SSLEngine sslEngine, final boolean value) {
-        // ignored
+        if (value) sslEngine.setWantClientAuth(value);
     }
 
     public void setWantClientAuth(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final boolean value) {
-        // ignored
+        if (value) sslServerSocket.setWantClientAuth(value);
     }
 
     public void setNeedClientAuth(final SSLContext context, final SSLSocket sslSocket, final boolean value) {
-        // ignored
+        if (value) sslSocket.setNeedClientAuth(value);
     }
 
     public void setNeedClientAuth(final SSLContext context, final SSLEngine sslEngine, final boolean value) {
-        // ignored
+        if (value) sslEngine.setNeedClientAuth(value);
     }
 
     public void setNeedClientAuth(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final boolean value) {
-        // ignored
+        if (value) sslServerSocket.setNeedClientAuth(value);
     }
 
     public void setEnabledCipherSuites(final SSLContext sslContext, final SSLSocket sslSocket, final String[] cipherSuites) {

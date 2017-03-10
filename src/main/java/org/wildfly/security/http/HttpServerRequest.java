@@ -21,6 +21,7 @@ package org.wildfly.security.http;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,6 +62,13 @@ public interface HttpServerRequest extends HttpServerScopes {
      *         exists.
      */
     SSLSession getSSLSession();
+
+    /**
+     * Get the peer certificates established on the connection.
+     *
+     * @return the peer certificates established on the connection or {@code null} if none available.
+     */
+    Certificate[] getPeerCertificates();
 
     /**
      * Notification from the mechanism to state no authentication is in progress whilst evaluating the current request.

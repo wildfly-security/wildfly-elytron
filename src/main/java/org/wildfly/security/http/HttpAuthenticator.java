@@ -18,16 +18,16 @@
 
 package org.wildfly.security.http;
 
-import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
-
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
+import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -163,6 +163,11 @@ public class HttpAuthenticator {
         @Override
         public SSLSession getSSLSession() {
             return httpExchangeSpi.getSSLSession();
+        }
+
+        @Override
+        public Certificate[] getPeerCertificates() {
+            return httpExchangeSpi.getPeerCertificates(required);
         }
 
         @Override

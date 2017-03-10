@@ -20,7 +20,12 @@ package org.wildfly.security.http.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -40,11 +45,6 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
-
-import java.security.cert.X509Certificate;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * The CLIENT_CERT authentication mechanism.
@@ -86,23 +86,22 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             log.trace("ClientCertAuthenticationMechanism: re-authentication succeed");
             return;
         }
-        if (attemptAuthentication(request, sslSession)) {
-            log.trace("ClientCertAuthenticationMechanism: authentication succeed");
+        if (attemptAuthentication(request)) {
             return;
         }
         log.trace("ClientCertAuthenticationMechanism: both, re-authentication and authentication, failed");
         fail(request);
     }
 
-    private boolean attemptAuthentication(HttpServerRequest request, SSLSession sslSession) throws HttpAuthenticationException {
-        X509Certificate[] x509Certificates;
-        try {
-            x509Certificates = X500.asX509CertificateArray(sslSession.getPeerCertificates());
-        } catch (SSLPeerUnverifiedException e) {
+    private boolean attemptAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
+        Certificate[] peerCertificates = request.getPeerCertificates();
+        if (peerCertificates == null) {
             log.trace("CLIENT-CERT Peer Unverified");
             request.noAuthenticationInProgress();
             return true;
         }
+
+        X509Certificate[] x509Certificates = X500.asX509CertificateArray(peerCertificates);
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
 
         log.tracef("Using ClientCertAuthenticationMechanism to authenticate the following certificates: [%s]", x509Certificates);
@@ -129,7 +128,10 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
 
             boolean authorized = authorizeCallback.isAuthorized();
             log.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
-            if (authorized) if (succeed(request)) return true;
+            if (authorized && succeed(request)) {
+                log.trace("ClientCertAuthenticationMechanism: authentication succeed");
+                return true;
+            }
         }
         return false;
     }

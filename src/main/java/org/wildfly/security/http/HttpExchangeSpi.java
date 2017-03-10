@@ -17,14 +17,18 @@
  */
 package org.wildfly.security.http;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -73,6 +77,29 @@ public interface HttpExchangeSpi extends HttpServerScopes {
      *         exists.
      */
     default SSLSession getSSLSession() {
+        return null;
+    }
+
+    /**
+     * Get the peer certificates (if any) associated with the current connection.
+     *
+     * Although re-negotiation may be requested the underlying implementation may not support re-negotiation and will continue
+     * to return {@code null}. {@code null} will also still be returned if after re-negotiation peer certificates are still not
+     * available.
+     *
+     * @param renegotiate if no certificates are available should re-negotiation of the session be attempted.
+     * @return the peer certificates associated with the current connection or {@code null} if none associated.
+     */
+    default Certificate[] getPeerCertificates(boolean renegotiate) {
+        SSLSession sslSession = getSSLSession();
+        if (sslSession != null) {
+            try {
+                return sslSession.getPeerCertificates();
+            } catch (SSLPeerUnverifiedException e) {
+                log.trace("CLIENT-CERT Peer Unverified");
+            }
+        }
+
         return null;
     }
 
