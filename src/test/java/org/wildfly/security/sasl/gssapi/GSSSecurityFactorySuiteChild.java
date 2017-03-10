@@ -20,6 +20,7 @@ package org.wildfly.security.sasl.gssapi;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.util.Collections;
 
 import org.ietf.jgss.GSSCredential;
 import org.junit.Test;
@@ -43,6 +44,7 @@ public class GSSSecurityFactorySuiteChild {
                 .setKeyTab(new File(GssapiTestSuite.serverKeyTab))
                 .setIsServer(true)
                 .setDebug(true)
+                .setOptions(Collections.emptyMap())
                 .build();
 
         GSSKerberosCredential credentialCredential = factory.create();
