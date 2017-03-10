@@ -33,6 +33,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.callback.OptionalNameCallback;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
@@ -108,8 +109,8 @@ public final class LocalUserClient extends AbstractSaslClient {
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;
                 if (quietAuth == false) {
-                    final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name",
-                            authenticationId) : new NameCallback("User name");
+                    final NameCallback nameCallback = authenticationId != null ? new OptionalNameCallback("User name",
+                            authenticationId) : new OptionalNameCallback("User name");
                     final RealmCallback realmCallback = new RealmCallback("User realm");
                     handleCallbacks(nameCallback, realmCallback);
                     authenticationId = nameCallback.getName();

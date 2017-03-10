@@ -205,7 +205,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
         this.trustManagerFactory = null;
-        this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
+        this.mechanismProperties = Collections.emptyMap();
         this.callbackIntercept = null;
     }
 
@@ -376,13 +376,16 @@ public final class AuthenticationConfiguration {
             return true;
         }
         // special case for local, quiet auth
-        boolean isLocalQuietAuth = mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER) && (
-            Boolean.parseBoolean(getOrDefault(String.valueOf(mechanismProperties.get(LocalUserClient.QUIET_AUTH)), "false")) ||
-            Boolean.parseBoolean(getOrDefault(String.valueOf(mechanismProperties.get(LocalUserClient.LEGACY_QUIET_AUTH)), "false"))
-        );
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
-        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && ! isLocalQuietAuth && ! SaslMechanismInformation.doesNotUsePrincipal(mechanismName) && getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
-            return false;
+        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL)) {
+            // no callback which can handle a principal.
+            if (! (mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER) || SaslMechanismInformation.doesNotUsePrincipal(mechanismName))) {
+                // the mechanism requires a principal.
+                if (getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
+                    // either we have no principal & the mech requires one, or we have a principal but the mech is anonymous.
+                    return false;
+                }
+            }
         }
         // if we have a credential-providing callback handler, we support any mechanism from here on out
         if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
@@ -1138,9 +1141,17 @@ public final class AuthenticationConfiguration {
     SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
         SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
 
-        final Map<String, ?> mechanismProperties = this.mechanismProperties;
+        Map<String, ?> mechanismProperties = this.mechanismProperties;
         if (! mechanismProperties.isEmpty()) {
-            saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, new HashMap<>(mechanismProperties));
+            mechanismProperties = new HashMap<>(mechanismProperties);
+            // special handling for JBOSS-LOCAL-USER quiet auth... only pass it through if we have a user callback
+            if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL)) {
+                mechanismProperties.remove(LocalUserClient.QUIET_AUTH);
+                mechanismProperties.remove(LocalUserClient.LEGACY_QUIET_AUTH);
+            }
+            if (! mechanismProperties.isEmpty()) {
+                saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, mechanismProperties);
+            }
         }
         String host = getHost();
         if (host != null) {
@@ -1241,7 +1252,7 @@ public final class AuthenticationConfiguration {
             if (forwardSecurityDomain != null) b.append("forwarding-authentication,");
             if (userCallbackHandler != null) b.append("user-callback-handler=").append(userCallbackHandler).append(',');
             if (! userCallbackKinds.isEmpty()) b.append("user-callback-kinds=").append(userCallbackKinds).append(',');
-            if (credentialSource != null) b.append("credentials-present,");
+            if (credentialSource != null && credentialSource != CredentialSource.NONE && credentialSource != IdentityCredentials.NONE) b.append("credentials-present,");
             if (providerSupplier != null) b.append("providers-supplier=").append(providerSupplier).append(',');
             if (keyManagerFactory != null) b.append("key-manager-factory=").append(keyManagerFactory).append(',');
             if (! allowedSasl.isEmpty()) b.append("always-allowed-sasl-mechanisms=").append(allowedSasl).append(',');
@@ -1289,11 +1300,10 @@ public final class AuthenticationConfiguration {
                     final Principal principal = config.getPrincipal();
                     if (principal instanceof AnonymousPrincipal) {
                         final String defaultName = nameCallback.getDefaultName();
-                        if (defaultName == null) {
-                            CallbackUtil.unsupported(nameCallback);
-                            continue;
+                        if (defaultName != null) {
+                            nameCallback.setName(defaultName);
                         }
-                        nameCallback.setName(defaultName);
+                        // otherwise set nothing; the mech can decide if that's OK or not
                         continue;
                     } else {
                         nameCallback.setName(config.doRewriteUser(principal).getName());
