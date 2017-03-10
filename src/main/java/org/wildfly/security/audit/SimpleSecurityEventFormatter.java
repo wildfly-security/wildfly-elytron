@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.function.Supplier;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
 import org.wildfly.security.auth.server.event.SecurityDefiniteOutcomeEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
@@ -77,6 +78,19 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     private void handleDefiniteOutcomeEvent(SecurityDefiniteOutcomeEvent event, StringBuilder stringBuilder) {
         handleUnknownEvent(event, stringBuilder);
         stringBuilder.append(",success=").append(event.isSuccessful());
+    }
+
+    @Override
+    public String handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, Void param) {
+        checkNotNullParam("event", event);
+        StringBuilder stringBuilder = new StringBuilder('{');
+        handleAuthenticationFailedEvent(event, stringBuilder);
+        return stringBuilder.append('}').toString();
+    }
+
+    private void handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, StringBuilder stringBuilder) {
+        handleDefiniteOutcomeEvent(event, stringBuilder);
+        stringBuilder.append(",principal=").append(event.getPrincipal() != null ? event.getPrincipal().toString() : null);
     }
 
     @Override
