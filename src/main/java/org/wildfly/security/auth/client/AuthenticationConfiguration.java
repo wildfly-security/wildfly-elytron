@@ -1252,7 +1252,7 @@ public final class AuthenticationConfiguration {
             if (forwardSecurityDomain != null) b.append("forwarding-authentication,");
             if (userCallbackHandler != null) b.append("user-callback-handler=").append(userCallbackHandler).append(',');
             if (! userCallbackKinds.isEmpty()) b.append("user-callback-kinds=").append(userCallbackKinds).append(',');
-            if (credentialSource != null) b.append("credentials-present,");
+            if (credentialSource != null && credentialSource != CredentialSource.NONE && credentialSource != IdentityCredentials.NONE) b.append("credentials-present,");
             if (providerSupplier != null) b.append("providers-supplier=").append(providerSupplier).append(',');
             if (keyManagerFactory != null) b.append("key-manager-factory=").append(keyManagerFactory).append(',');
             if (! allowedSasl.isEmpty()) b.append("always-allowed-sasl-mechanisms=").append(allowedSasl).append(',');
