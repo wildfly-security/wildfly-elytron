@@ -22,33 +22,57 @@ import static org.wildfly.common.math.HashMath.multiHashUnordered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
+import org.wildfly.common.net.Inet;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 class MatchHostRule extends MatchRule {
 
-    private static final Pattern validHostSpecPattern = Pattern.compile("(?i:[-a-z0-9_]+(?:\\.[-a-z0-9_]+)*\\.?)");
+    private static final Pattern validHostSpecPattern = Pattern.compile("(?i:[-a-z0-9_]+(?:\\.[-a-z0-9_]+)*)");
 
     private final String hostSpec;
+    private final byte[] hostSpecBytes;
 
-    MatchHostRule(final MatchRule parent, final String hostSpec) {
+    MatchHostRule(final MatchRule parent, String hostSpec) {
         super(parent);
-        if (! validHostSpecPattern.matcher(hostSpec).matches()) {
-            throw log.invalidHostSpec(hostSpec);
+        if (hostSpec.contains(":")) { // IPv6
+            this.hostSpecBytes = Inet.parseInet6AddressToBytes(hostSpec);
+            if (this.hostSpecBytes == null) {
+                throw log.invalidHostSpec(hostSpec);
+            }
+        } else { // IPv4 or domain name
+            if (!validHostSpecPattern.matcher(hostSpec).matches()) {
+                throw log.invalidHostSpec(hostSpec);
+            }
+            this.hostSpecBytes = Inet.parseInet4AddressToBytes(hostSpec); // null if not IPv4
         }
-        if (hostSpec.endsWith(".")) {
-            this.hostSpec = hostSpec.substring(0, hostSpec.length() - 1).toLowerCase(Locale.ENGLISH);
-        } else {
-            this.hostSpec = hostSpec.toLowerCase(Locale.ENGLISH);
-        }
+        this.hostSpec = hostSpec.toLowerCase(Locale.ROOT);
     }
 
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
         String host = uri.getHost();
-        return host != null && host.startsWith(hostSpec) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        if (host == null) {
+            return false;
+        }
+
+        byte[] hostBytes;
+        if (host.startsWith("[") && host.endsWith("]")) {
+            hostBytes = Inet.parseInet6AddressToBytes(host);
+        } else {
+            hostBytes = Inet.parseInet4AddressToBytes(host); // null if not IPv4
+        }
+
+        // if both hostSpec and host are valid IP addresses, compare their byte representations, otherwise compare as strings
+        if (hostBytes != null && this.hostSpecBytes != null) {
+            return Arrays.equals(hostBytes, this.hostSpecBytes) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        } else {
+            return host.toLowerCase(Locale.ROOT).equals(hostSpec) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        }
     }
 
     MatchRule reparent(final MatchRule newParent) {
