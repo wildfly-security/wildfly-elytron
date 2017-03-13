@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -35,6 +36,8 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 /**
  * A {@link SaslServerFactory} which uses the currently installed security providers to acquire a delegate
  * {@code SaslServerFactory}.  The provider service instances may or may not be cached.
@@ -43,7 +46,7 @@ import javax.security.sasl.SaslException;
  */
 public final class SecurityProviderSaslServerFactory implements SaslServerFactory {
 
-    private static final String serviceType = SaslServerFactory.class.getSimpleName();
+    private static final String SERVICE_TYPE = SaslServerFactory.class.getSimpleName();
 
     private final Supplier<Provider[]> providerSupplier;
 
@@ -72,19 +75,23 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
                 Set<Service> services = currentProvider.getServices();
                 if (services != null) {
                     for (Provider.Service service : services) {
-                        if (serviceType.equals(service.getType())) {
+                        if (SERVICE_TYPE.equals(service.getType())) {
                             try {
                                 saslServer = ((SaslServerFactory) service.newInstance(null)).createSaslServer(mechanism,
                                         protocol, serverName, props, cbh);
                                 if (saslServer != null) {
                                     return saslServer;
                                 }
-                            } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                            } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
+                                log.debug(e);
                             }
                         }
                     }
                 }
             }
+        }
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by provider supplier in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return null;
     }
@@ -97,15 +104,19 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
             Set<Service> services = currentProvider.getServices();
             if (services != null) {
                 for (Service service : services) {
-                    if (serviceType.equals(service.getType())) {
+                    if (SERVICE_TYPE.equals(service.getType())) {
                         try {
                             final String[] mechanismNames = ((SaslServerFactory) service.newInstance(null)).getMechanismNames(props);
                             Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
-                        } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                        } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
+                            log.debug(e);
                         }
                     }
                 }
             }
+        }
+        if (names.size() == 0 && log.isTraceEnabled()) {
+            log.tracef("No %s provided by provider supplier in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return names.toArray(new String[names.size()]);
     }

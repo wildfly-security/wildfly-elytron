@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -45,15 +46,15 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
 
     private static final String SERVICE_TYPE = HttpServerAuthenticationMechanismFactory.class.getSimpleName();
 
-    private final Supplier<Provider[]> providers;
+    private final Supplier<Provider[]> providerSupplier;
 
     /**
      * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
      *
-     * @param providers a {@link Supplier<Provider>} to supply the providers to use for locating the factories.
+     * @param providerSupplier a {@link Supplier<Provider>} to supply the providers to use for locating the factories.
      */
-    public SecurityProviderServerMechanismFactory(Supplier<Provider[]> providers) {
-        this.providers = checkNotNullParam("providers", providers);
+    public SecurityProviderServerMechanismFactory(Supplier<Provider[]> providerSupplier) {
+        this.providerSupplier = checkNotNullParam("providerSupplier", providerSupplier);
     }
 
     /**
@@ -68,15 +69,15 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
-        Set<String> mechanismNames = new LinkedHashSet<>();
-        for (Provider current : providers.get()) {
+        Set<String> names = new LinkedHashSet<>();
+        for (Provider current : providerSupplier.get()) {
             Set<Service> services = current.getServices();
             if (services != null) {
                 for (Service currentService : services) {
                     if (SERVICE_TYPE.equals(currentService.getType())) {
                         try {
                             String[] serviceMechNames = ((HttpServerAuthenticationMechanismFactory) currentService.newInstance(null)).getMechanismNames(properties);
-                            Collections.addAll(mechanismNames, serviceMechNames);
+                            Collections.addAll(names, serviceMechNames);
                         } catch (NoSuchAlgorithmException e) {
                             log.debug(e);
                         }
@@ -84,7 +85,10 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
                 }
             }
         }
-        return mechanismNames.toArray(new String[mechanismNames.size()]);
+        if (names.size() == 0 && log.isTraceEnabled()) {
+            log.tracef("No %s provided by service loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
+        }
+        return names.toArray(new String[names.size()]);
     }
 
     /**
@@ -92,7 +96,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
-        for (Provider current : providers.get()) {
+        for (Provider current : providerSupplier.get()) {
             Set<Service> services = current.getServices();
             if (services != null) {
                 for (Service currentService : services) {
@@ -109,6 +113,9 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
                     }
                 }
             }
+        }
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by service loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return null;
     }

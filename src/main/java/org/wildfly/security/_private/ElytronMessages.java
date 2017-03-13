@@ -1424,7 +1424,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException statusCodeNotNow();
 
     @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
-    String incorrectlyFormattedHeader(String heanderName);
+    String incorrectlyFormattedHeader(String headerName);
 
     @Message(id = 6002, value = "An authentication attempt for user '%s' failed validation using mechanism '%s'.")
     String authenticationFailed(String username, String mechanismName);

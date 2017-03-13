@@ -18,8 +18,10 @@
 package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -101,6 +103,9 @@ public final class FilterServerMechanismFactory implements HttpServerAuthenticat
             if (predicate.test(current)) {
                 filtered.add(current);
             }
+        }
+        if (filtered.size() == 0 && log.isTraceEnabled()) {
+            log.tracef("No mechanisms after filtering by %s (original mechanisms: %s)", FilterServerMechanismFactory.class.getSimpleName(), Arrays.toString(allMechanisms));
         }
         return filtered.toArray(new String[filtered.size()]);
     }

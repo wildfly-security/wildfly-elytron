@@ -18,7 +18,9 @@
 package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -52,14 +54,16 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
      */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
-        LinkedHashSet<String> availableMechanisms = new LinkedHashSet<>();
+        LinkedHashSet<String> names = new LinkedHashSet<>();
         for (HttpServerAuthenticationMechanismFactory current : factories) {
             if (current != null) {
-                Collections.addAll(availableMechanisms, current.getMechanismNames(properties));
+                Collections.addAll(names, current.getMechanismNames(properties));
             }
         }
-
-        return availableMechanisms.toArray(new String[availableMechanisms.size()]);
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by factories in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), Arrays.toString(factories));
+        }
+        return names.toArray(new String[names.size()]);
     }
 
     /**
@@ -78,6 +82,9 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
                     return mechanism;
                 }
             }
+        }
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by factories in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), Arrays.toString(factories));
         }
         return null;
     }
