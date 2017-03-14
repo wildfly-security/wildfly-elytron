@@ -18,11 +18,15 @@
 
 package org.wildfly.security.sasl.gssapi;
 
+import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -37,7 +41,8 @@ import org.ietf.jgss.Oid;
 import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
+import org.wildfly.security.credential.GSSKerberosCredential;
 
 /**
  * SaslServer for the GSSAPI mechanism as defined by RFC 4752
@@ -58,19 +63,36 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
     GssapiServer(final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler callbackHandler) throws SaslException {
-        super(SaslMechanismInformation.Names.GSSAPI, protocol, serverName, props, callbackHandler, log);
+        super(GSSAPI, protocol, serverName, props, callbackHandler, log);
 
         // Initialise our GSSContext
         GSSManager manager = GSSManager.getInstance();
 
-        // According to the Javadoc we will have a protocol and server name.
-        String localName = protocol + "@" + serverName;
-        log.tracef("Our name '%s'", localName);
         GSSContext gssContext = null;
+
+        GSSCredential ourCredential = null;
+
+        ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSKerberosCredential.class);
         try {
-            GSSName ourName = manager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
-            GSSCredential ourCredential = manager.createCredential(ourName, GSSContext.INDEFINITE_LIFETIME, KERBEROS_V5,
-                    GSSCredential.ACCEPT_ONLY);
+            log.trace("Obtaining GSSCredential for the service from callback handler...");
+            callbackHandler.handle(new Callback[] { gssCredentialCallback });
+            ourCredential = gssCredentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getGssCredential);
+        } catch (IOException e) {
+            throw log.mechCallbackHandlerFailedForUnknownReason(GSSAPI, e).toSaslException();
+        } catch (UnsupportedCallbackException e) {
+            log.trace("Unable to obtain GSSCredential from CallbackHandler", e);
+        }
+
+        try {
+            if (ourCredential == null) {
+                // According to the Javadoc we will have a protocol and server name.
+                String localName = protocol + "@" + serverName;
+                log.tracef("Our name '%s'", localName);
+
+                GSSName ourName = manager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
+                ourCredential = manager.createCredential(ourName, GSSContext.INDEFINITE_LIFETIME, KERBEROS_V5,
+                        GSSCredential.ACCEPT_ONLY);
+            }
 
             gssContext = manager.createContext(ourCredential);
         } catch (GSSException e) {
