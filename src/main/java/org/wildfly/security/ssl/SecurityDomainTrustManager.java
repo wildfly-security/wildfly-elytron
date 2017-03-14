@@ -34,8 +34,9 @@ import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.credential.X509CertificateChainCredential;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
+import org.wildfly.security.x500.X500PrincipalUtil;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -79,38 +80,68 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         if (chain.length == 0) {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
-        final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
-        Principal principal = evidence.getPrincipal();
+        Principal principal = X500PrincipalUtil.asX500Principal(chain[0].getSubjectX500Principal());
+        if (principal == null) {
+            throw ElytronMessages.log.notTrusted(null);
+        }
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
-        boolean ok = false;
         try {
-            final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
-            boolean verified = false;
-            boolean authorized = false;
-            if (evidenceSupport.mayBeSupported() && (verified = authenticationContext.verifyEvidence(evidence)) && (authorized = authenticationContext.authorize())) {
-                ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
-                authenticationContext.succeed();
-                if (handshakeSession != null) {
-                    handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
+            authenticationContext.setAuthenticationPrincipal(principal);
+            if (! authenticationContext.exists()) {
+                if (authenticationOptional) {
+                    ElytronMessages.log.tracef("Credential validation failed: no identity found for principal [%s], ignoring as authentication is optional", principal);
+                    return;
+                } else {
+                    throw ElytronMessages.log.notTrusted(principal);
                 }
-                ok = true;
-                return;
             }
-            ElytronMessages.log.tracef("Credential validation: evidence support = %s  verified = %b  authorized = %b", evidenceSupport, verified, authorized);
-
-            if (authenticationOptional) {
-                ElytronMessages.log.tracef("Credential validation failed: certificate is not trusted for principal [%s], ignoring as authentication is optional", principal);
-            } else {
-                throw ElytronMessages.log.notTrusted(principal);
+            if (authenticationContext.getCredentialAcquireSupport(X509CertificateChainCredential.class).mayBeSupported()) {
+                X509CertificateChainCredential credential = authenticationContext.getCredential(X509CertificateChainCredential.class);
+                if (credential == null) {
+                    if (authenticationOptional) {
+                        ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
+                        return;
+                    } else {
+                        throw ElytronMessages.log.notTrusted(principal);
+                    }
+                }
+                if (! credential.getFirstCertificate().equals(chain[0])) {
+                    if (authenticationOptional) {
+                        ElytronMessages.log.tracef("Credential validation failed: certificate does not match for principal [%s], ignoring as authentication is optional", principal);
+                        return;
+                    } else {
+                        throw ElytronMessages.log.notTrusted(principal);
+                    }
+                }
+            } else if (authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported()) {
+                final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
+                if (authenticationContext.verifyEvidence(evidence)) {
+                    ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
+                    authenticationContext.succeed();
+                } else if (authenticationOptional) {
+                    ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
+                    return;
+                } else {
+                    throw ElytronMessages.log.notTrusted(principal);
+                }
+            }
+            if (! authenticationContext.authorize()) {
+                if (authenticationOptional) {
+                    ElytronMessages.log.tracef("Credential validation failed: identity is not authorized principal [%s], ignoring as authentication is optional", principal);
+                    return;
+                } else {
+                    throw ElytronMessages.log.notTrusted(principal);
+                }
+            }
+            ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
+            authenticationContext.succeed();
+            if (handshakeSession != null) {
+                handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
             }
         } catch (RealmUnavailableException e) {
-            if (authenticationOptional) {
-                ElytronMessages.log.tracef(e, "Certificate not trusted due to realm failure for principal [%s]", principal);
-            } else {
-                throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
-            }
+            throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
         } finally {
-            if (! ok) {
+            if (! authenticationContext.isDone()) {
                 authenticationContext.fail();
             }
         }
