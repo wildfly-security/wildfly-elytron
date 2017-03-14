@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.http.HttpAuthenticationException;
 
 /**
@@ -76,7 +77,7 @@ public class AuthenticationMechanismException extends IOException {
      * @return the SASL exception
      */
     public SaslException toSaslException() {
-        return copyContents(new SaslException(getMessage(), getCause()));
+        return copyContents(this, new SaslException(getMessage(), getCause()));
     }
 
     /**
@@ -85,12 +86,25 @@ public class AuthenticationMechanismException extends IOException {
      * @return the HTTP exception
      */
     public HttpAuthenticationException toHttpAuthenticationException() {
-        return copyContents(new HttpAuthenticationException(getMessage(), getCause()));
+        return copyContents(this, new HttpAuthenticationException(getMessage(), getCause()));
     }
 
-    private <T extends Throwable> T copyContents(final T throwable) {
-        throwable.setStackTrace(getStackTrace());
-        final Throwable[] suppressed = getSuppressed();
+    /**
+     * Convert the given exception to an {@code AuthenticationMechanismException}.  If the given exception is
+     * already a {@code AuthenticationMechanismException}, it is returned as-is.
+     *
+     * @param source the source exception (must not be {@code null})
+     * @return the new exception instance (not {@code null})
+     */
+    public static AuthenticationMechanismException fromException(final Exception source) {
+        Assert.checkNotNullParam("source", source);
+        if (source instanceof AuthenticationMechanismException) return (AuthenticationMechanismException) source;
+        return copyContents(source, new AuthenticationMechanismException(source.getMessage(), source.getCause()));
+    }
+
+    private static <T extends Throwable> T copyContents(final Exception source, final T throwable) {
+        throwable.setStackTrace(source.getStackTrace());
+        final Throwable[] suppressed = source.getSuppressed();
         if (suppressed != null) for (final Throwable t : suppressed) {
             throwable.addSuppressed(t);
         }
