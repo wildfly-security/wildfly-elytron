@@ -72,6 +72,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
     private int receivingMaxBuffSize = DEFAULT_MAXBUF;
     private String[] qops;
     private int nonceCount = -1;
+    private String receivedClientUri;
 
     /**
      * Generates a digest challenge
@@ -232,11 +233,10 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             throw log.mechMissingDirective(getMechanismName(), "nc").toSaslException();
         }
 
-        String clientDigestURI;
         if (parsedDigestResponse.get("digest-uri") != null) {
-            clientDigestURI = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
-            if (! digestUriAccepted.test(clientDigestURI.toLowerCase(Locale.ROOT))) {
-                throw log.mechMismatchedWrongDigestUri(getMechanismName(), clientDigestURI).toSaslException();
+            receivedClientUri = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
+            if (! digestUriAccepted.test(receivedClientUri.toLowerCase(Locale.ROOT))) {
+                throw log.mechMismatchedWrongDigestUri(getMechanismName(), receivedClientUri).toSaslException();
             }
         } else {
             throw log.mechMissingDirective(getMechanismName(), "digest-uri").toSaslException();
@@ -269,7 +269,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, clientDigestURI, true);
+        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, receivedClientUri, true);
 
         // check response
         if (parsedDigestResponse.get("response") == null) {
@@ -301,7 +301,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
 
-        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, false);
+        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, receivedClientUri != null ? receivedClientUri : digestURI, false);
 
         responseAuth.append(response_value);
         return responseAuth.toArray();
