@@ -899,8 +899,12 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof MechanismInformationCallback) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
                     try {
-                        log.tracef("Handling MechanismInformationCallback");
-                        setMechanismInformation(mic.getMechanismInformation());
+                        MechanismInformation mi = mic.getMechanismInformation();
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Handling MechanismInformationCallback type='%s' name='%s' host-name='%s' protocol='%s'",
+                                    mi.getMechanismType(), mi.getMechanismName(), mi.getHostName(), mi.getProtocol());
+                        }
+                        setMechanismInformation(mi);
                     } catch (Exception e) {
                         log.trace(e);
                         throw new IOException(e);
