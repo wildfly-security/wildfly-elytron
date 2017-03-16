@@ -824,6 +824,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
     GeneralSecurityException tooManyKerberosTicketsFound();
 
+    @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
+    IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
+
     /* ssl package */
 
     @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")

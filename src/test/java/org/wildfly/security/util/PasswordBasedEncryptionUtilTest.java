@@ -30,6 +30,8 @@ import org.junit.Test;
 public class PasswordBasedEncryptionUtilTest {
 
     private static final String clearText = "Červenavý střizlíček a štebotavá žlůva ďobali ve sťavnatých ocúnech.";
+    private static final String DEFAULT_PICKETBOX_ALGORITHM = "PBEWithMD5AndDES";
+    private static final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
 
     /**
      * Test pair of encrypt/decrypt methods with Base32/Base64 encodings as input/output.
@@ -143,6 +145,48 @@ public class PasswordBasedEncryptionUtilTest {
         char[] decrypted = pbeUtil2.decodeAndDecrypt(encodedSecret);
         Assert.assertNotNull("decrypted is supposed to be not null", decrypted);
         Assert.assertArrayEquals("clearText should be equal decrypted", clearText.toCharArray(), decrypted);
+    }
+
+    /**
+     * Test to check if PicketBox compatibility mode can produce and consume strings from PicketBox encoding.
+     *
+     * @throws Exception when something goes wrong
+     */
+    @Test
+    public void testPicketBoxCompatibility() throws Exception {
+        final String secret1 = "secret_password";
+        final String pbGenerated1 = "1GhfMaq4jSY0.kFFU3QG4T";  // secret_password;12345678;230
+        checkPb(secret1, "12345678", 230, pbGenerated1);
+
+        final String secret2 = "super_secret";
+        final String pbGenerated2 = "088WUKotOwu7VOS8xRj.Rr";  // super_secret;ASDF1234;123
+        checkPb(secret2, "ASDF1234", 123, pbGenerated2);
+    }
+
+    private void checkPb(String secret, String salt, int iteration, String pbGenerated) throws GeneralSecurityException {
+
+        PasswordBasedEncryptionUtil encryptUtil = new PasswordBasedEncryptionUtil.Builder()
+                .picketBoxCompatibility()
+                .salt(salt)
+                .iteration(iteration)
+                .encryptMode()
+                .build();
+
+        PasswordBasedEncryptionUtil decryptUtil = new PasswordBasedEncryptionUtil.Builder()
+                .picketBoxCompatibility()
+                .salt(salt)
+                .iteration(iteration)
+                .decryptMode()
+                .build();
+
+        String encrypted = encryptUtil.encryptAndEncode(secret.toCharArray());
+        String crossDecrypted = new String(decryptUtil.decodeAndDecrypt(pbGenerated));
+        String decrypted = new String(decryptUtil.decodeAndDecrypt(encrypted));
+
+        Assert.assertTrue("Elytron in PB compatible mode failed", decrypted.equals(secret));
+        Assert.assertTrue("PicketBox encrypted, Elytron decrypted in compatible mode, failed", crossDecrypted.equals(secret));
+        Assert.assertTrue("Elytron in compatible mode encrypted, PicketBox encrypted must be the same", pbGenerated.equals(encrypted));
+
     }
 
 }
