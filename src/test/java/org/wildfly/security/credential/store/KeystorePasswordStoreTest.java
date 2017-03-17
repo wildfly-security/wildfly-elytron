@@ -29,7 +29,6 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -43,7 +42,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 /**
  * {@code KeyStoreCredentialStore} tests
  *
- * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
+ * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>,
+ *         <a href="mailto:hsvabek@redhat.com">Hynek Svabek</a>.
  */
 public class KeystorePasswordStoreTest {
 
@@ -238,7 +238,6 @@ public class KeystorePasswordStoreTest {
      * @throws UnsupportedCredentialTypeException
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-836")
     public void testCaseInsensitiveAlias()
         throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
         HashMap<String, String> csAttributes = new HashMap<>();
@@ -264,6 +263,10 @@ public class KeystorePasswordStoreTest {
         }
         if (!cs.exists(caseSensitive1.toLowerCase(), PasswordCredential.class)) {
             Assert.fail("'" + caseSensitive1.toLowerCase() + "'" + " in lowercase must exist");
+        }
+        cs.remove(caseSensitive1, PasswordCredential.class);
+        if (cs.exists(caseSensitive1, PasswordCredential.class)) {
+            Assert.fail(caseSensitive1 + " has been removed from the vault, but it exists");
         }
 
         // this is actually alias update
