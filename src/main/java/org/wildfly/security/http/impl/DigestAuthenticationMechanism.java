@@ -171,7 +171,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         }
 
         // Validate realm and select mechanism realm.
-        String mechanismRealm = null;
+        String mechanismRealm = null; // realm used in URP or default available realm
         String[] availableRealms = getAvailableRealms();
         for (String current : availableRealms) {
             if (messageRealm.equals(current)) {
@@ -179,9 +179,11 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                 break;
             }
         }
-        if (mechanismRealm == null && getAvailableRealms().length > 0) {
+        // when used realm not available
+        if (mechanismRealm == null && availableRealms.length > 0) {
+            // but realm declared in web.xml / hostname used
             if (messageRealm.equals(configuredRealm) || messageRealm.equals(request.getFirstRequestHeaderValue(HOST))) {
-                mechanismRealm = availableRealms[0];
+                mechanismRealm = availableRealms[0]; // use first available instead
             }
         }
         if (mechanismRealm == null) {
@@ -243,18 +245,18 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         final NameCallback nameCallback = new NameCallback("User name", username);
         final RealmCallback realmCallback = new RealmCallback("User realm", messageRealm);
 
-        byte[] response = null;
+        // try to obtain from two-way first (equal realm in plain property users files would be required otherwise)
+        byte[] response = getSaltedPasswordFromTwoWay(messageDigest, realmCallback, nameCallback);
+        if (response != null) {
+            return response;
+        }
+
         if (mechanismRealm.equals(messageRealm)) {
             // The mechanism configuration understands the realm name so fully pre-digested may be possible.
             response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5, getMechanismName());
             if (response != null) {
                 return response;
             }
-        }
-
-        response = getSaltedPasswordFromTwoWay(messageDigest, realmCallback, nameCallback);
-        if (response != null) {
-            return response;
         }
 
         response = getSaltedPasswordFromPasswordCallback(messageDigest, realmCallback, nameCallback);
@@ -300,7 +302,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
         try {
             callbackHandler.handle(new Callback[] { availableRealmsCallback });
-            return availableRealmsCallback.getRealmNames();
+            String[] realms = availableRealmsCallback.getRealmNames();
+
+            if (realms == null && configuredRealm != null) {
+                realms = new String[] { configuredRealm };
+            }
+
+            return realms;
         } catch (UnsupportedCallbackException ignored) {
             return new String[0];
         } catch (AuthenticationMechanismException e) {
