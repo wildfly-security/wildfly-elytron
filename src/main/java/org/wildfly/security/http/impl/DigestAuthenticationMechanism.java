@@ -24,7 +24,6 @@ import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.URI;
 import static org.wildfly.security.http.HttpConstants.DOMAIN;
-import static org.wildfly.security.http.HttpConstants.HOST;
 import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.NONCE;
 import static org.wildfly.security.http.HttpConstants.OPAQUE;
@@ -57,7 +56,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -82,7 +80,6 @@ import org.wildfly.security.util.ByteIterator;
 class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private static final String CHALLENGE_PREFIX = "Digest ";
-    private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
     private static final String OPAQUE_VALUE = "00000000000000000000000000000000";
     private static final byte COLON = ':';
 
@@ -98,12 +95,21 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * @param nonceManager
      * @param configuredRealm
      */
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) throws HttpAuthenticationException {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
         this.providers = providers;
+
+        try {
+            String[] realms = getAvailableRealms();
+            if (realms == null || realms.length == 0) {
+                throw log.availableRealmsNotSpecified();
+            }
+        } catch (AuthenticationMechanismException e) {
+            throw e.toHttpAuthenticationException();
+        }
     }
 
     @Override
@@ -113,7 +119,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
-        final String realmName = selectRealm(request);
+        final String defaultRealm = selectDefaultRealm();
 
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
@@ -125,25 +131,26 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                         validateResponse(responseTokens, request);
                         return;
                     } catch (AuthenticationMechanismException e) {
-                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(realmName, response, false));
+                        log.trace("Exception during DIGEST request validation", e);
+                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(defaultRealm, response, false));
                         return;
                     }
                 }
             }
         }
 
-        request.noAuthenticationInProgress(response -> prepareResponse(realmName, response, false));
+        request.noAuthenticationInProgress(response -> prepareResponse(defaultRealm, response, false));
     }
 
     private void validateResponse(HashMap<String, byte[]> responseTokens, final HttpServerRequest request) throws AuthenticationMechanismException, HttpAuthenticationException {
         String nonce = convertToken(NONCE, responseTokens.get(NONCE));
-        String messageRealm = convertToken(REALM, responseTokens.get(REALM));
+        String realm = convertToken(REALM, responseTokens.get(REALM));
         /*
          * We want to get the nonce checkes ASAP so it is recorded as used in case some intermittent failure prevents validation.
          *
          * We act on the validity at the end where we can let the client know if it is stale.
          */
-        boolean nonceValid = nonceManager.useNonce(nonce, messageRealm.getBytes(UTF_8));
+        boolean nonceValid = nonceManager.useNonce(nonce, realm.getBytes(UTF_8));
 
         String username = convertToken(USERNAME, responseTokens.get(USERNAME));
         byte[] digestUri;
@@ -170,39 +177,20 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             throw log.mechMacAlgorithmNotSupported(getMechanismName(), e);
         }
 
-        // Validate realm and select mechanism realm.
-        String mechanismRealm = null; // realm used in URP or default available realm
-        String[] availableRealms = getAvailableRealms();
-        for (String current : availableRealms) {
-            if (messageRealm.equals(current)) {
-                mechanismRealm = current;
-                break;
-            }
-        }
-        // when used realm not available
-        if (mechanismRealm == null && availableRealms.length > 0) {
-            // but realm declared in web.xml / hostname used
-            if (messageRealm.equals(configuredRealm) || messageRealm.equals(request.getFirstRequestHeaderValue(HOST))) {
-                mechanismRealm = availableRealms[0]; // use first available instead
-            }
-        }
-        if (mechanismRealm == null) {
-            throw log.mechDisallowedClientRealm(getMechanismName(), mechanismRealm);
-        }
-
-        final String selectedRealm = selectRealm(request);
+        final String defaultRealm = selectDefaultRealm();
+        checkRealm(realm, defaultRealm);
 
         if (username.length() == 0) {
             fail();
-            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(defaultRealm, httpResponse, false));
             return;
         }
 
-        byte[] hA1 = getH_A1(messageDigest, username, messageRealm, mechanismRealm);
+        byte[] hA1 = getH_A1(messageDigest, username, realm);
 
         if (hA1 == null) {
             fail();
-            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(defaultRealm, httpResponse, false));
             return;
         }
 
@@ -210,12 +198,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (Arrays.equals(response, calculatedResponse) == false) {
             fail();
-            request.authenticationFailed(log.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(log.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(defaultRealm, httpResponse, false));
             return;
         }
 
         if (nonceValid == false) {
-            request.authenticationInProgress(httpResponse -> prepareResponse(selectedRealm, httpResponse, true));
+            request.authenticationInProgress(httpResponse -> prepareResponse(defaultRealm, httpResponse, true));
             return;
         }
 
@@ -226,6 +214,21 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             fail();
             request.authenticationFailed(log.authorizationFailed(username, getMechanismName()), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
+    }
+
+    /**
+     * Check if realm used by client is allowed to by used to auth
+     */
+    private void checkRealm(String realm, String defaultRealm) throws AuthenticationMechanismException {
+        for (String current : getAvailableRealms()) {
+            if (realm.equals(current)) {
+                return;
+            }
+        }
+        if (realm.equals(defaultRealm)) {
+            return;
+        }
+        throw log.mechDisallowedClientRealm(getMechanismName(), realm);
     }
 
     private byte[] calculateResponseDigest(MessageDigest messageDigest, byte[] hA1, String nonce, String method, byte[] digestUri) {
@@ -241,25 +244,22 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         return messageDigest.digest(ByteIterator.ofBytes(hA2).hexEncode().drainToString().getBytes(UTF_8));
     }
 
-    private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String messageRealm, final String mechanismRealm) throws AuthenticationMechanismException {
+    private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String realm) throws AuthenticationMechanismException {
         final NameCallback nameCallback = new NameCallback("User name", username);
-        final RealmCallback realmCallback = new RealmCallback("User realm", messageRealm);
+        final RealmCallback realmCallback = new RealmCallback("User realm", realm);
 
-        // try to obtain from two-way first (equal realm in plain property users files would be required otherwise)
+        // try to obtain from two-way first (equal mech realm in security realm would be required otherwise)
         byte[] response = getSaltedPasswordFromTwoWay(messageDigest, realmCallback, nameCallback);
         if (response != null) {
             return response;
         }
 
-        if (mechanismRealm.equals(messageRealm)) {
-            // The mechanism configuration understands the realm name so fully pre-digested may be possible.
-            response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5, getMechanismName());
-            if (response != null) {
-                return response;
-            }
+        response = getSaltedPasswordFromPasswordCallback(messageDigest, realmCallback, nameCallback);
+        if (response != null) {
+            return response;
         }
 
-        response = getSaltedPasswordFromPasswordCallback(messageDigest, realmCallback, nameCallback);
+        response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5, getMechanismName());
         return response;
     }
 
@@ -275,12 +275,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * Select the realm which should be sent to the client in the challenge.
      *
      * If a realm has been configured it takes priority.
-     * Next the first mechanism realm is selected.
+     * Next the first available mechanism realm is selected.
      * Finally the value of the incomming 'Host' header is used instead.
      * @throws HttpAuthenticationException
      *
      */
-    private String selectRealm(HttpServerRequest request) throws HttpAuthenticationException  {
+    private String selectDefaultRealm() throws HttpAuthenticationException  {
         if (configuredRealm != null) {
             return configuredRealm;
         }
@@ -295,16 +295,19 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             return realms[0];
         }
 
-        return request.getFirstRequestHeaderValue(HOST);
+        throw log.digestMechanismRequireRealm();
     }
 
+    /**
+     * Get realms, which are allowed to be accepted from client.
+     */
     private String[] getAvailableRealms() throws AuthenticationMechanismException {
         final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
         try {
             callbackHandler.handle(new Callback[] { availableRealmsCallback });
             String[] realms = availableRealmsCallback.getRealmNames();
 
-            if (realms == null && configuredRealm != null) {
+            if ((realms == null || realms.length == 0) && configuredRealm != null) {
                 realms = new String[] { configuredRealm };
             }
 
@@ -314,7 +317,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } catch (AuthenticationMechanismException e) {
             throw e;
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(DIGEST_NAME, e);
+            throw log.mechCallbackHandlerFailedForUnknownReason(DIGEST_NAME, e);
         }
     }
 
