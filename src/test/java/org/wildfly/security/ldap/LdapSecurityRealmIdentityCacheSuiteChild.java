@@ -68,10 +68,11 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
     private AtomicInteger realmHitCount = new AtomicInteger();
     private AtomicInteger credentialHitCount = new AtomicInteger();
     private AtomicInteger attributesHitCount = new AtomicInteger();
+    private AtomicInteger evidencesHitCount = new AtomicInteger();
 
     @Test
     public void testCacheUpdateAfterChangeNotificationFromServer() throws Exception {
-        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm()).build()
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm(true, false)).build()
                 .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
                 .build();
 
@@ -80,6 +81,7 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
             assertEquals(1, realmHitCount.get());
             assertEquals(1, credentialHitCount.get());
             assertEquals(1, attributesHitCount.get());
+            assertEquals(0, evidencesHitCount.get());
         }
 
         ExceptionSupplier<DirContext, NamingException> supplier = LdapTestSuite.dirContextFactory.create();
@@ -97,12 +99,13 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         assertEquals(2, realmHitCount.get());
         assertEquals(2, credentialHitCount.get());
         assertEquals(2, attributesHitCount.get());
+        assertEquals(0, evidencesHitCount.get());
         dirContext.close();
     }
 
     @Test
     public void testCacheUpdateAfterRemoveNotificationFromServer() throws Exception {
-        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm()).build()
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm(true, false)).build()
                 .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
                 .build();
 
@@ -123,12 +126,30 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         dirContext.close();
     }
 
+    @Test
+    public void testDirectVerificationCaching() throws Exception {
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm(false, true)).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+
+        for (int i = 0; i < 5; i++) {
+            ServerAuthenticationContext sac = createServerAuthenticationContext("plainUser", securityDomain);
+            assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
+
+            assertEquals(1, realmHitCount.get());
+            assertEquals(1, credentialHitCount.get());
+            assertEquals(0, attributesHitCount.get());
+            assertEquals(1, evidencesHitCount.get());
+        }
+    }
+
     private void assertAuthenticationAndAuthorization(String username, SecurityDomain securityDomain) throws RealmUnavailableException {
         ServerAuthenticationContext sac = createServerAuthenticationContext(username, securityDomain);
 
         assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
         assertEquals(SupportLevel.SUPPORTED, sac.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
         assertEquals("plainPassword", new String(sac.getCredential(PasswordCredential.class).getPassword().castAs(ClearPassword.class, ClearPassword.ALGORITHM_CLEAR).getPassword()));
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
 
         assertTrue(sac.authorize(username));
 
@@ -146,19 +167,17 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         return sac;
     }
 
-    private ModifiableSecurityRealm createSecurityRealm() {
-        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(
-                LdapSecurityRealmBuilder.builder()
-                        .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
-                        .identityMapping()
-                            .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                            .setRdnIdentifier("uid")
-                            .build()
-                        .userPasswordCredentialLoader()
-                            .build()
-                        .addDirectEvidenceVerification()
-                        .build()
-        ), createRealmIdentitySimpleJavaMapCache());
+    private ModifiableSecurityRealm createSecurityRealm(boolean credentialLoader, boolean directVerification) {
+        LdapSecurityRealmBuilder builder = LdapSecurityRealmBuilder.builder()
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
+                .identityMapping()
+                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                    .setRdnIdentifier("uid")
+                    .build();
+        if (credentialLoader) builder.userPasswordCredentialLoader().build();
+        if (directVerification) builder.addDirectEvidenceVerification();
+        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(builder.build()),
+                createRealmIdentitySimpleJavaMapCache());
     }
 
     private class MockCacheableModifiableSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
@@ -201,11 +220,13 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
 
                 @Override
                 public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                    evidencesHitCount.incrementAndGet();
                     return identity.getEvidenceVerifySupport(evidenceType, algorithmName);
                 }
 
                 @Override
                 public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                    evidencesHitCount.incrementAndGet();
                     return identity.verifyEvidence(evidence);
                 }
 

@@ -33,7 +33,11 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.cache.RealmIdentityCache;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * <p>A wrapper class that provides caching capabilities for a {@link SecurityRealm} and its identities.
@@ -136,11 +140,42 @@ public class CachingSecurityRealm implements SecurityRealm {
 
             @Override
             public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                if (PasswordGuessEvidence.class.isAssignableFrom(evidenceType)) {
+                    if (credentials.canVerify(evidenceType, algorithmName)) {
+                        return SupportLevel.SUPPORTED;
+                    }
+                    Credential credential = identity.getCredential(PasswordCredential.class);
+                    if (credential != null) {
+                        credentials = credentials.withCredential(credential);
+                        if (credential.canVerify(evidenceType, algorithmName)) {
+                            return SupportLevel.SUPPORTED;
+                        }
+                    }
+                }
                 return identity.getEvidenceVerifySupport(evidenceType, algorithmName);
             }
 
             @Override
             public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                if (evidence instanceof PasswordGuessEvidence) {
+                    if (credentials.canVerify(evidence)) {
+                        return credentials.verify(evidence);
+                    }
+                    Credential credential = identity.getCredential(PasswordCredential.class);
+                    if (credential != null) {
+                        credentials = credentials.withCredential(credential);
+                        if (credential.canVerify(evidence)) {
+                            return credential.verify(evidence);
+                        }
+                    }
+                    char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
+                    Password password = ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, guess);
+                    if (identity.verifyEvidence(evidence)) {
+                        credentials = credentials.withCredential(new PasswordCredential(password));
+                        return true;
+                    }
+                    return false;
+                }
                 return identity.verifyEvidence(evidence);
             }
 
