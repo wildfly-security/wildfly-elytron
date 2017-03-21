@@ -129,10 +129,12 @@ public final class ElytronXmlParser {
     public static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration() throws ConfigXMLParseException {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
-            return parseAuthenticationClientConfiguration(streamReader);
-        } else {
-            return new FixedSecurityFactory<>(AuthenticationContext.EMPTY);
+            if (streamReader != null) {
+                return parseAuthenticationClientConfiguration(streamReader);
+            }
         }
+        // Try legacy configuration next
+        return parseLegacyConfiguration();
     }
 
     /**
@@ -144,9 +146,13 @@ public final class ElytronXmlParser {
      */
     public static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration(URI uri) throws ConfigXMLParseException {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance(uri);
-        try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
-            return parseAuthenticationClientConfiguration(streamReader);
+        if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
+            if (streamReader != null) {
+                return parseAuthenticationClientConfiguration(streamReader);
+            }
         }
+        // Try legacy configuration next
+        return parseLegacyConfiguration();
     }
 
     /**
@@ -191,7 +197,10 @@ public final class ElytronXmlParser {
                 }
             }
         }
-        // Try legacy configuration next
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static SecurityFactory<AuthenticationContext> parseLegacyConfiguration() {
         final ServiceLoader<LegacyConfiguration> loader = ServiceLoader.load(LegacyConfiguration.class, ElytronXmlParser.class.getClassLoader());
         final Iterator<LegacyConfiguration> iterator = loader.iterator();
         final List<LegacyConfiguration> configs = new ArrayList<>();
