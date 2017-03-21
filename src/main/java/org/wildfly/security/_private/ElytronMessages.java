@@ -1719,9 +1719,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9511, value = "Password cache for external commands not supported")
     CredentialStoreException cacheForExternalCommandsNotSupported();
 
-    @LogMessage
-    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to compatibility string")
-    void warnWrongBase64EncodedString();
+    @Message(id = 9512, value = "External storage key under alias \"%s\" has to be a SecretKey")
+    CredentialStoreException wrongTypeOfExternalStorageKey(String keyAlias);
 
     @Message(id = 9513, value = "Duplicate attribute (\"%s\") found in configuration.")
     ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
@@ -1778,6 +1777,15 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9530, value = "Automatic storage creation for the Credential Store is disabled \"%s\"")
     CredentialStoreException automaticStorageCreationDisabled(String location);
+
+    @Message(id = 9531, value = "Unexpected credential store external storage file version \"%s\"")
+    IOException unexpectedFileVersion(String version);
+
+    @Message(id = 9532, value = "Unrecognized entry type \"%s\"")
+    IOException unrecognizedEntryType(String entryType);
+
+    @Message(id = 9533, value = "Internal encryption problem while reading \"%s\"")
+    IOException internalEncryptionProblem(@Cause Exception e, String location);
 
     /* X.500 exceptions */
 
