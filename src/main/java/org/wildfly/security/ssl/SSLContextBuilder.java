@@ -54,8 +54,6 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SSLContextBuilder {
-    private static final int DEFAULT_SESSION_CACHE_SIZE = 0;
-    private static final int DEFAULT_SESSION_TIMEOUT = 0;
 
     private SecurityDomain securityDomain;
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
@@ -302,8 +300,8 @@ public final class SSLContextBuilder {
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         final boolean clientMode = this.clientMode;
         final boolean authenticationOptional = this.authenticationOptional;
-        final int sessionCacheSize = (this.sessionCacheSize < 0) ? DEFAULT_SESSION_CACHE_SIZE : this.sessionCacheSize;
-        final int sessionTimeout = (this.sessionTimeout < 0) ? DEFAULT_SESSION_TIMEOUT : this.sessionTimeout;
+        final int sessionCacheSize = this.sessionCacheSize;
+        final int sessionTimeout = this.sessionTimeout;
         final boolean wantClientAuth = this.wantClientAuth;
         final boolean needClientAuth = this.needClientAuth;
         final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
@@ -315,8 +313,8 @@ public final class SSLContextBuilder {
             final SSLContext sslContext = sslContextFactory.create();
             SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
             if (sessionContext != null) {
-                sessionContext.setSessionCacheSize(sessionCacheSize);
-                sessionContext.setSessionTimeout(sessionTimeout);
+                if (sessionCacheSize >= 0) sessionContext.setSessionCacheSize(sessionCacheSize);
+                if (sessionTimeout >= 0) sessionContext.setSessionTimeout(sessionTimeout);
             }
             final X509KeyManager x509KeyManager = keyManagerSecurityFactory == null ? null : keyManagerSecurityFactory.create();
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
