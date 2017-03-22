@@ -102,7 +102,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:
-                return new SpnegoAuthenticationMechanism(callbackHandler);
+                return new SpnegoAuthenticationMechanism(callbackHandler, properties);
         }
         return null;
     }
