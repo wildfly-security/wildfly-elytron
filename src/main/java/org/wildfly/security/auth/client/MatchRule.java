@@ -95,11 +95,11 @@ public abstract class MatchRule {
         }
 
         public boolean isUserMatched() {
-            throw new IllegalStateException();
+            return true;
         }
 
         public String getMatchUser() {
-            throw new IllegalStateException();
+            return null;
         }
 
         public boolean isUrnNameMatched() {
@@ -129,7 +129,7 @@ public abstract class MatchRule {
         StringBuilder asString(final StringBuilder b) {
             return b;
         }
-    }.matchNoUser();
+    };
 
     MatchRule(final MatchRule parent) {
         this.parent = parent;
@@ -517,6 +517,15 @@ public abstract class MatchRule {
      */
     public final MatchRule matchNoUser() {
         return new MatchNoUserRule(this);
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but matches URIs with or without user info.
+     *
+     * @return the new rule
+     */
+    public final MatchRule matchAnyUser() {
+        return without(MatchUserRule.class).without(MatchNoUserRule.class);
     }
 
     // URN
