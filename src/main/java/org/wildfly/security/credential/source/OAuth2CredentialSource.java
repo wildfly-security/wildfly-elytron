@@ -8,6 +8,11 @@ import javax.json.JsonObject;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,10 +27,11 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.BearerTokenCredential;
@@ -50,9 +56,8 @@ public class OAuth2CredentialSource implements CredentialSource {
         return new Builder(tokenEndpointUrl);
     }
 
-    private final String grantType;
     private final URL tokenEndpointUri;
-    private final Consumer<Map<String, String>> consumer;
+    private final Consumer<Map<String, String>> authenticationHandler;
     private String scopes;
     private final Supplier<SSLContext> sslContextSupplier;
     private final Supplier<HostnameVerifier> hostnameVerifierSupplier;
@@ -60,35 +65,20 @@ public class OAuth2CredentialSource implements CredentialSource {
     /**
      * Creates a new instance.
      *
-     * @param grantType the OAuth2 grant type as defined by the specification
-     * @param tokenEndpointUri the OAuth2 Token Endpoint {@link URI}
-     * @param scopes a string with the scope of the access request
-     * @param sslContextSupplier a supplier from where the {@link SSLContext} is obtained in case the token endpoint is using TLS/HTTPS
+     * @param tokenEndpointUrl         the OAuth2 Token Endpoint {@link URL}
+     * @param authenticationHandler    a callback that can be used to push addition parameters to requests sent to the authorization server
+     * @param scopes                   a string with the scope of the access request
+     * @param sslContextSupplier       a supplier from where the {@link SSLContext} is obtained in case the token endpoint is using TLS/HTTPS
      * @param hostnameVerifierSupplier a supplier from where the {@link HostnameVerifier} is obtained in case the token endpoint is using TLS/HTTPS
      */
-    private OAuth2CredentialSource(String grantType, URL tokenEndpointUri, String scopes, Supplier<SSLContext> sslContextSupplier, Supplier<HostnameVerifier> hostnameVerifierSupplier) {
-        this(grantType, tokenEndpointUri, stringStringMap -> {}, scopes, sslContextSupplier, hostnameVerifierSupplier);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param grantType the OAuth2 grant type as defined by the specification
-     * @param tokenEndpointUrl the OAuth2 Token Endpoint {@link URL}
-     * @param consumer a callback that can be used to push addition parameters to requests sent to the authorization server
-     * @param scopes a string with the scope of the access request
-     * @param sslContextSupplier a supplier from where the {@link SSLContext} is obtained in case the token endpoint is using TLS/HTTPS
-     * @param hostnameVerifierSupplier a supplier from where the {@link HostnameVerifier} is obtained in case the token endpoint is using TLS/HTTPS
-     */
-    private OAuth2CredentialSource(String grantType, URL tokenEndpointUrl, Consumer<Map<String, String>> consumer, String scopes, Supplier<SSLContext> sslContextSupplier, Supplier<HostnameVerifier> hostnameVerifierSupplier) {
-        this.grantType = checkNotNullParam("grantType", grantType);
+    private OAuth2CredentialSource(URL tokenEndpointUrl, Consumer<Map<String, String>> authenticationHandler, String scopes, Supplier<SSLContext> sslContextSupplier, Supplier<HostnameVerifier> hostnameVerifierSupplier) {
         this.tokenEndpointUri = checkNotNullParam("tokenEndpointUri", tokenEndpointUrl);
 
         if (isHttps(tokenEndpointUrl)) {
             checkNotNullParam("sslContextSupplier", sslContextSupplier);
         }
 
-        this.consumer = consumer;
+        this.authenticationHandler = checkNotNullParam("authenticationHandler", authenticationHandler);
         this.scopes = scopes;
         this.sslContextSupplier = sslContextSupplier;
         this.hostnameVerifierSupplier = hostnameVerifierSupplier;
@@ -115,8 +105,7 @@ public class OAuth2CredentialSource implements CredentialSource {
 
                     HashMap<String, String> parameters = new HashMap<>();
 
-                    parameters.put("grant_type", grantType);
-                    consumer.accept(parameters);
+                    authenticationHandler.accept(parameters);
 
                     if (scopes != null) {
                         parameters.put("scope", scopes);
@@ -166,12 +155,13 @@ public class OAuth2CredentialSource implements CredentialSource {
     private HttpURLConnection openConnection() throws IOException {
         log.debugf("Opening connection to [%s]", tokenEndpointUri);
         HttpURLConnection connection = (HttpURLConnection) tokenEndpointUri.openConnection();
-
         SSLContext sslContext = resolveSSLContext();
+
         if (sslContext != null) {
             HttpsURLConnection https = (HttpsURLConnection) connection;
 
             https.setSSLSocketFactory(sslContext.getSocketFactory());
+
             if (hostnameVerifierSupplier != null) {
                 https.setHostnameVerifier(checkNotNullParam("hostnameVerifier", hostnameVerifierSupplier.get()));
             }
@@ -200,11 +190,10 @@ public class OAuth2CredentialSource implements CredentialSource {
     public static class Builder {
 
         private final URL tokenEndpointUrl;
-        private Function<Builder, OAuth2CredentialSource> grantType;
         private String scopes;
         private Supplier<SSLContext> sslContextSupplier = new Supplier<SSLContext>() {
             @Override
-            public SSLContext get()  {
+            public SSLContext get() {
                 AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
                 try {
                     return contextConfigurationClient.getSSLContext(tokenEndpointUrl.toURI(), AuthenticationContext.captureCurrent());
@@ -214,10 +203,10 @@ public class OAuth2CredentialSource implements CredentialSource {
             }
         };
         private Supplier<HostnameVerifier> hostnameVerifierSupplier;
+        private Consumer<Map<String, String>> authenticationHandler;
 
         private Builder(URL tokenEndpointUrl) {
             this.tokenEndpointUrl = checkNotNullParam("tokenEndpointUrl", tokenEndpointUrl);
-            this.grantType = builder -> new OAuth2CredentialSource("client_credentials", tokenEndpointUrl, builder.scopes, builder.sslContextSupplier, builder.hostnameVerifierSupplier);
         }
 
         /**
@@ -234,15 +223,54 @@ public class OAuth2CredentialSource implements CredentialSource {
         /**
          * <p>Configure OAuth2 Resource Owner Password Grant Type as defined by the OAuth2 specification.
          *
+         * <p>When using this grant type, make sure to also configure one of the supported client authentication methods. For instance,
+         * make sure to provide client credentials via {@link #clientCredentials(String, String)}.
+         *
          * @param userName the resource owner's user name
          * @param password the resource owner's password
          * @return this instance.
          */
         public Builder useResourceOwnerPassword(String userName, String password) {
-            grantType = builder -> new OAuth2CredentialSource("password", tokenEndpointUrl, parameters -> {
-                parameters.put("username", userName);
-                parameters.put("password", password);
-            }, builder.scopes, builder.sslContextSupplier, builder.hostnameVerifierSupplier);
+            configureAuthenticationHandler(parameters -> configureResourceOwnerCredentialsParameters(parameters, userName, password));
+            return this;
+        }
+
+        /**
+         * <p>Configure OAuth2 Client Credentials Grant Type as defined by the OAuth2 specification.
+         *
+         * @param id the client id
+         * @param secret the client secret
+         * @return this instance.
+         */
+        public Builder clientCredentials(String id, String secret) {
+            checkNotNullParam("id", id);
+            checkNotNullParam("secret", secret);
+            configureAuthenticationHandler(parameters -> {
+                AuthenticationContext context = AuthenticationContext.captureCurrent();
+                AuthenticationContextConfigurationClient client = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+                AuthenticationConfiguration configuration = client.getAuthenticationConfiguration(URI.create(tokenEndpointUrl.toString()), context);
+                CallbackHandler handler = client.getCallbackHandler(configuration);
+
+                // if there is a handler associated with the configuration, we try to resolve username/password and change grant type to resource owner credentials
+                if (handler != null) {
+                    NameCallback nameCallback = new NameCallback("Username");
+                    PasswordCallback passwordCallback = new PasswordCallback("Password", false);
+
+                    try {
+                        handler.handle(new Callback[]{nameCallback, passwordCallback});
+                    } catch (Exception ignore) {
+                    }
+
+                    String userName = nameCallback.getName();
+                    char[] password = passwordCallback.getPassword();
+
+                    if (userName != null && password != null) {
+                        configureResourceOwnerCredentialsParameters(parameters, userName, String.valueOf(password));
+                    }
+                }
+
+                configureClientCredentialsParameters(parameters, id, secret.toCharArray());
+            });
             return this;
         }
 
@@ -276,7 +304,51 @@ public class OAuth2CredentialSource implements CredentialSource {
          * @return a OAuth2 credential source
          */
         public OAuth2CredentialSource build() {
-            return grantType.apply(this);
+            if (authenticationHandler == null) {
+                authenticationHandler = parameters -> {
+                    AuthenticationContext context = AuthenticationContext.captureCurrent();
+                    AuthenticationContextConfigurationClient client = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+                    AuthenticationConfiguration configuration = client.getAuthenticationConfiguration(URI.create(tokenEndpointUrl.toString()), context);
+                    CallbackHandler handler = client.getCallbackHandler(configuration);
+                    NameCallback nameCallback = new NameCallback("Client ID");
+                    PasswordCallback password1 = new PasswordCallback("Client Secret", false);
+
+                    try {
+                        handler.handle(new Callback[]{nameCallback, password1});
+                    } catch (Exception ignore) {
+                    }
+
+                    String userName = nameCallback.getName();
+                    char[] password = password1.getPassword();
+
+                    configureClientCredentialsParameters(parameters, userName, password);
+                };
+            }
+            return new OAuth2CredentialSource(tokenEndpointUrl, authenticationHandler.andThen(parameters -> {
+                if (!parameters.containsKey("client_id") || !parameters.containsKey("client_secret")) {
+                    throw ElytronMessages.log.oauth2ClientCredentialsNotProvided();
+                }
+            }), scopes, sslContextSupplier, hostnameVerifierSupplier);
+        }
+
+        private void configureClientCredentialsParameters(Map<String, String> parameters, String id, char[] secret) {
+            parameters.putIfAbsent("grant_type", "client_credentials");
+            parameters.put("client_id", checkNotNullParam("client_id", id));
+            parameters.put("client_secret", checkNotNullParam("client_secret", secret == null ? null : String.valueOf(secret)));
+        }
+
+        private void configureResourceOwnerCredentialsParameters(Map<String, String> parameters, String userName, String password) {
+            parameters.put("grant_type", "password");
+            parameters.put("username", checkNotNullParam("userName", userName));
+            parameters.put("password", checkNotNullParam("password", password));
+        }
+
+        private void configureAuthenticationHandler(Consumer<Map<String, String>> handler) {
+            if (authenticationHandler == null) {
+                authenticationHandler = handler;
+            } else {
+                authenticationHandler = authenticationHandler.andThen(handler);
+            }
         }
     }
 }

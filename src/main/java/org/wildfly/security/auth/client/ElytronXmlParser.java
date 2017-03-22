@@ -2016,6 +2016,10 @@ public final class ElytronXmlParser {
                         builder = parseOAuth2ResourceOwnerCredentials(reader, builder);
                         break;
                     }
+                    case "client-credentials": {
+                        builder = parseOAuth2ClientCredentials(reader, builder);
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
@@ -2054,18 +2058,57 @@ public final class ElytronXmlParser {
                 default: throw reader.unexpectedAttribute(i);
             }
         }
-        if (userName == null) {
-            throw missingAttribute(reader, "name");
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                if (userName != null && password != null) {
+                    return builder.useResourceOwnerPassword(userName, password);
+                }
+                return builder;
+            } else {
+                throw reader.unexpectedContent();
+            }
         }
-        if (password == null) {
-            throw missingAttribute(reader, "password");
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code oauth2-client-credentials-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param builder the builder
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static OAuth2CredentialSource.Builder parseOAuth2ClientCredentials(ConfigurationXMLStreamReader reader, OAuth2CredentialSource.Builder builder) throws ConfigXMLParseException {
+        String id = null;
+        String secret = null;
+        for (int i = 0; i < reader.getAttributeCount(); i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "client-id": {
+                    if (id != null) throw reader.unexpectedAttribute(i);
+                    id = reader.getAttributeValue(i);
+                    break;
+                }
+                case "client-secret": {
+                    if (secret != null) throw reader.unexpectedAttribute(i);
+                    secret = reader.getAttributeValue(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
         }
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                return builder.useResourceOwnerPassword(userName, password);
+                if (id != null && secret != null) {
+                    return builder.clientCredentials(id, secret);
+                }
+                return builder;
             } else {
                 throw reader.unexpectedContent();
             }
