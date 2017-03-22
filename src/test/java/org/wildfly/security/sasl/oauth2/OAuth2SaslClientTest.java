@@ -22,22 +22,24 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
-import javax.security.sasl.SaslClient;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import java.net.Authenticator;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.util.Arrays;
 
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,13 +51,15 @@ import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.CodePointIterator;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 
 /**
@@ -83,7 +87,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
     }
 
     @Test
-    public void testWithResourceOwnerCredentialsUsingMatchUserInfo() throws Exception {
+    public void testWithResourceOwnerCredentialsUsingConfiguration() throws Exception {
         URI serverUri = URI.create("protocol://test1.org");
         SaslClient saslClient = createSaslClientFromConfiguration(serverUri);
 
@@ -268,22 +272,19 @@ public class OAuth2SaslClientTest extends BaseTestCase {
             fail("Expected bad response from server");
         } catch (Exception e) {
             e.printStackTrace();
-            assertTrue(e.getCause().getMessage().contains("ELY05125"));
+            assertTrue(e.getCause().getMessage().contains("ELY09001"));
         }
     }
 
     @Test
     public void testResourceOwnerCredentialsUsingAPI() throws Exception {
-        Authenticator.setDefault(new ElytronAuthenticator());
         AuthenticationContext context = AuthenticationContext.empty()
                 .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.EMPTY
                         .useCredentials(OAuth2CredentialSource.builder(new URL("http://localhost:50831/token"))
+                                .clientCredentials("elytron-client", "dont_tell_me")
                                 .useResourceOwnerPassword("alice", "dont_tell_me")
                                 .build())
-                        .allowSaslMechanisms("OAUTHBEARER"))
-                .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.EMPTY
-                        .useName("elytron_client")
-                        .usePassword("dont_tell_me"));
+                        .allowSaslMechanisms("OAUTHBEARER"));
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         AuthenticationConfiguration configuration = contextConfigurationClient.getAuthenticationConfiguration(URI.create("http://resourceserver.com"), context);
         SaslClient saslClient = contextConfigurationClient.createSaslClient(URI.create("http://resourceserver.com"), configuration, Arrays.asList("OAUTHBEARER"));
@@ -308,27 +309,126 @@ public class OAuth2SaslClientTest extends BaseTestCase {
 
     @Test
     public void failedResourceOwnerCredentialsUsingAPI() throws Exception {
-        try {
-            Authenticator.setDefault(new ElytronAuthenticator());
-            AuthenticationContext context = AuthenticationContext.empty()
-                    .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.EMPTY
-                            .useCredentials(OAuth2CredentialSource.builder(new URL("http://localhost:50831/token"))
-                                    .useResourceOwnerPassword("unknown", "dont_tell_me")
-                                    .build())
-                            .allowSaslMechanisms("OAUTHBEARER"))
-                    .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.EMPTY
-                            .useName("elytron_client")
-                            .usePassword("dont_tell_me"));
-            AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
-            AuthenticationConfiguration configuration = contextConfigurationClient.getAuthenticationConfiguration(URI.create("http://resourceserver.com"), context);
-            SaslClient saslClient = contextConfigurationClient.createSaslClient(URI.create("http://resourceserver.com"), configuration, Arrays.asList("OAUTHBEARER"));
-            SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
-                    .setServerName("resourceserver.comn")
-                    .setProtocol("imap")
-                    .addRealm("oauth-realm", createSecurityRealmMock())
-                    .setDefaultRealmName("oauth-realm")
-                    .build();
+        AuthenticationContext context = AuthenticationContext.empty()
+                .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.EMPTY
+                        .useCredentials(OAuth2CredentialSource.builder(new URL("http://localhost:50831/token"))
+                                .useResourceOwnerPassword("unknown", "dont_tell_me")
+                                .clientCredentials("bad", "bad")
+                                .build())
+                        .allowSaslMechanisms("OAUTHBEARER"))
+                .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.EMPTY
+                        .useName("elytron_client")
+                        .usePassword("dont_tell_me"));
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        AuthenticationConfiguration configuration = contextConfigurationClient.getAuthenticationConfiguration(URI.create("http://resourceserver.com"), context);
+        SaslClient saslClient = contextConfigurationClient.createSaslClient(URI.create("http://resourceserver.com"), configuration, Arrays.asList("OAUTHBEARER"));
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.comn")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createSecurityRealmMock())
+                .setDefaultRealmName("oauth-realm")
+                .build();
 
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        try {
+            do {
+                message = saslClient.evaluateChallenge(message);
+                if (message == null) break;
+                message = saslServer.evaluateResponse(message);
+            } while (message != null);
+            fail("Expected bad response from server");
+        } catch (Exception e) {
+            e.printStackTrace();
+            assertTrue(e.getCause().getMessage().contains("ELY05125"));
+        }
+    }
+
+    @Test
+    public void testResourceOwnerCredentialsFromExternalCallback() throws Exception {
+        URI serverUri = URI.create("protocol://test7.org");
+        AuthenticationContext context = AuthenticationContext.getContextManager().get();
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        AuthenticationConfiguration authenticationConfiguration = contextConfigurationClient.getAuthenticationConfiguration(serverUri, context);
+        SaslClient saslClient = contextConfigurationClient.createSaslClient(serverUri, authenticationConfiguration, Arrays.asList(SaslMechanismInformation.Names.OAUTHBEARER));
+
+        assertNotNull("OAuth2SaslClient is null", saslClient);
+
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.comn")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createSecurityRealmMock())
+                .setDefaultRealmName("oauth-realm")
+                .build();
+
+
+        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.EMPTY.useCallbackHandler(new CallbackHandler() {
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof NameCallback) {
+                        NameCallback.class.cast(callback).setName("alice");
+                    } else if (callback instanceof PasswordCallback) {
+                        PasswordCallback.class.cast(callback).setPassword("dont_tell_me".toCharArray());
+                    } else {
+                        throw new RuntimeException("Unexpected callback");
+                    }
+                }
+            }
+        }));
+
+        externalContext.run(() -> {
+            try {
+                byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+                do {
+                    message = saslClient.evaluateChallenge(message);
+                    if (message == null) break;
+                    message = saslServer.evaluateResponse(message);
+                } while (message != null);
+
+                assertTrue(saslServer.isComplete());
+                assertTrue(saslClient.isComplete());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void failedResourceOwnerCredentialsFromExternalCallback() throws Exception {
+        URI serverUri = URI.create("protocol://test7.org");
+        AuthenticationContext context = AuthenticationContext.getContextManager().get();
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        AuthenticationConfiguration authenticationConfiguration = contextConfigurationClient.getAuthenticationConfiguration(serverUri, context);
+        SaslClient saslClient = contextConfigurationClient.createSaslClient(serverUri, authenticationConfiguration, Arrays.asList(SaslMechanismInformation.Names.OAUTHBEARER));
+
+        assertNotNull("OAuth2SaslClient is null", saslClient);
+
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.comn")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createSecurityRealmMock())
+                .setDefaultRealmName("oauth-realm")
+                .build();
+
+
+        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.EMPTY.useCallbackHandler(new CallbackHandler() {
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof NameCallback) {
+                        NameCallback.class.cast(callback).setName("alice");
+                    } else if (callback instanceof PasswordCallback) {
+                        PasswordCallback.class.cast(callback).setPassword("bad_password".toCharArray());
+                    } else {
+                        throw new RuntimeException("Unexpected callback");
+                    }
+                }
+            }
+        }));
+
+        externalContext.run(() -> {
             byte[] message = AbstractSaslParticipant.NO_BYTES;
 
             try {
@@ -342,9 +442,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                 e.printStackTrace();
                 assertTrue(e.getCause().getMessage().contains("ELY05125"));
             }
-        } finally {
-            Authenticator.setDefault(null);
-        }
+        });
     }
 
     private SecurityRealm createSecurityRealmMock() throws MalformedURLException {
@@ -356,19 +454,11 @@ public class OAuth2SaslClientTest extends BaseTestCase {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
                 String body = recordedRequest.getBody().readUtf8();
-                String authorizationHeader = recordedRequest.getHeader("Authorization");
-
-                if (authorizationHeader == null) {
-                    return new MockResponse().setResponseCode(401).addHeader("WWW-Authenticate", "Basic realm=realm\"test\"");
-                }
-
-                String clientIdAndSecret = CodePointIterator.ofString(authorizationHeader.substring("Basic".length() + 1)).base64Decode().asUtf8String().drainToString();
-
                 boolean resourceOwnerCredentials = body.contains("grant_type=password");
                 boolean clientCredentials = body.contains("grant_type=client_credentials");
 
                 if (resourceOwnerCredentials
-                        && clientIdAndSecret.equals("elytron-client:dont_tell_me")
+                        && (body.contains("client_id=elytron-client") && body.contains("client_secret=dont_tell_me"))
                         && (body.contains("username=alice") || body.contains("username=jdoe"))
                         && body.contains("password=dont_tell_me")) {
                     JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
@@ -377,7 +467,8 @@ public class OAuth2SaslClientTest extends BaseTestCase {
 
                     return new MockResponse().setBody(tokenBuilder.build().toString());
                 } else if (clientCredentials
-                        && clientIdAndSecret.equals("elytron-client:dont_tell_me")) {
+                        && (body.contains("client_id=elytron-client") && body.contains("client_secret=dont_tell_me"))
+                        && !body.contains("username=")) {
                     JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
                     tokenBuilder.add("access_token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64");

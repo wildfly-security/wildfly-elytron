@@ -332,9 +332,15 @@
 
     <xsd:complexType name="oauth2-bearer-token-type">
         <xsd:choice minOccurs="1">
+            <xsd:element name="client-credentials" type="oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="resource-owner-credentials" type="resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="token-endpoint-uri" type="xsd:anyURI" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="oauth2-client-credentials-type">
+        <xsd:attribute name="client-id" type="xsd:string" use="required" />
+        <xsd:attribute name="client-secret" type="xsd:string" use="required" />
     </xsd:complexType>
 
     <xsd:complexType name="resource-owner-credentials-type">

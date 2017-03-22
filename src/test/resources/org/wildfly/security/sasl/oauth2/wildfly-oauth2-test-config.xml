@@ -19,7 +19,6 @@
   -->
 <configuration>
     <authentication-client xmlns="urn:elytron:1.0">
-        <net-authenticator/>
         <authentication-rules>
             <rule use-configuration="test1.org">
                 <match-host name="test1.org"/>
@@ -39,15 +38,8 @@
             <rule use-configuration="test6">
                 <match-host name="test6.org"/>
             </rule>
-            <rule use-configuration="authorization-server-a">
-                <match-protocol name="http"/>
-                <match-host name="localhost"/>
-                <match-port number="50831"/>
-            </rule>
-            <rule use-configuration="authorization-server-b">
-                <match-protocol name="http"/>
-                <match-host name="127.0.0.1"/>
-                <match-port number="50831"/>
+            <rule use-configuration="test7">
+                <match-host name="test7.org"/>
             </rule>
         </authentication-rules>
         <authentication-configurations>
@@ -55,12 +47,15 @@
                 <credentials>
                     <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
                         <resource-owner-credentials name="jdoe" password="dont_tell_me"/>
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
                     </oauth2-bearer-token>
                 </credentials>
             </configuration>
             <configuration name="test2.org">
                 <credentials>
-                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token"/>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
+                    </oauth2-bearer-token>
                 </credentials>
             </configuration>
             <configuration name="test3.org">
@@ -70,7 +65,9 @@
             </configuration>
             <configuration name="test4.org">
                 <credentials>
-                    <oauth2-bearer-token token-endpoint-uri="http://127.0.0.1:50831/token"/>
+                    <oauth2-bearer-token token-endpoint-uri="http://127.0.0.1:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="bad_secret"/>
+                    </oauth2-bearer-token>
                 </credentials>
             </configuration>
             <configuration name="test5.org">
@@ -85,16 +82,11 @@
                     </oauth2-bearer-token>
                 </credentials>
             </configuration>
-            <configuration name="authorization-server-a">
-                <set-user-name name="elytron-client"/>
+            <configuration name="test7">
                 <credentials>
-                    <clear-password password="dont_tell_me"/>
-                </credentials>
-            </configuration>
-            <configuration name="authorization-server-b">
-                <set-user-name name="elytron-client"/>
-                <credentials>
-                    <clear-password password="bad_secret"/>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
+                    </oauth2-bearer-token>
                 </credentials>
             </configuration>
         </authentication-configurations>

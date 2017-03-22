@@ -1678,6 +1678,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9000, value = "Public and private key parameters are mismatched")
     IllegalArgumentException mismatchedPublicPrivateKeyParameters();
 
+    @Message(id = 9001, value = "Client credentials not provided")
+    IllegalStateException oauth2ClientCredentialsNotProvided();
+
     /* credential.store. package */
 
     @Message(id = 9501, value = "Credential store '%s' has to be initialized before the first usage")
