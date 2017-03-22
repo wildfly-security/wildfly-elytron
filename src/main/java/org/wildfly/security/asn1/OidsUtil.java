@@ -39,7 +39,8 @@ public class OidsUtil {
      * Category of mapping - determine context of the mapping
      */
     public enum Category {
-        RDN
+        RDN,
+        GSS
     }
 
     private static Map<Category, Map<String, String>> attributeNameToOidTable = new HashMap<>();
