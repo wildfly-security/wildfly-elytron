@@ -44,6 +44,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -429,6 +430,13 @@ public class SimpleDirContextFactoryBuilder {
                     env.forEach((key, value) -> {
                         if (value instanceof Object[]) {
                             log.debugf("    Property [%s] with values %s", key, Arrays.deepToString((Object[]) value));
+                        } else if (value.getClass().isArray()) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < Array.getLength(value); i++) {
+                                if (i != 0) sb.append(", ");
+                                sb.append(String.valueOf(Array.get(value, i)));
+                            }
+                            log.debugf("    Property [%s] with values [%s]", key, sb.toString());
                         } else {
                             log.debugf("    Property [%s] with value [%s]", key, value);
                         }
