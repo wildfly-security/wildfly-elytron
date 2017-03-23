@@ -324,7 +324,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             final String ksAlias = calculateNewAlias(credentialAlias, credentialClass, algorithmName, parameterSpec);
             try (Hold hold = lockForWrite()) {
                 keyStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
-                final TopEntry topEntry = cache.computeIfAbsent(credentialAlias, TopEntry::new);
+                final TopEntry topEntry = cache.computeIfAbsent(toLowercase(credentialAlias), TopEntry::new);
                 final MidEntry midEntry = topEntry.getMap().computeIfAbsent(credentialClass, c -> new MidEntry(topEntry, c));
                 final BottomEntry bottomEntry;
                 if (algorithmName != null) {
@@ -354,7 +354,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         final BottomEntry bottomEntry;
         final String ksAlias;
         try (Hold hold = lockForRead()) {
-            final TopEntry topEntry = cache.get(credentialAlias);
+            final TopEntry topEntry = cache.get(toLowercase(credentialAlias));
             if (topEntry == null) {
                 return null;
             }
@@ -633,12 +633,13 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     }
 
     public void remove(final String credentialAlias, final Class<? extends Credential> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec) throws CredentialStoreException {
+        String credentialAliasLowerCase = toLowercase(credentialAlias);
         try (Hold hold = lockForWrite()) {
             if (! modifiable) {
                 throw log.nonModifiableCredentialStore("remove");
             }
             // unlike retrieve or store, we want to remove *all* matches
-            final TopEntry topEntry = cache.get(credentialAlias);
+            final TopEntry topEntry = cache.get(credentialAliasLowerCase);
             if (topEntry == null) {
                 return;
             }
@@ -655,7 +656,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     }
                 }
             }
-            cache.remove(credentialAlias);
+            cache.remove(credentialAliasLowerCase);
             // done!
         } catch (KeyStoreException e) {
             throw log.cannotRemoveCredentialFromStore(e);
@@ -888,6 +889,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             b.append('/');
         }
         return b.toString();
+    }
+
+    private static String toLowercase(String str) {
+        return str.toLowerCase(Locale.ROOT);
     }
 
     static final class TopEntry {
