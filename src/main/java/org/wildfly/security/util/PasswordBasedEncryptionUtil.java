@@ -20,6 +20,7 @@ package org.wildfly.security.util;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
@@ -48,16 +49,30 @@ import org.wildfly.common.Assert;
  */
 public final class PasswordBasedEncryptionUtil {
 
+    // PicketBox compatibility related
+    private static final char PAD = '_';
+    private static final String REGEX = "^" + PAD + "{0,2}[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./]*$";
+    private static final String DEFAULT_PICKETBOX_ALGORITHM = "PBEWithMD5AndDES";
+    private static final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
+
     private static final String DEFAULT_PBE_ALGORITHM = "PBEWithHmacSHA1andAES_128";
 
     private final Cipher cipher;
     private final AlgorithmParameters algorithmParameters;
     private final Alphabet alphabet;
+    private final boolean picketBoxCompatibility;
+    private final boolean usePadding;
 
-    PasswordBasedEncryptionUtil(Cipher cipher, AlgorithmParameters algorithmParameters, Alphabet alphabet) {
+    PasswordBasedEncryptionUtil(Cipher cipher, AlgorithmParameters algorithmParameters, Alphabet alphabet, boolean usePadding, boolean picketBoxCompatibility) {
         this.cipher = cipher;
         this.alphabet = alphabet;
         this.algorithmParameters = algorithmParameters;
+        this.usePadding = usePadding;
+        this.picketBoxCompatibility = picketBoxCompatibility;
+    }
+
+    PasswordBasedEncryptionUtil(Cipher cipher, AlgorithmParameters algorithmParameters, Alphabet alphabet) {
+        this(cipher, algorithmParameters, alphabet, false, false);
     }
 
     /**
@@ -114,15 +129,23 @@ public final class PasswordBasedEncryptionUtil {
     }
 
     private byte[] decodeUsingAlphabet(String payload) {
-        ByteIterator byteIterator = isBase64(alphabet) ? CodePointIterator.ofString(payload).base64Decode(getAlphabet64(alphabet))
-                : CodePointIterator.ofString(payload).base32Decode(getAlphabet32(alphabet));
-        return byteIterator.drain();
+        if (picketBoxCompatibility) {
+            return picketBoxBase64Decode(payload);
+        } else {
+            ByteIterator byteIterator = isBase64(alphabet) ? CodePointIterator.ofString(payload).base64Decode(getAlphabet64(alphabet), usePadding)
+                    : CodePointIterator.ofString(payload).base32Decode(getAlphabet32(alphabet));
+            return byteIterator.drain();
+        }
     }
 
     private String encodeUsingAlphabet(byte[] payload) {
-        CodePointIterator codePointIteratorIterator = isBase64(alphabet) ? ByteIterator.ofBytes(payload).base64Encode(getAlphabet64(alphabet))
-                : ByteIterator.ofBytes(payload).base32Encode(getAlphabet32(alphabet));
-        return codePointIteratorIterator.drainToString();
+        if (picketBoxCompatibility) {
+            return picketBoxBased64Encode(payload);
+        } else {
+            CodePointIterator codePointIterator = isBase64(alphabet) ? ByteIterator.ofBytes(payload).base64Encode(getAlphabet64(alphabet), usePadding)
+                    : ByteIterator.ofBytes(payload).base32Encode(getAlphabet32(alphabet));
+            return codePointIterator.drainToString();
+        }
     }
 
     private static boolean isBase64(Alphabet alphabet) {
@@ -153,6 +176,72 @@ public final class PasswordBasedEncryptionUtil {
         return Normalizer.normalize(new String(buffer), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
 
+    private static byte[] picketBoxBase64Decode(String picketBoxBase64) {
+        if (picketBoxBase64.length() == 0) {
+            return new byte[0];
+        }
+
+        while (picketBoxBase64.length() % 4 != 0) {
+            picketBoxBase64 = PAD + picketBoxBase64;
+        }
+
+        if (!picketBoxBase64.matches(REGEX)) {
+            throw log.wrongBase64InPBCompatibleMode(picketBoxBase64);
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream((picketBoxBase64.length() * 3) / 4);
+        for (int i = 0, n = picketBoxBase64.length(); i < n;) {
+            int pos0 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos1 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos2 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos3 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            if (pos0 > -1) {
+                bos.write(((pos1 & 0x30) >>> 4) | (pos0 << 2));
+            }
+            if (pos1 > -1) {
+                bos.write(((pos2 & 0x3c) >>> 2) | ((pos1 & 0xf) << 4));
+            }
+            bos.write(((pos2 & 3) << 6) | pos3);
+        }
+        return bos.toByteArray();
+    }
+
+    private String picketBoxBased64Encode(byte[] buffer) {
+        int len = buffer.length, pos = len % 3, c;
+        byte b0 = 0, b1 = 0, b2 = 0;
+        StringBuffer sb = new StringBuffer();
+
+        int i = 0;
+        switch (pos) {
+            case 2:
+                b1 = buffer[i++];
+                c = ((b0 & 3) << 4) | ((b1 & 0xf0) >>> 4);
+                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            case 1:
+                b2 = buffer[i++];
+                c = ((b1 & 0xf) << 2) | ((b2 & 0xc0) >>> 6);
+                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+                c = b2 & 0x3f;
+                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+                break;
+        }
+
+        while (pos < len) {
+            b0 = buffer[pos++];
+            b1 = buffer[pos++];
+            b2 = buffer[pos++];
+            c = (b0 & 0xfc) >>> 2;
+            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            c = ((b0 & 3) << 4) | ((b1 & 0xf0) >>> 4);
+            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            c = ((b1 & 0xf) << 2) | ((b2 & 0xc0) >>> 6);
+            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            c = b2 & 0x3f;
+            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+        }
+
+        return sb.toString();
+    }
 
     /**
      * Builder class to build {@link PasswordBasedEncryptionUtil} class with all necessary parameters to support
@@ -176,9 +265,12 @@ public final class PasswordBasedEncryptionUtil {
 
         private Provider provider;
         private Alphabet alphabet = Alphabet.Base64Alphabet.STANDARD;
+        private boolean usePadding = false;
         private IvParameterSpec ivSpec;
         private String encodedIV;
         private AlgorithmParameters algorithmParameters;
+
+        private boolean picketBoxCompatibility = false;
 
         /**
          * Set password to use to generate the encryption key
@@ -257,6 +349,29 @@ public final class PasswordBasedEncryptionUtil {
          */
         public Builder salt(byte[] salt) {
             this.salt = salt;
+            return this;
+        }
+
+        /**
+         * Use PicketBox compatibility mode for producing exact output as using PBE for MASK- purpose.
+         *
+         * Problem is that PicketBox is using different base64 than standard.
+         * Default is {@code false}.
+         *
+         * @return this Builder
+         */
+        public Builder picketBoxCompatibility() {
+            picketBoxCompatibility = true;
+            return this;
+        }
+
+        /**
+         * Use padding when encoding/decoding binary data.
+         *
+         * @return this Builder
+         */
+        public Builder encodingPadded() {
+            usePadding = true;
             return this;
         }
 
@@ -394,7 +509,7 @@ public final class PasswordBasedEncryptionUtil {
                 if (algorithmParameters != null) {
                     cipher.init(cipherMode, secretKey, algorithmParameters);
                 } else {
-                    cipher.init(cipherMode, secretKey, generateAlgorithmParameters(parametersAlgorithm, cipherIteration, cipherSalt, ivSpec, provider));
+                        cipher.init(cipherMode, secretKey, generateAlgorithmParameters(parametersAlgorithm, cipherIteration, cipherSalt, ivSpec, provider));
                 }
             }
             return cipher;
@@ -433,6 +548,14 @@ public final class PasswordBasedEncryptionUtil {
          * @throws GeneralSecurityException when something goes wrong while initializing encryption related objects
          */
         public PasswordBasedEncryptionUtil build() throws GeneralSecurityException {
+            if (picketBoxCompatibility) {
+                // in compatible mode use Alphabet.PICKETBOX_COMPATIBILITY and no padding with proper key material and algorithm
+                alphabet = Alphabet.PICKETBOX_COMPATIBILITY;
+                usePadding = false;
+                keyAlgorithm = DEFAULT_PICKETBOX_ALGORITHM;
+                password = DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL.toCharArray();
+            }
+
             if (iteration <= -1) {
                 throw log.iterationCountNotSpecified();
             }
@@ -463,7 +586,7 @@ public final class PasswordBasedEncryptionUtil {
                 ivSpec = new IvParameterSpec(byteIterator.drain());
             }
 
-            return new PasswordBasedEncryptionUtil(createAndInitCipher(deriveSecretKey()), algorithmParameters, alphabet);
+            return new PasswordBasedEncryptionUtil(createAndInitCipher(deriveSecretKey()), algorithmParameters, alphabet, usePadding, picketBoxCompatibility);
         }
     }
 
