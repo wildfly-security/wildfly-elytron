@@ -96,6 +96,7 @@ public class HttpConstants {
     public static final String DIGEST_NAME = "DIGEST";
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
+    public static final String BEARER_TOKEN = "BEARER_TOKEN";
 
     /*
      * Response Codes

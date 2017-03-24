@@ -20,6 +20,7 @@ package org.wildfly.security;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
+import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
@@ -241,6 +242,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
         putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, FORM_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
         putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, SPNEGO_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, BEARER_TOKEN, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
     }
 
     private void putPasswordImplementations() {
