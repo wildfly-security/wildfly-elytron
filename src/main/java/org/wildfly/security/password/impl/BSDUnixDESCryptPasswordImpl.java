@@ -488,7 +488,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         int j = 0;
         int t0, t1;
         for (int i = 0; i < 16; i++) {
-            shifts += keyShifts[i];
+            shifts += keyShifts[i] & 0xff;
             t0 = (k0 << shifts) | (k0 >>> (28 - shifts));
             t1 = (k1 << shifts) | (k1 >>> (28 - shifts));
 
