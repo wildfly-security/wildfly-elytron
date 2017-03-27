@@ -32,12 +32,14 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.StreamSupport;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.util.EnumerationIterator;
 
 /**
@@ -292,6 +294,25 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      */
     public Spliterator<Credential> spliterator() {
         return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED);
+    }
+
+    public boolean canVerify(Class<? extends Evidence> evidenceClass, String algorithmName) {
+        return StreamSupport.stream(spliterator(), false)
+                .filter(credential -> credential.canVerify(evidenceClass, algorithmName))
+                .count() != 0;
+    }
+
+    public boolean canVerify(Evidence evidence) {
+        return StreamSupport.stream(spliterator(), false)
+                .filter(credential -> credential.canVerify(evidence))
+                .count() != 0;
+    }
+
+    public boolean verify(Evidence evidence) {
+        return StreamSupport.stream(spliterator(), false)
+                .filter(credential -> credential.canVerify(evidence))
+                .filter(credential -> credential.verify(evidence))
+                .count() != 0;
     }
 
     /**
