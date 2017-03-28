@@ -1291,13 +1291,13 @@ public final class AuthenticationConfiguration {
                 if (callbackIntercept != null && callbackIntercept.test(callback)) {
                     continue;
                 } else if (callback instanceof NameCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.PRINCIPAL)) {
+                    final Principal principal = config.getPrincipal();
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PRINCIPAL) && principal == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
                     final NameCallback nameCallback = (NameCallback) callback;
                     // populate with our authentication name
-                    final Principal principal = config.getPrincipal();
                     if (principal instanceof AnonymousPrincipal) {
                         final String defaultName = nameCallback.getDefaultName();
                         if (defaultName != null) {
@@ -1310,14 +1310,18 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                 } else if (callback instanceof PasswordCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL)) {
+                    final CredentialSource credentials = config.getCredentialSource();
+                    TwoWayPassword password = null;
+                    if ((credentials == null || (password = credentials.applyToCredential(PasswordCredential.class,
+                            ClearPassword.ALGORITHM_CLEAR, c -> c.getPassword(TwoWayPassword.class))) == null)
+                            && config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL)) {
                         userCallbacks.add(callback);
                         continue;
                     }
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
-                    final CredentialSource credentials = config.getCredentialSource();
+
                     if (credentials != null) {
-                        final TwoWayPassword password = credentials.applyToCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, c -> c.getPassword(TwoWayPassword.class));
+                        //final TwoWayPassword password = credentials.applyToCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, c -> c.getPassword(TwoWayPassword.class));
                         if (password instanceof ClearPassword) {
                             // shortcut
                             passwordCallback.setPassword(((ClearPassword) password).getPassword());
@@ -1349,11 +1353,12 @@ public final class AuthenticationConfiguration {
                     CallbackUtil.unsupported(callback);
                     continue;
                 } else if (callback instanceof CredentialCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL)) {
+                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    final Credential credential = config.getCredentialSource().getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm(), credentialCallback.getParameterSpec());
+                    if (config.getUserCallbackKinds().contains(CallbackKind.CREDENTIAL) && credential == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
-                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
                     // special handling for X.509 when a key manager factory is set
                     final SecurityFactory<X509KeyManager> keyManagerFactory = config.getX509KeyManagerFactory();
                     if (keyManagerFactory != null) {
@@ -1392,7 +1397,6 @@ public final class AuthenticationConfiguration {
                         }
                     }
                     // normal handling
-                    final Credential credential = config.getCredentialSource().getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm(), credentialCallback.getParameterSpec());
                     if (credential != null && credentialCallback.isCredentialSupported(credential)) {
                         credentialCallback.setCredential(credential);
                         continue;
@@ -1401,7 +1405,7 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                 } else if (callback instanceof RealmChoiceCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM)) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM) && config.setRealm == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
@@ -1423,7 +1427,7 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                 } else if (callback instanceof RealmCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM)) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.REALM) && config.setRealm == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
@@ -1432,7 +1436,7 @@ public final class AuthenticationConfiguration {
                     realmCallback.setText(realm != null ? realm : realmCallback.getDefaultText());
                     continue;
                 } else if (callback instanceof ParameterCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.PARAMETERS)) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PARAMETERS) && config.parameterSpecs == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
@@ -1469,7 +1473,7 @@ public final class AuthenticationConfiguration {
                     }
                     continue;
                 } else if (callback instanceof EvidenceVerifyCallback) {
-                    if (config.getUserCallbackKinds().contains(CallbackKind.PEER_CREDENTIAL)) {
+                    if (config.getUserCallbackKinds().contains(CallbackKind.PEER_CREDENTIAL) && config.getX509TrustManagerFactory() == null) {
                         userCallbacks.add(callback);
                         continue;
                     }
