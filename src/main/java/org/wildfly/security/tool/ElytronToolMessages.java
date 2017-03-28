@@ -144,8 +144,8 @@ public interface ElytronToolMessages extends BasicLogger {
     IllegalArgumentException credentialStoreURIParameterNameExpected(String uri);
 
     // mask command
-    @Message(id = Message.NONE, value = "\"mask\" command is used to get MASK- string encrypted using %s in PicketBox compatible way.")
-    String cmdMaskHelpHeader(String algorithm);
+    @Message(id = Message.NONE, value = "\"mask\" command is used to get MASK- string encrypted using PBEWithMD5AndDES in PicketBox compatible way.")
+    String cmdMaskHelpHeader();
 
     @Message(id = Message.NONE, value = "Salt to apply to masked string")
     String cmdMaskSaltDesc();
