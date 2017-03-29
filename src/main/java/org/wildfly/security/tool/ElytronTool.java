@@ -74,7 +74,8 @@ public class ElytronTool {
                     command.execute(newArgs);
                     System.exit(command.getStatus());
                 } catch (Exception e) {
-                    System.err.println(e.getLocalizedMessage());
+                    System.err.println(ElytronToolMessages.msg.commandExecuteException());
+                    e.printStackTrace(System.err);
                     System.exit(command.getStatus());
                 }
             } else {

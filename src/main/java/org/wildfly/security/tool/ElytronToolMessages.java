@@ -46,6 +46,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = Message.NONE, value = "java -jar %s %s")
     String cmdHelp(String jarFile, String commandName);
 
+    @Message(id = Message.NONE, value = "Exception encountered executing the command:")
+    String commandExecuteException();
+
     // CredentialStore command parameters descriptions
     @Message(id = Message.NONE, value = "Missing arguments. Printing general help message:")
     String missingArgumentsHelp();
