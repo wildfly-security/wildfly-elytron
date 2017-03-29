@@ -526,6 +526,7 @@ public class DigestTest extends BaseTestCase {
                 .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestServer"))
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestServer")
                 .addMechanismRealm("TestRealm")
                 .build();
 

@@ -1461,6 +1461,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6014, value = "Authentication mechanism '%s' cannot be found")
     HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);
 
+    @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
+    IllegalStateException digestMechanismRequireRealm();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
