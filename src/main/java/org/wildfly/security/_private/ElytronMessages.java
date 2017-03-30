@@ -1464,6 +1464,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
     IllegalStateException digestMechanismRequireRealm();
 
+    @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
+    HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
+
+    @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
+    HttpAuthenticationException httpAuthenticationNoMechanisms();
+
+    @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
+    HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")

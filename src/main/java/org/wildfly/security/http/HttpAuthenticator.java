@@ -103,11 +103,22 @@ public class HttpAuthenticator {
 
         private boolean authenticate() throws HttpAuthenticationException {
             List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.get();
+            if (required && authenticationMechanisms.size() == 0) {
+                throw log.httpAuthenticationNoMechanisms();
+            }
             responders = new ArrayList<>(authenticationMechanisms.size());
+            boolean evaluationFailed = false;
             try {
                 for (HttpServerAuthenticationMechanism nextMechanism : authenticationMechanisms) {
                     currentMechanism = nextMechanism;
-                    nextMechanism.evaluateRequest(this);
+                    try {
+                        nextMechanism.evaluateRequest(this);
+                    } catch (HttpAuthenticationException e) {
+                        // Give all mechanisms an opportunity to succeed, where a mechanism fails due to mis-configuration or a transient error
+                        // others may still be able to operate correctly.
+                        evaluationFailed = true;
+                        log.trace("Request evaluation for mechanism '%s' failed.", nextMechanism.getMechanismName(), e);
+                    }
 
                     if (isAuthenticated()) {
                         if (successResponder != null) {
@@ -126,18 +137,30 @@ public class HttpAuthenticator {
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
+                        boolean atLeastOneChallenge = false;
                         boolean statusSet = false;
                         for (HttpServerMechanismsResponder responder : responders) {
-                            responder.sendResponse(this);
-                            if (statusSet == false && statusCode > 0 && statusCode != OK) {
-                                httpExchangeSpi.setStatusCode(statusCode);
-                                statusSet = true;
+                            try {
+                                responder.sendResponse(this);
+                                atLeastOneChallenge = true;
+                                if (statusSet == false && statusCode > 0 && statusCode != OK) {
+                                    httpExchangeSpi.setStatusCode(statusCode);
+                                    statusSet = true;
+                                }
+                            } catch (HttpAuthenticationException e) {
+                                log.trace("HTTP authentication mechanism unable to send challenge.", e);
                             }
+                        }
+                        if (atLeastOneChallenge == false) {
+                            throw log.httpAuthenticationNoSuccessfulResponder();
                         }
                         if (statusSet == false) {
                             httpExchangeSpi.setStatusCode(OK);
                         }
                     } else {
+                        if (evaluationFailed) {
+                            throw log.httpAuthenticationFailedEvaluatingRequest();
+                        }
                         httpExchangeSpi.setStatusCode(FORBIDDEN);
                     }
                     return false;
