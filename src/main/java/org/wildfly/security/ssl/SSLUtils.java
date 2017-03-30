@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -51,6 +52,8 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 /**
  * SSL factories and utilities.
  *
@@ -62,7 +65,7 @@ public final class SSLUtils {
 
     private SSLUtils() {}
 
-    private static final String serviceType = SSLContext.class.getSimpleName();
+    private static final String SERVICE_TYPE = SSLContext.class.getSimpleName();
 
     /**
      * The key used to store the authenticated {@link SecurityIdentity} onto the {@link SSLSession}.
@@ -91,12 +94,11 @@ public final class SSLUtils {
      * @return the SSL context factory
      */
     public static SecurityFactory<SSLContext> createSslContextFactory(ProtocolSelector protocolSelector, Supplier<Provider[]> providerSupplier, String providerName) {
-        Provider[] providers = providerSupplier.get();
         final Map<String, List<Provider>> preferredProviderByAlgorithm = new IdentityHashMap<>();
 
         // compile all the providers that support SSLContext.
 
-        for (Provider provider : providers) {
+        for (Provider provider : providerSupplier.get()) {
             // if a provider name was given, filter by it
             if (providerName != null && ! providerName.equals(provider.getName())) {
                 continue;
@@ -104,7 +106,7 @@ public final class SSLUtils {
             Set<Service> services = provider.getServices();
             if (services != null) {
                 for (Provider.Service service : services) {
-                    if (serviceType.equals(service.getType())) {
+                    if (SERVICE_TYPE.equals(service.getType())) {
                         String protocolName = service.getAlgorithm();
                         List<Provider> providerList = preferredProviderByAlgorithm.computeIfAbsent(protocolName, s -> new ArrayList<>());
                         providerList.add(provider);
@@ -127,6 +129,10 @@ public final class SSLUtils {
                 }
                 throw ElytronMessages.log.noAlgorithmForSslProtocol();
             };
+        }
+
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by providers in %s: %s", SERVICE_TYPE, SSLUtils.class.getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
 
         return SSLUtils::throwIt;

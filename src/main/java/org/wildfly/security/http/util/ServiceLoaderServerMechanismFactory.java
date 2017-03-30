@@ -68,19 +68,22 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
      */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
-        Set<String> mechanismNames = new LinkedHashSet<>();
+        Set<String> names = new LinkedHashSet<>();
         synchronized(serviceLoader) {
             Iterator<HttpServerAuthenticationMechanismFactory> factoryIterator = serviceLoader.iterator();
             try {
                 while (factoryIterator.hasNext()) {
                     HttpServerAuthenticationMechanismFactory current = factoryIterator.next();
-                    Collections.addAll(mechanismNames, current.getMechanismNames(properties));
+                    Collections.addAll(names, current.getMechanismNames(properties));
                 }
             } catch (ServiceConfigurationError e) {
                 log.debug(e);
             }
         }
-        return mechanismNames.toArray(new String[mechanismNames.size()]);
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by service loader in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), serviceLoader.toString());
+        }
+        return names.toArray(new String[names.size()]);
     }
 
     /**
@@ -102,6 +105,9 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
             } catch (ServiceConfigurationError e) {
                 log.debug(e);
             }
+        }
+        if (log.isTraceEnabled()) {
+            log.tracef("No %s provided by service loader in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), serviceLoader.toString());
         }
         return null;
     }
