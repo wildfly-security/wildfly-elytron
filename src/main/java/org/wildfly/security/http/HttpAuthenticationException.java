@@ -27,6 +27,11 @@ import java.io.IOException;
 public class HttpAuthenticationException extends IOException {
 
     /**
+     *
+     */
+    private static final long serialVersionUID = 2920504964210220416L;
+
+    /**
      * Constructs a new {@code HttpAuthenticationException}. The message is left blank ({@code null}),
      * and no cause is specified.
      */
