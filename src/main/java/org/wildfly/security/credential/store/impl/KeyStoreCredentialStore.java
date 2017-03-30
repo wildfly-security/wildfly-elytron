@@ -21,8 +21,12 @@ package org.wildfly.security.credential.store.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,9 +65,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -122,10 +131,13 @@ import org.wildfly.security.x500.X500;
  * <p>
  * The following configuration parameters are supported:
  * <ul>
- *     <li>{@code location}: specifies the location of the key store (none means, use an in-memory store and do not save changes)</li>
+ *     <li>{@code location}: specifies the location of the key store (none means, use an in-memory store and do not store changes)</li>
  *     <li>{@code modifiable}: specifies whether the credential store should be modifiable</li>
  *     <li>{@code create}: specifies to automatically create storage file for this credential store (defaults to {@code false})</li>
- *     <li>{@code keyStoreType}: specify the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
+ *     <li>{@code keyStoreType}: specifies the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
+ *     <li>{@code keyAlias}: specifies the secret key alias within the key store to use for encrypt/decrypt of data in external storage (defaults to {@code cs_key})</li>
+ *     <li>{@code external}: specifies whether to store data to external storage and encrypted by {@code keyAlias} key (defaults to {@code false})</li>
+ *     <li>{@code cryptoAlg}: cryptographic algorithm name to be used to encrypt decrypt entries at external storage ({@code external} has to be set to {@code true})</li>
  * </ul>
  */
 public final class KeyStoreCredentialStore extends CredentialStoreSpi {
@@ -147,6 +159,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private boolean create;
     private CredentialStore.ProtectionParameter protectionParameter;
     private Provider[] providers;
+    private String encryptionKeyAlias;
+    private boolean useExternalStorage = false;
+    private ExternalStorage externalStorage;
+    private String cryptographicAlgorithm;
 
     public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, final Provider[] providers) throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
@@ -160,7 +176,11 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             final String locationName = attributes.get("location");
             location = locationName == null ? null : Paths.get(locationName);
             this.providers = providers;
-            load(attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType()));
+            String keyStoreType = attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType());
+            useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault("external", "false"));
+            encryptionKeyAlias = attributes.getOrDefault("keyAlias", "cs_key");
+            cryptographicAlgorithm = attributes.get("cryptoAlg");
+            load(keyStoreType);
             initialized = true;
         }
     }
@@ -711,7 +731,11 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final char[] storePassword = getStorePassword(protectionParameter);
                 try (AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
                     try {
-                        keyStore.store(os, storePassword);
+                        if (useExternalStorage) {
+                            externalStorage.store(os);
+                        } else {
+                            keyStore.store(os, storePassword);
+                        }
                     } catch (Throwable t) {
                         try {
                             os.cancel();
@@ -757,12 +781,24 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         // lock held
         final Enumeration<String> enumeration;
         // load the KeyStore from file
-        keyStore = getKeyStoreInstance(type);
+        if (useExternalStorage) {
+            setupExternalStorage(type);
+        } else {
+            keyStore = getKeyStoreInstance(type);
+        }
         if (location != null && Files.exists(location))
             try (InputStream fileStream = Files.newInputStream(location)) {
-                keyStore.load(fileStream, getStorePassword(protectionParameter));
+                char[] password = getStorePassword(protectionParameter);
+                if (useExternalStorage) {
+                    externalStorage.load(fileStream);
+                } else {
+                    keyStore.load(fileStream, password);
+                }
                 enumeration = keyStore.aliases();
-            } catch (GeneralSecurityException | IOException e) {
+            } catch (GeneralSecurityException e) {
+                throw log.cannotInitializeCredentialStore(
+                        log.internalEncryptionProblem(e, location.toString()));
+            } catch (IOException e) {
                 throw log.cannotInitializeCredentialStore(e);
         } else if (create) {
             try {
@@ -836,6 +872,22 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             throw log.cannotInitializeCredentialStore(e);
         }
     }
+
+    /**
+     * Sets {@link #keyStore} to JCEKS type keyStore to be used as external storage.
+     * Sets {@link #externalStorage} used to dump/load stored secret data.
+     */
+    private void setupExternalStorage(String type) throws CredentialStoreException {
+        KeyStore keyContainingKeyStore = getKeyStoreInstance(type);
+        keyStore = getKeyStoreInstance("JCEKS");
+        externalStorage = new ExternalStorage();
+        try {
+            externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, getStorePassword(protectionParameter), keyStore);
+        } catch(IOException e) {
+            throw log.cannotInitializeCredentialStore(e);
+        }
+    }
+
 
     private static final Map<String, Class<? extends Credential>> CREDENTIAL_TYPES;
 
@@ -1022,4 +1074,179 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             return hashCode;
         }
     }
+
+    private final class ExternalStorage {
+
+        // version of external storage file, can be used later to enhance functionality and keep backward compatibility
+        private int VERSION = 1;
+
+        private int SECRET_KEY_ENTRY_TYPE = 100;
+
+        private static final String DEFAULT_CRYPTOGRAPHIC_ALGORITHM = "AES/CBC/NoPadding";
+
+        private Cipher encrypt;
+        private Cipher decrypt;
+
+        private KeyStore dataKeyStore;
+        private KeyStore storageSecretKeyStore;
+        private SecretKey storageSecretKey;
+
+        private ExternalStorage() {}
+
+        void init(String cryptographicAlgorithm, String keyAlias, KeyStore keyStore, char[] keyPassword, KeyStore dataKeyStore) throws CredentialStoreException {
+
+            if (cryptographicAlgorithm == null)
+                cryptographicAlgorithm = DEFAULT_CRYPTOGRAPHIC_ALGORITHM;
+
+            storageSecretKeyStore = keyStore;
+            this.dataKeyStore = dataKeyStore;
+
+            try {
+                fetchStorageSecretKey(keyAlias, keyPassword);
+                Provider provider = keyStore.getProvider();
+                try {
+                    encrypt = Cipher.getInstance(cryptographicAlgorithm, provider);
+                } catch (NoSuchAlgorithmException e) {
+                    // fallback to any provider of desired algorithm
+                    encrypt = Cipher.getInstance(cryptographicAlgorithm);
+                }
+                try {
+                    decrypt = Cipher.getInstance(cryptographicAlgorithm, provider);
+                } catch (NoSuchAlgorithmException e) {
+                    // fallback to any provider of desired algorithm
+                    decrypt = Cipher.getInstance(cryptographicAlgorithm);
+                }
+            } catch (NoSuchAlgorithmException | NoSuchPaddingException | UnrecoverableEntryException |
+                    KeyStoreException | IOException | CertificateException e) {
+                throw new CredentialStoreException(e);
+            }
+        }
+
+        private void fetchStorageSecretKey(String keyAlias, char[] keyPassword) throws CertificateException, NoSuchAlgorithmException, IOException, CredentialStoreException, UnrecoverableEntryException, KeyStoreException {
+            storageSecretKeyStore.load(null, keyPassword);
+            KeyStore.Entry entry = storageSecretKeyStore.getEntry(keyAlias, new KeyStore.PasswordProtection(keyPassword));
+            if (! (entry instanceof KeyStore.SecretKeyEntry)) {
+                throw log.wrongTypeOfExternalStorageKey(keyAlias);
+            }
+            storageSecretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+        }
+
+        /**
+         * Load {@link #dataKeyStore} with data from the input stream.
+         *
+         * @param inputStream to load data from
+         * @throws IOException if something goes wrong
+         */
+        void load(InputStream inputStream) throws IOException, GeneralSecurityException {
+            dataKeyStore.load(null, null);
+            ObjectInputStream ois = new ObjectInputStream(inputStream);
+            int fileVersion = ois.readInt();
+            if (fileVersion == VERSION) {
+                while (ois.available() > 0) {
+                    int entryType = ois.readInt();
+                    if (entryType == SECRET_KEY_ENTRY_TYPE) {
+                        loadSecretKey(ois);
+                    } else {
+                        throw log.unrecognizedEntryType(Integer.toString(entryType));
+                    }
+                }
+            } else {
+                throw log.unexpectedFileVersion(Integer.toString(fileVersion));
+            }
+            ois.close();
+        }
+
+        private void loadSecretKey(ObjectInputStream ois) throws IOException, GeneralSecurityException {
+            byte[] encryptedData = readBytes(ois);
+            byte[] iv = readBytes(ois);
+
+            decrypt.init(Cipher.DECRYPT_MODE, storageSecretKey, new IvParameterSpec(iv));
+            Assert.checkMaximumParameter("cipher block size", 256, decrypt.getBlockSize());
+            byte[] unPadded = pkcs7UnPad(decrypt.doFinal(encryptedData));
+            ObjectInputStream entryOis = new ObjectInputStream(new ByteArrayInputStream(unPadded));
+            String ksAlias = entryOis.readUTF();
+            byte[] encodedSecretKey = readBytes(entryOis);
+            KeyStore.Entry entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encodedSecretKey, DATA_OID));
+            dataKeyStore.setEntry(ksAlias, entry, convertParameter(protectionParameter));
+        }
+
+        private byte[] readBytes(ObjectInputStream ois) throws IOException {
+            int len = ois.readInt();
+            byte[] data = new byte[len];
+            ois.read(data, 0, len);
+            return data;
+        }
+
+        private int writeBytes(byte[] data, ObjectOutputStream oos) throws IOException {
+            int len = data.length;
+            oos.writeInt(len);
+            oos.write(data, 0, len);
+            return len;
+        }
+
+        /**
+         * Store data from {@link #dataKeyStore} to output stream.
+         *
+         * @param outputStream to store data to
+         * @throws IOException if something goes wrong
+         */
+        void store(OutputStream outputStream) throws IOException, GeneralSecurityException {
+            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+            oos.writeInt(VERSION);
+            Enumeration<String> ksAliases = dataKeyStore.aliases();
+            while(ksAliases.hasMoreElements()) {
+                String alias = ksAliases.nextElement();
+                KeyStore.Entry entry = dataKeyStore.getEntry(alias, convertParameter(protectionParameter));
+                if (entry instanceof KeyStore.SecretKeyEntry) {
+                    saveSecretKey(alias, oos, (KeyStore.SecretKeyEntry)entry);
+                } else {
+                    throw log.unrecognizedEntryType(entry.getClass().getCanonicalName());
+                }
+            }
+            oos.flush();
+            oos.close();
+        }
+
+        private void saveSecretKey(String ksAlias, ObjectOutputStream oos, KeyStore.SecretKeyEntry entry) throws IOException, GeneralSecurityException {
+            ByteArrayOutputStream entryData = new ByteArrayOutputStream(1024);
+            ObjectOutputStream entryOos = new ObjectOutputStream(entryData);
+            entryOos.writeUTF(ksAlias);
+            writeBytes(entry.getSecretKey().getEncoded(), entryOos);
+            entryOos.flush();
+
+            encrypt.init(Cipher.ENCRYPT_MODE, storageSecretKey);
+            int blockSize = encrypt.getBlockSize();
+            Assert.checkMaximumParameter("cipher block size", 256, blockSize);
+            byte[] padded = pkcs7Pad(entryData.toByteArray(), blockSize);
+
+            byte[] encrypted = encrypt.doFinal(padded);
+            byte[] iv = encrypt.getIV();
+
+            oos.writeInt(SECRET_KEY_ENTRY_TYPE);
+            writeBytes(encrypted, oos);
+            writeBytes(iv, oos);
+        }
+
+        private byte[] pkcs7Pad(byte[] buffer, int blockSize) {
+            int len = buffer.length;
+            int toFill = blockSize - (len % blockSize);
+            byte[] padded = Arrays.copyOf(buffer, toFill + len);
+            Arrays.fill(padded, len, padded.length, (byte) toFill);
+            return padded;
+        }
+
+        private byte[] pkcs7UnPad(byte[] buffer) throws BadPaddingException {
+            byte last = buffer[buffer.length - 1];
+            int i = buffer.length - 2;
+            while (buffer[i] == last) {
+                i--;
+            }
+            if (i + 2 + last != buffer.length) {
+                throw new BadPaddingException();
+            }
+            return Arrays.copyOfRange(buffer, 0, i + 2);
+        }
+
+    }
+
 }
