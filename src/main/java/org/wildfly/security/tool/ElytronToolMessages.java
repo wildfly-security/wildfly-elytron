@@ -46,6 +46,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = Message.NONE, value = "java -jar %s %s")
     String cmdHelp(String jarFile, String commandName);
 
+    @Message(id = Message.NONE, value = "Exception encountered executing the command:")
+    String commandExecuteException();
+
     // CredentialStore command parameters descriptions
     @Message(id = Message.NONE, value = "Missing arguments. Printing general help message:")
     String missingArgumentsHelp();
@@ -55,9 +58,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = Message.NONE, value = "Configuration URI for credential store. URI basic form: \"cr-store://store_name?parameter1=value1; ... ;parameterN=valueN\"%n" +
             "Supported parameters are dependent on credential store type%n" +
-            "Generally supported parameters for default credential store implementation:%n" +
-            "create - automatically creates credential store file%n" +
-            "modifiable - is the credential modifiable%n" +
+            "Generally supported parameters for default credential store implementation (all are optional):%n" +
+            "create - automatically creates credential store file (true/false)%n" +
+            "modifiable - is the credential modifiable (true/false)%n" +
             "location - file location of credential store%n" +
             "keyStoreType - specify the key store type to use")
     String cmdLineURIDesc();
