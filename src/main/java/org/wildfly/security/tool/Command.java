@@ -42,7 +42,7 @@ public abstract class Command {
     /**
      * Default help line width.
      */
-    public static int WIDTH = 160;
+    public static int WIDTH = 1024;
 
     /**
      * Display help to the command.
