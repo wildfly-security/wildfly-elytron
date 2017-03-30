@@ -818,6 +818,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
+                    // TODO: should consider realm from RealmCallback
                     final Credential credential = getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm());
                     if (credential != null) {
                         log.tracef("Handling CredentialCallback: obtained successfully");

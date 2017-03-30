@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.http.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.HOST;
 
 import java.util.Map;
@@ -108,6 +109,7 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
 
                 } catch (Throwable e) {
                     // Give up now since the mechanism information could not be successfully resolved to a mechanism configuration
+                    log.trace("Providing MechanismInformation failed", e);
                     request.noAuthenticationInProgress();
                     return;
                 }
