@@ -26,7 +26,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
-import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
 /**
@@ -41,9 +40,6 @@ class MaskCommand extends Command {
      * Command string
      */
     public static final String MASK_COMMAND = "mask";
-
-    static final String DEFAULT_ALGORITHM = "PBEWithMD5AndDES";
-    static final String DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL = "somearbitrarycrazystringthatdoesnotmatter";
 
     static final String SALT_PARAM = "salt";
     static final String ITERATION_PARAM = "iteration";
@@ -105,9 +101,7 @@ class MaskCommand extends Command {
 
     static String computeMasked(String secret, String salt, int iteration) throws GeneralSecurityException {
         PasswordBasedEncryptionUtil encryptUtil = new PasswordBasedEncryptionUtil.Builder()
-                .alphabet(Alphabet.Base64Alphabet.PICKETBOX_COMPATIBILITY)
-                .keyAlgorithm(DEFAULT_ALGORITHM)
-                .password(DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL)
+                .picketBoxCompatibility()
                 .salt(salt)
                 .iteration(iteration)
                 .encryptMode()
@@ -123,7 +117,7 @@ class MaskCommand extends Command {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, MASK_COMMAND),
-                ElytronToolMessages.msg.cmdMaskHelpHeader(DEFAULT_ALGORITHM),
+                ElytronToolMessages.msg.cmdMaskHelpHeader(),
                 options,
                 "",
                 true);
