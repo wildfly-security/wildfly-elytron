@@ -20,6 +20,7 @@ package org.wildfly.security.http.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
+import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
@@ -79,6 +80,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(FORM_NAME);
         mechanismNames.add(SPNEGO_NAME);
+        mechanismNames.add(BEARER_TOKEN);
 
         return mechanismNames.toArray(new String[mechanismNames.size()]);
     }
@@ -103,6 +105,8 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:
                 return new SpnegoAuthenticationMechanism(callbackHandler, properties);
+            case BEARER_TOKEN:
+                return new BearerTokenAuthenticationMechanism(callbackHandler);
         }
         return null;
     }
