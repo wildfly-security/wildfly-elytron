@@ -74,8 +74,10 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
@@ -817,10 +819,23 @@ public final class ServerAuthenticationContext {
 
                 } else if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    String requestedRealm = stateRef.get().getMechanismRealmConfiguration().getRealmName();
 
                     final Credential credential = getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm());
                     if (credential != null) {
-                        log.tracef("Handling CredentialCallback: obtained successfully");
+                        if (credential instanceof PasswordCredential) {
+                            Password password = ((PasswordCredential) credential).getPassword();
+                            if (password != null && password instanceof DigestPassword) {
+                                String providedRealm = ((DigestPassword) password).getRealm();
+                                if ( ! providedRealm.equals(requestedRealm)) {
+                                    log.tracef("Handling CredentialCallback: credential for realm \"%s\" is not available (\"%s\" provided)", requestedRealm, providedRealm);
+                                    throw new FastUnsupportedCallbackException(callback);
+                                } else {
+                                    log.tracef("Handling CredentialCallback: obtained credential for correct realm \"%s\"", providedRealm);
+                                }
+                            }
+                        }
+                        log.tracef("Handling CredentialCallback: obtained credential: %s", credential);
                         credentialCallback.setCredential(credential);
                         handleOne(callbacks, idx + 1);
                         return;
