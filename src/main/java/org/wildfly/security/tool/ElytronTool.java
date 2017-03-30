@@ -77,6 +77,8 @@ public class ElytronTool {
                     System.err.println(e.getLocalizedMessage());
                     System.exit(command.getStatus());
                 }
+            } else if ("--help".equals(args[0]) || "-h".equals(args[0])) {
+                tool.generalHelp();
             } else {
                 System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
                 System.exit(ElytronToolExitStatus_unrecognizedCommand);
