@@ -18,14 +18,14 @@
 
 package org.wildfly.security.auth;
 
-import java.security.GeneralSecurityException;
+import java.io.IOException;
 
 /**
  * An exception indicating that an initial authentication (login) operation has failed.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class AuthenticationException extends GeneralSecurityException {
+public class AuthenticationException extends IOException {
 
     private static final long serialVersionUID = -1038330178933137221L;
 
