@@ -494,7 +494,6 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .addMechanismRealm("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
-
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
