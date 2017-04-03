@@ -124,6 +124,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                         validateResponse(responseTokens, request);
                         return;
                     } catch (AuthenticationMechanismException e) {
+                        log.trace(e);
                         request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(realmName, response, false));
                         return;
                     }
@@ -212,9 +213,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * Check if realm used by client is allowed to by used to auth
      */
     private void checkRealm(String realm, String defaultRealm) throws AuthenticationMechanismException {
-        for (String current : getAvailableRealms()) {
-            if (realm.equals(current)) {
-                return;
+        String[] realms = getAvailableRealms();
+        if (realms != null) {
+            for (String current : realms) {
+                if (realm.equals(current)) {
+                    return;
+                }
             }
         }
         if (realm.equals(defaultRealm)) {
@@ -284,7 +288,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         }
-        if (realms.length > 0) {
+        if (realms != null && realms.length > 0) {
             return realms[0];
         }
 

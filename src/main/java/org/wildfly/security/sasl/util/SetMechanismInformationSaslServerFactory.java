@@ -25,9 +25,10 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.server.MechanismInformation;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * A {@link SaslServerFactory} implementation that will always ensure mechanism information is passed to the {@link CallbackHandler} before the first authentication callbacks.
@@ -73,7 +74,7 @@ public final class SetMechanismInformationSaslServerFactory extends AbstractDele
             cbh.handle(new Callback[] { mechanismInformationCallback });
         } catch (Throwable e) {
             // The mechanism information could not be successfully resolved to a mechanism configuration
-            ElytronMessages.log.trace(e);
+            log.unableToResolveMechanismConfiguration(e);
             return null;
         }
         return super.createSaslServer(mechanism, protocol, serverName, props, cbh);
