@@ -66,6 +66,7 @@ class CredentialStoreCommand extends Command {
     public static final String HELP_PARAM = "help";
     public static final String PRINT_SUMMARY_PARAM = "summary";
 
+    private static final String CR_STORE_SCHEME = "cr-store";
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
     private CommandLine cmdLine = null;
@@ -142,8 +143,8 @@ class CredentialStoreCommand extends Command {
         boolean createKeyStore = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
-        if (uri != null) {
-            parse(new URI(uri));
+        if (uri != null && uri.startsWith(CR_STORE_SCHEME + ":")) {
+            parse(new URI(new StringBuilder(uri).insert((CR_STORE_SCHEME + "://").length(), "/").toString()));
         }
         if (location == null) {
             location = storageFile;
