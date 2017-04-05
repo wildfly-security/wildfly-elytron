@@ -158,10 +158,12 @@ public class XmlConfigurationTest {
             "        <rule use-configuration=\"set-host-to-localhost\">\n" +
             "            <match-host name=\"127.0.0.1\"/>\n" +
             "        </rule>\n" +
-// Ignore https://issues.jboss.org/browse/WFLY-7890
-//            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
-//            "            <match-host name=\"::1\"/>\n" +
-//            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"::1\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"0:0:0:0:0:0:0:1\"/>\n" +
+            "        </rule>\n" +
             "    </authentication-rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
