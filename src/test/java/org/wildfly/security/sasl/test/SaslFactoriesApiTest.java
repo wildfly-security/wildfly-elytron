@@ -112,7 +112,7 @@ public class SaslFactoriesApiTest extends BaseTestCase {
      */
     @Test
     public void testSaslServerFactoryGetMechanismNamesValid() {
-        Collections.list(Sasl.getSaslClientFactories()).stream().flatMap(sf -> Arrays.stream(sf.getMechanismNames(emptyMap())))
+        Collections.list(Sasl.getSaslServerFactories()).stream().flatMap(sf -> Arrays.stream(sf.getMechanismNames(emptyMap())))
                 .forEach(s -> assertThat(s, RegularExpressionMatcher.matchesPattern(REGEX_MECHANISM_NAME)));
     }
 
