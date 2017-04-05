@@ -36,6 +36,7 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.time.ZonedDateTime;
+import java.util.NoSuchElementException;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
@@ -1876,4 +1877,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11004, value = "Invalid suffix \"%s\" - rotating by second or millisecond is not supported")
     IllegalArgumentException rotatingBySecondUnsupported(String suffix);
+
+    @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
+    IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
 }
