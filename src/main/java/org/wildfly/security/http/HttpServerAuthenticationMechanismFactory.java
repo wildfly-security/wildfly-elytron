@@ -32,8 +32,8 @@ public interface HttpServerAuthenticationMechanismFactory {
      * Get the names of the HTTP authentication mechanisms that can be supplied by this factory filtered by the supplied
      * properties.
      *
-     * @param properties the selection criteria for the mechanisms.
-     * @return the names of the supported HTTP authentication mechanisms.
+     * @param properties the {@code non-null} set of properties to pass configuration to the mechanisms that may be evaluated for mechanism availability.
+     * @return A {@code non-null} array of the names of the supported HTTP authentication mechanisms.
      */
     String[] getMechanismNames(Map<String, ?> properties);
 
@@ -41,11 +41,11 @@ public interface HttpServerAuthenticationMechanismFactory {
     /**
      * Obtain an instance of the authentication mechanism requested provided this is allowed by any policy specified within the supplied properties.
      *
-     * @param mechanismName
-     * @param properties
-     * @param callbackHandler
-     * @return the configured {@link HttpServerAuthenticationMechanism} or null if no mechanism could be resolved for the given mechanism name.
-     * @throws HttpAuthenticationException if there is an error creating the mechanism
+     * @param mechanismName The {@code non-null} name of the mechanism to create.
+     * @param properties The {@code non-null} set of properties to select and configure the mechanism that may be evaluated for mechanism availability.
+     * @param callbackHandler The {@code non-null} {@link CallbackHandler} for use by the mechanism during authentication.
+     * @return the configured {@link HttpServerAuthenticationMechanism} or {@code null} if no mechanism could be resolved for the given mechanism name.
+     * @throws HttpAuthenticationException if there is an error creating the mechanism.
      */
     HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException;
 
