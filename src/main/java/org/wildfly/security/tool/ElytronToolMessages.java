@@ -162,4 +162,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 5, value = "Nothing to encrypt. Secret not specified.")
     MissingArgumentException secretNotSpecified();
 
+    @Message(id = 6, value = "Salt not specified.")
+    MissingArgumentException saltNotSpecified();
+
 }
