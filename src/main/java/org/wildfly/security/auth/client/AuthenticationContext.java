@@ -132,8 +132,8 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
     }
 
     /**
-     * Get a new authentication context which is the same as this one, but which includes the rules and configurations of the
-     * given context at the end of its list.
+     * Get a new authentication context which is the same as this one, but which includes the rules, configurations
+     * and SSL contexts of the given context at the end of its list.
      *
      * @param other the other authentication context
      * @return the combined authentication context
@@ -201,34 +201,6 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
     public AuthenticationContext replacingSslContext(int idx, MatchRule rule, SecurityFactory<SSLContext> sslContext) throws IndexOutOfBoundsException {
         if (sslContext == null || rule == null) return this;
         return new AuthenticationContext(authRules, replacing(sslRules, rule, sslContext, idx));
-    }
-
-    /**
-     * Get a new authentication context which is the same as this one, but which includes the rules and configurations of the
-     * given context inserted at the position of this context's list indicated by the {@code idx} parameter.
-     *
-     * @param idx the index at which insertion should be done
-     * @param other the other authentication context
-     * @return the combined authentication context
-     * @throws IndexOutOfBoundsException if the index is out of bounds
-     */
-    public AuthenticationContext with(int idx, AuthenticationContext other) throws IndexOutOfBoundsException {
-        if (other == null) return this;
-        return new AuthenticationContext(withAll(authRules, other.authRules, idx), sslRules);
-    }
-
-    /**
-     * Get a new authentication context which is the same as this one, but which includes the rules and SSL contexts of the
-     * given context inserted at the position of this context's list indicated by the {@code idx} parameter.
-     *
-     * @param idx the index at which insertion should be done
-     * @param other the other authentication context
-     * @return the combined authentication context
-     * @throws IndexOutOfBoundsException if the index is out of bounds
-     */
-    public AuthenticationContext withSsl(int idx, AuthenticationContext other) throws IndexOutOfBoundsException {
-        if (other == null) return this;
-        return new AuthenticationContext(authRules, withAll(sslRules, other.sslRules, idx));
     }
 
     /**
