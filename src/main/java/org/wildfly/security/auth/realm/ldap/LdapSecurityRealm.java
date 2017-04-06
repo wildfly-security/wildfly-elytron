@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
     private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
 
-    LdapSecurityRealm(final Supplier<Provider[]> providers, final ExceptionSupplier<DirContext, NamingException> dirContextSupplier,
+    private Set<Consumer<Principal>> listenersPendingRegistration = new LinkedHashSet<Consumer<Principal>>();
+
+    LdapSecurityRealm(final Supplier<Provider[]> providers,
+                      final ExceptionSupplier<DirContext, NamingException> dirContextSupplier,
                       final NameRewriter nameRewriter,
                       final IdentityMapping identityMapping,
                       final List<CredentialLoader> credentialLoaders,
@@ -144,18 +148,31 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
     @Override
     public void registerIdentityChangeListener(Consumer<Principal> listener) {
-        DirContext dirContext = null;
-        try {
-            dirContext = obtainContext();
-            EventContext eventContext = (EventContext) dirContext.lookup("");
-            eventContext.addNamingListener("", EventContext.SUBTREE_SCOPE, new ServerNotificationListener(listener));
-        } catch (Exception cause) {
-            throw log.ldapRealmFailedRegisterListener(cause);
-        } finally {
-            if (dirContext != null) {
-                closeContext(dirContext);
+        synchronized (this.listenersPendingRegistration) {
+            DirContext dirContext = null;
+            try {
+                dirContext = obtainContext();
+                registerIdentityChangeListener(dirContext, listener);
+            } catch (Exception cause) {
+                // either connection died or realm not available during boot
+                // we need to wait, lets store
+                listenersPendingRegistration.add(listener);
+
+                log.ldapRealmDeferRegistration();
+                if (log.isDebugEnabled()) {
+                    log.debug("Listener registration failure: ", cause);
+                }
+            } finally {
+                if (dirContext != null) {
+                    closeContext(dirContext);
+                }
             }
         }
+    }
+
+    private void registerIdentityChangeListener(final DirContext dirContext, final Consumer<Principal> listener) throws NamingException {
+        EventContext eventContext = (EventContext) dirContext.lookup("");
+        eventContext.addNamingListener("", EventContext.SUBTREE_SCOPE, new ServerNotificationListener(listener));
     }
 
     private ModifiableRealmIdentity getRealmIdentity(final Principal principal, final boolean exclusive) {
@@ -182,7 +199,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
     private DirContext obtainContext() throws RealmUnavailableException {
         try {
-            return dirContextSupplier.get();
+            DirContext ctx = dirContextSupplier.get();
+            synchronized (this.listenersPendingRegistration) {
+                // we got ctx, this means connection is up
+                // add & remove in case we are ok, take into account network failure.
+                final Iterator<Consumer<Principal>> it = this.listenersPendingRegistration.iterator();
+                while(it.hasNext()) {
+                    registerIdentityChangeListener(ctx, it.next());
+                    it.remove();
+                }
+                return ctx;
+            }
         } catch (NamingException e) {
             throw log.ldapRealmFailedToObtainContext(e);
         }

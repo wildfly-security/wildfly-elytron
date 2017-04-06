@@ -591,8 +591,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
     IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
 
-    @Message(id = 1146, value = "Ldap realm failed to register notification listener")
-    IllegalStateException ldapRealmFailedRegisterListener(@Cause  Throwable cause);
+    @LogMessage
+    @Message(id = 1146, value = "LDAP Realm unable to register listener, defering action.")
+    void ldapRealmDeferRegistration();
 
     @Message(id = 1147, value = "Invalid LDAP name [%s]")
     RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
@@ -1895,4 +1896,5 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
+
 }
