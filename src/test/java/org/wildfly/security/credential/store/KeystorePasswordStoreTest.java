@@ -42,7 +42,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 /**
  * {@code KeyStoreCredentialStore} tests
  *
- * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
+ * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>,
+ *         <a href="mailto:hsvabek@redhat.com">Hynek Svabek</a>.
  */
 public class KeystorePasswordStoreTest {
 
@@ -54,6 +55,7 @@ public class KeystorePasswordStoreTest {
         stores.put("ONE", BASE_STORE_DIRECTORY + "/keystore1.jceks");
         stores.put("TWO", BASE_STORE_DIRECTORY + "/keystore2.jceks");
         stores.put("THREE", BASE_STORE_DIRECTORY + "/keystore3.jceks");
+        stores.put("TO_DELETE", BASE_STORE_DIRECTORY + "/keystore4.jceks");
     }
 
     /**
@@ -121,6 +123,11 @@ public class KeystorePasswordStoreTest {
                 .addPassword("db-pass-4", "4-secret-info")
                 .addPassword("db-pass-5", "5-secret-info")
                 .build();
+        CredentialStoreBuilder.get().setKeyStoreFile(stores.get("TO_DELETE"))
+                .setKeyStorePassword("secret_store_DELETE")
+                .addPassword("alias1", "secret-password-1")
+                .addPassword("alias2", "secret-password-2")
+                .build();
 
     }
 
@@ -130,6 +137,165 @@ public class KeystorePasswordStoreTest {
     @AfterClass
     public static void remove() {
         Security.removeProvider(provider.getName());
+    }
+
+    /**
+     * After initialize Credential Store is removed backend CS file. This file must be created again when there is added new
+     * entry to store.
+     *
+     * @throws NoSuchAlgorithmException
+     * @throws CredentialStoreException
+     * @throws UnsupportedCredentialTypeException
+     */
+    @Test
+    public void testRecreatingKSTest()
+        throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
+
+        File ks = new File(stores.get("TO_DELETE"));
+        if (!ks.exists()) {
+            Assert.fail("KeyStore must exists!");
+        }
+
+        char[] password1 = "secret-password1".toCharArray();
+        char[] password2 = "secret-password2".toCharArray();
+
+        HashMap<String, String> csAttributes = new HashMap<>();
+
+        csAttributes.put("location", stores.get("TO_DELETE"));
+        csAttributes.put("keyStoreType", "JCEKS");
+
+        String passwordAlias1 = "passAlias1";
+        String passwordAlias2 = "passAlias2";
+
+        CredentialStore cs = newCredentialStoreInstance();
+        cs.initialize(csAttributes,
+            new CredentialStore.CredentialSourceProtectionParameter(
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_DELETE".toCharArray())))));
+
+        cs.store(passwordAlias1, createCredentialFromPassword(password1));
+        cs.store(passwordAlias2, createCredentialFromPassword(password2));
+
+        Assert.assertArrayEquals(password1, getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
+
+        if (!ks.delete()) {
+            Assert.fail("KeyStore [" + ks.getAbsolutePath() + "] delete fail");
+        }
+
+        Assert.assertArrayEquals(password1, getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
+        // load new entry (in memory)
+        Assert.assertArrayEquals(password2, getPasswordFromCredential(cs.retrieve(passwordAlias2, PasswordCredential.class)));
+
+        cs.store("abc", createCredentialFromPassword(password1));
+        cs.flush();
+        if (!ks.exists()) {
+            Assert.fail("KeyStore [" + ks.getAbsolutePath() + "] must exist yet.");
+        }
+    }
+
+    /**
+     * Credential Store is set to read-only.
+     *
+     * @throws NoSuchAlgorithmException
+     * @throws CredentialStoreException
+     * @throws UnsupportedCredentialTypeException
+     */
+    @Test
+    public void testReadOnly() throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
+
+        char[] password1 = "secret-password1".toCharArray();
+
+        HashMap<String, String> csAttributes = new HashMap<>();
+
+        csAttributes.put("location", stores.get("TWO"));
+        csAttributes.put("keyStoreType", "JCEKS");
+        csAttributes.put("modifiable", "false");
+
+        String passwordAlias1 = "passAlias_readonly";
+
+        CredentialStore cs = newCredentialStoreInstance();
+        cs.initialize(csAttributes,
+            new CredentialStore.CredentialSourceProtectionParameter(
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray())))));
+
+        try {
+            cs.store(passwordAlias1, createCredentialFromPassword(password1));
+            Assert.fail("This Credential Store should be read-only.");
+        } catch (CredentialStoreException e) {
+
+        }
+
+        Assert.assertNull("'" + passwordAlias1 + "' must not be in this Credential Store because is read-only.",
+            cs.retrieve(passwordAlias1, PasswordCredential.class));
+    }
+
+    /**
+     * Credential Store entries must be case insensitive.
+     *
+     * @throws NoSuchAlgorithmException
+     * @throws CredentialStoreException
+     * @throws UnsupportedCredentialTypeException
+     */
+    @Test
+    public void testCaseInsensitiveAlias()
+        throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
+        HashMap<String, String> csAttributes = new HashMap<>();
+
+        csAttributes.put("location", stores.get("TWO"));
+        csAttributes.put("keyStoreType", "JCEKS");
+
+        CredentialStore cs = newCredentialStoreInstance();
+        cs.initialize(csAttributes,
+            new CredentialStore.CredentialSourceProtectionParameter(
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray())))));
+
+        // store test
+        String caseSensitive1 = "caseSensitiveName";
+        String caseSensitive2 = caseSensitive1.toUpperCase();
+        char[] newPassword1 = "new-secret-passONE".toCharArray();
+        char[] newPassword2 = "new-secret-passTWO".toCharArray();
+        cs.store(caseSensitive1, createCredentialFromPassword(newPassword1));
+
+        if (!cs.exists(caseSensitive1, PasswordCredential.class)) {
+            Assert.fail("'" + caseSensitive1 + "'" + " must exist");
+        }
+        if (!cs.exists(caseSensitive1.toLowerCase(), PasswordCredential.class)) {
+            Assert.fail("'" + caseSensitive1.toLowerCase() + "'" + " in lowercase must exist");
+        }
+        cs.remove(caseSensitive1, PasswordCredential.class);
+        if (cs.exists(caseSensitive1, PasswordCredential.class)) {
+            Assert.fail(caseSensitive1 + " has been removed from the vault, but it exists");
+        }
+
+        // this is actually alias update
+        cs.store(caseSensitive2, createCredentialFromPassword(newPassword2));
+
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive1, PasswordCredential.class)));
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive2, PasswordCredential.class)));
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive1.toLowerCase(), PasswordCredential.class)));
+
+        // Reaload CS keystore from filesystem
+        csAttributes.put("location", stores.get("TWO"));
+        csAttributes.put("keyStoreType", "JCEKS");
+        csAttributes.put("modifiable", "false");
+
+        CredentialStore csReloaded = newCredentialStoreInstance();
+        csReloaded.initialize(csAttributes,
+            new CredentialStore.CredentialSourceProtectionParameter(
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray())))));
+
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive1, PasswordCredential.class)));
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive2, PasswordCredential.class)));
+        Assert.assertArrayEquals(newPassword2,
+            getPasswordFromCredential(cs.retrieve(caseSensitive1.toLowerCase(), PasswordCredential.class)));
     }
 
     /**
@@ -168,6 +334,20 @@ public class KeystorePasswordStoreTest {
         Assert.assertArrayEquals(password2, getPasswordFromCredential(cs.retrieve(passwordAlias2, PasswordCredential.class)));
         Assert.assertArrayEquals(password1, getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
         Assert.assertArrayEquals(password3, getPasswordFromCredential(cs.retrieve(passwordAlias3, PasswordCredential.class)));
+
+        char[] newPassword1 = "new-secret-pass1".toCharArray();
+
+        // update test
+        cs.store(passwordAlias1, createCredentialFromPassword(newPassword1));
+        Assert.assertArrayEquals(newPassword1,
+            getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
+
+        // remove test
+        cs.remove(passwordAlias2, PasswordCredential.class);
+
+        if (cs.exists(passwordAlias2, PasswordCredential.class)) {
+            Assert.fail(passwordAlias2 + " has been removed from the vault, but it exists");
+        }
     }
 
     /**
@@ -216,5 +396,12 @@ public class KeystorePasswordStoreTest {
         if (cs.exists(passwordAlias2, PasswordCredential.class)) {
             Assert.fail(passwordAlias2 + " has been removed from the vault, but it exists");
         }
+
+        char[] newPassword1 = "new-secret-pass1".toCharArray();
+
+        // update test
+        cs.store(passwordAlias1, createCredentialFromPassword(newPassword1));
+        Assert.assertArrayEquals(newPassword1,
+            getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
     }
 }
