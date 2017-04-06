@@ -79,6 +79,7 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
         SSLSession sslSession = request.getSSLSession();
         if (sslSession == null) {
+            log.trace("CLIENT-CERT no SSL session");
             request.noAuthenticationInProgress();
             return;
         }

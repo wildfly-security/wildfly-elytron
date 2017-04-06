@@ -921,7 +921,6 @@ public final class ServerAuthenticationContext {
                         }
                         setMechanismInformation(mi);
                     } catch (Exception e) {
-                        log.trace(e);
                         throw new IOException(e);
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {
