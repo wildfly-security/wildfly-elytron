@@ -808,7 +808,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 throw log.cannotInitializeCredentialStore(e);
             }
         } else {
-            throw log.automaticStorageCreationDisabled(location.toString());
+            throw log.automaticStorageCreationDisabled(location != null ? location.toString() : "null");
         }
         Matcher matcher;
         while (enumeration.hasMoreElements()) {
