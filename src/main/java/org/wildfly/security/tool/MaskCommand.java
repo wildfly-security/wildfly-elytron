@@ -77,6 +77,10 @@ class MaskCommand extends Command {
         }
 
         String salt = cmdLine.getOptionValue(SALT_PARAM);
+        if (salt == null) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.saltNotSpecified();
+        }
         String sIteration = cmdLine.getOptionValue(ITERATION_PARAM);
         int iterationCount = -1;
         if (sIteration != null && !sIteration.isEmpty()) {

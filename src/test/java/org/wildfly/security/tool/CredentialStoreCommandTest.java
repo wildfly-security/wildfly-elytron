@@ -20,42 +20,36 @@ package org.wildfly.security.tool;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
+import org.apache.commons.cli.AlreadySelectedException;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 
 /**
  * Test for "credential-store" command.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
+ * @author Hynek Švábek <hsvabek@redhat.com>
  */
-public class CredentialStoreCommandTest extends BaseToolTest {
+public class CredentialStoreCommandTest extends AbstractCommandTest {
 
-    /**
-     * temporary folder
-     */
-    @Rule
-    public TemporaryFolder tmp = new TemporaryFolder();
+    @Override
+    protected String getCommandType() {
+        return CredentialStoreCommand.CREDENTIAL_STORE_COMMAND;
+    }
 
     /**
      * basic test with --password option.
-     * @throws Exception if something goes wrong
      */
     @Test
-    public void clearTextCSPassword() throws Exception {
-        ElytronTool tool = new ElytronTool();
-        Command command = tool.findCommand(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND);
-
-        String storeFileName  = tmp.getRoot().getAbsolutePath() + "/test.store";
+    public void clearTextCSPassword() {
+        String storeFileName = getStoragePathForNewFile();
 
         String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--password", "cspassword"};
-        command.execute(args);
-        assertEquals("returned command status has to be 0", command.getStatus(), ElytronTool.ElytronToolExitStatus_OK);
+        executeCommandAndCheckStatus(args);
     }
 
     /**
@@ -63,23 +57,14 @@ public class CredentialStoreCommandTest extends BaseToolTest {
      * @throws Exception if something goes wrong
      */
     @Test
-    public void maskCSPassword() throws Exception {
-        ElytronTool tool = new ElytronTool();
-        Command command = tool.findCommand(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND);
-
-        String storeFileName  = tmp.getRoot().getAbsolutePath() + "/test.store";
+    public void maskCSPassword() {
+        String storeFileName = getStoragePathForNewFile();
 
         String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--password", "cspassword", "--salt", "A1B2C3D4", "--iteration", "100"};
 
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        PrintStream original = System.out;
-        System.setOut(new PrintStream(result));
-        command.execute(args);
-        System.setOut(original);
-        System.out.println("result" + result.toString());
-        assertEquals("returned command status has to be 0", command.getStatus(), ElytronTool.ElytronToolExitStatus_OK);
-        assertTrue(result.toString().contains("MASK-"));
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.contains("MASK-"));
     }
 
     /**
@@ -92,7 +77,7 @@ public class CredentialStoreCommandTest extends BaseToolTest {
         ElytronTool tool = new ElytronTool();
         Command command = tool.findCommand(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND);
 
-        String storeFileName  = tmp.getRoot().getAbsolutePath() + "/test.store";
+        String storeFileName = getStoragePathForNewFile();
 
         String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--salt", "A1B2C3D4", "--iteration", "100"};
@@ -100,4 +85,262 @@ public class CredentialStoreCommandTest extends BaseToolTest {
         command.execute(args);
     }
 
+    @Test
+    public void testAddAlias() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+
+        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+                aliasValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasValue);
+    }
+
+    @Test
+    public void testAliasesList() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String[] aliasNames = { "testalias1", "testalias2", "testalias3" };
+        String[] aliasValues = {"secret1", "secret2", "secret3"};
+
+        for (int i = 0; i < aliasNames.length; i++) {
+            try {
+                createStoreAndAddAliasAndCheck(storageLocation, storagePassword, aliasNames[i], aliasValues[i]);
+            } catch (RuntimeException e) {
+                if (!(e.getCause() instanceof NullPointerException)) {
+                    Assert.fail("It must fail because of there is forbidden to use empty alias name or value.");
+                }
+            }
+        }
+
+        String[] args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--aliases", "--summary",
+                "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasNames) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                    aliasName, output));
+            }
+        }
+    }
+
+    @Test
+    public void testRemoveAlias() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+
+        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+                aliasValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasValue);
+
+        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--remove", aliasName,
+                "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkNonExistsAlias(store, aliasName);
+    }
+
+    @Test
+    public void testUpdateAlias() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+        String aliasNewSecretValue = "updatedSecretValue";
+
+        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+                aliasValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasValue);
+
+        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName,
+                "--secret", aliasNewSecretValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasNewSecretValue);
+    }
+
+    @Test
+    public void testExistsAlias() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+
+        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+                aliasValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasValue);
+
+        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--exists", aliasName,
+                "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+        store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkExistsAlias(store, aliasName);
+    }
+
+    @Test
+    public void testMaskedPassword() {
+        String clearTextPassword = "secret_password";
+        String expectedMaskedPassword = "MASK-1GhfMaq4jSY0.kFFU3QG4T";
+        String salt = "12345678";
+        String iteration = "230";
+
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--add", "testalias", "--secret",
+                "secret2", "--summary", "--password", clearTextPassword, "--salt", salt, "--iteration", iteration };
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.contains(expectedMaskedPassword + ";" + salt + ";" + iteration));
+    }
+
+    @Test
+    @Ignore("https://issues.jboss.org/browse/ELY-1035")
+    public void testMutuallyExclusiveArgs() {
+        ElytronTool tool = new ElytronTool();
+        Command command = tool.findCommand(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND);
+
+        String clearTextPassword = "secret_password";
+
+        Pair<String, String> addOperation = Pair.of("--add", "-a");
+        Pair<String, String> existsOperation = Pair.of("--exists", "-e");
+        Pair<String, String> removeOperation = Pair.of("--remove", "-r");
+        Pair<String, String> aliasesOperation = Pair.of("--aliases", "-v");
+
+        String storeFileName = getStoragePathForNewFile();
+        String[] firstOperation = { addOperation.getLeft(), addOperation.getRight(), existsOperation.getLeft(),
+                aliasesOperation.getLeft(), aliasesOperation.getRight() };
+        String[] secondOperation = { removeOperation.getRight(), removeOperation.getLeft(), addOperation.getLeft(),
+                removeOperation.getLeft(), addOperation.getRight() };
+
+        for (int i = 0; i < firstOperation.length; i++) {
+            String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", firstOperation[i],
+                    "testalias", "--secret", "secret2", "--summary", "--password", clearTextPassword,
+                    secondOperation[i] };
+            try {
+                command.execute(args);
+                Assert.fail("We expect fail.");
+            } catch (Exception e) {
+                if (!(e instanceof AlreadySelectedException)) {
+                    Assert.fail(String.format("We expect different exception [%s], but we get [%s]",
+                        AlreadySelectedException.class.getSimpleName(), e.getClass().getSimpleName()));
+                }
+                assertEquals(
+                    String.format("The option '%s' was specified but an option from this group has already been selected: '%s'",
+                        secondOperation[i], firstOperation[i]), e.getMessage());
+            }
+        }
+    }
+
+    @Test
+    @Ignore("https://issues.jboss.org/browse/ELY-1036")
+    public void testMultiRequiredOption() {
+        ElytronTool tool = new ElytronTool();
+        Command command = tool.findCommand(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND);
+
+        String clearTextPassword = "secret_password";
+
+        String storeFileName = getStoragePathForNewFile();
+        String longOperation = "add";
+        String shortOperation = "a";
+
+        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--" + longOperation, "testalias",
+                "--secret", "secret2", "--summary", "--password", clearTextPassword, "-" + shortOperation, "doesnt_matter" };
+        try {
+            command.execute(args);
+            Assert.fail("We expect fail.");
+        } catch (Exception e) {
+            if (!(e instanceof AlreadySelectedException)) {
+                Assert.fail(String.format("We expect different exception [%s], but we get [%s]",
+                    AlreadySelectedException.class.getSimpleName(), e.getClass().getSimpleName()));
+            }
+            assertEquals(
+                String.format("FIX THIS CONDITION once the bug is fixed. '%s', '%s'", shortOperation, longOperation),
+                e.getMessage());
+        }
+    }
+
+    @Test
+    @Ignore("https://issues.jboss.org/browse/ELY-1037"
+    + "https://issues.jboss.org/browse/ELY-890")
+    public void testLocationFromUri() {
+        String clearTextPassword = "secret_password";
+        String aliasName = "aliasName";
+
+        String storeFileName = "test.jceks";
+        String longOperation = "add";
+
+        String[] args = { "--uri=cr-store://" + storeFileName + "?create=true", "--" + longOperation, aliasName,
+                "--secret", "secret2", "--summary", "--password", clearTextPassword };
+
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storeFileName, clearTextPassword);
+        checkExistsAlias(store, aliasName);
+    }
+
+    @Test
+    public void testPrintHelp() {
+        String clearTextPassword = "secret_password";
+
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = { "--help", "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--summary",
+                "--password", clearTextPassword };
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.contains("Get help with usage of this command"));
+    }
+
+    @Test
+    @Ignore("https://issues.jboss.org/browse/ELY-1033")
+    public void testShowHelpWithPriority() {
+        String clearTextPassword = "secret_password";
+
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--add", "testalias", "--secret",
+                "secret2", "--summary", "--password", clearTextPassword, "--help" };
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.contains("Get help with usage of this command"));
+    }
+
+    @Test
+    @Ignore("https://issues.jboss.org/browse/WFCORE-2480")
+    public void testCreateEmptyStore() {
+        String clearTextPassword = "secret_password";
+        String aliasName = "aliasName";
+
+        String storeFileName = getStoragePathForNewFile();
+        String longOperation = "create-storage";
+
+        String[] args = { "--uri=cr-store://" + storeFileName + "?create=true", "--" + longOperation, "--summary", "--password",
+                clearTextPassword };
+
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storeFileName, clearTextPassword);
+        // write alias to store... (if backed file exists it will pass)
+        try {
+            store.store(aliasName, createCredentialFromPassword("aliasSecretValue".toCharArray()));
+            store.flush();
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
+    }
 }
