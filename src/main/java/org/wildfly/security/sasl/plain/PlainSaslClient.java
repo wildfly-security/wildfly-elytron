@@ -105,17 +105,17 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 

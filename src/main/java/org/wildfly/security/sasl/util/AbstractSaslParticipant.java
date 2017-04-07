@@ -209,6 +209,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @exception IllegalStateException if wrapping is not configured
      */
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
+        if (isComplete() == false) throw log.mechAuthenticationNotComplete(getMechanismName());
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
             throw log.wrappingNotConfigured(getMechanismName());
@@ -230,6 +231,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @exception IllegalStateException if wrapping is not configured
      */
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
+        if (isComplete() == false) throw log.mechAuthenticationNotComplete(getMechanismName());
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
             throw log.wrappingNotConfigured(getMechanismName());

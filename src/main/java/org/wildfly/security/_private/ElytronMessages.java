@@ -928,7 +928,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException mechAuthenticationNotComplete(String mechName);
 
     @Message(id = 5006, value = "[%s] Authentication mechanism does not support security layer (wrapping/unwrapping)")
-    AuthenticationMechanismException mechNoSecurityLayer(String mechName);
+    IllegalStateException mechNoSecurityLayer(String mechName);
 
     @Message(id = 5007, value = "[%s] Invalid authentication mechanism negotiation message received")
     AuthenticationMechanismException mechInvalidMessageReceived(String mechName);
