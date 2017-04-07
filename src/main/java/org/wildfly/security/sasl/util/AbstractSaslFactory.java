@@ -51,7 +51,7 @@ public abstract class AbstractSaslFactory {
      * @return the mechanism names
      */
     public String[] getMechanismNames(Map<String, ?> props) {
-        if (matches(props)) {
+        if (matches(props, true)) {
             return names;
         } else {
             return EMPTY;
@@ -62,11 +62,12 @@ public abstract class AbstractSaslFactory {
      * Determine whether the properties match this mechanism.
      *
      * @param props the properties
+     * @param query is this call querying names? Or creating the mechanism.
      *
      * @return {@code true} if there is a match, {@code false} otherwise
      */
-    protected boolean matches(final Map<String, ?> props) {
-        return getPropertyValue(WildFlySasl.MECHANISM_QUERY_ALL, props, false) ||
+    protected boolean matches(final Map<String, ?> props, final boolean query) {
+        return (getPropertyValue(WildFlySasl.MECHANISM_QUERY_ALL, props, false) && query) ||
                 ! (getPropertyValue(Sasl.POLICY_NOPLAINTEXT, props, false) && isPlainText()
                 || getPropertyValue(Sasl.POLICY_NOANONYMOUS, props, false) && isAnonymous()
                 || getPropertyValue(Sasl.POLICY_FORWARD_SECRECY, props, false) && ! isForwardSecrecy()

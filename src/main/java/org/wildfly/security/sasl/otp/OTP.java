@@ -120,11 +120,11 @@ public final class OTP {
         return new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber);
     }
 
-    static boolean isMatched(final Map<String, ?> props) {
+    static boolean isMatched(final Map<String, ?> props, final boolean query) {
         if (props == null) {
             return true;
         }
-        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && query) {
             return true;
         }
         if ("true".equals(props.get(Sasl.POLICY_NOACTIVE))) {

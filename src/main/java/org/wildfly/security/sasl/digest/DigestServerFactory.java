@@ -69,7 +69,7 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props,
             CallbackHandler cbh) throws SaslException {
-        if (! matches(props) || ! matchesMech(mechanism)) {
+        if (! matches(props, false) || ! matchesMech(mechanism)) {
             return null;
         }
         Assert.checkNotNullParam("cbh", cbh);

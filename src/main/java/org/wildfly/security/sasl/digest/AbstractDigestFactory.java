@@ -39,9 +39,9 @@ abstract class AbstractDigestFactory {
     private static final String[] NO_MECHS = new String[0];
 
     @SuppressWarnings("RedundantIfStatement")
-    boolean matches(final Map<String, ?> props) {
+    boolean matches(final Map<String, ?> props, boolean query) {
         if (props == null) return true;
-        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && query) {
             return true;
         }
         if ("true".equals(props.get(Sasl.POLICY_FORWARD_SECRECY))
@@ -73,6 +73,6 @@ abstract class AbstractDigestFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return matches(props) ? MECHS.clone() : NO_MECHS;
+        return matches(props, true) ? MECHS.clone() : NO_MECHS;
     }
 }

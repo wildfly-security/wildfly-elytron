@@ -42,7 +42,7 @@ public final class PlainSaslClientFactory implements SaslClientFactory {
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Assert.checkNotNullParam("cbh", cbh);
         if (props == null) props = Collections.emptyMap();
-        if (PlainSasl.isMatched(props)) for (String mechanism : mechanisms) {
+        if (PlainSasl.isMatched(props, false)) for (String mechanism : mechanisms) {
             if (SaslMechanismInformation.Names.PLAIN.equals(mechanism)) {
                 return new PlainSaslClient(authorizationId, cbh);
             }
@@ -51,6 +51,6 @@ public final class PlainSaslClientFactory implements SaslClientFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return PlainSasl.isMatched(props) ? PlainSasl.NAMES.clone() : WildFlySasl.NO_NAMES;
+        return PlainSasl.isMatched(props, true) ? PlainSasl.NAMES.clone() : WildFlySasl.NO_NAMES;
     }
 }
