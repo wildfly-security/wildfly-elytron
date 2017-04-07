@@ -1858,4 +1858,11 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11002, value = "Invalid EventPriority '%s' passed to AuditEndpoint.")
     IllegalArgumentException invalidEventPriority(EventPriority eventPriority);
+
+    @LogMessage(level = Logger.Level.ERROR)
+    @Message(id = 11003, value = "Unable to rotate log file")
+    void unableToRotateLogFile( @Cause Throwable cause);
+
+    @Message(id = 11004, value = "Invalid suffix \"%s\" - rotating by second or millisecond is not supported")
+    IllegalArgumentException rotatingBySecondUnsupported(String suffix);
 }
