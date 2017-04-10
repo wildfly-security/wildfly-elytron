@@ -50,6 +50,7 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
         "createAuthenticator",
         "createAuthenticationContextConfigurationClient",
         "createSecurityDomain",
+        "createSecurityRealm",
         "registerSecurityDomain",
         "getSecurityDomain",
         "unregisterSecurityDomain",
