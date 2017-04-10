@@ -1803,6 +1803,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9533, value = "Internal encryption problem while reading \"%s\"")
     IOException internalEncryptionProblem(@Cause Exception e, String location);
 
+    @Message(id = 9534, value = "\"%s\" is not a block based algorithm")
+    CredentialStoreException algorithmNotBlockBased(String algorithm);
+
     /* X.500 exceptions */
 
     @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")

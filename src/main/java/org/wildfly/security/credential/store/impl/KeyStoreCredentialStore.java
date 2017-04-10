@@ -1216,6 +1216,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
             encrypt.init(Cipher.ENCRYPT_MODE, storageSecretKey);
             int blockSize = encrypt.getBlockSize();
+            if (blockSize == 0) throw log.algorithmNotBlockBased(encrypt.getAlgorithm());
             Assert.checkMaximumParameter("cipher block size", 256, blockSize);
             byte[] padded = pkcs7Pad(entryData.toByteArray(), blockSize);
 
