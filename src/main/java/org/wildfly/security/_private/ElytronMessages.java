@@ -627,6 +627,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
     void unableToResolveMechanismConfiguration(@Cause Throwable e);
 
+    @Message(id = 1158, value = "Unable to create kerberos GSS credential")
+    SecurityException unableToCreateKerberosCredential(@Cause Exception e);
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
