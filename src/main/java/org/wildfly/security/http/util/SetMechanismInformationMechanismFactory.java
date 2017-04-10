@@ -108,10 +108,7 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
                     })});
 
                 } catch (Throwable e) {
-                    // Give up now since the mechanism information could not be successfully resolved to a mechanism configuration
-                    log.unableToResolveMechanismConfiguration(e);
-                    request.noAuthenticationInProgress();
-                    return;
+                    throw log.unableToLocateMechanismConfiguration(e).toHttpAuthenticationException();
                 }
 
                 mechanism.evaluateRequest(request);

@@ -119,9 +119,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             }
 
             if (serviceGssCredential == null) {
-                log.trace("GSSCredential for the service from callback handler is null - cannot perform SPNEGO authentication");
-                request.noAuthenticationInProgress();
-                return;
+                throw log.unableToObtainServerCredential(SPNEGO_NAME).toHttpAuthenticationException();
             }
 
             try {
