@@ -187,7 +187,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
          */
         public Builder setRequestLifetime(final int requestLifetime) {
             assertNotBuilt();
-            this.requestLifetime = requestLifetime;
+            this.requestLifetime = requestLifetime < 0 ? GSSCredential.INDEFINITE_LIFETIME : requestLifetime;
 
             return this;
         }
