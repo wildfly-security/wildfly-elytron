@@ -689,6 +689,7 @@ public final class SaslMechanismInformation {
     public static boolean doesNotUsePrincipal(final String mechName) {
         switch (mechName) {
             case Names.ANONYMOUS:
+            case Names.GSSAPI:
             case Names.OAUTHBEARER: {
                 return true;
             }
@@ -702,12 +703,13 @@ public final class SaslMechanismInformation {
      * Determine whether a mechanism does not need the client to present credentials.
      *
      * @param mechName the mechanism name
-     * @return {@code true} if the mechanism does not present client credentials, {@code false} if it it does or it is not known
+     * @return {@code true} if the mechanism does not require client credentials, {@code false} if it it does or it is not known
      */
-    public static boolean doesNotUseClientCredentials(final String mechName) {
+    public static boolean doesNotRequireClientCredentials(final String mechName) {
         switch (mechName) {
             case LocalUserSaslFactory.JBOSS_LOCAL_USER:
             case Names.ANONYMOUS:
+            case Names.GSSAPI:
             case Names.EXTERNAL: {
                 return true;
             }

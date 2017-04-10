@@ -392,7 +392,7 @@ public final class AuthenticationConfiguration {
             return true;
         }
         // mechanisms that do not need credentials are probably supported
-        if (SaslMechanismInformation.doesNotUseClientCredentials(mechanismName)) {
+        if (SaslMechanismInformation.doesNotRequireClientCredentials(mechanismName)) {
             return true;
         }
         // if we have a key manager factory, we definitely support IEC/ISO 9798
