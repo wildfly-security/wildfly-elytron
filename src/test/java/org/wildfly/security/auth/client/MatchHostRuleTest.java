@@ -74,6 +74,7 @@ public class MatchHostRuleTest {
         Assert.assertTrue(MatchRule.ALL.matchHost("2001:db8:85a3::8a2e:370:7334").matches(new URI("remote+http://[2001:db8:85a3:0:0:8a2e:370:7334]:9990")));
         Assert.assertTrue(MatchRule.ALL.matchHost("2001:db8:85a3::8a2e:370:7334").matches(new URI("remote+http://[2001:db8:85a3::8a2e:370:7334]:9990")));
         Assert.assertTrue(MatchRule.ALL.matchHost("::1").matches(new URI("remote+http://[::1]:9990")));
+        Assert.assertTrue(MatchRule.ALL.matchHost("::1").matches(new URI("http-remoting://[0:0:0:0:0:0:0:1]:9990")));
 
         // IPv4 mapped IPv6 address
         Assert.assertTrue(MatchRule.ALL.matchHost("0:0:0:0:ffff:0:192.0.2.128").matches(new URI("remote+http://[0:0:0:0:ffff:0:192.0.2.128]:9990")));
