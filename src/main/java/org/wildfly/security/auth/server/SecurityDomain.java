@@ -166,6 +166,21 @@ public final class SecurityDomain {
     }
 
     /**
+     * Get the security domain associated with the given identity.
+     *
+     * @param identity the security identity (must not be {@code null})
+     * @return the identity's security domain (not {@code null})
+     */
+    public static SecurityDomain forIdentity(SecurityIdentity identity) {
+        checkNotNullParam("identity", identity);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_SECURITY_DOMAIN);
+        }
+        return identity.getSecurityDomain();
+    }
+
+    /**
      * Unregister any {@link SecurityDomain} associated with the specified {@link ClassLoader}.
      *
      * @param classLoader the non {@code null} {@link ClassLoader} to clear any {@link SecurityDomain} association.
