@@ -120,6 +120,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         private int minimumRemainingLifetime;
         private int requestLifetime;
         private boolean debug;
+        private boolean wrapGssCredential;
         private Map<String, Object> options;
 
         Builder() {
@@ -231,6 +232,19 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
+         * Set if the constructed {@link GSSCredential} should be wrapped to prevent improper credential disposal or not.
+         *
+         * @param value {@code true} if the constructed {@link GSSCredential} should be wrapped; {@code false} otherwise.
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setWrapGssCredential(final boolean value) {
+            assertNotBuilt();
+            this.wrapGssCredential = value;
+
+            return this;
+        }
+
+        /**
          * Set other configuration options for {@code Krb5LoginModule}
          *
          * @param options the configuration options which will be appended to options passed into {@code Krb5LoginModule}
@@ -274,23 +288,23 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 }
 
                 final GSSManager manager = GSSManager.getInstance();
-                return Subject.doAs(subject, new PrivilegedExceptionAction<GSSKerberosCredential>() {
-
-                    @Override
-                    public GSSKerberosCredential run() throws Exception {
-                        Set<KerberosPrincipal> principals = subject.getPrincipals(KerberosPrincipal.class);
-                        if (principals.size() < 1) {
-                            throw log.noKerberosPrincipalsFound();
-                        } else if (principals.size() > 1) {
-                            throw log.tooManyKerberosPrincipalsFound();
-                        }
-                        KerberosPrincipal principal = principals.iterator().next();
-                        log.tracef("Creating GSSName for Principal '%s'", principal);
-                        GSSName name = manager.createName(principal.getName(), GSSName.NT_USER_NAME, KERBEROS_V5);
-
-                        return new GSSKerberosCredential(manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
-                                isServer ? GSSCredential.ACCEPT_ONLY : GSSCredential.INITIATE_ONLY), kerberosTicket);
+                return Subject.doAs(subject, (PrivilegedExceptionAction<GSSKerberosCredential>) () -> {
+                    Set<KerberosPrincipal> principals = subject.getPrincipals(KerberosPrincipal.class);
+                    if (principals.size() < 1) {
+                        throw log.noKerberosPrincipalsFound();
+                    } else if (principals.size() > 1) {
+                        throw log.tooManyKerberosPrincipalsFound();
                     }
+                    KerberosPrincipal principal = principals.iterator().next();
+                    log.tracef("Creating GSSName for Principal '%s'", principal);
+                    GSSName name = manager.createName(principal.getName(), GSSName.NT_USER_NAME, KERBEROS_V5);
+
+                    if (wrapGssCredential) {
+                        return new GSSKerberosCredential(wrapCredential(manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
+                                isServer ? GSSCredential.ACCEPT_ONLY : GSSCredential.INITIATE_ONLY)), kerberosTicket);
+                    }
+                    return new GSSKerberosCredential(manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
+                            isServer ? GSSCredential.ACCEPT_ONLY : GSSCredential.INITIATE_ONLY), kerberosTicket);
                 });
 
             } catch (LoginException e) {
@@ -350,4 +364,59 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
 
     }
 
+    private static GSSCredential wrapCredential(final GSSCredential credential) {
+        return new GSSCredential() {
+
+            @Override
+            public int getUsage(Oid mech) throws GSSException {
+                return credential.getUsage(mech);
+            }
+
+            @Override
+            public int getUsage() throws GSSException {
+                return credential.getUsage();
+            }
+
+            @Override
+            public int getRemainingLifetime() throws GSSException {
+                return credential.getRemainingLifetime();
+            }
+
+            @Override
+            public int getRemainingInitLifetime(Oid mech) throws GSSException {
+                return credential.getRemainingInitLifetime(mech);
+            }
+
+            @Override
+            public int getRemainingAcceptLifetime(Oid mech) throws GSSException {
+                return credential.getRemainingAcceptLifetime(mech);
+            }
+
+            @Override
+            public GSSName getName(Oid mech) throws GSSException {
+                return credential.getName(mech);
+            }
+
+            @Override
+            public GSSName getName() throws GSSException {
+                return credential.getName();
+            }
+
+            @Override
+            public Oid[] getMechs() throws GSSException {
+                return credential.getMechs();
+            }
+
+            @Override
+            public void dispose() throws GSSException {
+                // Prevent disposal of our credential.
+            }
+
+            @Override
+            public void add(GSSName name, int initLifetime, int acceptLifetime, Oid mech, int usage) throws GSSException {
+                credential.add(name, initLifetime, acceptLifetime, mech, usage);
+            }
+
+        };
+    }
 }
