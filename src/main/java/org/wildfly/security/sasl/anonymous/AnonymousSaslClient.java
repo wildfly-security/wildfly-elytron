@@ -25,6 +25,8 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -89,5 +91,10 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
                 return b.toArray();
         }
         throw Assert.impossibleSwitchCase(state);
+    }
+
+    public Object getNegotiatedProperty(final String propName) {
+        // Our principal is always anonymous, even if an authz name was requested.
+        return WildFlySasl.PRINCIPAL.equals(propName) ? AnonymousPrincipal.getInstance() : super.getNegotiatedProperty(propName);
     }
 }
