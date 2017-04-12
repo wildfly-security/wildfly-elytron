@@ -86,9 +86,13 @@ class MaskCommand extends Command {
         if (sIteration != null && !sIteration.isEmpty()) {
             try {
                 iterationCount = Integer.parseInt(sIteration);
+                if (iterationCount < 1) {
+                    setStatus(GENERAL_CONFIGURATION_ERROR);
+                    throw ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE);
+                }
             } catch (NumberFormatException e) {
                 setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw new Exception(e);
+                throw ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE);
             }
         }
 
