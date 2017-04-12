@@ -96,7 +96,11 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
 
     private void handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, JsonObjectBuilder objectBuilder) {
         handleDefiniteOutcomeEvent(event, objectBuilder);
-        objectBuilder.add("principal", event.getPrincipal() != null ? event.getPrincipal().toString() : null);
+        if (event.getPrincipal() != null && event.getPrincipal().toString() != null) {
+            objectBuilder.add("principal", event.getPrincipal().toString());
+        } else {
+            objectBuilder.addNull("principal");
+        }
     }
 
     @Override
