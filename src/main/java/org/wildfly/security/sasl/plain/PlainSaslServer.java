@@ -161,18 +161,18 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
     @Override
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 
     @Override
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 

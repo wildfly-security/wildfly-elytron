@@ -94,7 +94,7 @@ final class ExternalSaslServer implements SaslServer {
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
             throw log.mechAuthenticationNotComplete(getMechanismName());
         }
@@ -102,7 +102,7 @@ final class ExternalSaslServer implements SaslServer {
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
+            throw log.mechNoSecurityLayer(getMechanismName());
         } else {
             throw log.mechAuthenticationNotComplete(getMechanismName());
         }
