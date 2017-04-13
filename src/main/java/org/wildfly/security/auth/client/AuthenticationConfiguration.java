@@ -132,7 +132,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_HOST = 1;
     private static final int SET_PROTOCOL = 2;
     private static final int SET_REALM = 3;
-    private static final int SET_AUTHZ_NAME = 4;
+    private static final int SET_AUTHZ_PRINCIPAL = 4;
     private static final int SET_FWD_DOMAIN = 5;
     private static final int SET_USER_CBH = 6;
     private static final int SET_USER_CB_KINDS = 7;
@@ -165,7 +165,7 @@ public final class AuthenticationConfiguration {
     final String setHost;
     final String setProtocol;
     final String setRealm;
-    final String setAuthzName;
+    final Principal setAuthzPrincipal;
     final SecurityDomain forwardSecurityDomain;
     final CallbackHandler userCallbackHandler;
     final EnumSet<CallbackKind> userCallbackKinds;
@@ -194,7 +194,7 @@ public final class AuthenticationConfiguration {
         this.setHost = null;
         this.setProtocol = null;
         this.setRealm = null;
-        this.setAuthzName = null;
+        this.setAuthzPrincipal = null;
         this.forwardSecurityDomain = null;
         this.userCallbackHandler = null;
         this.userCallbackKinds = NO_CALLBACK_KINDS;
@@ -228,7 +228,7 @@ public final class AuthenticationConfiguration {
         this.setHost = what == SET_HOST ? (String) value : original.setHost;
         this.setProtocol = what == SET_PROTOCOL ? (String) value : original.setProtocol;
         this.setRealm = what == SET_REALM ? (String) value : original.setRealm;
-        this.setAuthzName = what == SET_AUTHZ_NAME ? (String) value : original.setAuthzName;
+        this.setAuthzPrincipal = what == SET_AUTHZ_PRINCIPAL ? (Principal) value : original.setAuthzPrincipal;
         this.forwardSecurityDomain = what == SET_FWD_DOMAIN ? (SecurityDomain) value : original.forwardSecurityDomain;
         this.userCallbackHandler = what == SET_USER_CBH ? (CallbackHandler) value : original.userCallbackHandler;
         this.userCallbackKinds = what == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value : original.userCallbackKinds;
@@ -264,7 +264,7 @@ public final class AuthenticationConfiguration {
         this.setHost = what1 == SET_HOST ? (String) value1 : what2 == SET_HOST ? (String) value2 : original.setHost;
         this.setProtocol = what1 == SET_PROTOCOL ? (String) value1 : what2 == SET_PROTOCOL ? (String) value2 : original.setProtocol;
         this.setRealm = what1 == SET_REALM ? (String) value1 : what2 == SET_REALM ? (String) value2 : original.setRealm;
-        this.setAuthzName = what1 == SET_AUTHZ_NAME ? (String) value1 : what2 == SET_AUTHZ_NAME ? (String) value2 : original.setAuthzName;
+        this.setAuthzPrincipal = what1 == SET_AUTHZ_PRINCIPAL ? (Principal) value1 : what2 == SET_AUTHZ_PRINCIPAL ? (Principal) value2 : original.setAuthzPrincipal;
         this.forwardSecurityDomain = what1 == SET_FWD_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_DOMAIN ? (SecurityDomain) value2 : original.forwardSecurityDomain;
         this.userCallbackHandler = what1 == SET_USER_CBH ? (CallbackHandler) value1 : what2 == SET_USER_CBH ? (CallbackHandler) value2 : original.userCallbackHandler;
         this.userCallbackKinds = what1 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value1 : what2 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value2 : original.userCallbackKinds;
@@ -295,7 +295,7 @@ public final class AuthenticationConfiguration {
         this.setHost = original.setHost;
         this.setProtocol = original.setProtocol;
         this.setRealm = original.setRealm;
-        this.setAuthzName = original.setAuthzName;
+        this.setAuthzPrincipal = original.setAuthzPrincipal;
         this.forwardSecurityDomain = original.forwardSecurityDomain;
         this.userCallbackHandler = original.userCallbackHandler;
         this.userCallbackKinds = original.userCallbackKinds;
@@ -320,7 +320,7 @@ public final class AuthenticationConfiguration {
         this.setHost = getOrDefault(other.setHost, original.setHost);
         this.setProtocol = getOrDefault(other.setProtocol, original.setProtocol);
         this.setRealm = getOrDefault(other.setRealm, original.setRealm);
-        this.setAuthzName = getOrDefault(other.setAuthzName, original.setAuthzName);
+        this.setAuthzPrincipal = getOrDefault(other.setAuthzPrincipal, original.setAuthzPrincipal);
         this.forwardSecurityDomain = getOrDefault(other.forwardSecurityDomain, original.forwardSecurityDomain);
         this.userCallbackHandler = getOrDefault(other.userCallbackHandler, original.userCallbackHandler);
         this.userCallbackKinds = getOrDefault(other.userCallbackKinds, original.userCallbackKinds);
@@ -470,8 +470,8 @@ public final class AuthenticationConfiguration {
         return rewritten;
     }
 
-    String getAuthorizationName() {
-        return setAuthzName;
+    Principal getAuthorizationPrincipal() {
+        return setAuthzPrincipal;
     }
 
     Supplier<Provider[]> getProviderSupplier() {
@@ -583,16 +583,28 @@ public final class AuthenticationConfiguration {
 
     /**
      * Create a new configuration which is the same as this configuration, but which attempts to authorize to the given
-     * name after authentication.
+     * name after authentication.  Only mechanisms which support an authorization name principal will be selected.
      *
-     * @param name the name to use
+     * @param name the name to use, or {@code null} to not request authorization in the new configuration
      * @return the new configuration
      */
     public AuthenticationConfiguration useAuthorizationName(String name) {
-        if (Objects.equals(name, setAuthzName)) {
+        return useAuthorizationPrincipal(new NamePrincipal(name));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which attempts to authorize to the given
+     * principal after authentication.  Only mechanisms which support an authorization principal of the given type will
+     * be selected.
+     *
+     * @param principal the principal to use, or {@code null} to not request authorization in the new configuration
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useAuthorizationPrincipal(Principal principal) {
+        if (Objects.equals(principal, setAuthzPrincipal)) {
             return this;
         } else {
-            return new AuthenticationConfiguration(this, SET_AUTHZ_NAME, name);
+            return new AuthenticationConfiguration(this, SET_AUTHZ_PRINCIPAL, principal);
         }
     }
 
@@ -1166,7 +1178,21 @@ public final class AuthenticationConfiguration {
 
     SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
         SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
-
+        final Principal authorizationPrincipal = getAuthorizationPrincipal();
+        final Predicate<String> filter;
+        final String authzName;
+        if (authorizationPrincipal == null) {
+            filter = this::filterOneSaslMechanism;
+            authzName = null;
+        } else if (authorizationPrincipal instanceof NamePrincipal) {
+            filter = this::filterOneSaslMechanism;
+            authzName = authorizationPrincipal.getName();
+        } else if (authorizationPrincipal instanceof AnonymousPrincipal) {
+            filter = ((Predicate<String>) this::filterOneSaslMechanism).and("ANONYMOUS"::equals);
+            authzName = null;
+        } else {
+            return null;
+        }
         Map<String, ?> mechanismProperties = this.mechanismProperties;
         if (! mechanismProperties.isEmpty()) {
             mechanismProperties = new HashMap<>(mechanismProperties);
@@ -1187,10 +1213,10 @@ public final class AuthenticationConfiguration {
         if (protocol != null) {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
-        saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism));
+        saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
 
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
-                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
+                authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
     }
 
     CallbackHandler createCallbackHandler() {
@@ -1224,7 +1250,7 @@ public final class AuthenticationConfiguration {
             && Objects.equals(setHost, other.setHost)
             && Objects.equals(setProtocol, other.setProtocol)
             && Objects.equals(setRealm, other.setRealm)
-            && Objects.equals(setAuthzName, other.setAuthzName)
+            && Objects.equals(setAuthzPrincipal, other.setAuthzPrincipal)
             && Objects.equals(forwardSecurityDomain, other.forwardSecurityDomain)
             && Objects.equals(userCallbackHandler, other.userCallbackHandler)
             && Objects.equals(userCallbackKinds, other.userCallbackKinds)
@@ -1251,7 +1277,7 @@ public final class AuthenticationConfiguration {
         int hashCode = this.hashCode;
         if (hashCode == 0) {
             hashCode = Objects.hash(
-                capturedAccessContext, principal, setHost, setProtocol, setRealm, setAuthzName, forwardSecurityDomain, userCallbackHandler, credentialSource,
+                capturedAccessContext, principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, allowedSasl, deniedSasl, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
                 mechanismProperties, kerberosSecurityFactory) * 19 + setPort;
             if (hashCode == 0) {
@@ -1271,7 +1297,7 @@ public final class AuthenticationConfiguration {
             StringBuilder b = new StringBuilder(64);
             b.append("AuthenticationConfiguration:");
             b.append("principal=").append(principal).append(',');
-            if (setAuthzName != null) b.append("authorization-id=").append(setAuthzName).append(',');
+            if (setAuthzPrincipal != null) b.append("authorization-id=").append(setAuthzPrincipal).append(',');
             if (setHost != null) b.append("set-host=").append(setHost).append(',');
             if (setProtocol != null) b.append("set-protocol=").append(setProtocol).append(',');
             if (setPort != -1) b.append("set-port=").append(setPort).append(',');
