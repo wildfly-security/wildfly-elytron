@@ -339,7 +339,7 @@ public final class AuthenticationContextTest {
         assertNotNull(rn);
         assertEquals(expectedConfiguration, rn.getConfiguration());
         // https://issues.jboss.org/browse/ELY-986
-        // assertEquals(expectedRule, rn.getRule());
+         assertEquals(expectedRule, rn.getRule());
     }
 
 }
