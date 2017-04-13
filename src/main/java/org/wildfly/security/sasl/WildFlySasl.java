@@ -100,6 +100,11 @@ public final class WildFlySasl {
     public static final String SECURITY_IDENTITY = "wildfly.sasl.security-identity";
 
     /**
+     * The property which holds the negotiated client principal after a successful SASL client-side authentication.
+     */
+    public static final String PRINCIPAL = "wildfly.sasl.principal";
+
+    /**
      * The immutable empty names array.
      */
     public static final String[] NO_NAMES = new String[0];

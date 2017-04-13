@@ -103,6 +103,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.localuser.LocalUserClient;
 import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
+import org.wildfly.security.sasl.util.LocalPrincipalSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -1186,7 +1187,7 @@ public final class AuthenticationConfiguration {
         if (protocol != null) {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
-        saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
+        saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism));
 
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
