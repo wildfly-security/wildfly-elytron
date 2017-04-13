@@ -263,14 +263,25 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
-     * Get the principal to use for the given configuration.
+     * Get the authentication principal to use for the given configuration.
      *
      * @param configuration the configuration (must not be {@code null})
-     * @return the principal
+     * @return the authentication principal (not {@code null})
      */
     public Principal getPrincipal(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return configuration.getPrincipal();
+    }
+
+    /**
+     * Get the authorization principal to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the authorization principal, or {@code null} if none is specified
+     */
+    public Principal getAuthorizationPrincipal(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getAuthorizationPrincipal();
     }
 
     /**
