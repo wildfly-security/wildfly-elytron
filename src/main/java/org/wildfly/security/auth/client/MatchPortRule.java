@@ -46,6 +46,10 @@ class MatchPortRule extends MatchRule {
         return other.getMatchPort() == port && parentHalfEqual(other);
     }
 
+    public int getMatchPort() {
+        return port;
+    }
+
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 7919, port);
     }

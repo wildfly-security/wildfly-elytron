@@ -578,7 +578,9 @@ public abstract class MatchRule {
     public final String toString() {
         final StringBuilder b = new StringBuilder();
         asString(b);
-        b.setLength(b.length() - 1);
+        if (b.length() > 1) {
+            b.setLength(b.length() - 1);
+        }
         return b.toString();
     }
 
