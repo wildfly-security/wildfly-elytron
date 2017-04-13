@@ -44,9 +44,9 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
      *
      */
     SyslogAuditEndpoint(Builder builder) throws IOException {
+        SyslogHandler.Protocol protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
         syslogHandler = new SyslogHandler(checkNotNullParam("serverAddress", builder.serverAddress), builder.port, Facility.SECURITY,
-                null, builder.tcp ? Protocol.TCP : Protocol.UDP, checkNotNullParam("hostName", builder.hostName));
-
+                null, protocol, checkNotNullParam("hostName", builder.hostName));
     }
 
     @Override
@@ -95,6 +95,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
 
         private InetAddress serverAddress;
         private int port;
+        private boolean ssl = false;
         private boolean tcp = true;
         private String hostName;
 
@@ -133,6 +134,18 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
          */
         public Builder setTcp(boolean tcp) {
             this.tcp = tcp;
+
+            return this;
+        }
+
+        /**
+         * Set if the communication should be using SSL.
+         *
+         * @param ssl if the communication should be using SSL.
+         * @return this builder.
+         */
+        public Builder setSsl(boolean ssl) {
+            this.ssl = ssl;
 
             return this;
         }
