@@ -36,9 +36,13 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.AccessController;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -88,6 +92,7 @@ import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
+import org.wildfly.security.permission.ElytronPermission;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -99,6 +104,7 @@ import org.wildfly.security.util.CodePointIterator;
 public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
     static final String ELYTRON_1_0 = "urn:elytron:1.0";
+    static final ElytronPermission CREATE_SECURITY_REALM = ElytronPermission.forName("createSecurityRealm");
 
     private final Path root;
     private final NameRewriter nameRewriter;
@@ -114,6 +120,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param levels the number of levels of directory hashing to apply
      */
     public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_SECURITY_REALM);
+        }
         this.root = root;
         this.nameRewriter = nameRewriter;
         this.levels = levels;
@@ -126,9 +136,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param levels the number of levels of directory hashing to apply
      */
     public FileSystemSecurityRealm(final Path root, final int levels) {
-        this.root = root;
-        this.levels = levels;
-        nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        this(root, NameRewriter.IDENTITY_REWRITER, levels);
     }
 
     /**
@@ -137,9 +145,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param root the root path of the identity store
      */
     public FileSystemSecurityRealm(final Path root) {
-        this.root = root;
-        levels = 2;
-        nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        this(root, NameRewriter.IDENTITY_REWRITER, 2);
     }
 
     private Path pathFor(final String name) {
@@ -392,12 +398,31 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         public boolean exists() throws RealmUnavailableException {
-            return Files.exists(path);
+            if (System.getSecurityManager() == null) {
+                return Files.exists(path);
+            }
+            return AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> Files.exists(path));
         }
 
         public void delete() throws RealmUnavailableException {
+            if (System.getSecurityManager() == null) {
+                deletePrivileged();
+                return;
+            }
+            try {
+                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) this::deletePrivileged);
+            } catch (PrivilegedActionException e) {
+                if (e.getException() instanceof RealmUnavailableException) {
+                    throw (RealmUnavailableException) e.getException();
+                }
+                throw new RuntimeException(e.getException());
+            }
+        }
+
+        private Void deletePrivileged() throws RealmUnavailableException {
             try {
                 Files.delete(path);
+                return null;
             } catch (NoSuchFileException e) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             } catch (IOException e) {
@@ -429,6 +454,21 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         public void create() throws RealmUnavailableException {
+            if (System.getSecurityManager() == null) {
+                createPrivileged();
+                return;
+            }
+            try {
+                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) this::createPrivileged);
+            } catch (PrivilegedActionException e) {
+                if (e.getException() instanceof RealmUnavailableException) {
+                    throw (RealmUnavailableException) e.getException();
+                }
+                throw new RuntimeException(e.getException());
+            }
+        }
+
+        private Void createPrivileged() throws RealmUnavailableException {
             for (;;) {
                 final Path tempPath = tempPath();
                 final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
@@ -468,7 +508,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } catch (IOException ignored) {
                     // nothing we can do
                 }
-                return;
+                return null;
             }
         }
 
@@ -503,6 +543,21 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         private void replaceIdentity(final LoadedIdentity newIdentity) throws RealmUnavailableException {
+            if (System.getSecurityManager() == null) {
+                replaceIdentityPrivileged(newIdentity);
+                return;
+            }
+            try {
+                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> replaceIdentityPrivileged(newIdentity));
+            } catch (PrivilegedActionException e) {
+                if (e.getException() instanceof RealmUnavailableException) {
+                    throw (RealmUnavailableException) e.getException();
+                }
+                throw new RuntimeException(e.getException());
+            }
+        }
+
+        private Void replaceIdentityPrivileged(final LoadedIdentity newIdentity) throws RealmUnavailableException {
             for (;;) {
                 final Path tempPath = tempPath();
                 try {
@@ -546,7 +601,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     } catch (IOException ignored) {
                         // nothing we can do
                     }
-                    return;
+                    return null;
                 } catch (Throwable t) {
                     try {
                         Files.delete(tempPath);
@@ -640,6 +695,20 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
+            if (System.getSecurityManager() == null) {
+                return loadIdentityPrivileged(skipCredentials, skipAttributes);
+            }
+            try {
+                return AccessController.doPrivileged((PrivilegedExceptionAction<LoadedIdentity>) () -> loadIdentityPrivileged(skipCredentials, skipAttributes));
+            } catch (PrivilegedActionException e) {
+                if (e.getException() instanceof RealmUnavailableException) {
+                    throw (RealmUnavailableException) e.getException();
+                }
+                throw new RuntimeException(e.getException());
+            }
+        }
+
+        private LoadedIdentity loadIdentityPrivileged(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
             try (InputStream inputStream = Files.newInputStream(path, READ)) {
                 final XMLInputFactory inputFactory = XMLInputFactory.newFactory();
                 inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
