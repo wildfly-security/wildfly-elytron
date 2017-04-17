@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -264,7 +266,22 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                             while (it.hasNext()) {
                                 int cp = it.next();
                                 if (cp == '\\' && it.hasNext()) { // escape
-                                    builder.appendCodePoint(it.next());
+                                    //might be regular escape of regex like characters \\t \\! or unicode \\uxxxx
+                                    int marker = it.next();
+                                    if(marker != 'u'){
+                                        builder.appendCodePoint(marker);
+                                    } else {
+                                        StringBuilder hex = new StringBuilder();
+                                        try{
+                                            hex.appendCodePoint(it.next());
+                                            hex.appendCodePoint(it.next());
+                                            hex.appendCodePoint(it.next());
+                                            hex.appendCodePoint(it.next());
+                                            builder.appendCodePoint((char)Integer.parseInt(hex.toString(),16));
+                                        } catch(NoSuchElementException nsee){
+                                            throw ElytronMessages.log.invalidUnicodeSequence(hex.toString(),nsee);
+                                        }
+                                    }
                                 } else if (username == null && (cp == '=' || cp == ':')) { // username-password delimiter
                                     username = builder.toString().trim();
                                     builder = new StringBuilder();

@@ -148,8 +148,8 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                     passwordChars.get(password);
                     try {
                         String username = usernameChars.toString();
-                        log.tracef("Request => %s", request.getRequestURI());
-                        if (authenticate(mechanismRealm, username, passwordChars.array())) {
+
+                        if (authenticate(mechanismRealm, username, password)) {
                             log.tracef("User %s authenticated successfully!", username);
                             if (authorize(username)) {
                                 log.debugf("User %s authorization succeeded!", username);
