@@ -64,7 +64,7 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         Assert.checkNotNullParam("cbh", cbh);
         if (props == null) props = Collections.emptyMap();
 
-        if (! matches(props)) return null;
+        if (! matches(props, false)) return null;
         String selectedMech = select(mechanisms);
         if (selectedMech == null) return null;
 

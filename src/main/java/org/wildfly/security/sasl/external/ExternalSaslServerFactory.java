@@ -41,10 +41,10 @@ import org.wildfly.security.util._private.Arrays2;
 public final class ExternalSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return mechanism.equals(SaslMechanismInformation.Names.EXTERNAL) && getMechanismNames(props).length != 0 ? new ExternalSaslServer(cbh) : null;
+        return mechanism.equals(SaslMechanismInformation.Names.EXTERNAL) && getMechanismNames(props, false).length != 0 ? new ExternalSaslServer(cbh) : null;
     }
 
-    public String[] getMechanismNames(final Map<String, ?> props) {
+    private String[] getMechanismNames(final Map<String, ?> props, boolean query) {
         if (props == null) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }
@@ -71,4 +71,10 @@ public final class ExternalSaslServerFactory implements SaslServerFactory {
         }
         return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
     }
+
+    @Override
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return getMechanismNames(props, true);
+    }
+
 }

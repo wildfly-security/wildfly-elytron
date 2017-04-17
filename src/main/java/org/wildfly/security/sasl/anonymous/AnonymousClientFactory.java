@@ -37,6 +37,6 @@ public class AnonymousClientFactory extends AbstractAnonymousFactory implements 
     @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Only return a client if we are sure anonymous is supported.
-        return isIncluded(mechanisms) && matches(props) ? new AnonymousSaslClient(protocol, serverName, cbh, authorizationId) : null;
+        return isIncluded(mechanisms) && matches(props, false) ? new AnonymousSaslClient(protocol, serverName, cbh, authorizationId) : null;
     }
 }

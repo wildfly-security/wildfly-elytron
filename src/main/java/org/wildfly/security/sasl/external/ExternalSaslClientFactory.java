@@ -42,7 +42,7 @@ import org.wildfly.security.util._private.Arrays2;
 public final class ExternalSaslClientFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        if (getMechanismNames(props).length != 0) {
+        if (getMechanismNames(props, false).length != 0) {
             for (String mechanism : mechanisms) {
                 if (SaslMechanismInformation.Names.EXTERNAL.equals(mechanism)) {
                     return new ExternalSaslClient(authorizationId);
@@ -52,9 +52,9 @@ public final class ExternalSaslClientFactory implements SaslClientFactory {
         return null;
     }
 
-    public String[] getMechanismNames(Map<String, ?> props) {
+    private String[] getMechanismNames(Map<String, ?> props, boolean query) {
         if (props == null) props = Collections.emptyMap();
-        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && query) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }
         if ("true".equals(props.get(Sasl.POLICY_NOACTIVE))) {
@@ -77,4 +77,11 @@ public final class ExternalSaslClientFactory implements SaslClientFactory {
         }
         return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
     }
+
+    @Override
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return getMechanismNames(props, true);
+    }
+
+
 }

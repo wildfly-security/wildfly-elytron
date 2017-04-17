@@ -46,10 +46,10 @@ public class PlainSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure plain is required don't return a SaslServer
-        return SaslMechanismInformation.Names.PLAIN.equals(mechanism) && PlainSasl.isMatched(props) ? new PlainSaslServer(cbh) : null;
+        return SaslMechanismInformation.Names.PLAIN.equals(mechanism) && PlainSasl.isMatched(props, false) ? new PlainSaslServer(cbh) : null;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return PlainSasl.isMatched(props) ? PlainSasl.NAMES.clone() : WildFlySasl.NO_NAMES;
+        return PlainSasl.isMatched(props, true) ? PlainSasl.NAMES.clone() : WildFlySasl.NO_NAMES;
     }
 }

@@ -47,7 +47,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Assert.checkNotNullParam("cbh", cbh);
         if (props == null) props = Collections.emptyMap();
-        if (OTP.isMatched(props)) {
+        if (OTP.isMatched(props, false)) {
             for (String mechanism : mechanisms) {
                 if (SaslMechanismInformation.Names.OTP.equals(mechanism)) {
                     final Object rngNameValue = props.get(WildFlySasl.SECURE_RNG);
@@ -75,7 +75,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return OTP.isMatched(props) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
+        return OTP.isMatched(props, true) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
     }
 
     /**

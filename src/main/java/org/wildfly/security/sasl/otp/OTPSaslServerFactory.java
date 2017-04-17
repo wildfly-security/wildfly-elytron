@@ -51,7 +51,7 @@ public final class OTPSaslServerFactory implements SaslServerFactory {
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        if (SaslMechanismInformation.Names.OTP.equals(mechanism) && OTP.isMatched(props)) {
+        if (SaslMechanismInformation.Names.OTP.equals(mechanism) && OTP.isMatched(props, false)) {
             final OTPSaslServer server = new OTPSaslServer(mechanism, protocol, serverName, cbh, providers);
             server.init();
             return server;
@@ -60,6 +60,6 @@ public final class OTPSaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return OTP.isMatched(props) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
+        return OTP.isMatched(props, true) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
     }
 }

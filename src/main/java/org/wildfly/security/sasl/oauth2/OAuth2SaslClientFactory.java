@@ -39,6 +39,8 @@ import java.util.Map;
 public final class OAuth2SaslClientFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        if (getMechanismNames(props, false).length == 0) return null;
+
         for (String mechanism : mechanisms) {
             if (SaslMechanismInformation.Names.OAUTHBEARER.equals(mechanism)) {
                 return new OAuth2SaslClient(mechanism, protocol, serverName, cbh, authorizationId, new OAuth2Client(mechanism, authorizationId, cbh));
@@ -48,12 +50,12 @@ public final class OAuth2SaslClientFactory implements SaslClientFactory {
         return null;
     }
 
-    public String[] getMechanismNames(final Map<String, ?> props) {
+    private String[] getMechanismNames(final Map<String, ?> props, boolean query) {
         if (props == null) {
             return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
         }
 
-        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && query) {
             return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
         }
 
@@ -65,4 +67,11 @@ public final class OAuth2SaslClientFactory implements SaslClientFactory {
 
         return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
     }
+
+    @Override
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return getMechanismNames(props, true);
+    }
+
+
 }

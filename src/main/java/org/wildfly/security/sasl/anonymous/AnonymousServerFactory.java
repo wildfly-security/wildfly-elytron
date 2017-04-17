@@ -44,7 +44,7 @@ public class AnonymousServerFactory extends AbstractAnonymousFactory implements 
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure anonymous is required don't return a SaslServer
-        if (SaslMechanismInformation.Names.ANONYMOUS.equals(mechanism) == false || matches(props) == false) {
+        if (SaslMechanismInformation.Names.ANONYMOUS.equals(mechanism) == false || matches(props, false) == false) {
             return null;
         }
 
