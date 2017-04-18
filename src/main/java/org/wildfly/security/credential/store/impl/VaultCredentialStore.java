@@ -30,6 +30,7 @@ import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -202,4 +203,10 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
             }
         }
     }
+
+    @Override
+    public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
+        return data.keySet();
+    }
+
 }
