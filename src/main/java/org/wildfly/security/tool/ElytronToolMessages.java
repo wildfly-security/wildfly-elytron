@@ -82,6 +82,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Password credential value")
     String cmdLinePasswordCredentialValueDesc();
 
+    @Message(id = NONE, value = "Type of entry in credential store")
+    String cmdLineEntryTypeDesc();
+
     @Message(id = NONE, value = "Create credential store [true/false]")
     String cmdLineCreateCredentialStoreDesc();
 
@@ -241,4 +244,8 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 13, value = "Invalid option \"%s\" when performing bulk conversion. Use bulk conversion descriptor file.")
     Exception bulkConversionInvalidOption(String option);
+
+    @Message(id = 14, value = "Unknown entry-type \"%s\"")
+    IllegalArgumentException unknownEntryType(String entryType);
+
 }
