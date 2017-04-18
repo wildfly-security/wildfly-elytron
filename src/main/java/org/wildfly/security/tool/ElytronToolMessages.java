@@ -165,4 +165,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 6, value = "Salt not specified.")
     MissingArgumentException saltNotSpecified();
 
+    @Message(id = 7, value = "Invalid \"%s\" value. Must be an integer between %d and %d, inclusive")
+    IllegalArgumentException invalidParameterMustBeIntBetween(String parameter, int min, int max);
+
 }
