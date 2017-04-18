@@ -86,7 +86,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
             }
         }
         if (names.size() == 0 && log.isTraceEnabled()) {
-            log.tracef("No %s provided by service loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
+            log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return names.toArray(new String[names.size()]);
     }
@@ -115,7 +115,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
             }
         }
         if (log.isTraceEnabled()) {
-            log.tracef("No %s provided by service loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
+            log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return null;
     }
