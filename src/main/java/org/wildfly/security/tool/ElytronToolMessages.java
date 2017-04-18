@@ -17,11 +17,16 @@
  */
 package org.wildfly.security.tool;
 
+import static org.jboss.logging.annotations.Message.NONE;
+
 import org.apache.commons.cli.MissingArgumentException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
+import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
+import java.io.IOException;
 
 /**
  * Messages for Elytron tool.
@@ -34,29 +39,29 @@ public interface ElytronToolMessages extends BasicLogger {
     ElytronToolMessages msg = Logger.getMessageLogger(ElytronToolMessages.class, "org.wildfly.security.tool");
 
     // General messages
-    @Message(id = Message.NONE, value = "Command or alias \"%s\" not found.")
+    @Message(id = NONE, value = "Command or alias \"%s\" not found.")
     String commandOrAliasNotFound(String command);
 
-    @Message(id = Message.NONE, value = "Input data not confirmed. Exiting.")
+    @Message(id = NONE, value = "Input data not confirmed. Exiting.")
     String inputDataNotConfirmed();
 
-    @Message(id = Message.NONE, value = "Cannot start user prompt, console is missing.")
+    @Message(id = NONE, value = "Cannot start user prompt, console is missing.")
     String cannotPromptConsoleMissing();
 
-    @Message(id = Message.NONE, value = "java -jar %s %s")
+    @Message(id = NONE, value = "java -jar %s %s")
     String cmdHelp(String jarFile, String commandName);
 
-    @Message(id = Message.NONE, value = "Exception encountered executing the command:")
+    @Message(id = NONE, value = "Exception encountered executing the command:")
     String commandExecuteException();
 
     // CredentialStore command parameters descriptions
-    @Message(id = Message.NONE, value = "Missing arguments. Printing general help message:")
+    @Message(id = NONE, value = "Missing arguments. Printing general help message:")
     String missingArgumentsHelp();
 
-    @Message(id = Message.NONE, value = "Location of credential store storage file")
+    @Message(id = NONE, value = "Location of credential store storage file")
     String cmdLineStoreLocationDesc();
 
-    @Message(id = Message.NONE, value = "Configuration URI for credential store. URI basic form: \"cr-store://store_name?parameter1=value1; ... ;parameterN=valueN\"%n" +
+    @Message(id = NONE, value = "Configuration URI for credential store. URI basic form: \"cr-store://store_name?parameter1=value1; ... ;parameterN=valueN\"%n" +
             "Supported parameters are dependent on credential store type%n" +
             "Generally supported parameters for default credential store implementation (all are optional):%n" +
             "create - automatically creates credential store file (true/false)%n" +
@@ -65,73 +70,73 @@ public interface ElytronToolMessages extends BasicLogger {
             "keyStoreType - specify the key store type to use")
     String cmdLineURIDesc();
 
-    @Message(id = Message.NONE, value = "Password for credential store")
+    @Message(id = NONE, value = "Password for credential store")
     String cmdLineCredentialStorePassword();
 
-    @Message(id = Message.NONE, value = "Salt to apply for final masked password of the credential store")
+    @Message(id = NONE, value = "Salt to apply for final masked password of the credential store")
     String cmdLineSaltDesc();
 
-    @Message(id = Message.NONE, value = "Iteration count for final masked password of the credential store")
+    @Message(id = NONE, value = "Iteration count for final masked password of the credential store")
     String cmdLineIterationCountDesc();
 
-    @Message(id = Message.NONE, value = "Password credential value")
+    @Message(id = NONE, value = "Password credential value")
     String cmdLinePasswordCredentialValueDesc();
 
-    @Message(id = Message.NONE, value = "Create credential store [true/false]")
+    @Message(id = NONE, value = "Create credential store [true/false]")
     String cmdLineCreateCredentialStoreDesc();
 
-    @Message(id = Message.NONE, value = "Credential store type")
+    @Message(id = NONE, value = "Credential store type")
     String cmdLineCredentialStoreTypeDesc();
 
-    @Message(id = Message.NONE, value = "Add new alias to the credential store")
+    @Message(id = NONE, value = "Add new alias to the credential store")
     String cmdLineAddAliasDesc();
 
-    @Message(id = Message.NONE, value = "Remove alias from the credential store")
+    @Message(id = NONE, value = "Remove alias from the credential store")
     String cmdLineRemoveAliasDesc();
 
-    @Message(id = Message.NONE, value = "Check if alias exists within the credential store")
+    @Message(id = NONE, value = "Check if alias exists within the credential store")
     String cmdLineCheckAliasDesc();
 
-    @Message(id = Message.NONE, value = "Display all aliases")
+    @Message(id = NONE, value = "Display all aliases")
     String cmdLineAliasesDesc();
 
-    @Message(id = Message.NONE, value = "Print summary, especially command how to create this credential store")
+    @Message(id = NONE, value = "Print summary, especially command how to create this credential store")
     String cmdLinePrintSummary();
 
-    @Message(id = Message.NONE, value = "Get help with usage of this command")
+    @Message(id = NONE, value = "Get help with usage of this command")
     String cmdLineHelp();
 
-    @Message(id = Message.NONE, value = "Alias \"%s\" exists")
+    @Message(id = NONE, value = "Alias \"%s\" exists")
     String aliasExists(String alias);
 
-    @Message(id = Message.NONE, value = "Alias \"%s\" does not exist")
+    @Message(id = NONE, value = "Alias \"%s\" does not exist")
     String aliasDoesNotExist(String alias);
 
-    @Message(id = Message.NONE, value = "Alias \"%s\" has been successfully stored")
+    @Message(id = NONE, value = "Alias \"%s\" has been successfully stored")
     String aliasStored(String alias);
 
-    @Message(id = Message.NONE, value = "Alias \"%s\" has been successfully removed")
+    @Message(id = NONE, value = "Alias \"%s\" has been successfully removed")
     String aliasRemoved(String alias);
 
-    @Message(id = Message.NONE, value = "Credential store command summary:%n--------------------------------------%n%s")
+    @Message(id = NONE, value = "Credential store command summary:%n--------------------------------------%n%s")
     String commandSummary(String command);
 
-    @Message(id = Message.NONE, value = "Credential store contains following aliases: %s")
+    @Message(id = NONE, value = "Credential store contains following aliases: %s")
     String aliases(String aliases);
 
-    @Message(id = Message.NONE, value = "Action to perform on the credential store is not defined")
+    @Message(id = NONE, value = "Action to perform on the credential store is not defined")
     Exception actionToPerformNotDefined();
 
-    @Message(id = Message.NONE, value = "Credential store password: ")
+    @Message(id = NONE, value = "Credential store password: ")
     String credentialStorePasswordPrompt();
 
-    @Message(id = Message.NONE, value = "Confirm credential store password: ")
+    @Message(id = NONE, value = "Confirm credential store password: ")
     String credentialStorePasswordPromptConfirm();
 
-    @Message(id = Message.NONE, value = "Secret to store: ")
+    @Message(id = NONE, value = "Secret to store: ")
     String secretToStorePrompt();
 
-    @Message(id = Message.NONE, value = "Confirm secret to store: ")
+    @Message(id = NONE, value = "Confirm secret to store: ")
     String secretToStorePromptConfirm();
 
     @Message(id = 1, value = "Opening quote has to be the first character in parameter value '%s'")
@@ -147,16 +152,16 @@ public interface ElytronToolMessages extends BasicLogger {
     IllegalArgumentException credentialStoreURIParameterNameExpected(String uri);
 
     // mask command
-    @Message(id = Message.NONE, value = "\"mask\" command is used to get MASK- string encrypted using PBEWithMD5AndDES in PicketBox compatible way.")
+    @Message(id = NONE, value = "\"mask\" command is used to get MASK- string encrypted using PBEWithMD5AndDES in PicketBox compatible way.")
     String cmdMaskHelpHeader();
 
-    @Message(id = Message.NONE, value = "Salt to apply to masked string")
+    @Message(id = NONE, value = "Salt to apply to masked string")
     String cmdMaskSaltDesc();
 
-    @Message(id = Message.NONE, value = "Iteration count for masked string")
+    @Message(id = NONE, value = "Iteration count for masked string")
     String cmdMaskIterationCountDesc();
 
-    @Message(id = Message.NONE, value = "Secret to be encrypted")
+    @Message(id = NONE, value = "Secret to be encrypted")
     String cmdMaskSecretDesc();
 
     @Message(id = 5, value = "Nothing to encrypt. Secret not specified.")
@@ -168,4 +173,72 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 7, value = "Invalid \"%s\" value. Must be an integer between %d and %d, inclusive")
     IllegalArgumentException invalidParameterMustBeIntBetween(String parameter, int min, int max);
 
+    // vault command
+    @Message(id = NONE, value = "Vault keystore URL")
+    String cmdLineVaultKeyStoreURL();
+
+    @Message(id = NONE, value = "Vault keystore password:%n" +
+                                "- used to open original vault key store%n" +
+                                "- used as password for new converted credential store")
+    String cmdLineVaultKeyStorePassword();
+
+    @Message(id = NONE, value = "Vault directory containing encrypted files")
+    String cmdLineVaultEncryptionDirectory();
+
+    @Message(id = NONE, value = "8 character salt")
+    String cmdVaultLineSalt();
+
+    @Message(id = NONE, value = "Iteration count")
+    String cmdLineVaultIterationCount();
+
+    @Message(id = NONE, value = "Vault master key alias within key store")
+    String cmdLineVaultKeyStoreAlias();
+
+    @Message(id = NONE, value = "Configuration parameters for credential store in form of: \"parameter1=value1; ... ;parameterN=valueN\"%n" +
+            "Supported parameters are dependent on credential store type%n" +
+            "Generally supported parameters for default credential store implementation (all are optional):%n" +
+            "create - automatically creates credential store file (true/false)%n" +
+            "modifiable - is the credential modifiable (true/false)%n" +
+            "location - file location of credential store%n" +
+            "keyStoreType - specify the key store type to use")
+    String cmdLineVaultCSParametersDesc();
+
+    @Message(id = NONE, value = "Vault Conversion summary:%n--------------------------------------%n%s")
+    String vaultConversionSummary(String command);
+
+    @Message(id = NONE, value = "Vault Conversion Successful%n")
+    String conversionSuccessful();
+
+    @Message(id = NONE, value = "CLI command to add new credential store:%n")
+    String cliCommandToNewCredentialStore();
+
+    @Message(id = NONE, value = "Bulk conversion with parameters in description file")
+    String cliCommandBulkVaultCredentialStoreConversion();
+
+    @Message(id = NONE, value = "Print summary of conversion")
+    String cmdLineVaultPrintSummary();
+
+    @Message(id = NONE, value = "Location of credential store storage file")
+    String cmdLineVaultCSLocationDesc();
+
+    @Message(id = 8, value = "Cannot locate admin key with alias \"%s\" or it is of improper type")
+    RuntimeException cannotLocateAdminKey(String alias);
+
+    @Message(id = 9, value = "Cannot parse credential store attribute from supplied parameter")
+    RuntimeException cannotParseCSAttributes();
+
+    @Message(id = NONE, value = "Vault (enc-dir=\"%s\";keystore=\"%s\") converted to credential store \"%s\"")
+    String vaultConvertedToCS(String vaultDir, String keyStore, String credentialStoreStorage);
+
+    @Message(id = 10, value = "Cannot parse conversion descriptor file \"%s\" missing colon at line %s")
+    IOException descriptorParseMissingColon(String file, String line);
+
+    @Message(id = 11, value = "Unrecognized descriptor attribute at line %s")
+    IOException unrecognizedDescriptorAttribute(String line);
+
+    @Message(id = 12, value = "Problem converting vault (enc-dir=\"%s\";keystore=\"%s\")")
+    Exception bulkConversionProblem(String vaultDir, String keyStore, @Cause Throwable cause);
+
+    @Message(id = 13, value = "Invalid option \"%s\" when performing bulk conversion. Use bulk conversion descriptor file.")
+    Exception bulkConversionInvalidOption(String option);
 }

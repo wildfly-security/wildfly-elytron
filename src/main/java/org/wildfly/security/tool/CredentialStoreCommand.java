@@ -322,4 +322,20 @@ class CredentialStoreCommand extends Command {
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND), options, true);
     }
+
+    public static Map<String, String> parseCredentialStoreAttributes(final String attributeString) {
+        HashMap<String, String> attributes = new HashMap<>();
+        if (attributeString != null) {
+            for (String pair : attributeString.split(";")) {
+                String[] parts = pair.split("=");
+                if (parts[0] != null && !parts[0].isEmpty() && parts[1] != null) {
+                    attributes.put(parts[0], parts[1]);
+                } else {
+                    throw ElytronToolMessages.msg.cannotParseCSAttributes();
+                }
+            }
+        }
+        return attributes;
+    }
+
 }

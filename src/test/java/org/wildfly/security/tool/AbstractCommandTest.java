@@ -72,9 +72,9 @@ public abstract class AbstractCommandTest extends BaseToolTest {
         return path.toAbsolutePath().toString();
     }
 
-    protected void executeCommandAndCheckStatus(String[] args) {
+    protected void executeCommandAndCheckStatus(String commandType, String[] args) {
         ElytronTool tool = new ElytronTool();
-        Command command = tool.findCommand(getCommandType());
+        Command command = tool.findCommand(commandType == null ? getCommandType() : commandType);
         try {
             command.execute(args);
         } catch (Exception e) {
@@ -83,9 +83,13 @@ public abstract class AbstractCommandTest extends BaseToolTest {
         assertEquals("returned command status has to be 0", command.getStatus(), ElytronTool.ElytronToolExitStatus_OK);
     }
 
-    protected String executeCommandAndCheckStatusAndGetOutput(String[] args) {
+    protected void executeCommandAndCheckStatus(String[] args) {
+        executeCommandAndCheckStatus(null, args);
+    }
+
+    protected String executeCommandAndCheckStatusAndGetOutput(String commandType, String[] args) {
         ElytronTool tool = new ElytronTool();
-        Command command = tool.findCommand(getCommandType());
+        Command command = tool.findCommand(commandType == null ? getCommandType() : commandType);
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         PrintStream original = System.out;
         System.setOut(new PrintStream(result));
@@ -98,6 +102,10 @@ public abstract class AbstractCommandTest extends BaseToolTest {
         System.out.println("result" + result.toString());
         assertEquals("returned command status has to be 0", command.getStatus(), ElytronTool.ElytronToolExitStatus_OK);
         return result.toString();
+    }
+
+    protected String executeCommandAndCheckStatusAndGetOutput(String[] args) {
+        return executeCommandAndCheckStatusAndGetOutput(null, args);
     }
 
     protected void checkAliasSecretValue(CredentialStore cs, String aliasName, String secretValue) {
