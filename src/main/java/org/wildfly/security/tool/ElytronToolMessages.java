@@ -85,6 +85,10 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Type of entry in credential store")
     String cmdLineEntryTypeDesc();
 
+    @Message(id = NONE, value = "Comma separated list of JCA provider names. Providers will be supplied to the credential store instance.%n" +
+            "Each provider must be installed through java.security file.")
+    String cmdLineOtherProvidersDesc();
+
     @Message(id = NONE, value = "Create credential store [true/false]")
     String cmdLineCreateCredentialStoreDesc();
 
@@ -247,5 +251,8 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 14, value = "Unknown entry-type \"%s\"")
     IllegalArgumentException unknownEntryType(String entryType);
+
+    @Message(id = 15, value = "Unknown provider \"%s\"")
+    IllegalArgumentException unknownProvider(String provider);
 
 }
