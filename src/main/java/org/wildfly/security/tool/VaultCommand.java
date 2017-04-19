@@ -67,10 +67,8 @@ public class VaultCommand extends Command {
     public static final String VAULT_COMMAND = "vault";
 
     public static final String STORE_LOCATION_PARAM = "location";
-    public static final String CREDENTIAL_STORE_ATTRIBUTES_PARAM = "cs-attr";
     public static final String PRINT_SUMMARY_PARAM = "summary";
     public static final String FAIL_IF_EXIST_PARAM = "fail-if-exist";
-
 
     // vault command actions
     public static String BULK_CONVERT_PARAM = "bulk-convert";
@@ -91,7 +89,7 @@ public class VaultCommand extends Command {
         String salt;
         int iterationCount;
         String secretKeyAlias;
-        Map<String, String> csAttributes;
+        Map<String, String> implProps;
         String outputFile;
     }
 
@@ -120,9 +118,9 @@ public class VaultCommand extends Command {
         o = new Option("l", STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSLocationDesc());
         o.setArgName("loc");
         options.addOption(o);
-        o = new Option("a", CREDENTIAL_STORE_ATTRIBUTES_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSParametersDesc());
-        o.setArgName("attributes");
+        o = new Option("u", CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSParametersDesc());
         o.setValueSeparator(';');
+        o.setOptionalArg(true);
         options.addOption(o);
         options.addOption("f", PRINT_SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLineVaultPrintSummary());
 
@@ -153,7 +151,7 @@ public class VaultCommand extends Command {
             List<Descriptor> descriptors = parseDescriptorFile(bulkConversionDescriptor);
             for(Descriptor d: descriptors) {
                 try {
-                    convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.csAttributes);
+                    convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
                     System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(d.encryptionDirectory, d.keyStoreURL, d.outputFile));
                 } catch (Throwable e) {
                     throw ElytronToolMessages.msg.bulkConversionProblem(d.encryptionDirectory, d.keyStoreURL, e);
@@ -175,19 +173,27 @@ public class VaultCommand extends Command {
             if (location == null || location.isEmpty()) {
                 location = convertedStoreName(encryptionDirectory);
             }
-            Map<String, String> csAttributes = CredentialStoreCommand.parseCredentialStoreAttributes(cmdLine.getOptionValue(CREDENTIAL_STORE_ATTRIBUTES_PARAM));
+            Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM));
 
             convert(keystoreURL, keystorePassword, encryptionDirectory, salt, iterationCount, vaultSecretKeyAlias,
-                    location, csAttributes);
+                    location, implProps);
             System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(encryptionDirectory, keystoreURL, location));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             if (printSummary) {
                 StringBuilder com = new StringBuilder();
                 com.append(ElytronToolMessages.msg.conversionSuccessful());
                 com.append(ElytronToolMessages.msg.cliCommandToNewCredentialStore());
-                com.append("/subsystem=elytron/credential-store=test:add(uri=\"");
-                com.append(location).append("\"");
-                com.append(",relative-to=jboss.server.data.dir,credential-reference={");
+                com.append("/subsystem=elytron/credential-store=cs:add(");
+                com.append("relative-to=jboss.server.data.dir,");
+                if (location != null) {
+                    com.append("location=\"" + location + "\",");
+                }
+                String props = CredentialStoreCommand.formatPropertiesForCli(implProps);
+                if (!props.isEmpty()) {
+                    com.append(props);
+                    com.append(",");
+                }
+                com.append("credential-reference={");
                 com.append("clear-text=\"");
                 if (keystorePassword != null && !keystorePassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
                     com.append(MaskCommand.computeMasked(keystorePassword, salt, iterationCount));
@@ -290,8 +296,8 @@ public class VaultCommand extends Command {
                     descriptor.secretKeyAlias = value;
                 } else if (attribute.equals(STORE_LOCATION_PARAM)) {
                     descriptor.outputFile = value;
-                } else if (attribute.equals(CREDENTIAL_STORE_ATTRIBUTES_PARAM)) {
-                    descriptor.csAttributes =  CredentialStoreCommand.parseCredentialStoreAttributes(value);
+                } else if (attribute.equals(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM)) {
+                    descriptor.implProps =  CredentialStoreCommand.parseCredentialStoreProperties(value);
                 } else {
                     throw ElytronToolMessages.msg.unrecognizedDescriptorAttribute(Integer.toString(lineNumber));
                 }

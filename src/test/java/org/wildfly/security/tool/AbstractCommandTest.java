@@ -188,7 +188,7 @@ public abstract class AbstractCommandTest extends BaseToolTest {
 
     protected void createStoreAndAddAliasAndCheck(String storageLocation, String storagePassword, String aliasName,
         String aliasValue) {
-        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
