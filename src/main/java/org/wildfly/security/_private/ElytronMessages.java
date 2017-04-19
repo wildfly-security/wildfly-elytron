@@ -1815,6 +1815,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9534, value = "\"%s\" is not a block based algorithm")
     CredentialStoreException algorithmNotBlockBased(String algorithm);
 
+    @Message(id = 9535, value = "Algorithm \"%s\" does not use an initialization vector (IV)")
+    CredentialStoreException algorithmNotIV(String algorithm);
+
     /* X.500 exceptions */
 
     @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")
