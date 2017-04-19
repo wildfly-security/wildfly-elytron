@@ -105,6 +105,7 @@ import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
@@ -121,6 +122,9 @@ import org.wildfly.security.x500.X500;
 public final class ElytronXmlParser {
 
     private static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
+
+    private ElytronXmlParser() {
+    }
 
     // authentication client document
 
@@ -627,6 +631,13 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 8);
                         final String[] names = parseNamesType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.forbidSaslMechanisms(names));
+                        break;
+                    }
+                    case "sasl-mechanism-selector": {
+                        if (isSet(foundBits, 14)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 14);
+                        final SaslMechanismSelector selector = parseSaslMechanismSelectorType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.setSaslMechanismSelector(selector));
                         break;
                     }
                     case "credentials": {
@@ -1849,6 +1860,33 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return uri;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    static SaslMechanismSelector parseSaslMechanismSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        SaslMechanismSelector selector = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            if (reader.getAttributeLocalName(i).equals("selector")) {
+                selector = SaslMechanismSelector.fromString(reader.getAttributeValue(i));
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (selector == null) {
+            throw missingAttribute(reader, "selector");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return selector;
             } else {
                 throw reader.unexpectedContent();
             }
