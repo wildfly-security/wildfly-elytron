@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,6 +50,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -100,6 +100,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.localuser.LocalUserClient;
 import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
@@ -139,8 +140,8 @@ public final class AuthenticationConfiguration {
     private static final int SET_CRED_SOURCE = 8;
     private static final int SET_PROVIDER_SUPPLIER = 9;
     private static final int SET_KEY_MGR_FAC = 10;
-    private static final int SET_ALLOWED_SASL = 11;
-    private static final int SET_DENIED_SASL = 12;
+    private static final int SET_SASL_SELECTOR = 11;
+    // unused 12
     private static final int SET_PRINCIPAL_RW = 13;
     private static final int SET_SASL_FAC_SUP = 14;
     private static final int SET_PARAM_SPECS = 15;
@@ -173,8 +174,7 @@ public final class AuthenticationConfiguration {
     final int setPort;
     final Supplier<Provider[]> providerSupplier;
     final SecurityFactory<X509KeyManager> keyManagerFactory;
-    final Set<String> allowedSasl;
-    final Set<String> deniedSasl;
+    final SaslMechanismSelector saslMechanismSelector;
     final Function<Principal, Principal> principalRewriter;
     final Supplier<SaslClientFactory> saslClientFactorySupplier;
     final List<AlgorithmParameterSpec> parameterSpecs;
@@ -202,8 +202,7 @@ public final class AuthenticationConfiguration {
         this.setPort = -1;
         this.providerSupplier = null;
         this.keyManagerFactory = null;
-        this.allowedSasl = Collections.emptySet();
-        this.deniedSasl = Collections.emptySet();
+        this.saslMechanismSelector = null;
         this.principalRewriter = null;
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
@@ -236,8 +235,7 @@ public final class AuthenticationConfiguration {
         this.setPort = original.setPort;
         this.providerSupplier = what == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value : original.providerSupplier;
         this.keyManagerFactory = what == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value : original.keyManagerFactory;
-        this.allowedSasl = what == SET_ALLOWED_SASL ? (Set<String>) value : original.allowedSasl;
-        this.deniedSasl = what == SET_DENIED_SASL ? (Set<String>) value : original.deniedSasl;
+        this.saslMechanismSelector = what == SET_SASL_SELECTOR ? (SaslMechanismSelector) value : original.saslMechanismSelector;
         this.principalRewriter = what == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value : original.principalRewriter;
         this.saslClientFactorySupplier = what == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value : original.saslClientFactorySupplier;
         this.parameterSpecs = what == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value : original.parameterSpecs;
@@ -272,8 +270,7 @@ public final class AuthenticationConfiguration {
         this.setPort = original.setPort;
         this.providerSupplier = what1 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value1 : what2 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value2 : original.providerSupplier;
         this.keyManagerFactory = what1 == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value1 : what2 == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value2 : original.keyManagerFactory;
-        this.allowedSasl = what1 == SET_ALLOWED_SASL ? (Set<String>) value1 : what2 == SET_ALLOWED_SASL ? (Set<String>) value2 : original.allowedSasl;
-        this.deniedSasl = what1 == SET_DENIED_SASL ? (Set<String>) value1 : what2 == SET_DENIED_SASL ? (Set<String>) value2 : original.deniedSasl;
+        this.saslMechanismSelector = what1 == SET_SASL_SELECTOR ? (SaslMechanismSelector) value1 : what2 == SET_SASL_SELECTOR ? (SaslMechanismSelector) value2 : original.saslMechanismSelector;
         this.principalRewriter = what1 == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value1 : what2 == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value2 : original.principalRewriter;
         this.saslClientFactorySupplier = what1 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value1 : what2 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value2 : original.saslClientFactorySupplier;
         this.parameterSpecs = what1 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value1 : what2 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value2 : original.parameterSpecs;
@@ -303,8 +300,7 @@ public final class AuthenticationConfiguration {
         this.setPort = port;
         this.providerSupplier = original.providerSupplier;
         this.keyManagerFactory = original.keyManagerFactory;
-        this.allowedSasl = original.allowedSasl;
-        this.deniedSasl = original.deniedSasl;
+        this.saslMechanismSelector = original.saslMechanismSelector;
         this.principalRewriter = original.principalRewriter;
         this.saslClientFactorySupplier = original.saslClientFactorySupplier;
         this.parameterSpecs = original.parameterSpecs;
@@ -328,8 +324,7 @@ public final class AuthenticationConfiguration {
         this.setPort = getOrDefault(other.setPort, original.setPort);
         this.providerSupplier = getOrDefault(other.providerSupplier, original.providerSupplier);
         this.keyManagerFactory = getOrDefault(other.keyManagerFactory, original.keyManagerFactory);
-        this.allowedSasl = getOrDefault(other.allowedSasl, original.allowedSasl);
-        this.deniedSasl = getOrDefault(other.deniedSasl, original.deniedSasl);
+        this.saslMechanismSelector = getOrDefault(other.saslMechanismSelector, original.saslMechanismSelector);
         this.principalRewriter = getOrDefault(other.principalRewriter, original.principalRewriter);
         this.saslClientFactorySupplier = getOrDefault(other.saslClientFactorySupplier, original.saslClientFactorySupplier);
         this.parameterSpecs = getOrDefault(other.parameterSpecs, original.parameterSpecs);
@@ -375,14 +370,6 @@ public final class AuthenticationConfiguration {
      * @return {@code true} if supported, {@code false} otherwise
      */
     boolean saslSupportedByConfiguration(String mechanismName) {
-        // if a mechanism was explicitly disallowed, we do not support it no matter what
-        if (deniedSasl.contains(mechanismName)) {
-            return false;
-        }
-        // if a mechanism was explicitly allowed, we support it no matter what
-        if (allowedSasl.contains(mechanismName)) {
-            return true;
-        }
         // special case for local, quiet auth
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
         if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL)) {
@@ -444,21 +431,6 @@ public final class AuthenticationConfiguration {
         }
         // no apparent way to support the mechanism
         return false;
-    }
-
-    /**
-     * Determine if this SASL mechanism is allowed by this configuration's policy.  Implementations must combine
-     * using boolean-AND operations.
-     *
-     * @param mechanismName the mech name (must not be {@code null})
-     * @return {@code true} if allowed, {@code false} otherwise
-     */
-    boolean saslAllowedByConfiguration(String mechanismName) {
-        return ! deniedSasl.contains(mechanismName);
-    }
-
-    boolean filterOneSaslMechanism(String mechanismName) {
-        return saslSupportedByConfiguration(mechanismName) && saslAllowedByConfiguration(mechanismName);
     }
 
     Principal doRewriteUser(Principal original) {
@@ -1032,6 +1004,15 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, SET_MECH_PROPS, optimizeMap(newMap));
     }
 
+    private static <K, V> Map<K, V> optimizeMap(Map<K, V> orig) {
+        if (orig.isEmpty()) return Collections.emptyMap();
+        if (orig.size() == 1) {
+            final Map.Entry<K, V> entry = orig.entrySet().iterator().next();
+            return Collections.singletonMap(entry.getKey(), entry.getValue());
+        }
+        return orig;
+    }
+
     /**
      * Create a new configuration which is the same as this ocnfiguration, but which uses the given kerberos security
      * factory to acquire the GSS credential required for authentication.
@@ -1047,30 +1028,25 @@ public final class AuthenticationConfiguration {
     }
 
     /**
+     * Set the SASL mechanism selector for this authentication configuration.
+     *
+     * @param saslMechanismSelector the SASL mechanism selector, or {@code null} to clear the current selector
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration setSaslMechanismSelector(SaslMechanismSelector saslMechanismSelector) {
+        if (Objects.equals(this.saslMechanismSelector, saslMechanismSelector)) {
+            return this;
+        }
+        return new AuthenticationConfiguration(this, SET_SASL_SELECTOR, saslMechanismSelector);
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which does not forbid any SASL mechanisms.
      *
      * @return the new configuration.
      */
     public AuthenticationConfiguration allowAllSaslMechanisms() {
-        if (deniedSasl.isEmpty()) {
-            return this;
-        }
-        return new AuthenticationConfiguration(this, SET_DENIED_SASL, Collections.emptySet());
-    }
-
-    private static <T> Set<T> optimizeSet(Set<T> orig) {
-        if (orig.isEmpty()) return Collections.emptySet();
-        if (orig.size() == 1) return Collections.singleton(orig.iterator().next());
-        return orig;
-    }
-
-    private static <K, V> Map<K, V> optimizeMap(Map<K, V> orig) {
-        if (orig.isEmpty()) return Collections.emptyMap();
-        if (orig.size() == 1) {
-            final Map.Entry<K, V> entry = orig.entrySet().iterator().next();
-            return Collections.singletonMap(entry.getKey(), entry.getValue());
-        }
-        return orig;
+        return setSaslMechanismSelector(SaslMechanismSelector.ALL);
     }
 
     /**
@@ -1083,16 +1059,13 @@ public final class AuthenticationConfiguration {
     public AuthenticationConfiguration allowSaslMechanisms(String... names) {
         if (names == null || names.length == 0) {
             // clear out all explicitly-allowed names
-            return new AuthenticationConfiguration(this, SET_ALLOWED_SASL, Collections.emptySet());
+            return setSaslMechanismSelector(null);
         }
-        Set<String> newAllowedSasl = new HashSet<>(names.length);
-        Collections.addAll(newAllowedSasl, names);
-        newAllowedSasl.remove(null);
-        newAllowedSasl = optimizeSet(newAllowedSasl);
-        Set<String> newDeniedSasl = new HashSet<>(deniedSasl);
-        newDeniedSasl.removeAll(newAllowedSasl);
-        newDeniedSasl = optimizeSet(newDeniedSasl);
-        return new AuthenticationConfiguration(this, SET_ALLOWED_SASL, newAllowedSasl, SET_DENIED_SASL, newDeniedSasl);
+        SaslMechanismSelector selector = SaslMechanismSelector.NONE;
+        for (String name : names) {
+            selector = selector.addMechanism(name);
+        }
+        return setSaslMechanismSelector(selector);
     }
 
     /**
@@ -1102,18 +1075,14 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
-        if (names == null || names.length == 0) {
-            // clear out all explicitly-allowed names
-            return new AuthenticationConfiguration(this, SET_DENIED_SASL, Collections.emptySet());
+        SaslMechanismSelector selector = saslMechanismSelector;
+        if (selector == null) {
+            selector = SaslMechanismSelector.DEFAULT;
         }
-        Set<String> newDeniedSasl = new HashSet<>(deniedSasl);
-        Collections.addAll(newDeniedSasl, names);
-        newDeniedSasl = optimizeSet(newDeniedSasl);
-        Set<String> newAllowedSasl = new HashSet<>(names.length);
-        newAllowedSasl.removeAll(newDeniedSasl);
-        newAllowedSasl.remove(null);
-        newAllowedSasl = optimizeSet(newAllowedSasl);
-        return new AuthenticationConfiguration(this, SET_ALLOWED_SASL, newAllowedSasl, SET_DENIED_SASL, newDeniedSasl);
+        for (String name : names) {
+            selector = selector.forbidMechanism(name);
+        }
+        return setSaslMechanismSelector(selector);
     }
 
     // other
@@ -1176,19 +1145,24 @@ public final class AuthenticationConfiguration {
         return saslClientFactory;
     }
 
-    SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
+    SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator, SSLSession sslSession) throws SaslException {
         SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
+        final SaslMechanismSelector selector = this.saslMechanismSelector;
+        serverMechanisms = (selector == null ? SaslMechanismSelector.DEFAULT : selector).apply(serverMechanisms, sslSession);
+        if (serverMechanisms.isEmpty()) {
+            return null;
+        }
         final Principal authorizationPrincipal = getAuthorizationPrincipal();
         final Predicate<String> filter;
         final String authzName;
         if (authorizationPrincipal == null) {
-            filter = this::filterOneSaslMechanism;
+            filter = this::saslSupportedByConfiguration;
             authzName = null;
         } else if (authorizationPrincipal instanceof NamePrincipal) {
-            filter = this::filterOneSaslMechanism;
+            filter = this::saslSupportedByConfiguration;
             authzName = authorizationPrincipal.getName();
         } else if (authorizationPrincipal instanceof AnonymousPrincipal) {
-            filter = ((Predicate<String>) this::filterOneSaslMechanism).and("ANONYMOUS"::equals);
+            filter = ((Predicate<String>) this::saslSupportedByConfiguration).and("ANONYMOUS"::equals);
             authzName = null;
         } else {
             return null;
@@ -1258,8 +1232,7 @@ public final class AuthenticationConfiguration {
             && this.setPort == other.setPort
             && Objects.equals(providerSupplier, other.providerSupplier)
             && Objects.equals(keyManagerFactory, other.keyManagerFactory)
-            && Objects.equals(allowedSasl, other.allowedSasl)
-            && Objects.equals(deniedSasl, other.deniedSasl)
+            && Objects.equals(saslMechanismSelector, other.saslMechanismSelector)
             && Objects.equals(principalRewriter, other.principalRewriter)
             && Objects.equals(saslClientFactorySupplier, other.saslClientFactorySupplier)
             && Objects.equals(parameterSpecs, other.parameterSpecs)
@@ -1278,7 +1251,7 @@ public final class AuthenticationConfiguration {
         if (hashCode == 0) {
             hashCode = Objects.hash(
                 capturedAccessContext, principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
-                providerSupplier, keyManagerFactory, allowedSasl, deniedSasl, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
+                providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
                 mechanismProperties, kerberosSecurityFactory) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
@@ -1308,8 +1281,7 @@ public final class AuthenticationConfiguration {
             if (credentialSource != null && credentialSource != CredentialSource.NONE && credentialSource != IdentityCredentials.NONE) b.append("credentials-present,");
             if (providerSupplier != null) b.append("providers-supplier=").append(providerSupplier).append(',');
             if (keyManagerFactory != null) b.append("key-manager-factory=").append(keyManagerFactory).append(',');
-            if (! allowedSasl.isEmpty()) b.append("always-allowed-sasl-mechanisms=").append(allowedSasl).append(',');
-            if (! deniedSasl.isEmpty()) b.append("always-denied-sasl-mechanisms=").append(deniedSasl).append(',');
+            if (saslMechanismSelector != null) b.append("sasl-mechanism-selector=").append(saslMechanismSelector).append(',');
             if (principalRewriter != null) b.append("principal-rewriter=").append(principalRewriter).append(',');
             if (saslClientFactorySupplier != null) b.append("sasl-client-factory-supplier=").append(saslClientFactorySupplier).append(',');
             if (! parameterSpecs.isEmpty()) b.append("parameter-specifications=").append(parameterSpecs).append(',');

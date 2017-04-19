@@ -21,9 +21,11 @@ package org.wildfly.security.sasl;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -72,10 +74,71 @@ public abstract class SaslMechanismSelector {
      * @return the supplier of mechanisms (not {@code null})
      */
     public Supplier<String> createMechanismSupplier(String[] mechNames, SSLSession sslSession) {
+        Assert.checkNotNullParam("mechNames", mechNames);
         final LinkedHashSet<String> set = new LinkedHashSet<>(mechNames.length);
         Collections.addAll(set, mechNames);
         preprocess(set, sslSession);
         return doCreateSupplier(set, sslSession);
+    }
+
+    /**
+     * Create a supplier of mechanism names that provides the names of the mechanisms which are matched by
+     * this selector in the preferential order that the selector specifies.  When no preference between two mechanisms
+     * is specified, the original order is used.
+     *
+     * @param mechNames the mechanism names (must not be {@code null})
+     * @return the supplier of mechanisms (not {@code null})
+     */
+    public Supplier<String> createMechanismSupplier(Collection<String> mechNames) {
+        Assert.checkNotNullParam("mechNames", mechNames);
+        return createMechanismSupplier(mechNames, null);
+    }
+
+    /**
+     * Create a supplier of mechanism names that provides the names of the mechanisms which are matched by
+     * this selector in the preferential order that the selector specifies.  When no preference between two mechanisms
+     * is specified, the original order is used.
+     *
+     * @param mechNames the mechanism names (must not be {@code null})
+     * @param sslSession the SSL session, if any is active, or {@code null} if SSL is not active
+     * @return the supplier of mechanisms (not {@code null})
+     */
+    public Supplier<String> createMechanismSupplier(Collection<String> mechNames, SSLSession sslSession) {
+        Assert.checkNotNullParam("mechNames", mechNames);
+        final LinkedHashSet<String> set = new LinkedHashSet<>(mechNames);
+        preprocess(set, sslSession);
+        return doCreateSupplier(set, sslSession);
+    }
+
+    /**
+     * Get a list of mechanism names which are matched by this selector in the preferential order that the selector
+     * specifies.  When no preference between two mechanisms is specified, the original order is used.
+     *
+     * @param mechNames the mechanism names (must not be {@code null})
+     * @param sslSession the SSL session, if any is active, or {@code null} if SSL is not active
+     * @return the list of mechanisms (not {@code null})
+     */
+    public List<String> apply(Collection<String> mechNames, SSLSession sslSession) {
+        Assert.checkNotNullParam("mechNames", mechNames);
+        final Supplier<String> supplier = createMechanismSupplier(mechNames, sslSession);
+        final String first = supplier.get();
+        if (first == null) {
+            return Collections.emptyList();
+        }
+        final String second = supplier.get();
+        if (second == null) {
+            return Collections.singletonList(first);
+        }
+        ArrayList<String> list = new ArrayList<>();
+        list.add(first);
+        list.add(second);
+        for (;;) {
+            final String name = supplier.get();
+            if (name == null) {
+                return list;
+            }
+            list.add(name);
+        }
     }
 
     abstract Supplier<String> doCreateSupplier(LinkedHashSet<String> set, SSLSession sslSession);
