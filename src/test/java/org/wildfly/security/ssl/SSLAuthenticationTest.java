@@ -24,8 +24,12 @@ import static org.junit.Assert.assertTrue;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.URI;
+import java.security.AccessController;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.PrivilegedAction;
+import java.security.Security;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +51,9 @@ import javax.net.ssl.X509TrustManager;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -89,11 +96,12 @@ public class SSLAuthenticationTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        clientContext = new SSLContextBuilder()
-                .setClientMode(true)
-                .setKeyManager(getKeyManager("/ca/jks/ladybird.keystore"))
-                .setTrustManager(getCATrustManager())
-                .build().create();
+        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config.xml").toExternalForm());
+        AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(new WildFlyElytronProvider(), 1));
+
+        AuthenticationContext context = AuthenticationContext.getContextManager().get();
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        clientContext = contextConfigurationClient.getSSLContext(URI.create("protocol://test.org"), context);
     }
 
     /**
