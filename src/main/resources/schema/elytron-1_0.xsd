@@ -147,6 +147,7 @@
     <xsd:complexType name="ssl-context-type">
         <xsd:all>
             <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="0"/>
+            <xsd:element name="trust-store" type="trust-store-ref-type" minOccurs="0"/>
             <xsd:element name="cipher-suite" type="ssl-cipher-selector-type" minOccurs="0"/>
             <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
@@ -324,6 +325,10 @@
         <xsd:attribute name="store" type="xsd:string"/>
         <xsd:attribute name="alias" type="xsd:string"/>
         <xsd:attribute name="clear-text" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="trust-store-ref-type">
+        <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="bearer-token-type">
