@@ -1173,7 +1173,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         private byte[] readBytes(ObjectInputStream ois) throws IOException {
             int len = ois.readInt();
             byte[] data = new byte[len];
-            ois.read(data, 0, len);
+            int actualLen = ois.read(data, 0, len);
+            if (len != actualLen) throw log.readBytesMismatch(actualLen, len);
             return data;
         }
 
