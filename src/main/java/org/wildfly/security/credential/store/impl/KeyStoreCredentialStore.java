@@ -1222,6 +1222,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
             byte[] encrypted = encrypt.doFinal(padded);
             byte[] iv = encrypt.getIV();
+            if (iv == null) throw log.algorithmNotIV(encrypt.getAlgorithm());
 
             oos.writeInt(SECRET_KEY_ENTRY_TYPE);
             writeBytes(encrypted, oos);
