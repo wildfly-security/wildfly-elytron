@@ -476,7 +476,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
 
     @Message(id = 1108, value = "Ldap-backed realm identity search failed")
-    RuntimeException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
+    RealmUnavailableException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
 
     @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
     RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
