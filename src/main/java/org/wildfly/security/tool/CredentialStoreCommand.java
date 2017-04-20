@@ -136,16 +136,7 @@ class CredentialStoreCommand extends Command {
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
-        String sIteration = cmdLine.getOptionValue(ITERATION_PARAM);
-        int iterationCount = -1;
-        if (sIteration != null && !sIteration.isEmpty()) {
-            try {
-                iterationCount = Integer.parseInt(sIteration);
-            } catch (NumberFormatException e) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw new Exception(e);
-            }
-        }
+        int iterationCount = getArgumentAsInt(cmdLine.getOptionValue(ITERATION_PARAM));
         String entryType = cmdLine.getOptionValue(ENTRY_TYPE_PARAM);
         String otherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
         boolean createStorage = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
@@ -211,29 +202,58 @@ class CredentialStoreCommand extends Command {
             throw ElytronToolMessages.msg.actionToPerformNotDefined();
         }
 
+
         if (printSummary) {
+
             StringBuilder com = new StringBuilder();
-            com.append("/subsystem=elytron/credential-store=cs:add(");
-            com.append("relative-to=jboss.server.data.dir,");
-            if (location != null) {
-                com.append("location=\"" + location + "\",");
+
+            if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
+                String password = csPassword == null ? "" : csPassword;
+                if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+                    password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
+                }
+
+                if (createStorage) {
+                    com.append("/subsystem=elytron/credential-store=cs:add(");
+                    com.append("relative-to=jboss.server.data.dir,");
+                    if (location != null) {
+                        com.append("location=\"" + location + "\",");
+                    }
+                    if (createStorage) {
+                        com.append("create=true,");
+                    }
+                    String props = formatPropertiesForCli(implProps);
+                    if (!props.isEmpty()) {
+                        com.append(props);
+                        com.append(",");
+                    }
+                    com.append("credential-reference={");
+                    com.append("clear-text=\"");
+                    com.append(password);
+                    com.append("\"})");
+
+                    com.append("\n");
+                }
+
+                com.append("/subsystem=elytron/credential-store=test/alias=");
+                com.append(cmdLine.getOptionValue(ADD_ALIAS_PARAM));
+                com.append(":add(secret-value=\"");
+                com.append(password);
+                com.append("\")");
+
+            } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
+
+                com.append("/subsystem=elytron/credential-store=test/alias=");
+                com.append(cmdLine.getOptionValue(REMOVE_ALIAS_PARAM));
+                com.append(":remove()");
+
+            } else if (cmdLine.hasOption(ALIASES_PARAM)) {
+                com.append("/subsystem=elytron/credential-store=test:read-children-names(child-type=alias)");
+            } else if (cmdLine.hasOption(CHECK_ALIAS_PARAM)) {
+                com.append("ls /subsystem=elytron/credential-store=test1/alias=");
+                com.append(cmdLine.getOptionValue(CHECK_ALIAS_PARAM));
             }
-            if (createStorage) {
-                com.append("create=true,");
-            }
-            String props = formatPropertiesForCli(implProps);
-            if (!props.isEmpty()) {
-                com.append(props);
-                com.append(",");
-            }
-            com.append("credential-reference={");
-            com.append("clear-text=\"");
-            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                com.append(MaskCommand.computeMasked(csPassword, salt, iterationCount));
-            } else if (csPassword != null) {
-                com.append(csPassword);
-            }
-            com.append("\"})");
+
             System.out.println(ElytronToolMessages.msg.commandSummary(com.toString()));
         }
 
@@ -321,4 +341,15 @@ class CredentialStoreCommand extends Command {
         return "";
     }
 
+    private int getArgumentAsInt(String argument) throws Exception {
+        if (argument != null && !argument.isEmpty()) {
+            try {
+                return Integer.parseInt(argument);
+            } catch (NumberFormatException e) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw new Exception(e);
+            }
+        }
+        return -1;
+    }
 }
