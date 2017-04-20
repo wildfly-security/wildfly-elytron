@@ -972,9 +972,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5019, value = "[%s] No token was given")
     AuthenticationMechanismException mechNoTokenGiven(String mechanismName);
 
-    // 5019
-
-    // 5020
+    @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorUnexpectedEnd(String string);
 
     // 5021
 

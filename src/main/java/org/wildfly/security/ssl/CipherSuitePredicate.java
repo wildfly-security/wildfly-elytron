@@ -50,6 +50,9 @@ public abstract class CipherSuitePredicate {
     );
     private static final CipherSuitePredicate OPENSSL_ALL = matchNot(OPENSSL_COMPLEMENT_OF_ALL);
 
+    CipherSuitePredicate() {
+    }
+
     static CipherSuitePredicate optimize(CipherSuitePredicate predicate) {
         return predicate.isAlwaysFalse() ? matchFalse() : predicate.isAlwaysTrue() ? matchTrue() : predicate;
     }

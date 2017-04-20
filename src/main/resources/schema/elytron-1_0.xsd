@@ -148,7 +148,7 @@
         <xsd:all>
             <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="0"/>
             <xsd:element name="trust-store" type="trust-store-ref-type" minOccurs="0"/>
-            <xsd:element name="cipher-suite" type="ssl-cipher-selector-type" minOccurs="0"/>
+            <xsd:element name="cipher-suite" type="selector-type" minOccurs="0"/>
             <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
             <xsd:element ref="abstract-providers" minOccurs="0"/>
@@ -206,6 +206,7 @@
             <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="0"/>
             <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
+            <xsd:element name="sasl-mechanism-selector" type="selector-type" minOccurs="0"/>
             <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
             <xsd:element name="credentials" type="client-credentials-type" minOccurs="0"/>
             <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
@@ -370,7 +371,7 @@
         <xsd:attribute name="name" type="xsd:string" />
     </xsd:complexType>
 
-    <xsd:complexType name="ssl-cipher-selector-type">
+    <xsd:complexType name="selector-type">
         <xsd:attribute name="selector" type="xsd:string" use="required"/>
     </xsd:complexType>
 
