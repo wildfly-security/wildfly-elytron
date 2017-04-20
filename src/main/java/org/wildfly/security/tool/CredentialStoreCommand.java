@@ -17,7 +17,6 @@
  */
 package org.wildfly.security.tool;
 
-import java.net.URI;
 import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
@@ -54,7 +53,7 @@ class CredentialStoreCommand extends Command {
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
 
     public static final String STORE_LOCATION_PARAM = "location";
-    public static final String CONFIGURATION_URI_PARAM = "uri";
+    public static final String IMPLEMENTATION_PROPERTIES_PARAM = "properties";
     public static final String CREDENTIAL_STORE_PASSWORD_PARAM = "password";
     public static final String CREDENTIAL_STORE_TYPE_PARAM = "type";
     public static final String SALT_PARAM = "salt";
@@ -70,21 +69,17 @@ class CredentialStoreCommand extends Command {
     public static final String ENTRY_TYPE_PARAM = "entry-type";
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
 
-    private static final String CR_STORE_SCHEME = "cr-store";
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
     private CommandLine cmdLine = null;
-
-    private Map<String, String> credentialStoreConfigurationOptions = new HashMap<>();
-    private String storageFile = null;
 
     CredentialStoreCommand() {
         options = new Options();
         Option opt = new Option("l", STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLineStoreLocationDesc());
         opt.setArgName("loc");
+        opt.setOptionalArg(false);
         options.addOption(opt);
-        opt = new Option("u", CONFIGURATION_URI_PARAM, true, ElytronToolMessages.msg.cmdLineURIDesc());
-        opt.setArgName("uri");
+        opt = new Option("u", IMPLEMENTATION_PROPERTIES_PARAM, true, ElytronToolMessages.msg.cmdLineImplementationPropertiesDesc());
         options.addOption(opt);
         opt = new Option("p", CREDENTIAL_STORE_PASSWORD_PARAM, true, ElytronToolMessages.msg.cmdLineCredentialStorePassword());
         opt.setArgName("pwd");
@@ -138,7 +133,6 @@ class CredentialStoreCommand extends Command {
         }
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
-        String uri = cmdLine.getOptionValue(CONFIGURATION_URI_PARAM);
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
@@ -154,21 +148,16 @@ class CredentialStoreCommand extends Command {
         }
         String entryType = cmdLine.getOptionValue(ENTRY_TYPE_PARAM);
         String otherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
-        boolean createKeyStore = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
+        boolean createStorage = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
-        if (uri != null && uri.startsWith(CR_STORE_SCHEME + ":")) {
-            parse(new URI(new StringBuilder(uri).insert((CR_STORE_SCHEME + "://").length(), "/").toString()));
-        }
-        if (location == null) {
-            location = storageFile;
-        }
+        Map<String, String> implProps = parseCredentialStoreProperties(cmdLine.getOptionValue(IMPLEMENTATION_PROPERTIES_PARAM));
 
         CredentialStore credentialStore = CredentialStore.getInstance(csType);
-        credentialStoreConfigurationOptions.putIfAbsent("location", location);
-        credentialStoreConfigurationOptions.putIfAbsent("modifiable", Boolean.TRUE.toString());
-        credentialStoreConfigurationOptions.putIfAbsent("create", Boolean.valueOf(createKeyStore).toString());
-        credentialStoreConfigurationOptions.putIfAbsent("keyStoreType", "JCEKS");
+        implProps.put("location", location);
+        implProps.putIfAbsent("modifiable", Boolean.TRUE.toString());
+        implProps.putIfAbsent("create", Boolean.valueOf(createStorage).toString());
+        implProps.putIfAbsent("keyStoreType", "JCEKS");
 
         CredentialStore.CredentialSourceProtectionParameter credentialSourceProtectionParameter = null;
         if (csPassword == null) {
@@ -180,7 +169,7 @@ class CredentialStoreCommand extends Command {
                             IdentityCredentials.NONE.withCredential(
                                     new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, csPassword.toCharArray()))));
         }
-        credentialStore.initialize(credentialStoreConfigurationOptions,
+        credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
                 getProviders(otherProviders));
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
@@ -224,9 +213,20 @@ class CredentialStoreCommand extends Command {
 
         if (printSummary) {
             StringBuilder com = new StringBuilder();
-            com.append("/subsystem=elytron/credential-store=test:add(uri=\"");
-            com.append(uri).append("\"");
-            com.append(",relative-to=jboss.server.data.dir,credential-reference={");
+            com.append("/subsystem=elytron/credential-store=cs:add(");
+            com.append("relative-to=jboss.server.data.dir,");
+            if (location != null) {
+                com.append("location=\"" + location + "\",");
+            }
+            if (createStorage) {
+                com.append("create=true,");
+            }
+            String props = formatPropertiesForCli(implProps);
+            if (!props.isEmpty()) {
+                com.append(props);
+                com.append(",");
+            }
+            com.append("credential-reference={");
             com.append("clear-text=\"");
             if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
                 com.append(MaskCommand.computeMasked(csPassword, salt, iterationCount));
@@ -278,85 +278,6 @@ class CredentialStoreCommand extends Command {
         return Stream.of("cs", "credstore").collect(Collectors.toSet());
     }
 
-    private void parse(final URI uri) {
-        String path = uri.getPath();
-        if (path != null && path.length() > 1) {
-            storageFile = path.substring(1);
-        } else {
-            storageFile = null;
-        }
-        parseQueryParameter(uri.getQuery(), uri.toString());
-    }
-
-    private void parseQueryParameter(final String query, final String uri) {
-
-        if (query == null) {
-            return;
-        }
-
-        int i = 0;
-        int state = 0; // possible states KEY = 0 | VALUE = 1
-        StringBuilder token = new StringBuilder();
-        String key = null;
-        String value = null;
-        while (i < query.length()) {
-            char c = query.charAt(i);
-            if (state == 0) {   // KEY state
-                if (c == '=') {
-                    state = 1;
-                    key = token.toString();
-                    value = null;
-                    token.setLength(0);
-                } else {
-                    token.append(c);
-                }
-                i++;
-            } else if (state == 1) {  // VALUE state
-                if (c == '\'') {
-                    if (query.charAt(i - 1) != '=') {
-                        throw ElytronToolMessages.msg.credentialStoreURIParameterOpeningQuote(uri);
-                    }
-                    int inQuotes = i + 1;
-                    c = query.charAt(inQuotes);
-                    while (inQuotes < query.length() && c != '\'') {
-                        token.append(c);
-                        inQuotes++;
-                        c = query.charAt(inQuotes);
-                    }
-                    if (c == '\'') {
-                        i = inQuotes + 1;
-                        if (i < query.length() && query.charAt(i) != ';') {
-                            throw ElytronToolMessages.msg.credentialStoreURIParameterClosingQuote(uri);
-                        }
-                    } else {
-                        throw ElytronToolMessages.msg.credentialStoreURIParameterUnexpectedEnd(uri);
-                    }
-                } else if (c == ';') {
-                    value = token.toString();
-                    if (key == null) {
-                        throw ElytronToolMessages.msg.credentialStoreURIParameterNameExpected(uri);
-                    }
-                    // put to options and reset key, value and token
-                    credentialStoreConfigurationOptions.put(key, value);
-                    i++;
-                    key = null;
-                    value = null;
-                    token.setLength(0);
-                    // set state to KEY
-                    state = 0;
-                } else {
-                    token.append(c);
-                    i++;
-                }
-            }
-        }
-        if (key != null && token.length() > 0) {
-            credentialStoreConfigurationOptions.put(key, token.toString());
-        } else {
-            throw ElytronToolMessages.msg.credentialStoreURIParameterUnexpectedEnd(uri);
-        }
-    }
-
     /**
      * Display help to the command.
      */
@@ -367,7 +288,7 @@ class CredentialStoreCommand extends Command {
         help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND), options, true);
     }
 
-    public static Map<String, String> parseCredentialStoreAttributes(final String attributeString) {
+    static Map<String, String> parseCredentialStoreProperties(final String attributeString) {
         HashMap<String, String> attributes = new HashMap<>();
         if (attributeString != null) {
             for (String pair : attributeString.split(";")) {
@@ -375,11 +296,29 @@ class CredentialStoreCommand extends Command {
                 if (parts[0] != null && !parts[0].isEmpty() && parts[1] != null) {
                     attributes.put(parts[0], parts[1]);
                 } else {
-                    throw ElytronToolMessages.msg.cannotParseCSAttributes();
+                    throw ElytronToolMessages.msg.cannotParseProps();
                 }
             }
         }
         return attributes;
+    }
+
+    static String formatPropertiesForCli(Map<String, String> properties) {
+        if (properties != null || !properties.isEmpty()) {
+            boolean first = true;
+            StringBuilder attr = new StringBuilder("implementation-properties={");
+            for(String name: properties.keySet()) {
+                if (!first) {
+                    attr.append(",");
+                } else {
+                    first = false;
+                }
+                attr.append("\"" + name + "\"=>\"" + properties.get(name) + "\"");
+            }
+            attr.append("}");
+            return attr.toString();
+        }
+        return "";
     }
 
 }

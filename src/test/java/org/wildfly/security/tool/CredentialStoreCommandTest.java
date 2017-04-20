@@ -47,7 +47,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
     public void clearTextCSPassword() {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
+        String[] args = {"--location=" + storeFileName, "--create",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--password", "cspassword"};
         executeCommandAndCheckStatus(args);
     }
@@ -60,7 +60,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
     public void maskCSPassword() {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
+        String[] args = {"--location=" + storeFileName, "--create",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--password", "cspassword", "--salt", "A1B2C3D4", "--iteration", "100"};
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
@@ -79,7 +79,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = {"--location=" + storeFileName, "--uri=cr-store://test?create=true",
+        String[] args = {"--location=" + storeFileName, "--create",
                 "--add", "testalias", "--secret", "secret2", "--summary", "--salt", "A1B2C3D4", "--iteration", "100"};
 
         command.execute(args);
@@ -92,7 +92,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         String aliasName = "testalias";
         String aliasValue = "secret2";
 
-        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
 
@@ -117,8 +117,8 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
             }
         }
 
-        String[] args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--aliases", "--summary",
-                "--password", storagePassword };
+        String[] args = new String[] { "--location=" + storageLocation, "--create", "--aliases", "--summary",
+                "--password", storagePassword, "--properties", "keyStoreType=JCEKS;keyAlias=not_relevant"};
         executeCommandAndCheckStatus(args);
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
@@ -138,13 +138,13 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         String aliasName = "testalias";
         String aliasValue = "secret2";
 
-        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
 
-        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--remove", aliasName,
+        args = new String[] { "--location=" + storageLocation, "--create", "--remove", aliasName,
                 "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
@@ -159,13 +159,13 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         String aliasValue = "secret2";
         String aliasNewSecretValue = "updatedSecretValue";
 
-        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
 
-        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName,
+        args = new String[] { "--location=" + storageLocation, "--create", "--add", aliasName,
                 "--secret", aliasNewSecretValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
@@ -179,13 +179,13 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         String aliasName = "testalias";
         String aliasValue = "secret2";
 
-        String[] args = { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--add", aliasName, "--secret",
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
 
-        args = new String[] { "--location=" + storageLocation, "--uri=cr-store://test?create=true", "--exists", aliasName,
+        args = new String[] { "--location=" + storageLocation, "--create", "--exists", aliasName,
                 "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
         store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
@@ -201,7 +201,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--add", "testalias", "--secret",
+        String[] args = { "--location=" + storeFileName, "--create", "--add", "testalias", "--secret",
                 "secret2", "--summary", "--password", clearTextPassword, "--salt", salt, "--iteration", iteration };
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
@@ -228,7 +228,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
                 removeOperation.getLeft(), addOperation.getRight() };
 
         for (int i = 0; i < firstOperation.length; i++) {
-            String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", firstOperation[i],
+            String[] args = { "--location=" + storeFileName, "--create", firstOperation[i],
                     "testalias", "--secret", "secret2", "--summary", "--password", clearTextPassword,
                     secondOperation[i] };
             try {
@@ -258,7 +258,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         String longOperation = "add";
         String shortOperation = "a";
 
-        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--" + longOperation, "testalias",
+        String[] args = { "--location=" + storeFileName, "--create", "--" + longOperation, "testalias",
                 "--secret", "secret2", "--summary", "--password", clearTextPassword, "-" + shortOperation, "doesnt_matter" };
         try {
             command.execute(args);
@@ -299,7 +299,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = { "--help", "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--summary",
+        String[] args = { "--help", "--location=" + storeFileName, "--create", "--summary",
                 "--password", clearTextPassword };
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
@@ -313,7 +313,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = { "--location=" + storeFileName, "--uri=cr-store://test?create=true", "--add", "testalias", "--secret",
+        String[] args = { "--location=" + storeFileName, "--create", "--add", "testalias", "--secret",
                 "secret2", "--summary", "--password", clearTextPassword, "--help" };
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);

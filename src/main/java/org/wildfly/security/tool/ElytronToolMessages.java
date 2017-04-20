@@ -61,14 +61,14 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Location of credential store storage file")
     String cmdLineStoreLocationDesc();
 
-    @Message(id = NONE, value = "Configuration URI for credential store. URI basic form: \"cr-store://store_name?parameter1=value1; ... ;parameterN=valueN\"%n" +
-            "Supported parameters are dependent on credential store type%n" +
-            "Generally supported parameters for default credential store implementation (all are optional):%n" +
-            "create - automatically creates credential store file (true/false)%n" +
-            "modifiable - is the credential modifiable (true/false)%n" +
-            "location - file location of credential store%n" +
-            "keyStoreType - specify the key store type to use")
-    String cmdLineURIDesc();
+    @Message(id = NONE, value = "Implementation properties for credential store type in form of \"prop1=value1; ... ;propN=valueN\" .%n" +
+            "Supported properties are dependent on credential store type%n" +
+            "KeyStoreCredentialStore (default implementation) supports following additional properties (all are optional):%n" +
+            "keyStoreType - specifies the key store type to use (defaults to \"JCEKS\")%n" +
+            "keyAlias - specifies the secret key alias within the key store to use for encrypt/decrypt of data in external storage (defaults to \"cs_key\")%n" +
+            "external - specifies whether to store data to external storage and encrypted by keyAlias key (defaults to \"false\")%n" +
+            "cryptoAlg - cryptographic algorithm name to be used to encrypt/decrypt entries at external storage \"external\" has to be set to \"true\"")
+    String cmdLineImplementationPropertiesDesc();
 
     @Message(id = NONE, value = "Password for credential store")
     String cmdLineCredentialStorePassword();
@@ -146,18 +146,6 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Confirm secret to store: ")
     String secretToStorePromptConfirm();
 
-    @Message(id = 1, value = "Opening quote has to be the first character in parameter value '%s'")
-    IllegalArgumentException credentialStoreURIParameterOpeningQuote(String uri);
-
-    @Message(id = 2, value = "Closing quote has to be the last character of parameter value '%s'")
-    IllegalArgumentException credentialStoreURIParameterClosingQuote(String uri);
-
-    @Message(id = 3, value = "Unexpected end of parameter part of '%s'")
-    IllegalArgumentException credentialStoreURIParameterUnexpectedEnd(String uri);
-
-    @Message(id = 4, value = "Parameter name expected, but is missing '%s'")
-    IllegalArgumentException credentialStoreURIParameterNameExpected(String uri);
-
     // mask command
     @Message(id = NONE, value = "\"mask\" command is used to get MASK- string encrypted using PBEWithMD5AndDES in PicketBox compatible way.")
     String cmdMaskHelpHeader();
@@ -231,8 +219,8 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 8, value = "Cannot locate admin key with alias \"%s\" or it is of improper type")
     RuntimeException cannotLocateAdminKey(String alias);
 
-    @Message(id = 9, value = "Cannot parse credential store attribute from supplied parameter")
-    RuntimeException cannotParseCSAttributes();
+    @Message(id = 9, value = "Cannot parse credential store implementation properties from supplied parameter")
+    RuntimeException cannotParseProps();
 
     @Message(id = NONE, value = "Vault (enc-dir=\"%s\";keystore=\"%s\") converted to credential store \"%s\"")
     String vaultConvertedToCS(String vaultDir, String keyStore, String credentialStoreStorage);

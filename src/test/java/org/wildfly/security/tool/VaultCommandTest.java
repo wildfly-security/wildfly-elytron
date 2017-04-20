@@ -48,7 +48,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         executeCommandAndCheckStatus(args);
 
         // check result
-        args = new String[] { "--location", storeFileName, "--uri", "cr-store://test", "--aliases", "--summary",
+        args = new String[] { "--location", storeFileName, "--aliases", "--summary",
                 "--password", "secretsecret"};
 
         String[] aliasesToCheck = {"vb1::attr11","vb1::attr12"};
@@ -77,7 +77,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
 
         // check result
-        args = new String[] { "--location", "target/v1-cs-more.store" , "--uri", "cr-store://test", "--aliases", "--summary",
+        args = new String[] { "--location", "target/v1-cs-more.store" , "--aliases", "--summary",
                 "--password", "secretsecret"};
         String[] aliasesToCheck = {"vb1::attr11","vb1::attr12"};
         output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, args);
@@ -101,7 +101,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         try {
             executeCommandAndCheckStatus(args);
         } catch (Exception e) {
-            Assert.assertTrue(e.getCause().getMessage().indexOf("ELYTOOL00013") > -1
+            Assert.assertTrue(e.getCause().getMessage().contains("ELYTOOL00013")
                 && e.getCause().getMessage().indexOf("location") > -1);
         }
     }
