@@ -61,7 +61,7 @@ public class DefaultSingleSignOn implements SingleSignOn {
     }
 
     @Override
-    public SecurityIdentity getIdentity() {
+    public synchronized SecurityIdentity getIdentity() {
         return this.entry.getCachedIdentity().getSecurityIdentity();
     }
 
