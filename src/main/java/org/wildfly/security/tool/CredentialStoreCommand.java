@@ -206,11 +206,15 @@ class CredentialStoreCommand extends Command {
             }
         } else if (cmdLine.hasOption(ALIASES_PARAM)) {
             Set<String> aliases = credentialStore.getAliases();
-            StringBuilder list = new StringBuilder();
-            for (String alias: aliases) {
-                list.append(alias).append(" ");
+            if (aliases.size() != 0) {
+                StringBuilder list = new StringBuilder();
+                for (String alias: aliases) {
+                    list.append(alias).append(" ");
+                }
+                System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
+            } else {
+                System.out.println(ElytronToolMessages.msg.noAliases());
             }
-            System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else {
             setStatus(ACTION_NOT_DEFINED);
