@@ -185,10 +185,16 @@ class CredentialStoreCommand extends Command {
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);
-            credentialStore.remove(alias, entryTypeToCredential(entryType));
-            credentialStore.flush();
-            System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
+                credentialStore.remove(alias, entryTypeToCredential(entryType));
+                credentialStore.flush();
+                System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
+                setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                setStatus(ALIAS_NOT_FOUND);
+            }
+
         } else if (cmdLine.hasOption(CHECK_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(CHECK_ALIAS_PARAM);
             if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
