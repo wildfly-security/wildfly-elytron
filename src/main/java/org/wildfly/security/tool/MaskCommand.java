@@ -24,7 +24,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
@@ -53,15 +52,12 @@ class MaskCommand extends Command {
     MaskCommand() {
         Option salt = new Option("s", SALT_PARAM, true, ElytronToolMessages.msg.cmdMaskSaltDesc());
         Option iteration = new Option("i", ITERATION_PARAM, true, ElytronToolMessages.msg.cmdMaskIterationCountDesc());
-        OptionGroup og = new OptionGroup();
+        Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option x = new Option("x", SECRET_PARAM, true, ElytronToolMessages.msg.cmdMaskSecretDesc());
         x.setArgName("to encrypt");
-        Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
-        og.addOption(x);
-        og.addOption(h);
-        og.setRequired(true);
         options = new Options();
-        options.addOptionGroup(og);
+        options.addOption(x);
+        options.addOption(h);
         options.addOption(salt);
         options.addOption(iteration);
     }

@@ -116,9 +116,9 @@ class CredentialStoreCommand extends Command {
         og.addOption(a);
         og.addOption(e);
         og.addOption(r);
-        og.addOption(h);
         og.addOption(v);
         options.addOptionGroup(og);
+        options.addOption(h);
     }
 
     @Override
