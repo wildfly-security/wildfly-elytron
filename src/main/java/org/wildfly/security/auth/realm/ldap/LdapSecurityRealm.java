@@ -217,7 +217,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try {
                 return (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
             } catch (NamingException e) {
-                throw log.ldapRealmIdentitySearchFailed(e);
+                throw new RuntimeException(log.ldapRealmIdentitySearchFailed(e));
             }
         }).distinct().iterator(); // distinct to prevent deadlock on identity locking when one identity found twice
 
