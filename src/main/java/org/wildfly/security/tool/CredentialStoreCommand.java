@@ -140,6 +140,7 @@ class CredentialStoreCommand extends Command {
         String otherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
         boolean createStorage = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
+        String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
 
         Map<String, String> implProps = parseCredentialStoreProperties(cmdLine.getOptionValue(IMPLEMENTATION_PROPERTIES_PARAM));
 
@@ -164,7 +165,6 @@ class CredentialStoreCommand extends Command {
                 getProviders(otherProviders));
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
-            String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
             if (secret == null) {
                 // prompt for secret
                 secret = prompt(false, ElytronToolMessages.msg.secretToStorePrompt(), true, ElytronToolMessages.msg.secretToStorePromptConfirm());
@@ -235,7 +235,7 @@ class CredentialStoreCommand extends Command {
                 com.append("/subsystem=elytron/credential-store=test/alias=");
                 com.append(cmdLine.getOptionValue(ADD_ALIAS_PARAM));
                 com.append(":add(secret-value=\"");
-                com.append(password);
+                com.append(secret);
                 com.append("\")");
 
             } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
