@@ -264,6 +264,31 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
+     * Get the actual protocol to use for the given configuration and URI.
+     *
+     * @param uri the URI (must not be {@code null})
+     * @param configuration the configuration (must not be {@code null})
+     * @return the actual protocol to use, or {@code null} if none is configured and none is present on the URI
+     */
+    public String getRealProtocol(URI uri, AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("configuration", configuration);
+        final String protocol = configuration.getProtocol();
+        return protocol == null ? uri.getScheme() : protocol;
+    }
+
+    /**
+     * Get the actual protocol to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the actual protocol to use, or {@code null} if none is configured
+     */
+    public String getRealProtocol(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getProtocol();
+    }
+
+    /**
      * Get the authentication principal to use for the given configuration.
      *
      * @param configuration the configuration (must not be {@code null})
