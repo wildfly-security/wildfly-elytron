@@ -128,6 +128,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Credential store contains following aliases: %s")
     String aliases(String aliases);
 
+    @Message(id = NONE, value = "Credential store contains no aliases")
+    String noAliases();
+
     @Message(id = NONE, value = "Action to perform on the credential store is not defined")
     Exception actionToPerformNotDefined();
 
