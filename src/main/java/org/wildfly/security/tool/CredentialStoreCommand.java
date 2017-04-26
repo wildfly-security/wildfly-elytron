@@ -303,7 +303,11 @@ class CredentialStoreCommand extends Command {
     public void help() {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND), options, true);
+        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND),
+                ElytronToolMessages.msg.cmdLineCredentialStoreHelpHeader(),
+                options,
+                "",
+                true);
     }
 
     static Map<String, String> parseCredentialStoreProperties(final String attributeString) {

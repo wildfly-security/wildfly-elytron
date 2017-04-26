@@ -222,7 +222,11 @@ public class VaultCommand extends Command {
     public void help() {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, VAULT_COMMAND), options, true);
+        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, VAULT_COMMAND),
+                ElytronToolMessages.msg.cmdVaultHelpHeader(),
+                options,
+                "",
+                true);
     }
 
     private String convertedStoreName(String encryptionDirectory) {
