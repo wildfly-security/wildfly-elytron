@@ -243,4 +243,6 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 15, value = "Unknown provider \"%s\"")
     IllegalArgumentException unknownProvider(String provider);
 
+    @Message(id = NONE, value = "Credential Store has been successfully created")
+    String credentialStoreCreated();
 }
