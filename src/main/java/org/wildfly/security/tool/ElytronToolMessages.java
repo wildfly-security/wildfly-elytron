@@ -45,9 +45,6 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Input data not confirmed. Exiting.")
     String inputDataNotConfirmed();
 
-    @Message(id = NONE, value = "Cannot start user prompt, console is missing.")
-    String cannotPromptConsoleMissing();
-
     @Message(id = NONE, value = "java -jar %s %s")
     String cmdHelp(String jarFile, String commandName);
 

@@ -17,7 +17,10 @@
  */
 package org.wildfly.security.tool;
 
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -82,26 +85,28 @@ public abstract class Command {
      * @param confirm confirm data after the first input
      * @param confirmPrompt confirmation text
      * @return data as user inputs it
+     * @throws Exception
      */
-    protected String prompt(boolean echo, String prompt, boolean confirm, String confirmPrompt) {
+    protected String prompt(boolean echo, String prompt, boolean confirm, String confirmPrompt) throws Exception {
         Console console = System.console();
-        if (console == null) {
-            System.err.println(ElytronToolMessages.msg.cannotPromptConsoleMissing());
-            System.exit(GENERAL_CONFIGURATION_ERROR);
-        }
-        if (echo) {
-            String first = console.readLine(prompt);
-            if (first != null && confirm) {
-                String second = console.readLine(confirmPrompt);
-                if (first.equals(second)) {
-                    return first;
+        if (echo || console == null) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+                String first = console != null ? console.readLine(prompt) : in.readLine();
+                if (first != null && confirm) {
+                    String second = console != null ? console.readLine(confirmPrompt) : in.readLine();
+                    if (first.equals(second)) {
+                        return first;
+                    } else {
+                        System.err.println(ElytronToolMessages.msg.inputDataNotConfirmed());
+                        System.exit(INPUT_DATA_NOT_CONFIRMED);
+                        return null;
+                    }
                 } else {
-                    System.err.println(ElytronToolMessages.msg.inputDataNotConfirmed());
-                    System.exit(INPUT_DATA_NOT_CONFIRMED);
-                    return null;
+                    return first;
                 }
-            } else {
-                return first;
+            } catch (IOException e) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw new Exception(e);
             }
         } else {
             char[] inVisible = console.readPassword(prompt != null ? prompt : "Password:");
