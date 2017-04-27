@@ -296,14 +296,12 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
     @Test
     public void testPrintHelp() {
         String clearTextPassword = "secret_password";
-
         String storeFileName = getStoragePathForNewFile();
+        assertTrue(executeCommandAndCheckStatusAndGetOutput(new String[]{"--help",  "--location=" + storeFileName, "--create", "--summary", "--password", clearTextPassword, "-a", "alias1", "-x", "secret1" })
+            .contains("Get help with usage of this command"));
+        assertTrue(executeCommandAndCheckStatusAndGetOutput(new String[]{"--help"})
+                .contains("Get help with usage of this command"));
 
-        String[] args = { "--help", "--location=" + storeFileName, "--create", "--summary",
-                "--password", clearTextPassword };
-
-        String output = executeCommandAndCheckStatusAndGetOutput(args);
-        assertTrue(output.contains("Get help with usage of this command"));
     }
 
     @Test

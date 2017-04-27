@@ -116,9 +116,9 @@ class CredentialStoreCommand extends Command {
         og.addOption(a);
         og.addOption(e);
         og.addOption(r);
-        og.addOption(h);
         og.addOption(v);
         options.addOptionGroup(og);
+        options.addOption(h);
     }
 
     @Override
@@ -311,7 +311,11 @@ class CredentialStoreCommand extends Command {
     public void help() {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND), options, true);
+        help.printHelp(ElytronToolMessages.msg.cmdHelp(ElytronTool.TOOL_JAR, CREDENTIAL_STORE_COMMAND),
+                ElytronToolMessages.msg.cmdLineCredentialStoreHelpHeader(),
+                options,
+                "",
+                true);
     }
 
     static Map<String, String> parseCredentialStoreProperties(final String attributeString) {

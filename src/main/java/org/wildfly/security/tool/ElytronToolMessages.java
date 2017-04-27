@@ -58,6 +58,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Location of credential store storage file")
     String cmdLineStoreLocationDesc();
 
+    @Message(id = NONE, value = "\"credential-store\" command is used to perform various operations on credential store.")
+    String cmdLineCredentialStoreHelpHeader();
+
     @Message(id = NONE, value = "Implementation properties for credential store type in form of \"prop1=value1; ... ;propN=valueN\" .%n" +
             "Supported properties are dependent on credential store type%n" +
             "KeyStoreCredentialStore (default implementation) supports following additional properties (all are optional):%n" +
@@ -169,6 +172,9 @@ public interface ElytronToolMessages extends BasicLogger {
     IllegalArgumentException invalidParameterMustBeIntBetween(String parameter, int min, int max);
 
     // vault command
+    @Message(id = NONE, value = "\"vault\" command is used convert PicketBox Security Vault to credential store using default implementation (KeyStoreCredentialStore).")
+    String cmdVaultHelpHeader();
+
     @Message(id = NONE, value = "Vault keystore URL")
     String cmdLineVaultKeyStoreURL();
 

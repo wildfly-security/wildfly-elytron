@@ -159,10 +159,10 @@ public class MaskCommandTest extends AbstractCommandTest {
 
     @Test
     public void testPrintHelp() {
-        String[] args = { "--help" };
-
-        String output = executeCommandAndCheckStatusAndGetOutput(args);
-        assertTrue(output.contains("Get help with usage of this command"));
+        assertTrue(executeCommandAndCheckStatusAndGetOutput(new String[]{"--help"})
+                .contains("Get help with usage of this command"));
+        assertTrue(executeCommandAndCheckStatusAndGetOutput(new String[]{"--help","-x", "sec", "-s", "12345678"})
+                .contains("Get help with usage of this command"));
     }
 
 }
