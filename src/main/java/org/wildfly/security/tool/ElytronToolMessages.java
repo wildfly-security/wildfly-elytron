@@ -245,4 +245,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Credential Store has been successfully created")
     String credentialStoreCreated();
+
+    @Message(id = 16, value = "Option \"%s\" is not specified.")
+    MissingArgumentException optionNotSpecified(String option);
 }
