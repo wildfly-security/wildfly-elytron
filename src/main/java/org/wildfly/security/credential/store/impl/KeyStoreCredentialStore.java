@@ -1243,10 +1243,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             while (buffer[i] == last) {
                 i--;
             }
-            if (i + 2 + last != buffer.length) {
+            if (i + 1 + last != buffer.length) {
                 throw new BadPaddingException();
             }
-            return Arrays.copyOfRange(buffer, 0, i + 2);
+            return Arrays.copyOfRange(buffer, 0, i + 1);
         }
 
     }
