@@ -137,6 +137,7 @@ import org.wildfly.security.x500.X500;
  *     <li>{@code keyStoreType}: specifies the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
  *     <li>{@code keyAlias}: specifies the secret key alias within the key store to use for encrypt/decrypt of data in external storage (defaults to {@code cs_key})</li>
  *     <li>{@code external}: specifies whether to store data to external storage and encrypted by {@code keyAlias} key (defaults to {@code false})</li>
+ *     <li>{@code externalPath}: specifies path to the external storage. It has to be used in conjunction with {@code external=true} and it defaults to value of {@code location} when {@code keyStoreType} is PKCS11.</li>
  *     <li>{@code cryptoAlg}: cryptographic algorithm name to be used to encrypt decrypt entries at external storage ({@code external} has to be set to {@code true})</li>
  * </ul>
  */
@@ -156,6 +157,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private volatile boolean modifiable;
     private KeyStore keyStore;
     private Path location;
+    private Path externalPath;
     private boolean create;
     private CredentialStore.ProtectionParameter protectionParameter;
     private Provider[] providers;
@@ -178,6 +180,18 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             this.providers = providers;
             String keyStoreType = attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType());
             useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault("external", "false"));
+            if (useExternalStorage) {
+                final String externalPathName = attributes.get("externalPath");
+                if (externalPathName == null) {
+                    externalPath = location;
+                    location = null;
+                } else {
+                    externalPath = Paths.get(externalPathName);
+                    if (externalPath.equals(location)) {
+                        throw log.locatonAndexternalPathAreIdentical(location.toString(), externalPath.toString());
+                    }
+                }
+            }
             encryptionKeyAlias = attributes.getOrDefault("keyAlias", "cs_key");
             cryptographicAlgorithm = attributes.get("cryptoAlg");
             load(keyStoreType);
@@ -726,10 +740,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
     public void flush() throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
-            final Path location = this.location;
-            if (location != null) try {
+            final Path dataLocation = externalPath == null ? location : externalPath;
+            if (dataLocation != null) try {
                 final char[] storePassword = getStorePassword(protectionParameter);
-                try (AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
+                try (AtomicFileOutputStream os = new AtomicFileOutputStream(dataLocation)) {
                     try {
                         if (useExternalStorage) {
                             externalStorage.store(os);
@@ -781,35 +795,50 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         // lock held
         final Enumeration<String> enumeration;
         // load the KeyStore from file
+        final Path dataLocation;
         if (useExternalStorage) {
-            setupExternalStorage(type);
+            dataLocation = externalPath;
+            setupExternalStorage(type, dataLocation);
         } else {
+            dataLocation = location;
             keyStore = getKeyStoreInstance(type);
         }
-        if (location != null && Files.exists(location))
-            try (InputStream fileStream = Files.newInputStream(location)) {
-                char[] password = getStorePassword(protectionParameter);
-                if (useExternalStorage) {
-                    externalStorage.load(fileStream);
-                } else {
-                    keyStore.load(fileStream, password);
+        if (create) {
+            if (dataLocation == null) {
+                try {
+                    keyStore.load(null, null);
+                } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
+                    throw log.cannotInitializeCredentialStore(e);
                 }
-                enumeration = keyStore.aliases();
-            } catch (GeneralSecurityException e) {
-                throw log.cannotInitializeCredentialStore(
-                        log.internalEncryptionProblem(e, location.toString()));
-            } catch (IOException e) {
-                throw log.cannotInitializeCredentialStore(e);
-        } else if (create) {
-            try {
-                keyStore.load(null, null);
-                enumeration = Collections.emptyEnumeration();
-            } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
-                throw log.cannotInitializeCredentialStore(e);
             }
         } else {
-            throw log.automaticStorageCreationDisabled(location != null ? location.toString() : "null");
+            if (dataLocation != null && !Files.exists(dataLocation)) {
+                throw log.automaticStorageCreationDisabled(dataLocation.toString());
+            }
         }
+
+        try {
+            if (dataLocation != null && Files.exists(dataLocation)) {
+                char[] password = getStorePassword(protectionParameter);
+                try (InputStream fileStream = Files.newInputStream(dataLocation)) {
+                    if (useExternalStorage) {
+                        externalStorage.load(fileStream);
+                    } else {
+                        keyStore.load(fileStream, password);
+                    }
+                }
+                enumeration = keyStore.aliases();
+            } else {
+                keyStore.load(null, null);
+                enumeration = Collections.emptyEnumeration();
+            }
+        } catch (GeneralSecurityException e) {
+            throw log.cannotInitializeCredentialStore(
+                    log.internalEncryptionProblem(e, dataLocation.toString()));
+        } catch (IOException e) {
+            throw log.cannotInitializeCredentialStore(e);
+        }
+
         Matcher matcher;
         while (enumeration.hasMoreElements()) {
             final String ksAlias = enumeration.nextElement().toLowerCase(Locale.ROOT);
@@ -877,13 +906,22 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
      * Sets {@link #keyStore} to JCEKS type keyStore to be used as external storage.
      * Sets {@link #externalStorage} used to dump/load stored secret data.
      */
-    private void setupExternalStorage(String type) throws CredentialStoreException {
-        KeyStore keyContainingKeyStore = getKeyStoreInstance(type);
+    private void setupExternalStorage(final String keyContainingKeyStoreType, final Path keyContainingKeyStoreLocation) throws CredentialStoreException {
+        KeyStore keyContainingKeyStore = getKeyStoreInstance(keyContainingKeyStoreType);
         keyStore = getKeyStoreInstance("JCEKS");
         externalStorage = new ExternalStorage();
         try {
-            externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, getStorePassword(protectionParameter), keyStore);
-        } catch(IOException e) {
+            final char[] storePassword = getStorePassword(protectionParameter);
+            if (keyContainingKeyStoreLocation != null) {
+                try (InputStream is = Files.newInputStream(keyContainingKeyStoreLocation)) {
+                    keyContainingKeyStore.load(is, storePassword);
+                }
+            } else {
+                // keystore without file (e.g. PKCS11)
+                keyContainingKeyStore.load(null, storePassword);
+            }
+            externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, storePassword, keyStore);
+        } catch(IOException | GeneralSecurityException e) {
             throw log.cannotInitializeCredentialStore(e);
         }
     }
@@ -1123,7 +1161,6 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         }
 
         private void fetchStorageSecretKey(String keyAlias, char[] keyPassword) throws CertificateException, NoSuchAlgorithmException, IOException, CredentialStoreException, UnrecoverableEntryException, KeyStoreException {
-            storageSecretKeyStore.load(null, keyPassword);
             KeyStore.Entry entry = storageSecretKeyStore.getEntry(keyAlias, new KeyStore.PasswordProtection(keyPassword));
             if (entry == null) {
                 throw log.externalStorageKeyDoesNotExist(keyAlias);
