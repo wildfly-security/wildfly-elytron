@@ -165,9 +165,17 @@ class CredentialStoreCommand extends Command {
                 getProviders(otherProviders));
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
+            if (alias.length() == 0) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(ADD_ALIAS_PARAM);
+            }
             if (secret == null) {
                 // prompt for secret
                 secret = prompt(false, ElytronToolMessages.msg.secretToStorePrompt(), true, ElytronToolMessages.msg.secretToStorePromptConfirm());
+                if (secret == null) {
+                    setStatus(GENERAL_CONFIGURATION_ERROR);
+                    throw ElytronToolMessages.msg.optionNotSpecified(PASSWORD_CREDENTIAL_VALUE_PARAM);
+                }
             }
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
