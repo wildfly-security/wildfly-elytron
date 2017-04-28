@@ -17,12 +17,18 @@
  */
 package org.wildfly.security.tool;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -127,4 +133,50 @@ public abstract class Command {
         }
     }
 
+    /**
+     * Alerts if any of the command line options used are duplicated
+     * @param cmdLine the command line options used when invoking the command, after parsing
+     */
+    public void printDuplicatesWarning(CommandLine cmdLine) {
+        List<Option> optionsList = new ArrayList<>(Arrays.asList(cmdLine.getOptions()));
+        Set<Option> duplicatesSet = new HashSet<>();
+        for (Option option : cmdLine.getOptions()) {
+            if (Collections.frequency(optionsList, option) > 1) {
+                duplicatesSet.add(option);
+            }
+        }
+
+        for (Option option : duplicatesSet) {
+            System.out.println(ElytronToolMessages.msg.duplicateOptionSpecified(option.getLongOpt()));
+        }
+    }
+
+    /**
+     * Alerts if any of the command line options used are duplicated, excluding commands
+     * that are allowed to have duplicates
+     * @param cmdLine the command line options used when invoking the command, after parsing
+     * @param duplicatesAllowed list of the commands line options that can be duplicated. For example:
+     *                          <code>
+     *                              List<String> allowedDuplicates = new ArrayList<String>()
+     *                                  {{ add(PASSWORD_CREDENTIAL_VALUE_PARAM);
+ *                                  }};
+     *                          </code>
+     */
+    public void printDuplicatesWarning(CommandLine cmdLine, List<String> duplicatesAllowed) {
+        if (duplicatesAllowed == null) {
+            return;
+        }
+
+        List<Option> optionsList = new ArrayList<>(Arrays.asList(cmdLine.getOptions()));
+        Set<Option> duplicatesSet = new HashSet<>();
+        for (Option option : cmdLine.getOptions()) {
+            if (Collections.frequency(optionsList, option) > 1 && !duplicatesAllowed.contains(option.getLongOpt())) {
+                duplicatesSet.add(option);
+            }
+        }
+
+        for (Option option : duplicatesSet) {
+            System.out.println(ElytronToolMessages.msg.duplicateOptionSpecified(option.getLongOpt()));
+        }
+    }
 }

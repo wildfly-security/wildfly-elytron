@@ -165,4 +165,16 @@ public class MaskCommandTest extends AbstractCommandTest {
                 .contains("Get help with usage of this command"));
     }
 
+    @Test
+    public void testDuplicateOptions() {
+        final String secret = "super_secret";
+
+        String[] args = {"--iteration", "123", "--salt", "ASDF1234", "--secret", secret, "--secret", "another_secret", "-s", "another_salt"};
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+
+        Assert.assertTrue(output.contains("Option \"salt\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertTrue(output.contains("Option \"secret\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertFalse(output.contains("Option \"iteration\" specified more than once. Only the first occurrence will be used"));
+    }
 }

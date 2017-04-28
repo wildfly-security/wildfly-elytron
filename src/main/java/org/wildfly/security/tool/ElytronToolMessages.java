@@ -254,4 +254,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 16, value = "Option \"%s\" is not specified.")
     MissingArgumentException optionNotSpecified(String option);
+
+    @Message(id = 17, value = "Option \"%s\" specified more than once. Only the first occurrence will be used.")
+    String duplicateOptionSpecified(String option);
 }
