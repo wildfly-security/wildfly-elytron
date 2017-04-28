@@ -1201,7 +1201,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 if (entry instanceof KeyStore.SecretKeyEntry) {
                     saveSecretKey(alias, oos, (KeyStore.SecretKeyEntry)entry);
                 } else {
-                    throw log.unrecognizedEntryType(entry.getClass().getCanonicalName());
+                    throw log.unrecognizedEntryType(entry != null ? entry.getClass().getCanonicalName() : "null");
                 }
             }
             oos.flush();
