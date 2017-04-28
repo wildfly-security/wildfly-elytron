@@ -183,24 +183,13 @@ public class VaultCommand extends Command {
                 StringBuilder com = new StringBuilder();
                 com.append(ElytronToolMessages.msg.conversionSuccessful());
                 com.append(ElytronToolMessages.msg.cliCommandToNewCredentialStore());
-                com.append("/subsystem=elytron/credential-store=cs:add(");
-                com.append("relative-to=jboss.server.data.dir,");
-                if (location != null) {
-                    com.append("location=\"" + location + "\",");
-                }
-                String props = CredentialStoreCommand.formatPropertiesForCli(implProps);
-                if (!props.isEmpty()) {
-                    com.append(props);
-                    com.append(",");
-                }
-                com.append("credential-reference={");
-                com.append("clear-text=\"");
+                String password = "";
                 if (keystorePassword != null && !keystorePassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                    com.append(MaskCommand.computeMasked(keystorePassword, salt, iterationCount));
+                    password = MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
                 } else if (keystorePassword != null) {
-                    com.append(keystorePassword);
+                    password = keystorePassword;
                 }
-                com.append("\"})");
+                CredentialStoreCommand.getCreateSummary(implProps, com, password);
                 System.out.println(ElytronToolMessages.msg.vaultConversionSummary(com.toString()));
             }
         }
