@@ -1885,4 +1885,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
     IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
+
+    @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
+    CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
 }

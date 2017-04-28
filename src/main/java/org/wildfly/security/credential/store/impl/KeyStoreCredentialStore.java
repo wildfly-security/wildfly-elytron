@@ -1125,6 +1125,9 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         private void fetchStorageSecretKey(String keyAlias, char[] keyPassword) throws CertificateException, NoSuchAlgorithmException, IOException, CredentialStoreException, UnrecoverableEntryException, KeyStoreException {
             storageSecretKeyStore.load(null, keyPassword);
             KeyStore.Entry entry = storageSecretKeyStore.getEntry(keyAlias, new KeyStore.PasswordProtection(keyPassword));
+            if (entry == null) {
+                throw log.externalStorageKeyDoesNotExist(keyAlias);
+            }
             if (! (entry instanceof KeyStore.SecretKeyEntry)) {
                 throw log.wrongTypeOfExternalStorageKey(keyAlias);
             }
