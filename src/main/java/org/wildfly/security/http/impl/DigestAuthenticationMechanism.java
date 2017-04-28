@@ -112,9 +112,8 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
-        final String realmName = selectRealm(request);
-
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
+
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
                 if (current.startsWith(CHALLENGE_PREFIX)) {
@@ -125,14 +124,14 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                         return;
                     } catch (AuthenticationMechanismException e) {
                         log.trace(e);
-                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(realmName, response, false));
+                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(selectRealm(), response, false));
                         return;
                     }
                 }
             }
         }
 
-        request.noAuthenticationInProgress(response -> prepareResponse(realmName, response, false));
+        request.noAuthenticationInProgress(response -> prepareResponse(selectRealm(), response, false));
     }
 
     private void validateResponse(HashMap<String, byte[]> responseTokens, final HttpServerRequest request) throws AuthenticationMechanismException, HttpAuthenticationException {
@@ -170,8 +169,11 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             throw log.mechMacAlgorithmNotSupported(getMechanismName(), e);
         }
 
-        final String selectedRealm = selectRealm(request);
-        checkRealm(messageRealm, selectedRealm);
+        if (!checkRealm(messageRealm)) {
+            throw log.mechDisallowedClientRealm(getMechanismName(), messageRealm);
+        }
+
+        String selectedRealm = selectRealm();
 
         if (username.length() == 0) {
             fail();
@@ -210,21 +212,18 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     }
 
     /**
-     * Check if realm used by client is allowed to by used to auth
+     * Check if realm is offered by the server
      */
-    private void checkRealm(String realm, String defaultRealm) throws AuthenticationMechanismException {
+    private boolean checkRealm(String realm) throws AuthenticationMechanismException {
         String[] realms = getAvailableRealms();
         if (realms != null) {
             for (String current : realms) {
                 if (realm.equals(current)) {
-                    return;
+                    return true;
                 }
             }
         }
-        if (realm.equals(defaultRealm)) {
-            return;
-        }
-        throw log.mechDisallowedClientRealm(getMechanismName(), realm);
+        return false;
     }
 
     private byte[] calculateResponseDigest(MessageDigest messageDigest, byte[] hA1, String nonce, String method, byte[] digestUri) {
@@ -273,26 +272,26 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      *
      * If a realm has been configured it takes priority.
      * Next the first available mechanism realm is selected.
-     * If no mechanism is available, {@link IllegalStateException} is thrown.
+     * If no mechanism is available or mechanism configured realm is not offered by the server, {@link IllegalStateException} is thrown.
      * @throws HttpAuthenticationException
      *
      */
-    private String selectRealm(HttpServerRequest request) throws HttpAuthenticationException  {
-        if (configuredRealm != null) {
-            return configuredRealm;
-        }
-
-        String[] realms;
+    private String selectRealm() throws HttpAuthenticationException {
         try {
-            realms = getAvailableRealms();
+            if (configuredRealm != null) {
+                if (!checkRealm(configuredRealm)) {
+                    throw log.digestMechanismInvalidRealm(configuredRealm);
+                }
+                return configuredRealm;
+            }
+            String[] realms = getAvailableRealms();
+            if (realms != null && realms.length > 0) {
+                return realms[0];
+            }
+            throw log.digestMechanismRequireRealm();
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         }
-        if (realms != null && realms.length > 0) {
-            return realms[0];
-        }
-
-        throw log.digestMechanismRequireRealm();
     }
 
     private String[] getAvailableRealms() throws AuthenticationMechanismException {
