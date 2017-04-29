@@ -331,7 +331,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1063, value = "Private key is null")
     IllegalArgumentException privateKeyIsNull();
 
-    @Message(id = 1064, value = "Invalid name")
+    @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
 
     @Message(id = 1065, value = "Pattern requires a capture group")

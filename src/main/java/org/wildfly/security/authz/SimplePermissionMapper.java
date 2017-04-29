@@ -182,21 +182,25 @@ public class SimplePermissionMapper implements PermissionMapper {
 
         /**
          * If multiple mappings are found the corresponding {@link PermissionVerifier} instances will be combined using 'and'.
+         * Will assign permission which would be assigned by all mappings.
          */
         AND,
 
         /**
          * If multiple mappings are found the corresponding {@link PermissionVerifier} instances will be combined using 'or'.
+         * Will assign permissions which would be assigned by at least one mapping.
          */
         OR,
 
         /**
          * If multiple mappings are found the corresponding {@link PermissionVerifier} instances will be combined using 'xor'.
+         * Will assign permissions which would be assigned by odd amount of mappings.
          */
         XOR,
 
         /**
          * If multiple mappings are found the corresponding {@link PermissionVerifier} instances will be combined using 'unless'.
+         * Will assign permissions which would be assigned by first mapping but not by others.
          */
         UNLESS;
     }

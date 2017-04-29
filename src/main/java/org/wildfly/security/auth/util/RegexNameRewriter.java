@@ -52,6 +52,7 @@ public final class RegexNameRewriter implements NameRewriter {
      * @return the rewritten name
      */
     public String rewriteName(final String original) {
+        if (original == null) return null;
         final Matcher matcher = pattern.matcher(original);
         return replaceAll ? matcher.replaceAll(replacement) : matcher.replaceFirst(replacement);
     }
