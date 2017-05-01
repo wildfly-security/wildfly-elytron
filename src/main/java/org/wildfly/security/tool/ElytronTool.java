@@ -68,9 +68,9 @@ public class ElytronTool {
         ElytronTool tool = new ElytronTool();
         if (args != null && args.length > 0) {
             Command command = tool.findCommand(args[0]);
-            if (command != null) {
-                String[] newArgs = new String[args.length -1];
-                System.arraycopy(args, 1, newArgs, 0, args.length -1);
+            String[] newArgs = new String[args.length -1];
+            System.arraycopy(args, 1, newArgs, 0, args.length -1);
+            if (command != null && newArgs.length > 0) {
                 try {
                     command.execute(newArgs);
                     System.exit(command.getStatus());
@@ -79,7 +79,7 @@ public class ElytronTool {
                     e.printStackTrace(System.err);
                     System.exit(command.getStatus());
                 }
-            } else if ("--help".equals(args[0]) || "-h".equals(args[0])) {
+            } else if ("--help".equals(args[0]) || "-h".equals(args[0]) || (command != null && newArgs.length == 0)) {
                 tool.generalHelp();
             } else {
                 System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
