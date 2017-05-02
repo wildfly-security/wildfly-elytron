@@ -60,7 +60,14 @@ public interface NameRewriter {
      * @return the principal rewriter (not {@code null})
      */
     default UnaryOperator<Principal> asPrincipalRewriter() {
-        return principal -> principal instanceof NamePrincipal ? new NamePrincipal(NameRewriter.this.rewriteName(principal.getName())) : principal;
+        return principal -> {
+            if (principal == null) return null;
+            if (principal instanceof NamePrincipal) {
+                String rewritten = NameRewriter.this.rewriteName(principal.getName());
+                return rewritten == null ? null : new NamePrincipal(rewritten);
+            }
+            return principal;
+        };
     }
 
     /**

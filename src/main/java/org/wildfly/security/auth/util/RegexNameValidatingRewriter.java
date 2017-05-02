@@ -45,6 +45,7 @@ public final class RegexNameValidatingRewriter implements NameRewriter {
     }
 
     public String rewriteName(final String original) {
+        if (original == null) return null;
         return pattern.matcher(original).find() != match ? null : original;
     }
 
