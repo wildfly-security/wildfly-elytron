@@ -76,6 +76,47 @@ public class XmlConfigurationTest {
     }
 
     @Test
+    public void testSaslMechConfiguration() throws Exception {
+        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "\n" +
+            "<configuration>" +
+            "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+            "    <authentication-configurations>\n" +
+            "        <configuration name=\"test-1\">\n" +
+            "            <allow-sasl-mechanisms names=\"someName\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-2\">\n" +
+            "            <sasl-mechanism-selector selector=\"someName\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-3\">\n" +
+            "            <sasl-mechanism-selector selector=\"someName #ALL\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-4\">\n" +
+            "            <sasl-mechanism-selector selector=\"someName -JBOSS-LOCAL-USER\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-5\">\n" +
+            "            <sasl-mechanism-selector selector=\"someName (! JBOSS-LOCAL-USER)\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-6\">\n" +
+            "            <sasl-mechanism-selector selector=\"!#HASH(MD5)\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-7\">\n" +
+            "            <sasl-mechanism-selector selector=\"#FAMILY(SCRAM)\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-8\">\n" +
+            "            <sasl-mechanism-selector selector=\"(DIGEST-SHA-256||SCRAM-SHA-256) #PLUS\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-9\">\n" +
+            "            <sasl-mechanism-selector selector=\"(((#HASH(SHA-256) &amp;&amp; (#PLUS) ) ) )\"/>\n" +
+            "        </configuration>\n" +
+            "    </authentication-configurations>\n" +
+            "</authentication-client>\n" +
+            "</configuration>").getBytes(StandardCharsets.UTF_8);
+        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+        factory.create();
+    }
+
+    @Test
     public void testRuleConfiguration() throws Exception {
         final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +

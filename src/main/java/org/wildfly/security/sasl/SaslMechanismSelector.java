@@ -146,18 +146,22 @@ public abstract class SaslMechanismSelector {
     void preprocess(Set<String> mechNames, SSLSession sslSession) {}
 
     public SaslMechanismSelector addMechanism(String mechName) {
+        Assert.checkNotNullParam("mechName", mechName);
         return new AddSelector(this, mechName);
     }
 
     public SaslMechanismSelector forbidMechanism(String mechName) {
+        Assert.checkNotNullParam("mechName", mechName);
         return new ForbidSelector(this, mechName);
     }
 
     public SaslMechanismSelector addMatching(SaslMechanismPredicate predicate) {
+        Assert.checkNotNullParam("predicate", predicate);
         return new AddMatchingSelector(this, predicate);
     }
 
     public SaslMechanismSelector forbidMatching(SaslMechanismPredicate predicate) {
+        Assert.checkNotNullParam("predicate", predicate);
         return new ForbidMatchingSelector(this, predicate);
     }
 
@@ -397,14 +401,14 @@ public abstract class SaslMechanismSelector {
                                     final int start = i.offset() - 1;
                                     for (;;) {
                                         if (! i.hasNext()) {
-                                            stringVal = string.substring(start);
+                                            nextStringVal = string.substring(start);
                                             this.offs = offs;
                                             next = TOK_NAME;
                                             return true;
                                         }
                                         cp = i.next();
                                         if (! isNameChar(cp)) {
-                                            stringVal = string.substring(start, i.offset());
+                                            nextStringVal = string.substring(start, i.offset());
                                             i.prev();
                                             this.offs = offs;
                                             next = TOK_NAME;
@@ -498,6 +502,7 @@ public abstract class SaslMechanismSelector {
      *
      *     top-level-predicate ::= '(' if-predicate ')' |
      *                   special |
+     *                   name |
      *                   '!' top-level-predicate
      *
      *     and-predicate ::= top-level-predicate '&&' and-predicate |
@@ -588,6 +593,12 @@ public abstract class SaslMechanismSelector {
             case TOK_MUTUAL: {
                 return SaslMechanismPredicate.matchMutual();
             }
+            case TOK_NAME: {
+                return SaslMechanismPredicate.matchExact(t.getStringVal());
+            }
+            case TOK_NOT: {
+                return parseTopLevelPredicate(t, string).not();
+            }
             default: {
                 throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
             }
@@ -599,6 +610,7 @@ public abstract class SaslMechanismSelector {
         if (! t.hasNext() || t.peekNext() != TOK_Q) {
             return query;
         }
+        t.next(); // consume
         SaslMechanismPredicate ifTrue = parseIfPredicate(t, string);
         if (! t.hasNext()) {
             throw log.mechSelectorUnexpectedEnd(string);
@@ -617,6 +629,7 @@ public abstract class SaslMechanismSelector {
         }
         ArrayList<SaslMechanismPredicate> list = new ArrayList<>();
         list.add(first);
+        t.next(); // consume
         for (;;) {
             list.add(parseOrPredicate(t, string));
             if (! t.hasNext() || t.peekNext() != TOK_EQ) {
@@ -632,6 +645,7 @@ public abstract class SaslMechanismSelector {
         }
         ArrayList<SaslMechanismPredicate> list = new ArrayList<>();
         list.add(first);
+        t.next(); // consume
         for (;;) {
             list.add(parseAndPredicate(t, string));
             if (! t.hasNext() || t.peekNext() != TOK_OR) {
@@ -647,6 +661,7 @@ public abstract class SaslMechanismSelector {
         }
         ArrayList<SaslMechanismPredicate> list = new ArrayList<>();
         list.add(first);
+        t.next(); // consume
         for (;;) {
             list.add(parseTopLevelPredicate(t, string));
             if (! t.hasNext() || t.peekNext() != TOK_OR) {
