@@ -392,13 +392,13 @@ public final class ElytronXmlParser {
                         credentialFactory = new PrivateKeyKeyStoreEntryCredentialFactory(parseKeyStoreRefType(reader, keyStoresMap), location);
                         break;
                     }
-                    case "ssl-cipher-suite": {
+                    case "cipher-suite": {
                         if (isSet(foundBits, 1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 1);
                         cipherSuiteSelector = parseCipherSuiteSelectorType(reader);
                         break;
                     }
-                    case "ssl-protocol": {
+                    case "protocol": {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 2);
                         protocolSelector = parseProtocolSelectorNamesType(reader);
