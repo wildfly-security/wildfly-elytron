@@ -1560,6 +1560,8 @@ public final class AuthenticationConfiguration {
                         }
                     }
                     continue;
+                } else if (userCallbackHandler != null) {
+                    userCallbacks.add(callback);
                 } else {
                     CallbackUtil.unsupported(callback);
                     continue;
