@@ -121,7 +121,7 @@ import org.wildfly.security.x500.X500;
  */
 public final class ElytronXmlParser {
 
-    private static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
+    static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
 
     private ElytronXmlParser() {
     }
@@ -806,8 +806,8 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
-                case "name": name = reader.getAttributeValue(i); break;
-                case "authority": authority = reader.getAttributeValue(i); break;
+                case "name": name = reader.getAttributeValueResolved(i); break;
+                case "authority": authority = reader.getAttributeValueResolved(i); break;
                 default: throw reader.unexpectedAttribute(i);
             }
         }
@@ -914,19 +914,19 @@ public final class ElytronXmlParser {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "algorithm": {
-                    algorithm = reader.getAttributeValue(i);
+                    algorithm = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "hash": {
-                    hash = reader.getAttributeValue(i);
+                    hash = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "salt": {
-                    salt = reader.getAttributeValue(i);
+                    salt = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "iteration-count": {
-                    iterationCount = reader.getIntAttributeValue(i);
+                    iterationCount = reader.getIntAttributeValueResolved(i);
                     if (iterationCount < 1) {
                         throw xmlLog.xmlInvalidIterationCount(reader, iterationCount);
                     }
@@ -1142,22 +1142,22 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "type": {
                     if (type != null) throw reader.unexpectedAttribute(i);
-                    type = reader.getAttributeValue(i);
+                    type = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "provider": {
                     if (provider != null) throw reader.unexpectedAttribute(i);
-                    provider = reader.getAttributeValue(i);
+                    provider = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "name": {
                     if (name != null) throw reader.unexpectedAttribute(i);
-                    name = reader.getAttributeValue(i);
+                    name = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "wrap-passwords": {
                     if (wrap != null) throw reader.unexpectedAttribute(i);
-                    wrap = Boolean.valueOf(Boolean.parseBoolean(reader.getAttributeValue(i)));
+                    wrap = Boolean.valueOf(Boolean.parseBoolean(reader.getAttributeValueResolved(i)));
                     break;
                 }
                 default:
@@ -1287,12 +1287,12 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "key-store-name": {
                     if (keyStoreName != null) throw reader.unexpectedAttribute(i);
-                    keyStoreName = reader.getAttributeValue(i);
+                    keyStoreName = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "alias": {
                     if (alias != null) throw reader.unexpectedAttribute(i);
-                    alias = reader.getAttributeValue(i);
+                    alias = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: throw reader.unexpectedElement();
@@ -1379,7 +1379,7 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "key-store-name": {
                     if (keyStoreName != null) throw reader.unexpectedAttribute(i);
-                    keyStoreName = reader.getAttributeValue(i);
+                    keyStoreName = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: throw reader.unexpectedElement();
@@ -1416,17 +1416,17 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "store": {
                     if (storeName != null) throw reader.unexpectedAttribute(i);
-                    storeName = reader.getAttributeValue(i);
+                    storeName = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "alias": {
                     if (alias != null) throw reader.unexpectedAttribute(i);
-                    alias = reader.getAttributeValue(i);
+                    alias = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "clear-text": {
                     if (clearText != null) throw reader.unexpectedAttribute(i);
-                    clearText = reader.getAttributeValue(i);
+                    clearText = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default:
@@ -1505,17 +1505,17 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "type": {
                     if (type != null) throw reader.unexpectedAttribute(i);
-                    type = reader.getAttributeValue(i);
+                    type = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "provider": {
                     if (provider != null) throw reader.unexpectedAttribute(i);
-                    provider = reader.getAttributeValue(i);
+                    provider = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "name": {
                     if (name != null) throw reader.unexpectedAttribute(i);
-                    name = reader.getAttributeValue(i);
+                    name = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default:
@@ -1620,12 +1620,12 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "name": {
                     if (name != null) throw reader.unexpectedAttribute(i);
-                    name = reader.getAttributeValue(i);
+                    name = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "value": {
                     if (value != null) throw reader.unexpectedAttribute(i);
-                    value = reader.getAttributeValue(i);
+                    value = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default:
@@ -1695,7 +1695,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("name")) {
-                name = reader.getAttributeValue(i);
+                name = reader.getAttributeValueResolved(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1729,7 +1729,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("number")) {
-                String s = reader.getAttributeValue(i);
+                String s = reader.getAttributeValueResolved(i);
                 try {
                     number = Integer.parseInt(s);
                 } catch (NumberFormatException ignored) {
@@ -1772,9 +1772,9 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("pattern")) {
-                pattern = Pattern.compile(reader.getAttributeValue(i));
+                pattern = Pattern.compile(reader.getAttributeValueResolved(i));
             } else if (reader.getAttributeLocalName(i).equals("replacement")) {
-                replacement = reader.getAttributeValue(i);
+                replacement = reader.getAttributeValueResolved(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1811,7 +1811,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("names")) {
-                String s = reader.getAttributeValue(i);
+                String s = reader.getAttributeValueResolved(i);
                 names = s.trim().split("\\s+");
             } else {
                 throw reader.unexpectedAttribute(i);
@@ -1846,7 +1846,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("uri")) {
-                uri = reader.getURIAttributeValue(i);
+                uri = reader.getURIAttributeValueResolved(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1873,7 +1873,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("selector")) {
-                selector = SaslMechanismSelector.fromString(reader.getAttributeValue(i));
+                selector = SaslMechanismSelector.fromString(reader.getAttributeValueResolved(i));
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1907,7 +1907,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("selector")) {
-                selector = CipherSuiteSelector.fromString(reader.getAttributeValue(i));
+                selector = CipherSuiteSelector.fromString(reader.getAttributeValueResolved(i));
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1956,7 +1956,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("module-name")) {
-                moduleName = reader.getAttributeValue(i);
+                moduleName = reader.getAttributeValueResolved(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -1989,7 +1989,7 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("password")) {
-                password = reader.getAttributeValue(i).toCharArray();
+                password = reader.getAttributeValueResolved(i).toCharArray();
             } else {
                 throw reader.unexpectedAttribute(i);
             }
@@ -2041,12 +2041,12 @@ public final class ElytronXmlParser {
                                 case "key":
                                     if (key != null)
                                         throw reader.unexpectedAttribute(i);
-                                    key = reader.getAttributeValue(i);
+                                    key = reader.getAttributeValueResolved(i);
                                     break;
                                 case "value":
                                     if (value != null)
                                         throw reader.unexpectedAttribute(i);
-                                    value = reader.getAttributeValue(i);
+                                    value = reader.getAttributeValueResolved(i);
                                     break;
                                 default:
                                     throw reader.unexpectedAttribute(i);
@@ -2160,12 +2160,12 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "name": {
                     if (userName != null) throw reader.unexpectedAttribute(i);
-                    userName = reader.getAttributeValue(i);
+                    userName = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "password": {
                     if (password != null) throw reader.unexpectedAttribute(i);
-                    password = reader.getAttributeValue(i);
+                    password = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: throw reader.unexpectedAttribute(i);
@@ -2202,12 +2202,12 @@ public final class ElytronXmlParser {
             switch (reader.getAttributeLocalName(i)) {
                 case "client-id": {
                     if (id != null) throw reader.unexpectedAttribute(i);
-                    id = reader.getAttributeValue(i);
+                    id = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "client-secret": {
                     if (secret != null) throw reader.unexpectedAttribute(i);
-                    secret = reader.getAttributeValue(i);
+                    secret = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: throw reader.unexpectedAttribute(i);
@@ -2252,11 +2252,11 @@ public final class ElytronXmlParser {
     }
 
     private static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
-        return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValue(0));
+        return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValueResolved(0));
     }
 
     private static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
-        return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValue(0));
+        return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValueResolved(0));
     }
 
     private static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
@@ -2278,8 +2278,8 @@ public final class ElytronXmlParser {
         return reader.missingRequiredAttribute(null, name);
     }
 
-    private static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) {
-        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValue(index), reader.getAttributeLocalName(index), reader.getName());
+    private static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
+        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
     static final class KeyStoreCreateFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {
