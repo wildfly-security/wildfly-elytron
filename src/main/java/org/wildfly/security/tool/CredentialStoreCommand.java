@@ -139,6 +139,10 @@ class CredentialStoreCommand extends Command {
         String entryType = cmdLine.getOptionValue(ENTRY_TYPE_PARAM);
         String otherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
         boolean createStorage = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
+        if (createStorage && cmdLine.getArgs().length > 0) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.noArgumentOption(CREATE_CREDENTIAL_STORE_PARAM);
+        }
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
         String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
 
