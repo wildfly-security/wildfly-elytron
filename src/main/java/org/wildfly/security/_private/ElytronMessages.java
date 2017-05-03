@@ -630,6 +630,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1158, value = "Unable to create kerberos GSS credential")
     SecurityException unableToCreateKerberosCredential(@Cause Exception e);
+
+    @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
+    ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
