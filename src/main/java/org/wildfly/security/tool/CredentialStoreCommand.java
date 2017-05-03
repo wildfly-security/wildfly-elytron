@@ -132,6 +132,10 @@ class CredentialStoreCommand extends Command {
         }
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
+        if (location == null) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.optionNotSpecified(STORE_LOCATION_PARAM);
+        }
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
