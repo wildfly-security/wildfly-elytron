@@ -64,7 +64,7 @@ public interface NameRewriter {
             if (principal == null) return null;
             if (principal instanceof NamePrincipal) {
                 String rewritten = NameRewriter.this.rewriteName(principal.getName());
-                return rewritten == null ? null : new NamePrincipal(rewritten);
+                return new NamePrincipal(rewritten);
             }
             return principal;
         };
