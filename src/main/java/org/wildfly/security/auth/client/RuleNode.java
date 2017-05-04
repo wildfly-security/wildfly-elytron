@@ -110,6 +110,6 @@ class RuleNode<T> {
         if (next == null) {
             throw new IndexOutOfBoundsException();
         }
-        return new RuleNode<T>(next.with(rule, configuration, idx - 1), rule, configuration);
+        return new RuleNode<T>(next.replacing(rule, configuration, idx - 1), this.rule, this.configuration);
     }
 }
