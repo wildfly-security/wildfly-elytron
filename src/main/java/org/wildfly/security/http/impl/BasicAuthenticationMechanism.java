@@ -166,7 +166,7 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                             }
 
                         } else {
-                            log.debugf("User %s authorization failed.", username);
+                            log.debugf("User %s authentication failed.", username);
                             fail();
 
                             request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
