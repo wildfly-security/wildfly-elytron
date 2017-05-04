@@ -272,7 +272,6 @@ public final class AuthenticationContextTest {
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-988")
     public void replaceRuleConfiguration() {
         RuleNode<AuthenticationConfiguration> initialRule = new RuleNode<>(
                 new RuleNode<>(
@@ -295,7 +294,6 @@ public final class AuthenticationContextTest {
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-988")
     public void replaceRuleSsl() {
         RuleNode<SecurityFactory<SSLContext>> initialRule = new RuleNode<>(
                 new RuleNode<>(
