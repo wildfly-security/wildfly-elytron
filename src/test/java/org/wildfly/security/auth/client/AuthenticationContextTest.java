@@ -228,27 +228,47 @@ public final class AuthenticationContextTest {
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-987")
-    public void addRuleCtxConfigurationAtTheStart() {
-        // implementation is blocked by https://issues.jboss.org/browse/ELY-987
+    public void addRuleCtxConfiguration_noInitialSsl() {
+        RuleNode<AuthenticationConfiguration> testedConfigurationRule = new RuleNode<>(null, MatchRule.ALL.matchPort(1234), config2);
+        RuleNode<SecurityFactory<SSLContext>> testedSslRule = new RuleNode<>(null, MatchRule.ALL.matchHost("someHost2"), ssl1);
+        AuthenticationContext testedCtx = new AuthenticationContext(testedConfigurationRule, testedSslRule);
+
+        RuleNode<AuthenticationConfiguration> initialConfigurationRule = new RuleNode<>(null, MatchRule.ALL.matchHost("someHost1"), config1);
+        AuthenticationContext ctx = new AuthenticationContext(initialConfigurationRule, null)
+                .with(testedCtx);
+
+        assertExpectedRuleNode(ctx.authRules, config1, MatchRule.ALL.matchHost("someHost1"));
+
+        RuleNode<AuthenticationConfiguration> secondConfiguration = ctx.authRules.getNext();
+        assertExpectedRuleNode(secondConfiguration, config2, MatchRule.ALL.matchPort(1234));
+
+        assertNull(secondConfiguration.getNext());
+
+        assertExpectedRuleNode(ctx.sslRules, ssl1, MatchRule.ALL.matchHost("someHost2"));
+
+        assertNull(ctx.sslRules.getNext());
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-987")
-    public void addRuleCtxConfigurationInTheMiddle() {
-        // implementation is blocked by https://issues.jboss.org/browse/ELY-987
-    }
+    public void addRuleCtxConfiguration_noInitialConfig() {
+        RuleNode<AuthenticationConfiguration> testedConfigurationRule = new RuleNode<>(null, MatchRule.ALL.matchHost("someHost1"), config1);
+        RuleNode<SecurityFactory<SSLContext>> testedSslRule = new RuleNode<>(null, MatchRule.ALL.matchPort(2345), ssl2);
+        AuthenticationContext testedCtx = new AuthenticationContext(testedConfigurationRule, testedSslRule);
 
-    @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-987")
-    public void addRuleCtxSslAtTheStart() {
-        // implementation is blocked by https://issues.jboss.org/browse/ELY-987
-    }
+        RuleNode<SecurityFactory<SSLContext>> initialSslRule = new RuleNode<>(null, MatchRule.ALL.matchHost("someHost2"), ssl1);
+        AuthenticationContext ctx = new AuthenticationContext(null, initialSslRule)
+                .with(testedCtx);
 
-    @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-987")
-    public void addRuleCtxSslInTheMiddle() {
-        // implementation is blocked by https://issues.jboss.org/browse/ELY-987
+        assertExpectedRuleNode(ctx.authRules, config1, MatchRule.ALL.matchHost("someHost1"));
+
+        assertNull(ctx.authRules.getNext());
+
+        assertExpectedRuleNode(ctx.sslRules, ssl1, MatchRule.ALL.matchHost("someHost2"));
+
+        RuleNode<SecurityFactory<SSLContext>> secondSsl = ctx.sslRules.getNext();
+        assertExpectedRuleNode(secondSsl, ssl2, MatchRule.ALL.matchPort(2345));
+
+        assertNull(secondSsl.getNext());
     }
 
     @Test
@@ -338,8 +358,7 @@ public final class AuthenticationContextTest {
     private <T> void assertExpectedRuleNode(RuleNode<T> rn, T expectedConfiguration, MatchRule expectedRule) {
         assertNotNull(rn);
         assertEquals(expectedConfiguration, rn.getConfiguration());
-        // https://issues.jboss.org/browse/ELY-986
-         assertEquals(expectedRule, rn.getRule());
+        assertEquals(expectedRule, rn.getRule());
     }
 
 }
