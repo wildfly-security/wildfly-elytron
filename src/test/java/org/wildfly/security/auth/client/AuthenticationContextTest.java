@@ -18,7 +18,6 @@ package org.wildfly.security.auth.client;
 import static org.junit.Assert.*;
 import java.security.GeneralSecurityException;
 import javax.net.ssl.SSLContext;
-import org.junit.Ignore;
 
 import org.junit.Test;
 import org.wildfly.security.SecurityFactory;
