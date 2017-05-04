@@ -28,6 +28,9 @@ import org.jboss.logmanager.ExtLogRecord;
 import org.jboss.logmanager.handlers.SyslogHandler;
 import org.jboss.logmanager.handlers.SyslogHandler.Facility;
 import org.jboss.logmanager.handlers.SyslogHandler.Protocol;
+import org.jboss.logmanager.handlers.TcpOutputStream;
+
+import javax.net.SocketFactory;
 
 /**
  * An {@link AuditEndpoint} that logs to syslog.
@@ -41,12 +44,18 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     private final SyslogHandler syslogHandler;
 
     /**
-     *
+     * Creates a new {@link AuditEndpoint} that logs to syslog.
      */
     SyslogAuditEndpoint(Builder builder) throws IOException {
         SyslogHandler.Protocol protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
         syslogHandler = new SyslogHandler(checkNotNullParam("serverAddress", builder.serverAddress), builder.port, Facility.SECURITY,
                 null, protocol, checkNotNullParam("hostName", builder.hostName));
+
+        if (builder.tcp && builder.socketFactory != null) {
+            syslogHandler.setOutputStream(new TcpOutputStream(builder.socketFactory, builder.serverAddress, builder.port) {
+                // anonymous class to access protected constructor
+            });
+        }
     }
 
     @Override
@@ -98,6 +107,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         private boolean ssl = false;
         private boolean tcp = true;
         private String hostName;
+        private SocketFactory socketFactory = null;
 
         Builder() {
         }
@@ -146,6 +156,18 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
          */
         public Builder setSsl(boolean ssl) {
             this.ssl = ssl;
+
+            return this;
+        }
+
+        /**
+         * Set {@link SocketFactory} for TCP connections - usually to provide configured {@link javax.net.ssl.SSLSocketFactory}.
+         *
+         * @param socketFactory the {@link SocketFactory} or {@code null} for default {@link SocketFactory}.
+         * @return this builder.
+         */
+        public Builder setSocketFactory(SocketFactory socketFactory) {
+            this.socketFactory = socketFactory;
 
             return this;
         }
