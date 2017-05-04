@@ -254,4 +254,10 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 16, value = "Option \"%s\" is not specified.")
     MissingArgumentException optionNotSpecified(String option);
+
+    @Message(id = NONE, value = "Vault password: ")
+    String vaultPasswordPrompt();
+
+    @Message(id = NONE, value = "Confirm vault password: ")
+    String vaultPasswordPromptConfirm();
 }
