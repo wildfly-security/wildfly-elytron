@@ -120,7 +120,6 @@ public class ExternalSaslClientTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-983")
     public void testDontUseQueryAllPolicyInCreateMethod() throws Exception {
         final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
         assertNotNull("SaslClientFactory not registered", factory);
@@ -211,7 +210,6 @@ public class ExternalSaslClientTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-802")
     public void testWrapUnwrap() throws Exception {
         final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
 

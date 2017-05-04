@@ -48,7 +48,7 @@ public final class ExternalSaslServerFactory implements SaslServerFactory {
         if (props == null) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }
-        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+        if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && query) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }
         if ("true".equals(props.get(Sasl.POLICY_NOACTIVE))) {
