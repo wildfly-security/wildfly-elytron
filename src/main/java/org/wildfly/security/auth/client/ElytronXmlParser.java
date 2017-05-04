@@ -2396,6 +2396,9 @@ public final class ElytronXmlParser {
 
         public X509CertificateChainPrivateCredential get() throws ConfigXMLParseException {
             final KeyStore.Entry entry = entrySupplier.get();
+            if (entry == null) {
+                throw xmlLog.keyStoreEntryMissing(location, "unknown");
+            }
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
