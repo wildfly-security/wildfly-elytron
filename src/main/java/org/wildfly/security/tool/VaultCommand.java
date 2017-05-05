@@ -165,7 +165,7 @@ public class VaultCommand extends Command {
             // single Vault conversion
             // default values are from VaultTool
             String keystoreURL = cmdLine.getOptionValue(KEYSTORE_PARAM, "vault.keystore");
-            String keystorePassword = cmdLine.getOptionValue(KEYSTORE_PASSWORD_PARAM, "");
+            String keystorePassword = cmdLine.getOptionValue(KEYSTORE_PASSWORD_PARAM);
             String encryptionDirectory = cmdLine.getOptionValue(ENC_DIR_PARAM, "vault");
             String salt = cmdLine.getOptionValue(SALT_PARAM, "12345678");
             int iterationCount = Integer.parseInt(cmdLine.getOptionValue(ITERATION_PARAM, "23"));
@@ -176,6 +176,10 @@ public class VaultCommand extends Command {
                 location = convertedStoreName(encryptionDirectory);
             }
             Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM));
+
+            if (keystorePassword == null) {
+                keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), true, ElytronToolMessages.msg.vaultPasswordPromptConfirm());
+            }
 
             convert(keystoreURL, keystorePassword, encryptionDirectory, salt, iterationCount, vaultSecretKeyAlias,
                     location, implProps);
