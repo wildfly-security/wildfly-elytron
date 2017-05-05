@@ -89,7 +89,7 @@ public interface ElytronToolMessages extends BasicLogger {
             "Each provider must be installed through java.security file.")
     String cmdLineOtherProvidersDesc();
 
-    @Message(id = NONE, value = "Create credential store [true/false]")
+    @Message(id = NONE, value = "Create credential store")
     String cmdLineCreateCredentialStoreDesc();
 
     @Message(id = NONE, value = "Credential store type")
@@ -260,4 +260,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 17, value = "Option \"%s\" specified more than once. Only the first occurrence will be used.")
     String duplicateOptionSpecified(String option);
+
+    @Message(id = 18, value = "Option \"%s\" does not expect any arguments.")
+    MissingArgumentException noArgumentOption(String option);
 }
