@@ -1026,12 +1026,12 @@ public final class ServerAuthenticationContext {
         String realmName = mapAll(preRealmPrincipal, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         final Principal postRealmPrincipal = rewriteAll(preRealmPrincipal, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
-        if (preRealmPrincipal == null) {
+        if (postRealmPrincipal == null) {
             log.tracef("Unable to rewrite principal [%s] by post-realm rewritters", preRealmPrincipal);
             return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
         }
         final Principal finalPrincipal = rewriteAll(postRealmPrincipal, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getPrincipalRewriter());
-        if (preRealmPrincipal == null) {
+        if (finalPrincipal == null) {
             log.tracef("Unable to rewrite principal [%s] by final rewritters", postRealmPrincipal);
             return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
         }
