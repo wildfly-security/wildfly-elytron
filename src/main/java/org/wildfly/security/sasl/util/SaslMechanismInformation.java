@@ -689,6 +689,7 @@ public final class SaslMechanismInformation {
     public static boolean doesNotUsePrincipal(final String mechName) {
         switch (mechName) {
             case Names.ANONYMOUS:
+            case Names.EXTERNAL:
             case Names.GSSAPI:
             case Names.OAUTHBEARER: {
                 return true;
