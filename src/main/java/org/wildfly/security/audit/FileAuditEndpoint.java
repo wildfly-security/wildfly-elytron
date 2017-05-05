@@ -92,10 +92,26 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
     }
 
+    /**
+     * Writes <code>bytes.length</code> bytes from the specified byte array
+     * to the underlying output stream managed by this class.
+     * The general contract for <code>write(bytes)</code> is that it must be
+     * invoked from a synchronization block surrounding one log message processing.
+     *
+     * @param bytes the data.
+     * @throws IOException if an I/O error occurs.
+     */
     protected void write(byte[] bytes) throws IOException {
         outputStream.write(bytes);
     }
 
+    /**
+     * The general contract for <code>preWrite(date)</code> is that any method override
+     * must ensure thread safety invoking this method from a synchronization block
+     * surrounding one log message processing.
+     *
+     * @param date
+     */
     protected void preWrite(Date date) {
         // NO-OP by default
     }
