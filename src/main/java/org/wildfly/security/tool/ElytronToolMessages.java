@@ -213,7 +213,10 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "CLI command to add new credential store:%n")
     String cliCommandToNewCredentialStore();
 
-    @Message(id = NONE, value = "Bulk conversion with parameters in description file")
+    @Message(id = NONE, value = "Bulk conversion with options listed in description file. All options have no default value and should be set in the file.%n" +
+                                "Each set of options must start with the \"keystore\" option in the following format:%n " +
+                                "keystore:<value>%nkeystore-password:<value>%nenc-dir:<value>%nsalt:<value>%niteration:<value>%nlocation:<value>%n" +
+                                "alias:<value.%nproperties:<parameter1>=<value1>; ... ;<parameterN>=<valueN>")
     String cliCommandBulkVaultCredentialStoreConversion();
 
     @Message(id = NONE, value = "Print summary of conversion")
