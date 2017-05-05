@@ -114,7 +114,6 @@ public class ExternalSaslServerTest extends BaseTestCase {
 
 
     @Test
-    @Ignore("ELY-983")
     public void testDontUseQueryAllPolicyInCreateMethod() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
@@ -189,7 +188,6 @@ public class ExternalSaslServerTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-802")
     public void testWrapUnwrap() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
