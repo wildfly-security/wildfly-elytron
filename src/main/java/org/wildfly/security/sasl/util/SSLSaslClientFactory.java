@@ -18,20 +18,18 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
-
-import org.wildfly.security.auth.callback.SSLQueryCallbackHandler;
 
 /**
  * A SASL client factory which provides information about the security layer of the connection to the callback handler.
@@ -39,41 +37,25 @@ import org.wildfly.security.auth.callback.SSLQueryCallbackHandler;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SSLSaslClientFactory extends AbstractDelegatingSaslClientFactory implements SaslClientFactory {
-    private final SSLContext sslContext;
-    private final SSLSocket sslSocket;
-    private final SSLEngine sslEngine;
+    private final Supplier<SSLSession> sslSession;
 
     /**
      * Construct a new instance.
      *
      * @param delegate the delegate SASL client factory
-     * @param sslContext the SSL context used
-     * @param sslEngine the SSL engine of the connection
+     * @param sslSession supplier of the current SSLSession
      */
-    public SSLSaslClientFactory(final SaslClientFactory delegate, final SSLContext sslContext, final SSLEngine sslEngine) {
-        super(delegate);
-        this.sslContext = sslContext;
-        this.sslEngine = sslEngine;
-        sslSocket = null;
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param delegate the delegate SASL client factory
-     * @param sslContext the SSL context used
-     * @param sslSocket the SSL socket connection
-     */
-    public SSLSaslClientFactory(final SaslClientFactory delegate, final SSLContext sslContext, final SSLSocket sslSocket) {
-        super(delegate);
-        this.sslContext = sslContext;
-        this.sslSocket = sslSocket;
-        sslEngine = null;
+    public SSLSaslClientFactory(final SaslClientFactory delegate, final Supplier<SSLSession> sslSession) {
+       super(delegate);
+       this.sslSession = checkNotNullParam("sslSession", sslSession);
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        final SSLQueryCallbackHandler newHandler = sslEngine != null ? new SSLQueryCallbackHandler(cbh, sslContext, sslEngine) : new SSLQueryCallbackHandler(cbh, sslContext, sslSocket);
-        return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, newHandler);
+        final SSLQueryCallbackHandler newHandler = new SSLQueryCallbackHandler(cbh, sslSession);
+        SaslClient saslClient = super.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, newHandler);
+        newHandler.activate();
+
+        return saslClient;
     }
 
     @SuppressWarnings("checkstyle:equalshashcode")
@@ -88,10 +70,10 @@ public final class SSLSaslClientFactory extends AbstractDelegatingSaslClientFact
 
     @SuppressWarnings("checkstyle:equalshashcode")
     public boolean equals(final SSLSaslClientFactory other) {
-        return super.equals(other) && sslContext.equals(other.sslContext) && Objects.equals(sslSocket, other.sslSocket) && Objects.equals(sslEngine, other.sslEngine);
+        return super.equals(other) && Objects.equals(sslSession, other.sslSession);
     }
 
     protected int calculateHashCode() {
-        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), sslContext.hashCode()), Objects.hashCode(sslEngine)), Objects.hashCode(sslSocket));
+        return multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), Objects.hashCode(sslSession));
     }
 }
