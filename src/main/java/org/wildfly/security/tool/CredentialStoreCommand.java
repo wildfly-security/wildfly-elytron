@@ -236,7 +236,7 @@ class CredentialStoreCommand extends Command {
                 }
 
                 if (createStorage) {
-                    getCreateSummary(location, implProps, com, password);
+                    getCreateSummary(implProps, com, password);
                     com.append("\n");
                 }
 
@@ -258,7 +258,7 @@ class CredentialStoreCommand extends Command {
                 com.append("ls /subsystem=elytron/credential-store=test1/alias=");
                 com.append(cmdLine.getOptionValue(CHECK_ALIAS_PARAM));
             } else if ( cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM) ){
-                getCreateSummary(location, implProps, com, password);
+                getCreateSummary(implProps, com, password);
             }
 
             System.out.println(ElytronToolMessages.msg.commandSummary(com.toString()));
@@ -335,6 +335,9 @@ class CredentialStoreCommand extends Command {
 
     static String formatPropertiesForCli(Map<String, String> properties) {
         if (properties != null || !properties.isEmpty()) {
+            properties.remove("create");
+            properties.remove("location");
+            properties.remove("modifiable");
             boolean first = true;
             StringBuilder attr = new StringBuilder("implementation-properties={");
             for(String name: properties.keySet()) {
@@ -363,13 +366,16 @@ class CredentialStoreCommand extends Command {
         return -1;
     }
 
-    private void getCreateSummary(String location, Map<String, String> implProps, StringBuilder com, String password) {
+    static void getCreateSummary(Map<String, String> implProps, StringBuilder com, String password) {
         com.append("/subsystem=elytron/credential-store=cs:add(");
         com.append("relative-to=jboss.server.data.dir,");
-        if (location != null) {
-            com.append("location=\"" + location + "\",");
-        }
         com.append("create=true,");
+        if (implProps.get("modifiable") != null) {
+            com.append("modifiable=" + implProps.get("modifiable") + ",");
+        }
+        if (implProps.get("location") != null) {
+            com.append("location=\"" + implProps.get("location") + "\",");
+        }
         String props = formatPropertiesForCli(implProps);
         if (!props.isEmpty()) {
             com.append(props);
