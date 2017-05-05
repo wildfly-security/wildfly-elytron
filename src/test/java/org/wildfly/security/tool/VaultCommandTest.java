@@ -106,4 +106,17 @@ public class VaultCommandTest extends AbstractCommandTest {
         }
     }
 
+    @Test
+    public void testDuplicateOptions() {
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = {"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
+                "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+
+        Assert.assertTrue(output.contains("Option \"enc-dir\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertTrue(output.contains("Option \"keystore\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertFalse(output.contains("Option \"salt\" specified more than once. Only the first occurrence will be used"));
+    }
 }

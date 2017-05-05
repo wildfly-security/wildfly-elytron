@@ -72,6 +72,8 @@ class MaskCommand extends Command {
             return;
         }
 
+        printDuplicatesWarning(cmdLine);
+
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         if (salt == null) {
             setStatus(GENERAL_CONFIGURATION_ERROR);

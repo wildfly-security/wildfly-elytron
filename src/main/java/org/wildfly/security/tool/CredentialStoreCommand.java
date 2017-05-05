@@ -131,6 +131,8 @@ class CredentialStoreCommand extends Command {
             return;
         }
 
+        printDuplicatesWarning(cmdLine);
+
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
         String salt = cmdLine.getOptionValue(SALT_PARAM);

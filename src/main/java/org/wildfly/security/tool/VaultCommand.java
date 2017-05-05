@@ -143,6 +143,8 @@ public class VaultCommand extends Command {
         }
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
+        printDuplicatesWarning(cmdLine);
+
         String bulkConversionDescriptor = cmdLine.getOptionValue(BULK_CONVERT_PARAM);
         if (bulkConversionDescriptor != null && !bulkConversionDescriptor.isEmpty()) {
             checkInvalidOptions(KEYSTORE_PARAM, KEYSTORE_PASSWORD_PARAM, ENC_DIR_PARAM, SALT_PARAM, ITERATION_PARAM, ALIAS_PARAM, STORE_LOCATION_PARAM);

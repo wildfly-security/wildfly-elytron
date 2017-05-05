@@ -341,4 +341,20 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
             Assert.fail(e.getMessage());
         }
     }
+
+    @Test
+    public void testDuplicateOptions() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret", aliasValue, "--summary",
+                "--password", storagePassword, "--add", "another_alias", "-x", "another_secret" };
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+
+        Assert.assertTrue(output.contains("Option \"add\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertTrue(output.contains("Option \"secret\" specified more than once. Only the first occurrence will be used."));
+        Assert.assertFalse(output.contains("Option \"create\" specified more than once. Only the first occurrence will be used"));
+    }
 }
