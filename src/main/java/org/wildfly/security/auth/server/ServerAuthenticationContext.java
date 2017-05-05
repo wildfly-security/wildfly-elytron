@@ -970,18 +970,12 @@ public final class ServerAuthenticationContext {
         };
     }
 
-    private static Principal validatedRewrite(Principal principal, Function<Principal, Principal> rewriter) {
-        Principal rewritten = rewriter.apply(principal);
-        if (rewritten == null) {
-            throw log.invalidName();
-        }
-        return rewritten;
-    }
-
     private static Principal rewriteAll(Principal principal, Function<Principal, Principal> r1, Function<Principal, Principal> r2, Function<Principal, Principal> r3) {
-        principal = validatedRewrite(principal, r1);
-        principal = validatedRewrite(principal, r2);
-        principal = validatedRewrite(principal, r3);
+        principal = r1.apply(principal);
+        if (principal == null) return null;
+        principal = r2.apply(principal);
+        if (principal == null) return null;
+        principal = r3.apply(principal);
         return principal;
     }
 
@@ -1003,19 +997,31 @@ public final class ServerAuthenticationContext {
         return realmName != null ? realmName : defaultRealmName;
     }
 
-    NameAssignedState assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, Principal originalPrincipal, final Evidence evidence, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials) throws RealmUnavailableException {
+    State assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, Principal originalPrincipal, final Evidence evidence, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials) throws RealmUnavailableException {
         return assignName(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, originalPrincipal, evidence, privateCredentials, publicCredentials, false);
     }
 
-    NameAssignedState assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, Principal originalPrincipal, final Evidence evidence, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials, final boolean exclusive) throws RealmUnavailableException {
+    State assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, Principal originalPrincipal, final Evidence evidence, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials, final boolean exclusive) throws RealmUnavailableException {
         final SecurityDomain domain = capturedIdentity.getSecurityDomain();
         final Principal preRealmPrincipal = rewriteAll(originalPrincipal, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
+        if (preRealmPrincipal == null) {
+            log.tracef("Unable to rewrite principal [%s] by pre-realm rewritters", originalPrincipal);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+        }
         String realmName = mapAll(preRealmPrincipal, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         final Principal postRealmPrincipal = rewriteAll(preRealmPrincipal, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
+        if (preRealmPrincipal == null) {
+            log.tracef("Unable to rewrite principal [%s] by post-realm rewritters", preRealmPrincipal);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+        }
         final Principal finalPrincipal = rewriteAll(postRealmPrincipal, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getPrincipalRewriter());
+        if (preRealmPrincipal == null) {
+            log.tracef("Unable to rewrite principal [%s] by final rewritters", postRealmPrincipal);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+        }
 
-        log.tracef("Principal assigning: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
+        log.tracef("Principal assigning: [%s], pre-realm rewritten: [%s], realm name: [%s], post-realm rewritten: [%s], realm rewritten: [%s]",
                 originalPrincipal, preRealmPrincipal, realmName, postRealmPrincipal, finalPrincipal);
 
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
@@ -1297,15 +1303,23 @@ public final class ServerAuthenticationContext {
             // get the identity we are authorizing from
             final SecurityIdentity sourceIdentity = getSourceIdentity();
 
-            final NameAssignedState nameAssignedState = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            final State state = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            if ( ! (state instanceof NameAssignedState)) {
+                ElytronMessages.log.tracef("Authorization failed - unable to assign identity name");
+                return false;
+            }
+
+            final NameAssignedState nameAssignedState = (NameAssignedState) state;
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
                 if (! realmIdentity.exists()) {
+                    ElytronMessages.log.tracef("Authorization failed - identity does not exists");
                     return false;
                 }
                 // check the run-as permission on the old identity
                 if (authorizeRunAs && ! sourceIdentity.implies(new RunAsPrincipalPermission(nameAssignedState.getAuthenticationPrincipal().getName()))) {
+                    ElytronMessages.log.tracef("Authorization failed - source identity does not have RunAsPrincipalPermission");
                     return false;
                 }
                 final AuthorizedAuthenticationState newState = nameAssignedState.doAuthorization(false);
@@ -1428,7 +1442,11 @@ public final class ServerAuthenticationContext {
             }
 
             // Finally, run the identity through the normal name selection process.
-            final NameAssignedState nameState = assignName(sourceIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), importedPrincipal, null, privateCredentials, publicCredentials);
+            final State state = assignName(sourceIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), importedPrincipal, null, privateCredentials, publicCredentials);
+            if ( ! (state instanceof NameAssignedState)) {
+                return false;
+            }
+            final NameAssignedState nameState = (NameAssignedState) state;
             final RealmIdentity realmIdentity = nameState.getRealmIdentity();
             boolean ok = false;
             try {
@@ -1464,9 +1482,11 @@ public final class ServerAuthenticationContext {
         @Override
         void setName(final String name, final boolean exclusive) throws RealmUnavailableException {
             final AtomicReference<State> stateRef = getStateRef();
-            final NameAssignedState newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), new NamePrincipal(name), null, privateCredentials, publicCredentials, exclusive);
+            final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), new NamePrincipal(name), null, privateCredentials, publicCredentials, exclusive);
             if (! stateRef.compareAndSet(this, newState)) {
-                newState.realmIdentity.dispose();
+                if (newState instanceof NameAssignedState) {
+                    ((NameAssignedState)newState).realmIdentity.dispose();
+                }
                 stateRef.get().setName(name, exclusive);
             }
         }
@@ -1484,13 +1504,17 @@ public final class ServerAuthenticationContext {
             log.tracef("Evidence verification: evidence = %s  evidencePrincipal = %s", evidence, evidencePrincipal);
             final MechanismRealmConfiguration mechanismRealmConfiguration = getMechanismRealmConfiguration();
             if (evidencePrincipal != null) {
-                final NameAssignedState newState = assignName(getSourceIdentity(), mechanismConfiguration, mechanismRealmConfiguration, evidencePrincipal, evidence, privateCredentials, publicCredentials);
+                final State newState = assignName(getSourceIdentity(), mechanismConfiguration, mechanismRealmConfiguration, evidencePrincipal, evidence, privateCredentials, publicCredentials);
                 if (! newState.verifyEvidence(evidence)) {
-                    newState.realmIdentity.dispose();
+                    if (newState instanceof NameAssignedState) {
+                        ((NameAssignedState)newState).realmIdentity.dispose();
+                    }
                     return false;
                 }
                 if (! stateRef.compareAndSet(this, newState)) {
-                    newState.realmIdentity.dispose();
+                    if (newState instanceof NameAssignedState) {
+                        ((NameAssignedState)newState).realmIdentity.dispose();
+                    }
                     return stateRef.get().verifyEvidence(evidence);
                 }
                 return true;
@@ -1536,9 +1560,11 @@ public final class ServerAuthenticationContext {
         void setPrincipal(final Principal principal) throws RealmUnavailableException {
             Assert.checkNotNullParam("principal", principal);
             final AtomicReference<State> stateRef = getStateRef();
-            final NameAssignedState newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), principal, null, privateCredentials, publicCredentials);
+            final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), principal, null, privateCredentials, publicCredentials);
             if (! stateRef.compareAndSet(this, newState)) {
-                newState.realmIdentity.dispose();
+                if (newState instanceof NameAssignedState) {
+                    ((NameAssignedState)newState).realmIdentity.dispose();
+                }
                 stateRef.get().setPrincipal(principal);
             }
         }
@@ -1647,6 +1673,27 @@ public final class ServerAuthenticationContext {
             if (! stateRef.compareAndSet(this, newState)) {
                 stateRef.get().addPublicCredential(credential);
             }
+        }
+    }
+
+    final class InvalidNameState extends UnassignedState {
+
+        InvalidNameState(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials) {
+            super(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+        }
+
+        @Override
+        void fail() {
+            final AtomicReference<State> stateRef = getStateRef();
+            if (! stateRef.compareAndSet(this, FAILED)) {
+                // recurse & retry
+                stateRef.get().fail();
+            }
+        }
+
+        @Override
+        boolean isDone() {
+            return true;
         }
     }
 
@@ -2059,7 +2106,13 @@ public final class ServerAuthenticationContext {
                 ElytronMessages.log.trace("RunAs authorization succeed - the same identity");
                 return this;
             }
-            final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            final State state = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            if ( ! (state instanceof NameAssignedState)) {
+                ElytronMessages.log.tracef("RunAs authorization failed - unable to assign identity name");
+                return null;
+            }
+
+            final NameAssignedState nameAssignedState = (NameAssignedState) state;
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
