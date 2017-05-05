@@ -89,7 +89,7 @@ public interface ElytronToolMessages extends BasicLogger {
             "Each provider must be installed through java.security file.")
     String cmdLineOtherProvidersDesc();
 
-    @Message(id = NONE, value = "Create credential store [true/false]")
+    @Message(id = NONE, value = "Create credential store")
     String cmdLineCreateCredentialStoreDesc();
 
     @Message(id = NONE, value = "Credential store type")
@@ -213,10 +213,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "CLI command to add new credential store:%n")
     String cliCommandToNewCredentialStore();
 
-    @Message(id = NONE, value = "Bulk conversion with options listed in description file. All options have no default value and should be set in the file.%n" +
-                                "Each set of options must start with the \"keystore\" option in the following format:%n " +
-                                "keystore:<value>%nkeystore-password:<value>%nenc-dir:<value>%nsalt:<value>%niteration:<value>%nlocation:<value>%n" +
-                                "alias:<value.%nproperties:<parameter1>=<value1>; ... ;<parameterN>=<valueN>")
+    @Message(id = NONE, value = "Bulk conversion with parameters in description file")
     String cliCommandBulkVaultCredentialStoreConversion();
 
     @Message(id = NONE, value = "Print summary of conversion")
@@ -260,4 +257,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 17, value = "Option \"%s\" specified more than once. Only the first occurrence will be used.")
     String duplicateOptionSpecified(String option);
+
+    @Message(id = 18, value = "Option \"%s\" does not expect any arguments.")
+    MissingArgumentException noArgumentOption(String option);
 }
