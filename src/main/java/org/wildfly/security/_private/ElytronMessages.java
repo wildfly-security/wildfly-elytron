@@ -740,6 +740,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
     InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
 
+    @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
+    ConfigXMLParseException missingAlias(@Param Location location);
+
     /* util package */
 
     @Message(id = 3001, value = "Unexpected padding")

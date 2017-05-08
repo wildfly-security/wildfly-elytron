@@ -316,7 +316,7 @@
             <xsd:element name="credential-store" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
-        <xsd:attribute name="alias" type="xsd:string" use="required"/>
+        <xsd:attribute name="alias" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="credential-store-reference-type">

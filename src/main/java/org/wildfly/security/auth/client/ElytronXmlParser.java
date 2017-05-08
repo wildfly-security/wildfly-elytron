@@ -1300,9 +1300,6 @@ public final class ElytronXmlParser {
         if (keyStoreName == null) {
             throw missingAttribute(reader, "key-store-name");
         }
-        if (alias == null) {
-            throw missingAttribute(reader, "alias");
-        }
         ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> keyStoreCredential = null;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
@@ -1348,7 +1345,18 @@ public final class ElytronXmlParser {
                         } else {
                             protectionParameter = null;
                         }
-                        return keyStoreSupplier.get().getEntry(finalAlias, protectionParameter == null ? null : protectionParameter);
+                        if (finalAlias != null) {
+                            return keyStoreSupplier.get().getEntry(finalAlias, protectionParameter == null ? null : protectionParameter);
+                        } else {
+                            //  allow to retrieve entry without providing alias only if keystore includes one and only entry.
+                            if (keyStoreSupplier.get().size() > 1) {
+                                throw xmlLog.missingAlias(location);
+                            } else if (keyStoreSupplier.get().aliases().hasMoreElements()) {
+                                return keyStoreSupplier.get().getEntry(keyStoreSupplier.get().aliases().nextElement(), protectionParameter == null ? null : protectionParameter);
+                            } else {
+                                return null;
+                            }
+                        }
                     } catch (GeneralSecurityException e) {
                         throw xmlLog.xmlFailedToLoadKeyStoreData(location, e);
                     }
