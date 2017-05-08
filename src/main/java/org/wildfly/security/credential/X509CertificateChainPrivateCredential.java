@@ -47,9 +47,15 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
         if (! getFirstCertificate().getPublicKey().getAlgorithm().equals(privateKey.getAlgorithm())) {
             throw ElytronMessages.log.mismatchedPublicPrivateKeyAlgorithms();
         }
-        if (! KeyUtil.hasSameParameters(getFirstCertificate().getPublicKey(), privateKey)) {
-            throw ElytronMessages.log.mismatchedPublicPrivateKeyParameters();
-        }
+
+        /*
+         * Where keys from PKCS#11 are in use we can not guarantee to convert them to a comparable parameter spec
+         * which leads to the check below returning false - the most we can check is matching algorithms which are checked above.
+         */
+
+        //if (! KeyUtil.hasSameParameters(getFirstCertificate().getPublicKey(), privateKey)) {
+        //    throw ElytronMessages.log.mismatchedPublicPrivateKeyParameters();
+        //}
         this.privateKey = privateKey;
     }
 

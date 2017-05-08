@@ -1186,7 +1186,7 @@ public final class ElytronXmlParser {
                 switch (reader.getLocalName()) {
                     case "key-store-credential": {
                         // group 2
-                        if (! gotSource || gotCredential) {
+                        if (gotCredential) {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
@@ -1208,7 +1208,7 @@ public final class ElytronXmlParser {
                     }
                     case "key-store-clear-password": {
                         // group 2
-                        if (! gotSource || gotCredential) {
+                        if (gotCredential) {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
@@ -1218,7 +1218,7 @@ public final class ElytronXmlParser {
                     }
                     case "file": {
                         // group 1
-                        if (gotSource) {
+                        if (gotSource || gotCredential) {
                             throw reader.unexpectedElement();
                         }
                         gotSource = true;
@@ -1227,7 +1227,7 @@ public final class ElytronXmlParser {
                     }
                     case "resource": {
                         // group 1
-                        if (gotSource) {
+                        if (gotSource || gotCredential) {
                             throw reader.unexpectedElement();
                         }
                         gotSource = true;
@@ -1236,7 +1236,7 @@ public final class ElytronXmlParser {
                     }
                     case "uri": {
                         // group 1
-                        if (gotSource) {
+                        if (gotSource || gotCredential) {
                             throw reader.unexpectedElement();
                         }
                         gotSource = true;
@@ -1257,8 +1257,7 @@ public final class ElytronXmlParser {
                 } else if (uriSource != null) {
                     keyStoreFactory = new URILoadingKeyStoreFactory(keyStoreFactory, passwordFactory, uriSource, location);
                 } else {
-                    // not reachable
-                    throw new IllegalStateException();
+                    keyStoreFactory = new NullLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, location);
                 }
                 keyStoresMap.put(name, keyStoreFactory);
                 return;
@@ -2383,6 +2382,19 @@ public final class ElytronXmlParser {
         InputStream createStream() throws IOException {
             return uri.toURL().openStream();
         }
+    }
+
+    static final class NullLoadingKeyStoreFactory extends AbstractLoadingKeyStoreFactory {
+
+        NullLoadingKeyStoreFactory(final ExceptionSupplier<KeyStore, ConfigXMLParseException> delegateFactory, final ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory, final XMLLocation location) {
+            super(delegateFactory, passwordFactory, location);
+        }
+
+        @Override
+        InputStream createStream() throws IOException {
+            return null;
+        }
+
     }
 
     static final class PrivateKeyKeyStoreEntryCredentialFactory implements ExceptionSupplier<X509CertificateChainPrivateCredential, ConfigXMLParseException> {
