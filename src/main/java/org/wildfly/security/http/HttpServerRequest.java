@@ -92,7 +92,23 @@ public interface HttpServerRequest extends HttpServerScopes {
      *
      * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
      */
-    void authenticationInProgress(final HttpServerMechanismsResponder responder);
+    default void authenticationInProgress(final HttpServerMechanismsResponder responder) {
+        authenticationInProgress(responder, true);
+    }
+
+    /**
+     * <p>Notification that this mechanism has commenced but not completed authentication. Mechanisms can use this method
+     * to decide whether the challenge should be sent or not depending on the authentication requirements for the resource
+     * being requested. Mechanisms can use this method to allow access to non-protected resources.
+     *
+     * <p>For requests that require authentication, the behavior is exactly the same as {@link #authenticationInProgress(HttpServerMechanismsResponder)}.
+     *
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
+     * @param authenticationRequired if {@code true}, indicates an additional round trip to server is required, probably because
+     *                               the mechanisms is challenging the client. If {@code false}, the round trip is optional if
+     *                               the request does not require authentication.
+     */
+    void authenticationInProgress(final HttpServerMechanismsResponder responder, boolean authenticationRequired);
 
     /**
      * Notification that authentication is now complete.

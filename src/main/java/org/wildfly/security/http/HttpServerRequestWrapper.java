@@ -89,6 +89,11 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     }
 
     @Override
+    public void authenticationInProgress(HttpServerMechanismsResponder responder, boolean authenticationRequired) {
+        delegate.authenticationInProgress(responder, authenticationRequired);
+    }
+
+    @Override
     public void authenticationComplete(HttpServerMechanismsResponder responder) {
         delegate.authenticationComplete(responder);
     }
