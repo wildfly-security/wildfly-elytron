@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.spec.AlgorithmParameterSpec;
@@ -234,7 +236,12 @@ public class VaultCommand extends Command {
             throws Exception {
 
         final HashMap<String, String> vaultInitialOptions = new HashMap<>();
-        vaultInitialOptions.put("location", encryptionDirectory);
+        if (Files.exists(Paths.get(encryptionDirectory))) {
+            vaultInitialOptions.put("location", encryptionDirectory);
+        } else
+        {
+            throw ElytronToolMessages.msg.pathNotValid(encryptionDirectory);
+        }
         vaultInitialOptions.put("create", Boolean.FALSE.toString());
 
         CredentialStore vaultCredentialStore = getInstance(VaultCredentialStore.VAULT_CREDENTIAL_STORE);
