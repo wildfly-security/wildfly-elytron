@@ -49,11 +49,13 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -93,7 +95,9 @@ import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.permission.ElytronPermission;
+import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -109,6 +113,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     private final Path root;
     private final NameRewriter nameRewriter;
     private final int levels;
+    private final boolean encoded;
 
     private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
 
@@ -118,8 +123,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param root the root path of the identity store
      * @param nameRewriter the name rewriter to apply to looked up names
      * @param levels the number of levels of directory hashing to apply
+     * @param encoded whether identity names should by BASE32 encoded before using as filename
      */
-    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels) {
+    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(CREATE_SECURITY_REALM);
@@ -127,6 +133,18 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         this.root = root;
         this.nameRewriter = nameRewriter;
         this.levels = levels;
+        this.encoded = encoded;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param root the root path of the identity store
+     * @param nameRewriter the name rewriter to apply to looked up names
+     * @param levels the number of levels of directory hashing to apply
+     */
+    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels) {
+        this(root, nameRewriter, levels, true);
     }
 
     /**
@@ -136,7 +154,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param levels the number of levels of directory hashing to apply
      */
     public FileSystemSecurityRealm(final Path root, final int levels) {
-        this(root, NameRewriter.IDENTITY_REWRITER, levels);
+        this(root, NameRewriter.IDENTITY_REWRITER, levels, true);
     }
 
     /**
@@ -145,23 +163,50 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param root the root path of the identity store
      */
     public FileSystemSecurityRealm(final Path root) {
-        this(root, NameRewriter.IDENTITY_REWRITER, 2);
+        this(root, NameRewriter.IDENTITY_REWRITER, 2, true);
     }
 
-    private Path pathFor(final String name) {
+    private Path pathFor(String name) {
         assert name.codePointCount(0, name.length()) > 0;
-        final int levels = this.levels;
+        String normalizedName = name;
+
+        if (encoded) {
+            normalizedName = Normalizer.normalize(name, Normalizer.Form.NFKC)
+                    .toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9]", "_");
+        }
+
         Path path = root;
         int idx = 0;
         for (int level = 0; level < levels; level ++) {
-            int newIdx = name.offsetByCodePoints(idx, 1);
-            path = path.resolve(name.substring(idx, newIdx));
+            int newIdx = normalizedName.offsetByCodePoints(idx, 1);
+            path = path.resolve(normalizedName.substring(idx, newIdx));
             idx = newIdx;
-            if (idx == name.length()) {
+            if (idx == normalizedName.length()) {
                 break;
             }
         }
+
+        if (encoded) {
+            String base32 = ByteIterator.ofBytes(new ByteStringBuilder().append(name).toArray())
+                    .base32Encode(Alphabet.Base32Alphabet.STANDARD, false).drainToString();
+            name = normalizedName + "-" + base32;
+        }
+
         return path.resolve(name + ".xml");
+    }
+
+    private String nameFor(Path path) {
+        String fileName = path.toString();
+        fileName = fileName.substring(0, fileName.length() - 4); // remove ".xml"
+        if (encoded) {
+            CodePointIterator it = CodePointIterator.ofString(fileName);
+            it.delimitedBy('-').skipAll();
+            it.next(); // skip '-'
+            fileName = it.base32Decode(Alphabet.Base32Alphabet.STANDARD, false)
+                    .asUtf8String().drainToString();
+        }
+        return fileName;
     }
 
     public RealmIdentity getRealmIdentity(final Principal principal) {
@@ -224,8 +269,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
-                    final String fileName = path.getFileName().toString();
-                    return getRealmIdentityForUpdate(new NamePrincipal(fileName.substring(0, fileName.length() - 4)));
+                    final String name = nameFor(path.getFileName());
+                    return getRealmIdentityForUpdate(new NamePrincipal(name));
                 }
 
                 public void close() throws IOException {
