@@ -318,9 +318,9 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         sb.append(", ").append(NONCE).append("=\"").append(nonceManager.generateNonce(realmName.getBytes(StandardCharsets.UTF_8))).append("\"");
         sb.append(", ").append(OPAQUE).append("=\"").append(OPAQUE_VALUE).append("\"");
         if (stale) {
-            sb.append(", ").append(STALE).append("=\"true\"");
+            sb.append(", ").append(STALE).append("=true");
         }
-        sb.append(", ").append(ALGORITHM).append("=\"").append(MD5).append("\"");
+        sb.append(", ").append(ALGORITHM).append("=").append(MD5);
 
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setStatusCode(UNAUTHORIZED);
