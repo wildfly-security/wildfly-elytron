@@ -206,7 +206,9 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
 
     @Override
     public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
-        return data.keySet();
+        synchronized (data) {
+            return data.keySet();
+        }
     }
 
 }
