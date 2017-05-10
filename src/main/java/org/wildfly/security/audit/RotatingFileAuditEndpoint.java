@@ -50,7 +50,7 @@ public class RotatingFileAuditEndpoint extends FileAuditEndpoint {
 
     private String nextSuffix;
     private long nextRollover = Long.MAX_VALUE;
-    private volatile long currentSize = 0;
+    private long currentSize = 0;
 
     RotatingFileAuditEndpoint(Builder builder) throws IOException {
         super(builder);
