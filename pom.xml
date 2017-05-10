@@ -36,6 +36,7 @@
 
     <name>WildFly Elytron Tool</name>
     <description>Set of tools for WildFly Elytron</description>
+    <url>https://github.com/wildfly-security/wildfly-elytron-tool</url>
 
     <issueManagement>
         <system>Jira</system>
@@ -179,13 +180,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${version.jar.plugin}</version>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <mainClass>org.wildfly.security._private.Main</mainClass>
-                            </manifest>
-                        </archive>
-                    </configuration>
                 </plugin>
 
                 <!-- Javadoc -->
