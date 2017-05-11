@@ -225,7 +225,7 @@ public class VaultCommand extends Command {
     }
 
     private String convertedStoreName(String encryptionDirectory) {
-        return encryptionDirectory + (encryptionDirectory.isEmpty() ? "" : File.separator) + "converted-vault.cr-store";
+        return encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(File.separator) ? "" : File.separator) + "converted-vault.cr-store";
     }
 
     private void convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
