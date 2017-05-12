@@ -240,7 +240,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 if (authenticationId == null || authenticationId.length() == 0) {
                     authenticationId = defaultUser;
                 }
-                if (authenticationId == null) {
+                if (authenticationId == null || authenticationId.length() == 0) {
                     throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
                 }
                 if (authorizationId == null) {
