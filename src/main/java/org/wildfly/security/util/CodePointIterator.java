@@ -271,6 +271,17 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Skip all the remaining code points in this iterator.
+     * (Useful in combination with {@link #delimitedBy(int...)})
+     *
+     * @return the same code point iterator
+     */
+    public CodePointIterator skipAll() {
+        while (hasNext()) next();
+        return this;
+    }
+
+    /**
      * Drain all the remaining code points in this iterator to the given string builder,
      * inserting the given prefix and delimiter before and after every {@code n} code points,
      * respectively.
