@@ -154,6 +154,7 @@
             <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
             <xsd:element name="providers" type="providers-type" minOccurs="0"/>
+            <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-type" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
@@ -286,6 +287,11 @@
     <xsd:element name="abstract-sasl-factories" abstract="true"/>
     <xsd:element name="use-provider-sasl-factory" substitutionGroup="abstract-sasl-factories" type="empty-type" />
     <xsd:element name="use-service-loader-sasl-factory" substitutionGroup="abstract-sasl-factories" type="module-ref-type" />
+
+    <xsd:complexType name="certificate-revocation-list-type">
+        <xsd:attribute name="path" type="xsd:string" use="optional"/>
+        <xsd:attribute name="maximum-cert-path" type="xsd:positiveInteger" use="optional"/>
+    </xsd:complexType>
 
     <xsd:complexType name="key-stores-type">
         <xsd:sequence minOccurs="0" maxOccurs="unbounded">
