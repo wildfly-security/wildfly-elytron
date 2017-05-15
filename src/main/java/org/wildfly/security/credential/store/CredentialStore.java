@@ -26,6 +26,7 @@ import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.credential.Credential;
@@ -56,6 +57,18 @@ public class CredentialStore {
      * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
      */
     public static CredentialStore getInstance(String algorithm) throws NoSuchAlgorithmException {
+        return getInstance(algorithm, Security::getProviders);
+    }
+
+    /**
+     * Get a {@code CredentialStore} instance.  The returned CredentialStore object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @param providers supplier of provider instances to search.
+     * @return a {@code CredentialStore} instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     */
+    public static CredentialStore getInstance(String algorithm, Supplier<Provider[]> providers) throws NoSuchAlgorithmException {
         for (Provider provider : Security.getProviders()) {
             final Provider.Service service = provider.getService(CREDENTIAL_STORE_TYPE, algorithm);
             if (service != null) {
