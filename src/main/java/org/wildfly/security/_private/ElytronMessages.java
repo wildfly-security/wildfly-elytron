@@ -36,6 +36,7 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
@@ -1800,6 +1801,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9525, value = "location and externalPath initial attributes are the same. [location=%s, externalPath=%s]")
     CredentialStoreException locationAndExternalPathAreIdentical(String location, String externalPath);
+
+    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
+    CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
+
 
     /* X.500 exceptions */
 

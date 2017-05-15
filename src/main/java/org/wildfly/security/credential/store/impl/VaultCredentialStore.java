@@ -28,7 +28,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,6 +61,7 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
     public static final String VAULT_CREDENTIAL_STORE = "VaultCredentialStore";
 
     private static final String LOCATION = "location";
+    private static final List<String> validAttribtues = Arrays.asList(LOCATION);
 
     // synchronize all accesses, particularly during load/store
     private final Map<String, byte[]> data = new HashMap<>();
@@ -87,6 +90,7 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
         if (secretKey == null) {
             throw log.cannotAcquireCredentialFromStore(null);
         }
+        validateAttribute(attributes, validAttribtues);
         final String location = attributes.get(LOCATION);
         if (location != null) {
             final File locationFile = new File(location, "VAULT.dat");
