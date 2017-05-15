@@ -158,7 +158,7 @@ public class AnonymousTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useAnonymous());
 
 

@@ -414,7 +414,7 @@ public class LocalUserTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(expectedUsername)
                                 .useRealm("mainRealm")
                                 .allowSaslMechanisms(LOCAL_USER));

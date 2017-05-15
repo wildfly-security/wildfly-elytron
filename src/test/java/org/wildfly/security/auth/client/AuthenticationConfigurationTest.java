@@ -33,8 +33,8 @@ public final class AuthenticationConfigurationTest {
         AuthenticationConfiguration c1;
         AuthenticationConfiguration c2;
 
-        c1 = AuthenticationConfiguration.EMPTY.useName("name1").usePort(1234).useProtocol("abcd");
-        c2 = AuthenticationConfiguration.EMPTY.useName("name1").usePort(1234).useProtocol("abcd");
+        c1 = AuthenticationConfiguration.empty().useName("name1").usePort(1234).useProtocol("abcd");
+        c2 = AuthenticationConfiguration.empty().useName("name1").usePort(1234).useProtocol("abcd");
 
         assertEquals(c1, c2);
     }
@@ -44,8 +44,8 @@ public final class AuthenticationConfigurationTest {
         AuthenticationConfiguration c1;
         AuthenticationConfiguration c2;
 
-        c1 = AuthenticationConfiguration.EMPTY.useName("name1").usePort(1234).useProtocol("abcd").usePassword("abcd");
-        c2 = AuthenticationConfiguration.EMPTY.useName("name1").usePort(1234).useProtocol("abcd").usePassword("abcd");
+        c1 = AuthenticationConfiguration.empty().useName("name1").usePort(1234).useProtocol("abcd").usePassword("abcd");
+        c2 = AuthenticationConfiguration.empty().useName("name1").usePort(1234).useProtocol("abcd").usePassword("abcd");
 
         assertEquals(c1, c2);
     }
@@ -56,10 +56,10 @@ public final class AuthenticationConfigurationTest {
         AuthenticationConfiguration c1;
         AuthenticationConfiguration c2;
 
-        c1 = AuthenticationConfiguration.EMPTY.useName("name1").usePassword("password1").usePort(1234);
-        c2 = AuthenticationConfiguration.EMPTY.useName("name2").useProtocol("abcd").usePort(1234);
+        c1 = AuthenticationConfiguration.empty().useName("name1").usePassword("password1").usePort(1234);
+        c2 = AuthenticationConfiguration.empty().useName("name2").useProtocol("abcd").usePort(1234);
         assertEquals(
-            AuthenticationConfiguration.EMPTY.useName("name1").useCredentials(c1.getCredentialSource()).usePort(1234).useProtocol("abcd"),
+            AuthenticationConfiguration.empty().useName("name1").useCredentials(c1.getCredentialSource()).usePort(1234).useProtocol("abcd"),
             c2.with(c1)
         );
 

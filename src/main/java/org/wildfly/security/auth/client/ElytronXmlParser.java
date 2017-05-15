@@ -226,7 +226,7 @@ public final class ElytronXmlParser {
                 final AuthenticationContext context = config.getConfiguredAuthenticationContext();
                 if (context != null) return context;
             }
-            return AuthenticationContext.EMPTY;
+            return AuthenticationContext.empty();
         };
     }
 
@@ -636,9 +636,11 @@ public final class ElytronXmlParser {
         if (authenticationConfigurationsMap.containsKey(name)) {
             throw xmlLog.xmlDuplicateAuthenticationConfigurationName(name, reader);
         }
-        ExceptionUnaryOperator<AuthenticationConfiguration, ConfigXMLParseException> configuration = ignored -> AuthenticationConfiguration.EMPTY;
+
+        ExceptionUnaryOperator<AuthenticationConfiguration, ConfigXMLParseException> configuration = ignored -> AuthenticationConfiguration.empty();
         DeferredSupplier<Provider[]> providerSupplier = new DeferredSupplier<>(providers);
         configuration = andThenOp(configuration, parent -> parent.useProviders(providerSupplier));
+
         int foundBits = 0;
         if (! reader.hasNext()) {
             throw reader.unexpectedDocumentEnd();
@@ -779,7 +781,7 @@ public final class ElytronXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 final ExceptionUnaryOperator<AuthenticationConfiguration, ConfigXMLParseException> finalConfiguration = configuration;
-                authenticationConfigurationsMap.put(name, () -> finalConfiguration.apply(AuthenticationConfiguration.EMPTY));
+                authenticationConfigurationsMap.put(name, () -> finalConfiguration.apply(AuthenticationConfiguration.empty()));
                 return;
             } else {
                 throw reader.unexpectedContent();

@@ -563,7 +563,7 @@ public class EntityTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useKeyStoreCredential(loadKeyStore(keyStore), keyStoreAlias, new KeyStore.PasswordProtection(keyStorePassword))
                                 .useTrustManager(trustManager)
                                 .allowSaslMechanisms(mechanisms));
@@ -577,7 +577,7 @@ public class EntityTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useKeyManagerCredential(keyManager)
                                 .useTrustManager(trustManager)
                                 .allowSaslMechanisms(mechanisms));
@@ -591,7 +591,7 @@ public class EntityTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useCertificateCredential(privateKey, certificateChain)
                                 .useTrustManager(trustManager)
                                 .allowSaslMechanisms(mechanisms));

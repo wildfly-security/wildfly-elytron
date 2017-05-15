@@ -56,7 +56,7 @@ public class DigestCallbackHandlerUtils {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
                                 .useRealm(sentRealm)
