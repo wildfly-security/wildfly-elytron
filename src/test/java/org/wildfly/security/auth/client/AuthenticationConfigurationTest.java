@@ -63,5 +63,12 @@ public final class AuthenticationConfigurationTest {
             c2.with(c1)
         );
 
+        c1 = AuthenticationConfiguration.EMPTY.useName("name1").usePassword("password1");
+        c2 = AuthenticationConfiguration.EMPTY.usePort(1234);
+        assertEquals(
+                AuthenticationConfiguration.EMPTY.useName("name1").useCredentials(c1.getCredentialSource()).usePort(1234),
+                c1.with(c2)
+        );
+
     }
 }
