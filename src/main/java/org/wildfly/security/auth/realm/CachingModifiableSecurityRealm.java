@@ -29,7 +29,6 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.cache.RealmIdentityCache;
@@ -46,11 +45,12 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link ModifiableSecurityRealm} whose {@link RealmIdentity} should be cached
      * @param cache the {@link RealmIdentityCache} instance
+     * @param listening whether change listener should be registered
      */
-    public CachingModifiableSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
-        super(realm, cache);
+    public CachingModifiableSecurityRealm(ModifiableSecurityRealm realm, RealmIdentityCache cache, boolean listening) {
+        super(realm, cache, listening);
     }
 
     @Override
@@ -164,8 +164,6 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             private void executeAndInvalidate(ExceptionConsumer<ModifiableRealmIdentity, RealmUnavailableException> operation) throws RealmUnavailableException {
                 try {
                     operation.accept(modifiable);
-                } catch (RealmUnavailableException rue) {
-                    throw rue;
                 } finally {
                     removeFromCache(modifiable.getRealmIdentityPrincipal());
                 }

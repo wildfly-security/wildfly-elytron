@@ -172,10 +172,9 @@ public class SecurityRealmIdentityCacheTest {
 
             @Override
             public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-                return getEvidenceVerifySupport(evidenceType, algorithmName);
+                return realm.getEvidenceVerifySupport(evidenceType, algorithmName);
             }
-        }, cache) {
-        };
+        }, cache, true);
     }
 
     private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {

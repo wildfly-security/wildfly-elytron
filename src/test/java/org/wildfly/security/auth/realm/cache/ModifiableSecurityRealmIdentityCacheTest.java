@@ -176,7 +176,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
 
         addUser(realm, "joe", "User");
 
-        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(realm), createRealmIdentitySimpleJavaMapCache());
+        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(realm), createRealmIdentitySimpleJavaMapCache(), true);
     }
 
     private void addUser(ModifiableSecurityRealm realm, String userName, String roles) throws RealmUnavailableException {

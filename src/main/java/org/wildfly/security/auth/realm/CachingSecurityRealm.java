@@ -46,24 +46,27 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class CachingSecurityRealm implements SecurityRealm {
 
-    private final CacheableSecurityRealm realm;
+    private final SecurityRealm realm;
     private final RealmIdentityCache cache;
 
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached
      * @param cache the {@link RealmIdentityCache} instance
+     * @param listening whether change listener should be registered
      */
-    public CachingSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
+    public CachingSecurityRealm(SecurityRealm realm, RealmIdentityCache cache, boolean listening) {
         this.realm = checkNotNullParam("realm", realm);
         this.cache = checkNotNullParam("cache", cache);
 
-        if (realm instanceof CacheableSecurityRealm) {
-            CacheableSecurityRealm cacheable = CacheableSecurityRealm.class.cast(realm);
-            cacheable.registerIdentityChangeListener(this::removeFromCache);
-        } else {
-            throw ElytronMessages.log.realmCacheUnexpectedType(realm, CacheableSecurityRealm.class);
+        if (listening) {
+            if (realm instanceof CacheableSecurityRealm) {
+                CacheableSecurityRealm cacheable = CacheableSecurityRealm.class.cast(realm);
+                cacheable.registerIdentityChangeListener(this::removeFromCache);
+            } else {
+                throw ElytronMessages.log.realmCacheUnexpectedType(realm, CacheableSecurityRealm.class);
+            }
         }
     }
 
@@ -242,7 +245,7 @@ public class CachingSecurityRealm implements SecurityRealm {
         cache.clear();
     }
 
-    protected CacheableSecurityRealm getCacheableRealm() {
+    protected SecurityRealm getCacheableRealm() {
         return realm;
     }
 }

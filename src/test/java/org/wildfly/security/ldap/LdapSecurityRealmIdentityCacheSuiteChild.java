@@ -177,7 +177,7 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         if (credentialLoader) builder.userPasswordCredentialLoader().build();
         if (directVerification) builder.addDirectEvidenceVerification();
         return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(builder.build()),
-                createRealmIdentitySimpleJavaMapCache());
+                createRealmIdentitySimpleJavaMapCache(), true);
     }
 
     private class MockCacheableModifiableSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
