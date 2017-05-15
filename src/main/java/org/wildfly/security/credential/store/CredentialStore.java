@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.credential.store;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.NoSuchAlgorithmException;
@@ -69,7 +70,8 @@ public class CredentialStore {
      * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
      */
     public static CredentialStore getInstance(String algorithm, Supplier<Provider[]> providers) throws NoSuchAlgorithmException {
-        for (Provider provider : Security.getProviders()) {
+        checkNotNullParam("providers", providers);
+        for (Provider provider : providers.get()) {
             final Provider.Service service = provider.getService(CREDENTIAL_STORE_TYPE, algorithm);
             if (service != null) {
                 return new CredentialStore(provider, (CredentialStoreSpi) service.newInstance(null), algorithm);
@@ -89,6 +91,31 @@ public class CredentialStore {
      */
     public static CredentialStore getInstance(String algorithm, String providerName) throws NoSuchAlgorithmException, NoSuchProviderException {
         final Provider provider = Security.getProvider(providerName);
+        if (provider == null) throw new NoSuchProviderException(providerName);
+        return getInstance(algorithm, provider);
+    }
+
+    /**
+     * Get a {@code CredentialStore} instance.  The returned CredentialStore object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @param providerName the name of the provider to use
+     * @param providers supplier of provider instances to search
+     * @return a {@code CredentialStore} instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     * @throws NoSuchProviderException if given provider name cannot match any registered {@link Provider}
+     */
+    public static CredentialStore getInstance(String algorithm, String providerName, Supplier<Provider[]> providers) throws NoSuchAlgorithmException, NoSuchProviderException {
+        checkNotNullParam("algorithm", algorithm);
+        checkNotNullParam("providerName", providerName);
+        checkNotNullParam("providers", providers);
+        Provider provider = null;
+        for (Provider current : providers.get()) {
+            if (providerName.equals(current.getName())) {
+                provider = current;
+                break;
+            }
+        }
         if (provider == null) throw new NoSuchProviderException(providerName);
         return getInstance(algorithm, provider);
     }
