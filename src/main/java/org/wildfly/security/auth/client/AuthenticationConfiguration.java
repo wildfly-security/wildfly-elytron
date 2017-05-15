@@ -111,6 +111,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.x500.TrustedAuthority;
 
@@ -200,7 +201,7 @@ public final class AuthenticationConfiguration {
         this.userCallbackKinds = NO_CALLBACK_KINDS;
         this.credentialSource = IdentityCredentials.NONE;
         this.setPort = -1;
-        this.providerSupplier = null;
+        this.providerSupplier = ProviderUtil.aggregate(Security::getProviders, new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()));
         this.keyManagerFactory = null;
         this.saslMechanismSelector = null;
         this.principalRewriter = null;
