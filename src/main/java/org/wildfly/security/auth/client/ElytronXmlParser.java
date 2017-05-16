@@ -205,7 +205,7 @@ public final class ElytronXmlParser {
                 }
             }
         }
-        throw reader.unexpectedDocumentEnd();
+        return AuthenticationContext::empty;
     }
 
     private static SecurityFactory<AuthenticationContext> parseLegacyConfiguration() {
