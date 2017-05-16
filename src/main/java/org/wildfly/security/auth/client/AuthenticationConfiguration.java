@@ -320,7 +320,7 @@ public final class AuthenticationConfiguration {
         this.forwardSecurityDomain = getOrDefault(other.forwardSecurityDomain, original.forwardSecurityDomain);
         this.userCallbackHandler = getOrDefault(other.userCallbackHandler, original.userCallbackHandler);
         this.userCallbackKinds = getOrDefault(other.userCallbackKinds, original.userCallbackKinds);
-        this.credentialSource = getOrDefault(other.credentialSource, original.credentialSource);
+        this.credentialSource = other.credentialSource == IdentityCredentials.NONE ? original.credentialSource : other.credentialSource;
         this.setPort = getOrDefault(other.setPort, original.setPort);
         this.providerSupplier = getOrDefault(other.providerSupplier, original.providerSupplier);
         this.keyManagerFactory = getOrDefault(other.keyManagerFactory, original.keyManagerFactory);
