@@ -188,7 +188,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 } else {
                     externalPath = Paths.get(externalPathName);
                     if (externalPath.equals(location)) {
-                        throw log.locatonAndexternalPathAreIdentical(location.toString(), externalPath.toString());
+                        throw log.locationAndExternalPathAreIdentical(location.toString(), externalPath.toString());
                     }
                 }
             }
