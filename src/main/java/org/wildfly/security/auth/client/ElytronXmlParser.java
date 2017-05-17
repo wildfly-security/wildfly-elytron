@@ -609,7 +609,7 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 5)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 5);
                         final Map<String, String> mechanismProperties = parsePropertiesType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useMechanismProperties(mechanismProperties));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useMechanismProperties(mechanismProperties, true));
                         break;
                     }
                     case "allow-all-sasl-mechanisms": {
