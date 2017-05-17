@@ -269,4 +269,10 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm vault password: ")
     String vaultPasswordPromptConfirm();
+
+    @Message(id = NONE, value = "Mask secret: ")
+    String maskSecretPrompt();
+
+    @Message(id = NONE, value = "Confirm mask secret: ")
+    String maskSecretPromptConfirm();
 }

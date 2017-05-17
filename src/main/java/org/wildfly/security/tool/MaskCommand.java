@@ -96,8 +96,7 @@ class MaskCommand extends Command {
 
         String secret = cmdLine.getOptionValue(SECRET_PARAM);
         if (secret == null) {
-            setStatus(GENERAL_CONFIGURATION_ERROR);
-            throw ElytronToolMessages.msg.secretNotSpecified();
+            secret = prompt(false, ElytronToolMessages.msg.maskSecretPrompt(), true, ElytronToolMessages.msg.maskSecretPromptConfirm());
         }
 
         final String masked = computeMasked(secret, salt, iterationCount);
