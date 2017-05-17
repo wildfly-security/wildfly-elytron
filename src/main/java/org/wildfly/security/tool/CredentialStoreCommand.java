@@ -265,7 +265,7 @@ class CredentialStoreCommand extends Command {
             } else if (cmdLine.hasOption(ALIASES_PARAM)) {
                 com.append("/subsystem=elytron/credential-store=test:read-children-names(child-type=alias)");
             } else if (cmdLine.hasOption(CHECK_ALIAS_PARAM)) {
-                com.append("ls /subsystem=elytron/credential-store=test1/alias=");
+                com.append("ls /subsystem=elytron/credential-store=test/alias=");
                 com.append(cmdLine.getOptionValue(CHECK_ALIAS_PARAM));
             } else if ( cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM) ){
                 getCreateSummary(implProps, com, password);
