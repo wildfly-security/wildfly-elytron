@@ -23,6 +23,7 @@ import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
@@ -37,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
@@ -109,6 +111,7 @@ import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.ssl.X509CRLExtendedTrustManager;
 import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
@@ -393,6 +396,8 @@ public final class ElytronXmlParser {
         PrivateKeyKeyStoreEntryCredentialFactory credentialFactory = null;
         ExceptionSupplier<KeyStore, ConfigXMLParseException> trustStoreSupplier = null;
         DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
+        TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder();
+
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -437,6 +442,12 @@ public final class ElytronXmlParser {
                         trustStoreSupplier = parseTrustStoreRefType(reader, keyStoresMap);
                         break;
                     }
+                    case "certificate-revocation-list": {
+                        if (isSet(foundBits, 6)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 6);
+                        parseCertificateRevocationList(reader, trustManagerBuilder);
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag != END_ELEMENT) {
@@ -466,8 +477,12 @@ public final class ElytronXmlParser {
                         sslContextBuilder.setKeyManager(builder.build());
                     }
                     if (finalTrustStoreSupplier != null) {
-                        KeyStore trustStore = finalTrustStoreSupplier.get();
-                        sslContextBuilder.setTrustManager(createX509TrustManager(trustStore));
+                        trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
+                        try {
+                            sslContextBuilder.setTrustManager(trustManagerBuilder.build());
+                        } catch (GeneralSecurityException e) {
+                            throw new ConfigXMLParseException(e);
+                        }
                     }
                     sslContextBuilder.setProviderName(finalProviderName);
                     sslContextBuilder.setProviderSupplier(finalProvidersSupplier);
@@ -480,19 +495,85 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    private static X509TrustManager createX509TrustManager(KeyStore keyStore) throws ConfigXMLParseException {
-        try {
+    private static class TrustManagerBuilder {
+        KeyStore trustStore;
+        boolean crl = false;
+        InputStream crlStream = null;
+        int maxCertPath = 5;
+
+        void setTrustStore(KeyStore trustStore) {
+            checkNotNullParam("trustStore", trustStore);
+            this.trustStore = trustStore;
+        }
+
+        void setCrl() {
+            this.crl = true;
+        }
+
+        void setCrlStream(InputStream crlStream) {
+            this.crlStream = crlStream;
+        }
+
+        void setMaxCertPath(int maxCertPath) {
+            checkMinimumParameter("maxCertPath", 1, maxCertPath);
+            this.maxCertPath = maxCertPath;
+        }
+
+        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException {
             final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(keyStore);
+            trustManagerFactory.init(trustStore);
+            if (crl) {
+                return new X509CRLExtendedTrustManager(trustStore, trustManagerFactory, crlStream, maxCertPath, null);
+            }
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
                 if (trustManager instanceof X509TrustManager) {
                     return (X509TrustManager) trustManager;
                 }
             }
             throw ElytronMessages.log.noDefaultTrustManager();
-        } catch (GeneralSecurityException e) {
-            throw new ConfigXMLParseException(e);
         }
+    }
+
+    private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String path = null;
+        int maxCertPath = 0;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "path": {
+                    if (path != null) throw reader.unexpectedAttribute(i);
+                    path = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "maximum-cert-path": {
+                    if (maxCertPath != 0) throw reader.unexpectedAttribute(i);
+                    maxCertPath = reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                builder.setCrl();
+                if (path != null) {
+                    try {
+                        builder.setCrlStream(new FileInputStream(path));
+                    } catch (FileNotFoundException e) {
+                        throw new ConfigXMLParseException(e);
+                    }
+                }
+                if (maxCertPath != 0) builder.setMaxCertPath(maxCertPath);
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
     }
 
     static ExceptionUnaryOperator<RuleNode<SecurityFactory<SSLContext>>, ConfigXMLParseException> parseSslContextRuleType(final ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<SecurityFactory<SSLContext>, ConfigXMLParseException>> sslContextsMap) throws ConfigXMLParseException {

@@ -25,6 +25,7 @@
             </key-store>
             <key-store name="ladybird" type="JKS">
                 <file name="target/test-classes/ca/jks/ladybird.keystore"/>
+                <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>
         <ssl-contexts>
