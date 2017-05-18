@@ -1021,19 +1021,19 @@ public final class ServerAuthenticationContext {
         final Principal preRealmPrincipal = rewriteAll(originalPrincipal, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
         if (preRealmPrincipal == null) {
             log.tracef("Unable to rewrite principal [%s] by pre-realm rewritters", originalPrincipal);
-            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
         }
         String realmName = mapAll(preRealmPrincipal, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         final Principal postRealmPrincipal = rewriteAll(preRealmPrincipal, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         if (postRealmPrincipal == null) {
             log.tracef("Unable to rewrite principal [%s] by post-realm rewritters", preRealmPrincipal);
-            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
         }
         final Principal finalPrincipal = rewriteAll(postRealmPrincipal, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getPrincipalRewriter());
         if (finalPrincipal == null) {
             log.tracef("Unable to rewrite principal [%s] by final rewritters", postRealmPrincipal);
-            return new InvalidNameState(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
         }
 
         log.tracef("Principal assigning: [%s], pre-realm rewritten: [%s], realm name: [%s], post-realm rewritten: [%s], realm rewritten: [%s]",
@@ -1693,8 +1693,16 @@ public final class ServerAuthenticationContext {
 
     final class InvalidNameState extends UnassignedState {
 
-        InvalidNameState(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials) {
+        final MechanismRealmConfiguration mechanismRealmConfiguration;
+
+        InvalidNameState(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, final IdentityCredentials privateCredentials, final IdentityCredentials publicCredentials) {
             super(capturedIdentity, mechanismConfiguration, privateCredentials, publicCredentials);
+            this.mechanismRealmConfiguration = mechanismRealmConfiguration;
+        }
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            return mechanismRealmConfiguration;
         }
 
         @Override
