@@ -95,16 +95,17 @@
             </xsd:documentation>
         </xsd:annotation>
 
-        <xsd:all minOccurs="1" maxOccurs="1">
+        <xsd:all minOccurs="0" maxOccurs="1">
             <xsd:element name="attributes" type="attributes-type"/>
             <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
+            <xsd:element name="providers" type="providers-type" />
         </xsd:all>
 
         <xsd:attribute name="name" type="xsd:string" use="required" />
-        <xsd:attribute name="type" type="xsd:string" use="optional">
+        <xsd:attribute name="type" type="xsd:string" default="KeyStoreCredentialStore" use="optional">
             <xsd:annotation>
                 <xsd:documentation>
-                    The credential store type, e.g. KeyStorePasswordStore.
+                    The credential store type, e.g. KeyStoreCredentialStore.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -134,6 +135,7 @@
             <xsd:element name="net-authenticator" type="empty-type" minOccurs="0"/>
             <xsd:element name="ssl-context-rules" type="ssl-context-rules-type" minOccurs="0"/>
             <xsd:element name="ssl-contexts" type="ssl-contexts-type" minOccurs="0"/>
+            <xsd:element name="providers" type="providers-type" minOccurs="0"/>
         </xsd:all>
     </xsd:complexType>
 
@@ -151,7 +153,7 @@
             <xsd:element name="cipher-suite" type="selector-type" minOccurs="0"/>
             <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
-            <xsd:element ref="abstract-providers" minOccurs="0"/>
+            <xsd:element name="providers" type="providers-type" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
@@ -210,7 +212,7 @@
             <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
             <xsd:element name="credentials" type="client-credentials-type" minOccurs="0"/>
             <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
-            <xsd:element ref="abstract-providers" minOccurs="0"/>
+            <xsd:element name="providers" type="providers-type" minOccurs="0" />
             <xsd:element ref="abstract-sasl-factories" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -274,9 +276,12 @@
     <xsd:element name="set-user-name" substitutionGroup="abstract-user-spec" type="name-type" />
     <xsd:element name="set-anonymous" substitutionGroup="abstract-user-spec" type="empty-type" />
 
-    <xsd:element name="abstract-providers" abstract="true"/>
-    <xsd:element name="use-system-providers" substitutionGroup="abstract-providers" type="empty-type"/>
-    <xsd:element name="use-service-loader-providers" substitutionGroup="abstract-providers" type="module-ref-type"/>
+    <xsd:complexType name="providers-type">
+        <xsd:all minOccurs="0">
+            <xsd:element name="global" type="empty-type" />
+            <xsd:element name="use-service-loader" type="module-ref-type" />
+        </xsd:all>
+    </xsd:complexType>   
 
     <xsd:element name="abstract-sasl-factories" abstract="true"/>
     <xsd:element name="use-provider-sasl-factory" substitutionGroup="abstract-sasl-factories" type="empty-type" />

@@ -111,6 +111,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.x500.TrustedAuthority;
 
@@ -200,14 +201,14 @@ public final class AuthenticationConfiguration {
         this.userCallbackKinds = NO_CALLBACK_KINDS;
         this.credentialSource = IdentityCredentials.NONE;
         this.setPort = -1;
-        this.providerSupplier = null;
+        this.providerSupplier = ProviderUtil.aggregate(Security::getProviders, new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()));
         this.keyManagerFactory = null;
         this.saslMechanismSelector = null;
         this.principalRewriter = null;
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
         this.trustManagerFactory = null;
-        this.mechanismProperties = Collections.emptyMap();
+        this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.kerberosSecurityFactory = null;
     }
@@ -993,13 +994,32 @@ public final class AuthenticationConfiguration {
      * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
      * the {@code SaslClientFactory} when the mechanism is created.
      *
+     * Existing properties defined on this authentication context will be retained unless overridden by new properties, any
+     * properties resulting with a value of {@code null} will be removed.
+     *
      * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
      * @return the new configuration.
      */
     public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
-        if (mechanismProperties == null || mechanismProperties.isEmpty()) return this;
-        final HashMap<String, Object> newMap = new HashMap<>(mechanismProperties);
-        newMap.putAll(this.mechanismProperties);
+        return useMechanismProperties(mechanismProperties, false);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
+     * the {@code SaslClientFactory} when the mechanism is created.
+     *
+     * If exclusive the existing properties will be discarded and replaced with the new properties otherwise existing properties
+     * defined on this authentication context will be retained unless overridden by new properties, any properties resulting
+     * with a value of {@code null} will be removed.
+     *
+     * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
+     * @param exclusive should the provided properties be used exclusively or merged with the existing properties?
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties, boolean exclusive) {
+        if (!exclusive && (mechanismProperties == null || mechanismProperties.isEmpty())) return this;
+        final HashMap<String, Object> newMap = exclusive ? new HashMap<>() : new HashMap<>(this.mechanismProperties);
+        newMap.putAll(mechanismProperties);
         newMap.values().removeIf(Objects::isNull);
         return new AuthenticationConfiguration(this, SET_MECH_PROPS, optimizeMap(newMap));
     }

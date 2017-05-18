@@ -19,6 +19,7 @@
 package org.wildfly.security.util;
 
 import java.security.Provider;
+import java.util.ArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -110,5 +111,47 @@ public final class ProviderUtil {
             }
         }
         return null;
+    }
+
+    /**
+     * Create a {@link Supplier} of providers that is an aggregation of the result of multiple suppliers.
+     *
+     * The aggregation will be performed the first time the supplier is called and the results cached.
+     *
+     * @param suppliers the suppliers to aggregate.
+     * @return A supplier which will return an aggregation of all of the suppliers.
+     */
+    public static Supplier<Provider[]> aggregate(final Supplier<Provider[]>... suppliers) {
+        Assert.checkNotNullParam("suppliers", suppliers);
+
+        return new Supplier<Provider[]>() {
+
+            private volatile Provider[] result = null;
+
+            @Override
+            public Provider[] get() {
+                if (result == null) {
+                    synchronized (suppliers) {
+                        if (result == null) {
+                            ArrayList<Provider[]> resolvedProviders = new ArrayList<>(suppliers.length);
+                            int count = 0;
+                            for (Supplier<Provider[]> current : suppliers) {
+                                Provider[] resolved = current.get();
+                                count += resolved.length;
+                                resolvedProviders.add(resolved);
+                            }
+                            Provider[] tempResult = new Provider[count];
+                            count = 0;
+                            for (Provider[] p : resolvedProviders) {
+                                System.arraycopy(p, 0, tempResult, (count += p.length) - p.length, p.length);
+                            }
+                            result = tempResult;
+                        }
+                    }
+                }
+                return result.clone();
+            }
+        };
+
     }
 }

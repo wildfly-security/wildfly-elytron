@@ -46,6 +46,7 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.x500.X500;
 
 /**
  * Extension to the {@link X509TrustManager} interface to support CRL verification.
@@ -97,7 +98,11 @@ public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager 
             throw ElytronMessages.log.sslErrorCreatingTrustManager(getClass().getName(), e);
         }
 
-        this.acceptedIssuers = acceptedIssuers;
+        if (acceptedIssuers != null) {
+            this.acceptedIssuers = acceptedIssuers;
+        } else {
+            this.acceptedIssuers = X500.NO_CERTIFICATES;
+        }
     }
 
     /**
