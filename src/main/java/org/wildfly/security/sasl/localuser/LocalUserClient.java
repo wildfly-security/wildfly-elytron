@@ -109,8 +109,8 @@ public final class LocalUserClient extends AbstractSaslClient {
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;
                 if (quietAuth == false) {
-                    final NameCallback nameCallback = authenticationId != null ? new OptionalNameCallback("User name",
-                            authenticationId) : new OptionalNameCallback("User name");
+                    final NameCallback nameCallback = authenticationId != null && authenticationId.length() != 0 ?
+                            new OptionalNameCallback("User name", authenticationId) : new OptionalNameCallback("User name");
                     final RealmCallback realmCallback = new RealmCallback("User realm");
                     handleCallbacks(nameCallback, realmCallback);
                     authenticationId = nameCallback.getName();

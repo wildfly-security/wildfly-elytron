@@ -105,7 +105,8 @@ public final class ScramClient {
      * @throws AuthenticationMechanismException if the client authentication failed for some reason
      */
     public ScramInitialClientMessage getInitialResponse() throws AuthenticationMechanismException {
-        final NameCallback nameCallback = authorizationId == null ? new NameCallback("User name") : new NameCallback("User name", authorizationId);
+        final NameCallback nameCallback = authorizationId == null || authorizationId.length() == 0 ?
+                new NameCallback("User name") : new NameCallback("User name", authorizationId);
         try {
             MechanismUtil.handleCallbacks(mechanism.toString(), callbackHandler, nameCallback);
         } catch (UnsupportedCallbackException e) {
