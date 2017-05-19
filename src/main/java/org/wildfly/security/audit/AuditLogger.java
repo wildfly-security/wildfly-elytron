@@ -49,15 +49,19 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
 
     @Override
     public void accept(SecurityEvent t) {
-        EventPriority priority = priorityMapper.apply(t);
-        if (priority == EventPriority.OFF)
-            return;
-
-        String formatted = messageFormatter.apply(t);
         try {
-            auditEndpoint.accept(priority, formatted);
+            EventPriority priority = priorityMapper.apply(t);
+            if (priority == EventPriority.OFF)
+                return;
+
+            String formatted = messageFormatter.apply(t);
+            try {
+                auditEndpoint.accept(priority, formatted);
+            } catch (Throwable throwable) {
+                audit.endpointUnavaiable(priority.toString(), formatted, throwable);
+            }
         } catch (Throwable throwable) {
-            audit.endpointUnavaiable(priority.toString(), formatted, throwable);
+            audit.unableToAcceptEvent(throwable);
         }
     }
 

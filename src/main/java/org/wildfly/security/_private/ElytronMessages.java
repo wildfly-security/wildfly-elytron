@@ -1870,4 +1870,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
 
+    @LogMessage(level = Logger.Level.FATAL)
+    @Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")
+    void unableToAcceptEvent(@Cause Throwable cause);
+
 }
