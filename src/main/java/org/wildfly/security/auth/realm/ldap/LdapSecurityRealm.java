@@ -847,7 +847,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     try {
                         attributesEnum.close();
                     } catch (NamingException e) {
-                        log.trace(e);
+                        log.trace("Unable to close attributesEnum", e);
                     }
                 }
             }
@@ -1117,7 +1117,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                             try {
                                 result.close();
                             } catch (NamingException ex) {
-                                log.trace(ex);
+                                log.trace("Unable to close result", ex);
                             }
                             throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, Arrays.toString(filterArgs), e);
                         }
@@ -1127,12 +1127,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                         try {
                             result.close();
                         } catch (NamingException e) {
-                            log.trace(e);
+                            log.trace("Unable to close result", e);
                         }
                     }
                 });
             } catch (NameNotFoundException e) {
-                log.trace(e);
+                log.trace("Error searching", e);
                 return Stream.empty();
             } catch (Exception e) {
                 throw log.ldapRealmIdentitySearchFailed(e);

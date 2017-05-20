@@ -88,7 +88,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         try {
             if (c != null) c.close();
         } catch (Exception e) {
-            audit.trace(e);
+            audit.trace("Unable to close", e);
         }
     }
 

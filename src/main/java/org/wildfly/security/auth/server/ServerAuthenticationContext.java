@@ -806,7 +806,7 @@ public final class ServerAuthenticationContext {
                                 final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
                                 clearPasswordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                             } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                                log.trace(e);
+                                log.trace("Unable to get key spec", e);
                                 throw new FastUnsupportedCallbackException(callback);
                             }
                             log.tracef("Handling PasswordCallback: obtained successfully");
@@ -882,7 +882,7 @@ public final class ServerAuthenticationContext {
                         X509Certificate[] x509Certificates = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
                         verifyEvidence(new X509PeerCertificateChainEvidence(x509Certificates));
                     } catch (SSLPeerUnverifiedException e) {
-                        log.trace(e);
+                        log.trace("Peer unverified", e);
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
