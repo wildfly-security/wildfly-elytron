@@ -1483,7 +1483,7 @@ public interface ElytronMessages extends BasicLogger {
     HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);
 
     @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
-    IllegalStateException digestMechanismRequireRealm();
+    HttpAuthenticationException digestMechanismRequireRealm();
 
     @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
     HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
@@ -1495,7 +1495,7 @@ public interface ElytronMessages extends BasicLogger {
     HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
 
     @Message(id = 6019, value = "Unable to authenticate using DIGEST mechanism - mechanism realm name (%s) is not valid")
-    IllegalStateException digestMechanismInvalidRealm(String realm);
+    HttpAuthenticationException digestMechanismInvalidRealm(String realm);
 
     /* asn1 package */
 
