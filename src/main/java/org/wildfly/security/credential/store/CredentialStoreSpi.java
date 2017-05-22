@@ -17,8 +17,11 @@
  */
 package org.wildfly.security.credential.store;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -143,5 +146,19 @@ public abstract class CredentialStoreSpi {
      */
     public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Validate given attributes in credential store implementation.
+     *
+     * @param attributes attributes to used to pass information to credential store service.
+     * @param validAttributes valid attributes based on credential store implementation.
+     * @throws CredentialStoreException if validation fails
+     */
+    public void validateAttribute(Map<String, String> attributes, List<String> validAttributes) throws CredentialStoreException {
+        for (String attr : attributes.keySet()) {
+            if (!validAttributes.contains(attr))
+                throw log.unsupportedAttribute(attr, validAttributes);
+        }
     }
 }

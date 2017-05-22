@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -151,6 +152,17 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     public static final String KEY_STORE_CREDENTIAL_STORE = KeyStoreCredentialStore.class.getSimpleName();
 
     private static final String X_509 = "X.509";
+    private static final String CREATE = "create";
+    private static final String CRYPTOALG = "cryptoAlg";
+    private static final String EXTERNAL = "external";
+    private static final String EXTERNALPATH = "externalPath";
+    private static final String KEYALIAS = "keyAlias";
+    private static final String KEYSTORETYPE = "keyStoreType";
+    private static final String LOCATION = "location";
+    private static final String MODIFIABLE = "modifiable";
+
+    private static final List<String> validAttribtues = Arrays.asList(CREATE, CRYPTOALG, EXTERNAL, EXTERNALPATH, KEYALIAS,
+            KEYSTORETYPE, LOCATION, MODIFIABLE);
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final HashMap<String, TopEntry> cache = new HashMap<>();
@@ -171,17 +183,18 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             if (protectionParameter == null) {
                 throw log.protectionParameterRequired();
             }
+            validateAttribute(attributes, validAttribtues);
             cache.clear();
             this.protectionParameter = protectionParameter;
-            modifiable = Boolean.parseBoolean(attributes.getOrDefault("modifiable", "true"));
-            create = Boolean.parseBoolean(attributes.getOrDefault("create", "false"));
-            final String locationName = attributes.get("location");
+            modifiable = Boolean.parseBoolean(attributes.getOrDefault(MODIFIABLE, "true"));
+            create = Boolean.parseBoolean(attributes.getOrDefault(CREATE, "false"));
+            final String locationName = attributes.get(LOCATION);
             location = locationName == null ? null : Paths.get(locationName);
             this.providers = providers;
-            String keyStoreType = attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType());
-            useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault("external", "false"));
+            String keyStoreType = attributes.getOrDefault(KEYSTORETYPE, KeyStore.getDefaultType());
+            useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault(EXTERNAL, "false"));
             if (useExternalStorage) {
-                final String externalPathName = attributes.get("externalPath");
+                final String externalPathName = attributes.get(EXTERNALPATH);
                 if (externalPathName == null) {
                     externalPath = location;
                     location = null;
@@ -192,8 +205,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     }
                 }
             }
-            encryptionKeyAlias = attributes.getOrDefault("keyAlias", "cs_key");
-            cryptographicAlgorithm = attributes.get("cryptoAlg");
+            encryptionKeyAlias = attributes.getOrDefault(KEYALIAS, "cs_key");
+            cryptographicAlgorithm = attributes.get(CRYPTOALG);
             load(keyStoreType);
             initialized = true;
         }
