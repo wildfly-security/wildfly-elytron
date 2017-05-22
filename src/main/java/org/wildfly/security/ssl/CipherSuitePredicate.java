@@ -42,7 +42,10 @@ public abstract class CipherSuitePredicate {
     private static final CipherSuitePredicate OPENSSL_COMPLEMENT_OF_ALL = matchEncryption(Encryption.NULL);
     private static final CipherSuitePredicate OPENSSL_DEFAULT_DELETES = matchAny(
         matchAuthentication(Authentication.NULL),
-        matchEncryption(Encryption.NULL)
+        matchEncryption(Encryption.NULL),
+        matchExport(),
+        matchLevel(SecurityLevel.LOW),
+        matchProtocol(Protocol.SSLv2)
     );
     private static final CipherSuitePredicate OPENSSL_COMPLEMENT_OF_DEFAULT = matchAll(
         matchAuthentication(Authentication.NULL),
