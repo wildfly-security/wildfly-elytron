@@ -156,7 +156,16 @@ public final class AuthenticationConfiguration {
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
      * remapping of any kind, and always uses an anonymous principal.
      */
+    @Deprecated
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration();
+
+    /**
+     * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
+     * remapping of any kind, and always uses an anonymous principal.
+     */
+    public static AuthenticationConfiguration empty() {
+        return EMPTY;
+    }
 
     private SaslClientFactory saslClientFactory = null;
     private int hashCode;

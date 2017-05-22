@@ -260,7 +260,7 @@ public class PlainTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
                                 .allowSaslMechanisms(PLAIN));

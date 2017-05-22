@@ -29,13 +29,13 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 public final class AuthenticationContextTest {
 
     private final AuthenticationConfiguration config1
-            = AuthenticationConfiguration.EMPTY.useName("name1").usePort(1111).useProtocol("protocol1").usePassword("password1");
+            = AuthenticationConfiguration.empty().useName("name1").usePort(1111).useProtocol("protocol1").usePassword("password1");
     private final AuthenticationConfiguration config2
-            = AuthenticationConfiguration.EMPTY.useName("name2").usePort(2222).useProtocol("protocol2").usePassword("password2");
+            = AuthenticationConfiguration.empty().useName("name2").usePort(2222).useProtocol("protocol2").usePassword("password2");
     private final AuthenticationConfiguration config3
-            = AuthenticationConfiguration.EMPTY.useName("name3").usePort(3333).useProtocol("protocol3").usePassword("password3");
+            = AuthenticationConfiguration.empty().useName("name3").usePort(3333).useProtocol("protocol3").usePassword("password3");
     private final AuthenticationConfiguration config4
-            = AuthenticationConfiguration.EMPTY.useName("name4").usePort(4444).useProtocol("protocol4").usePassword("password4");
+            = AuthenticationConfiguration.empty().useName("name4").usePort(4444).useProtocol("protocol4").usePassword("password4");
 
     private final SecurityFactory<SSLContext> ssl1 = new SSLContextBuilder().setSessionTimeout(1).build();
     private final SecurityFactory<SSLContext> ssl2 = new SSLContextBuilder().setSessionTimeout(2).build();

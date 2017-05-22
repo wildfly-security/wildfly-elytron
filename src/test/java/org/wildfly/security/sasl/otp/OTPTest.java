@@ -984,7 +984,7 @@ public class OTPTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
@@ -999,7 +999,7 @@ public class OTPTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
@@ -1025,7 +1025,7 @@ public class OTPTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)

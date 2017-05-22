@@ -36,7 +36,7 @@ class ScramCallbackHandlerUtils {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
                                 .allowSaslMechanisms("SCRAM-SHA-256"));
@@ -49,7 +49,7 @@ class ScramCallbackHandlerUtils {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
                                 .allowSaslMechanisms("SCRAM-SHA-256"));

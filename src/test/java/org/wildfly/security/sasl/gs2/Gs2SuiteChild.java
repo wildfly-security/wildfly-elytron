@@ -624,7 +624,7 @@ public class Gs2SuiteChild extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useAuthorizationName(authorizationId)
                                 .useGSSCredential(credential)
                                 .allowSaslMechanisms(mechanisms));

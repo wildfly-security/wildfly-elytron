@@ -941,7 +941,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
                                 .useRealm(realm)
@@ -967,7 +967,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
-                        AuthenticationConfiguration.EMPTY
+                        AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .useCredentialStoreEntry(cs, alias)
                                 .useRealm(realm)

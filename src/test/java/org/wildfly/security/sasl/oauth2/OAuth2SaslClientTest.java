@@ -279,7 +279,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
     @Test
     public void testResourceOwnerCredentialsUsingAPI() throws Exception {
         AuthenticationContext context = AuthenticationContext.empty()
-                .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.EMPTY
+                .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.empty()
                         .useCredentials(OAuth2CredentialSource.builder(new URL("http://localhost:50831/token"))
                                 .clientCredentials("elytron-client", "dont_tell_me")
                                 .useResourceOwnerPassword("alice", "dont_tell_me")
@@ -310,13 +310,13 @@ public class OAuth2SaslClientTest extends BaseTestCase {
     @Test
     public void failedResourceOwnerCredentialsUsingAPI() throws Exception {
         AuthenticationContext context = AuthenticationContext.empty()
-                .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.EMPTY
+                .with(MatchRule.ALL.matchHost("resourceserver.com"), AuthenticationConfiguration.empty()
                         .useCredentials(OAuth2CredentialSource.builder(new URL("http://localhost:50831/token"))
                                 .useResourceOwnerPassword("unknown", "dont_tell_me")
                                 .clientCredentials("bad", "bad")
                                 .build())
                         .allowSaslMechanisms("OAUTHBEARER"))
-                .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.EMPTY
+                .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.empty()
                         .useName("elytron_client")
                         .usePassword("dont_tell_me"));
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
@@ -362,7 +362,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                 .build();
 
 
-        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.EMPTY.useCallbackHandler(new CallbackHandler() {
+        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.empty().useCallbackHandler(new CallbackHandler() {
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
@@ -413,7 +413,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                 .build();
 
 
-        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.EMPTY.useCallbackHandler(new CallbackHandler() {
+        AuthenticationContext externalContext = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), AuthenticationConfiguration.empty().useCallbackHandler(new CallbackHandler() {
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
