@@ -350,7 +350,7 @@ public abstract class CipherSuiteSelector {
      *             <li>The special {@code ALL} keyword, which includes all cipher suites (except for encryptionless
      *                  suites; in other words, this keyword implies {@code -eNULL}).</li>
      *             <li>The special {@code COMPLEMENTOFALL} keyword, which is presently equivalent to {@code eNULL}.</li>
-     *             <li>The special {@code DEFAULT} keyword, which is equivalent to {@code ALL:!aNULL:!eNULL}.</li>
+     *             <li>The special {@code DEFAULT} keyword, which is equivalent to {@code ALL:!EXPORT:!LOW:!aNULL:!eNULL:!SSLv2}.</li>
      *             <li>The special {@code COMPLEMENTOFDEFAULT} keyword, which presently includes any anonymous cipher
      *                  suites (but excludes those without encryption, which must always be enabled manually).</li>
      *             <li>The special {@code @STRENGTH} keyword, which causes all the mechanisms enabled thus far to be
