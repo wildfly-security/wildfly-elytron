@@ -53,6 +53,7 @@ import java.util.function.UnaryOperator;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.ChoiceCallback;
@@ -110,6 +111,7 @@ import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
+import org.wildfly.security.sasl.util.SubjectSaslClientFactory;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
@@ -151,6 +153,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_ACCESS_CTXT = 18;
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_KRB_SEC_FAC = 20;
+    private static final int SET_SUBJECT = 21;
 
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
@@ -192,6 +195,7 @@ public final class AuthenticationConfiguration {
     final Map<String, ?> mechanismProperties;
     final Predicate<Callback> callbackIntercept;
     final SecurityFactory<Credential> kerberosSecurityFactory;
+    final Subject subject;
 
     // constructors
 
@@ -220,6 +224,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.kerberosSecurityFactory = null;
+        this.subject = null;
     }
 
     /**
@@ -253,6 +258,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what == SET_MECH_PROPS ? (Map<String, ?>) value : original.mechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.kerberosSecurityFactory = what == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value : original.kerberosSecurityFactory;
+        this.subject = what == SET_SUBJECT ? (Subject) value : original.subject;
         sanitazeOnMutation(what);
     }
 
@@ -289,6 +295,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what1 == SET_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_MECH_PROPS ? (Map<String, ?>) value2 : original.mechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.kerberosSecurityFactory = what1 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value1 : what2 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value2 : original.kerberosSecurityFactory;
+        this.subject = what1 == SET_SUBJECT ? (Subject) value1 : what2 == SET_SUBJECT ? (Subject) value2 : original.subject;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
     }
@@ -321,6 +328,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = original.mechanismProperties;
         this.callbackIntercept = original.callbackIntercept;
         this.kerberosSecurityFactory = original.kerberosSecurityFactory;
+        this.subject = original.subject;
     }
 
     private AuthenticationConfiguration(final AuthenticationConfiguration original, final AuthenticationConfiguration other) {
@@ -345,6 +353,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = getOrDefault(other.mechanismProperties, original.mechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.kerberosSecurityFactory = getOrDefault(other.kerberosSecurityFactory, original.kerberosSecurityFactory);
+        this.subject = getOrDefault(other.subject, original.subject);
         sanitazeOnMutation(SET_USER_CBH);
     }
 
@@ -372,6 +381,10 @@ public final class AuthenticationConfiguration {
 
     int getPort() {
         return setPort;
+    }
+
+    Subject getSubject() {
+        return subject;
     }
 
     // internal actions
@@ -941,6 +954,22 @@ public final class AuthenticationConfiguration {
         }
     }
 
+    /**
+     * Create a new configuration which is the same as this configuration, but which establishes the given JAAS subject
+     * during authentication attempts.  Some authentication mechanisms rely on the JAAS subject in order to function
+     * correctly.
+     *
+     * @param subject the subject to set (may be {@code null}, which indicates that the subject should be inherited from the use site)
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useSubject(Subject subject) {
+        if (Objects.equals(this.subject, subject)) {
+            return this;
+        } else {
+            return new AuthenticationConfiguration(this, SET_SUBJECT, subject);
+        }
+    }
+
     // Providers
 
     /**
@@ -1226,6 +1255,7 @@ public final class AuthenticationConfiguration {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
+        saslClientFactory = new SubjectSaslClientFactory(saslClientFactory, subject);
 
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
@@ -1326,6 +1356,7 @@ public final class AuthenticationConfiguration {
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
             if (! mechanismProperties.isEmpty()) b.append("mechanism-properties=").append(mechanismProperties).append(',');
             if (kerberosSecurityFactory != null) b.append("kerberos-security-factory").append(kerberosSecurityFactory).append(',');
+            if (subject != null) b.append("subject-present,");
             b.setLength(b.length() - 1);
             return this.toString = b.toString();
         }
