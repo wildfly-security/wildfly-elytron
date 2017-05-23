@@ -635,6 +635,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
     ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
 
+    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
+    IOException keyTabDoesNotExists(String keyTab);
+
+    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
+    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
