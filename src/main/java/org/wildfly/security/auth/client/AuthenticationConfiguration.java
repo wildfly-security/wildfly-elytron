@@ -240,7 +240,7 @@ public final class AuthenticationConfiguration {
         this.setAuthzPrincipal = what == SET_AUTHZ_PRINCIPAL ? (Principal) value : original.setAuthzPrincipal;
         this.forwardSecurityDomain = what == SET_FWD_DOMAIN ? (SecurityDomain) value : original.forwardSecurityDomain;
         this.userCallbackHandler = what == SET_USER_CBH ? (CallbackHandler) value : original.userCallbackHandler;
-        this.userCallbackKinds = what == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value : original.userCallbackKinds;
+        this.userCallbackKinds = (what == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value : original.userCallbackKinds).clone();
         this.credentialSource = what == SET_CRED_SOURCE ? (CredentialSource) value : original.credentialSource;
         this.setPort = original.setPort;
         this.providerSupplier = what == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value : original.providerSupplier;
@@ -253,6 +253,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what == SET_MECH_PROPS ? (Map<String, ?>) value : original.mechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.kerberosSecurityFactory = what == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value : original.kerberosSecurityFactory;
+        sanitazeOnMutation(what);
     }
 
     /**
@@ -275,7 +276,7 @@ public final class AuthenticationConfiguration {
         this.setAuthzPrincipal = what1 == SET_AUTHZ_PRINCIPAL ? (Principal) value1 : what2 == SET_AUTHZ_PRINCIPAL ? (Principal) value2 : original.setAuthzPrincipal;
         this.forwardSecurityDomain = what1 == SET_FWD_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_DOMAIN ? (SecurityDomain) value2 : original.forwardSecurityDomain;
         this.userCallbackHandler = what1 == SET_USER_CBH ? (CallbackHandler) value1 : what2 == SET_USER_CBH ? (CallbackHandler) value2 : original.userCallbackHandler;
-        this.userCallbackKinds = what1 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value1 : what2 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value2 : original.userCallbackKinds;
+        this.userCallbackKinds = (what1 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value1 : what2 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value2 : original.userCallbackKinds).clone();
         this.credentialSource = what1 == SET_CRED_SOURCE ? (CredentialSource) value1 : what2 == SET_CRED_SOURCE ? (CredentialSource) value2 : original.credentialSource;
         this.setPort = original.setPort;
         this.providerSupplier = what1 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value1 : what2 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value2 : original.providerSupplier;
@@ -288,6 +289,8 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what1 == SET_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_MECH_PROPS ? (Map<String, ?>) value2 : original.mechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.kerberosSecurityFactory = what1 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value1 : what2 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value2 : original.kerberosSecurityFactory;
+        sanitazeOnMutation(what1);
+        sanitazeOnMutation(what2);
     }
 
     /**
@@ -329,7 +332,7 @@ public final class AuthenticationConfiguration {
         this.setAuthzPrincipal = getOrDefault(other.setAuthzPrincipal, original.setAuthzPrincipal);
         this.forwardSecurityDomain = getOrDefault(other.forwardSecurityDomain, original.forwardSecurityDomain);
         this.userCallbackHandler = getOrDefault(other.userCallbackHandler, original.userCallbackHandler);
-        this.userCallbackKinds = getOrDefault(other.userCallbackKinds, original.userCallbackKinds);
+        this.userCallbackKinds = getOrDefault(other.userCallbackKinds, original.userCallbackKinds).clone();
         this.credentialSource = other.credentialSource == IdentityCredentials.NONE ? original.credentialSource : other.credentialSource;
         this.setPort = getOrDefault(other.setPort, original.setPort);
         this.providerSupplier = getOrDefault(other.providerSupplier, original.providerSupplier);
@@ -342,6 +345,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = getOrDefault(other.mechanismProperties, original.mechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.kerberosSecurityFactory = getOrDefault(other.kerberosSecurityFactory, original.kerberosSecurityFactory);
+        sanitazeOnMutation(SET_USER_CBH);
     }
 
     private static <T> T getOrDefault(T value, T defVal) {
@@ -382,7 +386,7 @@ public final class AuthenticationConfiguration {
     boolean saslSupportedByConfiguration(String mechanismName) {
         // special case for local, quiet auth
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
-        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL)) {
+        if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && principal != AnonymousPrincipal.getInstance()) {
             // no callback which can handle a principal.
             if (! (mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER) || SaslMechanismInformation.doesNotUsePrincipal(mechanismName))) {
                 // the mechanism requires a principal.
@@ -393,7 +397,7 @@ public final class AuthenticationConfiguration {
             }
         }
         // if we have a credential-providing callback handler, we support any mechanism from here on out
-        if (userCallbackKinds.contains(CallbackKind.CREDENTIAL)) {
+        if (userCallbackKinds.contains(CallbackKind.CREDENTIAL) || (credentialSource != null && ! credentialSource.equals(IdentityCredentials.NONE))) {
             return true;
         }
         // mechanisms that do not need credentials are probably supported
@@ -1200,7 +1204,7 @@ public final class AuthenticationConfiguration {
         if (! mechanismProperties.isEmpty()) {
             mechanismProperties = new HashMap<>(mechanismProperties);
             // special handling for JBOSS-LOCAL-USER quiet auth... only pass it through if we have a user callback
-            if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL)) {
+            if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && principal != AnonymousPrincipal.getInstance()) {
                 mechanismProperties.remove(LocalUserClient.QUIET_AUTH);
                 mechanismProperties.remove(LocalUserClient.LEGACY_QUIET_AUTH);
             }
@@ -1321,6 +1325,57 @@ public final class AuthenticationConfiguration {
             return this.toString = b.toString();
         }
         return toString;
+    }
+    //user callback sanitation
+    private void sanitazeOnMutation(final int what) {
+        switch (what) {
+            case SET_PRINCIPAL:
+                // CallbackKind.PRINCIPAL
+                if (this.principal != null && ! this.principal.equals(AnonymousPrincipal.getInstance())) {
+                    this.userCallbackKinds.remove(CallbackKind.PRINCIPAL);
+                }
+                break;
+            case SET_CRED_SOURCE:
+                // CallbackKind.CREDENTIAL
+                if (this.credentialSource != null && ! this.credentialSource.equals(IdentityCredentials.NONE)) {
+                    this.userCallbackKinds.remove(CallbackKind.CREDENTIAL);
+                }
+                break;
+            case SET_REALM:
+                // CallbackKind.REALM
+                this.userCallbackKinds.remove(CallbackKind.REALM);
+                break;
+            case SET_PARAM_SPECS:
+                // CallbackKind.PARAMETERS
+                this.userCallbackKinds.remove(CallbackKind.PARAMETERS);
+                break;
+            case SET_KEY_MGR_FAC:
+                // CallbackKind.PEER_CREDENTIAL
+                this.userCallbackKinds.remove(CallbackKind.PEER_CREDENTIAL);
+                break;
+            case SET_USER_CB_KINDS:
+                // SANITAZE on above content
+                if (this.principal != null) {
+                    sanitazeOnMutation(SET_PRINCIPAL);
+                }
+
+                if (this.credentialSource != null) {
+                    sanitazeOnMutation(SET_CRED_SOURCE);
+                }
+
+                if (this.setRealm != null) {
+                    sanitazeOnMutation(SET_REALM);
+                }
+
+                if (this.parameterSpecs != null) {
+                    sanitazeOnMutation(SET_PARAM_SPECS);
+                }
+
+                if (this.keyManagerFactory != null) {
+                    sanitazeOnMutation(SET_KEY_MGR_FAC);
+                }
+                break;
+        }
     }
 
     // delegates for equality tests
