@@ -408,7 +408,7 @@ public abstract class SaslMechanismSelector {
                                         }
                                         cp = i.next();
                                         if (! isNameChar(cp)) {
-                                            nextStringVal = string.substring(start, i.offset());
+                                            nextStringVal = string.substring(start, i.offset() - 1);
                                             i.prev();
                                             this.offs = offs;
                                             next = TOK_NAME;
