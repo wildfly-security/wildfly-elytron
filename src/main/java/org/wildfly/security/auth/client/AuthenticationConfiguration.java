@@ -499,6 +499,11 @@ public final class AuthenticationConfiguration {
         if (rewriter == null) {
             return this;
         }
+
+        if (this.principalRewriter == null) {
+            return new AuthenticationConfiguration(this, SET_PRINCIPAL_RW, rewriter.asPrincipalRewriter());
+        }
+
         return new AuthenticationConfiguration(this, SET_PRINCIPAL_RW, principalRewriter.andThen(rewriter.asPrincipalRewriter()));
     }
 
