@@ -37,6 +37,7 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.security.auth.kerberos.KerberosTicket;
+import javax.security.auth.kerberos.KeyTab;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
@@ -259,6 +260,8 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
 
         public SecurityFactory<GSSKerberosCredential> build() throws IOException {
             assertNotBuilt();
+            checkKeyTab();
+
             final Configuration configuration = createConfiguration();
 
             built = true;
@@ -314,6 +317,16 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                     throw (GeneralSecurityException) e.getCause();
                 }
                 throw new GeneralSecurityException(e.getCause());
+            }
+        }
+
+        private void checkKeyTab() throws IOException {
+            KeyTab kt = KeyTab.getInstance(keyTab);
+            if (!kt.exists()) {
+                throw log.keyTabDoesNotExists(keyTab.getAbsolutePath());
+            }
+            if (kt.getKeys(new KerberosPrincipal(principal)).length == 0) {
+                throw log.noKeysForPrincipalInKeyTab(principal, keyTab.getAbsolutePath());
             }
         }
 
