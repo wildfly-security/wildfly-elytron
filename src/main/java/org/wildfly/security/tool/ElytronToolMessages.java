@@ -269,4 +269,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm vault password: ")
     String vaultPasswordPromptConfirm();
+
+    @Message(id = 19, value = "The value \"%s\" is not a valid path to directory.")
+    IllegalArgumentException pathNotValid(String path);
 }
