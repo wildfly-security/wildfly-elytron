@@ -204,7 +204,7 @@ public interface ElytronToolMessages extends BasicLogger {
             "keyStoreType - specify the key store type to use")
     String cmdLineVaultCSParametersDesc();
 
-    @Message(id = NONE, value = "Vault Conversion summary:%n--------------------------------------%n%s")
+    @Message(id = NONE, value = "Vault Conversion summary:%n--------------------------------------%n%s%n--------------------------------------%n")
     String vaultConversionSummary(String command);
 
     @Message(id = NONE, value = "Vault Conversion Successful%n")

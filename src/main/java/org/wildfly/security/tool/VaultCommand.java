@@ -157,6 +157,9 @@ public class VaultCommand extends Command {
                 try {
                     convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
                     System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(d.encryptionDirectory, d.keyStoreURL, d.outputFile));
+                    if (printSummary) {
+                        printSummary(d.vaultPassword, d.salt, d.iterationCount, d.implProps);
+                    }
                 } catch (Throwable e) {
                     throw ElytronToolMessages.msg.bulkConversionProblem(d.encryptionDirectory, d.keyStoreURL, e);
                 }
@@ -188,17 +191,7 @@ public class VaultCommand extends Command {
             System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(encryptionDirectory, keystoreURL, location));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             if (printSummary) {
-                StringBuilder com = new StringBuilder();
-                com.append(ElytronToolMessages.msg.conversionSuccessful());
-                com.append(ElytronToolMessages.msg.cliCommandToNewCredentialStore());
-                String password = "";
-                if (keystorePassword != null && !keystorePassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                    password = MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
-                } else if (keystorePassword != null) {
-                    password = keystorePassword;
-                }
-                CredentialStoreCommand.getCreateSummary(implProps, com, password);
-                System.out.println(ElytronToolMessages.msg.vaultConversionSummary(com.toString()));
+                printSummary(keystorePassword, salt, iterationCount, implProps);
             }
         }
 
@@ -360,6 +353,20 @@ public class VaultCommand extends Command {
                 .decryptMode()
                 .build();
         return decryptUtil.decodeAndDecrypt(password);
+    }
+
+    private void printSummary (String keystorePassword, String salt, int iterationCount, Map<String, String> implProps) throws GeneralSecurityException {
+        StringBuilder com = new StringBuilder();
+        com.append(ElytronToolMessages.msg.conversionSuccessful());
+        com.append(ElytronToolMessages.msg.cliCommandToNewCredentialStore());
+        String password = "";
+        if (keystorePassword != null && !keystorePassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+            password = MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
+        } else if (keystorePassword != null) {
+            password = keystorePassword;
+        }
+        CredentialStoreCommand.getCreateSummary(implProps, com, password);
+        System.out.println(ElytronToolMessages.msg.vaultConversionSummary(com.toString()));
     }
 
 }
