@@ -80,7 +80,11 @@ public class ElytronTool {
                     System.exit(command.getStatus());
                 }
             } else if ("--help".equals(args[0]) || "-h".equals(args[0]) || (command != null && newArgs.length == 0)) {
-                tool.generalHelp();
+                if (command != null) {
+                    command.help();
+                } else {
+                    tool.generalHelp();
+                }
             } else {
                 System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
                 System.exit(ElytronToolExitStatus_unrecognizedCommand);
