@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
+import java.security.AccessControlContext;
 import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -132,6 +133,10 @@ public final class AuthenticationContextConfigurationClient {
             final IdentityCredentials publicCredentials = securityIdentity.getPublicCredentials();
             // private overrides public
             configuration = configuration.useForwardedIdentity(null).usePrincipal(securityIdentity.getPrincipal()).useCredentials(publicCredentials.with(privateCredentials));
+        }
+        final AccessControlContext capturedContext = configuration.getCapturedContext();
+        if (capturedContext == null) {
+            configuration = configuration.withCapturedAccessControlContext();
         }
 
         log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
