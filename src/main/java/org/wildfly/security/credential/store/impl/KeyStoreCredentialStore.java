@@ -847,7 +847,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             }
         } catch (GeneralSecurityException e) {
             throw log.cannotInitializeCredentialStore(
-                    log.internalEncryptionProblem(e, dataLocation.toString()));
+                    log.internalEncryptionProblem(e, dataLocation != null ? dataLocation.toString() : "null"));
         } catch (IOException e) {
             throw log.cannotInitializeCredentialStore(e);
         }
