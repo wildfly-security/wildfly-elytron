@@ -77,12 +77,6 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
      */
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        SSLSession sslSession = request.getSSLSession();
-        if (sslSession == null) {
-            log.trace("CLIENT-CERT no SSL session");
-            request.noAuthenticationInProgress();
-            return;
-        }
         if (attemptReAuthentication(request)) {
             log.trace("ClientCertAuthenticationMechanism: re-authentication succeed");
             return;
@@ -181,7 +175,27 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
     private Function<SecurityDomain, IdentityCache> createIdentityCache(HttpServerRequest request) {
         SSLSession sslSession = request.getSSLSession();
         if (sslSession == null) {
-            return null;
+            return securityDomain -> new IdentityCache() {
+
+                private volatile CachedIdentity cachedIdentity;
+
+                @Override
+                public void put(SecurityIdentity identity) {
+                    cachedIdentity = new CachedIdentity(getMechanismName(), identity);
+                }
+
+                @Override
+                public CachedIdentity get() {
+                    return cachedIdentity;
+                }
+
+                @Override
+                public CachedIdentity remove() {
+                    CachedIdentity old = cachedIdentity;
+                    cachedIdentity = null;
+                    return old;
+                }
+            };
         }
         return securityDomain -> new IdentityCache() {
 
