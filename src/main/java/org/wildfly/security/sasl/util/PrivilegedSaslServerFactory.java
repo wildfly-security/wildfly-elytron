@@ -18,8 +18,13 @@
 
 package org.wildfly.security.sasl.util;
 
+import static java.security.AccessController.doPrivileged;
+
+import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -52,7 +57,18 @@ public final class PrivilegedSaslServerFactory extends AbstractDelegatingSaslSer
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        final SaslServer saslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
+        final SaslServer saslServer;
+        try {
+            saslServer = doPrivileged((PrivilegedExceptionAction<SaslServer>) () -> delegate.createSaslServer(mechanism, protocol, serverName, props, cbh));
+        } catch (PrivilegedActionException pae) {
+            try {
+                throw pae.getCause();
+            } catch (SaslException | RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable throwable) {
+                throw new UndeclaredThrowableException(throwable);
+            }
+        }
         return saslServer == null ? null : new PrivilegedSaslServer(saslServer, context);
     }
 }
