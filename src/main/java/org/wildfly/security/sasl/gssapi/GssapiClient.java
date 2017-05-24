@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
@@ -37,6 +38,7 @@ import org.ietf.jgss.MessageProp;
 import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -87,7 +89,20 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             credential = ((GSSKerberosCredential) credObj).getGssCredential();
         }
 
-        // Better way to obtain the credential if we don't have one?
+        if (credential == null) {
+            CredentialCallback callback = new CredentialCallback(GSSKerberosCredential.class);
+
+            try {
+                tryHandleCallbacks(callback);
+
+                GSSKerberosCredential kerberosCredential = callback.getCredential(GSSKerberosCredential.class);
+                if (kerberosCredential != null) {
+                    credential = kerberosCredential.getGssCredential();
+                }
+            } catch (UnsupportedCallbackException e) {
+                log.trace("CallbackHandler does not support CredentialCallback");
+            }
+        }
 
         final GSSContext gssContext;
         try {
