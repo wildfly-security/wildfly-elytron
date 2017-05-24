@@ -275,4 +275,10 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 19, value = "The value \"%s\" is not a valid path to directory.")
     IllegalArgumentException pathNotValid(String path);
+
+    @Message(id = NONE, value = "Mask secret: ")
+    String maskSecretPrompt();
+
+    @Message(id = NONE, value = "Confirm mask secret: ")
+    String maskSecretPromptConfirm();
 }
