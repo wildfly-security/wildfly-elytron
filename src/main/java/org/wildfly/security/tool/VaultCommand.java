@@ -235,7 +235,6 @@ public class VaultCommand extends Command {
         {
             throw ElytronToolMessages.msg.pathNotValid(encryptionDirectory);
         }
-        vaultInitialOptions.put("create", Boolean.FALSE.toString());
 
         CredentialStore vaultCredentialStore = getInstance(VaultCredentialStore.VAULT_CREDENTIAL_STORE);
         vaultCredentialStore.initialize(vaultInitialOptions,
