@@ -46,6 +46,8 @@ public abstract class Command {
 
     private int status = 255;
 
+    private List<String> redirectionValues;
+
     public abstract void execute(String[] args) throws Exception;
 
     /**
@@ -96,23 +98,32 @@ public abstract class Command {
     protected String prompt(boolean echo, String prompt, boolean confirm, String confirmPrompt) throws Exception {
         Console console = System.console();
         if (echo || console == null) {
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
-                String first = console != null ? console.readLine(prompt) : in.readLine();
-                if (first != null && confirm) {
-                    String second = console != null ? console.readLine(confirmPrompt) : in.readLine();
-                    if (first.equals(second)) {
-                        return first;
-                    } else {
-                        System.err.println(ElytronToolMessages.msg.inputDataNotConfirmed());
-                        System.exit(INPUT_DATA_NOT_CONFIRMED);
-                        return null;
+            if (console == null && redirectionValues == null) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+                    redirectionValues = new ArrayList<>();
+                    String value;
+                    while ((value = in.readLine()) != null) {
+                        redirectionValues.add(value);
                     }
-                } else {
-                    return first;
+                } catch (IOException e) {
+                    setStatus(GENERAL_CONFIGURATION_ERROR);
+                    throw new Exception(e);
                 }
-            } catch (IOException e) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw new Exception(e);
+            }
+            String first = console != null ? console.readLine(prompt)
+                    : (redirectionValues.size() == 0 ? null : redirectionValues.remove(0));
+            if (first != null && confirm) {
+                String second = console != null ? console.readLine(confirmPrompt)
+                        : (redirectionValues.size() == 0 ? null : redirectionValues.remove(0));
+                if (first.equals(second)) {
+                    return first;
+                } else {
+                    System.err.println(ElytronToolMessages.msg.inputDataNotConfirmed());
+                    System.exit(INPUT_DATA_NOT_CONFIRMED);
+                    return null;
+                }
+            } else {
+                return first;
             }
         } else {
             char[] inVisible = console.readPassword(prompt != null ? prompt : "Password:");

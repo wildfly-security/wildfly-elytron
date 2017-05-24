@@ -164,6 +164,10 @@ class CredentialStoreCommand extends Command {
         if (csPassword == null) {
             // prompt for password
             csPassword = prompt(false, ElytronToolMessages.msg.credentialStorePasswordPrompt(), true, ElytronToolMessages.msg.credentialStorePasswordPromptConfirm());
+            if (csPassword == null) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(CREDENTIAL_STORE_PASSWORD_PARAM);
+            }
         }
         if (csPassword != null) {
             credentialSourceProtectionParameter = new CredentialStore.CredentialSourceProtectionParameter(
@@ -380,16 +384,18 @@ class CredentialStoreCommand extends Command {
         com.append("/subsystem=elytron/credential-store=cs:add(");
         com.append("relative-to=jboss.server.data.dir,");
         com.append("create=true,");
-        if (implProps.get("modifiable") != null) {
-            com.append("modifiable=" + implProps.get("modifiable") + ",");
-        }
-        if (implProps.get("location") != null) {
-            com.append("location=\"" + implProps.get("location") + "\",");
-        }
-        String props = formatPropertiesForCli(implProps);
-        if (!props.isEmpty()) {
-            com.append(props);
-            com.append(",");
+        if (implProps != null && !implProps.isEmpty()) {
+            if (implProps.get("modifiable") != null) {
+                com.append("modifiable=" + implProps.get("modifiable") + ",");
+            }
+            if (implProps.get("location") != null) {
+                com.append("location=\"" + implProps.get("location") + "\",");
+            }
+            String props = formatPropertiesForCli(implProps);
+            if (!props.isEmpty()) {
+                com.append(props);
+                com.append(",");
+            }
         }
         com.append("credential-reference={");
         com.append("clear-text=\"");
