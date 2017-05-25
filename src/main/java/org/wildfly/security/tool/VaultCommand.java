@@ -359,10 +359,12 @@ public class VaultCommand extends Command {
         com.append(ElytronToolMessages.msg.conversionSuccessful());
         com.append(ElytronToolMessages.msg.cliCommandToNewCredentialStore());
         String password = "";
-        if (keystorePassword != null && !keystorePassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-            password = MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
-        } else if (keystorePassword != null) {
+        if (keystorePassword != null) {
             password = keystorePassword;
+            if (salt != null && iterationCount > -1) {
+                password = keystorePassword.startsWith("MASK-") ? keystorePassword + ";" + salt + ";" + String.valueOf(iterationCount)
+                        : MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
+            }
         }
         CredentialStoreCommand.getCreateSummary(implProps, com, password);
         System.out.println(ElytronToolMessages.msg.vaultConversionSummary(com.toString()));
