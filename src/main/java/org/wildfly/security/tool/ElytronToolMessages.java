@@ -306,4 +306,8 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 25, value = "Credential store storage file \"%s\" does not exist.")
     IllegalArgumentException storageFileDoesNotExist(String location);
+
+    @Message(id = 26, value = "Credential store storage file \"%s\" already exists.")
+    IllegalArgumentException storageFileExists(String location);
+
 }
