@@ -106,6 +106,9 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
                 if (filtered.length > 0) {
                     saslClient = pair.saslClientFactory.createSaslClient(mechArray, authorizationId, protocol, serverName, props, cbh);
                     if (saslClient != null) {
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Created SaslClient for mechanism %s, using Provider %s", saslClient.getMechanismName(), pair.provider.getName());
+                        }
                         return saslClient;
                     }
                 }
