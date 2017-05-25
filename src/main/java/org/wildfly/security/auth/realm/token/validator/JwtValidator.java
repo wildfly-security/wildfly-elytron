@@ -94,7 +94,7 @@ public class JwtValidator implements TokenValidator {
     public Attributes validate(BearerTokenEvidence evidence) throws RealmUnavailableException {
         checkNotNullParam("evidence", evidence);
         String jwt = evidence.getToken();
-        String[] parts = jwt.split("\\.");
+        String[] parts = jwt.split("\\.", -1);
 
         if (parts.length < 3) {
             throw log.tokenRealmJwtInvalidFormat();
