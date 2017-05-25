@@ -30,6 +30,7 @@ import java.util.Collections;
 import javax.xml.stream.XMLStreamException;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.client.config.ClientConfiguration;
@@ -161,11 +162,26 @@ public class XmlConfigurationTest {
             "            <match-host name=\"test2\"/>\n" +
             "            <match-userinfo name=\"fred\"/>\n" +
             "        </rule>\n" +
+            "        <rule use-configuration=\"setup-sasl\">\n" +
+            "            <match-purpose names=\"connect\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"setup-sasl\">\n" +
+            "            <match-port number=\"123\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"setup-sasl\">\n" +
+            "            <match-userinfo name=\"user1\"/>\n" +
+            "        </rule>\n" +
             "    </authentication-rules>\n" +
             "</authentication-client>\n" +
             "</configuration>").getBytes(StandardCharsets.UTF_8);
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
-        factory.create();
+        AuthenticationContext ac = factory.create();
+
+        Assert.assertNull(ac.authRuleMatching(new URI("http://unknown/"), null, null, null)); // no match
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://test1/"), null, null, null)); // match host
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://host/"), null, null, "connect")); // match purpose
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://host:123/"), null, null, null)); // match port
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://user1@host/"), null, null, null)); // match user
     }
 
     /**
