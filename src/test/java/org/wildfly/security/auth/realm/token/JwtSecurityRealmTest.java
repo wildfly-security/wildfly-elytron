@@ -24,6 +24,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.PlainObject;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import mockit.integration.junit4.JMockit;
 import org.junit.Test;
@@ -225,17 +226,33 @@ public class JwtSecurityRealmTest extends BaseTestCase {
 
         JWSObject jwsObject = new JWSObject(new JWSHeader.Builder(JWSAlgorithm.RS256)
                 .type(new JOSEObjectType("jwt")).build(),
-                new Payload(claimsBuilder
-                        .build().toString()));
+                new Payload(claimsBuilder.build().toString()));
 
         jwsObject.sign(signer);
 
-        String s = jwsObject.serialize();
-
-        return s;
+        return jwsObject.serialize();
     }
 
     private String createJwt(KeyPair keyPair) throws Exception {
         return createJwt(keyPair, 60);
+    }
+
+    @Test
+    public void testUnsecuredJwt() throws Exception {
+        JsonObjectBuilder claimsBuilder = Json.createObjectBuilder()
+                .add("alg", "none");
+        PlainObject plainObject = new PlainObject(new Payload(claimsBuilder.build().toString()));
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder().build())
+                .build();
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
+
+        assertNotNull(realmIdentity);
+        assertFalse(realmIdentity.exists());
     }
 }
