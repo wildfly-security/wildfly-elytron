@@ -82,6 +82,9 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final ArrayList<Pair> clientFactoryList = new ArrayList<>();
         for (Provider currentProvider : providerSupplier.get()) {
+            if (currentProvider == null) {
+                continue;
+            }
             Set<Service> services = currentProvider.getServices();
             if (services != null) {
                 for (Service service : currentProvider.getServices()) {
