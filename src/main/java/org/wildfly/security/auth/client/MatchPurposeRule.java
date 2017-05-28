@@ -40,7 +40,7 @@ class MatchPurposeRule extends MatchRule {
     }
 
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return Arrays.binarySearch(purposes, purpose) >= 0 && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return purpose != null && Arrays.binarySearch(purposes, purpose) >= 0 && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {
