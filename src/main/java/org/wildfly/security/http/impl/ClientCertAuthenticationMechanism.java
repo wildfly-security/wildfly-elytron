@@ -24,11 +24,14 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import javax.net.ssl.SSLSession;
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
@@ -77,24 +80,20 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
      */
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        SSLSession sslSession = request.getSSLSession();
-        if (sslSession == null) {
-            log.trace("CLIENT-CERT no SSL session");
-            request.noAuthenticationInProgress();
-            return;
-        }
-        if (attemptReAuthentication(request)) {
+        Function<SecurityDomain, IdentityCache> cacheFunction = createIdentityCacheFunction(request);
+
+        if (cacheFunction!= null && attemptReAuthentication(request, cacheFunction)) {
             log.trace("ClientCertAuthenticationMechanism: re-authentication succeed");
             return;
         }
-        if (attemptAuthentication(request)) {
+        if (attemptAuthentication(request, cacheFunction)) {
             return;
         }
         log.trace("ClientCertAuthenticationMechanism: both, re-authentication and authentication, failed");
         fail(request);
     }
 
-    private boolean attemptAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
+    private boolean attemptAuthentication(HttpServerRequest request, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
         Certificate[] peerCertificates = request.getPeerCertificates();
         if (peerCertificates == null) {
             log.trace("CLIENT-CERT Peer Unverified");
@@ -118,16 +117,28 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         boolean verified = callback.isVerified();
         log.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b", verified);
         if (verified) {
-            CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(evidence.getPrincipal(), createIdentityCache(request), true);
+            final BooleanSupplier authorizedFunction;
+            final Callback authorizeCallBack;
+            if (cacheFunction != null) {
+                CachedIdentityAuthorizeCallback cacheCallback = new CachedIdentityAuthorizeCallback(evidence.getPrincipal(), cacheFunction, true);
+                authorizedFunction = cacheCallback::isAuthorized;
+                authorizeCallBack = cacheCallback;
+            } else {
+                String name = evidence.getPrincipal().getName();
+                AuthorizeCallback plainCallback = new AuthorizeCallback(name, name);
+                authorizedFunction = plainCallback::isAuthorized;
+                authorizeCallBack = plainCallback;
+            }
+
             try {
-                MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
+                MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallBack);
             } catch (AuthenticationMechanismException e) {
                 throw e.toHttpAuthenticationException();
             } catch (UnsupportedCallbackException e) {
                 throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
             }
 
-            boolean authorized = authorizeCallback.isAuthorized();
+            boolean authorized = authorizedFunction.getAsBoolean();
             log.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
             if (authorized && succeed(request)) {
                 log.trace("ClientCertAuthenticationMechanism: authentication succeed");
@@ -161,8 +172,8 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         }
     }
 
-    private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
-        CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(createIdentityCache(request), true);
+    private boolean attemptReAuthentication(HttpServerRequest request, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
+        CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(cacheFunction, true);
         try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
         } catch (AuthenticationMechanismException e) {
@@ -178,12 +189,9 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         return false;
     }
 
-    private Function<SecurityDomain, IdentityCache> createIdentityCache(HttpServerRequest request) {
+    private Function<SecurityDomain, IdentityCache> createIdentityCacheFunction(HttpServerRequest request) {
         SSLSession sslSession = request.getSSLSession();
-        if (sslSession == null) {
-            return null;
-        }
-        return securityDomain -> new IdentityCache() {
+        return sslSession == null ? null : securityDomain -> new IdentityCache() {
 
             final Map<SecurityDomain, CachedIdentity> identities = SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap<>());
 

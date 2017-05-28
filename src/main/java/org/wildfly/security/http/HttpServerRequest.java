@@ -58,6 +58,9 @@ public interface HttpServerRequest extends HttpServerScopes {
     /**
      * Get the {@link SSLSession} (if any) that has been established for the connection in use.
      *
+     * Note that even if this is null {@link #getPeerCertificates()} can still return some certificates, as the certificates
+     * may have been provided to the underlying server via some external mechanism (such as headers).
+     *
      * @return the {@link SSLSession} (if any) that has been established for the connection in use, or {@code null} if none
      *         exists.
      */
