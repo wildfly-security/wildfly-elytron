@@ -124,7 +124,7 @@ import org.wildfly.security.x500.X500;
  */
 public final class ElytronXmlParser {
 
-    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(Security::getProviders, new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader()));
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader()), Security::getProviders);
 
     static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
 

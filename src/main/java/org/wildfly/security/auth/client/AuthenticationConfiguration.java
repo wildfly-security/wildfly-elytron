@@ -210,7 +210,7 @@ public final class AuthenticationConfiguration {
         this.userCallbackKinds = NO_CALLBACK_KINDS;
         this.credentialSource = IdentityCredentials.NONE;
         this.setPort = -1;
-        this.providerSupplier = ProviderUtil.aggregate(Security::getProviders, new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()));
+        this.providerSupplier = ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()), Security::getProviders);
         this.keyManagerFactory = null;
         this.saslMechanismSelector = null;
         this.principalRewriter = null;
