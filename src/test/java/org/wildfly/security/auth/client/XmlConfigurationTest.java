@@ -157,10 +157,11 @@ public class XmlConfigurationTest {
             "    <authentication-rules>\n" +
             "        <rule use-configuration=\"set-host-to-localhost\">\n" +
             "            <match-host name=\"test1\"/>\n" +
+            "            <match-no-user/>\n" +
             "        </rule>\n" +
             "        <rule use-configuration=\"setup-sasl\">\n" +
             "            <match-host name=\"test2\"/>\n" +
-            "            <match-userinfo name=\"fred\"/>\n" +
+            "            <match-user name=\"fred\"/>\n" +
             "        </rule>\n" +
             "        <rule use-configuration=\"setup-sasl\">\n" +
             "            <match-purpose names=\"connect\"/>\n" +
@@ -169,7 +170,7 @@ public class XmlConfigurationTest {
             "            <match-port number=\"123\"/>\n" +
             "        </rule>\n" +
             "        <rule use-configuration=\"setup-sasl\">\n" +
-            "            <match-userinfo name=\"user1\"/>\n" +
+            "            <match-user name=\"user1\"/>\n" +
             "        </rule>\n" +
             "    </authentication-rules>\n" +
             "</authentication-client>\n" +
@@ -276,7 +277,7 @@ public class XmlConfigurationTest {
                 "    <authentication-rules>\n" +
                 "        <rule use-configuration=\"setup-sasl\">\n" +
                 "            <match-host name=\"test2\"/>\n" +
-                "            <match-userinfo name=\"fred\"/>\n" +
+                "            <match-user name=\"fred\"/>\n" +
                 "        </rule>\n" +
                 "    </authentication-rules>\n" +
                 "</authentication-client>\n" +
