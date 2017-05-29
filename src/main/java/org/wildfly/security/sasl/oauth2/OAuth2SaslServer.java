@@ -76,9 +76,8 @@ final class OAuth2SaslServer extends AbstractSaslServer {
                     return serverResponse;
                 }
                 case S_IN_ERROR: {
-                    // client is trying to abort the authentication, we just force FAILED state
-                    ok = false;
-                    return null;
+                    // client sent dummy client response, server fails the authentication
+                    throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
                 }
                 case COMPLETE_STATE: {
                     if (response != null && response.length != 0) {

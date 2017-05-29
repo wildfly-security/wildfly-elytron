@@ -45,6 +45,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import java.io.ByteArrayInputStream;
@@ -58,6 +59,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 /**
@@ -212,17 +214,15 @@ public class OAuth2SaslTest extends BaseTestCase {
                 .build();
 
         byte[] message = AbstractSaslParticipant.NO_BYTES;
-        byte[] serverErrorMessage = AbstractSaslParticipant.NO_BYTES;
+        byte[] serverErrorMessage;
 
-        do {
-            message = saslClient.evaluateChallenge(message);
-            if (message == null) break;
-            message = saslServer.evaluateResponse(message);
-
-            if (message != null) {
-                serverErrorMessage = message;
-            }
-        } while (message != null);
+        assertNotNull(message = saslClient.evaluateChallenge(message)); // 1. Client sends an invalid initial client response.
+        assertNotNull(serverErrorMessage = message = saslServer.evaluateResponse(message)); // 2. Server responds with an error message.
+        assertNotNull(message = saslClient.evaluateChallenge(message)); // 3. Client sends a dummy client response.
+        try {
+            saslServer.evaluateResponse(message); // 4. Server fails the authentication.
+            fail("Expected SaslException not thrown");
+        } catch (SaslException ignore) {}
 
         assertFalse(saslServer.isComplete());
         assertFalse(saslClient.isComplete());
