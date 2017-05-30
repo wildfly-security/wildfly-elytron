@@ -109,19 +109,22 @@ public final class URIUtil {
      * @return the user name, or {@code null} if the URI did not contain a recoverable user name
      */
     public static String getUserFromURI(URI uri) {
-        final String userInfo = uri.getUserInfo();
-        if (userInfo != null) {
-            return userInfo;
-        }
-        if ("domain".equals(uri.getScheme())) {
+        String userInfo = uri.getUserInfo();
+        if (userInfo == null && "domain".equals(uri.getScheme())) {
             final String ssp = uri.getSchemeSpecificPart();
             final int at = ssp.lastIndexOf('@');
             if (at == -1) {
                 return null;
             }
-            return ssp.substring(0, at);
+            userInfo = ssp.substring(0, at);
         }
-        return null;
+        if (userInfo != null) {
+            final int colon = userInfo.indexOf(':');
+            if (colon != -1) {
+                userInfo = userInfo.substring(0, colon);
+            }
+        }
+        return userInfo;
     }
 
     /**
