@@ -1050,6 +1050,9 @@ public final class ServerAuthenticationContext {
         } else {
             realmIdentity = securityRealm.getRealmIdentity(finalPrincipal);
         }
+        if (! realmIdentity.exists()) {
+            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
+        }
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, preRealmPrincipal, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
     }
 
@@ -1703,6 +1706,11 @@ public final class ServerAuthenticationContext {
         @Override
         MechanismRealmConfiguration getMechanismRealmConfiguration() {
             return mechanismRealmConfiguration;
+        }
+
+        @Override
+        RealmIdentity getRealmIdentity() {
+            return RealmIdentity.NON_EXISTENT;
         }
 
         @Override
