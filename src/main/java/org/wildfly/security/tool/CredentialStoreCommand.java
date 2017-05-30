@@ -68,6 +68,7 @@ class CredentialStoreCommand extends Command {
     public static final String PRINT_SUMMARY_PARAM = "summary";
     public static final String ENTRY_TYPE_PARAM = "entry-type";
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
+    public static final String DEBUG_PARAM = "debug";
 
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
@@ -113,12 +114,14 @@ class CredentialStoreCommand extends Command {
         r.setArgName("alias");
         Option v = new Option("v", ALIASES_PARAM, false, ElytronToolMessages.msg.cmdLineAliasesDesc());
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
+        Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
         og.addOption(a);
         og.addOption(e);
         og.addOption(r);
         og.addOption(v);
         options.addOptionGroup(og);
         options.addOption(h);
+        options.addOption(d);
     }
 
     @Override
@@ -132,6 +135,7 @@ class CredentialStoreCommand extends Command {
         }
 
         printDuplicatesWarning(cmdLine);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
         if (location == null) {

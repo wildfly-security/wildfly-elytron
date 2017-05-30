@@ -281,4 +281,10 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm mask secret: ")
     String maskSecretPromptConfirm();
+
+    @Message(id = NONE, value = "Print stack trace when error occurs.")
+    String cmdLineDebug();
+
+    @Message(id = NONE, value = "Exception encountered executing the command. Use option \"--debug\" for complete exception stack trace.")
+    String commandExecuteExceptionNoDebug();
 }

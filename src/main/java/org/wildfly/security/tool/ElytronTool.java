@@ -75,8 +75,18 @@ public class ElytronTool {
                     command.execute(newArgs);
                     System.exit(command.getStatus());
                 } catch (Exception e) {
-                    System.err.println(ElytronToolMessages.msg.commandExecuteException());
-                    e.printStackTrace(System.err);
+                    if (command.isEnableDebug()) {
+                        System.err.println(ElytronToolMessages.msg.commandExecuteException());
+                        e.printStackTrace(System.err);
+                    } else {
+                        if (e.getLocalizedMessage() != null && e.getLocalizedMessage().startsWith("ELYTOOL"))
+                        {
+                            System.err.println(ElytronToolMessages.msg.commandExecuteException());
+                            System.err.println(e.getLocalizedMessage());
+                        } else {
+                            System.err.println(ElytronToolMessages.msg.commandExecuteExceptionNoDebug());
+                        }
+                    }
                     System.exit(command.getStatus());
                 }
             } else if ("--help".equals(args[0]) || "-h".equals(args[0]) || (command != null && newArgs.length == 0)) {

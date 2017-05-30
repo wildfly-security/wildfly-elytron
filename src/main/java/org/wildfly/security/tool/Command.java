@@ -48,6 +48,8 @@ public abstract class Command {
 
     private List<String> redirectionValues;
 
+    private boolean enableDebug;
+
     public abstract void execute(String[] args) throws Exception;
 
     /**
@@ -189,5 +191,19 @@ public abstract class Command {
         for (Option option : duplicatesSet) {
             System.out.println(ElytronToolMessages.msg.duplicateOptionSpecified(option.getLongOpt()));
         }
+    }
+
+    /**
+     * Get the command debug option
+     */
+    public boolean isEnableDebug() {
+        return enableDebug;
+    }
+
+    /**
+     * Set the command debug option
+     */
+    public void setEnableDebug(boolean enableDebug) {
+        this.enableDebug = enableDebug;
     }
 }

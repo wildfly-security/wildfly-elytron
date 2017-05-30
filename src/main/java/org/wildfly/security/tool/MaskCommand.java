@@ -44,6 +44,7 @@ class MaskCommand extends Command {
     static final String ITERATION_PARAM = "iteration";
     static final String SECRET_PARAM = "secret";
     static final String HELP_PARAM = "help";
+    static final String DEBUG_PARAM = "debug";
 
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
@@ -54,12 +55,14 @@ class MaskCommand extends Command {
         Option iteration = new Option("i", ITERATION_PARAM, true, ElytronToolMessages.msg.cmdMaskIterationCountDesc());
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option x = new Option("x", SECRET_PARAM, true, ElytronToolMessages.msg.cmdMaskSecretDesc());
+        Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
         x.setArgName("to encrypt");
         options = new Options();
         options.addOption(x);
         options.addOption(h);
         options.addOption(salt);
         options.addOption(iteration);
+        options.addOption(d);
     }
 
     @Override
@@ -73,6 +76,7 @@ class MaskCommand extends Command {
         }
 
         printDuplicatesWarning(cmdLine);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         if (salt == null) {
