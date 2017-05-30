@@ -71,4 +71,9 @@ class RealmInfo {
     RoleDecoder getRoleDecoder() {
         return roleDecoder;
     }
+
+    @Override
+    public String toString() {
+        return "RealmInfo{name='" + name + "', securityRealm=" + securityRealm + "}";
+    }
 }
