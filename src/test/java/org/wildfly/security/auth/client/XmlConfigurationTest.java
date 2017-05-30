@@ -25,6 +25,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collections;
 
 import javax.xml.stream.XMLStreamException;
@@ -93,7 +94,7 @@ public class XmlConfigurationTest {
             "            <sasl-mechanism-selector selector=\"someName #ALL\"/>\n" +
             "        </configuration>\n" +
             "        <configuration name=\"test-4\">\n" +
-            "            <sasl-mechanism-selector selector=\"someName -JBOSS-LOCAL-USER\"/>\n" +
+            "            <sasl-mechanism-selector selector=\"someName #ALL -JBOSS-LOCAL-USER\"/>\n" +
             "        </configuration>\n" +
             "        <configuration name=\"test-5\">\n" +
             "            <sasl-mechanism-selector selector=\"someName (! JBOSS-LOCAL-USER)\"/>\n" +
@@ -110,11 +111,56 @@ public class XmlConfigurationTest {
             "        <configuration name=\"test-9\">\n" +
             "            <sasl-mechanism-selector selector=\"(((#HASH(SHA-256) &amp;&amp; (#PLUS) ) ) )\"/>\n" +
             "        </configuration>\n" +
+            "        <configuration name=\"test-10\">\n" +
+            "            <sasl-mechanism-selector selector=\"PLAIN DIGEST-MD5 ANONYMOUS JBOSS-LOCAL-USER\"/>\n" +
+            "        </configuration>\n" +
             "    </authentication-configurations>\n" +
+            "    <authentication-rules>\n" +
+            "        <rule use-configuration=\"test-1\">\n" +
+            "            <match-host name=\"host-1\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-3\">\n" +
+            "            <match-host name=\"host-3\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-4\">\n" +
+            "            <match-host name=\"host-4\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-5\">\n" +
+            "            <match-host name=\"host-5\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-7\">\n" +
+            "            <match-host name=\"host-7\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-10\">\n" +
+            "            <match-host name=\"host-10\"/>\n" +
+            "        </rule>\n" +
+            "    </authentication-rules>\n" +
             "</authentication-client>\n" +
             "</configuration>").getBytes(StandardCharsets.UTF_8);
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
-        factory.create();
+        AuthenticationContext ac = factory.create();
+
+        AuthenticationConfiguration ac3 = ac.authRuleMatching(new URI("http://host-3/"), null, null, null).getConfiguration();
+        String[] filtered = ac3.saslMechanismSelector.apply(Arrays.asList("A", "B"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
+
+        AuthenticationConfiguration ac4 = ac.authRuleMatching(new URI("http://host-4/"), null, null, null).getConfiguration();
+        filtered = ac4.saslMechanismSelector.apply(Arrays.asList("A", "B", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
+
+        AuthenticationConfiguration ac5 = ac.authRuleMatching(new URI("http://host-5/"), null, null, null).getConfiguration();
+        filtered = ac5.saslMechanismSelector.apply(Arrays.asList("A", "B", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
+
+        // ELY-1184
+        AuthenticationConfiguration ac7 = ac.authRuleMatching(new URI("http://host-7/"), null, null, null).getConfiguration();
+        filtered = ac7.saslMechanismSelector.apply(Arrays.asList("SCRAM-SHA-1-PLUS",  "DIGEST-MD5", "SCRAM-SHA-512"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"SCRAM-SHA-1-PLUS", "SCRAM-SHA-512"}, filtered);
+
+        // ELY-1185
+        AuthenticationConfiguration ac10 = ac.authRuleMatching(new URI("http://host-10/"), null, null, null).getConfiguration();
+        filtered = ac10.saslMechanismSelector.apply(Arrays.asList("PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER", "ABC"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER"}, filtered);
     }
 
     @Test
