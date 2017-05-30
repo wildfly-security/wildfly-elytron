@@ -327,7 +327,7 @@ public class SimpleDirContextFactoryBuilder {
             } else if (authenticationContext != null) { // password from AuthenticationContext
                 ClearPassword password = null;
                 try {
-                    URI uri = new URI(providerUrl);
+                    URI uri = new URI(providerUrl.split(" ")[0]); // only first URI used for AC resolution
                     AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null, CONNECT_PURPOSE);
 
                     NameCallback nameCallback = new NameCallback("LDAP principal");
@@ -386,7 +386,7 @@ public class SimpleDirContextFactoryBuilder {
         private SocketFactory getSocketFactory() throws NamingException {
             if (socketFactory == null && authenticationContext != null) {
                 try {
-                    URI uri = new URI(providerUrl);
+                    URI uri = new URI(providerUrl.split(" ")[0]); // only first URI used for AC resolution
                     if ( ! uri.getScheme().equalsIgnoreCase(LDAPS_SCHEME)) {
                         return socketFactory; // non-SSL connection
                     }

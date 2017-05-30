@@ -845,14 +845,14 @@ public final class ElytronXmlParser {
                 checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     // -- match --
-                    case "match-no-userinfo": {
+                    case "match-no-user": {
                         if (isSet(foundBits, 0)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 0);
                         parseEmptyType(reader);
                         rule = rule.matchNoUser();
                         break;
                     }
-                    case "match-userinfo": {
+                    case "match-user": {
                         if (isSet(foundBits, 0)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 0);
                         rule = rule.matchUser(parseNameType(reader));

@@ -167,8 +167,7 @@
 
     <xsd:complexType name="abstract-match-rule-type" abstract="true">
         <xsd:all>
-            <xsd:element ref="abstract-match-userinfo" minOccurs="0"/>
-            <xsd:element name="match-userinfo" type="name-type" minOccurs="0"/>
+            <xsd:element ref="abstract-match-user" minOccurs="0"/>
             <xsd:element name="match-protocol" type="name-type" minOccurs="0"/>
             <xsd:element name="match-host" type="name-type" minOccurs="0"/>
             <xsd:element name="match-path" type="name-type" minOccurs="0"/>
@@ -180,9 +179,9 @@
         </xsd:all>
     </xsd:complexType>
 
-    <xsd:element name="abstract-match-userinfo" abstract="true"/>
-    <xsd:element name="match-no-userinfo" substitutionGroup="abstract-match-userinfo" type="empty-type"/>
-    <xsd:element name="match-userinfo" substitutionGroup="abstract-match-userinfo" type="name-type"/>
+    <xsd:element name="abstract-match-user" abstract="true"/>
+    <xsd:element name="match-no-user" substitutionGroup="abstract-match-user" type="empty-type"/>
+    <xsd:element name="match-user" substitutionGroup="abstract-match-user" type="name-type"/>
 
     <xsd:complexType name="ssl-context-rule-type">
         <xsd:complexContent>
