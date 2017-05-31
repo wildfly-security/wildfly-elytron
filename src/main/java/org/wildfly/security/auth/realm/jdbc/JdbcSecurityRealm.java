@@ -34,6 +34,7 @@ import javax.sql.DataSource;
 
 import java.security.Principal;
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -148,12 +149,17 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                         final Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
-                        if (credentialType.isInstance(credential)) {
+                        if (credential.matches(credentialType, algorithmName, parameterSpec)) {
                             return credentialType.cast(credential);
                         }
                     }

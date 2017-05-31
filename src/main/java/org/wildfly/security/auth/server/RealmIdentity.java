@@ -21,6 +21,7 @@ package org.wildfly.security.auth.server;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
@@ -31,6 +32,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.key.KeyUtil;
 
 /**
  * A representation of a pre-authentication identity.
@@ -76,7 +78,8 @@ public interface RealmIdentity {
     <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
 
     /**
-     * Acquire a credential of the given type and algorithm name.
+     * Acquire a credential of the given type and algorithm name.  Realms which support more than one credential of a
+     * given type must override this method.
      *
      * @param credentialType the credential type class (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
@@ -93,6 +96,33 @@ public interface RealmIdentity {
             return credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm()) ? credential : null;
         } else {
             return getCredential(credentialType);
+        }
+    }
+
+    /**
+     * Acquire a credential of the given type and algorithm name.  Realms which support more than one credential of a
+     * given type and algorithm must override this method.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
+     * @param <C> the credential type
+     *
+     * @return the credential, or {@code null} if no such credential exists
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        final C credential = getCredential(credentialType, algorithmName);
+        if (parameterSpec != null) {
+            if (! (credential instanceof AlgorithmCredential)) {
+                return null;
+            }
+            return KeyUtil.parametersEqual(parameterSpec, ((AlgorithmCredential) credential).getParameters()) ? credential : null;
+        } else {
+            return credential;
         }
     }
 

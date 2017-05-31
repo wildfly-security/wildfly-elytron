@@ -36,6 +36,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Enumeration;
 import java.util.Set;
 
@@ -161,6 +162,11 @@ public class JaasSecurityRealm implements SecurityRealm {
 
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             return null;
         }
 

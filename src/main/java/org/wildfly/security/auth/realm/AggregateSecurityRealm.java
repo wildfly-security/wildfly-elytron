@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
@@ -132,6 +133,11 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         @Override
         public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
             return authenticationIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialType, algorithmName, parameterSpec);
         }
 
         @Override

@@ -23,6 +23,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -189,14 +190,17 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialType", credentialType);
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
             for (Credential credential : entry.getCredentials()) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return credentialType.cast(credential.clone());
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return credentialType.cast(credential.clone());
                 }
             }
             return null;

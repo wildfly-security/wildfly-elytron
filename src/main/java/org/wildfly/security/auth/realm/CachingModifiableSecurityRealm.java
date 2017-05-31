@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -134,6 +135,11 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             @Override
             public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
                 return modifiable.getCredential(credentialType, algorithmName);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                return modifiable.getCredential(credentialType, algorithmName, parameterSpec);
             }
 
             @Override
