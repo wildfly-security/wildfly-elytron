@@ -276,7 +276,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialAcquireSupport(credentialType, algorithmName);
+            SupportLevel support = loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -357,7 +357,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
                 SupportLevel support = SupportLevel.UNSUPPORTED;
                 for (CredentialLoader loader : credentialLoaders) {
-                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
                         SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec, providers);
@@ -410,7 +410,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     return null;
                 }
                 for (CredentialLoader loader : credentialLoaders) {
-                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
                         Credential credential = icl.getCredential(credentialType, algorithmName, parameterSpec, providers);
