@@ -97,7 +97,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
             loginName = delimIter.drainToString();
             i.next(); // skip delimiter
             password = delimIter.drainToString();
-            if (authorizationId == null) {
+            if (authorizationId == null || authorizationId.isEmpty()) {
                 authorizationId = loginName;
             }
         } catch (NoSuchElementException ignored) {

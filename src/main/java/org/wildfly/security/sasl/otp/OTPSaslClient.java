@@ -84,7 +84,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                 final ByteStringBuilder response = new ByteStringBuilder();
                 final String authorizationId = getAuthorizationId();
                 validateAuthorizationId(authorizationId);
-                nameCallback = authorizationId == null || authorizationId.length() == 0 ?
+                nameCallback = authorizationId == null || authorizationId.isEmpty() ?
                         new NameCallback("User name") : new NameCallback("User name", authorizationId);
                 handleCallbacks(nameCallback);
                 userName = nameCallback.getName();

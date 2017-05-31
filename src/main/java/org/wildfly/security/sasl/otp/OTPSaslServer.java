@@ -210,7 +210,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
 
                 // Check the authorization id
-                if (authorizationID == null) {
+                if (authorizationID == null || authorizationID.isEmpty()) {
                     authorizationID = userName;
                 }
                 final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
