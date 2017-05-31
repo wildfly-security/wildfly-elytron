@@ -153,6 +153,11 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             }
 
             @Override
+            public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) throws RealmUnavailableException {
+                return modifiable.applyToCredential(credentialType, algorithmName, parameterSpec, function);
+            }
+
+            @Override
             public void dispose() {
                 modifiable.dispose();
             }
