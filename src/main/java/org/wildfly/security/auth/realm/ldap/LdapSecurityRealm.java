@@ -413,7 +413,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
-                        Credential credential = icl.getCredential(credentialType, algorithmName, providers);
+                        Credential credential = icl.getCredential(credentialType, algorithmName, parameterSpec, providers);
                         if (credentialType.isInstance(credential)) {
                             return credentialType.cast(credential);
                         }

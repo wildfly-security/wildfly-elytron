@@ -120,7 +120,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
         @Override
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec, final Supplier<Provider[]> providers) {
-            Credential credential = getCredential(credentialType, credentialAlgorithm, providers);
+            Credential credential = getCredential(credentialType, credentialAlgorithm, parameterSpec, providers);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null) {
                 return SupportLevel.SUPPORTED;
@@ -136,7 +136,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String credentialAlgorithm, Supplier<Provider[]> providers) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
@@ -165,7 +165,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
         @Override
         public boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException {
-            final PasswordCredential credential = getCredential(PasswordCredential.class, null, providers);
+            final PasswordCredential credential = getCredential(PasswordCredential.class, null, null, providers);
             if (credential == null) return false;
             return credential.verify(providers, evidence);
         }

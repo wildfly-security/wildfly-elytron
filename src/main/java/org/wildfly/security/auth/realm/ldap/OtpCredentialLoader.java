@@ -110,7 +110,7 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, Supplier<Provider[]> providers) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
