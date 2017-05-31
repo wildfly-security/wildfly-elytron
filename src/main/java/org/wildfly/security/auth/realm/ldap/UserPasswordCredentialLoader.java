@@ -23,6 +23,7 @@ import static org.wildfly.security.auth.realm.ldap.UserPasswordPasswordUtil.pars
 
 import java.io.IOException;
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -118,7 +119,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm, final Supplier<Provider[]> providers) {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec, final Supplier<Provider[]> providers) {
             Credential credential = getCredential(credentialType, credentialAlgorithm, providers);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null) {
@@ -131,7 +132,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm, final Supplier<Provider[]> providers) throws RealmUnavailableException {
             // If we can acquire PasswordCredential and it support provided evidence, we can verify.
             if ( ! PasswordCredential.canVerifyEvidence(evidenceType, evidenceAlgorithm)) return SupportLevel.UNSUPPORTED;
-            return getCredentialAcquireSupport(PasswordCredential.class, null, providers);
+            return getCredentialAcquireSupport(PasswordCredential.class, null, null, providers);
         }
 
         @Override

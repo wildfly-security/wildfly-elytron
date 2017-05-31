@@ -360,7 +360,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
-                        SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, providers);
+                        SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec, providers);
                         if (temp != null && temp.isDefinitelySupported()) {
                             // As soon as one claims definite support we know it is supported.
                             return temp;
