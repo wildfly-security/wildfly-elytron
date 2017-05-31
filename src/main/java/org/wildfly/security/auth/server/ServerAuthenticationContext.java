@@ -673,6 +673,7 @@ public final class ServerAuthenticationContext {
         final Credential credential = getCredential(credentialType);
         return credential == null ? null : credential.castAndApply(credentialType, function);
     }
+
     /**
      * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
      *
@@ -689,6 +690,26 @@ public final class ServerAuthenticationContext {
     public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
         final Credential credential = getCredential(credentialType, algorithmName);
         return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType, algorithmName, parameterSpec);
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
     }
 
     /**
