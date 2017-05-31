@@ -37,7 +37,6 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.SupportLevel;
-import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -145,7 +144,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
         return SupportLevel.POSSIBLY_SUPPORTED;
     }

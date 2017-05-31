@@ -89,8 +89,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
-        return authenticationRealm.getCredentialAcquireSupport(credentialType, algorithmName);
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        return authenticationRealm.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
     }
 
     @Override

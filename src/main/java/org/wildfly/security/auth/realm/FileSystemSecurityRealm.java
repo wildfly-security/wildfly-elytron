@@ -327,7 +327,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
     }
 
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 

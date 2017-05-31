@@ -251,8 +251,8 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-            return realm.getCredentialAcquireSupport(credentialType, algorithmName);
+        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            return realm.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
         }
 
         @Override

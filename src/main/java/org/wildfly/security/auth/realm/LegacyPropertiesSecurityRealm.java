@@ -112,7 +112,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) : SupportLevel.UNSUPPORTED;
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) : SupportLevel.UNSUPPORTED;
             }
 
             @Override
@@ -224,9 +224,9 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
-        return PasswordCredential.class.isAssignableFrom(credentialType) && (algorithmName == null || algorithmName.equals(ALGORITHM_CLEAR) && plainText || algorithmName.equals(ALGORITHM_DIGEST_MD5)) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+        return PasswordCredential.class.isAssignableFrom(credentialType) && (algorithmName == null || algorithmName.equals(ALGORITHM_CLEAR) && plainText || algorithmName.equals(ALGORITHM_DIGEST_MD5)) && parameterSpec == null ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override

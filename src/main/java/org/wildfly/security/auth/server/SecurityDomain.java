@@ -457,7 +457,7 @@ public final class SecurityDomain {
     public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
         return getSupportLevel(r -> {
             try {
-                return r.getCredentialAcquireSupport(credentialType, algorithmName);
+                return r.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             } catch (RealmUnavailableException e) {
                 log.trace("Failed to obtain credential acquire support from realm", e);
                 return null;

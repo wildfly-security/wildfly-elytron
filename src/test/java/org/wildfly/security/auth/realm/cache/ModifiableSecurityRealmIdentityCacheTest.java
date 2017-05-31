@@ -33,6 +33,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.Principal;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -269,8 +270,8 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-            return realm.getCredentialAcquireSupport(credentialType, algorithmName);
+        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            return realm.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
         }
 
         @Override

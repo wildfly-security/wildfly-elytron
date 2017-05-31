@@ -271,7 +271,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
@@ -337,7 +337,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
@@ -391,7 +391,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }

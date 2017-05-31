@@ -225,8 +225,8 @@ public class CachingSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-        return getCacheableRealm().getCredentialAcquireSupport(credentialType, algorithmName);
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        return getCacheableRealm().getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
     }
 
     @Override

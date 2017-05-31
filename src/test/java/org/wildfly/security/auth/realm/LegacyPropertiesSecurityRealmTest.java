@@ -104,8 +104,8 @@ public class LegacyPropertiesSecurityRealmTest {
         PasswordGuessEvidence badGuess = new PasswordGuessEvidence("I will hack you".toCharArray());
         PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_HASH.toCharArray());
 
-        assertEquals("ClearPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
-        assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
+        assertEquals("ClearPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
+        assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5, null));
         assertEquals("Verify", SupportLevel.SUPPORTED, realm.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
 
         RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
@@ -168,8 +168,8 @@ public class LegacyPropertiesSecurityRealmTest {
         PasswordGuessEvidence badGuess = new PasswordGuessEvidence("I will hack you".toCharArray());
         PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_HASH.toCharArray());
 
-        assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
-        assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
+        assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
+        assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5, null));
         assertEquals("Verify", SupportLevel.SUPPORTED, realm.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
 
         RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
