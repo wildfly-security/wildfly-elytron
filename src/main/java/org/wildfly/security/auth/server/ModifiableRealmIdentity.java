@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -83,7 +84,7 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
             return null;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;
         }

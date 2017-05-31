@@ -1776,7 +1776,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName);
+            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, null);
         }
 
         @Override
@@ -2201,7 +2201,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName);
+            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, null);
         }
 
         @Override

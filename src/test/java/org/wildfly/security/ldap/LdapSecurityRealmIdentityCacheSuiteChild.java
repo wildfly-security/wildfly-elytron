@@ -28,6 +28,7 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -207,9 +208,9 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
                 }
 
                 @Override
-                public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+                public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
                     credentialHitCount.incrementAndGet();
-                    return identity.getCredentialAcquireSupport(credentialType, algorithmName);
+                    return identity.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
                 }
 
                 @Override

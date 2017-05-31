@@ -169,15 +169,13 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return SupportLevel.UNSUPPORTED;
             for (Credential credential : entry.getCredentials()) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return SupportLevel.SUPPORTED;
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return SupportLevel.SUPPORTED;
                 }
             }
             return SupportLevel.UNSUPPORTED;

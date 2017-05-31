@@ -152,7 +152,7 @@ public class PasswordSupportSuiteChild {
         assertNotNull(identity);
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1, null));
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
@@ -206,7 +206,7 @@ public class PasswordSupportSuiteChild {
         assertNotNull(identity);
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
@@ -230,7 +230,7 @@ public class PasswordSupportSuiteChild {
     }
 
     private void verifyPasswordSupport(RealmIdentity identity, final String algorithm, SupportLevel requiredSupport) throws RealmUnavailableException {
-        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
+        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null);
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 

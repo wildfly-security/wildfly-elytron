@@ -372,14 +372,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return new NamePrincipal(name);
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return SupportLevel.SUPPORTED;
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return SupportLevel.SUPPORTED;
                 }
             }
             return SupportLevel.UNSUPPORTED;

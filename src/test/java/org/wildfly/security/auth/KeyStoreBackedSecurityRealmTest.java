@@ -74,8 +74,8 @@ public class KeyStoreBackedSecurityRealmTest {
         RealmIdentity realmIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5));
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
+        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, null));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
 
         // as a result, the only type that will yield a non null credential is Password.
         Password password = realmIdentity.getCredential(PasswordCredential.class, null).getPassword();
@@ -90,8 +90,8 @@ public class KeyStoreBackedSecurityRealmTest {
         realmIdentity = realm.getRealmIdentity(new NamePrincipal("javajoe"));
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5));
+        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, null));
 
         // as a result, the only type that will yield a non null credential is Password.
         password = realmIdentity.getCredential(PasswordCredential.class, null).getPassword();

@@ -139,18 +139,13 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);
             if (entry == null) {
                 return SupportLevel.UNSUPPORTED;
             }
             final Credential credential = Credential.fromKeyStoreEntry(entry);
-            if (credentialType.isInstance(credential)) {
-                if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                    return SupportLevel.SUPPORTED;
-                }
-            }
-            return SupportLevel.UNSUPPORTED;
+            return credential != null && credential.matches(credentialType, algorithmName, parameterSpec) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         }
 
         @Override
