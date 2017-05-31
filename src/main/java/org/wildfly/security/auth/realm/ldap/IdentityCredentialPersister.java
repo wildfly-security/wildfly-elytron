@@ -1,5 +1,7 @@
 package org.wildfly.security.auth.realm.ldap;
 
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.credential.Credential;
 
@@ -18,9 +20,11 @@ public interface IdentityCredentialPersister extends IdentityCredentialLoader {
      *
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name, if any
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return {@code true} if persisting of given credential is supported
      */
-    boolean getCredentialPersistSupport(Class<? extends Credential> credentialType, String algorithmName);
+    boolean getCredentialPersistSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec);
 
     /**
      * Store credential of identity.

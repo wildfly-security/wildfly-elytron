@@ -171,7 +171,8 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm) {
+        public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec) {
+            // for now, assume that the parameterSpec matches the credential algorithm.
             return credentialType == PasswordCredential.class && (credentialAlgorithm == null || UserPasswordPasswordUtil.isAlgorithmSupported(credentialAlgorithm));
         }
 

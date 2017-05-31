@@ -447,10 +447,11 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 for (Credential credential : credentials) {
                     final Class<? extends Credential> credentialType = credential.getClass();
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    final AlgorithmParameterSpec parameterSpec = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getParameters() : null;
                     boolean supported = false;
                     for (CredentialPersister persister : credentialPersisters) {
                         IdentityCredentialPersister icp = persister.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
-                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName, parameterSpec)) {
                             supported = true;
                         }
                     }
@@ -469,9 +470,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 for (Credential credential : credentials) {
                     final Class<? extends Credential> credentialType = credential.getClass();
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    final AlgorithmParameterSpec parameterSpec = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getParameters() : null;
                     for (CredentialPersister persister : credentialPersisters) {
                         IdentityCredentialPersister icp = persister.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
-                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName, parameterSpec)) {
                             icp.persistCredential(credential);
                             // next credential
                             break;
