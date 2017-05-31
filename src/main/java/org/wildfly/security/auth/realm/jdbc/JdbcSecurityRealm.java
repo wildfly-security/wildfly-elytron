@@ -80,7 +80,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         SupportLevel support = SupportLevel.UNSUPPORTED;
         for (QueryConfiguration configuration : queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                final SupportLevel mapperSupport = keyMapper.getCredentialAcquireSupport(credentialType, algorithmName);
+                final SupportLevel mapperSupport = keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
                 if (support.compareTo(mapperSupport) < 0) {
                     support = mapperSupport;
                 }
@@ -128,7 +128,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
             SupportLevel support = SupportLevel.UNSUPPORTED;
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         final SupportLevel mapperSupport = executePrincipalQuery(configuration, r -> keyMapper.getCredentialSupport(r, providers));
                         if (mapperSupport == SupportLevel.SUPPORTED) {
                             return SupportLevel.SUPPORTED;
@@ -157,7 +157,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
             Assert.checkNotNullParam("credentialType", credentialType);
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         final Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
                         if (credential.matches(credentialType, algorithmName, parameterSpec)) {
                             return credentialType.cast(credential);
