@@ -517,14 +517,34 @@ public final class ServerAuthenticationContext {
      * @param credentialType the credential type class (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
+     * @return the level of support for this credential type
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return stateRef.get().getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
+    }
+
+    /**
+     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable.
+     *
+     * If an authentication identity is established this will be for that identity, otherwise this will be the general
+     * level of support advertised by the security domain.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
+     *  not support algorithm names
      * @return the level of support for this credential type
      *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-        Assert.checkNotNullParam("credentialType", credentialType);
-        return stateRef.get().getCredentialAcquireSupport(credentialType, algorithmName);
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
     }
 
     /**
@@ -1081,7 +1101,7 @@ public final class ServerAuthenticationContext {
             return false;
         }
 
-        SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             throw log.noAuthenticationInProgress();
         }
 
@@ -1775,8 +1795,8 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, null);
+        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
         }
 
         @Override
@@ -1982,7 +2002,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
 
@@ -2200,8 +2220,8 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, null);
+        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
         }
 
         @Override
