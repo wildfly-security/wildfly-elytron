@@ -64,7 +64,6 @@ public class SimpleDirContextFactoryBuilder {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
     private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
-    private static final String CONNECT_PURPOSE = "dir-context-connect";
     private static final String LDAPS_SCHEME = "ldaps";
 
     private boolean built = false;
@@ -328,7 +327,7 @@ public class SimpleDirContextFactoryBuilder {
                 ClearPassword password = null;
                 try {
                     URI uri = new URI(providerUrl.split(" ")[0]); // only first URI used for AC resolution
-                    AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null, CONNECT_PURPOSE);
+                    AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null);
 
                     NameCallback nameCallback = new NameCallback("LDAP principal");
                     CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
@@ -390,7 +389,7 @@ public class SimpleDirContextFactoryBuilder {
                     if ( ! uri.getScheme().equalsIgnoreCase(LDAPS_SCHEME)) {
                         return socketFactory; // non-SSL connection
                     }
-                    SecurityFactory<SSLContext> sslContextFactory = authClient.getSSLContextFactory(uri, authenticationContext, null, null, CONNECT_PURPOSE);
+                    SecurityFactory<SSLContext> sslContextFactory = authClient.getSSLContextFactory(uri, authenticationContext, null, null);
                     return sslContextFactory.create().getSocketFactory();
                 } catch (Exception e) {
                     throw log.obtainingDirContextCredentialFromAuthenticationContextFailed(e);

@@ -900,12 +900,6 @@ public final class ElytronXmlParser {
                         rule = parseMatchAbstractType(rule, reader);
                         break;
                     }
-                    case "match-purpose": {
-                        if (isSet(foundBits, 8)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 8);
-                        rule = rule.matchPurposes(parseNamesType(reader));
-                        break;
-                    }
                     default: {
                         return rule;
                     }
