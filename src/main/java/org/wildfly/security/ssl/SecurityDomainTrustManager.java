@@ -31,6 +31,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -46,17 +47,19 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
     private final boolean authenticationOptional;
+    private final MechanismConfigurationSelector mechanismConfigurationSelector;
 
-    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional) {
+    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional, final MechanismConfigurationSelector mechanismConfigurationSelector) {
         this.delegate = delegate;
         this.securityDomain = securityDomain;
         this.authenticationOptional = authenticationOptional;
+        this.mechanismConfigurationSelector = mechanismConfigurationSelector;
     }
 
-    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional) {
+    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional, final MechanismConfigurationSelector mechanismConfigurationSelector) {
         this(delegate instanceof X509ExtendedTrustManager ?
                 (X509ExtendedTrustManager) delegate :
-                new WrappingX509ExtendedTrustManager(delegate), securityDomain, authenticationOptional);
+                new WrappingX509ExtendedTrustManager(delegate), securityDomain, authenticationOptional, mechanismConfigurationSelector);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -84,7 +87,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         if (principal == null) {
             throw ElytronMessages.log.notTrusted(null);
         }
-        final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
+        final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext(mechanismConfigurationSelector);
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
             if (! authenticationContext.exists()) {
