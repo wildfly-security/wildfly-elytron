@@ -56,6 +56,13 @@ public interface RealmIdentity {
     Principal getRealmIdentityPrincipal();
 
     /**
+     * @deprecated Transition method; remove before GA.
+     */
+    default SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
+    }
+
+    /**
      * Determine whether a given credential type is definitely obtainable, possibly obtainable, or definitely not
      * obtainable for this identity.
      *

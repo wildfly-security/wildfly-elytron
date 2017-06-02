@@ -62,6 +62,13 @@ public interface SecurityRealm {
     }
 
     /**
+     * @deprecated Transition method; remove before GA.
+     */
+    default SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
+    }
+
+    /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
      * some identities), or definitely not obtainable.
      *
