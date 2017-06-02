@@ -71,6 +71,7 @@ import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.util.ByteIterator;
 
 /**
@@ -327,7 +328,15 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     }
 
     public byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm, String mechanismName) throws AuthenticationMechanismException {
-        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm);
+        final String realmName = realmCallback.getDefaultText();
+        final String userName = nameCallback.getDefaultName();
+        final DigestPasswordAlgorithmSpec parameterSpec;
+        if (realmName != null && userName != null) {
+            parameterSpec = new DigestPasswordAlgorithmSpec(userName, realmName);
+        } else {
+            parameterSpec = null;
+        }
+        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm, parameterSpec);
         try {
             callbackHandler.handle(new Callback[] { realmCallback, nameCallback, credentialCallback });
             return credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAndApply(DigestPassword.class, DigestPassword::getDigest));
