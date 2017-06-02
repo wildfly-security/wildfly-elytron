@@ -53,6 +53,12 @@ public interface AuthorizationIdentity {
             public Attributes getAttributes() {
                 return attributes;
             }
+
+            @Override
+            public String toString() {
+                return "EMPTY";
+            }
+
         };
     }
 }

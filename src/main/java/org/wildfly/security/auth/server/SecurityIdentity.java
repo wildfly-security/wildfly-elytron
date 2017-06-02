@@ -808,4 +808,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     IdentityCredentials getPrivateCredentialsPrivate() {
         return privateCredentials;
     }
+
+    @Override
+    public String toString() {
+        return "SecurityIdentity{" +
+                "principal=" + principal +
+                ", securityDomain=" + securityDomain +
+                ", authorizationIdentity=" + authorizationIdentity +
+                ", realmInfo=" + realmInfo +
+                ", creationTime=" + creationTime +
+                '}';
+    }
 }

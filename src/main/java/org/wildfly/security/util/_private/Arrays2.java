@@ -186,4 +186,23 @@ public final class Arrays2 {
             }
         }
     }
+
+    public static String objectToString(Object value) {
+        if (value == null) {
+            return "null";
+        } else if (value instanceof Object[]) {
+            return Arrays.deepToString((Object[]) value);
+        } else if (value.getClass().isArray()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            for (int i = 0; i < Array.getLength(value); i++) {
+                if (i != 0) sb.append(", ");
+                sb.append(String.valueOf(Array.get(value, i)));
+            }
+            sb.append(']');
+            return sb.toString();
+        } else {
+            return value.toString();
+        }
+    }
 }

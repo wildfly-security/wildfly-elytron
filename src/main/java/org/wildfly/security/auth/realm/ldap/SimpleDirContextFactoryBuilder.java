@@ -29,6 +29,7 @@ import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.util._private.Arrays2;
 
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -44,9 +45,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import java.lang.reflect.Array;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -427,20 +426,7 @@ public class SimpleDirContextFactoryBuilder {
 
                 if (log.isDebugEnabled()) {
                     log.debugf("Creating [" + InitialDirContext.class + "] with environment:");
-                    env.forEach((key, value) -> {
-                        if (value instanceof Object[]) {
-                            log.debugf("    Property [%s] with values %s", key, Arrays.deepToString((Object[]) value));
-                        } else if (value.getClass().isArray()) {
-                            StringBuilder sb = new StringBuilder();
-                            for (int i = 0; i < Array.getLength(value); i++) {
-                                if (i != 0) sb.append(", ");
-                                sb.append(String.valueOf(Array.get(value, i)));
-                            }
-                            log.debugf("    Property [%s] with values [%s]", key, sb.toString());
-                        } else {
-                            log.debugf("    Property [%s] with value [%s]", key, value);
-                        }
-                    });
+                    env.forEach((key, value) -> log.debugf("    Property [%s] with value [%s]", key, Arrays2.objectToString(value)));
                 }
 
                 InitialLdapContext initialContext;
