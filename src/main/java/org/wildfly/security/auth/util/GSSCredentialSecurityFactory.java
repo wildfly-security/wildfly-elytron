@@ -122,6 +122,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         private int requestLifetime;
         private boolean debug;
         private boolean wrapGssCredential;
+        private boolean checkKeyTab;
         private Map<String, Object> options;
 
         Builder() {
@@ -246,6 +247,19 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
+         * Set if keytab file existence and principal presence in it should be checked on factory build.
+         *
+         * @param value {@code true} if keytab file should be checked; {@code false} otherwise.
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setCheckKeyTab(final boolean value) {
+            assertNotBuilt();
+            this.checkKeyTab = value;
+
+            return this;
+        }
+
+        /**
          * Set other configuration options for {@code Krb5LoginModule}
          *
          * @param options the configuration options which will be appended to options passed into {@code Krb5LoginModule}
@@ -260,7 +274,9 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
 
         public SecurityFactory<GSSKerberosCredential> build() throws IOException {
             assertNotBuilt();
-            checkKeyTab();
+            if (checkKeyTab) {
+                checkKeyTab();
+            }
 
             final Configuration configuration = createConfiguration();
 
