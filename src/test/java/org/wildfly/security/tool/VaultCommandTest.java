@@ -132,6 +132,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         } catch (Exception e) {
             // Exception is wrapped inside ELYTOOL00012
             Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00020"));
+            testFailed = false;
         }
 
         Assert.assertFalse("Test was supposed to throw exception!", testFailed);
@@ -149,6 +150,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         } catch (Exception e) {
             // Exception is wrapped inside ELYTOOL00012
             Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00021"));
+            testFailed = false;
         }
 
         Assert.assertFalse("Test was supposed to throw exception!", testFailed);
@@ -166,6 +168,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         } catch (Exception e) {
             // Exception is wrapped inside ELYTOOL00012
             Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00022"));
+            testFailed = false;
         }
 
         Assert.assertFalse("Test was supposed to throw exception!", testFailed);
@@ -183,6 +186,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         } catch (Exception e) {
             // Exception is wrapped inside ELYTOOL00012
             Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00023"));
+            testFailed = false;
         }
 
         Assert.assertFalse("Test was supposed to throw exception!", testFailed);
@@ -200,6 +204,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         } catch (Exception e) {
             testFailed = false;
             Assert.assertTrue(e.getCause().getMessage().contains("ELYTOOL00024"));
+            testFailed = false;
         }
 
         Assert.assertFalse("Test was supposed to throw exception!", testFailed);
