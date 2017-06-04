@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.tool;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
@@ -225,7 +227,12 @@ class CredentialStoreCommand extends Command {
                 }
                 System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
             } else {
-                System.out.println(ElytronToolMessages.msg.noAliases());
+                if (Files.exists(Paths.get(location))) {
+                    System.out.println(ElytronToolMessages.msg.noAliases());
+                } else
+                {
+                    throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
+                }
             }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)) {

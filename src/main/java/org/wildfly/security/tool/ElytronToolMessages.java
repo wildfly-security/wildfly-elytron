@@ -281,4 +281,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm mask secret: ")
     String maskSecretPromptConfirm();
+
+    @Message(id = 20, value = "Credential store storage file \"%s\" does not exist.")
+    IllegalArgumentException storageFileDoesNotExist(String location);
 }
