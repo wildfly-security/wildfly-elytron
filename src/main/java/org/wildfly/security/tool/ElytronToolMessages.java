@@ -283,7 +283,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Confirm mask secret: ")
     String maskSecretPromptConfirm();
 
-    @Message(id = 20, value = "Credential store storage file \"%s\" does not exist.")
+    @Message(id = 5, value = "Credential store storage file \"%s\" does not exist.")
     IllegalArgumentException storageFileDoesNotExist(String location);
 
     @Message(id = NONE, value = "Print stack trace when error occurs.")
@@ -291,4 +291,19 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Exception encountered executing the command. Use option \"--debug\" for complete exception stack trace.")
     String commandExecuteExceptionNoDebug();
+
+    @Message(id = 20, value = "Alias was not defined.")
+    MissingArgumentException undefinedAlias();
+
+    @Message(id = 21, value = "Location of the output file was not defined.")
+    MissingArgumentException undefinedOutputLocation();
+
+    @Message(id = 22, value = "Encryption directory was not defined.")
+    MissingArgumentException undefinedEncryptionDirectory();
+
+    @Message(id = 23, value = "Vault password was not defined")
+    MissingArgumentException undefinedVaultPassword();
+
+    @Message(id = 24, value = "Cannot parse conversion descriptor file \"%s\". No keystore specified.")
+    IOException undefinedKeystore(String file);
 }
