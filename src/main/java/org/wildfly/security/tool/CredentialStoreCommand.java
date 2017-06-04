@@ -19,11 +19,17 @@ package org.wildfly.security.tool;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,6 +77,8 @@ class CredentialStoreCommand extends Command {
     public static final String ENTRY_TYPE_PARAM = "entry-type";
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
     public static final String DEBUG_PARAM = "debug";
+    public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+
 
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
@@ -99,6 +107,10 @@ class CredentialStoreCommand extends Command {
         options.addOption(opt);
         opt = new Option("o", OTHER_PROVIDERS_PARAM, true, ElytronToolMessages.msg.cmdLineOtherProvidersDesc());
         opt.setArgName("providers");
+        opt.setOptionalArg(true);
+        options.addOption(opt);
+        opt = new Option("q", CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM, true, ElytronToolMessages.msg.cmdLineCustomCredentialStoreProviderDesc());
+        opt.setArgName("cs-provider");
         opt.setOptionalArg(true);
         options.addOption(opt);
         options.addOption("c", CREATE_CREDENTIAL_STORE_PARAM, false, ElytronToolMessages.msg.cmdLineCreateCredentialStoreDesc());
@@ -150,6 +162,7 @@ class CredentialStoreCommand extends Command {
         int iterationCount = getArgumentAsInt(cmdLine.getOptionValue(ITERATION_PARAM));
         String entryType = cmdLine.getOptionValue(ENTRY_TYPE_PARAM);
         String otherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
+        String csProvider = cmdLine.getOptionValue(CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM);
         boolean createStorage = cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM);
         if (createStorage && cmdLine.getArgs().length > 0) {
             setStatus(GENERAL_CONFIGURATION_ERROR);
@@ -160,11 +173,23 @@ class CredentialStoreCommand extends Command {
 
         Map<String, String> implProps = parseCredentialStoreProperties(cmdLine.getOptionValue(IMPLEMENTATION_PROPERTIES_PARAM));
 
-        CredentialStore credentialStore = CredentialStore.getInstance(csType);
+        CredentialStore credentialStore;
+        if (csProvider != null) {
+            credentialStore = CredentialStore.getInstance(csType, csProvider, getProvidersSupplier(csProvider));
+        } else {
+            try {
+                credentialStore = CredentialStore.getInstance(csType);
+            } catch (NoSuchAlgorithmException e) {
+                // fallback to load all possible providers
+                credentialStore = CredentialStore.getInstance(csType, getProvidersSupplier(null));
+            }
+        }
         implProps.put("location", location);
         implProps.putIfAbsent("modifiable", Boolean.TRUE.toString());
         implProps.putIfAbsent("create", Boolean.valueOf(createStorage).toString());
-        implProps.putIfAbsent("keyStoreType", "JCEKS");
+        if (csType.equals(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE)) {
+            implProps.putIfAbsent("keyStoreType", "JCEKS");
+        }
 
         CredentialStore.CredentialSourceProtectionParameter credentialSourceProtectionParameter = null;
         if (csPassword == null) {
@@ -182,7 +207,7 @@ class CredentialStoreCommand extends Command {
         }
         credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
-                getProviders(otherProviders));
+                getProvidersSupplier(otherProviders).get());
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
             if (alias.length() == 0) {
@@ -306,22 +331,43 @@ class CredentialStoreCommand extends Command {
         }
     }
 
-    private Provider[] getProviders(String otherProviders) {
-        if (otherProviders != null && !otherProviders.isEmpty()) {
-            String[] providerNames = otherProviders.split(",");
-            Provider[] providers = new Provider[providerNames.length];
-            int i = 0;
-            for(String p: providerNames) {
-                Provider provider = Security.getProvider(p.trim());
-                if (provider == null) {
-                    throw ElytronToolMessages.msg.unknownProvider(p.trim());
+    private Supplier<Provider[]> getProvidersSupplier(final String providersList) {
+        return () -> {
+            if (providersList != null && !providersList.isEmpty()) {
+                final String[] providerNames = providersList.split(",");
+                List<Provider> providers = new ArrayList<>(providerNames.length);
+                for(String p: providerNames) {
+                    Provider provider = Security.getProvider(p.trim());
+                    if (provider != null) {
+                        providers.add(provider);
+                    }
                 }
-                providers[i++] = provider;
+                ServiceLoader<Provider> providerLoader = ServiceLoader.load(Provider.class);
+                for (Provider provider : providerLoader) {
+                    for (String p : providerNames) {
+                        if (provider.getName().equals(p)) {
+                            providers.add(provider);
+                            break;
+                        }
+                    }
+                }
+                if (providers.isEmpty()) {
+                    throw ElytronToolMessages.msg.unknownProvider(providersList);
+                }
+                return providers.toArray(new Provider[providers.size()]);
+            } else {
+                // when no provider list is specified, load all Providers from service loader except WildFlyElytron Provider
+                ServiceLoader<Provider> providerLoader = ServiceLoader.load(Provider.class);
+                Iterator<Provider> providerIterator = providerLoader.iterator();
+                List<Provider> providers = new ArrayList<>();
+                while (providerIterator.hasNext()) {
+                    Provider provider = providerIterator.next();
+                    if (provider.getName().equals("WildFlyElytron")) continue;
+                    providers.add(provider);
+                }
+                return providers.toArray(new Provider[providers.size()]);
             }
-            return providers;
-        } else {
-            return null;
-        }
+        };
     }
 
     @Override
