@@ -86,8 +86,12 @@ public interface ElytronToolMessages extends BasicLogger {
     String cmdLineEntryTypeDesc();
 
     @Message(id = NONE, value = "Comma separated list of JCA provider names. Providers will be supplied to the credential store instance.%n" +
-            "Each provider must be installed through java.security file.")
+            "Each provider must be installed through java.security file or through service loader from properly packaged jar file on classpath.")
     String cmdLineOtherProvidersDesc();
+
+    @Message(id = NONE, value = "Provider name containing CredentialStoreSpi implementation.%n" +
+            "Provider must be installed through java.security file or through service loader from properly packaged jar file on classpath.")
+    String cmdLineCustomCredentialStoreProviderDesc();
 
     @Message(id = NONE, value = "Create credential store")
     String cmdLineCreateCredentialStoreDesc();
@@ -161,9 +165,6 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Secret to be encrypted")
     String cmdMaskSecretDesc();
-
-    @Message(id = 5, value = "Nothing to encrypt. Secret not specified.")
-    MissingArgumentException secretNotSpecified();
 
     @Message(id = 6, value = "Salt not specified.")
     MissingArgumentException saltNotSpecified();
