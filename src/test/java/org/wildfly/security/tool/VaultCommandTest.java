@@ -93,7 +93,7 @@ public class VaultCommandTest extends AbstractCommandTest {
 
     /**
      * Bulk vault conversion test with wrong option
-     * @throws Exception when something ges wrong
+     * @throws Exception when something goes wrong
      */
     @Test
     public void bulkConversionWrongOption() {
@@ -118,5 +118,95 @@ public class VaultCommandTest extends AbstractCommandTest {
         Assert.assertTrue(output.contains("Option \"enc-dir\" specified more than once. Only the first occurrence will be used."));
         Assert.assertTrue(output.contains("Option \"keystore\" specified more than once. Only the first occurrence will be used."));
         Assert.assertFalse(output.contains("Option \"salt\" specified more than once. Only the first occurrence will be used"));
+    }
+
+    /**
+     * Bulk vault conversion missing the alias option
+     */
+    @Test
+    public void bulkConversionMissingAliasOption() {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-alias"};
+        boolean testFailed = true;
+        try {
+            executeCommandAndCheckStatus(args);
+        } catch (Exception e) {
+            // Exception is wrapped inside ELYTOOL00012
+            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00020"));
+            testFailed = false;
+        }
+
+        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+    }
+
+    /**
+     * Bulk vault conversion missing the location option
+     */
+    @Test
+    public void bulkConversionMissingLocationOption() {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-location"};
+        boolean testFailed = true;
+        try {
+            executeCommandAndCheckStatus(args);
+        } catch (Exception e) {
+            // Exception is wrapped inside ELYTOOL00012
+            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00021"));
+            testFailed = false;
+        }
+
+        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+    }
+
+    /**
+     * Bulk vault conversion missing the enc-dir option
+     */
+    @Test
+    public void bulkConversionMissingEncryptionDirOption() {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-enc-dir"};
+        boolean testFailed = true;
+        try {
+            executeCommandAndCheckStatus(args);
+        } catch (Exception e) {
+            // Exception is wrapped inside ELYTOOL00012
+            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00022"));
+            testFailed = false;
+        }
+
+        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+    }
+
+    /**
+     * Bulk vault conversion missing the keystore-password option
+     */
+    @Test
+    public void bulkConversionMissingKeystorePasswordOption() {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-keystore-password"};
+        boolean testFailed = true;
+        try {
+            executeCommandAndCheckStatus(args);
+        } catch (Exception e) {
+            // Exception is wrapped inside ELYTOOL00012
+            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00023"));
+            testFailed = false;
+        }
+
+        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+    }
+
+    /**
+     * Bulk vault conversion missing the keystore option
+     */
+    @Test
+    public void bulkConversionMissingKeystoreOption() {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-keystore-url"};
+        boolean testFailed = true;
+        try {
+            executeCommandAndCheckStatus(args);
+        } catch (Exception e) {
+            testFailed = false;
+            Assert.assertTrue(e.getCause().getMessage().contains("ELYTOOL00024"));
+            testFailed = false;
+        }
+
+        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
     }
 }

@@ -157,6 +157,11 @@ public class VaultCommand extends Command {
 
             // bulk conversion
             List<Descriptor> descriptors = parseDescriptorFile(bulkConversionDescriptor);
+
+            if (descriptors.size() == 0) {
+                throw ElytronToolMessages.msg.undefinedKeystore(bulkConversionDescriptor);
+            }
+
             for(Descriptor d: descriptors) {
                 try {
                     convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
@@ -233,11 +238,28 @@ public class VaultCommand extends Command {
             throws Exception {
 
         final HashMap<String, String> vaultInitialOptions = new HashMap<>();
+
+        if (encryptionDirectory == null || "".equals(encryptionDirectory)) {
+            throw ElytronToolMessages.msg.undefinedEncryptionDirectory();
+        }
+
         if (Files.exists(Paths.get(encryptionDirectory))) {
             vaultInitialOptions.put("location", encryptionDirectory);
         } else
         {
             throw ElytronToolMessages.msg.pathNotValid(encryptionDirectory);
+        }
+
+        if (secretKeyAlias == null || "".equals(secretKeyAlias)) {
+            throw ElytronToolMessages.msg.undefinedAlias();
+        }
+
+        if (outputFile == null || "".equals(outputFile)) {
+            throw ElytronToolMessages.msg.undefinedOutputLocation();
+        }
+
+        if (vaultPassword == null || "".equals(vaultPassword)) {
+            throw ElytronToolMessages.msg.undefinedVaultPassword();
         }
 
         CredentialStore vaultCredentialStore = getInstance(VaultCredentialStore.VAULT_CREDENTIAL_STORE);
