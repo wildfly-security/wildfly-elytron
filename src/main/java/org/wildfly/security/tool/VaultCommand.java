@@ -83,6 +83,7 @@ public class VaultCommand extends Command {
     public static final String ITERATION_PARAM = "iteration";
     public static final String ALIAS_PARAM = "alias";
     public static final String HELP_PARAM = "help";
+    public static final String DEBUG_PARAM = "debug";
 
     private static final class Descriptor {
         String keyStoreURL;
@@ -129,8 +130,10 @@ public class VaultCommand extends Command {
         Option b = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cliCommandBulkVaultCredentialStoreConversion());
         b.setArgName("description file");
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
+        Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
         options.addOption(b);
         options.addOption(h);
+        options.addOption(d);
 
     }
 
@@ -146,6 +149,7 @@ public class VaultCommand extends Command {
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
         printDuplicatesWarning(cmdLine);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String bulkConversionDescriptor = cmdLine.getOptionValue(BULK_CONVERT_PARAM);
         if (bulkConversionDescriptor != null && !bulkConversionDescriptor.isEmpty()) {
