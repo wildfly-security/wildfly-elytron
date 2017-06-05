@@ -21,6 +21,9 @@ package org.wildfly.security.sasl.gs2;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
 
+import java.io.IOException;
+
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
@@ -36,7 +39,7 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteIterator;
@@ -76,22 +79,26 @@ final class Gs2SaslServer extends AbstractSaslServer {
         }
 
         // Attempt to obtain a credential
-        GSSCredential credential;
-        CredentialCallback credentialCallback = new CredentialCallback(GSSKerberosCredential.class);
+        GSSCredential credential = null;
+        ServerCredentialCallback credentialCallback = new ServerCredentialCallback(GSSKerberosCredential.class);
 
         try {
-            tryHandleCallbacks(credentialCallback);
+            log.trace("Obtaining GSSCredential for the service from callback handler");
+            callbackHandler.handle(new Callback[] { credentialCallback });
             credential = credentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getGssCredential);
-        } catch (UnsupportedCallbackException | IllegalStateException | SaslException e) {
-            try {
+        } catch (IOException e) {
+            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+        } catch (UnsupportedCallbackException e) {
+            log.trace("Unable to obtain GSSCredential from callback handler", e);
+        }
+
+        try {
+            if (credential == null) {
                 String localNameStr = protocol + "@" + serverName;
+                log.tracef("Our name '%s'", localNameStr);
                 GSSName localName = gssManager.createName(localNameStr, GSSName.NT_HOSTBASED_SERVICE, mechanism);
                 credential = gssManager.createCredential(localName, GSSContext.INDEFINITE_LIFETIME, mechanism, GSSCredential.ACCEPT_ONLY);
-            } catch (GSSException e1) {
-                throw log.mechUnableToCreateGssContext(getMechanismName(), e1).toSaslException();
             }
-        }
-        try {
             gssContext = gssManager.createContext(credential);
         } catch (GSSException e) {
             throw log.mechUnableToCreateGssContext(getMechanismName(), e).toSaslException();
