@@ -818,7 +818,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         final Path dataLocation;
         if (useExternalStorage) {
             dataLocation = externalPath;
-            setupExternalStorage(type, dataLocation);
+            setupExternalStorage(type, location);
         } else {
             dataLocation = location;
             keyStore = getKeyStoreInstance(type);
