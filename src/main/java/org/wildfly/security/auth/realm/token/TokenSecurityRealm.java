@@ -32,6 +32,7 @@ import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * <p>A {@link SecurityRealm} capable of building identities based on different security token formats based on a {@link TokenValidator}.
@@ -71,7 +72,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         return SupportLevel.UNSUPPORTED;
     }
 
@@ -146,7 +147,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
 

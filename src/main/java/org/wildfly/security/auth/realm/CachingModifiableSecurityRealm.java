@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -97,8 +98,8 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             }
 
             @Override
-            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-                return modifiable.getCredentialAcquireSupport(credentialType, algorithmName);
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                return modifiable.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
 
             @Override
@@ -137,6 +138,11 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             }
 
             @Override
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                return modifiable.getCredential(credentialType, algorithmName, parameterSpec);
+            }
+
+            @Override
             public <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) throws RealmUnavailableException {
                 return modifiable.applyToCredential(credentialType, function);
             }
@@ -144,6 +150,11 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
             @Override
             public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
                 return modifiable.applyToCredential(credentialType, algorithmName, function);
+            }
+
+            @Override
+            public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) throws RealmUnavailableException {
+                return modifiable.applyToCredential(credentialType, algorithmName, parameterSpec, function);
             }
 
             @Override

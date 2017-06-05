@@ -600,9 +600,8 @@ public class DigestTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
 
-        message = client.evaluateChallenge(message);
         try {
-            server.evaluateResponse(message);
+            client.evaluateChallenge(message);
             fail("Expection exception not thrown.");
         } catch (IOException e) {
         }
@@ -632,9 +631,8 @@ public class DigestTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
 
-        message = client.evaluateChallenge(message);
         try {
-            server.evaluateResponse(message);
+            client.evaluateChallenge(message);
             fail("Expection exception not thrown.");
         } catch (IOException e) {
         }

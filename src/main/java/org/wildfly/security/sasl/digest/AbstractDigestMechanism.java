@@ -59,6 +59,7 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
@@ -477,7 +478,15 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm(getMechanismName()));
+        final String realmName = realmCallback.getDefaultText();
+        final String userName = nameCallback.getDefaultName();
+        final DigestPasswordAlgorithmSpec parameterSpec;
+        if (realmName != null && userName != null) {
+            parameterSpec = new DigestPasswordAlgorithmSpec(userName, realmName);
+        } else {
+            parameterSpec = null;
+        }
+        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm(getMechanismName()), parameterSpec);
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
             return credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAndApply(DigestPassword.class, DigestPassword::getDigest));

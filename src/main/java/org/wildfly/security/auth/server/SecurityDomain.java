@@ -25,6 +25,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.PrivilegedAction;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -449,17 +450,32 @@ public final class SecurityDomain {
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return the level of support for this credential
      */
-    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) {
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
         return getSupportLevel(r -> {
             try {
-                return r.getCredentialAcquireSupport(credentialType, algorithmName);
+                return r.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             } catch (RealmUnavailableException e) {
                 log.trace("Failed to obtain credential acquire support from realm", e);
                 return null;
             }
         });
+    }
+
+    /**
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
+     * some identities), or definitely not obtainable.
+     *
+     * @param credentialType the exact credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
+     *  not support algorithm names
+     * @return the level of support for this credential
+     */
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) {
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
     }
 
     /**

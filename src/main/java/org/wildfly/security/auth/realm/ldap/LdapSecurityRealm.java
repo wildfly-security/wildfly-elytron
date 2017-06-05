@@ -23,6 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -270,12 +271,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialAcquireSupport(credentialType, algorithmName);
+            SupportLevel support = loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -333,10 +334,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
@@ -356,10 +357,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
                 SupportLevel support = SupportLevel.UNSUPPORTED;
                 for (CredentialLoader loader : credentialLoaders) {
-                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
-                        SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, providers);
+                        SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec, providers);
                         if (temp != null && temp.isDefinitelySupported()) {
                             // As soon as one claims definite support we know it is supported.
                             return temp;
@@ -383,9 +384,14 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
@@ -404,10 +410,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     return null;
                 }
                 for (CredentialLoader loader : credentialLoaders) {
-                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
-                        Credential credential = icl.getCredential(credentialType, algorithmName, providers);
+                        Credential credential = icl.getCredential(credentialType, algorithmName, parameterSpec, providers);
                         if (credentialType.isInstance(credential)) {
                             return credentialType.cast(credential);
                         }
@@ -441,10 +447,11 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 for (Credential credential : credentials) {
                     final Class<? extends Credential> credentialType = credential.getClass();
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    final AlgorithmParameterSpec parameterSpec = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getParameters() : null;
                     boolean supported = false;
                     for (CredentialPersister persister : credentialPersisters) {
                         IdentityCredentialPersister icp = persister.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
-                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName, parameterSpec)) {
                             supported = true;
                         }
                     }
@@ -463,9 +470,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 for (Credential credential : credentials) {
                     final Class<? extends Credential> credentialType = credential.getClass();
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    final AlgorithmParameterSpec parameterSpec = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getParameters() : null;
                     for (CredentialPersister persister : credentialPersisters) {
                         IdentityCredentialPersister icp = persister.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
-                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName, parameterSpec)) {
                             icp.persistCredential(credential);
                             // next credential
                             break;

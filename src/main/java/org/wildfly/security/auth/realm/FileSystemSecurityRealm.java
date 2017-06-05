@@ -47,6 +47,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.Normalizer;
@@ -81,7 +82,6 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.PublicKeyCredential;
@@ -327,7 +327,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
     }
 
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
@@ -372,14 +372,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return new NamePrincipal(name);
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return SupportLevel.SUPPORTED;
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return SupportLevel.SUPPORTED;
                 }
             }
             return SupportLevel.UNSUPPORTED;
@@ -390,13 +388,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return credentialType.cast(credential.clone());
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return credentialType.cast(credential.clone());
                 }
             }
             return null;

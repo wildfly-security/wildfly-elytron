@@ -18,6 +18,7 @@
 package org.wildfly.security.auth.realm.jdbc;
 
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Supplier;
@@ -42,9 +43,11 @@ public interface KeyMapper extends ColumnMapper {
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return the level of support for this credential
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName);
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec);
 
     /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
@@ -57,7 +60,7 @@ public interface KeyMapper extends ColumnMapper {
      */
     default SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) {
         if (PasswordGuessEvidence.class.isAssignableFrom(evidenceType)) {
-            return getCredentialAcquireSupport(PasswordCredential.class, null);
+            return getCredentialAcquireSupport(PasswordCredential.class, null, null);
         }
         return SupportLevel.UNSUPPORTED;
     }

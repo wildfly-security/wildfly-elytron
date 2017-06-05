@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
@@ -94,15 +95,15 @@ public class CachingSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-                if (credentials.contains(credentialType, algorithmName)) {
-                    return credentials.getCredentialAcquireSupport(credentialType, algorithmName);
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                if (credentials.contains(credentialType, algorithmName, parameterSpec)) {
+                    return credentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
                 }
-                Credential credential = identity.getCredential(credentialType, algorithmName);
+                Credential credential = identity.getCredential(credentialType, algorithmName, parameterSpec);
                 if (credential != null) {
                     credentials = credentials.withCredential(credential);
                 }
-                return credentials.getCredentialAcquireSupport(credentialType, algorithmName);
+                return credentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
 
             @Override
@@ -127,6 +128,18 @@ public class CachingSecurityRealm implements SecurityRealm {
                     credentials = credentials.withCredential(credential);
                 }
                 return credentials.getCredential(credentialType, algorithmName);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                if (credentials.contains(credentialType, algorithmName, parameterSpec)) {
+                    return credentials.getCredential(credentialType, algorithmName, parameterSpec);
+                }
+                Credential credential = identity.getCredential(credentialType, algorithmName, parameterSpec);
+                if (credential != null) {
+                    credentials = credentials.withCredential(credential);
+                }
+                return credentials.getCredential(credentialType, algorithmName, parameterSpec);
             }
 
             @Override
@@ -212,8 +225,8 @@ public class CachingSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-        return getCacheableRealm().getCredentialAcquireSupport(credentialType, algorithmName);
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        return getCacheableRealm().getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
     }
 
     @Override

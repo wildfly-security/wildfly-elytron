@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -164,7 +165,7 @@ public class LRURealmIdentityCacheTest {
             }
 
             @Override
-            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
                 return null;
             }
 

@@ -21,6 +21,7 @@ package org.wildfly.security.auth.server;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
@@ -31,6 +32,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.key.KeyUtil;
 
 /**
  * A representation of a pre-authentication identity.
@@ -54,16 +56,25 @@ public interface RealmIdentity {
     Principal getRealmIdentityPrincipal();
 
     /**
+     * @deprecated Transition method; remove before GA.
+     */
+    default SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
+    }
+
+    /**
      * Determine whether a given credential type is definitely obtainable, possibly obtainable, or definitely not
      * obtainable for this identity.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return the level of support for this credential type (may not be {@code null})
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException;
 
     /**
      * Acquire a credential of the given type.
@@ -76,7 +87,8 @@ public interface RealmIdentity {
     <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
 
     /**
-     * Acquire a credential of the given type and algorithm name.
+     * Acquire a credential of the given type and algorithm name.  Realms which support more than one credential of a
+     * given type must override this method.
      *
      * @param credentialType the credential type class (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
@@ -97,6 +109,33 @@ public interface RealmIdentity {
     }
 
     /**
+     * Acquire a credential of the given type and algorithm name.  Realms which support more than one credential of a
+     * given type and algorithm must override this method.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
+     * @param <C> the credential type
+     *
+     * @return the credential, or {@code null} if no such credential exists
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        final C credential = getCredential(credentialType, algorithmName);
+        if (parameterSpec != null) {
+            if (! (credential instanceof AlgorithmCredential)) {
+                return null;
+            }
+            return KeyUtil.parametersEqual(parameterSpec, ((AlgorithmCredential) credential).getParameters()) ? credential : null;
+        } else {
+            return credential;
+        }
+    }
+
+    /**
      * Apply the given function to the acquired credential, if it is set and of the given type.
      *
      * @param credentialType the credential type class (must not be {@code null})
@@ -112,12 +151,12 @@ public interface RealmIdentity {
         return credential == null ? null : credential.castAndApply(credentialType, function);
     }
 
-
     /**
      * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
      *
      * @param credentialType the credential type class (must not be {@code null})
-     * @param algorithmName the algorithm name
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
      * @param function the function to apply (must not be {@code null})
      * @param <C> the credential type
      * @param <R> the return type
@@ -128,6 +167,26 @@ public interface RealmIdentity {
     default <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
         final Credential credential = getCredential(credentialType, algorithmName);
         return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type, algorithm, and parameters.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType, algorithmName, parameterSpec);
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
     }
 
     /**
@@ -217,7 +276,7 @@ public interface RealmIdentity {
             return AnonymousPrincipal.getInstance();
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;
         }
@@ -251,7 +310,7 @@ public interface RealmIdentity {
             return null;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;
         }

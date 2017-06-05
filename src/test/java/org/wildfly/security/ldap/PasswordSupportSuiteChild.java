@@ -128,7 +128,7 @@ public class PasswordSupportSuiteChild {
 
     @Test
     public void testOneTimePasswordUser0() throws Exception {
-        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null);
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null, null);
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
         RealmIdentity identity = simpleToDnRealm.getRealmIdentity(new NamePrincipal("userWithOtp"));
@@ -151,8 +151,8 @@ public class PasswordSupportSuiteChild {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(new NamePrincipal("userWithOtp"));
         assertNotNull(identity);
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1, null));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1, null));
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
@@ -205,8 +205,8 @@ public class PasswordSupportSuiteChild {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(new NamePrincipal("userToChange"));
         assertNotNull(identity);
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
@@ -222,7 +222,7 @@ public class PasswordSupportSuiteChild {
 
     private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.getRealmIdentity(new NamePrincipal(simpleName));
-        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 
         verifyPasswordSupport(realmIdentity, algorithm, SupportLevel.SUPPORTED);
@@ -230,7 +230,7 @@ public class PasswordSupportSuiteChild {
     }
 
     private void verifyPasswordSupport(RealmIdentity identity, final String algorithm, SupportLevel requiredSupport) throws RealmUnavailableException {
-        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
+        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null);
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 

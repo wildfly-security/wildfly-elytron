@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.security.Principal;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -166,8 +167,8 @@ public class SecurityRealmIdentityCacheTest {
             }
 
             @Override
-            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-                return realm.getCredentialAcquireSupport(credentialType, algorithmName);
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                return realm.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
 
             @Override

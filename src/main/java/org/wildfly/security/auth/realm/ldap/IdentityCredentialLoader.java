@@ -20,6 +20,7 @@ package org.wildfly.security.auth.realm.ldap;
 
 
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Supplier;
 
 import org.wildfly.security.auth.SupportLevel;
@@ -40,10 +41,12 @@ interface IdentityCredentialLoader {
      *
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name, if any
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @param providers the providers to use when checking ability to obtain the credential
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, Supplier<Provider[]> providers);
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers);
 
     /**
      * Acquire a credential of the given type.
@@ -51,8 +54,10 @@ interface IdentityCredentialLoader {
      * @param <C> the type to which should be credential casted
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name, if any
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @param providers the providers to use when obtaining the credential
      * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      */
-    <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, Supplier<Provider[]> providers);
+    <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers);
 }

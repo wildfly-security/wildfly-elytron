@@ -72,9 +72,9 @@ public class JaasSecurityRealmTest {
         assertNotNull("Unexpected null realm identity", realmIdentity);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, "blah"));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, "blah", null));
         assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED,
-                realmIdentity.getCredentialAcquireSupport(PublicKeyCredential.class, null));
+                realmIdentity.getCredentialAcquireSupport(PublicKeyCredential.class, null, null));
 
         // the JAAS realm identity cannot be used to obtain credentials, so getCredential should always return null.
         assertNull("Invalid non null credential", realmIdentity.getCredential(PasswordCredential.class, null));

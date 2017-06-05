@@ -23,6 +23,7 @@ import javax.naming.directory.NoSuchAttributeException;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -53,7 +54,7 @@ class OtpCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
         if (credentialType == PasswordCredential.class) {
             if (algorithmName == null) {
                 return SupportLevel.SUPPORTED;
@@ -93,7 +94,7 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final Supplier<Provider[]> providers) {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return SupportLevel.UNSUPPORTED;
             }
@@ -109,7 +110,7 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, Supplier<Provider[]> providers) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
@@ -142,8 +143,8 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
-            return OtpCredentialLoader.this.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported();
+        public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            return OtpCredentialLoader.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported();
         }
 
         @Override

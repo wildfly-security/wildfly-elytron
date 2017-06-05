@@ -24,6 +24,8 @@ import org.wildfly.security.credential.Credential;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 
 /**
@@ -49,9 +51,11 @@ interface CredentialLoader {
      *
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.

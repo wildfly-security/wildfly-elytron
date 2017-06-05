@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import java.security.Principal;
+import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -64,16 +65,25 @@ public interface SecurityRealm {
     }
 
     /**
+     * @deprecated Transition method; remove before GA.
+     */
+    default SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+        return getCredentialAcquireSupport(credentialType, algorithmName, null);
+    }
+
+    /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
      * some identities), or definitely not obtainable.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
+     * @param parameterSpec the algorithm parameters to match, or {@code null} if any parameters are acceptable or the credential type
+     *  does not support algorithm parameters
      * @return the level of support for this credential
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException;
 
     /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
@@ -126,7 +136,7 @@ public interface SecurityRealm {
             return RealmIdentity.NON_EXISTENT;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;
         }

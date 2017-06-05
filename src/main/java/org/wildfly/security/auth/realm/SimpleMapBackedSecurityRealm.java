@@ -23,6 +23,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -36,7 +37,6 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.SupportLevel;
-import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -144,7 +144,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
@@ -168,15 +168,13 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return SupportLevel.UNSUPPORTED;
             for (Credential credential : entry.getCredentials()) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return SupportLevel.SUPPORTED;
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return SupportLevel.SUPPORTED;
                 }
             }
             return SupportLevel.UNSUPPORTED;
@@ -189,14 +187,17 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialType", credentialType);
+            return getCredential(credentialType, algorithmName, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+            checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
             for (Credential credential : entry.getCredentials()) {
-                if (credentialType.isInstance(credential)) {
-                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return credentialType.cast(credential.clone());
-                    }
+                if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                    return credentialType.cast(credential.clone());
                 }
             }
             return null;
