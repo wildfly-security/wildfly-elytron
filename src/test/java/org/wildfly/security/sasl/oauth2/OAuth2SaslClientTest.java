@@ -49,7 +49,6 @@ import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
-import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -158,8 +157,8 @@ public class OAuth2SaslClientTest extends BaseTestCase {
         try {
             message = saslServer.evaluateResponse(message);
         } catch (SaslException e) {
-            assertTrue(e.getCause() instanceof RealmUnavailableException);
-            RealmUnavailableException cause = (RealmUnavailableException) e.getCause();
+            assertTrue(e.getCause() instanceof IllegalArgumentException);
+            IllegalArgumentException cause = (IllegalArgumentException) e.getCause();
             assertTrue(cause.getMessage().contains("ELY01114"));
         }
     }
