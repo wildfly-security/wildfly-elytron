@@ -397,6 +397,7 @@ public final class SecurityDomain {
         }
         Principal preRealmPrincipal = preRealmPrincipalRewriter.apply(principal);
         if (preRealmPrincipal == null) {
+            log.tracef("Pre-realm rewritter: null output for principal %s", principal);
             throw log.invalidName();
         }
 
@@ -407,11 +408,13 @@ public final class SecurityDomain {
 
         Principal postRealmPrincipal = postRealmPrincipalRewriter.apply(preRealmPrincipal);
         if (postRealmPrincipal == null) {
+            log.tracef("Post-realm rewritter: null output for principal %s", preRealmPrincipal);
             throw log.invalidName();
         }
 
         Principal realmRewrittenPrincipal = realmInfo.getPrincipalRewriter().apply(postRealmPrincipal);
         if (realmRewrittenPrincipal == null) {
+            log.tracef("Realm rewritter: null output for principal %s", postRealmPrincipal);
             throw log.invalidName();
         }
 
