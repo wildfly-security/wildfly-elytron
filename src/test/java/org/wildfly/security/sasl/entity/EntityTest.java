@@ -65,6 +65,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -566,7 +567,7 @@ public class EntityTest extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useKeyStoreCredential(loadKeyStore(keyStore), keyStoreAlias, new KeyStore.PasswordProtection(keyStorePassword))
                                 .useTrustManager(trustManager)
-                                .allowSaslMechanisms(mechanisms));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanisms(mechanisms)));
 
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
@@ -580,7 +581,7 @@ public class EntityTest extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useKeyManagerCredential(keyManager)
                                 .useTrustManager(trustManager)
-                                .allowSaslMechanisms(mechanisms));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanisms(mechanisms)));
 
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
@@ -594,7 +595,7 @@ public class EntityTest extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useCertificateCredential(privateKey, certificateChain)
                                 .useTrustManager(trustManager)
-                                .allowSaslMechanisms(mechanisms));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanisms(mechanisms)));
 
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);

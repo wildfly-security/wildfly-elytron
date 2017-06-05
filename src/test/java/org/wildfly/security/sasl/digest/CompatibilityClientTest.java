@@ -48,6 +48,7 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
@@ -129,7 +130,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testRfc2831example1", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -181,7 +182,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testRfc2831example2", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -232,7 +233,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testAuthorizedAuthorizationId", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -284,7 +285,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-int");
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testAuthorizedAuthorizationId", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -420,7 +421,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testQopAuthConfRc4", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -611,7 +612,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         if (useCredentialStore) {
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testQopAuthConfRc4", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -945,12 +946,12 @@ public class CompatibilityClientTest extends BaseTestCase {
                                 .useName(username)
                                 .usePassword(password)
                                 .useRealm(realm)
-                                .allowSaslMechanisms(SaslMechanismInformation.Names.DIGEST_MD5));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(SaslMechanismInformation.Names.DIGEST_MD5)));
 
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
     }
 
-    private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, String storeName, String alias, String storeFileName, String storePassword, String keyPassword)
+    private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, String alias, String storeFileName, String storePassword, String keyPassword)
             throws Exception {
         final HashMap<String, String> csAttributes = new HashMap<>();
         csAttributes.put("location", storeFileName);
@@ -971,8 +972,8 @@ public class CompatibilityClientTest extends BaseTestCase {
                                 .useName(username)
                                 .useCredentialStoreEntry(cs, alias)
                                 .useRealm(realm)
-                                .allowSaslMechanisms(SaslMechanismInformation.Names.DIGEST_MD5)
-                );
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(SaslMechanismInformation.Names.DIGEST_MD5)));
+
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter"), context);
     }
 

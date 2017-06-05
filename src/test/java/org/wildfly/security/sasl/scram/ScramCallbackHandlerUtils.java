@@ -26,6 +26,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 
 /**
  * @author Kabir Khan
@@ -39,7 +40,7 @@ class ScramCallbackHandlerUtils {
                         AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
-                                .allowSaslMechanisms("SCRAM-SHA-256"));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism("SCRAM-SHA-256")));
 
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
@@ -52,7 +53,7 @@ class ScramCallbackHandlerUtils {
                         AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
-                                .allowSaslMechanisms("SCRAM-SHA-256"));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism("SCRAM-SHA-256")));
 
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);

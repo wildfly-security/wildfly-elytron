@@ -52,6 +52,7 @@ import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
@@ -284,7 +285,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                                 .clientCredentials("elytron-client", "dont_tell_me")
                                 .useResourceOwnerPassword("alice", "dont_tell_me")
                                 .build())
-                        .allowSaslMechanisms("OAUTHBEARER"));
+                        .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism("OAUTHBEARER")));
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         AuthenticationConfiguration configuration = contextConfigurationClient.getAuthenticationConfiguration(URI.create("http://resourceserver.com"), context);
         SaslClient saslClient = contextConfigurationClient.createSaslClient(URI.create("http://resourceserver.com"), configuration, Arrays.asList("OAUTHBEARER"));
@@ -315,7 +316,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
                                 .useResourceOwnerPassword("unknown", "dont_tell_me")
                                 .clientCredentials("bad", "bad")
                                 .build())
-                        .allowSaslMechanisms("OAUTHBEARER"))
+                        .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism("OAUTHBEARER")))
                 .with(MatchRule.ALL.matchHost("localhost").matchPort(50831).matchPath("/token"), AuthenticationConfiguration.empty()
                         .useName("elytron_client")
                         .usePassword("dont_tell_me"));

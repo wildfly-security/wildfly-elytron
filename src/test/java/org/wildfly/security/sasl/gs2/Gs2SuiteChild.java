@@ -75,6 +75,7 @@ import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.GssapiTestSuite;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -627,7 +628,7 @@ public class Gs2SuiteChild extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useAuthorizationName(authorizationId)
                                 .useGSSCredential(credential)
-                                .allowSaslMechanisms(mechanisms));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanisms(mechanisms)));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }

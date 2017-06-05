@@ -1078,51 +1078,6 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, SET_SASL_SELECTOR, saslMechanismSelector);
     }
 
-    /**
-     * Create a new configuration which is the same as this configuration, but which does not forbid any SASL mechanisms.
-     *
-     * @return the new configuration.
-     */
-    public AuthenticationConfiguration allowAllSaslMechanisms() {
-        return setSaslMechanismSelector(SaslMechanismSelector.ALL);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which explicitly allows only the given named mechanisms.
-     * Any unlisted mechanisms will not be supported unless the configuration supports it.
-     *
-     * @param names the mechanism names
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration allowSaslMechanisms(String... names) {
-        if (names == null || names.length == 0) {
-            // clear out all explicitly-allowed names
-            return setSaslMechanismSelector(null);
-        }
-        SaslMechanismSelector selector = SaslMechanismSelector.NONE;
-        for (String name : names) {
-            selector = selector.addMechanism(name);
-        }
-        return setSaslMechanismSelector(selector);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which forbids the given named mechanisms.
-     *
-     * @param names the mechanism names
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
-        SaslMechanismSelector selector = saslMechanismSelector;
-        if (selector == null) {
-            selector = SaslMechanismSelector.DEFAULT;
-        }
-        for (String name : names) {
-            selector = selector.forbidMechanism(name);
-        }
-        return setSaslMechanismSelector(selector);
-    }
-
     // other
 
     /**
