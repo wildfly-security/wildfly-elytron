@@ -182,7 +182,7 @@ public abstract class SaslMechanismPredicate {
 
     static final SaslMechanismPredicate MUTUAL = new SaslMechanismPredicate() {
         boolean test(final String mechName, final SSLSession sslSession) {
-            return sslSession != null && SaslMechanismInformation.MUTUAL.test(mechName);
+            return SaslMechanismInformation.MUTUAL.test(mechName);
         }
 
         void toString(final StringBuilder b) {
