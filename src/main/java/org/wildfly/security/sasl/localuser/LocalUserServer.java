@@ -155,11 +155,6 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        deleteChallenge();
-    }
-
-    @Override
     protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
         switch (state) {
             case INITIAL_CHALLENGE_STATE:
