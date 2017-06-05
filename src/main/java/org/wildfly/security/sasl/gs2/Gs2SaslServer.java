@@ -285,7 +285,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
             throw log.mechUnableToDeterminePeerName(getMechanismName(), e).toSaslException();
         }
         log.tracef("checking if [%s] is authorized to act as [%s]...", authenticationID, authorizationID);
-        if (authorizationID == null) {
+        if (authorizationID == null || authorizationID.isEmpty()) {
             authorizationID = authenticationID;
         }
         AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationID, authorizationID);

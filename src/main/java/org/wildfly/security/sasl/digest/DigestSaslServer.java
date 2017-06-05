@@ -282,7 +282,8 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         createCiphersAndKeys();
 
         // authorization check
-        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authzid == null ? userName : authzid);
+        String authorizationId = (authzid == null || authzid.isEmpty()) ? userName : authzid;
+        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationId);
         try {
             tryHandleCallbacks(authorizeCallback);
         } catch (UnsupportedCallbackException e) {
@@ -291,7 +292,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         if (authorizeCallback.isAuthorized()) {
             authzid = authorizeCallback.getAuthorizedID();
         } else {
-            throw log.mechAuthorizationFailed(getMechanismName(), userName, authzid).toSaslException();
+            throw log.mechAuthorizationFailed(getMechanismName(), userName, authorizationId).toSaslException();
         }
 
         return createResponseAuth(parsedDigestResponse);
