@@ -1050,9 +1050,7 @@ public final class ServerAuthenticationContext {
         } else {
             realmIdentity = securityRealm.getRealmIdentity(finalPrincipal);
         }
-        if (! realmIdentity.exists()) {
-            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
-        }
+
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, preRealmPrincipal, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
     }
 
