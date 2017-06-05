@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -32,6 +33,7 @@ import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -121,6 +123,10 @@ public final class AuthenticationContextConfigurationClient {
         final String userInfo = uri.getUserInfo();
         if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
             configuration = configuration.useName(userInfo);
+        }
+        final Subject subject = configuration.getSubject();
+        if (subject == null) {
+            configuration = configuration.useSubject(Subject.getSubject(AccessController.getContext()));
         }
 
         log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
