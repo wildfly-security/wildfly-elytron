@@ -163,8 +163,14 @@ public interface RealmIdentity {
     boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException;
 
     /**
-     * Determine if the identity exists in lieu of verifying or acquiring a credential.  This method is intended to be
-     * used to verify an identity for non-authentication purposes only.
+     * Determine if the identity exists in lieu of verifying or acquiring a credential. This method is intended to be used to
+     * verify an identity for non-authentication purposes only.
+     *
+     * Implementations of this method should return {@code false} up until the point it is known that a call to
+     * {@link #getAuthorizationIdentity()} can successfully return an identity.
+     *
+     * If a realm can load an identity independently of credential acquisition and evidence verification if not already loaded
+     * it should be loaded at the time of this call to return an accurate result.
      *
      * @return {@code true} if the identity exists in this realm, {@code false} otherwise
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
@@ -182,6 +188,7 @@ public interface RealmIdentity {
      *
      * @return the authorization identity (may not be {@code null})
      *
+     * @throws IllegalStateException if called for an identity that does not exist
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     default AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
