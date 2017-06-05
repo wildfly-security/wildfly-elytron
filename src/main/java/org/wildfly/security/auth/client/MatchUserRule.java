@@ -36,31 +36,38 @@ class MatchUserRule extends MatchRule {
         this.userSpec = userSpec;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String userInfo = URIUtil.getUserFromURI(uri);
-        return userInfo != null && userInfo.equals(userSpec) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return userInfo != null && userInfo.equals(userSpec) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchUserRule(newParent, userSpec);
     }
 
+    @Override
     public String getMatchUser() {
         return userSpec;
     }
 
+    @Override
     public boolean isUserMatched() {
         return true;
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return userSpec.equals(other.getMatchUser());
     }
 
+    @Override
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 3323, userSpec.hashCode());
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("user=").append(userSpec).append(',');
     }

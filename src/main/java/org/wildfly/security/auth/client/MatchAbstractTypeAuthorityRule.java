@@ -30,30 +30,37 @@ class MatchAbstractTypeAuthorityRule extends MatchRule {
         this.authority = authority;
     }
 
+    @Override
     public String getMatchAbstractTypeAuthority() {
         return authority;
     }
 
+    @Override
     public boolean isTypeAuthorityMatched() {
         return true;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return authority.equals(abstractTypeAuthority) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return authority.equals(abstractTypeAuthority) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchAbstractTypeAuthorityRule(newParent, authority);
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return authority.equals(other.getMatchAbstractTypeAuthority()) && parentHalfEqual(other);
     }
 
+    @Override
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 7879, authority.hashCode());
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("abstractTypeAuthority=").append(authority).append(',');
     }

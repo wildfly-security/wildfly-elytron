@@ -38,26 +38,32 @@ class MatchPathRule extends MatchRule {
         }
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return uri.isAbsolute() && prefixes(uri.getPath()) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return uri.isAbsolute() && prefixes(uri.getPath()) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchPathRule(newParent, pathSpec);
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return pathSpec.equals(other.getMatchPath()) && parentHalfEqual(other);
     }
 
+    @Override
     public String getMatchPath() {
         return pathSpec;
     }
 
+    @Override
     public boolean isPathMatched() {
         return true;
     }
 
+    @Override
     public int hashCode() {
         // our prime is 3923
         return multiHashUnordered(parentHashCode(), 3923, pathSpec.hashCode());
@@ -70,6 +76,7 @@ class MatchPathRule extends MatchRule {
         return pathSpec.startsWith(this.pathSpec);
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("path=~").append(pathSpec).append(',');
     }

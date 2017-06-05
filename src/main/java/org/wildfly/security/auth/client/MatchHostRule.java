@@ -54,7 +54,8 @@ class MatchHostRule extends MatchRule {
         this.hostSpec = hostSpec.toLowerCase(Locale.ROOT);
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String host = uri.getHost();
         if (host == null) {
             return false;
@@ -69,33 +70,39 @@ class MatchHostRule extends MatchRule {
 
         // if both hostSpec and host are valid IP addresses, compare their byte representations, otherwise compare as strings
         if (hostBytes != null && this.hostSpecBytes != null) {
-            return Arrays.equals(hostBytes, this.hostSpecBytes) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+            return Arrays.equals(hostBytes, this.hostSpecBytes) && super.matches(uri, abstractType, abstractTypeAuthority);
         } else {
-            return host.toLowerCase(Locale.ROOT).equals(hostSpec) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+            return host.toLowerCase(Locale.ROOT).equals(hostSpec) && super.matches(uri, abstractType, abstractTypeAuthority);
         }
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchHostRule(newParent, hostSpec);
     }
 
+    @Override
     public String getMatchHost() {
         return hostSpec;
     }
 
+    @Override
     public boolean isHostMatched() {
         return true;
     }
 
+    @Override
     public int hashCode() {
         // our prime is 2011
         return multiHashUnordered(parentHashCode(), 2011, hostSpec.hashCode());
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return hostSpec.equals(other.getMatchHost()) && parentHalfEqual(other);
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("host=").append(hostSpec).append(',');
     }

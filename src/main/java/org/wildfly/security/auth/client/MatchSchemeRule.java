@@ -34,32 +34,39 @@ class MatchSchemeRule extends MatchRule {
         this.protoName = protoName;
     }
 
+    @Override
     public boolean isProtocolMatched() {
         return true;
     }
 
+    @Override
     public String getMatchProtocol() {
         return protoName;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String scheme = uri.getScheme();
-        return scheme != null && scheme.equals(protoName) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return scheme != null && scheme.equals(protoName) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchSchemeRule(newParent, protoName);
     }
 
+    @Override
     public int hashCode() {
         // our prime is 3547
         return multiHashUnordered(parentHashCode(), 3547, protoName.hashCode());
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return protoName.equals(other.getMatchProtocol()) && parentHalfEqual(other);
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("scheme=").append(protoName).append(',');
     }
