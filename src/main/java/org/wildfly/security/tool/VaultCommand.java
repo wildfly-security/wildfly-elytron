@@ -164,10 +164,10 @@ public class VaultCommand extends Command {
 
             for(Descriptor d: descriptors) {
                 try {
-                    convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
+                    final HashMap<String, String> convertedOptions = convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
                     System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(d.encryptionDirectory, d.keyStoreURL, d.outputFile));
                     if (printSummary) {
-                        printSummary(d.vaultPassword, d.salt, d.iterationCount, d.implProps);
+                        printSummary(d.vaultPassword, d.salt, d.iterationCount, convertedOptions);
                     }
                 } catch (Throwable e) {
                     throw ElytronToolMessages.msg.bulkConversionProblem(d.encryptionDirectory, d.keyStoreURL, e);
@@ -195,12 +195,12 @@ public class VaultCommand extends Command {
                 keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), true, ElytronToolMessages.msg.vaultPasswordPromptConfirm());
             }
 
-            convert(keystoreURL, keystorePassword, encryptionDirectory, salt, iterationCount, vaultSecretKeyAlias,
+            final HashMap<String, String> convertedOptions = convert(keystoreURL, keystorePassword, encryptionDirectory, salt, iterationCount, vaultSecretKeyAlias,
                     location, implProps);
             System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(encryptionDirectory, keystoreURL, location));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             if (printSummary) {
-                printSummary(keystorePassword, salt, iterationCount, implProps);
+                printSummary(keystorePassword, salt, iterationCount, convertedOptions);
             }
         }
 
@@ -232,7 +232,7 @@ public class VaultCommand extends Command {
         return encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(File.separator) ? "" : File.separator) + "converted-vault.cr-store";
     }
 
-    private void convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
+    private HashMap<String, String> convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
                          String salt, int iterationCount, String secretKeyAlias,
                          String outputFile, Map<String, String> csAttributes)
             throws Exception {
@@ -282,6 +282,8 @@ public class VaultCommand extends Command {
             convertedCredentialStore.store(alias, credential);
         }
         convertedCredentialStore.flush();
+
+        return convertedOptions;
     }
 
     private List<Descriptor> parseDescriptorFile(String descriptorFileLocation) throws IOException {

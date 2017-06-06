@@ -276,7 +276,6 @@ class CredentialStoreCommand extends Command {
 
 
         if (printSummary) {
-
             StringBuilder com = new StringBuilder();
             String password = csPassword == null ? "" : csPassword;
 
@@ -285,28 +284,25 @@ class CredentialStoreCommand extends Command {
                     password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
                 }
 
-                if (createStorage) {
+                if ( implProps.get("create") != null && implProps.get("create").equals("true") ) {
                     getCreateSummary(implProps, com, password);
                     com.append("\n");
                 }
 
-                com.append("/subsystem=elytron/credential-store=test/alias=");
+                com.append("/subsystem=elytron/credential-store=test:add-alias(alias=");
                 com.append(cmdLine.getOptionValue(ADD_ALIAS_PARAM));
-                com.append(":add(secret-value=\"");
+                com.append(",secret-value=\"");
                 com.append(secret);
                 com.append("\")");
 
             } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
 
-                com.append("/subsystem=elytron/credential-store=test/alias=");
+                com.append("/subsystem=elytron/credential-store=test:remove-alias(alias=");
                 com.append(cmdLine.getOptionValue(REMOVE_ALIAS_PARAM));
-                com.append(":remove()");
+                com.append(")");
 
-            } else if (cmdLine.hasOption(ALIASES_PARAM)) {
-                com.append("/subsystem=elytron/credential-store=test:read-children-names(child-type=alias)");
-            } else if (cmdLine.hasOption(CHECK_ALIAS_PARAM)) {
-                com.append("ls /subsystem=elytron/credential-store=test/alias=");
-                com.append(cmdLine.getOptionValue(CHECK_ALIAS_PARAM));
+            } else if (cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM) ) {
+                com.append("/subsystem=elytron/credential-store=test:read-aliases()");
             } else if ( cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM) ){
                 getCreateSummary(implProps, com, password);
             }
@@ -438,15 +434,23 @@ class CredentialStoreCommand extends Command {
     }
 
     static void getCreateSummary(Map<String, String> implProps, StringBuilder com, String password) {
-        com.append("/subsystem=elytron/credential-store=cs:add(");
+        com.append("/subsystem=elytron/credential-store=test:add(");
         com.append("relative-to=jboss.server.data.dir,");
-        com.append("create=true,");
         if (implProps != null && !implProps.isEmpty()) {
+            if (implProps.get("create") != null) {
+                com.append("create=")
+                        .append(implProps.get("create"))
+                        .append(",");
+            }
             if (implProps.get("modifiable") != null) {
-                com.append("modifiable=" + implProps.get("modifiable") + ",");
+                com.append("modifiable=")
+                        .append(implProps.get("modifiable"))
+                        .append(",");
             }
             if (implProps.get("location") != null) {
-                com.append("location=\"" + implProps.get("location") + "\",");
+                com.append("location=\"")
+                        .append(implProps.get("location"))
+                        .append("\",");
             }
             String props = formatPropertiesForCli(implProps);
             if (!props.isEmpty()) {
