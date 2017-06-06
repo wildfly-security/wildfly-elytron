@@ -114,6 +114,15 @@ public class XmlConfigurationTest {
             "        <configuration name=\"test-10\">\n" +
             "            <sasl-mechanism-selector selector=\"PLAIN DIGEST-MD5 ANONYMOUS JBOSS-LOCAL-USER\"/>\n" +
             "        </configuration>\n" +
+            "        <configuration name=\"test-11\">\n" +
+            "            <sasl-mechanism-selector selector=\"someName -PLAIN #ALL\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-12\">\n" +
+            "            <sasl-mechanism-selector selector=\"-PLAIN JBOSS-LOCAL-USER PLAIN\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"test-13\">\n" +
+            "            <sasl-mechanism-selector selector=\"-PLAIN someName -DIGEST-MD5 #ALL\"/>\n" +
+            "        </configuration>\n" +
             "    </authentication-configurations>\n" +
             "    <authentication-rules>\n" +
             "        <rule use-configuration=\"test-1\">\n" +
@@ -133,6 +142,15 @@ public class XmlConfigurationTest {
             "        </rule>\n" +
             "        <rule use-configuration=\"test-10\">\n" +
             "            <match-host name=\"host-10\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-11\">\n" +
+            "            <match-host name=\"host-11\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-12\">\n" +
+            "            <match-host name=\"host-12\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"test-13\">\n" +
+            "            <match-host name=\"host-13\"/>\n" +
             "        </rule>\n" +
             "    </authentication-rules>\n" +
             "</authentication-client>\n" +
@@ -161,6 +179,19 @@ public class XmlConfigurationTest {
         AuthenticationConfiguration ac10 = ac.authRuleMatching(new URI("http://host-10/"), null, null).getConfiguration();
         filtered = ac10.saslMechanismSelector.apply(Arrays.asList("PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER", "ABC"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER"}, filtered);
+
+        // ELY-1216
+        AuthenticationConfiguration ac11 = ac.authRuleMatching(new URI("http://host-11/"), null, null).getConfiguration();
+        filtered = ac11.saslMechanismSelector.apply(Arrays.asList("A", "B", "PLAIN"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
+
+        AuthenticationConfiguration ac12 = ac.authRuleMatching(new URI("http://host-12/"), null, null).getConfiguration();
+        filtered = ac12.saslMechanismSelector.apply(Arrays.asList("A", "B", "PLAIN", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"JBOSS-LOCAL-USER"}, filtered);
+
+        AuthenticationConfiguration ac13 = ac.authRuleMatching(new URI("http://host-13/"), null, null).getConfiguration();
+        filtered = ac13.saslMechanismSelector.apply(Arrays.asList("A", "B", "PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
+        Assert.assertArrayEquals(new String[]{"A", "B", "JBOSS-LOCAL-USER"}, filtered);
     }
 
     @Test
