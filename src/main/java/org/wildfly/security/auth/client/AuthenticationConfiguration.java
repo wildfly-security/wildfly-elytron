@@ -1079,6 +1079,36 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, SET_SASL_SELECTOR, saslMechanismSelector);
     }
 
+    @Deprecated
+    public AuthenticationConfiguration allowAllSaslMechanisms() {
+        return setSaslMechanismSelector(SaslMechanismSelector.ALL);
+    }
+
+    @Deprecated
+    public AuthenticationConfiguration allowSaslMechanisms(String... names) {
+        if (names == null || names.length == 0) {
+            // clear out all explicitly-allowed names
+            return setSaslMechanismSelector(null);
+        }
+        SaslMechanismSelector selector = SaslMechanismSelector.NONE;
+        for (String name : names) {
+            selector = selector.addMechanism(name);
+        }
+        return setSaslMechanismSelector(selector);
+    }
+
+    @Deprecated
+    public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
+        SaslMechanismSelector selector = saslMechanismSelector;
+        if (selector == null) {
+            selector = SaslMechanismSelector.DEFAULT;
+        }
+        for (String name : names) {
+            selector = selector.forbidMechanism(name);
+        }
+        return setSaslMechanismSelector(selector);
+    }
+
     // other
 
     /**
