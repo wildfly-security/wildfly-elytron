@@ -85,8 +85,12 @@ public final class TokenSecurityRealm implements SecurityRealm {
         return SupportLevel.UNSUPPORTED;
     }
 
+    private boolean isBearerTokenEvidence(Evidence evidence) {
+        return evidence != null && isBearerTokenEvidence(evidence.getClass());
+    }
+
     private boolean isBearerTokenEvidence(Class<?> evidenceType) {
-        return evidenceType != null && evidenceType.equals(BearerTokenEvidence.class);
+        return BearerTokenEvidence.class.equals(evidenceType);
     }
 
     final class TokenRealmIdentity implements RealmIdentity {
@@ -95,8 +99,8 @@ public final class TokenSecurityRealm implements SecurityRealm {
         private Attributes claims;
 
         TokenRealmIdentity(Evidence evidence) {
-            if (evidence != null && isBearerTokenEvidence(evidence.getClass())) {
-                this.evidence = (BearerTokenEvidence) evidence;
+            if (isBearerTokenEvidence(evidence)) {
+                this.evidence = BearerTokenEvidence.class.cast(evidence);
             } else {
                 this.evidence = null;
             }
@@ -120,21 +124,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         @Override
         public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
-            if (!isBearerTokenEvidence(evidence.getClass())) {
-                return false;
-            }
-
-            BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
-
-            try {
-                return strategy.validate(tokenEvidence) != null;
-            } catch (RealmUnavailableException rue) {
-                throw rue;
-            } catch (Exception unknown) {
-                ElytronMessages.log.debugf(unknown, "Failed to verify token evidence [%s]", tokenEvidence.getToken());
-            }
-
-            return false;
+            return validateToken(evidence) != null;
         }
 
         @Override
@@ -176,17 +166,26 @@ public final class TokenSecurityRealm implements SecurityRealm {
         }
 
         private Attributes getClaims() throws RealmUnavailableException {
-            if (this.claims == null && this.evidence != null) {
-                try {
-                    this.claims = strategy.validate(this.evidence);
-                } catch (RealmUnavailableException rue) {
-                    throw rue;
-                } catch (Exception unknown) {
-                    ElytronMessages.log.debugf(unknown, "Failed to extract claims from token [%s]", evidence.getToken());
-                }
+            if (this.claims == null) {
+                this.claims = validateToken(this.evidence);
             }
 
             return this.claims;
+        }
+
+        private Attributes validateToken(Evidence evidence) throws RealmUnavailableException {
+            if (!isBearerTokenEvidence(evidence)) {
+                return null;
+            }
+            BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
+            try {
+                return strategy.validate(tokenEvidence);
+            } catch (RealmUnavailableException rue) {
+                throw rue;
+            } catch (Exception unknown) {
+                ElytronMessages.log.debugf(unknown, "Failed to validate token evidence [%s]", tokenEvidence.getToken());
+            }
+            return null;
         }
     }
 
