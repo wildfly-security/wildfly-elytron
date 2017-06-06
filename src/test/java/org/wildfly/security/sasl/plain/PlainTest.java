@@ -43,6 +43,7 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 
@@ -263,7 +264,7 @@ public class PlainTest extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useName(username)
                                 .usePassword(password)
-                                .allowSaslMechanisms(PLAIN));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(PLAIN)));
 
 
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);

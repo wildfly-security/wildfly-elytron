@@ -85,7 +85,7 @@ public class XmlConfigurationTest {
             "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
             "    <authentication-configurations>\n" +
             "        <configuration name=\"test-1\">\n" +
-            "            <allow-sasl-mechanisms names=\"someName\"/>\n" +
+            "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
             "        </configuration>\n" +
             "        <configuration name=\"test-2\">\n" +
             "            <sasl-mechanism-selector selector=\"someName\"/>\n" +
@@ -188,7 +188,7 @@ public class XmlConfigurationTest {
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-protocol name=\"HTTP\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
-            "            <allow-all-sasl-mechanisms />\n" +
+            "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
             "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
             "            <set-mechanism-properties>\n" +
             "                <property key=\"key-one\" value=\"value-one\"/>\n" +
@@ -304,7 +304,7 @@ public class XmlConfigurationTest {
                 "            <set-host name=\"localhost\"/>\n" +
                 "            <set-protocol name=\"HTTP\"/>\n" +
                 "            <set-user-name name=\"jane\"/>\n" +
-                "            <allow-all-sasl-mechanisms />\n" +
+                "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
                 "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
                 "            <set-mechanism-properties>\n" +
                 "                <property key=\"key-one\" value=\"value-one\"/>\n" +

@@ -32,6 +32,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
 
@@ -60,7 +61,7 @@ public class DigestCallbackHandlerUtils {
                                 .useName(username)
                                 .usePassword(password)
                                 .useRealm(sentRealm)
-                                .allowSaslMechanisms(SaslMechanismInformation.Names.DIGEST_MD5));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(SaslMechanismInformation.Names.DIGEST_MD5)));
 
 
         return ClientUtils.getCallbackHandler(new URI("seems://irrelevant"), context);

@@ -42,6 +42,7 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -417,7 +418,7 @@ public class LocalUserTest extends BaseTestCase {
                         AuthenticationConfiguration.empty()
                                 .useName(expectedUsername)
                                 .useRealm("mainRealm")
-                                .allowSaslMechanisms(LOCAL_USER));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(LOCAL_USER)));
 
 
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
