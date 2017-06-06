@@ -156,6 +156,10 @@ class CredentialStoreCommand extends Command {
             setStatus(GENERAL_CONFIGURATION_ERROR);
             throw ElytronToolMessages.msg.optionNotSpecified(STORE_LOCATION_PARAM);
         }
+        if ((cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM)) && !Files.exists(Paths.get(location))) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
+        }
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
@@ -256,12 +260,7 @@ class CredentialStoreCommand extends Command {
                 }
                 System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
             } else {
-                if (Files.exists(Paths.get(location))) {
-                    System.out.println(ElytronToolMessages.msg.noAliases());
-                } else
-                {
-                    throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
-                }
+                System.out.println(ElytronToolMessages.msg.noAliases());
             }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)) {
