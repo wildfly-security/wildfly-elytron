@@ -113,6 +113,7 @@ import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
+import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
 
 /**
@@ -1227,8 +1228,13 @@ public final class AuthenticationConfiguration {
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
 
-        return saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
+        SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
+
+        if (log.isTraceEnabled()) {
+            log.tracef("Created SaslClient [%s] for mechanisms [%s]", saslClient, Arrays2.objectToString(serverMechanisms));
+        }
+        return saslClient;
     }
 
     CallbackHandler createCallbackHandler() {

@@ -42,6 +42,8 @@ import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 /**
  * A SASL server factory configuration.
  *
@@ -56,7 +58,9 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     SaslServer doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<SaslServerFactory> factoryTransformation) throws SaslException {
-        return new SecurityIdentitySaslServerFactory(factoryTransformation.apply(getFactory())).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
+        SaslServer server = new SecurityIdentitySaslServerFactory(factoryTransformation.apply(getFactory())).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
+        log.tracef("Created SaslServer [%s] for mechanism [%s]", server, name);
+        return server;
     }
 
     Collection<String> getAllSupportedMechNames() {
