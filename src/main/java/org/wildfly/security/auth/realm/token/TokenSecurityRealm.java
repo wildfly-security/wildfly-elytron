@@ -124,7 +124,17 @@ public final class TokenSecurityRealm implements SecurityRealm {
                 return false;
             }
 
-            return strategy.validate((BearerTokenEvidence) evidence) != null;
+            BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
+
+            try {
+                return strategy.validate(tokenEvidence) != null;
+            } catch (RealmUnavailableException rue) {
+                throw rue;
+            } catch (Exception unknown) {
+                ElytronMessages.log.debugf(unknown, "Failed to verify token evidence [%s]", tokenEvidence.getToken());
+            }
+
+            return false;
         }
 
         @Override
@@ -167,7 +177,13 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         private Attributes getClaims() throws RealmUnavailableException {
             if (this.claims == null && this.evidence != null) {
-                this.claims = strategy.validate(this.evidence);
+                try {
+                    this.claims = strategy.validate(this.evidence);
+                } catch (RealmUnavailableException rue) {
+                    throw rue;
+                } catch (Exception unknown) {
+                    ElytronMessages.log.debugf(unknown, "Failed to extract claims from token [%s]", evidence.getToken());
+                }
             }
 
             return this.claims;

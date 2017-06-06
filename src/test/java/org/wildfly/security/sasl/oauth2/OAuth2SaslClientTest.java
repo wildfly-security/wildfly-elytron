@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.oauth2;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -55,6 +57,7 @@ import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.util.ByteIterator;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -154,13 +157,9 @@ public class OAuth2SaslClientTest extends BaseTestCase {
 
         message = saslClient.evaluateChallenge(message);
 
-        try {
-            message = saslServer.evaluateResponse(message);
-        } catch (SaslException e) {
-            assertTrue(e.getCause() instanceof IllegalArgumentException);
-            IllegalArgumentException cause = (IllegalArgumentException) e.getCause();
-            assertTrue(cause.getMessage().contains("ELY01114"));
-        }
+        message = saslServer.evaluateResponse(message);
+        assertFalse(saslServer.isComplete());
+        assertEquals("{\"status\":\"invalid_token\"}", ByteIterator.ofBytes(message).base64Decode().asUtf8String().drainToString());
     }
 
     @Test
