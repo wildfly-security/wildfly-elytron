@@ -36,6 +36,7 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
 
     private final Class<E> service;
     private final ClassLoader classLoader;
+    private int hashCode;
     private volatile E[] result;
 
     public ServiceLoaderSupplier(final Class<E> service, final ClassLoader classLoader) {
@@ -60,5 +61,23 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
             }
         }
         return result.clone();
+    }
+
+    public int hashCode() {
+        int hc = hashCode;
+        if (hc == 0) {
+            hc = service.hashCode() * 19 + classLoader.hashCode();
+            if (hc == 0) hc = 1;
+            return hashCode = hc;
+        }
+        return hc;
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof ServiceLoaderSupplier && equals((ServiceLoaderSupplier<?>) obj);
+    }
+
+    private boolean equals(final ServiceLoaderSupplier<?> other) {
+        return other == this || other.service == service && other.classLoader == classLoader;
     }
 }
