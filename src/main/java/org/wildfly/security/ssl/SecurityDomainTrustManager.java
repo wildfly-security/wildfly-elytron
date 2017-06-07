@@ -87,8 +87,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         if (principal == null) {
             throw ElytronMessages.log.notTrusted(null);
         }
-        final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext(mechanismConfigurationSelector);
-        try {
+        try (final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext(mechanismConfigurationSelector)) {
             authenticationContext.setAuthenticationPrincipal(principal);
             if (! authenticationContext.exists()) {
                 if (authenticationOptional) {
@@ -143,10 +142,6 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             }
         } catch (RealmUnavailableException e) {
             throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
-        } finally {
-            if (! authenticationContext.isDone()) {
-                authenticationContext.fail();
-            }
         }
     }
 
