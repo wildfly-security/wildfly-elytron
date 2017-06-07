@@ -143,7 +143,11 @@ public abstract class SaslMechanismSelector {
 
     abstract Supplier<String> doCreateSupplier(LinkedHashSet<String> set, SSLSession sslSession);
 
-    void preprocess(Set<String> mechNames, SSLSession sslSession) {}
+    void preprocess(Set<String> mechNames, SSLSession sslSession) {
+        if (prev != null) {
+            prev.preprocess(mechNames, sslSession);
+        }
+    }
 
     public SaslMechanismSelector addMechanism(String mechName) {
         Assert.checkNotNullParam("mechName", mechName);
@@ -825,6 +829,7 @@ public abstract class SaslMechanismSelector {
         }
 
         void preprocess(final Set<String> mechNames, final SSLSession sslSession) {
+            prev.preprocess(mechNames, sslSession);
             mechNames.remove(mechName);
         }
 
@@ -907,6 +912,7 @@ public abstract class SaslMechanismSelector {
         }
 
         void preprocess(final Set<String> mechNames, final SSLSession sslSession) {
+            prev.preprocess(mechNames, sslSession);
             mechNames.removeIf(mechName -> predicate.test(mechName, sslSession));
         }
 
