@@ -963,12 +963,13 @@ public final class AuthenticationConfiguration {
     }
 
     /**
-     * Use the system default security providers to locate security implementations.
+     * Use the default provider discovery behaviour of combining service loader discovered providers with the system default
+     * security providers when locating security implementations.
      *
      * @return the new configuration
      */
     public AuthenticationConfiguration useDefaultProviders() {
-        return useProviders(null);
+        return useProviders(ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()), Security::getProviders));
     }
 
     /**
