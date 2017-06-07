@@ -18,13 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security.sasl.util.TLSServerEndPointChannelBinding.getDigestAlgorithm;
-
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +34,8 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
+import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
+import org.wildfly.security.x500.X500;
 
 /**
  * A SASL server factory which implements the {@code tls-server-end-point} channel binding algorithm.  The channel
@@ -60,7 +56,7 @@ public final class TLSServerEndPointChannelBindingSaslServerFactory extends Abst
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         return super.createSaslServer(mechanism, protocol, serverName, props, new CallbackHandler() {
-            private byte[] bindingData;
+            private X509Certificate[] certs;
 
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
@@ -69,23 +65,9 @@ public final class TLSServerEndPointChannelBindingSaslServerFactory extends Abst
                     Callback callback = iterator.next();
                     if (callback instanceof SSLCallback) {
                         final SSLCallback sslCallback = (SSLCallback) callback;
-                        final Certificate[] localCertificates = sslCallback.getSslSession().getLocalCertificates();
-                        if (localCertificates != null && localCertificates.length > 0) {
-                            final X509Certificate localCertificate = (X509Certificate) localCertificates[0];
-                            final String sigAlgOID = localCertificate.getSigAlgOID();
-                            final String digestAlgorithm = getDigestAlgorithm(sigAlgOID);
-                            if (digestAlgorithm != null) try {
-                                final MessageDigest messageDigest = MessageDigest.getInstance(digestAlgorithm);
-                                final byte[] encoded = localCertificate.getEncoded();
-                                bindingData = messageDigest.digest(encoded);
-                            } catch (CertificateEncodingException | NoSuchAlgorithmException e) {
-                                // fail silently
-                            }
-                        }
-                    } else if (callback instanceof ChannelBindingCallback && bindingData != null) {
-                        final ChannelBindingCallback bindingCallback = (ChannelBindingCallback) callback;
-                        bindingCallback.setBindingType("tls-server-end-point");
-                        bindingCallback.setBindingData(bindingData);
+                        certs = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
+                    } else if (callback instanceof ChannelBindingCallback) {
+                        TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, certs);
                         iterator.remove();
                     }
                 }

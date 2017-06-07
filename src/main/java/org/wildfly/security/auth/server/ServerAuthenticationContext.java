@@ -50,6 +50,7 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
@@ -83,6 +84,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -791,6 +793,7 @@ public final class ServerAuthenticationContext {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
+            private X509Certificate[] certs;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -943,9 +946,13 @@ public final class ServerAuthenticationContext {
                     try {
                         X509Certificate[] x509Certificates = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
                         verifyEvidence(new X509PeerCertificateChainEvidence(x509Certificates));
+                        certs = x509Certificates;
                     } catch (SSLPeerUnverifiedException e) {
                         log.trace("Peer unverified", e);
                     }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof ChannelBindingCallback) {
+                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, certs);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
