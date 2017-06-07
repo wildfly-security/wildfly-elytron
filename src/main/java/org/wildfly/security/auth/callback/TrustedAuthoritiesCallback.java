@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
 import java.util.List;
 
 import org.wildfly.security.x500.TrustedAuthority;
@@ -29,13 +28,8 @@ import org.wildfly.security.x500.TrustedAuthority;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public final class TrustedAuthoritiesCallback implements ExtendedCallback, Serializable {
+public final class TrustedAuthoritiesCallback implements ExtendedCallback {
 
-    private static final long serialVersionUID = 1212562522733770963L;
-
-    /**
-     * @serial The list of trusted authorities.
-     */
     private List<TrustedAuthority> trustedAuthorities;
 
     /**

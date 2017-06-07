@@ -20,8 +20,6 @@ package org.wildfly.security.auth.callback;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 
-import java.io.Serializable;
-
 import javax.net.ssl.SSLSession;
 
 /**
@@ -29,9 +27,7 @@ import javax.net.ssl.SSLSession;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLCallback implements ExtendedCallback, Serializable {
-
-    private static final long serialVersionUID = 7854221380587494535L;
+public final class SSLCallback implements ExtendedCallback {
 
     /**
      * @serial The SSL session.

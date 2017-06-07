@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
@@ -32,26 +31,11 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractCredentialCallback implements ExtendedCallback, Serializable {
-    private static final long serialVersionUID = 2492953504365612226L;
+public abstract class AbstractCredentialCallback implements ExtendedCallback {
 
-    /**
-     * @serial The type of the supported credential.
-     */
     private final Class<? extends Credential> credentialType;
-    /**
-     * @serial The algorithm of the required credential, or {@code null} if any algorithm is suitable or the credential
-     *  type does not use algorithm names.
-     */
     private final String algorithm;
-    /**
-     * @serial The algorithm parameter specification, or {@code null} if any parameters are acceptable or the credential
-     *  type does not support parameters.
-     */
     private final AlgorithmParameterSpec parameterSpec;
-    /**
-     * @serial The credential itself.
-     */
     private Credential credential;
 
     AbstractCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm, final AlgorithmParameterSpec parameterSpec) {
