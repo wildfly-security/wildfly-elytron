@@ -72,6 +72,14 @@ public enum CallbackKind {
      * Callbacks which provide general input.
      */
     GENERAL_INPUT,
+    /**
+     * Callbacks which deal with SSL configuration.
+     */
+    SSL,
+    /**
+     * Callbacks which configure channel binding options.
+     */
+    CHANNEL_BINDING,
     ;
 
     private static final int fullSize = values().length;
