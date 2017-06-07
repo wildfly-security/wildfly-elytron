@@ -611,7 +611,23 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public SecurityIdentity createRunAsIdentity(String name, boolean authorize) throws SecurityException {
         Assert.checkNotNullParam("name", name);
-        // rewrite name
+        return createRunAsIdentity(new NamePrincipal(name), authorize);
+    }
+
+    /**
+     * Attempt to create a new identity that can be used to run as a user with the given principal.
+     *
+     * @param principal the principal to attempt to run as
+     * @param authorize {@code true} to check the current identity is authorized to run as a user
+     *        with the given principal, {@code false} to just check if the caller has the
+     *        {@code setRunAsPermission} {@link RuntimePermission}
+     * @return the new security identity
+     * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
+     *         {@link ElytronPermission} or if the operation authorization failed for any other reason
+     */
+    public SecurityIdentity createRunAsIdentity(Principal principal, boolean authorize) throws SecurityException {
+        Assert.checkNotNullParam("principal", principal);
+        // rewrite principal
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SET_RUN_AS_PERMISSION);
@@ -619,11 +635,11 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
 
         final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
         try {
-            if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
-                throw log.runAsAuthorizationFailed(principal, new NamePrincipal(name), null);
+            if (! (context.importIdentity(this) && context.authorize(principal, authorize))) {
+                throw log.runAsAuthorizationFailed(this.principal, principal, null);
             }
         } catch (RealmUnavailableException e) {
-            throw log.runAsAuthorizationFailed(principal, context.getAuthenticationPrincipal(), e);
+            throw log.runAsAuthorizationFailed(this.principal, context.getAuthenticationPrincipal(), e);
         }
         return context.getAuthorizedIdentity();
     }

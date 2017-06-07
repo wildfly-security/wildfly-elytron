@@ -377,7 +377,7 @@ public final class ServerAuthenticationContext {
      */
     public void setAuthenticationName(String name, boolean exclusive) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("name", name);
-        stateRef.get().setName(name, exclusive);
+        setAuthenticationPrincipal(new NamePrincipal(name), exclusive);
     }
 
     /**
@@ -389,8 +389,21 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if the authentication name was already set
      */
     public void setAuthenticationPrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        setAuthenticationPrincipal(principal, false);
+    }
+
+    /**
+     * Set the authentication principal for this authentication.  Calling this method initiates authentication.
+     *
+     * @param principal the authentication principal
+     * @param exclusive {@code true} if exclusive access to the backing identity is required
+     * @throws IllegalArgumentException if the principal cannot be mapped to a name, or the mapped name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public void setAuthenticationPrincipal(Principal principal, boolean exclusive) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("principal", principal);
-        stateRef.get().setPrincipal(principal);
+        stateRef.get().setPrincipal(principal, exclusive);
     }
 
     /**
@@ -404,7 +417,7 @@ public final class ServerAuthenticationContext {
      */
     public boolean isSameName(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("name", name);
-        return stateRef.get().isSameName(name);
+        return isSamePrincipal(new NamePrincipal(name));
     }
 
     /**
@@ -463,19 +476,35 @@ public final class ServerAuthenticationContext {
      * is successful, {@code true} is returned and the context is placed in the "authorized" state with the new authorization
      * identity.  If the authorization fails, {@code false} is returned and the state of the context is unchanged.
      *
-     * @param name the authorization name
+     * @param name the authorization name (must not be {@code null})
      * @return {@code true} if the authorization succeeded, {@code false} otherwise
      * @throws IllegalArgumentException if the name is syntactically invalid
      * @throws RealmUnavailableException if the realm is not available
      * @throws IllegalStateException if the authentication name was not set or authentication was already complete
      */
     public boolean authorize(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
-        return authorize(name, true);
+        checkNotNullParam("name", name);
+        return authorize(new NamePrincipal(name), true);
     }
 
-    boolean authorize(String name, boolean authorizeRunAs) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
-        Assert.checkNotNullParam("name", name);
-        return stateRef.get().authorize(name, authorizeRunAs);
+    /**
+     * Attempt to authorize a change to a new user (possibly including an authentication attempt).  If the authorization
+     * is successful, {@code true} is returned and the context is placed in the "authorized" state with the new authorization
+     * identity.  If the authorization fails, {@code false} is returned and the state of the context is unchanged.
+     *
+     * @param principal the authorization principal (must not be {@code null})
+     * @return {@code true} if the authorization succeeded, {@code false} otherwise
+     * @throws IllegalArgumentException if the principal is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication principal was not set or authentication was already complete
+     */
+    public boolean authorize(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        return authorize(principal, true);
+    }
+
+    boolean authorize(Principal principal, boolean authorizeRunAs) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        checkNotNullParam("principal", principal);
+        return stateRef.get().authorize(principal, authorizeRunAs);
     }
 
     /**
@@ -1134,10 +1163,6 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        boolean isSameName(String name) {
-            return false;
-        }
-
         boolean isSamePrincipal(Principal principal) {
             return false;
         }
@@ -1178,15 +1203,7 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        void setName(String name) throws RealmUnavailableException {
-            setName(name, false);
-        }
-
-        void setName(String name, boolean exclusive) throws RealmUnavailableException {
-            throw log.noAuthenticationInProgress();
-        }
-
-        void setPrincipal(Principal principal) throws RealmUnavailableException {
+        void setPrincipal(Principal principal, boolean exclusive) throws RealmUnavailableException {
             throw log.noAuthenticationInProgress();
         }
 
@@ -1194,7 +1211,7 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        boolean authorize(String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
+        boolean authorize(Principal authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             throw log.noAuthenticationInProgress();
         }
 
@@ -1262,7 +1279,7 @@ public final class ServerAuthenticationContext {
             return capturedIdentity.getSecurityDomain();
         }
 
-        boolean authorize(String authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
+        boolean authorize(Principal authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
             transition();
             return stateRef.get().authorize(authorizationId, authorizeRunAs);
         }
@@ -1305,17 +1322,6 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setName(String name) throws RealmUnavailableException {
-            setName(name, false);
-        }
-
-        @Override
-        void setName(String name, boolean exclusive) throws RealmUnavailableException {
-            transition();
-            stateRef.get().setName(name, exclusive);
-        }
-
-        @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
             return getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
         }
@@ -1327,9 +1333,9 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setPrincipal(Principal principal) throws RealmUnavailableException {
+        void setPrincipal(Principal principal, boolean exclusive) throws RealmUnavailableException {
             transition();
-            stateRef.get().setPrincipal(principal);
+            stateRef.get().setPrincipal(principal, exclusive);
         }
 
         @Override
@@ -1376,13 +1382,13 @@ public final class ServerAuthenticationContext {
         ActiveState() {
         }
 
-        boolean authorize(String authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
+        boolean authorize(Principal authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
             final AtomicReference<State> stateRef = getStateRef();
 
             // get the identity we are authorizing from
             final SecurityIdentity sourceIdentity = getSourceIdentity();
 
-            final State state = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            final State state = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, IdentityCredentials.NONE, IdentityCredentials.NONE);
             if ( ! (state instanceof NameAssignedState)) {
                 ElytronMessages.log.tracef("Authorization failed - unable to assign identity name");
                 return false;
@@ -1554,23 +1560,6 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setName(final String name) throws RealmUnavailableException {
-            setName(name, false);
-        }
-
-        @Override
-        void setName(final String name, final boolean exclusive) throws RealmUnavailableException {
-            final AtomicReference<State> stateRef = getStateRef();
-            final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), new NamePrincipal(name), null, privateCredentials, publicCredentials, exclusive);
-            if (! stateRef.compareAndSet(this, newState)) {
-                if (newState instanceof NameAssignedState) {
-                    ((NameAssignedState)newState).realmIdentity.dispose();
-                }
-                stateRef.get().setName(name, exclusive);
-            }
-        }
-
-        @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
             return getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
         }
@@ -1638,15 +1627,15 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setPrincipal(final Principal principal) throws RealmUnavailableException {
+        void setPrincipal(final Principal principal, final boolean exclusive) throws RealmUnavailableException {
             Assert.checkNotNullParam("principal", principal);
             final AtomicReference<State> stateRef = getStateRef();
-            final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), principal, null, privateCredentials, publicCredentials);
+            final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), principal, null, privateCredentials, publicCredentials, exclusive);
             if (! stateRef.compareAndSet(this, newState)) {
                 if (newState instanceof NameAssignedState) {
                     ((NameAssignedState)newState).realmIdentity.dispose();
                 }
-                stateRef.get().setPrincipal(principal);
+                stateRef.get().setPrincipal(principal, exclusive);
             }
         }
 
@@ -1901,7 +1890,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean authorize(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
+        boolean authorize(final Principal authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             final AuthorizedAuthenticationState authzState = doAuthorization(true);
             if (authzState == null) {
                 return false;
@@ -1954,29 +1943,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setName(final String name) {
-            setName(name, false);
-        }
-
-        @Override
-        void setName(final String name, final boolean exclusive) {
-            if (isSameName(name)) {
-                return;
-            }
-            throw log.nameAlreadySet();
-        }
-
-        @Override
-        void setPrincipal(final Principal principal) {
+        void setPrincipal(final Principal principal, final boolean exclusive) {
             if (isSamePrincipal(principal)) {
                 return;
             }
             throw log.nameAlreadySet();
-        }
-
-        @Override
-        boolean isSameName(String name) {
-            return isSamePrincipal(new NamePrincipal(name));
         }
 
         @Override
@@ -2035,11 +2006,6 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean isSameName(final String name) {
-            return false;
-        }
-
-        @Override
         boolean isSamePrincipal(final Principal principal) {
             return principal instanceof AnonymousPrincipal;
         }
@@ -2080,20 +2046,9 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setName(final String name) throws RealmUnavailableException {
-            setName(name, false);
-        }
-
-        @Override
-        void setName(final String name, final boolean exclusive) throws RealmUnavailableException {
-            // reject all names
-            super.setName(name);
-        }
-
-        @Override
-        void setPrincipal(final Principal principal) throws RealmUnavailableException {
+        void setPrincipal(final Principal principal, final boolean exclusive) throws RealmUnavailableException {
             if (! (principal instanceof AnonymousPrincipal)) {
-                super.setPrincipal(principal);
+                super.setPrincipal(principal, exclusive);
             }
         }
 
@@ -2175,11 +2130,6 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean isSameName(String name) {
-            return isSamePrincipal(new NamePrincipal(name));
-        }
-
-        @Override
         boolean isSamePrincipal(Principal principal) {
             final SecurityDomain domain = authorizedIdentity.getSecurityDomain();
             principal = rewriteAll(principal, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
@@ -2195,12 +2145,12 @@ public final class ServerAuthenticationContext {
             return ! requireLoginPermission || authorizedIdentity.implies(LoginPermission.getInstance());
         }
 
-        AuthorizedState authorizeRunAs(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
-            if (isSameName(authorizationId)) {
+        AuthorizedState authorizeRunAs(final Principal authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
+            if (isSamePrincipal(authorizationId)) {
                 ElytronMessages.log.trace("RunAs authorization succeed - the same identity");
                 return this;
             }
-            final State state = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), new NamePrincipal(authorizationId), null, IdentityCredentials.NONE, IdentityCredentials.NONE);
+            final State state = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, IdentityCredentials.NONE, IdentityCredentials.NONE);
             if ( ! (state instanceof NameAssignedState)) {
                 ElytronMessages.log.tracef("RunAs authorization failed - unable to assign identity name");
                 return null;
