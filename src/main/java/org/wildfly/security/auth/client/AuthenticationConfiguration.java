@@ -1025,7 +1025,7 @@ public final class AuthenticationConfiguration {
      * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
      * @return the new configuration.
      */
-    public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
+    public AuthenticationConfiguration useMechanismProperties(Map<String, ?> mechanismProperties) {
         return useMechanismProperties(mechanismProperties, false);
     }
 
@@ -1041,7 +1041,7 @@ public final class AuthenticationConfiguration {
      * @param exclusive should the provided properties be used exclusively or merged with the existing properties?
      * @return the new configuration.
      */
-    public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties, boolean exclusive) {
+    public AuthenticationConfiguration useMechanismProperties(Map<String, ?> mechanismProperties, boolean exclusive) {
         if (!exclusive && (mechanismProperties == null || mechanismProperties.isEmpty())) return this;
         final HashMap<String, Object> newMap = exclusive ? new HashMap<>() : new HashMap<>(this.mechanismProperties);
         newMap.putAll(mechanismProperties);
