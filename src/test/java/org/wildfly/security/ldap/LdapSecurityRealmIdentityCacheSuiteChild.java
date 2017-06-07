@@ -43,7 +43,7 @@ import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.CachingModifiableSecurityRealm;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -266,7 +266,7 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         }
 
         @Override
-        public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+        public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
             return realm.getRealmIdentityIterator();
         }
     }

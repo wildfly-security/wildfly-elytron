@@ -72,7 +72,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -239,11 +239,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         return new Identity(finalName, pathFor(finalName), lock);
     }
 
-    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
         return subIterator(root, levels);
     }
 
-    private CloseableIterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
+    private ModifiableRealmIdentityIterator subIterator(final Path root, final int levels) {
         final DirectoryStream<Path> stream;
         final Iterator<Path> iterator;
         if (levels == 0) {
@@ -252,9 +252,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 iterator = stream.iterator();
             } catch (IOException e) {
                 ElytronMessages.log.debug(e);
-                return CloseableIterator.emptyIterator();
+                return ModifiableRealmIdentityIterator.emptyIterator();
             }
-            return new CloseableIterator<ModifiableRealmIdentity>() {
+            return new ModifiableRealmIdentityIterator() {
 
                 public boolean hasNext() {
                     if ( ! iterator.hasNext()) {
@@ -273,8 +273,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     return getRealmIdentityForUpdate(new NamePrincipal(name));
                 }
 
-                public void close() throws IOException {
-                    stream.close();
+                public void close() throws RealmUnavailableException {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                        ElytronMessages.log.debug(e);
+                    }
                 }
             };
         } else {
@@ -286,10 +290,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 iterator = stream.iterator();
             } catch (IOException e) {
                 ElytronMessages.log.debug(e);
-                return CloseableIterator.emptyIterator();
+                return ModifiableRealmIdentityIterator.emptyIterator();
             }
-            return new CloseableIterator<ModifiableRealmIdentity>() {
-                private CloseableIterator<ModifiableRealmIdentity> subIterator;
+            return new ModifiableRealmIdentityIterator() {
+                private ModifiableRealmIdentityIterator subIterator;
 
                 public boolean hasNext() {
                     for (;;) {
@@ -319,9 +323,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     return subIterator.next();
                 }
 
-                public void close() throws IOException {
-                    if (subIterator != null) subIterator.close();
-                    stream.close();
+                public void close() throws RealmUnavailableException {
+                    try {
+                        if (subIterator != null) subIterator.close();
+                    } finally {
+                        try {
+                            stream.close();
+                        } catch (IOException e) {
+                            ElytronMessages.log.debug(e);
+                        }
+                    }
                 }
             };
         }

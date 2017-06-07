@@ -48,7 +48,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.CachingModifiableSecurityRealm;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -150,7 +150,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         assertAuthenticationAndAuthorization("joe", "password", securityDomain);
         assertEquals(1, realmHitCount.get());
 
-        CloseableIterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator();
+        ModifiableRealmIdentityIterator iterator = securityRealm.getRealmIdentityIterator();
 
         ModifiableRealmIdentity joe = iterator.next();
         List<Credential> credentials;
@@ -285,7 +285,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         }
 
         @Override
-        public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+        public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
             return realm.getRealmIdentityIterator();
         }
     }

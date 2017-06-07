@@ -18,35 +18,34 @@
 
 package org.wildfly.security.auth.server;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Iterator providing close() method to free resources before end of iterating.
+ * An iterator over realm identities.  The iterator should be closed in order to release any associated
+ * resources.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public interface CloseableIterator<E> extends Iterator<E>, Closeable {
+public interface ModifiableRealmIdentityIterator extends Iterator<ModifiableRealmIdentity>, AutoCloseable {
 
     /**
      * Close any underlying resources. No need to call if end of sequence already occurred.
      */
-    default void close() throws IOException {}
+    default void close() throws RealmUnavailableException {}
 
     /**
      * Returns an iterator that has no elements and is closeable.
-     * @param <T> the type of elements of this iterator
+     *
      * @return empty closeable iterator
      */
-    static <T> CloseableIterator<T> emptyIterator() {
-        return new CloseableIterator<T>() {
+    static ModifiableRealmIdentityIterator emptyIterator() {
+        return new ModifiableRealmIdentityIterator() {
             @Override
             public boolean hasNext() {
                 return false;
             }
             @Override
-            public T next() {
+            public ModifiableRealmIdentity next() {
                 return null;
             }
         };
