@@ -129,6 +129,11 @@ public final class AuthenticationContextConfigurationClient {
         return configuration;
     }
 
+    @Deprecated
+    public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext, int protocolDefaultPort, String abstractType, String abstractTypeAuthority, String purpose) {
+        return getAuthenticationConfiguration(uri, authenticationContext, protocolDefaultPort, abstractType, abstractTypeAuthority);
+    }
+
     /**
      * Get the SSL context which matches the given URI, or {@link SSLContext#getDefault()} if there is none.
      *
@@ -153,6 +158,11 @@ public final class AuthenticationContextConfigurationClient {
         return getSSLContextFactory(uri, authenticationContext, abstractType, abstractTypeAuthority).create();
     }
 
+    @Deprecated
+    public SSLContext getSSLContext(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority, String purpose) throws GeneralSecurityException {
+        return getSSLContext(uri, authenticationContext, abstractType, abstractTypeAuthority);
+    }
+
     /**
      * Get the SSL context factory which matches the given URI and type, or {@link SSLContext#getDefault()} if there is none.
      *
@@ -168,6 +178,11 @@ public final class AuthenticationContextConfigurationClient {
         final RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.sslRuleMatching(uri, abstractType, abstractTypeAuthority);
         if (node == null) return SSLContext::getDefault;
         return node.getConfiguration();
+    }
+
+    @Deprecated
+    public SecurityFactory<SSLContext> getSSLContextFactory(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority, String purpose) {
+        return getSSLContextFactory(uri, authenticationContext, abstractType, abstractTypeAuthority);
     }
 
     /**
