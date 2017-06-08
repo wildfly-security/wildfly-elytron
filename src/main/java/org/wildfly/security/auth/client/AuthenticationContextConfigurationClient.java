@@ -40,6 +40,9 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.auth.server.IdentityCredentials;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.permission.ElytronPermission;
 
 /**
@@ -121,6 +124,14 @@ public final class AuthenticationContextConfigurationClient {
         final String userInfo = uri.getUserInfo();
         if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
             configuration = configuration.useName(userInfo);
+        }
+        final SecurityDomain forwardSecurityDomain = configuration.forwardSecurityDomain;
+        if (forwardSecurityDomain != null) {
+            final SecurityIdentity securityIdentity = forwardSecurityDomain.getCurrentSecurityIdentity();
+            final IdentityCredentials privateCredentials = securityIdentity.getPrivateCredentials();
+            final IdentityCredentials publicCredentials = securityIdentity.getPublicCredentials();
+            // private overrides public
+            configuration = configuration.useForwardedIdentity(null).usePrincipal(securityIdentity.getPrincipal()).useCredentials(publicCredentials.with(privateCredentials));
         }
 
         log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
