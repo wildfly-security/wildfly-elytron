@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
-
 import org.wildfly.common.Assert;
 import org.wildfly.security.credential.Credential;
 
@@ -28,13 +26,8 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public final class CredentialUpdateCallback implements ExtendedCallback, Serializable {
+public final class CredentialUpdateCallback implements ExtendedCallback {
 
-    private static final long serialVersionUID = -4068818282904056378L;;
-
-    /**
-     * @serial The new credential.
-     */
     private final Credential credential;
 
     /**

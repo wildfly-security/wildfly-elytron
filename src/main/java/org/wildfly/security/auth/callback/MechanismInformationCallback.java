@@ -17,8 +17,7 @@
  */
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
-
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.wildfly.security.auth.server.MechanismInformation;
@@ -30,9 +29,7 @@ import org.wildfly.security.auth.server.MechanismInformation;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class MechanismInformationCallback implements ExtendedCallback, Serializable {
-
-    private static final long serialVersionUID = -8376970360160709801L;
+public class MechanismInformationCallback implements ExtendedCallback {
 
     private final MechanismInformation mechanismInformation;
 

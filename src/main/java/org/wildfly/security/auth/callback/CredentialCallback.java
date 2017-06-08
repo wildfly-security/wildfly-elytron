@@ -36,8 +36,6 @@ import org.wildfly.security.credential.Credential;
  */
 public final class CredentialCallback extends AbstractCredentialCallback {
 
-    private static final long serialVersionUID = 4756568346009259703L;
-
     /**
      * Construct a new instance.
      *

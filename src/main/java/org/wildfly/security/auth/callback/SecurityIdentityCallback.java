@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.io.Serializable;
-
 import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
@@ -28,13 +26,8 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentityCallback implements ExtendedCallback, Serializable {
+public final class SecurityIdentityCallback implements ExtendedCallback {
 
-    private static final long serialVersionUID = -238599667659078631L;
-
-    /**
-     * @serial The security identity.
-     */
     private SecurityIdentity securityIdentity;
 
     /**
