@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.util;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security.manager.WildFlySecurityManager.doPrivilegedWithParameter;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
@@ -27,11 +26,10 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.ParametricPrivilegedExceptionAction;
 
 /**
  * A {@code SaslServer} which evaluates responses and wrap/unwrap requests in an privileged context.
@@ -54,7 +52,7 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
 
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         try {
-            return doPrivilegedWithParameter(response, (ParametricPrivilegedExceptionAction<byte[], byte[]>) delegate::evaluateResponse, accessControlContext);
+            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.evaluateResponse(response), accessControlContext);
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();

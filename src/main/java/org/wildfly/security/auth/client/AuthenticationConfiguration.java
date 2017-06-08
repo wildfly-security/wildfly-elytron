@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.client;
 
 import static java.security.AccessController.doPrivileged;
+import static java.security.AccessController.getContext;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -108,6 +109,7 @@ import org.wildfly.security.sasl.localuser.LocalUserClient;
 import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.LocalPrincipalSaslClientFactory;
+import org.wildfly.security.sasl.util.PrivilegedSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -1111,6 +1113,16 @@ public final class AuthenticationConfiguration {
         return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
     }
 
+    /**
+     * Create a new configuration which is the same as this configuration, but which captures the caller's access
+     * control context to be used in authentication decisions.
+     *
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration withCapturedAccessControlContext() {
+        return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, getContext());
+    }
+
     // merging
 
     /**
@@ -1188,6 +1200,8 @@ public final class AuthenticationConfiguration {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
+        final SaslClientFactory finalSaslClientFactory = saslClientFactory;
+        saslClientFactory = doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext);
 
         SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
@@ -1224,7 +1238,6 @@ public final class AuthenticationConfiguration {
      */
     public boolean equals(final AuthenticationConfiguration other) {
         return hashCode() == other.hashCode()
-            && Objects.equals(capturedAccessContext, other.capturedAccessContext)
             && Objects.equals(principal, other.principal)
             && Objects.equals(setHost, other.setHost)
             && Objects.equals(setProtocol, other.setProtocol)
@@ -1255,7 +1268,7 @@ public final class AuthenticationConfiguration {
         int hashCode = this.hashCode;
         if (hashCode == 0) {
             hashCode = Objects.hash(
-                capturedAccessContext, principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
+                principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
                 mechanismProperties, kerberosSecurityFactory) * 19 + setPort;
             if (hashCode == 0) {
@@ -1348,6 +1361,10 @@ public final class AuthenticationConfiguration {
                 }
                 break;
         }
+    }
+
+    AccessControlContext getCapturedContext() {
+        return capturedAccessContext;
     }
 
     // delegates for equality tests
