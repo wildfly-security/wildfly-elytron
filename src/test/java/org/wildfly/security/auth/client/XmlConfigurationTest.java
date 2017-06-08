@@ -85,7 +85,7 @@ public class XmlConfigurationTest {
             "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
             "    <authentication-configurations>\n" +
             "        <configuration name=\"test-1\">\n" +
-            "            <allow-sasl-mechanisms names=\"someName\"/>\n" +
+            "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
             "        </configuration>\n" +
             "        <configuration name=\"test-2\">\n" +
             "            <sasl-mechanism-selector selector=\"someName\"/>\n" +
@@ -140,25 +140,25 @@ public class XmlConfigurationTest {
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
         AuthenticationContext ac = factory.create();
 
-        AuthenticationConfiguration ac3 = ac.authRuleMatching(new URI("http://host-3/"), null, null, null).getConfiguration();
+        AuthenticationConfiguration ac3 = ac.authRuleMatching(new URI("http://host-3/"), null, null).getConfiguration();
         String[] filtered = ac3.saslMechanismSelector.apply(Arrays.asList("A", "B"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
 
-        AuthenticationConfiguration ac4 = ac.authRuleMatching(new URI("http://host-4/"), null, null, null).getConfiguration();
+        AuthenticationConfiguration ac4 = ac.authRuleMatching(new URI("http://host-4/"), null, null).getConfiguration();
         filtered = ac4.saslMechanismSelector.apply(Arrays.asList("A", "B", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
 
-        AuthenticationConfiguration ac5 = ac.authRuleMatching(new URI("http://host-5/"), null, null, null).getConfiguration();
+        AuthenticationConfiguration ac5 = ac.authRuleMatching(new URI("http://host-5/"), null, null).getConfiguration();
         filtered = ac5.saslMechanismSelector.apply(Arrays.asList("A", "B", "JBOSS-LOCAL-USER"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"A", "B"}, filtered);
 
         // ELY-1184
-        AuthenticationConfiguration ac7 = ac.authRuleMatching(new URI("http://host-7/"), null, null, null).getConfiguration();
+        AuthenticationConfiguration ac7 = ac.authRuleMatching(new URI("http://host-7/"), null, null).getConfiguration();
         filtered = ac7.saslMechanismSelector.apply(Arrays.asList("SCRAM-SHA-1-PLUS",  "DIGEST-MD5", "SCRAM-SHA-512"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"SCRAM-SHA-1-PLUS", "SCRAM-SHA-512"}, filtered);
 
         // ELY-1185
-        AuthenticationConfiguration ac10 = ac.authRuleMatching(new URI("http://host-10/"), null, null, null).getConfiguration();
+        AuthenticationConfiguration ac10 = ac.authRuleMatching(new URI("http://host-10/"), null, null).getConfiguration();
         filtered = ac10.saslMechanismSelector.apply(Arrays.asList("PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER", "ABC"), null).toArray(new String[]{});
         Assert.assertArrayEquals(new String[]{"PLAIN", "DIGEST-MD5", "JBOSS-LOCAL-USER"}, filtered);
     }
@@ -188,7 +188,7 @@ public class XmlConfigurationTest {
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-protocol name=\"HTTP\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
-            "            <allow-all-sasl-mechanisms />\n" +
+            "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
             "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
             "            <set-mechanism-properties>\n" +
             "                <property key=\"key-one\" value=\"value-one\"/>\n" +
@@ -210,9 +210,6 @@ public class XmlConfigurationTest {
             "            <match-user name=\"fred\"/>\n" +
             "        </rule>\n" +
             "        <rule use-configuration=\"setup-sasl\">\n" +
-            "            <match-purpose names=\"connect\"/>\n" +
-            "        </rule>\n" +
-            "        <rule use-configuration=\"setup-sasl\">\n" +
             "            <match-port number=\"123\"/>\n" +
             "        </rule>\n" +
             "        <rule use-configuration=\"setup-sasl\">\n" +
@@ -224,11 +221,10 @@ public class XmlConfigurationTest {
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
         AuthenticationContext ac = factory.create();
 
-        Assert.assertNull(ac.authRuleMatching(new URI("http://unknown/"), null, null, null)); // no match
-        Assert.assertNotNull(ac.authRuleMatching(new URI("http://test1/"), null, null, null)); // match host
-        Assert.assertNotNull(ac.authRuleMatching(new URI("http://host/"), null, null, "connect")); // match purpose
-        Assert.assertNotNull(ac.authRuleMatching(new URI("http://host:123/"), null, null, null)); // match port
-        Assert.assertNotNull(ac.authRuleMatching(new URI("http://user1@host/"), null, null, null)); // match user
+        Assert.assertNull(ac.authRuleMatching(new URI("http://unknown/"), null, null)); // no match
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://test1/"), null, null)); // match host
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://host:123/"), null, null)); // match port
+        Assert.assertNotNull(ac.authRuleMatching(new URI("http://user1@host/"), null, null)); // match user
     }
 
     /**
@@ -308,7 +304,7 @@ public class XmlConfigurationTest {
                 "            <set-host name=\"localhost\"/>\n" +
                 "            <set-protocol name=\"HTTP\"/>\n" +
                 "            <set-user-name name=\"jane\"/>\n" +
-                "            <allow-all-sasl-mechanisms />\n" +
+                "            <sasl-mechanism-selector selector=\"#ALL\" />\n" +
                 "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
                 "            <set-mechanism-properties>\n" +
                 "                <property key=\"key-one\" value=\"value-one\"/>\n" +

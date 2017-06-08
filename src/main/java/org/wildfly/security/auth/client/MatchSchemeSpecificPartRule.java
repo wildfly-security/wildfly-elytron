@@ -34,7 +34,8 @@ class MatchSchemeSpecificPartRule extends MatchRule {
         this.name = name;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         if (! uri.isOpaque()) return false;
         String scheme = uri.getScheme();
         String name;
@@ -50,21 +51,25 @@ class MatchSchemeSpecificPartRule extends MatchRule {
         } else {
             name = uri.getSchemeSpecificPart();
         }
-        return name.equals(this.name) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return name.equals(this.name) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchSchemeSpecificPartRule(newParent, name);
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return name.equals(other.getMatchUrnName()) && parentHalfEqual(other);
     }
 
+    @Override
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 2143, name.hashCode());
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("urn=").append(name).append(',');
     }

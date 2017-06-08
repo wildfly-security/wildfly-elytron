@@ -150,9 +150,27 @@ public abstract class SaslMechanismSelector {
         return new AddSelector(this, mechName);
     }
 
+    public SaslMechanismSelector addMechanisms(String... mechNames) {
+        Assert.checkNotNullParam("mechNames", mechNames);
+        SaslMechanismSelector selector = this;
+        for (String mechName : mechNames) {
+            selector = new AddSelector(selector, mechName);
+        }
+        return selector;
+    }
+
     public SaslMechanismSelector forbidMechanism(String mechName) {
         Assert.checkNotNullParam("mechName", mechName);
         return new ForbidSelector(this, mechName);
+    }
+
+    public SaslMechanismSelector forbidMechanisms(String... mechNames) {
+        Assert.checkNotNullParam("mechNames", mechNames);
+        SaslMechanismSelector selector = this;
+        for (String mechName : mechNames) {
+            selector = new ForbidSelector(selector, mechName);
+        }
+        return selector;
     }
 
     public SaslMechanismSelector addMatching(SaslMechanismPredicate predicate) {

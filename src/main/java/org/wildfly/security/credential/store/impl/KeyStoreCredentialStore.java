@@ -134,7 +134,10 @@ import org.wildfly.security.x500.X500;
  * <ul>
  *     <li>{@code location}: specifies the location of the key store (none means, use an in-memory store and do not store changes)</li>
  *     <li>{@code modifiable}: specifies whether the credential store should be modifiable</li>
- *     <li>{@code create}: specifies to automatically create storage file for this credential store (defaults to {@code false})</li>
+ *     <li>{@code create}: specifies to automatically create storage file for this credential store (defaults to {@code false}).
+ *          <p>
+ *          If {@code external} is true, the storage file will be created calling the {@link #flush} method. If {@code external} is false and the storage file does not exist yet,
+ *          then an empty credential store is created when {@link #initialize} method is invoked.</li>
  *     <li>{@code keyStoreType}: specifies the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
  *     <li>{@code keyAlias}: specifies the secret key alias within the key store to use for encrypt/decrypt of data in external storage (defaults to {@code cs_key})</li>
  *     <li>{@code external}: specifies whether to store data to external storage and encrypted by {@code keyAlias} key (defaults to {@code false})</li>
@@ -208,6 +211,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             encryptionKeyAlias = attributes.getOrDefault(KEYALIAS, "cs_key");
             cryptographicAlgorithm = attributes.get(CRYPTOALG);
             load(keyStoreType);
+            if ( create  && !useExternalStorage && location != null && !Files.exists(location) ){
+                //Only in this case, flush the data to the file allowing the credential store creation independently of modifiable flag
+                flush();
+            }
             initialized = true;
         }
     }
@@ -811,7 +818,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         final Path dataLocation;
         if (useExternalStorage) {
             dataLocation = externalPath;
-            setupExternalStorage(type, dataLocation);
+            setupExternalStorage(type, location);
         } else {
             dataLocation = location;
             keyStore = getKeyStoreInstance(type);
@@ -847,7 +854,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             }
         } catch (GeneralSecurityException e) {
             throw log.cannotInitializeCredentialStore(
-                    log.internalEncryptionProblem(e, dataLocation.toString()));
+                    log.internalEncryptionProblem(e, dataLocation != null ? dataLocation.toString() : "null"));
         } catch (IOException e) {
             throw log.cannotInitializeCredentialStore(e);
         }

@@ -104,25 +104,9 @@ public final class AuthenticationContextConfigurationClient {
      * @return the matching configuration
      */
     public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext, int protocolDefaultPort, String abstractType, String abstractTypeAuthority) {
-        return getAuthenticationConfiguration(uri, authenticationContext, protocolDefaultPort, abstractType, abstractTypeAuthority, null);
-    }
-
-    /**
-     * Get the authentication configuration which matches the given URI and type, or {@link AuthenticationConfiguration#EMPTY} if there is none, setting
-     * a default protocol port.
-     *
-     * @param uri the URI to match (must not be {@code null})
-     * @param authenticationContext the authentication context to examine (must not be {@code null})
-     * @param protocolDefaultPort the protocol-default port
-     * @param abstractType the abstract type (may be {@code null})
-     * @param abstractTypeAuthority the abstract type authority (may be {@code null})
-     * @param purpose the authentication purpose (may be {@code null})
-     * @return the matching configuration
-     */
-    public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext, int protocolDefaultPort, String abstractType, String abstractTypeAuthority, String purpose) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
-        final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority, purpose);
+        final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority);
         AuthenticationConfiguration configuration = node != null ? node.getConfiguration() : AuthenticationConfiguration.empty();
         final String uriHost = uri.getHost();
         if (uriHost != null && configuration.setHost == null) {
@@ -139,8 +123,8 @@ public final class AuthenticationContextConfigurationClient {
             configuration = configuration.useName(userInfo);
         }
 
-        log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, purpose=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
-                uri, protocolDefaultPort, abstractType, abstractTypeAuthority, purpose, node != null ? node.rule : null, configuration);
+        log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
+                uri, protocolDefaultPort, abstractType, abstractTypeAuthority, node != null ? node.rule : null, configuration);
 
         return configuration;
     }
@@ -166,21 +150,7 @@ public final class AuthenticationContextConfigurationClient {
      * @return the matching SSL context
      */
     public SSLContext getSSLContext(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority) throws GeneralSecurityException {
-        return getSSLContext(uri, authenticationContext, abstractType, abstractTypeAuthority, null);
-    }
-
-    /**
-     * Get the SSL context which matches the given URI and type, or {@link SSLContext#getDefault()} if there is none.
-     *
-     * @param uri the URI to match (must not be {@code null})
-     * @param authenticationContext the authentication context to examine (must not be {@code null})
-     * @param abstractType the abstract type (may be {@code null})
-     * @param abstractTypeAuthority the abstract type authority (may be {@code null})
-     * @param purpose the authentication purpose (may be {@code null})
-     * @return the matching SSL context
-     */
-    public SSLContext getSSLContext(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority, String purpose) throws GeneralSecurityException {
-        return getSSLContextFactory(uri, authenticationContext, abstractType, abstractTypeAuthority, purpose).create();
+        return getSSLContextFactory(uri, authenticationContext, abstractType, abstractTypeAuthority).create();
     }
 
     /**
@@ -190,13 +160,12 @@ public final class AuthenticationContextConfigurationClient {
      * @param authenticationContext the authentication context to examine (must not be {@code null})
      * @param abstractType the abstract type (may be {@code null})
      * @param abstractTypeAuthority the abstract type authority (may be {@code null})
-     * @param purpose the authentication purpose (may be {@code null})
      * @return the matching SSL context factory (not {@code null})
      */
-    public SecurityFactory<SSLContext> getSSLContextFactory(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority, String purpose) {
+    public SecurityFactory<SSLContext> getSSLContextFactory(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
-        final RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.sslRuleMatching(uri, abstractType, abstractTypeAuthority, purpose);
+        final RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.sslRuleMatching(uri, abstractType, abstractTypeAuthority);
         if (node == null) return SSLContext::getDefault;
         return node.getConfiguration();
     }

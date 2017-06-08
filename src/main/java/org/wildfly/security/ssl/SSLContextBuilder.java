@@ -35,8 +35,11 @@ import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.MechanismConfiguration;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.PrincipalDecoder;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
@@ -70,6 +73,7 @@ public final class SSLContextBuilder {
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
     private String providerName;
     private boolean wrap = true;
+    private MechanismConfigurationSelector mechanismConfigurationSelector;
 
     /**
      * Set the security domain to use to authenticate clients.
@@ -287,6 +291,19 @@ public final class SSLContextBuilder {
     }
 
     /**
+     * Set selector of mechanism configuration for {@link ServerAuthenticationContext}, which will be used for SSL client authentication.
+     *
+     * @param mechanismConfigurationSelector mechanism configuration selector to be used by {@link ServerAuthenticationContext} in SSL authentication.
+     * @return this builder
+     */
+    public SSLContextBuilder setMechanismConfigurationSelector(final MechanismConfigurationSelector mechanismConfigurationSelector) {
+        this.mechanismConfigurationSelector = mechanismConfigurationSelector;
+        return this;
+    }
+
+
+
+    /**
      * Build a security factory for the new context.  The factory will cache the constructed instance.
      *
      * @return the security factory
@@ -306,6 +323,9 @@ public final class SSLContextBuilder {
         final boolean needClientAuth = this.needClientAuth;
         final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
         final boolean wrap  = this.wrap;
+        final MechanismConfigurationSelector mechanismConfigurationSelector = this.mechanismConfigurationSelector != null ?
+                this.mechanismConfigurationSelector :
+                MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY);
 
         return new OneTimeSecurityFactory<>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier, providerName);
@@ -346,7 +366,7 @@ public final class SSLContextBuilder {
                     x509KeyManager
             }, new TrustManager[]{
                     canAuthPeers ?
-                            new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional) :
+                            new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional, mechanismConfigurationSelector) :
                             x509TrustManager
             }, null);
 

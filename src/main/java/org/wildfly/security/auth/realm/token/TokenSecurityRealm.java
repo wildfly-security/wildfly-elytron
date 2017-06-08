@@ -158,7 +158,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         @Override
         public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            if (isBearerTokenEvidence(evidenceType)) {
+            if (exists() && isBearerTokenEvidence(evidenceType)) {
                 return SupportLevel.SUPPORTED;
             }
 

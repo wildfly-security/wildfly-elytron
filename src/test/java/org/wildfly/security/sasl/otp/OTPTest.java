@@ -79,6 +79,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
+import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
@@ -989,7 +990,7 @@ public class OTPTest extends BaseTestCase {
                                 .useChoice(MATCH_RESPONSE_CHOICE, responseChoice)
                                 .useChoice(MATCH_PASSWORD_FORMAT_CHOICE, passwordFormatChoice)
                                 .usePassword(password)
-                                .allowSaslMechanisms(algorithm));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(algorithm)));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }
@@ -1016,7 +1017,7 @@ public class OTPTest extends BaseTestCase {
                                         }
                                     }
                                 }, EnumSet.of(CallbackKind.CREDENTIAL_RESET))
-                                .allowSaslMechanisms(algorithm));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(algorithm)));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }
@@ -1041,7 +1042,7 @@ public class OTPTest extends BaseTestCase {
                                         }
                                     }
                                 }, EnumSet.of(CallbackKind.CREDENTIAL_RESET))
-                                .allowSaslMechanisms(algorithm));
+                                .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(algorithm)));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }

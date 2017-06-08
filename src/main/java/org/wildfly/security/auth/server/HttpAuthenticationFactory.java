@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +55,9 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
-        return new SecurityIdentityServerMechanismFactory(factoryTransformation.apply(getFactory())).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
+        HttpServerAuthenticationMechanism server = new SecurityIdentityServerMechanismFactory(factoryTransformation.apply(getFactory())).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
+        log.tracef("Created HttpServerAuthenticationMechanism [%s] for mechanism [%s]", server, name);
+        return server;
     }
 
     Collection<String> getAllSupportedMechNames() {

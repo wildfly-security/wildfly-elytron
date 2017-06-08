@@ -77,6 +77,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.password.Password;
@@ -1119,9 +1120,7 @@ public final class ServerAuthenticationContext {
         } else {
             realmIdentity = securityRealm.getRealmIdentity(finalPrincipal);
         }
-        if (! realmIdentity.exists()) {
-            return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
-        }
+
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, preRealmPrincipal, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
     }
 
@@ -1606,6 +1605,9 @@ public final class ServerAuthenticationContext {
                 }
                 return true;
             }
+            Class<? extends Evidence> evidenceType = evidence.getClass();
+            String algorithm = evidence instanceof AlgorithmEvidence ? ((AlgorithmEvidence) evidence).getAlgorithm() : null;
+
             // verify evidence with no name set: use the realms to find a match (SSO scenario, etc.)
             final SecurityDomain domain = getSecurityDomain();
             final Collection<RealmInfo> realmInfos = domain.getRealmInfos();
@@ -1613,7 +1615,7 @@ public final class ServerAuthenticationContext {
             RealmInfo realmInfo = null;
             for (RealmInfo info : realmInfos) {
                 realmIdentity = info.getSecurityRealm().getRealmIdentity(evidence);
-                if (realmIdentity.exists()) {
+                if (realmIdentity.getEvidenceVerifySupport(evidenceType, algorithm).mayBeSupported()) {
                     realmInfo = info;
                     break;
                 } else {
@@ -1624,7 +1626,6 @@ public final class ServerAuthenticationContext {
                 // no verification possible, no identity found
                 return false;
             }
-            assert realmIdentity != null && realmIdentity.exists();
             final Principal resolvedPrincipal = realmIdentity.getRealmIdentityPrincipal();
             if (resolvedPrincipal == null) {
                 // we have to have a principal

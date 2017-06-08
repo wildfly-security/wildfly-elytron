@@ -220,7 +220,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
         }
 
-        NameCallback nameCallback = authorizationId != null && authorizationId.length() != 0 ?
+        NameCallback nameCallback = authorizationId != null && ! authorizationId.isEmpty() ?
                 new NameCallback("User name", authorizationId) : new NameCallback("User name");
 
         // get password

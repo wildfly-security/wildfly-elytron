@@ -49,9 +49,12 @@ public interface SecurityRealm {
     }
 
     /**
-     * Get a handle for to the identity for the given locator in the context of this security realm. Any
-     * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
-     * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
+     * Get a handle for to the identity for the given evidence in the context of this security realm. Any validation / name
+     * mapping is an implementation detail for the realm. The identity may or may not exist. The returned handle <em>must</em>
+     * be cleaned up by a call to {@link RealmIdentity#dispose()}.
+     *
+     * Where this method is used to obtain a {@link RealmIdentity} prior to evidence verification the method
+     * {@link RealmIdentity#getEvidenceVerifySupport(Class, String)} will be used to verify if the identity is usable.
      *
      * @param evidence an evidence instance which identifies the identity within the realm (must not be {@code null})
      * @return the {@link RealmIdentity} for the provided evidence (not {@code null})

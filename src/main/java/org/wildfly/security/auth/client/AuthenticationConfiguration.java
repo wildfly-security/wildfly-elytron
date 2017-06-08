@@ -117,6 +117,7 @@ import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
+import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.X500;
 
@@ -962,12 +963,13 @@ public final class AuthenticationConfiguration {
     }
 
     /**
-     * Use the system default security providers to locate security implementations.
+     * Use the default provider discovery behaviour of combining service loader discovered providers with the system default
+     * security providers when locating security implementations.
      *
      * @return the new configuration
      */
     public AuthenticationConfiguration useDefaultProviders() {
-        return useProviders(null);
+        return useProviders(ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()), Security::getProviders));
     }
 
     /**
@@ -1083,51 +1085,6 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, SET_SASL_SELECTOR, saslMechanismSelector);
     }
 
-    /**
-     * Create a new configuration which is the same as this configuration, but which does not forbid any SASL mechanisms.
-     *
-     * @return the new configuration.
-     */
-    public AuthenticationConfiguration allowAllSaslMechanisms() {
-        return setSaslMechanismSelector(SaslMechanismSelector.ALL);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which explicitly allows only the given named mechanisms.
-     * Any unlisted mechanisms will not be supported unless the configuration supports it.
-     *
-     * @param names the mechanism names
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration allowSaslMechanisms(String... names) {
-        if (names == null || names.length == 0) {
-            // clear out all explicitly-allowed names
-            return setSaslMechanismSelector(null);
-        }
-        SaslMechanismSelector selector = SaslMechanismSelector.NONE;
-        for (String name : names) {
-            selector = selector.addMechanism(name);
-        }
-        return setSaslMechanismSelector(selector);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which forbids the given named mechanisms.
-     *
-     * @param names the mechanism names
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
-        SaslMechanismSelector selector = saslMechanismSelector;
-        if (selector == null) {
-            selector = SaslMechanismSelector.DEFAULT;
-        }
-        for (String name : names) {
-            selector = selector.forbidMechanism(name);
-        }
-        return setSaslMechanismSelector(selector);
-    }
-
     // other
 
     /**
@@ -1232,8 +1189,13 @@ public final class AuthenticationConfiguration {
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
 
-        return saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
+        SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
+
+        if (log.isTraceEnabled()) {
+            log.tracef("Created SaslClient [%s] for mechanisms [%s]", saslClient, Arrays2.objectToString(serverMechanisms));
+        }
+        return saslClient;
     }
 
     CallbackHandler createCallbackHandler() {

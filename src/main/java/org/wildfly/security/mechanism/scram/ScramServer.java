@@ -434,9 +434,9 @@ public final class ScramServer {
 
             String userName = clientMessage.getInitialResponse().getAuthenticationName();
             String authorizationID = clientMessage.getInitialResponse().getAuthorizationId();
-            if (authorizationID == null) {
+            if (authorizationID == null || authorizationID.isEmpty()) {
                 authorizationID = userName;
-            }else{
+            } else {
                 ByteStringBuilder bsb = new ByteStringBuilder();
                 StringPrep.encode(authorizationID, bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
                 authorizationID = new String(bsb.toArray(), StandardCharsets.UTF_8);

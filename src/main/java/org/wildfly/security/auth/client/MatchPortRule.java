@@ -34,26 +34,32 @@ class MatchPortRule extends MatchRule {
         this.port = port;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return uri.getPort() == port && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return uri.getPort() == port && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchPortRule(newParent, port);
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return other.getMatchPort() == port && parentHalfEqual(other);
     }
 
+    @Override
     public int getMatchPort() {
         return port;
     }
 
+    @Override
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 7919, port);
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("port=").append(port).append(',');
     }

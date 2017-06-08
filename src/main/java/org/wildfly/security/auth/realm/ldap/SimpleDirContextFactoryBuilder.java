@@ -29,6 +29,7 @@ import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.util._private.Arrays2;
 
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -44,9 +45,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import java.lang.reflect.Array;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -64,7 +63,6 @@ public class SimpleDirContextFactoryBuilder {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
     private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
-    private static final String CONNECT_PURPOSE = "dir-context-connect";
     private static final String LDAPS_SCHEME = "ldaps";
 
     private boolean built = false;
@@ -328,7 +326,7 @@ public class SimpleDirContextFactoryBuilder {
                 ClearPassword password = null;
                 try {
                     URI uri = new URI(providerUrl.split(" ")[0]); // only first URI used for AC resolution
-                    AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null, CONNECT_PURPOSE);
+                    AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null);
 
                     NameCallback nameCallback = new NameCallback("LDAP principal");
                     CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
@@ -390,7 +388,7 @@ public class SimpleDirContextFactoryBuilder {
                     if ( ! uri.getScheme().equalsIgnoreCase(LDAPS_SCHEME)) {
                         return socketFactory; // non-SSL connection
                     }
-                    SecurityFactory<SSLContext> sslContextFactory = authClient.getSSLContextFactory(uri, authenticationContext, null, null, CONNECT_PURPOSE);
+                    SecurityFactory<SSLContext> sslContextFactory = authClient.getSSLContextFactory(uri, authenticationContext, null, null);
                     return sslContextFactory.create().getSocketFactory();
                 } catch (Exception e) {
                     throw log.obtainingDirContextCredentialFromAuthenticationContextFailed(e);
@@ -427,20 +425,7 @@ public class SimpleDirContextFactoryBuilder {
 
                 if (log.isDebugEnabled()) {
                     log.debugf("Creating [" + InitialDirContext.class + "] with environment:");
-                    env.forEach((key, value) -> {
-                        if (value instanceof Object[]) {
-                            log.debugf("    Property [%s] with values %s", key, Arrays.deepToString((Object[]) value));
-                        } else if (value.getClass().isArray()) {
-                            StringBuilder sb = new StringBuilder();
-                            for (int i = 0; i < Array.getLength(value); i++) {
-                                if (i != 0) sb.append(", ");
-                                sb.append(String.valueOf(Array.get(value, i)));
-                            }
-                            log.debugf("    Property [%s] with values [%s]", key, sb.toString());
-                        } else {
-                            log.debugf("    Property [%s] with value [%s]", key, value);
-                        }
-                    });
+                    env.forEach((key, value) -> log.debugf("    Property [%s] with value [%s]", key, Arrays2.objectToString(value)));
                 }
 
                 InitialLdapContext initialContext;

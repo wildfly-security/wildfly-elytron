@@ -701,30 +701,9 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useMechanismProperties(mechanismProperties, true));
                         break;
                     }
-                    case "allow-all-sasl-mechanisms": {
+                    case "sasl-mechanism-selector": {
                         if (isSet(foundBits, 6)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 6);
-                        parseEmptyType(reader);
-                        configuration = andThenOp(configuration, AuthenticationConfiguration::allowAllSaslMechanisms);
-                        break;
-                    }
-                    case "allow-sasl-mechanisms": {
-                        if (isSet(foundBits, 7)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 7);
-                        final String[] names = parseNamesType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.allowSaslMechanisms(names));
-                        break;
-                    }
-                    case "forbid-sasl-mechanisms": {
-                        if (isSet(foundBits, 8)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 8);
-                        final String[] names = parseNamesType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.forbidSaslMechanisms(names));
-                        break;
-                    }
-                    case "sasl-mechanism-selector": {
-                        if (isSet(foundBits, 14)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 14);
                         final SaslMechanismSelector selector = parseSaslMechanismSelectorType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.setSaslMechanismSelector(selector));
                         break;
@@ -898,12 +877,6 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 7)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 7);
                         rule = parseMatchAbstractType(rule, reader);
-                        break;
-                    }
-                    case "match-purpose": {
-                        if (isSet(foundBits, 8)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 8);
-                        rule = rule.matchPurposes(parseNamesType(reader));
                         break;
                     }
                     default: {

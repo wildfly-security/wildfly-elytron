@@ -62,6 +62,7 @@ import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util._private.Arrays2;
 
 /**
  * A {@link HttpServerAuthenticationMechanism} implementation to support SPNEGO.
@@ -125,8 +126,10 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             try {
                 gssContext = gssManager.createContext(serviceGssCredential);
 
-                log.tracef("Using SpnegoAuthenticationMechanism to authenticate %s using the following mechanisms: [%s]",
-                        serviceGssCredential.getName(), serviceGssCredential.getMechs());
+                if (log.isTraceEnabled()) {
+                    log.tracef("Using SpnegoAuthenticationMechanism to authenticate %s using the following mechanisms: [%s]",
+                            serviceGssCredential.getName(), Arrays2.objectToString(serviceGssCredential.getMechs()));
+                }
 
                 if (connectionScope != null) {
                     connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
@@ -146,7 +149,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 .findFirst() : Optional.empty();
 
         if (log.isTraceEnabled()) {
-            log.tracef("Sent HTTP authorizations: [%s]", authorizationValues == null ? "null" : String.join(", ", authorizationValues));
+            log.tracef("Sent HTTP authorizations: [%s]", Arrays2.objectToString(authorizationValues));
         }
 
         // Do we have an incoming response to a challenge? If so, process it.
@@ -231,7 +234,9 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
     }
 
     private void sendChallenge(byte[] responseToken, HttpServerResponse response, int statusCode) {
-        log.tracef("Sending intermediate challenge: %s", responseToken);
+        if (log.isTraceEnabled()) {
+            log.tracef("Sending intermediate challenge: %s", Arrays2.objectToString(responseToken));
+        }
         if (responseToken == null) {
             response.addResponseHeader(WWW_AUTHENTICATE, NEGOTIATE);
         } else {

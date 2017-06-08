@@ -33,23 +33,28 @@ class MatchNoUserRule extends MatchRule {
         super(parent.without(MatchUserRule.class));
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+    @Override
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String userInfo = URIUtil.getUserFromURI(uri);
-        return userInfo == null && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return userInfo == null && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
+    @Override
     MatchRule reparent(final MatchRule newParent) {
         return new MatchNoUserRule(newParent);
     }
 
+    @Override
     boolean halfEqual(final MatchRule other) {
         return other.getMatchUser() == null && parentHalfEqual(other);
     }
 
+    @Override
     public int hashCode() {
         return multiHashUnordered(parentHashCode(), 3121, 0);
     }
 
+    @Override
     StringBuilder asString(final StringBuilder b) {
         return parentAsString(b).append("no user,");
     }

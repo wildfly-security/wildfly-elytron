@@ -728,6 +728,58 @@ public class DigestTest extends BaseTestCase {
         Assert.assertArrayEquals(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, server.unwrap(message, 0, message.length));
     }
 
+    /**
+     * Test a successful exchange with null authorizationId
+     */
+    @Test
+    public void testSuccessfulExchangeNullAuthorizationId() throws Exception {
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .addMechanismRealm("TestRealm")
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
+        SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, null, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = client.evaluateChallenge(message);
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
+    /**
+     * Test a successful exchange with empty authorizationId
+     */
+    @Test
+    public void testSuccessfulExchangeEmptyAuthorizationId() throws Exception {
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .addMechanismRealm("TestRealm")
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
+        SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, "", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = client.evaluateChallenge(message);
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
     private KeySpec getDigestKeySpec(String username, String password, String realm) throws NoSuchAlgorithmException {
         byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
         return new DigestPasswordSpec(username, realm, urpHash);

@@ -155,11 +155,6 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        deleteChallenge();
-    }
-
-    @Override
     protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
         switch (state) {
             case INITIAL_CHALLENGE_STATE:
@@ -237,14 +232,14 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     authenticationId = null;
                     authenticationRealm = null;
                 }
-                if (authenticationId == null || authenticationId.length() == 0) {
+                if (authenticationId == null || authenticationId.isEmpty()) {
                     authenticationId = defaultUser;
                 }
-                if (authenticationId == null || authenticationId.length() == 0) {
+                if (authenticationId == null || authenticationId.isEmpty()) {
                     throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
                 }
-                if (authorizationId == null) {
-                    // If no authorization ID is specifed default to authentication ID
+                if (authorizationId == null || authorizationId.isEmpty()) {
+                    // If no authorization ID is specified default to authentication ID
                     authorizationId = authenticationId;
                 }
                 final NameCallback nameCallback = new NameCallback("User name", authenticationId);
