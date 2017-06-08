@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 import org.wildfly.common.function.ExceptionConsumer;
 import org.wildfly.security.auth.SupportLevel;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -60,9 +60,9 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
     }
 
     @Override
-    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
-        CloseableIterator<ModifiableRealmIdentity> iterator = getModifiableSecurityRealm().getRealmIdentityIterator();
-        return new CloseableIterator<ModifiableRealmIdentity>() {
+    public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
+        ModifiableRealmIdentityIterator iterator = getModifiableSecurityRealm().getRealmIdentityIterator();
+        return new ModifiableRealmIdentityIterator() {
             @Override
             public boolean hasNext() {
                 return iterator.hasNext();

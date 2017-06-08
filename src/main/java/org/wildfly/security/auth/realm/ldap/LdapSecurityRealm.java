@@ -79,7 +79,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -225,7 +225,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     }
 
     @Override
-    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
         if (identityMapping.iteratorFilter == null) {
             throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
         }
@@ -249,7 +249,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             }
         }).distinct().iterator(); // distinct to prevent deadlock on identity locking when one identity found twice
 
-        return new CloseableIterator<ModifiableRealmIdentity>() {
+        return new ModifiableRealmIdentityIterator() {
 
             @Override
             public boolean hasNext() {
@@ -263,7 +263,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() throws RealmUnavailableException {
                 resultStream.close();
                 closeContext(dirContext);
             }

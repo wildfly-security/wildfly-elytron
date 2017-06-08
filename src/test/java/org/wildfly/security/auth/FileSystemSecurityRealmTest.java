@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
-import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -50,7 +50,6 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.util.CodePointIterator;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -396,7 +395,7 @@ public class FileSystemSecurityRealmTest {
     @Test
     public void testIteratingNeedlessClose() throws Exception {
         FileSystemSecurityRealm securityRealm = createRealmWithTwoIdentities();
-        Iterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator();
+        ModifiableRealmIdentityIterator iterator = securityRealm.getRealmIdentityIterator();
 
         int count = 0;
         while(iterator.hasNext()){
@@ -404,26 +403,25 @@ public class FileSystemSecurityRealmTest {
             count++;
         }
         Assert.assertEquals(2, count);
-        ((Closeable) iterator).close(); // needless, already closed
+        iterator.close(); // needless, already closed
         getRootPath(); // will fail on windows if iterator not closed correctly
     }
 
     @Test
     public void testPartialIterating() throws Exception {
         FileSystemSecurityRealm securityRealm = createRealmWithTwoIdentities();
-        Iterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator();
+        ModifiableRealmIdentityIterator iterator = securityRealm.getRealmIdentityIterator();
 
         Assert.assertTrue(iterator.hasNext());
         Assert.assertTrue(iterator.next().exists());
-        Assert.assertTrue(iterator instanceof Closeable);
-        ((Closeable) iterator).close();
+        iterator.close();
         getRootPath(); // will fail on windows if iterator not closed correctly
     }
 
     @Test
     public void testPartialIteratingTryWithResource() throws Exception {
         FileSystemSecurityRealm securityRealm = createRealmWithTwoIdentities();
-        try(CloseableIterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator()) {
+        try(ModifiableRealmIdentityIterator iterator = securityRealm.getRealmIdentityIterator()) {
             Assert.assertTrue(iterator.hasNext());
             Assert.assertTrue(iterator.next().exists());
         } // try should ensure iterator closing

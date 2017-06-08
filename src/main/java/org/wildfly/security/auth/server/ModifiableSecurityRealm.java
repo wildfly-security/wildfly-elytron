@@ -74,5 +74,5 @@ public interface ModifiableSecurityRealm extends SecurityRealm {
      * @return the identity iterator
      * @throws RealmUnavailableException if the realm fails for some reason
      */
-    CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException;
+    ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException;
 }
