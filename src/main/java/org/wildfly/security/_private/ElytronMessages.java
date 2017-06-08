@@ -492,19 +492,19 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException cannotSucceedNotAuthorized();
 
     @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
-    RealmUnavailableException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
+    IllegalStateException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
 
     @Message(id = 1114, value = "Invalid token format. Tokens must have a signature part accordingly with JWS specification")
-    RealmUnavailableException tokenRealmJwtInvalidFormat();
+    IllegalArgumentException tokenRealmJwtInvalidFormat();
 
     @Message(id = 1115, value = "Failed to parse token")
-    RealmUnavailableException tokenRealmJwtParseFailed(@Cause Throwable cause);
+    IllegalStateException tokenRealmJwtParseFailed(@Cause Throwable cause);
 
     @Message(id = 1116, value = "Signature verification failed")
-    RealmUnavailableException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
+    IllegalStateException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
 
     @Message(id = 1117, value = "Invalid signature algorithm [%s]")
-    RealmUnavailableException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
+    IllegalArgumentException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
 
     @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
     IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
