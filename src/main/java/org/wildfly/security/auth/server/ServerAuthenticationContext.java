@@ -941,6 +941,8 @@ public final class ServerAuthenticationContext {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
                     evidenceVerifyCallback.setVerified(verifyEvidence(evidenceVerifyCallback.getEvidence()));
+
+                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SSLCallback) {
                     SSLCallback sslCallback = (SSLCallback) callback;
 
@@ -1005,6 +1007,7 @@ public final class ServerAuthenticationContext {
                                     mi.getMechanismType(), mi.getMechanismName(), mi.getHostName(), mi.getProtocol());
                         }
                         setMechanismInformation(mi);
+                        handleOne(callbacks, idx + 1);
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
@@ -1018,12 +1021,10 @@ public final class ServerAuthenticationContext {
                     authorizeCallback.setSecurityDomain(stateRef.get().getSecurityDomain());
                     SecurityIdentity authorizedIdentity = null;
                     Principal principal = null;
-                    try {
-                        SecurityIdentity identity = authorizeCallback.getIdentity();
-                        if (identity != null && importIdentity(identity)) {
-                            authorizedIdentity = getAuthorizedIdentity();
-                            return;
-                        }
+                    SecurityIdentity identity = authorizeCallback.getIdentity();
+                    if (identity != null && importIdentity(identity)) {
+                        authorizedIdentity = getAuthorizedIdentity();
+                    } else {
                         principal = authorizeCallback.getPrincipal();
                         if (principal == null) {
                             principal = authorizeCallback.getAuthorizationPrincipal();
@@ -1032,12 +1033,11 @@ public final class ServerAuthenticationContext {
                             setAuthenticationPrincipal(principal);
                             authorize();
                             authorizedIdentity = getAuthorizedIdentity();
-                            return;
                         }
-                    } finally {
-                        log.tracef("Handling CachedIdentityAuthorizeCallback: principal = %s  authorizedIdentity = %s", principal, authorizedIdentity);
-                        authorizeCallback.setAuthorized(authorizedIdentity);
                     }
+                    log.tracef("Handling CachedIdentityAuthorizeCallback: principal = %s  authorizedIdentity = %s", principal, authorizedIdentity);
+                    authorizeCallback.setAuthorized(authorizedIdentity);
+                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof IdentityCredentialCallback) {
                     IdentityCredentialCallback icc = (IdentityCredentialCallback) callback;
                     Credential credential = icc.getCredential();
