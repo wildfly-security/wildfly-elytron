@@ -20,17 +20,21 @@ package org.wildfly.security.mechanism.oauth2;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
@@ -131,6 +135,15 @@ public class OAuth2Server {
                 }
 
                 if (authorizeCallback.isAuthorized()) {
+                    try {
+                        callbackHandler.handle(new Callback[]{new IdentityCredentialCallback(new BearerTokenCredential(evidence.getToken()), true)});
+                    } catch (UnsupportedCallbackException ignore) {
+                        // ignored
+                    } catch (AuthenticationMechanismException e) {
+                        throw e;
+                    } catch (IOException e) {
+                        throw log.mechServerSideAuthenticationFailed(mechanismName, e);
+                    }
                     return new byte[0];
                 }
             }

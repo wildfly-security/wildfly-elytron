@@ -18,9 +18,9 @@
 
 package org.wildfly.security.http.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,10 +32,14 @@ import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.MechanismUtil;
 
 /**
  * <p>A {@link HttpServerAuthenticationMechanism} capable to perform authentication based on a bearer token.
@@ -87,31 +91,33 @@ class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMech
         }
 
         BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
+        EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
 
-        try {
-            EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
+        handleCallback(verifyCallback);
 
-            callbackHandler.handle(new Callback[] {verifyCallback});
+        if (verifyCallback.isVerified()) {
+            AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
 
-            if (verifyCallback.isVerified()) {
-                AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
+            handleCallback(authorizeCallback);
 
-                callbackHandler.handle(new Callback[] {authorizeCallback});
-
-                if (authorizeCallback.isAuthorized()) {
-                    callbackHandler.handle(new Callback[]{AuthenticationCompleteCallback.SUCCEEDED});
-                    request.authenticationComplete();
-                    return;
-                }
+            if (authorizeCallback.isAuthorized()) {
+                handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
+                handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
+                request.authenticationComplete();
+                return;
             }
-
-            invalidBearerToken(request);
-        } catch (IOException | UnsupportedCallbackException e) {
-            throw new HttpAuthenticationException(e);
         }
+
+        request.authenticationFailed("Invalid bearer token", response -> response.setStatusCode(403));
     }
 
-    private void invalidBearerToken(HttpServerRequest request) {
-        request.authenticationFailed("Invalid bearer token", response -> response.setStatusCode(403));
+    private void handleCallback(Callback callback) throws HttpAuthenticationException {
+        try {
+            MechanismUtil.handleCallbacks(BEARER_TOKEN, callbackHandler, callback);
+        } catch (AuthenticationMechanismException e) {
+            throw e.toHttpAuthenticationException();
+        } catch (UnsupportedCallbackException ignored) {
+            log.tracef("Unsupported callback [%s]", callback);
+        }
     }
 }
