@@ -41,6 +41,7 @@ import org.ietf.jgss.Oid;
 import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 
@@ -279,6 +280,13 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                     setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
                 }
 
+                try {
+                    tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssContext.getDelegCred()), true));
+                } catch (UnsupportedCallbackException | GSSException e) {
+                    // ignored
+                } catch (SaslException e) {
+                    throw e;
+                }
                 log.trace("Negotiation complete.");
                 negotiationComplete();
                 // By now this is the end.

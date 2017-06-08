@@ -39,6 +39,7 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
@@ -215,6 +216,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
                             throw log.mechGssApiMechanismMismatch(getMechanismName()).toSaslException();
                         }
                         checkAuthorizationID();
+                        try {
+                            tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssContext.getDelegCred()), true));
+                        } catch (UnsupportedCallbackException | GSSException e) {
+                            // ignored
+                        } catch (SaslException e) {
+                            throw e;
+                        }
                         negotiationComplete();
                     } else {
                         // Expecting subsequent exchanges
@@ -235,6 +243,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
                             throw log.mechGssApiMechanismMismatch(getMechanismName()).toSaslException();
                         }
                         checkAuthorizationID();
+                        try {
+                            tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssContext.getDelegCred()), true));
+                        } catch (UnsupportedCallbackException | GSSException e) {
+                            // ignored
+                        } catch (SaslException e) {
+                            throw e;
+                        }
                         negotiationComplete();
                     }
                     return response;
