@@ -300,7 +300,7 @@ import org.wildfly.security.x500.X500;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class ServerAuthenticationContext {
+public final class ServerAuthenticationContext implements AutoCloseable {
 
     private final AtomicReference<State> stateRef;
 
@@ -453,7 +453,7 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public void fail() throws IllegalStateException {
-        stateRef.get().fail();
+        stateRef.get().fail(true);
     }
 
     /**
@@ -815,6 +815,14 @@ public final class ServerAuthenticationContext {
     public void updateCredential(Credential credential) throws RealmUnavailableException {
         Assert.checkNotNullParam("credential", credential);
         stateRef.get().updateCredential(credential);
+    }
+
+    /**
+     * Close the server authentication context, failing any in-progress authentication and releasing any
+     * associated resources.
+     */
+    public void close() {
+        stateRef.get().fail(false);
     }
 
     AtomicReference<State> getStateRef() {
@@ -1234,8 +1242,8 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        void fail() {
-            throw log.noAuthenticationInProgress();
+        void fail(final boolean requireInProgress) {
+            if (requireInProgress) throw log.noAuthenticationInProgress();
         }
 
         boolean isDone() {
@@ -1305,9 +1313,9 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             transition();
-            stateRef.get().fail();
+            stateRef.get().fail(requireInProgress);
         }
 
         @Override
@@ -1480,11 +1488,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
                 // recurse & retry
-                stateRef.get().fail();
+                stateRef.get().fail(requireInProgress);
             }
         }
 
@@ -1773,11 +1781,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
                 // recurse & retry
-                stateRef.get().fail();
+                stateRef.get().fail(requireInProgress);
             }
         }
 
@@ -1937,11 +1945,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             final SecurityIdentity capturedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
-                stateRef.get().fail();
+                stateRef.get().fail(requireInProgress);
                 return;
             }
             SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
@@ -2078,10 +2086,10 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
-                stateRef.get().fail();
+                stateRef.get().fail(requireInProgress);
             }
         }
 
@@ -2263,11 +2271,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
             final SecurityIdentity authorizedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
             if (! stateRef.compareAndSet(this, FAILED)) {
-                stateRef.get().fail();
+                stateRef.get().fail(requireInProgress);
                 return;
             }
             SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
@@ -2318,7 +2326,7 @@ public final class ServerAuthenticationContext {
 
     private static final State FAILED = new State() {
         @Override
-        void fail() {
+        void fail(final boolean requireInProgress) {
         }
 
         @Override
