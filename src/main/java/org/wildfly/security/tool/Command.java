@@ -50,6 +50,11 @@ public abstract class Command {
 
     private boolean enableDebug;
 
+    /**
+     * Command used to execute the tool.
+     */
+    private String toolCommand = "java -jar wildfly-elytron-tool.jar";
+
     public abstract void execute(String[] args) throws Exception;
 
     /**
@@ -205,5 +210,19 @@ public abstract class Command {
      */
     public void setEnableDebug(boolean enableDebug) {
         this.enableDebug = enableDebug;
+    }
+
+    /**
+     * Get tool command
+     */
+    public String getToolCommand() {
+        return toolCommand;
+    }
+
+    /**
+     * Set tool command
+     */
+    public void setToolCommand(String toolCommand) {
+        this.toolCommand = toolCommand;
     }
 }

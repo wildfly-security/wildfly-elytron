@@ -39,12 +39,11 @@ public class ElytronTool {
      */
     public static int ElytronToolExitStatus_OK = 0;
 
-    /**
-     *
-     */
-    public static final String TOOL_JAR = "wildfly-elytron-tool.jar";
-
     private Map<String, Command> commandRegistry = new HashMap<>();
+    /**
+     * Name of the script used to execute the tool.
+     */
+    private String scriptName = null;
 
 
     /**
@@ -67,7 +66,14 @@ public class ElytronTool {
 
         ElytronTool tool = new ElytronTool();
         if (args != null && args.length > 0) {
+            if (args[0].startsWith("{")) {
+                tool.scriptName = args[0].substring(1, args[0].indexOf('}'));
+                args[0] = args[0].substring(args[0].indexOf('}') + 1);
+            }
             Command command = tool.findCommand(args[0]);
+            if (command != null && tool.scriptName != null) {
+                command.setToolCommand(tool.scriptName);
+            }
             String[] newArgs = new String[args.length -1];
             System.arraycopy(args, 1, newArgs, 0, args.length -1);
             if (command != null && newArgs.length > 0) {
@@ -109,6 +115,9 @@ public class ElytronTool {
         System.out.print(ElytronToolMessages.msg.missingArgumentsHelp());
         System.out.println();
         for (Command c: commandRegistry.values()) {
+            if (scriptName != null) {
+                c.setToolCommand(scriptName);
+            }
             c.help();
             System.out.println();
         }
