@@ -25,103 +25,6 @@
             attributeFormDefault="unqualified"
             version="1.0">
 
-    <!-- File-backed realm elements -->
-
-    <xsd:element name="identity" type="identity-type"/>
-
-    <xsd:complexType name="identity-type">
-        <xsd:all minOccurs="1" maxOccurs="1">
-            <xsd:element name="credentials" type="credentials-type" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="attributes" type="attributes-type" minOccurs="0" maxOccurs="1"/>
-        </xsd:all>
-    </xsd:complexType>
-
-    <xsd:complexType name="credentials-type">
-        <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="password" type="credential-type"/>
-            <xsd:element name="otp" type="otp-credential-type"/>
-            <xsd:element name="public-key" type="credential-type"/>
-            <xsd:element name="certificate" type="credential-type"/>
-        </xsd:choice>
-    </xsd:complexType>
-
-    <xsd:complexType name="attributes-type">
-        <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="attribute" type="attribute-type"/>
-        </xsd:choice>
-    </xsd:complexType>
-
-    <xsd:complexType name="credential-type">
-        <xsd:simpleContent>
-            <xsd:extension base="xsd:string">
-                <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
-                <xsd:attribute name="format" type="xsd:string" use="optional"/>
-            </xsd:extension>
-        </xsd:simpleContent>
-    </xsd:complexType>
-
-    <xsd:complexType name="otp-credential-type">
-        <xsd:simpleContent>
-            <xsd:extension base="xsd:string">
-                <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
-                <xsd:attribute name="hash" type="xsd:string" use="optional"/>
-                <xsd:attribute name="seed" type="xsd:string" use="optional"/>
-                <xsd:attribute name="sequence" type="xsd:string" use="optional"/>
-            </xsd:extension>
-        </xsd:simpleContent>
-    </xsd:complexType>
-
-    <xsd:complexType name="attribute-type">
-        <xsd:attribute name="name" type="xsd:string" use="required"/>
-        <xsd:attribute name="value" type="xsd:string" use="required"/>
-    </xsd:complexType>
-
-    <!-- Credential Stores elements -->
-    <xsd:complexType name="credential-stores-type">
-        <xsd:annotation>
-            <xsd:documentation>
-                Complex type to contain the definitions of the credential stores.
-            </xsd:documentation>
-        </xsd:annotation>
-        <xsd:sequence>
-            <xsd:element name="credential-store" type="credential-store-type" minOccurs="0" />
-        </xsd:sequence>
-    </xsd:complexType>
-
-    <xsd:complexType name="credential-store-type">
-        <xsd:annotation>
-            <xsd:documentation>
-                An individual credential store definition.
-            </xsd:documentation>
-        </xsd:annotation>
-
-        <xsd:all minOccurs="0" maxOccurs="1">
-            <xsd:element name="attributes" type="attributes-type"/>
-            <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
-            <xsd:element name="providers" type="providers-type" />
-        </xsd:all>
-
-        <xsd:attribute name="name" type="xsd:string" use="required" />
-        <xsd:attribute name="type" type="xsd:string" default="KeyStoreCredentialStore" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    The credential store type, e.g. KeyStoreCredentialStore.
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-        <xsd:attribute name="provider" type="xsd:string" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    The name of the provider to use to
-                    instantiate the CredentialStoreSpi, if the provider is not
-                    specified then the first provider found that can
-                    create an instance of the specified 'type' will be
-                    used.
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-    </xsd:complexType>
-
     <!-- Authentication client elements -->
 
     <xsd:element name="authentication-client" type="authentication-client-type"/>
@@ -363,6 +266,103 @@
         <xsd:attribute name="password" type="xsd:string" use="required" />
     </xsd:complexType>
 
+    <!-- Credential Stores elements -->
+    <xsd:complexType name="credential-stores-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                Complex type to contain the definitions of the credential stores.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="credential-store" type="credential-store-type" minOccurs="0" />
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="credential-store-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                An individual credential store definition.
+            </xsd:documentation>
+        </xsd:annotation>
+
+        <xsd:all minOccurs="0" maxOccurs="1">
+            <xsd:element name="attributes" type="attributes-type"/>
+            <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
+            <xsd:element name="providers" type="providers-type" />
+        </xsd:all>
+
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+        <xsd:attribute name="type" type="xsd:string" default="KeyStoreCredentialStore" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The credential store type, e.g. KeyStoreCredentialStore.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="provider" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The name of the provider to use to
+                    instantiate the CredentialStoreSpi, if the provider is not
+                    specified then the first provider found that can
+                    create an instance of the specified 'type' will be
+                    used.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <!-- File-backed realm elements -->
+
+    <xsd:element name="identity" type="identity-type"/>
+
+    <xsd:complexType name="identity-type">
+        <xsd:all minOccurs="1" maxOccurs="1">
+            <xsd:element name="credentials" type="credentials-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="attributes" type="attributes-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="credentials-type">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="password" type="credential-type"/>
+            <xsd:element name="otp" type="otp-credential-type"/>
+            <xsd:element name="public-key" type="credential-type"/>
+            <xsd:element name="certificate" type="credential-type"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="attributes-type">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="attribute" type="attribute-type"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="credential-type">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
+                <xsd:attribute name="format" type="xsd:string" use="optional"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="otp-credential-type">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
+                <xsd:attribute name="hash" type="xsd:string" use="optional"/>
+                <xsd:attribute name="seed" type="xsd:string" use="optional"/>
+                <xsd:attribute name="sequence" type="xsd:string" use="optional"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="attribute-type">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="value" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
     <!-- Common types -->
 
     <xsd:complexType name="empty-type"/>
@@ -430,4 +430,5 @@
             </xsd:element>
         </xsd:sequence>
     </xsd:complexType>
+
 </xsd:schema>
