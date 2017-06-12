@@ -20,9 +20,9 @@ package org.wildfly.security.audit;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Permission;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.function.Supplier;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -39,13 +39,13 @@ import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
  */
 public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, String> {
 
-    private final Supplier<DateFormat> dateFormatSupplier;
+    private final Supplier<DateTimeFormatter> dateFormatSupplier;
 
     /**
      *
      */
     SimpleSecurityEventFormatter(Builder builder) {
-        this.dateFormatSupplier = builder.dateFormatSupplier;
+        this.dateFormatSupplier = builder.dateTimeFormatterSupplier;
     }
 
     @Override
@@ -57,13 +57,14 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     }
 
     private void handleUnknownEvent(SecurityEvent event, StringBuilder stringBuilder) {
-        DateFormat dateFormat = dateFormatSupplier.get();
+        DateTimeFormatter dateFormat = dateFormatSupplier.get();
+
         stringBuilder.append("event=").append(event.getClass().getSimpleName());
-        stringBuilder.append(",event-time=").append(dateFormat.format(Date.from(event.getInstant())));
+        stringBuilder.append(",event-time=").append(dateFormat.format(event.getInstant()));
 
         SecurityIdentity securityIdentity = event.getSecurityIdentity();
         stringBuilder.append(",security-identity=[name=").append(securityIdentity.getPrincipal().getName());
-        stringBuilder.append(",creation-time=").append(dateFormat.format(Date.from(securityIdentity.getCreationTime()))).append(']');
+        stringBuilder.append(",creation-time=").append(dateFormat.format(securityIdentity.getCreationTime())).append(']');
     }
 
 
@@ -121,19 +122,20 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
 
     public static class Builder {
 
-        private Supplier<DateFormat> dateFormatSupplier = SimpleDateFormat::new;
+        private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = ()  -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
 
         Builder() {
         }
 
         /**
-         * Set a {@link Supplier<DateFormat>} to format any dates in the resulting output.
+         * Set a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
+         * The supplied DateTimeFormatter has to have a time zone configured.
          *
-         * @param dateFormatSupplier a {@link Supplier<DateFormat>} to format any dates in the resulting output.
+         * @param dateTimeFormatterSupplier a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
          * @return {@code this} builder.
          */
-        public Builder setDateFormatSupplier(Supplier<DateFormat> dateFormatSupplier) {
-            this.dateFormatSupplier = checkNotNullParam("dateFormatSupplier", dateFormatSupplier);
+        public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
+            this.dateTimeFormatterSupplier = checkNotNullParam("dateTimeFormatterSupplier", dateTimeFormatterSupplier);
 
             return this;
         }

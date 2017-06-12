@@ -29,9 +29,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.function.Supplier;
 
 /**
@@ -45,7 +46,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
 
     private volatile boolean accepting = true;
 
-    private final Supplier<DateFormat> dateFormatSupplier;
+    private final Supplier<DateTimeFormatter> dateTimeFormatterSupplier;
     private final boolean syncOnAccept;
 
     private File file;
@@ -53,7 +54,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
     private OutputStream outputStream;
 
     FileAuditEndpoint(Builder builder) throws IOException {
-        this.dateFormatSupplier = builder.dateFormatSupplier;
+        this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
         this.syncOnAccept = builder.syncOnAccept;
         setFile(builder.location.toFile());
     }
@@ -106,30 +107,32 @@ public class FileAuditEndpoint implements AuditEndpoint {
     }
 
     /**
-     * The general contract for <code>preWrite(date)</code> is that any method override
+     * The general contract for <code>preWrite(instant)</code> is that any method override
      * must ensure thread safety invoking this method from a synchronization block
      * surrounding one log message processing.
      *
-     * @param date
+     * @param instant
      */
-    protected void preWrite(Date date) {
+    protected void preWrite(Instant instant) {
         // NO-OP by default
     }
 
     @Override
     public void accept(EventPriority t, String u) throws IOException {
         if (!accepting) return;
-        Date date = new Date();
+        Instant instant = Instant.now();
 
         synchronized(this) {
             if (!accepting) return; // We may have been waiting to get in here.
 
-            preWrite(date);
+            preWrite(instant);
 
             boolean started = false;
 
             try {
-                write(dateFormatSupplier.get().format(date).getBytes(StandardCharsets.UTF_8));
+                write(dateTimeFormatterSupplier.get()
+                        .format(instant)
+                        .getBytes(StandardCharsets.UTF_8));
                 started = true;
                 write(new byte[]{','});
                 write(t.toString().getBytes(StandardCharsets.UTF_8));
@@ -172,7 +175,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
 
     public static class Builder {
 
-        private Supplier<DateFormat> dateFormatSupplier = SimpleDateFormat::new;
+        private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = () -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
         private Path location = new File("audit.log").toPath();
         private boolean syncOnAccept = true;
 
@@ -180,13 +183,14 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
 
         /**
-         * Set the {@link Supplier<DateFormat>} to obtain the formatter for dates.
+         * Set the {@link Supplier<DateTimeFormatter>} to obtain the formatter for dates.
+         * The supplied DateTimeFormatter has to have a time zone configured.
          *
-         * @param dateFormatSupplier the {@link Supplier<DateFormat>} to obtain the formatter for dates.
+         * @param dateTimeFormatterSupplier the {@link Supplier<DateTimeFormatter>} to obtain the formatter for dates.
          * @return this builder.
          */
-        public Builder setDateFormatSupplier(Supplier<DateFormat> dateFormatSupplier) {
-            this.dateFormatSupplier = checkNotNullParam("dateFormatSupplier", dateFormatSupplier);
+        public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
+            this.dateTimeFormatterSupplier = checkNotNullParam("dateTimeFormatterSupplier", dateTimeFormatterSupplier);
 
             return this;
         }

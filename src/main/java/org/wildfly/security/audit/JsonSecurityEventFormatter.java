@@ -20,9 +20,9 @@ package org.wildfly.security.audit;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Permission;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.function.Supplier;
 
 import javax.json.Json;
@@ -42,13 +42,13 @@ import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
  */
 public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, String> {
 
-    private final Supplier<DateFormat> dateFormatSupplier;
+    private final Supplier<DateTimeFormatter> dateTimeFormatterSupplier;
 
     /**
      *
      */
     JsonSecurityEventFormatter(Builder builder) {
-        this.dateFormatSupplier = builder.dateFormatSupplier;
+        this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
     }
 
     @Override
@@ -60,15 +60,15 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     }
 
     private void handleUnknownEvent(SecurityEvent event, JsonObjectBuilder objectBuilder) {
-        DateFormat dateFormat = dateFormatSupplier.get();
+        DateTimeFormatter dateFormat = dateTimeFormatterSupplier.get();
 
         objectBuilder.add("event", event.getClass().getSimpleName());
-        objectBuilder.add("event-time", dateFormat.format(Date.from(event.getInstant())));
+        objectBuilder.add("event-time", dateFormat.format(event.getInstant()));
 
         JsonObjectBuilder securityIdentityBuilder = Json.createObjectBuilder();
         SecurityIdentity securityIdentity = event.getSecurityIdentity();
         securityIdentityBuilder.add("name", securityIdentity.getPrincipal().getName());
-        securityIdentityBuilder.add("creation-time", dateFormat.format(Date.from(securityIdentity.getCreationTime())));
+        securityIdentityBuilder.add("creation-time", dateFormat.format(securityIdentity.getCreationTime()));
 
         objectBuilder.add("security-identity", securityIdentityBuilder);
     }
@@ -134,20 +134,20 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
 
     public static class Builder {
 
-        private Supplier<DateFormat> dateFormatSupplier = SimpleDateFormat::new;
+        private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = () -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
 
         Builder() {
         }
 
         /**
-         * Set a {@link Supplier<DateFormat>} to format any dates in the resulting output.
+         * Set a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
+         * The supplied DateTimeFormatter has to have a time zone configured.
          *
-         * @param dateFormatSupplier a {@link Supplier<DateFormat>} to format any dates in the resulting output.
+         * @param dateTimeFormatterSupplier a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
          * @return {@code this} builder.
          */
-        public Builder setDateFormatSupplier(Supplier<DateFormat> dateFormatSupplier) {
-            this.dateFormatSupplier = checkNotNullParam("dateFormatSupplier", dateFormatSupplier);
-
+        public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
+            this.dateTimeFormatterSupplier = checkNotNullParam("dateTimeFormatterSupplier", dateTimeFormatterSupplier);
             return this;
         }
 
