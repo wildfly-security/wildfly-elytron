@@ -477,7 +477,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         }
     }
 
-    protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
+    protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, final boolean defaultRealm) throws SaslException {
         final String realmName = realmCallback.getDefaultText();
         final String userName = nameCallback.getDefaultName();
         final DigestPasswordAlgorithmSpec parameterSpec;
@@ -488,7 +488,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         }
         CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm(getMechanismName()), parameterSpec);
         try {
-            tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+            if (defaultRealm) {
+                tryHandleCallbacks(nameCallback, credentialCallback);
+            } else {
+                tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+            }
             return credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAndApply(DigestPassword.class, DigestPassword::getDigest));
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
@@ -501,10 +505,14 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         }
     }
 
-    protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
+    protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername, final boolean defaultRealm) throws SaslException {
         CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
         try {
-            tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+            if (defaultRealm) {
+                tryHandleCallbacks(nameCallback, credentialCallback);
+            } else {
+                tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+            }
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
                 return null;
@@ -533,10 +541,14 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         return digest_urp;
     }
 
-    protected byte[] getSaltedPasswordFromPasswordCallback(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
+    protected byte[] getSaltedPasswordFromPasswordCallback(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername, final boolean defaultRealm) throws SaslException {
         PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         try {
-            tryHandleCallbacks(realmCallback, nameCallback, passwordCallback);
+            if (defaultRealm) {
+                tryHandleCallbacks(nameCallback, passwordCallback);
+            } else {
+                tryHandleCallbacks(realmCallback, nameCallback, passwordCallback);
+            }
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == passwordCallback) {
                 return null;

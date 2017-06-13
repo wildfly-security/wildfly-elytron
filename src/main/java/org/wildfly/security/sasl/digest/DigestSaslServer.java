@@ -55,10 +55,12 @@ import org.wildfly.security.util.ByteStringBuilder;
 class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
     private final Predicate<String> digestUriAccepted;
+    private final boolean defaultRealm;
 
-    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriAccepted, Supplier<Provider[]> providers) throws SaslException {
+    DigestSaslServer(String[] realms, final boolean defaultRealm, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriAccepted, Supplier<Provider[]> providers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers, providers);
         this.realms = realms;
+        this.defaultRealm = defaultRealm;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
         this.digestUriAccepted = digestUriAccepted;
@@ -256,12 +258,12 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         // get password
         final NameCallback nameCallback = new NameCallback("User name", userName);
         final RealmCallback realmCallback = new RealmCallback("User realm", clientRealm);
-        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback);
+        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback, defaultRealm);
         if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, true);
+            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, true, defaultRealm);
         }
         if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, true);
+            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, true, defaultRealm);
         }
         if (digest_urp == null) {
             throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
