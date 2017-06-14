@@ -122,7 +122,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      *
      * @param root the root path of the identity store
      * @param nameRewriter the name rewriter to apply to looked up names
-     * @param levels the number of levels of directory hashing to apply
+     * @param levels the number of levels of directory to apply
      * @param encoded whether identity names should by BASE32 encoded before using as filename
      */
     public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded) {
@@ -141,7 +141,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      *
      * @param root the root path of the identity store
      * @param nameRewriter the name rewriter to apply to looked up names
-     * @param levels the number of levels of directory hashing to apply
+     * @param levels the number of levels of directory to apply
      */
     public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels) {
         this(root, nameRewriter, levels, true);
@@ -151,14 +151,14 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * Construct a new instance.
      *
      * @param root the root path of the identity store
-     * @param levels the number of levels of directory hashing to apply
+     * @param levels the number of levels of directory to apply
      */
     public FileSystemSecurityRealm(final Path root, final int levels) {
         this(root, NameRewriter.IDENTITY_REWRITER, levels, true);
     }
 
     /**
-     * Construct a new instance with 2 levels of hashing.
+     * Construct a new instance with 2 levels of directory.
      *
      * @param root the root path of the identity store
      */
