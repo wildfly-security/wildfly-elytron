@@ -69,6 +69,7 @@ class MaskCommand extends Command {
     public void execute(String[] args) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
         cmdLine = parser.parse(options, args, false);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
         if (cmdLine.hasOption(HELP_PARAM)) {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
@@ -76,7 +77,6 @@ class MaskCommand extends Command {
         }
 
         printDuplicatesWarning(cmdLine);
-        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         if (salt == null) {

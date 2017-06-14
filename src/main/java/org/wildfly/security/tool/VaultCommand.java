@@ -141,6 +141,7 @@ public class VaultCommand extends Command {
     public void execute(String[] args) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
         cmdLine = parser.parse(options, args, false);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
         if (cmdLine.hasOption(HELP_PARAM)) {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
@@ -149,7 +150,6 @@ public class VaultCommand extends Command {
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
         printDuplicatesWarning(cmdLine);
-        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String bulkConversionDescriptor = cmdLine.getOptionValue(BULK_CONVERT_PARAM);
         if (bulkConversionDescriptor != null && !bulkConversionDescriptor.isEmpty()) {

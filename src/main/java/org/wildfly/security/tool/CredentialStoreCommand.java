@@ -142,6 +142,7 @@ class CredentialStoreCommand extends Command {
     public void execute(String[] args) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
         cmdLine = parser.parse(options, args, false);
+        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
         if (cmdLine.hasOption(HELP_PARAM)) {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
@@ -149,7 +150,6 @@ class CredentialStoreCommand extends Command {
         }
 
         printDuplicatesWarning(cmdLine);
-        setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
         if (location == null) {
