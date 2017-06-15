@@ -18,14 +18,22 @@
 
 package org.wildfly.security.auth.realm.token;
 
+import static org.junit.Assert.*;
+
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jose.PlainObject;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,14 +43,6 @@ import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.util.ByteStringBuilder;
-
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-
-import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -206,6 +206,25 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         assertFalse(realmIdentity.exists());
     }
 
+    @Test
+    public void testUnsecuredJwt() throws Exception {
+        PlainObject plainObject = new PlainObject(new PlainHeader(), new Payload(createClaims(10, 0).build().toString()));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid").build())
+                .build();
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
+
+        assertNotNull(realmIdentity);
+        assertTrue(realmIdentity.exists());
+        assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
+    }
+
     private String createJwt(KeyPair keyPair, int expirationOffset) throws Exception {
         return createJwt(keyPair, expirationOffset, -1);
     }
@@ -213,16 +232,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
     private String createJwt(KeyPair keyPair, int expirationOffset, int notBeforeOffset) throws Exception {
         PrivateKey privateKey = keyPair.getPrivate();
         JWSSigner signer = new RSASSASigner(privateKey);
-        JsonObjectBuilder claimsBuilder = Json.createObjectBuilder()
-                .add("active", true)
-                .add("sub", "elytron@jboss.org")
-                .add("iss", "elytron-oauth2-realm")
-                .add("aud", Json.createArrayBuilder().add("my-app-valid").add("third-app-valid").add("another-app-valid").build())
-                .add("exp", (System.currentTimeMillis() / 1000) + expirationOffset);
-
-        if (notBeforeOffset > 0) {
-            claimsBuilder.add("nbf", (System.currentTimeMillis() / 1000) + notBeforeOffset);
-        }
+        JsonObjectBuilder claimsBuilder = createClaims(expirationOffset, notBeforeOffset);
 
         JWSObject jwsObject = new JWSObject(new JWSHeader.Builder(JWSAlgorithm.RS256)
                 .type(new JOSEObjectType("jwt")).build(),
@@ -237,22 +247,18 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         return createJwt(keyPair, 60);
     }
 
-    @Test
-    public void testUnsecuredJwt() throws Exception {
+    private JsonObjectBuilder createClaims(int expirationOffset, int notBeforeOffset) {
         JsonObjectBuilder claimsBuilder = Json.createObjectBuilder()
-                .add("alg", "none");
-        PlainObject plainObject = new PlainObject(new Payload(claimsBuilder.build().toString()));
+                .add("active", true)
+                .add("sub", "elytron@jboss.org")
+                .add("iss", "elytron-oauth2-realm")
+                .add("aud", Json.createArrayBuilder().add("my-app-valid").add("third-app-valid").add("another-app-valid").build())
+                .add("exp", (System.currentTimeMillis() / 1000) + expirationOffset);
 
-        BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
+        if (notBeforeOffset > 0) {
+            claimsBuilder.add("nbf", (System.currentTimeMillis() / 1000) + notBeforeOffset);
+        }
 
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName("sub")
-                .validator(JwtValidator.builder().build())
-                .build();
-
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        return claimsBuilder;
     }
 }
