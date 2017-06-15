@@ -29,34 +29,35 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TimeZone;
 
 /**
- * Test case to test {@link RotatingFileAuditEndpoint}
+ * Test case to test {@link SizeRotatingFileAuditEndpointTest}
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
+ * @author <a href="mailto:yborgess@redhat.com">Yeray Borges</a>
  */
 @RunWith(JMockit.class)
-public class RotatingFileAuditEndpointTest {
-
+public class SizeRotatingFileAuditEndpointTest {
     static File logDirFile;
     static Path logFile;
-    static TimeZone UTC = TimeZone.getTimeZone("UTC");
-    long time = 0x1000000L;
-    long lastModTime = 0x1000000L;
+    static ZoneId UTC = ZoneId.of("UTC");
+    Instant currentTime;
 
     @BeforeClass
     public static void init() throws Exception {
-        logDirFile = new File(RotatingFileAuditEndpointTest.class.getResource(".").getFile(), "audit");
+        logDirFile = new File(SizeRotatingFileAuditEndpointTest.class.getResource(".").getFile(), "audit");
         logFile = Paths.get(logDirFile.getPath(), "audit");
     }
 
     @Test
     public void testBase() throws Exception {
-        AuditEndpoint endpoint = RotatingFileAuditEndpoint.builder()
+        AuditEndpoint endpoint = SizeRotatingFileAuditEndpoint.builder()
                 .setLocation(logFile)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message");
@@ -65,108 +66,80 @@ public class RotatingFileAuditEndpointTest {
     }
 
     @Test
-    public void testTimeBasedRollover() throws Exception {
-        AuditEndpoint endpoint = RotatingFileAuditEndpoint.builder()
-                .setTimeZone(UTC)
-                .setMaxBackupIndex(0)
-                .setSuffix(".yyyy-MM-dd")
-                .setLocation(logFile)
-                .build();
-        endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        time = 0x2000000L;
-        endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        endpoint.close();
-        assertFiles("audit", "audit.1970-07-14");
-    }
-
-    @Test
-    public void testAppend() throws Exception {
-        AuditEndpoint endpoint = RotatingFileAuditEndpoint.builder()
-                .setRotateOnBoot(false)
-                .setMaxBackupIndex(2)
-                .setRotateSize(1)
-                .setSuffix(".yyyy-MM-dd")
-                .setLocation(logFile)
-                .build();
-        endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        endpoint.close();
-        AuditEndpoint endpoint2 = RotatingFileAuditEndpoint.builder()
-                .setRotateOnBoot(false)
-                .setMaxBackupIndex(2)
-                .setRotateSize(1)
-                .setSuffix(".yyyy-MM-dd")
-                .setLocation(logFile)
-                .build();
-        time = 0x1000001L;
-        endpoint2.accept(EventPriority.CRITICAL, "testing log message 2");
-        endpoint2.close();
-        assertFiles("audit");
-    }
-
-    @Test
-    public void testRotateOnBoot() throws Exception {
-        AuditEndpoint endpoint = RotatingFileAuditEndpoint.builder()
-                .setTimeZone(UTC)
-                .setRotateOnBoot(true)
-                .setMaxBackupIndex(2)
-                .setRotateSize(1)
-                .setSuffix(".yyyy-MM-dd")
-                .setLocation(logFile)
-                .build();
-        endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        endpoint.close();
-        AuditEndpoint endpoint2 = RotatingFileAuditEndpoint.builder()
-                .setTimeZone(UTC)
-                .setRotateOnBoot(true)
-                .setMaxBackupIndex(2)
-                .setRotateSize(1)
-                .setSuffix(".yyyy-MM-dd")
-                .setLocation(logFile)
-                .build();
-        time = 0x1000001L;
-        endpoint2.accept(EventPriority.CRITICAL, "testing log message 2");
-        endpoint2.close();
-        assertFiles("audit", "audit.1970-07-14.1");
-    }
-
-    @Test
     public void testRotateOnSizeOverflow() throws Exception {
-        AuditEndpoint endpoint = RotatingFileAuditEndpoint.builder()
+        AuditEndpoint endpoint = SizeRotatingFileAuditEndpoint.builder()
                 .setTimeZone(UTC)
                 .setMaxBackupIndex(4)
                 .setRotateSize(60)
                 .setSuffix(".yyyy-MM-dd")
                 .setLocation(logFile)
                 .build();
-        for (int i = 0; i < 15; i++) {
+        int i = 0;
+        for (;i < 15; i++) {
+            endpoint.accept(EventPriority.CRITICAL, "testing log message "+i);
+        }
+        currentTime = currentTime.plus(1, ChronoUnit.DAYS);
+        for (;i < 30; i++) {
             endpoint.accept(EventPriority.CRITICAL, "testing log message "+i);
         }
         endpoint.close();
-        assertFiles("audit", "audit.1970-07-14.1", "audit.1970-07-14.2", "audit.1970-07-14.3", "audit.1970-07-14.4");
+        assertFiles("audit", "audit.1970-01-01.1", "audit.1970-01-01.2", "audit.1970-01-01.3", "audit.1970-01-01.4",
+                "audit.1970-01-02.1", "audit.1970-01-02.2", "audit.1970-01-02.3", "audit.1970-01-02.4");
+    }
+
+    @Test
+    public void testRotateOnBoot() throws Exception {
+        AuditEndpoint endpoint = SizeRotatingFileAuditEndpoint.builder()
+                .setTimeZone(UTC)
+                .setRotateOnBoot(true)
+                .setMaxBackupIndex(2)
+                .setRotateSize(1)
+                .setSuffix(".yyyy-MM-dd")
+                .setLocation(logFile)
+                .build();
+        endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
+        endpoint.close();
+        endpoint = SizeRotatingFileAuditEndpoint.builder()
+                .setTimeZone(UTC)
+                .setRotateOnBoot(true)
+                .setMaxBackupIndex(2)
+                .setRotateSize(1)
+                .setSuffix(".yyyy-MM-dd")
+                .setLocation(logFile)
+                .build();
+        endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
+        endpoint.close();
+        assertFiles("audit", "audit.1970-01-01.1");
     }
 
     @Before
     public void initDir() {
         logDirFile.mkdirs();
         Assert.assertTrue(logDirFile.isDirectory());
-        for (File file : logDirFile.listFiles()) {
+        File[] var1 = logDirFile.listFiles();
+        int var2 = var1.length;
+
+        for(int var3 = 0; var3 < var2; ++var3) {
+            File file = var1[var3];
             file.delete();
         }
-        assertFiles();
+
+        this.assertFiles(new String[0]);
     }
 
     @Before
     public void mockTime() {
+        currentTime = Instant.EPOCH.truncatedTo(ChronoUnit.DAYS);
         new MockUp<System>() {
             @Mock
             public long currentTimeMillis() {
-                return time * 1000L;
+                return currentTime.toEpochMilli();
             }
         };
         new MockUp<File>() {
             @Mock
             public long lastModified() {
-                return lastModTime * 1000L;
+                return currentTime.toEpochMilli();
             }
         };
     }
