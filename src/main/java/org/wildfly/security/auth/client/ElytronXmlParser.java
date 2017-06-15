@@ -1534,12 +1534,19 @@ public final class ElytronXmlParser {
 
     private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> createCredentialStoreSupplier(final XMLLocation location, final String storeName, final String alias, final String clearText, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) {
         return () -> {
-            final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(storeName);
-            if (supplier == null) {
-                throw xmlLog.xmlCredentialStoreNameNotDefined(location, storeName);
+            if (storeName != null) {
+                final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(storeName);
+                if (supplier == null) {
+                    throw xmlLog.xmlCredentialStoreNameNotDefined(location, storeName);
+                }
+                final CredentialStore credentialStore = supplier.get();
+                return new CredentialStoreCredentialSource(credentialStore, alias);
+            } else if (clearText != null) {
+                final PasswordCredential passwordCredential = new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, clearText.toCharArray()));
+                return IdentityCredentials.NONE.withCredential(passwordCredential);
+            } else {
+                throw xmlLog.xmlInvalidCredentialStoreRef(location);
             }
-            final CredentialStore credentialStore = supplier.get();
-            return new CredentialStoreCredentialSource(credentialStore, alias);
         };
     }
 

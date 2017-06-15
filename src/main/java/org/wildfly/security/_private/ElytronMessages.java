@@ -1811,6 +1811,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
     CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
 
+    @Message(id = 9527, value = "Invalid credential store reference")
+    ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
+
 
     /* X.500 exceptions */
 
