@@ -77,7 +77,7 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
                     Collections.addAll(names, current.getMechanismNames(properties));
                 }
             } catch (ServiceConfigurationError e) {
-                log.debug(e);
+                log.debug("Unable to read service configuration", e);
             }
         }
         if (log.isTraceEnabled()) {
@@ -103,7 +103,7 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
                     }
                 }
             } catch (ServiceConfigurationError e) {
-                log.debug(e);
+                log.debug("Unable to read service configuration", e);
             }
         }
         if (log.isTraceEnabled()) {

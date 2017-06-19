@@ -92,7 +92,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
                         try {
                             clientFactoryList.add(new Pair(currentProvider, (SaslClientFactory) service.newInstance(null)));
                         } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
-                            log.debug(e);
+                            log.debug("Unable to create instance", e);
                         }
                     }
                 }
@@ -136,7 +136,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
                             final String[] mechanismNames = ((SaslClientFactory) service.newInstance(null)).getMechanismNames(props);
                             Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
                         } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
-                            log.debug(e);
+                            log.debug("Unable to create instance", e);
                         }
                     }
                 }
