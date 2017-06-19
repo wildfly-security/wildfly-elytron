@@ -107,9 +107,6 @@
             <xsd:element ref="abstract-user-spec"/>
             <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
             <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="0"/>
-            <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="0"/>
-            <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
-            <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="sasl-mechanism-selector" type="selector-type" minOccurs="0"/>
             <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
             <xsd:element name="credentials" type="client-credentials-type" minOccurs="0"/>
