@@ -98,12 +98,6 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.HashPasswordSpec;
-import org.wildfly.security.password.spec.IteratedHashPasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
 import org.wildfly.security.sasl.SaslMechanismSelector;
@@ -942,16 +936,6 @@ public final class ElytronXmlParser {
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
                         break;
                     }
-                    case "hashed-password": {
-                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseHashedPassword(reader, providers);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
-                        break;
-                    }
-                    case "crypt-password": {
-                        Password password = parseCryptPassword(reader);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
-                        break;
-                    }
                     case "key-pair": {
                         KeyPair keyPair = parseKeyPair(reader);
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(keyPair))));
@@ -989,83 +973,6 @@ public final class ElytronXmlParser {
             }
         }
         throw reader.unexpectedDocumentEnd();
-    }
-
-    private static ExceptionSupplier<Password, ConfigXMLParseException> parseHashedPassword(final ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        String algorithm = null;
-        String hash = null;
-        String salt = null;
-        int iterationCount = -1;
-        for (int i = 0; i < attributeCount; i ++) {
-            checkAttributeNamespace(reader, i);
-            switch (reader.getAttributeLocalName(i)) {
-                case "algorithm": {
-                    algorithm = reader.getAttributeValueResolved(i);
-                    break;
-                }
-                case "hash": {
-                    hash = reader.getAttributeValueResolved(i);
-                    break;
-                }
-                case "salt": {
-                    salt = reader.getAttributeValueResolved(i);
-                    break;
-                }
-                case "iteration-count": {
-                    iterationCount = reader.getIntAttributeValueResolved(i);
-                    if (iterationCount < 1) {
-                        throw xmlLog.xmlInvalidIterationCount(reader, iterationCount);
-                    }
-                    break;
-                }
-                default: {
-                    throw reader.unexpectedAttribute(i);
-                }
-            }
-        }
-        if (algorithm == null) throw reader.missingRequiredAttribute("", "algorithm");
-        if (hash == null) throw reader.missingRequiredAttribute("", "hash");
-        byte[] hashBytes = CodePointIterator.ofString(hash).base64Decode().drain();
-        final PasswordSpec passwordSpec;
-        if (salt != null) {
-            byte[] saltBytes = CodePointIterator.ofString(salt).base64Decode().drain();
-            if (iterationCount != -1) {
-                passwordSpec = new IteratedSaltedHashPasswordSpec(hashBytes, saltBytes, iterationCount);
-            } else {
-                passwordSpec = new SaltedHashPasswordSpec(hashBytes, saltBytes);
-            }
-        } else {
-            if (iterationCount != -1) {
-                passwordSpec = new IteratedHashPasswordSpec(hashBytes, iterationCount);
-            } else {
-                passwordSpec = new HashPasswordSpec(hashBytes);
-            }
-        }
-
-        final XMLLocation location = reader.getLocation();
-        final String finalAlgorithm = algorithm;
-        return () -> {
-            try {
-                final PasswordFactory instance = PasswordFactory.getInstance(finalAlgorithm, providers);
-                return instance.generatePassword(passwordSpec);
-            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                throw xmlLog.xmlFailedToCreateCredential(location, e);
-            }
-        };
-    }
-
-    private static Password parseCryptPassword(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
-        final String crypt = requireSingleAttribute(reader, "crypt");
-        final Password password;
-        try {
-            password = ModularCrypt.decode(crypt);
-        } catch (InvalidKeySpecException e) {
-            throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), e);
-        }
-        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
-        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
-        return password;
     }
 
     private static KeyPair parseKeyPair(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {

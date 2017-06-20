@@ -125,25 +125,12 @@
             <xsd:element name="key-store-reference" type="key-store-ref-type"/>
             <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
             <xsd:element name="clear-password" type="clear-password-type"/>
-            <xsd:element name="hashed-password" type="hashed-password-type"/>
-            <xsd:element name="crypt-password" type="crypt-password-type"/>
             <xsd:element name="key-pair" type="key-pair-type"/>
             <xsd:element name="certificate" type="certificate-type"/>
             <xsd:element name="public-key-pem" type="xsd:string"/>
             <xsd:element name="bearer-token" type="bearer-token-type"/>
             <xsd:element name="oauth2-bearer-token" type="oauth2-bearer-token-type"/>
         </xsd:choice>
-    </xsd:complexType>
-
-    <xsd:complexType name="hashed-password-type">
-        <xsd:attribute name="algorithm" type="xsd:string" use="required"/>
-        <xsd:attribute name="hash" type="xsd:base64Binary" use="required"/>
-        <xsd:attribute name="salt" type="xsd:base64Binary" use="optional"/>
-        <xsd:attribute name="iteration-count" type="xsd:positiveInteger" use="optional"/>
-    </xsd:complexType>
-
-    <xsd:complexType name="crypt-password-type">
-        <xsd:attribute name="crypt" type="xsd:string" use="required"/>
     </xsd:complexType>
 
     <xsd:complexType name="key-pair-type">
