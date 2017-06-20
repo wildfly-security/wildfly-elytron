@@ -86,8 +86,12 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         } catch (IOException e) {
             throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanism, e).toSaslException();
         }
+        final boolean defaultRealm;
         if (realms == null) {
+            defaultRealm = true;
             realms = new String[] { serverName };
+        } else {
+            defaultRealm = false;
         }
 
         Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
@@ -114,7 +118,7 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
             digestUriTest = digestUriTest.or(acceptableUris::contains);
         }
 
-        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, digestUriTest, providers);
+        final DigestSaslServer server = new DigestSaslServer(realms, defaultRealm, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, digestUriTest, providers);
         server.init();
         return server;
     }

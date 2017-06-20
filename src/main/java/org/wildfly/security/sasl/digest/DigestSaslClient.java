@@ -226,12 +226,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // get password
         RealmCallback realmCallback = realm != null ?
                 new RealmCallback("User realm", realm) : new RealmCallback("User realm");
-        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback);
+        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback, false);
         if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, false);
+            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, false, false);
         }
         if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false);
+            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false, false);
         }
         if (digest_urp == null) {
             throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
