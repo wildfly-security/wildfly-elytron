@@ -991,6 +991,38 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
+    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseProtectionParametersType(final ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Supplier<Provider[]> providers) throws ConfigXMLParseException {
+        ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> function = parent -> CredentialSource.NONE;
+        requireNoAttributes(reader);
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "credential-store-reference": {
+                        final ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier = parseCredentialStoreRefType(reader, credentialStoresMap);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(supplier.get()));
+                        break;
+                    }
+                    case "clear-password": {
+                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseClearPassword(reader, providers);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
+                        break;
+                    }
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
+                }
+            } else if (tag == END_ELEMENT) {
+                final ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> finalFunction = function;
+                return () -> finalFunction.apply(null);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
     private static ExceptionSupplier<Password, ConfigXMLParseException> parseHashedPassword(final ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String algorithm = null;
@@ -1648,7 +1680,7 @@ public final class ElytronXmlParser {
                     case "protection-parameter-credentials": {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 2);
-                        credentialSourceSupplier = parseCredentialsType(reader, keyStoresMap, credentialStoresMap, providersSupplier);
+                        credentialSourceSupplier = parseProtectionParametersType(reader, credentialStoresMap, providersSupplier);
                         break;
                     }
                     case "providers": {

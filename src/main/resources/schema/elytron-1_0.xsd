@@ -183,7 +183,7 @@
             <xsd:element name="global" type="empty-type" />
             <xsd:element name="use-service-loader" type="module-ref-type" />
         </xsd:all>
-    </xsd:complexType>   
+    </xsd:complexType>
 
     <xsd:element name="abstract-sasl-factories" abstract="true"/>
     <xsd:element name="use-provider-sasl-factory" substitutionGroup="abstract-sasl-factories" type="empty-type" />
@@ -287,7 +287,7 @@
 
         <xsd:all minOccurs="0" maxOccurs="1">
             <xsd:element name="attributes" type="attributes-type"/>
-            <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
+            <xsd:element name="protection-parameter-credentials" type="protection-parameter-credentials-type"/>
             <xsd:element name="providers" type="providers-type" />
         </xsd:all>
 
@@ -310,6 +310,13 @@
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="protection-parameter-credentials-type">
+        <xsd:choice minOccurs="0" maxOccurs="1">
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
+            <xsd:element name="clear-password" type="clear-password-type"/>
+        </xsd:choice>
     </xsd:complexType>
 
     <!-- File-backed realm elements -->
