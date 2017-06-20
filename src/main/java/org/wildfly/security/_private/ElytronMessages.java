@@ -1448,6 +1448,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5173, value = "[%s] Unable to obtain server credential.")
     AuthenticationMechanismException unableToObtainServerCredential(String mechName);
 
+    @Message(id = 5174, value = "[%s] No srcName returned from established GSSContext.")
+    AuthenticationMechanismException noSrcNameFromGssContext(String mechName);
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")
