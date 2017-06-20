@@ -203,7 +203,7 @@ public class XmlConfigurationTest {
             "    <credential-stores>\n" +
             "        <credential-store name=\"store1\" type=\"" + KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE + "\">\n" +
             "            <protection-parameter-credentials>\n" +
-            "                <clear-password password=\"1234\"/>\n" +
+            "                <credential-store-reference clear-text=\"1234\"/>\n" +
             "            </protection-parameter-credentials>\n" +
             "            <attributes>\n" +
             "                <attribute name=\"keyStoreType\" value=\"JCEKS\"/>\n" +
