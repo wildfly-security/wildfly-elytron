@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class RawDSAPrivateKey extends RawKey implements DSAPrivateKey, PrivateKey {
+class RawDSAPrivateKey extends RawPrivateKey implements DSAPrivateKey, PrivateKey {
     private static final long serialVersionUID = 4399699674813282148L;
 
     private final BigInteger x;
@@ -59,4 +59,5 @@ class RawDSAPrivateKey extends RawKey implements DSAPrivateKey, PrivateKey {
     boolean isEqual(final DSAPrivateKey key) {
         return super.isEqual(key) && Objects.equals(x, key.getX()) && Objects.equals(params, key.getParams());
     }
+
 }

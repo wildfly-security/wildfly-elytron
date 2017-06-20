@@ -29,7 +29,7 @@ import javax.crypto.spec.DHParameterSpec;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class RawDHPrivateKey extends RawKey implements DHPrivateKey, PrivateKey {
+class RawDHPrivateKey extends RawPrivateKey implements DHPrivateKey, PrivateKey {
     private static final long serialVersionUID = - 4800398215863011448L;
     private final BigInteger x;
     private final DHParameterSpec params;

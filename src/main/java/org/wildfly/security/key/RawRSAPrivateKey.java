@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class RawRSAPrivateKey extends RawKey implements RSAPrivateKey, PrivateKey {
+class RawRSAPrivateKey extends RawPrivateKey implements RSAPrivateKey, PrivateKey {
     private static final long serialVersionUID = - 184627557213615873L;
 
     private final BigInteger privateExponent;

@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class RawECPrivateKey extends RawKey implements ECPrivateKey, PrivateKey {
+class RawECPrivateKey extends RawPrivateKey implements ECPrivateKey, PrivateKey {
     private static final long serialVersionUID = - 7911268659221164137L;
     private final BigInteger s;
     private final ECParameterSpec params;
