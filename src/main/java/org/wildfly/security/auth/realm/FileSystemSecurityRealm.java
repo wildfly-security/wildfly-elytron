@@ -251,7 +251,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 stream = Files.newDirectoryStream(root, "*.xml");
                 iterator = stream.iterator();
             } catch (IOException e) {
-                ElytronMessages.log.debug(e);
+                ElytronMessages.log.debug("Unable to open directory", e);
                 return ModifiableRealmIdentityIterator.emptyIterator();
             }
             return new ModifiableRealmIdentityIterator() {
@@ -261,7 +261,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         try {
                             close();
                         } catch (IOException e) {
-                            ElytronMessages.log.debug(e);
+                            ElytronMessages.log.debug("Unable to close the stream", e);
                         }
                     }
                     return iterator.hasNext();
@@ -277,7 +277,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     try {
                         stream.close();
                     } catch (IOException e) {
-                        ElytronMessages.log.debug(e);
+                        ElytronMessages.log.debug("Unable to close the stream", e);
                     }
                 }
             };
@@ -289,7 +289,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 });
                 iterator = stream.iterator();
             } catch (IOException e) {
-                ElytronMessages.log.debug(e);
+                ElytronMessages.log.debug("Unable to open directory", e);
                 return ModifiableRealmIdentityIterator.emptyIterator();
             }
             return new ModifiableRealmIdentityIterator() {
@@ -302,7 +302,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                                 try {
                                     close();
                                 } catch (IOException e) {
-                                    ElytronMessages.log.debug(e);
+                                    ElytronMessages.log.debug("Unable to close the stream", e);
                                 }
                                 return false;
                             }
@@ -330,7 +330,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         try {
                             stream.close();
                         } catch (IOException e) {
-                            ElytronMessages.log.debug(e);
+                            ElytronMessages.log.debug("Unable to close the stream", e);
                         }
                     }
                 }

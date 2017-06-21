@@ -100,7 +100,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     credential = kerberosCredential.getGssCredential();
                 }
             } catch (UnsupportedCallbackException e) {
-                log.trace("CallbackHandler does not support CredentialCallback");
+                log.trace("CallbackHandler does not support CredentialCallback", e);
             }
         }
 

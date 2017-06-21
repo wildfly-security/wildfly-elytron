@@ -96,7 +96,7 @@ public interface HttpExchangeSpi extends HttpServerScopes {
             try {
                 return sslSession.getPeerCertificates();
             } catch (SSLPeerUnverifiedException e) {
-                log.trace("CLIENT-CERT Peer Unverified");
+                log.trace("CLIENT-CERT Peer Unverified", e);
             }
         }
 

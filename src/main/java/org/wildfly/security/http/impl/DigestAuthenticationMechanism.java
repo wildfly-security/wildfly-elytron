@@ -124,7 +124,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                         validateResponse(responseTokens, request);
                         return;
                     } catch (AuthenticationMechanismException e) {
-                        log.trace(e);
+                        log.trace("Failed to parse or validate the response", e);
                         request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(selectRealm(), response, false));
                         return;
                     }

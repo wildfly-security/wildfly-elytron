@@ -79,7 +79,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
                             String[] serviceMechNames = ((HttpServerAuthenticationMechanismFactory) currentService.newInstance(null)).getMechanismNames(properties);
                             Collections.addAll(names, serviceMechNames);
                         } catch (NoSuchAlgorithmException e) {
-                            log.debug(e);
+                            log.debug("Unable to create instance", e);
                         }
                     }
                 }
@@ -108,7 +108,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
                                 return mechanism;
                             }
                         } catch (NoSuchAlgorithmException e) {
-                            log.debug(e);
+                            log.debug("Unable to create instance", e);
                         }
                     }
                 }
