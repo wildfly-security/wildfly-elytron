@@ -18,10 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static javax.xml.stream.XMLStreamConstants.COMMENT;
-import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
-import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
@@ -176,23 +173,7 @@ public final class ElytronXmlParser {
                     checkElementNamespace(reader);
                     switch (reader.getLocalName()) {
                         case "authentication-client": {
-                            SecurityFactory<AuthenticationContext> futureContext = parseAuthenticationClientType(reader);
-                            while (reader.hasNext()) {
-                                switch (reader.next()) {
-                                    case COMMENT:
-                                    case PROCESSING_INSTRUCTION: {
-                                        break;
-                                    }
-                                    case END_DOCUMENT: {
-                                        return futureContext;
-                                    }
-                                    default: {
-                                        if (reader.isWhiteSpace()) break;
-                                        throw reader.unexpectedElement();
-                                    }
-                                }
-                            }
-                            return futureContext;
+                            return parseAuthenticationClientType(reader);
                         }
                         default: {
                             throw reader.unexpectedElement();
@@ -304,6 +285,7 @@ public final class ElytronXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
+                assert reader.getLocalName().equals("authentication-client");
                 if (netAuthenticator) {
                     Authenticator.setDefault(new ElytronAuthenticator());
                 }
@@ -966,6 +948,7 @@ public final class ElytronXmlParser {
                     }
                 }
             } else if (tag == END_ELEMENT) {
+                assert reader.getLocalName().equals("credentials") || reader.getLocalName().equals("protection-parameter-credentials");
                 final ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> finalFunction = function;
                 return () -> finalFunction.apply(null);
             } else {
@@ -1045,48 +1028,28 @@ public final class ElytronXmlParser {
 
     private static <P> P[] parseMultiPem(final ConfigurationXMLStreamReader reader, final Class<P> pemType, final IntFunction<P[]> ctor) throws ConfigXMLParseException {
         requireNoAttributes(reader);
-        if (reader.hasNext()) {
-            final int next = reader.next();
-            if (reader.hasText()) {
-                final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()).skip(Character::isWhitespace));
-                if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
-                if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
-                final ArrayList<P> arrayList = new ArrayList<>();
-                while (pemContent.hasNext()) {
-                    final PemEntry<?> pemEntry = pemContent.next();
-                    final P pem = pemEntry.tryCast(pemType);
-                    if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
-                    arrayList.add(pem);
-                }
-                if (arrayList.isEmpty()) throw xmlLog.xmlNoPemContent(reader);
-                return arrayList.toArray(ctor.apply(arrayList.size()));
-            } else {
-                throw reader.unexpectedContent();
-            }
-        } else {
-            throw reader.unexpectedDocumentEnd();
+        final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()));
+        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+        final ArrayList<P> arrayList = new ArrayList<>();
+        while (pemContent.hasNext()) {
+            final PemEntry<?> pemEntry = pemContent.next();
+            final P pem = pemEntry.tryCast(pemType);
+            if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
+            arrayList.add(pem);
         }
+        if (arrayList.isEmpty()) throw xmlLog.xmlNoPemContent(reader);
+        return arrayList.toArray(ctor.apply(arrayList.size()));
     }
 
     private static <P> P parsePem(final ConfigurationXMLStreamReader reader, final Class<P> pemType) throws ConfigXMLParseException {
         requireNoAttributes(reader);
-        if (reader.hasNext()) {
-            final int next = reader.next();
-            if (reader.hasText()) {
-                final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()).skip(Character::isWhitespace));
-                if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
-                if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
-                if (! pemContent.hasNext()) throw xmlLog.xmlNoPemContent(reader);
-                final PemEntry<?> pemEntry = pemContent.next();
-                final P pem = pemEntry.tryCast(pemType);
-                if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
-                return pem;
-            } else {
-                throw reader.unexpectedContent();
-            }
-        } else {
-            throw reader.unexpectedDocumentEnd();
-        }
+        final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()));
+        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+        if (! pemContent.hasNext()) throw xmlLog.xmlNoPemContent(reader);
+        final PemEntry<?> pemEntry = pemContent.next();
+        final P pem = pemEntry.tryCast(pemType);
+        if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
+        return pem;
     }
 
     /**

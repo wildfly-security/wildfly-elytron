@@ -849,6 +849,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
     IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
 
+    @Message(id = 3033, value = "PrivateKey parse error")
+    IllegalArgumentException privateKeyParseError(@Cause Throwable cause);
+
     /* ssl package */
 
     @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")

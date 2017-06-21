@@ -21,11 +21,13 @@ package org.wildfly.security.pem;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.KeyFactory;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -50,6 +52,7 @@ public final class Pem {
     private static final Pattern VALID_LABEL = Pattern.compile("[^ -~&&[^-]]");
     private static final String PUBLIC_KEY_FORMAT = "PUBLIC KEY";
     private static final String CERTIFICATE_FORMAT = "CERTIFICATE";
+    private static final String PRIVATE_KEY_FORMAT = "PRIVATE KEY";
 
     /**
      * Parse arbitrary PEM content.  The given function is used to parse the content of the PEM representation and produce
@@ -61,17 +64,26 @@ public final class Pem {
      * @param pemContent the content to parse (must not be {@code null})
      * @param contentFunction a function to consume the PEM content and produce a result (must not be {@code null})
      * @param <R> the value return type
-     * @return the return value of the function
+     * @return the return value of the function or {@code null} if there is no PEM content to parse
      * @throws IllegalArgumentException if there is a problem with processing the content of the PEM data
      */
     public static <R> R parsePemContent(CodePointIterator pemContent, BiFunction<String, ByteIterator, R> contentFunction) throws IllegalArgumentException {
         Assert.checkNotNullParam("pemContent", pemContent);
         Assert.checkNotNullParam("contentFunction", contentFunction);
-        pemContent = pemContent.skipCrLf();
-        if (! pemContent.limitedTo(11).contentEquals("-----BEGIN ")) {
+
+        while(true) {
+            if (! pemContent.hasNext()) return null;
+            int cp = pemContent.next();
+            if (cp == '-') break;
+            if (! Character.isWhitespace(cp)) {
+                throw log.malformedPemContent(pemContent.offset());
+            }
+        }
+
+        if (! pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
             throw log.malformedPemContent(pemContent.offset());
         }
-        String type = pemContent.delimitedBy('-').drainToString().trim();
+        String type = pemContent.delimitedBy('-').drainToString();
         final Matcher matcher = VALID_LABEL.matcher(type);
         if (matcher.find()) {
             // BEGIN string is 11 chars long
@@ -80,8 +92,11 @@ public final class Pem {
         if (! pemContent.limitedTo(5).contentEquals("-----")) {
             throw log.malformedPemContent(pemContent.offset());
         }
-        final ByteIterator byteIterator = pemContent.delimitedBy('-').base64Decode();
+        CodePointIterator delimitedIterator = pemContent.delimitedBy('-').skip(Character::isWhitespace).skipCrLf();
+        final ByteIterator byteIterator = delimitedIterator.base64Decode();
         final R result = contentFunction.apply(type, byteIterator);
+        delimitedIterator.skipAll(); // skip until '-'
+
         if (! pemContent.limitedTo(9).contentEquals("-----END ")) {
             throw log.malformedPemContent(pemContent.offset());
         }
@@ -109,21 +124,28 @@ public final class Pem {
                     if (! pemContent.hasNext()) {
                         return false;
                     }
-                    next = parsePemContent(pemContent, (label, byteIterator) -> {
-                        switch (label) {
+                    next = parsePemContent(pemContent, (type, byteIterator) -> {
+                        switch (type) {
                             case CERTIFICATE_FORMAT: {
-                                final X509Certificate x509Certificate = parsePemX509CertificateContent(label, byteIterator);
+                                final X509Certificate x509Certificate = parsePemX509CertificateContent(type, byteIterator);
                                 return new PemEntry<>(x509Certificate);
                             }
                             case PUBLIC_KEY_FORMAT: {
-                                final PublicKey publicKey = parsePemPublicKey(label, byteIterator);
+                                final PublicKey publicKey = parsePemPublicKey(type, byteIterator);
                                 return new PemEntry<>(publicKey);
+                            }
+                            case PRIVATE_KEY_FORMAT: {
+                                final PrivateKey privateKey = parsePemPrivateKey(type, byteIterator);
+                                return new PemEntry<>(privateKey);
                             }
                             default: {
                                 throw log.malformedPemContent(pemContent.offset());
                             }
                         }
                     });
+                    if (next == null) {
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -170,12 +192,7 @@ public final class Pem {
      * @return a byte array with the DER content
      */
     public static byte[] extractDerContent(CodePointIterator pemContent) {
-        return parsePemContent(pemContent, new BiFunction<String, ByteIterator, byte[]>() {
-            @Override
-            public byte[] apply(String type, ByteIterator byteIterator) {
-                return byteIterator.drain();
-            }
-        });
+        return parsePemContent(pemContent, (type, byteIterator) -> byteIterator.drain());
     }
 
     private static X509Certificate parsePemX509CertificateContent(String type, ByteIterator byteIterator) throws IllegalArgumentException {
@@ -213,6 +230,33 @@ public final class Pem {
             }
         } catch (Exception cause) {
             throw log.publicKeyParseError(cause);
+        }
+    }
+
+    private static PrivateKey parsePemPrivateKey(String type, ByteIterator byteIterator) throws IllegalArgumentException {
+        if (! type.equals(PRIVATE_KEY_FORMAT)) {
+            throw log.invalidPemType(PRIVATE_KEY_FORMAT, type);
+        }
+        try {
+            byte[] der = byteIterator.drain();
+            DERDecoder derDecoder = new DERDecoder(der);
+            derDecoder.startSequence();
+
+            // Version
+            if (derDecoder.peekType() != ASN1.INTEGER_TYPE) throw log.asnUnexpectedTag();
+            derDecoder.skipElement();
+
+            // AlgorithmIdentifier
+            derDecoder.startSequence();
+            String algorithm = derDecoder.decodeObjectIdentifierAsKeyAlgorithm();
+
+            if (algorithm != null) {
+                return KeyFactory.getInstance(algorithm).generatePrivate(new PKCS8EncodedKeySpec(der));
+            }
+
+            throw log.asnUnrecognisedAlgorithm(algorithm);
+        } catch (Exception cause) {
+            throw log.privateKeyParseError(cause);
         }
     }
 
