@@ -274,6 +274,17 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
+     * Get the actual sasl protocol to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the real port to use
+     */
+    public String getSaslProtocol(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getSaslProtocol();
+    }
+
+    /**
      * Get the authentication principal to use for the given configuration.
      *
      * @param configuration the configuration (must not be {@code null})

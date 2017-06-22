@@ -159,6 +159,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_ACCESS_CTXT = 18;
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_KRB_SEC_FAC = 20;
+    private static final int SET_SASL_PROTOCOL = 21;
 
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
@@ -200,6 +201,7 @@ public final class AuthenticationConfiguration {
     final Map<String, ?> mechanismProperties;
     final Predicate<Callback> callbackIntercept;
     final SecurityFactory<Credential> kerberosSecurityFactory;
+    final String saslProtocol;
 
     // constructors
 
@@ -228,6 +230,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.kerberosSecurityFactory = null;
+        this.saslProtocol = null;
     }
 
     /**
@@ -261,6 +264,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what == SET_MECH_PROPS ? (Map<String, ?>) value : original.mechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.kerberosSecurityFactory = what == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value : original.kerberosSecurityFactory;
+        this.saslProtocol = what == SET_SASL_PROTOCOL ? (String) value : original.saslProtocol;
         sanitazeOnMutation(what);
     }
 
@@ -297,6 +301,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = what1 == SET_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_MECH_PROPS ? (Map<String, ?>) value2 : original.mechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.kerberosSecurityFactory = what1 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value1 : what2 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value2 : original.kerberosSecurityFactory;
+        this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
     }
@@ -329,6 +334,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = original.mechanismProperties;
         this.callbackIntercept = original.callbackIntercept;
         this.kerberosSecurityFactory = original.kerberosSecurityFactory;
+        this.saslProtocol = original.saslProtocol;
     }
 
     private AuthenticationConfiguration(final AuthenticationConfiguration original, final AuthenticationConfiguration other) {
@@ -353,6 +359,7 @@ public final class AuthenticationConfiguration {
         this.mechanismProperties = getOrDefault(other.mechanismProperties, original.mechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.kerberosSecurityFactory = getOrDefault(other.kerberosSecurityFactory, original.kerberosSecurityFactory);
+        this.saslProtocol =  getOrDefault(other.saslProtocol, original.saslProtocol);
         sanitazeOnMutation(SET_USER_CBH);
     }
 
@@ -376,6 +383,10 @@ public final class AuthenticationConfiguration {
 
     String getProtocol() {
         return setProtocol;
+    }
+
+    String getSaslProtocol() {
+        return saslProtocol;
     }
 
     int getPort() {
@@ -906,9 +917,9 @@ public final class AuthenticationConfiguration {
     }
 
     /**
-     * Create a new configuration which is the same as this configuration, but which specifies a different protocol to be passed to the authentication mechanisms.
+     * Create a new configuration which is the same as this configuration, but which specifies a different protocol to be used for outgoing connection.
      *
-     * @param protocol the protocol to pass to the authentication mechanisms.
+     * @param protocol the protocol to be used for outgoing connection.
      * @return the new configuration
      */
     public AuthenticationConfiguration useProtocol(String protocol) {
@@ -919,6 +930,23 @@ public final class AuthenticationConfiguration {
             return this;
         } else {
             return new AuthenticationConfiguration(this, SET_PROTOCOL, protocol);
+        }
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which specifies a different protocol to be passed to the authentication mechanisms.
+     *
+     * @param saslProtocol the protocol to pass to the authentication mechanisms.
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useSaslProtocol(String saslProtocol) {
+        if (saslProtocol == null || saslProtocol.isEmpty()) {
+            saslProtocol = null;
+        }
+        if (Objects.equals(this.saslProtocol, saslProtocol)) {
+            return this;
+        } else {
+            return new AuthenticationConfiguration(this, SET_SASL_PROTOCOL, saslProtocol);
         }
     }
 
@@ -1195,7 +1223,7 @@ public final class AuthenticationConfiguration {
         if (host != null) {
             saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
         }
-        String protocol = getProtocol();
+        String protocol = getSaslProtocol();
         if (protocol != null) {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
@@ -1256,7 +1284,8 @@ public final class AuthenticationConfiguration {
             && Objects.equals(parameterSpecs, other.parameterSpecs)
             && Objects.equals(trustManagerFactory, other.trustManagerFactory)
             && Objects.equals(mechanismProperties, other.mechanismProperties)
-            && Objects.equals(kerberosSecurityFactory, other.kerberosSecurityFactory);
+            && Objects.equals(kerberosSecurityFactory, other.kerberosSecurityFactory)
+            && Objects.equals(saslProtocol, other.saslProtocol);
     }
 
     /**
@@ -1270,7 +1299,7 @@ public final class AuthenticationConfiguration {
             hashCode = Objects.hash(
                 principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
-                mechanismProperties, kerberosSecurityFactory) * 19 + setPort;
+                mechanismProperties, kerberosSecurityFactory, saslProtocol) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
             }
@@ -1291,6 +1320,7 @@ public final class AuthenticationConfiguration {
             if (setAuthzPrincipal != null) b.append("authorization-id=").append(setAuthzPrincipal).append(',');
             if (setHost != null) b.append("set-host=").append(setHost).append(',');
             if (setProtocol != null) b.append("set-protocol=").append(setProtocol).append(',');
+            if (saslProtocol != null) b.append("sasl-protocol-name=").append(saslProtocol).append(',');
             if (setPort != -1) b.append("set-port=").append(setPort).append(',');
             if (setRealm != null) b.append("set-realm=").append(setRealm).append(',');
             if (forwardSecurityDomain != null) b.append("forwarding-authentication,");

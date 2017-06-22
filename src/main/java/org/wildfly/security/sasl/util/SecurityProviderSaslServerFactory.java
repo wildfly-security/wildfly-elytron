@@ -83,6 +83,9 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
                                 saslServer = ((SaslServerFactory) service.newInstance(null)).createSaslServer(mechanism,
                                         protocol, serverName, props, cbh);
                                 if (saslServer != null) {
+                                    if (log.isTraceEnabled()) {
+                                        log.tracef("Created SaslServer for mechanism %s and protocol %s", mechanism, protocol);
+                                    }
                                     return saslServer;
                                 }
                             } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
