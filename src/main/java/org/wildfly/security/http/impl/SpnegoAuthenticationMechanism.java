@@ -21,15 +21,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
-import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
+import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -157,75 +156,89 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             log.trace("Processing incoming response to a challenge...");
 
             byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
+
+            Subject subject = new Subject(true, Collections.emptySet(), Collections.emptySet(), kerberosTicket != null ? Collections.singleton(kerberosTicket) : Collections.emptySet());
+
+            byte[] responseToken;
             try {
+                final GSSContext finalGssContext = gssContext;
+                responseToken = Subject.doAs(subject, (PrivilegedExceptionAction<byte[]>) () -> finalGssContext.acceptSecContext(decodedValue, 0, decodedValue.length));
+            } catch (PrivilegedActionException e) {
+                log.trace("Call to acceptSecContext failed.", e.getCause());
+                handleCallback(AuthenticationCompleteCallback.FAILED);
+                clearAttachments(connectionScope);
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
+                return;
+            }
 
-                Subject subject = new Subject(true, Collections.emptySet(), Collections.emptySet(), kerberosTicket != null ? Collections.singleton(kerberosTicket) : Collections.emptySet());
+            if (gssContext.isEstablished()) {
+                final GSSCredential gssCredential;
 
-                byte[] responseToken;
                 try {
-                    final GSSContext finalGssContext = gssContext;
-                    responseToken = Subject.doAs(subject, (PrivilegedExceptionAction<byte[]>) () -> finalGssContext.acceptSecContext(decodedValue, 0, decodedValue.length));
-                } catch (PrivilegedActionException e) {
-                    if (e.getCause() instanceof GSSException) {
-                        throw (GSSException) e.getCause();
-                    }
-
-                    throw new GeneralSecurityException(e);
-                }
-
-                if (gssContext.isEstablished()) {
-                    final GSSCredential gssCredential = gssContext.getCredDelegState() ? gssContext.getDelegCred() : null;
-                    if (gssCredential != null) {
-                        log.trace("Associating delegated GSSCredential with identity.");
-                        handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
-                    } else {
-                        log.trace("No GSSCredential delegated from client.");
-                    }
-
-                    log.trace("GSSContext established, authorizing...");
-
-                    GSSName srcName = gssContext.getSrcName();
-                    if (srcName == null) {
-                        log.trace("Authorization failed - srcName of GSSContext (name of initiator) is null - wrong realm or kdc?");
-                        if (connectionScope != null) {
-                            connectionScope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
-                        }
-                        request.noAuthenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
-                        return;
-                    }
-
-                    if (authorizeSrcName(srcName, gssContext)) {
-                        log.trace("GSSContext established and authorized - authentication complete");
-                        request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
-
-                        return;
-                    } else {
-                        log.trace("Authorization of established GSSContext failed");
-                        handleCallback(AuthenticationCompleteCallback.FAILED);
-                        request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
-                        return;
-                    }
-                } else if (responseToken != null) {
-                    log.trace("GSSContext establishing - sending negotiation token to the peer");
-                    request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
+                    gssCredential = gssContext.getCredDelegState() ? gssContext.getDelegCred() : null;
+                } catch (GSSException e) {
+                    log.trace("Unable to access delegated credential despite being delegated.", e);
+                    handleCallback(AuthenticationCompleteCallback.FAILED);
+                    clearAttachments(connectionScope);
+                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                     return;
                 }
-            } catch (GeneralSecurityException | GSSException e) {
-                log.trace("GSSContext message exchange failed", e);
-                handleCallback(AuthenticationCompleteCallback.FAILED);
 
-                // TODO send token REJECTED (not provided by acceptSecContext) [ELY-711][ELY-715]
-                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
+                if (gssCredential != null) {
+                    log.trace("Associating delegated GSSCredential with identity.");
+                    handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
+                } else {
+                    log.trace("No GSSCredential delegated from client.");
+                }
+
+                log.trace("GSSContext established, authorizing...");
+
+                final GSSName srcName;
+                try {
+                    srcName = gssContext.getSrcName();
+                    if (srcName == null) {
+                        log.trace("Authorization failed - srcName of GSSContext (name of initiator) is null - wrong realm or kdc?");
+                        handleCallback(AuthenticationCompleteCallback.FAILED);
+                        clearAttachments(connectionScope);
+                        request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
+                        return;
+                    }
+                } catch (GSSException e) {
+                    log.trace("Unable to obtain srcName from established GSSContext.", e);
+                    handleCallback(AuthenticationCompleteCallback.FAILED);
+                    clearAttachments(connectionScope);
+                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
+                    return;
+                }
+
+                if (authorizeSrcName(srcName, gssContext)) {
+                    log.trace("GSSContext established and authorized - authentication complete");
+                    request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
+
+                    return;
+                } else {
+                    log.trace("Authorization of established GSSContext failed");
+                    handleCallback(AuthenticationCompleteCallback.FAILED);
+                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
+                    return;
+                }
+            } else if (responseToken != null) {
+                log.trace("GSSContext establishing - sending negotiation token to the peer");
+                request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
                 return;
             }
         }
 
         log.trace("Request lacks valid authentication credentials");
-        if (connectionScope != null) {
-            connectionScope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
-            connectionScope.setAttachment(KERBEROS_TICKET, null); // clear cache
-        }
+        clearAttachments(connectionScope);
         request.noAuthenticationInProgress(this::sendBareChallenge);
+    }
+
+    private static void clearAttachments(HttpScope scope) {
+        if (scope != null) {
+            scope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
+            scope.setAttachment(KERBEROS_TICKET, null); // clear cache
+        }
     }
 
     private void sendBareChallenge(HttpServerResponse response) {
