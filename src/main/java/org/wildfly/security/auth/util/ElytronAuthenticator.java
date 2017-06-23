@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.util;
 
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.net.Authenticator;
@@ -75,6 +76,7 @@ public final class ElytronAuthenticator extends Authenticator {
         try {
             authenticationConfiguration = client.getAuthenticationConfiguration(getRequestingURL().toURI(), context);
         } catch (URISyntaxException e) {
+            log.tracef("URISyntaxException getting URI from the requesting URL [%s]:", getRequestingURL(), e);
             return null;
         }
         if (authenticationConfiguration == null) return null;
@@ -100,10 +102,18 @@ public final class ElytronAuthenticator extends Authenticator {
                     callbackHandler.handle(new Callback[] { nameCallback, passwordCallback });
                     password = passwordCallback.getPassword();
                 } catch (IOException | UnsupportedCallbackException e1) {
+                    log.trace("Error handling callback:", e1);
                     return null;
                 }
             }
-        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (IOException e){
+            log.trace("IOException handling callback:", e);
+            return null;
+        } catch (NoSuchAlgorithmException e) {
+            log.trace("NoSuchAlgorithmException getting PasswordFactory:", e);
+            return null;
+        } catch (InvalidKeySpecException e){
+            log.trace("InvalidKeySpecException getting ClearPasswordSpec:", e);
             return null;
         }
         final String name = nameCallback.getName();
