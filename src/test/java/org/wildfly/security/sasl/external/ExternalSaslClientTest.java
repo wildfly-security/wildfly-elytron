@@ -36,7 +36,6 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -64,10 +63,10 @@ public class ExternalSaslClientTest extends BaseTestCase {
 
         final String[] empty = new String[] {};
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_FORWARD_SECRECY)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOACTIVE)));
+        assertArrayEquals(MECHANISMS_EXTERNAL_ONLY, factory.getMechanismNames(setProps(Sasl.POLICY_NOACTIVE)));
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOANONYMOUS)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NODICTIONARY)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOPLAINTEXT)));
+        assertArrayEquals(MECHANISMS_EXTERNAL_ONLY, factory.getMechanismNames(setProps(Sasl.POLICY_NODICTIONARY)));
+        assertArrayEquals(MECHANISMS_EXTERNAL_ONLY, factory.getMechanismNames(setProps(Sasl.POLICY_NOPLAINTEXT)));
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_PASS_CREDENTIALS)));
 
         assertArrayEquals(MECHANISMS_EXTERNAL_ONLY,
@@ -129,7 +128,6 @@ public class ExternalSaslClientTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-982")
     public void testCreateSaslClientWithValidFiltering() throws Exception {
         assertNotNull(Sasl.createSaslClient(MECHANISMS_EXTERNAL_ONLY, null, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE),
                 null));

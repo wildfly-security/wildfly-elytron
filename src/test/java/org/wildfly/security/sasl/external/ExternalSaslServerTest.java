@@ -40,7 +40,6 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -74,14 +73,14 @@ public class ExternalSaslServerTest extends BaseTestCase {
         assertNotNull("SaslServerFactory not registered", factory);
 
         final String[] empty = new String[] {};
+        final String[] allMechanisms = new String[] { EXTERNAL };
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_FORWARD_SECRECY)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOACTIVE)));
+        assertArrayEquals(allMechanisms, factory.getMechanismNames(setProps(Sasl.POLICY_NOACTIVE)));
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOANONYMOUS)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NODICTIONARY)));
-        assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_NOPLAINTEXT)));
+        assertArrayEquals(allMechanisms, factory.getMechanismNames(setProps(Sasl.POLICY_NODICTIONARY)));
+        assertArrayEquals(allMechanisms, factory.getMechanismNames(setProps(Sasl.POLICY_NOPLAINTEXT)));
         assertArrayEquals(empty, factory.getMechanismNames(setProps(Sasl.POLICY_PASS_CREDENTIALS)));
 
-        final String[] allMechanisms = new String[] { EXTERNAL };
         assertArrayEquals(allMechanisms,
                 factory.getMechanismNames(setProps(WildFlySasl.MECHANISM_QUERY_ALL, Sasl.POLICY_NOPLAINTEXT)));
         assertArrayEquals(allMechanisms, factory.getMechanismNames(null));
@@ -122,7 +121,6 @@ public class ExternalSaslServerTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("ELY-982")
     public void testCreateSaslServerWithValidPolicy() throws Exception {
         assertNotNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NOACTIVE), null));
         assertNotNull(Sasl.createSaslServer(EXTERNAL, "test", "localhost", setProps(Sasl.POLICY_NODICTIONARY), null));
