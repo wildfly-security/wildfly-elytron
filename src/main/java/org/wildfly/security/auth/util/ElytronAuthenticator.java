@@ -89,7 +89,7 @@ public final class ElytronAuthenticator extends Authenticator {
             if (twoWayPassword == null) {
                 return null;
             }
-            final PasswordFactory factory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm());
+            final PasswordFactory factory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm(), client.getProviderSupplier(authenticationConfiguration));
             final ClearPasswordSpec keySpec = factory.getKeySpec(twoWayPassword, ClearPasswordSpec.class);
             password = keySpec.getEncodedPassword();
         } catch (UnsupportedCallbackException e) {

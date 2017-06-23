@@ -28,7 +28,9 @@ import java.security.AccessControlContext;
 import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
+import java.security.Provider;
 import java.util.Collection;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
@@ -387,5 +389,16 @@ public final class AuthenticationContextConfigurationClient {
     public Socket connect(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) throws IOException {
         final InetSocketAddress address = getDestinationInetSocketAddress(uri, configuration, protocolDefaultPort);
         return new Socket(address.getAddress(), address.getPort());
+    }
+
+    /**
+     * Get a {@link Supplier} as a source for all {@link Provider} instances registered in the given {@code configuration}.
+     *
+     * @param configuration the authentication configuration to use (must not be {@code null})
+     * @return a supplier as a source for {@link Provider} instances (not {@code null})
+     */
+    public Supplier<Provider[]> getProviderSupplier(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getProviderSupplier();
     }
 }
