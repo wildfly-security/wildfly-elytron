@@ -205,9 +205,15 @@ class CredentialStoreCommand extends Command {
             }
         }
         if (csPassword != null) {
+            char[] passwordCredential;
+            if (csPassword.startsWith("MASK-")) {
+                passwordCredential = MaskCommand.decryptMasked(csPassword);
+            } else {
+                passwordCredential = csPassword.toCharArray();
+            }
             credentialSourceProtectionParameter = new CredentialStore.CredentialSourceProtectionParameter(
                             IdentityCredentials.NONE.withCredential(
-                                    new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, csPassword.toCharArray()))));
+                                    new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordCredential))));
         }
         credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
