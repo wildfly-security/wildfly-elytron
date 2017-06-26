@@ -142,6 +142,14 @@
                                         <exclude>log4j:log4j:jar:</exclude>
                                     </excludes>
                                 </artifactSet>
+                                <filters>
+                                    <filter>
+                                        <artifact>org.wildfly.security:wildfly-elytron</artifact>
+                                        <excludes>
+                                            <exclude>schema/*.xsd</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
                                 <transformers>
                                     <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                         <mainClass>org.wildfly.security.tool.ElytronTool</mainClass>
