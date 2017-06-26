@@ -83,7 +83,7 @@ public class X500AttributePrincipalDecoderTest {
     public void testDecodeWithRequiredAttributes() {
         X500Principal principal;
         // require the principal to have both CN and OU attributes
-        X500AttributePrincipalDecoder decoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME, ",", 0, 2, false, X500.OID_AT_COMMON_NAME, X500.OID_AT_ORGANIZATIONAL_UNIT_NAME);
+        X500AttributePrincipalDecoder decoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME, ",", 0, 2, false, false, X500.OID_AT_COMMON_NAME, X500.OID_AT_ORGANIZATIONAL_UNIT_NAME);
 
         principal = new X500Principal("cn=bob.smith,cn=bsmith,dc=example,dc=redhat,dc=com"); // missing an OU attribute
         assertEquals(null, decoder.getName(principal));

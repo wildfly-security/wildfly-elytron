@@ -41,6 +41,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
     private final int maximumSegments;
     private final boolean reverse;
     private final String[] requiredOids;
+    private final boolean convert;
 
     /**
      * Construct a new instance.  A joining string of "." is assumed.
@@ -147,7 +148,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final int startSegment, final int maximumSegments, final boolean reverse) {
-        this(oid, joiner, startSegment, maximumSegments, reverse, NO_REQUIRED_OIDS);
+        this(oid, joiner, startSegment, maximumSegments, reverse, false, NO_REQUIRED_OIDS);
     }
 
     /**
@@ -158,20 +159,22 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param startSegment the 0-based starting occurrence of the attribute to map
      * @param maximumSegments the maximum number of occurrences of the attribute to map
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     * @param convert {@code true} if the Principal should be converted to {@link X500Principal} if not one already
      * @param requiredOids the OIDs of the attributes that must be present
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final int startSegment, final int maximumSegments,
-                                         final boolean reverse, final String... requiredOids) {
+                                         final boolean reverse, final boolean convert, final String... requiredOids) {
         this.oid = oid;
         this.joiner = joiner;
         this.startSegment = startSegment;
         this.maximumSegments = maximumSegments;
         this.reverse = reverse;
+        this.convert = convert;
         this.requiredOids = requiredOids;
     }
 
     public String getName(final Principal principal) {
-        final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
+        final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal, convert);
         if (x500Principal == null) {
             return null;
         }
