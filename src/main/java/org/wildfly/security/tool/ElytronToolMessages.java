@@ -45,8 +45,8 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Input data not confirmed. Exiting.")
     String inputDataNotConfirmed();
 
-    @Message(id = NONE, value = "java -jar %s %s")
-    String cmdHelp(String jarFile, String commandName);
+    @Message(id = NONE, value = "%s %s")
+    String cmdHelp(String toolCommand, String commandName);
 
     @Message(id = NONE, value = "Exception encountered executing the command:")
     String commandExecuteException();
