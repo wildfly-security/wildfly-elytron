@@ -184,10 +184,10 @@ public class VaultCommand extends Command {
 
             String vaultSecretKeyAlias = cmdLine.getOptionValue(ALIAS_PARAM, "vault");
             String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
-            if (location == null || location.isEmpty()) {
-                location = convertedStoreName(encryptionDirectory);
-            }
             Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM));
+            if (location == null || location.isEmpty()) {
+                location = convertedStoreName(encryptionDirectory, implProps);
+            }
 
             if (keystorePassword == null) {
                 keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), true, ElytronToolMessages.msg.vaultPasswordPromptConfirm());
@@ -226,8 +226,9 @@ public class VaultCommand extends Command {
                 true);
     }
 
-    private String convertedStoreName(String encryptionDirectory) {
-        return encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(File.separator) ? "" : File.separator) + "converted-vault.cr-store";
+    private String convertedStoreName(String encryptionDirectory, Map<String, String> implProps) {
+        final String implPropsLocation = implProps.get("location");
+        return (implPropsLocation != null && ! implPropsLocation.isEmpty()) ? implPropsLocation : encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(File.separator) ? "" : File.separator) + "converted-vault.cr-store";
     }
 
     private HashMap<String, String> convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
