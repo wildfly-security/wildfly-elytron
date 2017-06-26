@@ -118,6 +118,27 @@ class MaskCommand extends Command {
         return "MASK-" + encryptUtil.encryptAndEncode(secret.toCharArray()) + ";" + salt + ";" + String.valueOf(iteration);
     }
 
+    static char[] decryptMasked(String maskedPassword) throws GeneralSecurityException {
+        int maskLength = "MASK-".length();
+        if (maskedPassword == null || maskedPassword.length() <= maskLength) {
+            throw ElytronToolMessages.msg.wrongMaskedPasswordFormat();
+        }
+        String[] parsed = maskedPassword.substring(maskLength).split(";");
+        if (parsed.length != 3) {
+            throw ElytronToolMessages.msg.wrongMaskedPasswordFormat();
+        }
+        String encoded = parsed[0];
+        String salt = parsed[1];
+        int iteration = Integer.parseInt(parsed[2]);
+        PasswordBasedEncryptionUtil encryptUtil = new PasswordBasedEncryptionUtil.Builder()
+                .picketBoxCompatibility()
+                .salt(salt)
+                .iteration(iteration)
+                .decryptMode()
+                .build();
+        return encryptUtil.decodeAndDecrypt(encoded);
+    }
+
     /**
      * Display help to the command.
      */

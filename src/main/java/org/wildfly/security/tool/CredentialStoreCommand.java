@@ -205,9 +205,15 @@ class CredentialStoreCommand extends Command {
             }
         }
         if (csPassword != null) {
+            char[] passwordCredential;
+            if (csPassword.startsWith("MASK-")) {
+                passwordCredential = MaskCommand.decryptMasked(csPassword);
+            } else {
+                passwordCredential = csPassword.toCharArray();
+            }
             credentialSourceProtectionParameter = new CredentialStore.CredentialSourceProtectionParameter(
                             IdentityCredentials.NONE.withCredential(
-                                    new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, csPassword.toCharArray()))));
+                                    new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordCredential))));
         }
         credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
@@ -277,17 +283,15 @@ class CredentialStoreCommand extends Command {
         if (printSummary) {
             StringBuilder com = new StringBuilder();
             String password = csPassword == null ? "" : csPassword;
+            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+                password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
+            }
 
             if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
-                if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                    password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
-                }
-
-                if ( implProps.get("create") != null && implProps.get("create").equals("true") ) {
+                if (implProps.get("create") != null && implProps.get("create").equals("true")) {
                     getCreateSummary(implProps, com, password);
                     com.append("\n");
                 }
-
                 com.append("/subsystem=elytron/credential-store=test:add-alias(alias=");
                 com.append(cmdLine.getOptionValue(ADD_ALIAS_PARAM));
                 com.append(",secret-value=\"");
@@ -302,7 +306,7 @@ class CredentialStoreCommand extends Command {
 
             } else if (cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM) ) {
                 com.append("/subsystem=elytron/credential-store=test:read-aliases()");
-            } else if ( cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM) ){
+            } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)){
                 getCreateSummary(implProps, com, password);
             }
 
