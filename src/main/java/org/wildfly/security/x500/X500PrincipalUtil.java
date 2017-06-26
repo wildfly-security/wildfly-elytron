@@ -178,11 +178,29 @@ public final class X500PrincipalUtil {
      * @return the X.500 principal or {@code null} if the principal can not be converted.
      */
     public static X500Principal asX500Principal(Principal principal) {
+        return asX500Principal(principal, false);
+    }
+
+    /**
+     * Attempt to convert the given principal to an X.500 principal.
+     *
+     * @param principal the original principal
+     * @param convert {@code true} if the principal should be converted to a {@link X500Principal} if not one already.
+     * @return the X.500 principal or {@code null} if the principal can not be converted.
+     */
+    public static X500Principal asX500Principal(Principal principal, boolean convert) {
         if (principal instanceof X500Principal) {
             return (X500Principal) principal;
         }
         if (HAS_X500_NAME && principal instanceof X500Name) {
             return ((X500Name) principal).asX500Principal();
+        }
+        if (convert) {
+            try {
+                return new X500Principal(principal.getName());
+            } catch (IllegalArgumentException ignored) {
+                log.trace("Unable to convert to X500Principal", ignored);
+            }
         }
 
         return null;
