@@ -25,8 +25,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.spec.AlgorithmParameterSpec;
@@ -243,11 +241,12 @@ public class VaultCommand extends Command {
             throw ElytronToolMessages.msg.undefinedEncryptionDirectory();
         }
 
-        if (Files.exists(Paths.get(encryptionDirectory))) {
+        final File locationFile = new File(encryptionDirectory, "VAULT.dat");
+        if (locationFile.exists()) {
             vaultInitialOptions.put("location", encryptionDirectory);
         } else
         {
-            throw ElytronToolMessages.msg.pathNotValid(encryptionDirectory);
+            throw ElytronToolMessages.msg.vaultFileNotFound(encryptionDirectory);
         }
 
         if (secretKeyAlias == null || "".equals(secretKeyAlias)) {
