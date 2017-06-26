@@ -267,7 +267,12 @@ public class VaultCommand extends Command {
                 getVaultCredentialStoreProtectionParameter(keyStoreURL, vaultPassword, salt, iterationCount, secretKeyAlias));
 
         final HashMap<String, String> convertedOptions = new HashMap<>();
-        convertedOptions.put("location", outputFile);
+        if (!Files.exists(Paths.get(outputFile))) {
+            convertedOptions.put("location", outputFile);
+        } else
+        {
+            throw ElytronToolMessages.msg.storageFileExists(outputFile);
+        }
         convertedOptions.put("modifiable", Boolean.TRUE.toString());
         convertedOptions.put("create", Boolean.TRUE.toString());
         if (csAttributes != null) {
