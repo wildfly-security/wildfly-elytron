@@ -130,7 +130,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         // Propagate the identity to interested callback handlers
 
         try {
-            callbackHandler.handle(new Callback[] { new IdentityCredentialCallback(new PasswordCredential(ClearPassword.createRaw("plain", password.toCharArray())), true) } );
+            callbackHandler.handle(new Callback[] { new IdentityCredentialCallback(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray())), true) } );
         } catch (UnsupportedCallbackException e) {
             // ignored
         } catch (SaslException e) {
