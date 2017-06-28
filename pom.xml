@@ -59,13 +59,13 @@
         <version.org.apache.directory.jdbm>2.0.0-M2</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M5</version.org.apache.directory.mavibot>
 
-        <version.org.jboss.logging>3.3.0.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.0.5.Final</version.org.jboss.logmanager>
-        <version.org.jboss.logmanager.log4j-jboss>1.1.2.Final</version.org.jboss.logmanager.log4j-jboss>
+        <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
+        <version.org.jboss.logmanager>2.0.6.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logmanager.log4j-jboss>1.1.3.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.0.1.Final</version.org.jboss.logging.tools>
-        <version.org.jboss.modules>1.6.0.Beta6</version.org.jboss.modules>
+        <version.org.jboss.modules>1.6.0.CR1</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
-        <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
+        <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.1.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.jboss.threads>2.2.1.Final</version.org.jboss.threads>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
@@ -76,8 +76,8 @@
         <version.com.nimbusds.nimbus-jose-jwt>4.13.1</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.4.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.6.Final</version.org.wildfly.checkstyle-config>
-        <version.org.wildfly.client.config>1.0.0.Beta4</version.org.wildfly.client.config>
-        <version.org.wildfly.common>1.2.0.Beta8</version.org.wildfly.common>
+        <version.org.wildfly.client.config>1.0.0.CR2</version.org.wildfly.client.config>
+        <version.org.wildfly.common>1.2.0.CR1</version.org.wildfly.common>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
