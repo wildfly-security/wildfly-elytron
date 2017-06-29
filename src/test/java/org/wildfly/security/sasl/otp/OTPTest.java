@@ -78,6 +78,8 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -119,9 +121,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
 
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
@@ -170,9 +172,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("103029b112deb117").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 100));
+                "TeSt", 100));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("87fec7768b73ccf9").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 99));
+                "TeSt", 99));
 
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
@@ -221,9 +223,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -271,9 +273,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("103029b112deb117").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 100));
+                "TeSt", 100));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("87fec7768b73ccf9").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 99));
+                "TeSt", 99));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -322,9 +324,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("3712dcb4aa5316c1").hexDecode().drain(),
-                "ke1235".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1235", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -373,9 +375,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("3712dcb4aa5316c1").hexDecode().drain(),
-                "ke1235".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1235", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -425,9 +427,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("eb65a876fd5e5e8e").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 10)); // Low sequence number, the sequence should be reset
+                "ke1234", 10)); // Low sequence number, the sequence should be reset
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("870c2dcc4fd6b474").hexDecode().drain(),
-                "lr4321".getBytes(StandardCharsets.US_ASCII), 499));
+                "lr4321", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -472,9 +474,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -521,9 +523,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -569,9 +571,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
 
@@ -646,7 +648,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -692,7 +694,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -729,9 +731,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("5bf075d9959d036f").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 499));
+                "ke1234", 499));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -770,7 +772,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 500));
+                "ke1234", 500));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -805,7 +807,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "thisSeedIsTooLong".getBytes(StandardCharsets.US_ASCII), 500));
+                "thisSeedIsTooLong", 500));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -840,7 +842,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "A seed!".getBytes(StandardCharsets.US_ASCII), 500));
+                "A seed!", 500));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -875,7 +877,7 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234".getBytes(StandardCharsets.US_ASCII), 0));
+                "ke1234", 0));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -902,6 +904,21 @@ public class OTPTest extends BaseTestCase {
     }
 
     @Test
+    public void testGeneratePasswordFromPassPhrase() throws Exception {
+        final String algorithm = ALGORITHM_OTP_SHA1;
+
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+        final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("103029b112deb117").hexDecode().drain(),
+                "TeSt", 100));
+
+        OneTimePasswordAlgorithmSpec otpSpec = new OneTimePasswordAlgorithmSpec(algorithm, "TeSt", 100);
+        EncryptablePasswordSpec passwordSpec = new EncryptablePasswordSpec("This is a test.".toCharArray(), otpSpec);
+        OneTimePassword generatedOTPassword = (OneTimePassword) passwordFactory.generatePassword(passwordSpec);
+
+        assertTrue(password.equals(generatedOTPassword));
+    }
+
+    @Test
     public void testUnauthorizedAuthorizationId() throws Exception {
         final String algorithm = ALGORITHM_OTP_SHA1;
         final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
@@ -909,9 +926,9 @@ public class OTPTest extends BaseTestCase {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
         final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("103029b112deb117").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 100));
+                "TeSt", 100));
         OneTimePassword expectedUpdatedPassword = (OneTimePassword) passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("87fec7768b73ccf9").hexDecode().drain(),
-                "TeSt".getBytes(StandardCharsets.US_ASCII), 99));
+                "TeSt", 99));
         final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
         final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
         try {
@@ -967,7 +984,7 @@ public class OTPTest extends BaseTestCase {
 
         assertEquals(expectedUpdatedPassword.getAlgorithm(), updatedPassword.getAlgorithm());
         assertArrayEquals(expectedUpdatedPassword.getHash(), updatedPassword.getHash());
-        assertArrayEquals(expectedUpdatedPassword.getSeed(), updatedPassword.getSeed());
+        assertEquals(expectedUpdatedPassword.getSeed(), updatedPassword.getSeed());
         assertEquals(expectedUpdatedPassword.getSequenceNumber(), updatedPassword.getSequenceNumber());
         realmIdentity.dispose();
     }

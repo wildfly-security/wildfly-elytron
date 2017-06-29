@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -687,7 +688,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                             streamWriter.writeStartElement("otp");
                             streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
                             streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
-                            streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed()).base64Encode().drainToString());
+                            streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed().getBytes(StandardCharsets.US_ASCII)).base64Encode().drainToString());
                             streamWriter.writeAttribute("sequence", Integer.toString(otp.getSequenceNumber()));
                             streamWriter.writeEndElement();
                         } else {
@@ -948,7 +949,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             String name = null;
             String algorithm = null;
             byte[] hash = null;
-            byte[] seed = null;
+            String seed = null;
             int sequenceNumber = 0;
 
             final int attributeCount = streamReader.getAttributeCount();
@@ -963,9 +964,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } else if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("hash".equals(localName)) {
-                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode().drain();
+                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain();
                 } else if ("seed".equals(localName)) {
-                    seed = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode().drain();
+                    seed = new String(CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII);
                 } else if ("sequence".equals(localName)) {
                     sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
                 } else {

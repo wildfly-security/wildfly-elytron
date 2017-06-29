@@ -20,7 +20,6 @@ package org.wildfly.security.password.spec;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
 import java.util.Objects;
 
 import org.wildfly.common.Assert;
@@ -35,10 +34,10 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
     private static final long serialVersionUID = 2703192508293746122L;
 
     private final String algorithm;
-    private final byte[] seed;
+    private final String seed;
     private final int sequenceNumber;
 
-    public OneTimePasswordAlgorithmSpec(final String algorithm, final byte[] seed, final int sequenceNumber) {
+    public OneTimePasswordAlgorithmSpec(final String algorithm, final String seed, final int sequenceNumber) {
         Assert.checkNotNullParam("algorithm", algorithm);
         Assert.checkNotNullParam("seed", seed);
         this.algorithm = algorithm;
@@ -50,7 +49,7 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
         return algorithm;
     }
 
-    public byte[] getSeed() {
+    public String getSeed() {
         return seed;
     }
 
@@ -62,10 +61,10 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
         if (! (other instanceof OneTimePasswordAlgorithmSpec)) return false;
         if (this == other) return true;
         OneTimePasswordAlgorithmSpec otherSpec = (OneTimePasswordAlgorithmSpec) other;
-        return sequenceNumber == otherSpec.sequenceNumber && Objects.equals(algorithm, otherSpec.algorithm) && Arrays.equals(seed, otherSpec.seed);
+        return sequenceNumber == otherSpec.sequenceNumber && Objects.equals(algorithm, otherSpec.algorithm) && Objects.equals(seed, otherSpec.seed);
     }
 
     public int hashCode() {
-        return (sequenceNumber * 31 + Arrays.hashCode(seed)) * 31 + algorithm.hashCode();
+        return (sequenceNumber * 31 + seed.hashCode()) * 31 + algorithm.hashCode();
     }
 }

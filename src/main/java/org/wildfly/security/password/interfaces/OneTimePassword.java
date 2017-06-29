@@ -60,7 +60,7 @@ public interface OneTimePassword extends OneWayPassword {
      *
      * @return the seed used to generate the hash
      */
-    byte[] getSeed();
+    String getSeed();
 
     /**
      * Get the sequence number used to generate the hash.
@@ -96,10 +96,10 @@ public interface OneTimePassword extends OneWayPassword {
      * @param sequenceNumber the sequence number
      * @return the raw password implementation
      */
-    static OneTimePassword createRaw(String algorithm, byte[] hash, byte[] seed, int sequenceNumber) {
+    static OneTimePassword createRaw(String algorithm, byte[] hash, String seed, int sequenceNumber) {
         Assert.checkNotNullParam("hash", hash);
         Assert.checkNotNullParam("seed", seed);
         Assert.checkNotNullParam("algorithm", algorithm);
-        return new RawOneTimePassword(algorithm, hash.clone(), seed.clone(), sequenceNumber);
+        return new RawOneTimePassword(algorithm, hash.clone(), seed, sequenceNumber);
     }
 }

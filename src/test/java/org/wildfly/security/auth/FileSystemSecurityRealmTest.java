@@ -52,7 +52,6 @@ import org.wildfly.security.util.CodePointIterator;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -300,7 +299,7 @@ public class FileSystemSecurityRealmTest {
         credentials.add(new PasswordCredential(bCryptPassword));
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
-        byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
+        String seed = "ke1234";
         PasswordFactory otpFactory = PasswordFactory.getInstance(OneTimePassword.ALGORITHM_OTP_SHA1);
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)
@@ -319,7 +318,7 @@ public class FileSystemSecurityRealmTest {
         assertNotNull(otp);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash, otp.getHash());
-        assertArrayEquals(seed, otp.getSeed());
+        assertEquals(seed, otp.getSeed());
         assertEquals(500, otp.getSequenceNumber());
 
         AuthorizationIdentity authorizationIdentity = existingIdentity.getAuthorizationIdentity();
@@ -347,7 +346,7 @@ public class FileSystemSecurityRealmTest {
         credentials.add(new PasswordCredential(bCryptPassword));
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
-        byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
+        String seed = "ke1234";
         PasswordFactory otpFactory = PasswordFactory.getInstance(OneTimePassword.ALGORITHM_OTP_SHA1);
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)

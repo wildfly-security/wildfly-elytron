@@ -27,10 +27,10 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
     private static final long serialVersionUID = -5742928998692812041L;
 
     private final byte[] hash;
-    private final byte[] seed;
+    private final String seed;
     private final int sequenceNumber;
 
-    RawOneTimePassword(final String algorithm, final byte[] hash, final byte[] seed, final int sequenceNumber) {
+    RawOneTimePassword(final String algorithm, final byte[] hash, final String seed, final int sequenceNumber) {
         super(algorithm);
         this.hash = hash;
         this.seed = seed;
@@ -41,8 +41,8 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
         return hash.clone();
     }
 
-    public byte[] getSeed() {
-        return seed.clone();
+    public String getSeed() {
+        return seed;
     }
 
     public int getSequenceNumber() {
@@ -54,7 +54,7 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
     }
 
     public int hashCode() {
-        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(seed)), sequenceNumber), getAlgorithm().hashCode());
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), seed.hashCode()), sequenceNumber), getAlgorithm().hashCode());
     }
 
     public boolean equals(final Object obj) {
@@ -62,6 +62,6 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
             return false;
         }
         RawOneTimePassword other = (RawOneTimePassword) obj;
-        return sequenceNumber == other.sequenceNumber && getAlgorithm().equals(other.getAlgorithm()) && Arrays.equals(hash, other.hash) && Arrays.equals(seed, other.seed);
+        return sequenceNumber == other.sequenceNumber && getAlgorithm().equals(other.getAlgorithm()) && Arrays.equals(hash, other.hash) && seed.equals(other.seed);
     }
 }

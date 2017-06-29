@@ -18,7 +18,6 @@
 
 package org.wildfly.security.sasl.otp;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -117,7 +116,7 @@ public final class OTP {
      * @return the parameter specification for a one-time password generated using the given algorithm, seed, and sequence number
      */
     public static OneTimePasswordAlgorithmSpec getOTPParameterSpec(final String algorithm, final String seed, final int sequenceNumber) {
-        return new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber);
+        return new OneTimePasswordAlgorithmSpec(algorithm, seed, sequenceNumber);
     }
 
     static boolean isMatched(final Map<String, ?> props, final boolean query) {

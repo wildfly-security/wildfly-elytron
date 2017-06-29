@@ -27,10 +27,10 @@ import org.wildfly.common.Assert;
 public final class OneTimePasswordSpec implements PasswordSpec {
 
     private final byte[] hash;
-    private final byte[] seed;
+    private final String seed;
     private final int sequenceNumber;
 
-    public OneTimePasswordSpec(final byte[] hash, final byte[] seed, final int sequenceNumber) {
+    public OneTimePasswordSpec(final byte[] hash, final String seed, final int sequenceNumber) {
         Assert.checkNotNullParam("hash", hash);
         Assert.checkNotNullParam("seed", seed);
         this.hash = hash;
@@ -42,7 +42,7 @@ public final class OneTimePasswordSpec implements PasswordSpec {
         return hash;
     }
 
-    public byte[] getSeed() {
+    public String getSeed() {
         return seed;
     }
 

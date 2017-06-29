@@ -33,7 +33,6 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -58,52 +57,6 @@ class OTPUtil {
         }
         assert i == dict.length;
         randomCharDictionary = dict;
-    }
-
-    /**
-     * Generate a 64-bit OTP as specified in <a href="https://tools.ietf.org/html/rfc2289">RFC 2289</a>.
-     *
-     * @param algorithm the OTP algorithm, must be either "otp-md5" or "otp-sha1"
-     * @param passPhrase the pass phrase, as a byte array
-     * @param seed the seed, as a byte array
-     * @param sequenceNumber the number of times the hash function will be applied
-     * @return the 64-bit OTP hash
-     * @throws SaslException if the given OTP algorithm is invalid
-     */
-    public static byte[] generateOTP(String algorithm, byte[] passPhrase, byte[] seed, int sequenceNumber) throws SaslException {
-        final MessageDigest messageDigest;
-        try {
-            messageDigest = getMessageDigest(algorithm);
-        } catch (NoSuchAlgorithmException e) {
-            throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
-        }
-
-        // Initial step
-        final ByteStringBuilder seedAndPassPhrase = new ByteStringBuilder();
-        seedAndPassPhrase.append(seed);
-        seedAndPassPhrase.append(passPhrase);
-        byte[] hash = hashAndFold(algorithm, messageDigest, seedAndPassPhrase.toArray());
-
-        // Computation step
-        for (int i = 0; i < sequenceNumber; i++) {
-            messageDigest.reset();
-            hash = hashAndFold(algorithm, messageDigest, hash);
-        }
-        return hash;
-    }
-
-    /**
-     * Generate a 64-bit OTP as specified in <a href="https://tools.ietf.org/html/rfc2289">RFC 2289</a>.
-     *
-     * @param algorithm the OTP algorithm, must be either "otp-md5" or "otp-sha1"
-     * @param passPhrase the pass phrase
-     * @param seed the seed
-     * @param sequenceNumber the number of times the hash function will be applied
-     * @return the 64-bit OTP hash
-     * @throws SaslException if the given OTP algorithm is invalid
-     */
-    public static byte[] generateOTP(String algorithm, String passPhrase, String seed, int sequenceNumber) throws SaslException {
-        return generateOTP(algorithm, passPhrase.getBytes(StandardCharsets.UTF_8), seed.toLowerCase(Locale.ENGLISH).getBytes(StandardCharsets.US_ASCII), sequenceNumber);
     }
 
     /**
