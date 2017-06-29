@@ -112,6 +112,7 @@ import org.wildfly.security.sasl.util.LocalPrincipalSaslClientFactory;
 import org.wildfly.security.sasl.util.PrivilegedSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
+import org.wildfly.security.sasl.util.SSLSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
@@ -1226,6 +1227,9 @@ public final class AuthenticationConfiguration {
         String protocol = getSaslProtocol();
         if (protocol != null) {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
+        }
+        if (sslSession != null) {
+            saslClientFactory = new SSLSaslClientFactory(saslClientFactory, () -> sslSession);
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
         final SaslClientFactory finalSaslClientFactory = saslClientFactory;
