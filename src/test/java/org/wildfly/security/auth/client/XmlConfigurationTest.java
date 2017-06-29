@@ -20,6 +20,7 @@ package org.wildfly.security.auth.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -560,5 +561,40 @@ public class XmlConfigurationTest {
         assertEquals(1216, credential.getPrivateKey().getEncoded().length);
         assertEquals(1, credential.getCertificateChain().length);
         assertEquals("CN=clientDn, O=Red Hat, OU=EAP QE, L=Czech Republic, C=CZ", credential.getCertificateChain()[0].getSubjectDN().toString());
+    }
+
+    @Test
+    public void testWrongAliasInStoreSSLConfiguration() throws Exception {
+        final String wrongAlias = "WrongAlias";
+        final byte[] xmlBytes = ("<configuration>\n" +
+    "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+        "<key-stores>\n" +
+            "<key-store name=\"ladybird\" type=\"JKS\">\n" +
+                "<file name=\"target/test-classes/ca/jks/ladybird.keystore\"/>\n" +
+                "<key-store-clear-password password=\"Elytron\"/>\n" +
+            "</key-store>\n" +
+        "</key-stores>\n" +
+        "<ssl-contexts>\n" +
+            "<ssl-context name=\"my-ssl\">\n" +
+                "<key-store-ssl-certificate key-store-name=\"ladybird\" alias=\"" + wrongAlias + "\">\n" +
+                    "<key-store-clear-password password=\"Elytron\"/>\n" +
+                "</key-store-ssl-certificate>\n" +
+            "</ssl-context>\n" +
+        "</ssl-contexts>\n" +
+        "<ssl-context-rules>\n" +
+        "    <rule use-ssl-context=\"my-ssl\">\n" +
+        "        <match-host name=\"localhost\"/>\n" +
+        "    </rule>\n" +
+        "</ssl-context-rules>\n" +
+    "</authentication-client>\n" +
+"</configuration>").getBytes(StandardCharsets.UTF_8);
+        try {
+            final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+            factory.create();
+        } catch (XMLStreamException e) {
+            assertTrue("\"" + wrongAlias + "\" must be mentioned in the exception message", e.getMessage().contains("ELY01159: Key store entry for alias \"" + wrongAlias + "\" is missing."));
+            return;
+        }
+        fail("Expected exception");
     }
 }
