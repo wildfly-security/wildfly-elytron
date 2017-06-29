@@ -831,7 +831,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
-            private X509Certificate[] certs;
+            private X509Certificate[] serverCerts;
+            private X509Certificate[] peerCerts;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -855,6 +856,18 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     if (authenticationID != null) {
                         // always re-set the authentication name to ensure it hasn't changed.
                         setAuthenticationName(authenticationID);
+                    } else {
+                        // This is a special case to support scenarios where the identity was already established by some
+                        // external method (e.g.: EXTERNAL SASL and TLS) where only authorization is necessary. We delay authentication
+                        // until we receive an authorization request.
+                        // In the future, we may want to support external methods other than TLS peer authentication
+                        State state = stateRef.get();
+                        if (!(state instanceof NameAssignedState || state instanceof AuthorizedState)) {
+                            if (peerCerts != null) {
+                                log.tracef("Authentication ID is null but SSL peer certificates are available. Trying to authenticate peer");
+                                verifyEvidence(new X509PeerCertificateChainEvidence(peerCerts));
+                            }
+                        }
                     }
                     String authorizationID = authorizeCallback.getAuthorizationID();
                     boolean authorized = authorizationID != null ? authorize(authorizationID) : authorize();
@@ -984,15 +997,15 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     SSLCallback sslCallback = (SSLCallback) callback;
 
                     try {
-                        X509Certificate[] x509Certificates = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
-                        verifyEvidence(new X509PeerCertificateChainEvidence(x509Certificates));
-                        certs = x509Certificates;
+                        peerCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
                     } catch (SSLPeerUnverifiedException e) {
                         log.trace("Peer unverified", e);
+                        peerCerts = null;
                     }
+                    serverCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getLocalCertificates());
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof ChannelBindingCallback) {
-                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, certs);
+                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, serverCerts);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
