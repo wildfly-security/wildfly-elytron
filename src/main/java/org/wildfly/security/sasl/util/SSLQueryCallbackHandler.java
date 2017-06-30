@@ -56,7 +56,7 @@ public final class SSLQueryCallbackHandler implements CallbackHandler {
 
     public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
         SSLSession sslSession;
-        if (! once.compareAndSet(false, true) || (sslSession = this.sslSession.get()) == null) {
+        if (! once.compareAndSet(true, false) || (sslSession = this.sslSession.get()) == null) {
             delegate.handle(callbacks);
             return;
         }

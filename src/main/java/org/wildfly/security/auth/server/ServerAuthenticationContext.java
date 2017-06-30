@@ -831,7 +831,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
-            private X509Certificate[] certs;
+            private X509Certificate[] serverCerts;
+            private X509Certificate[] peerCerts;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -855,6 +856,17 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     if (authenticationID != null) {
                         // always re-set the authentication name to ensure it hasn't changed.
                         setAuthenticationName(authenticationID);
+                    } else {
+                        // This is a special case to support scenarios where the identity was already established by some
+                        // external method (e.g.: EXTERNAL SASL and TLS) where only authorization is necessary. We delay authentication
+                        // until we receive an authorization request.
+                        // In the future, we may want to support external methods other than TLS peer authentication
+                        if (stateRef.get().canVerifyEvidence()) {
+                            if (peerCerts != null) {
+                                log.tracef("Authentication ID is null but SSL peer certificates are available. Trying to authenticate peer");
+                                verifyEvidence(new X509PeerCertificateChainEvidence(peerCerts));
+                            }
+                        }
                     }
                     String authorizationID = authorizeCallback.getAuthorizationID();
                     boolean authorized = authorizationID != null ? authorize(authorizationID) : authorize();
@@ -984,15 +996,15 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     SSLCallback sslCallback = (SSLCallback) callback;
 
                     try {
-                        X509Certificate[] x509Certificates = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
-                        verifyEvidence(new X509PeerCertificateChainEvidence(x509Certificates));
-                        certs = x509Certificates;
+                        peerCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
                     } catch (SSLPeerUnverifiedException e) {
                         log.trace("Peer unverified", e);
+                        peerCerts = null;
                     }
+                    serverCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getLocalCertificates());
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof ChannelBindingCallback) {
-                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, certs);
+                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, serverCerts);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
@@ -1257,6 +1269,33 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         void addPrivateCredential(final Credential credential) {
             throw log.noAuthenticationInProgress();
         }
+
+        /**
+         * Indicate whether or not current state is {@link NameAssignedState}.
+         *
+         * @return {@code true} if state is {@link NameAssignedState}. Otherwise, {@code false}.
+         */
+        public boolean isNameAssigned() {
+            return this instanceof NameAssignedState;
+        }
+
+        /**
+         * Indicate whether or not current state is {@link AuthorizedState}.
+         *
+         * @return {@code true} if state is {@link AuthorizedState}. Otherwise, {@code false}.
+         */
+        public boolean isAuthorized() {
+            return this instanceof AuthorizedState;
+        }
+
+        /**
+         * Indicate whether or not evidence verification is allowed.
+         *
+         * @return {@code true} if evidence verification can be performed. Otherwise, {@code false}.
+         */
+        public boolean canVerifyEvidence() {
+            return !(this instanceof NameAssignedState || this instanceof AuthorizedState);
+        }
     }
 
     final class InactiveState extends State {
@@ -1404,7 +1443,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             final SecurityIdentity sourceIdentity = getSourceIdentity();
 
             final State state = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, IdentityCredentials.NONE, IdentityCredentials.NONE);
-            if ( ! (state instanceof NameAssignedState)) {
+            if (!state.isNameAssigned()) {
                 ElytronMessages.log.tracef("Authorization failed - unable to assign identity name");
                 return false;
             }
@@ -1543,7 +1582,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
             // Finally, run the identity through the normal name selection process.
             final State state = assignName(sourceIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), importedPrincipal, null, privateCredentials, publicCredentials);
-            if ( ! (state instanceof NameAssignedState)) {
+            if (!state.isNameAssigned()) {
                 return false;
             }
             final NameAssignedState nameState = (NameAssignedState) state;
@@ -1589,13 +1628,13 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             if (evidencePrincipal != null) {
                 final State newState = assignName(getSourceIdentity(), mechanismConfiguration, mechanismRealmConfiguration, evidencePrincipal, evidence, privateCredentials, publicCredentials);
                 if (! newState.verifyEvidence(evidence)) {
-                    if (newState instanceof NameAssignedState) {
+                    if (newState.isNameAssigned()) {
                         ((NameAssignedState)newState).realmIdentity.dispose();
                     }
                     return false;
                 }
                 if (! stateRef.compareAndSet(this, newState)) {
-                    if (newState instanceof NameAssignedState) {
+                    if (newState.isNameAssigned()) {
                         ((NameAssignedState)newState).realmIdentity.dispose();
                     }
                     return stateRef.get().verifyEvidence(evidence);
@@ -1647,7 +1686,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             final AtomicReference<State> stateRef = getStateRef();
             final State newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), principal, null, privateCredentials, publicCredentials, exclusive);
             if (! stateRef.compareAndSet(this, newState)) {
-                if (newState instanceof NameAssignedState) {
+                if (newState.isNameAssigned()) {
                     ((NameAssignedState)newState).realmIdentity.dispose();
                 }
                 stateRef.get().setPrincipal(principal, exclusive);
@@ -2166,7 +2205,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                 return this;
             }
             final State state = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, IdentityCredentials.NONE, IdentityCredentials.NONE);
-            if ( ! (state instanceof NameAssignedState)) {
+            if (!state.isNameAssigned()) {
                 ElytronMessages.log.tracef("RunAs authorization failed - unable to assign identity name");
                 return null;
             }
