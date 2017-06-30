@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -72,7 +73,7 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
                     return;
                 }
                 closeStreams(); // close the original file (some OSes won't let you move/rename a file that is open)
-                final Path target =  file.getParentFile().toPath().resolve(file.getName() + nextSuffix);
+                final Path target = Paths.get(file.toPath() + nextSuffix);
                 Files.move(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
                 setFile(file);
             } catch (IOException e) {
