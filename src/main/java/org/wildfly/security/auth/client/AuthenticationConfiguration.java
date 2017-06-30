@@ -589,6 +589,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useName(String name) {
+        Assert.checkNotNullParam("name", name);
         return usePrincipal(new NamePrincipal(name));
     }
 
@@ -600,7 +601,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useAuthorizationName(String name) {
-        return useAuthorizationPrincipal(new NamePrincipal(name));
+        return useAuthorizationPrincipal(name == null ? null : new NamePrincipal(name));
     }
 
     /**

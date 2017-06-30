@@ -21,6 +21,8 @@ package org.wildfly.security.auth.principal;
 import java.io.Serializable;
 import java.security.Principal;
 
+import org.wildfly.common.Assert;
+
 /**
  * A principal which is comprised of a simple {@code String} name.
  *
@@ -41,6 +43,7 @@ public final class NamePrincipal implements Principal, Serializable {
      * @param name the principal name
      */
     public NamePrincipal(final String name) {
+        Assert.checkNotNullParam("name", name);
         this.name = name;
     }
 
