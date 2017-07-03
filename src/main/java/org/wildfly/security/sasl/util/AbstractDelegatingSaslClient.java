@@ -73,4 +73,9 @@ public abstract class AbstractDelegatingSaslClient implements SaslClient, SaslWr
     public void dispose() throws SaslException {
         delegate.dispose();
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + "->" + delegate.toString();
+    }
 }

@@ -96,4 +96,9 @@ public abstract class AbstractDelegatingSaslClientFactory implements SaslClientF
     protected int calculateHashCode() {
         return delegate.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + "->" + delegate.toString();
+    }
 }

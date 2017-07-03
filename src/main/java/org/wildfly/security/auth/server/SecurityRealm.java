@@ -145,5 +145,10 @@ public interface SecurityRealm {
             Assert.checkNotNullParam("evidenceType", evidenceType);
             return SupportLevel.UNSUPPORTED;
         }
+
+        @Override
+        public String toString() {
+            return "EMPTY_REALM";
+        }
     };
 }

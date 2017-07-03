@@ -92,4 +92,9 @@ abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
     protected SSLContext getDelegate() {
         return delegate;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + "->" + delegate.toString();
+    }
 }
