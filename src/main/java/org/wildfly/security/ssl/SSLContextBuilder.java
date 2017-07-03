@@ -82,6 +82,11 @@ public final class SSLContextBuilder {
      *    certificate authentication
      */
     public SSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
+
+        if (securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).isNotSupported()) {
+            throw ElytronMessages.tls.securityDomainOfSSLContextDoesNotSupportX509();
+        }
+
         this.securityDomain = securityDomain;
 
         return this;
