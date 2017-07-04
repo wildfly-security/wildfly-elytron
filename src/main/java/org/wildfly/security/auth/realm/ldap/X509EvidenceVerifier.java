@@ -95,6 +95,9 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         @Override
         public boolean verifyCertificate(X509Certificate certificate, Attributes attributes) throws NamingException {
             Attribute attribute = attributes.get(ldapAttribute);
+
+            if (attribute == null) return false;
+
             final int size = attribute.size();
             for (int i = 0; i < size; i++) {
                 BigInteger value = new BigInteger((String) attribute.get(i));
@@ -122,6 +125,9 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         @Override
         public boolean verifyCertificate(X509Certificate certificate, Attributes attributes) throws NamingException {
             Attribute attribute = attributes.get(ldapAttribute);
+
+            if (attribute == null) return false;
+
             final int size = attribute.size();
             for (int i = 0; i < size; i++) {
                 if (certificate.getSubjectDN().getName().equals(attribute.get(i))) {
@@ -150,11 +156,14 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         @Override
         public boolean verifyCertificate(X509Certificate certificate, Attributes attributes) throws NamingException, RealmUnavailableException {
             Attribute attribute = attributes.get(ldapAttribute);
+
+            if (attribute == null) return false;
+
             final int size = attribute.size();
             try {
                 MessageDigest md = MessageDigest.getInstance(algorithm);
+                String digest = ByteIterator.ofBytes(md.digest(certificate.getEncoded())).hexEncode(true).drainToString();
                 for (int i = 0; i < size; i++) {
-                    String digest = ByteIterator.ofBytes(md.digest(certificate.getEncoded())).hexEncode(true).drainToString();
                     if (digest.equalsIgnoreCase((String) attribute.get(i))) {
                         return true;
                     }
@@ -187,6 +196,9 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         @Override
         public boolean verifyCertificate(X509Certificate certificate, Attributes attributes) throws NamingException, RealmUnavailableException {
             Attribute attribute = attributes.get(ldapAttribute);
+
+            if (attribute == null) return false;
+
             final int size = attribute.size();
             try {
                 for (int i = 0; i < size; i++) {
