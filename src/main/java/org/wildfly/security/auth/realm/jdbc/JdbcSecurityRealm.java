@@ -159,7 +159,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
                         final Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
-                        if (credential.matches(credentialType, algorithmName, parameterSpec)) {
+                        if (credential != null && credential.matches(credentialType, algorithmName, parameterSpec)) {
                             return credentialType.cast(credential);
                         }
                     }
