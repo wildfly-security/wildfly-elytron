@@ -633,15 +633,16 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(SET_RUN_AS_PERMISSION);
         }
 
-        final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
-        try {
+        SecurityIdentity identity = null;
+        try (final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY))) {
             if (! (context.importIdentity(this) && context.authorize(principal, authorize))) {
                 throw log.runAsAuthorizationFailed(this.principal, principal, null);
             }
+            identity = context.getAuthorizedIdentity();
         } catch (RealmUnavailableException e) {
-            throw log.runAsAuthorizationFailed(this.principal, context.getAuthenticationPrincipal(), e);
+            throw log.runAsAuthorizationFailed(this.principal, principal, e);
         }
-        return context.getAuthorizedIdentity();
+        return identity;
     }
 
     /**
@@ -671,11 +672,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(SET_RUN_AS_PERMISSION);
         }
 
-        final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
-        if (! context.authorizeAnonymous(authorize)) {
-            throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
+        SecurityIdentity identity = null;
+        try (final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY))) {
+            if (! context.authorizeAnonymous(authorize)) {
+                throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
+            }
+            identity = context.getAuthorizedIdentity();
         }
-        return context.getAuthorizedIdentity();
+        return identity;
     }
 
     /**
