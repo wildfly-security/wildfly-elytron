@@ -153,6 +153,11 @@ class DelegatingLdapContext implements LdapContext {
         }
     }
 
+    @Override
+    public String toString() {
+        return super.toString() + "->" + delegating.toString();
+    }
+
     // LdapContext specific
 
     @Override

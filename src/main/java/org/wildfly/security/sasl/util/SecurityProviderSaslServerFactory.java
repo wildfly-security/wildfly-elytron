@@ -84,12 +84,12 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
                                         protocol, serverName, props, cbh);
                                 if (saslServer != null) {
                                     if (log.isTraceEnabled()) {
-                                        log.tracef("Created SaslServer for mechanism %s and protocol %s", mechanism, protocol);
+                                        log.tracef("Creating SaslServer [%s] for mechanism [%s] and protocol [%s]", saslServer, mechanism, protocol);
                                     }
                                     return saslServer;
                                 }
                             } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException e) {
-                                log.debug("Unable to create instance", e);
+                                log.debug("Unable to create instance of SaslServerFactory", e);
                             }
                         }
                     }

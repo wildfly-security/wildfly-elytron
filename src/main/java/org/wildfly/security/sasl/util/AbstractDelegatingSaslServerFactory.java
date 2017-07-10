@@ -67,4 +67,9 @@ public abstract class AbstractDelegatingSaslServerFactory implements SaslServerF
     public String[] getMechanismNames(final Map<String, ?> props) {
         return delegate.getMechanismNames(props);
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + "->" + delegate.toString();
+    }
 }

@@ -333,5 +333,10 @@ public interface RealmIdentity {
         public boolean exists() throws RealmUnavailableException {
             return false;
         }
+
+        @Override
+        public String toString() {
+            return "NON_EXISTENT";
+        }
     };
 }

@@ -1240,7 +1240,7 @@ public final class AuthenticationConfiguration {
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
 
         if (log.isTraceEnabled()) {
-            log.tracef("Created SaslClient [%s] for mechanisms [%s]", saslClient, Arrays2.objectToString(serverMechanisms));
+            log.tracef("Created SaslClient [%s] for mechanisms %s", saslClient, Arrays2.objectToString(serverMechanisms));
         }
         return saslClient;
     }
