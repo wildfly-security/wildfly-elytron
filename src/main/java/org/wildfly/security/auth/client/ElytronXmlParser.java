@@ -1303,13 +1303,22 @@ public final class ElytronXmlParser {
                             protectionParameter = null;
                         }
                         if (finalAlias != null) {
-                            return keyStoreSupplier.get().getEntry(finalAlias, protectionParameter == null ? null : protectionParameter);
+                            KeyStore.Entry finalEntry = keyStoreSupplier.get().getEntry(finalAlias, protectionParameter == null ? null : protectionParameter);
+                            if (finalEntry == null) {
+                                throw xmlLog.keyStoreEntryMissing(location, finalAlias);
+                            }
+                            return finalEntry;
                         } else {
                             //  allow to retrieve entry without providing alias only if keystore includes one and only entry.
                             if (keyStoreSupplier.get().size() > 1) {
                                 throw xmlLog.missingAlias(location);
                             } else if (keyStoreSupplier.get().aliases().hasMoreElements()) {
-                                return keyStoreSupplier.get().getEntry(keyStoreSupplier.get().aliases().nextElement(), protectionParameter == null ? null : protectionParameter);
+                                String firstAlias = keyStoreSupplier.get().aliases().nextElement();
+                                KeyStore.Entry finalEntry = keyStoreSupplier.get().getEntry(firstAlias, protectionParameter == null ? null : protectionParameter);
+                                if (finalEntry == null) {
+                                    throw xmlLog.keyStoreEntryMissing(location, firstAlias);
+                                }
+                                return finalEntry;
                             } else {
                                 return null;
                             }
