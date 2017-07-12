@@ -46,7 +46,7 @@ public final class OneTimePasswordAlgorithmParametersSpiImpl extends AbstractAlg
     protected void engineEncode(final ASN1Encoder encoder, final OneTimePasswordAlgorithmSpec parameterSpec) {
         encoder.startSequence();
         encoder.encodeOctetString(parameterSpec.getAlgorithm());
-        encoder.encodeOctetString(parameterSpec.getSeed());
+        encoder.encodeIA5String(parameterSpec.getSeed());
         encoder.encodeInteger(parameterSpec.getSequenceNumber());
         encoder.endSequence();
     }
@@ -54,7 +54,7 @@ public final class OneTimePasswordAlgorithmParametersSpiImpl extends AbstractAlg
     protected OneTimePasswordAlgorithmSpec engineDecode(final ASN1Decoder decoder) {
         decoder.startSequence();
         final String algorithm = decoder.decodeOctetStringAsString();
-        final byte[] seed = decoder.decodeOctetString();
+        final String seed = decoder.decodeIA5String();
         final int sequenceNumber = decoder.decodeInteger().intValue();
         decoder.endSequence();
         return new OneTimePasswordAlgorithmSpec(algorithm, seed, sequenceNumber);

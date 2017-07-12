@@ -138,12 +138,12 @@ public class PasswordSupportSuiteChild {
         assertNotNull(otp);
         assertEquals(1234, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'a', 'b', 'c', 'd' }, otp.getHash());
-        Assert.assertArrayEquals(new byte[] { 'e', 'f', 'g', 'h' }, otp.getSeed());
+        Assert.assertEquals("efgh", otp.getSeed());
     }
 
     @Test
     public void testOneTimePasswordUser1Update() throws Exception {
-        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'i', 'j', 'k' }, new byte[] { 'l', 'm', 'n' }, 4321);
+        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'i', 'j', 'k' }, "lmn", 4321);
         final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
@@ -165,12 +165,12 @@ public class PasswordSupportSuiteChild {
         assertNotNull(otp);
         assertEquals(4321, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'i', 'j', 'k' }, otp.getHash());
-        Assert.assertArrayEquals(new byte[] { 'l', 'm', 'n' }, otp.getSeed());
+        Assert.assertEquals("lmn", otp.getSeed());
     }
 
     @Test
     public void testOneTimePasswordUser2SetCredentials() throws Exception {
-        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'o', 'p', 'q' }, new byte[] { 'r', 's', 't' }, 65);
+        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'o', 'p', 'q' }, "rst", 65);
         final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
@@ -192,7 +192,7 @@ public class PasswordSupportSuiteChild {
         assertNotNull(otp);
         assertEquals(65, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());
-        Assert.assertArrayEquals(new byte[] { 'r', 's', 't' }, otp.getSeed());
+        Assert.assertEquals("rst", otp.getSeed());
     }
 
     @Test

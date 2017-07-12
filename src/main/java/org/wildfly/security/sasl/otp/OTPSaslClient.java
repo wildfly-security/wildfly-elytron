@@ -25,6 +25,7 @@ import static org.wildfly.security.sasl.otp.OTPUtil.*;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,6 +38,9 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ExtendedChoiceCallback;
 import org.wildfly.security.auth.callback.ParameterCallback;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.OneTimePassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -147,7 +151,11 @@ final class OTPSaslClient extends AbstractSaslClient {
                             if (seed.equals(passPhrase)) {
                                 throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                             }
-                            otp = formatOTP(generateOTP(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
+                            try {
+                                otp = formatOTP(generateOtpHash(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
+                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                                throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
+                            }
                         } else {
                             throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
                         }
@@ -155,7 +163,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                     case DIRECT_OTP:
                         // Try obtaining the OTP directly
                         final ParameterCallback parameterCallback = new ParameterCallback(OneTimePasswordAlgorithmSpec.class);
-                        parameterCallback.setParameterSpec(new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber));
+                        parameterCallback.setParameterSpec(new OneTimePasswordAlgorithmSpec(algorithm, seed, sequenceNumber));
                         handleCallbacks(nameCallback, parameterCallback, passwordCallback);
                         otp = getOTP(passwordCallback);
                         break;
@@ -236,7 +244,11 @@ final class OTPSaslClient extends AbstractSaslClient {
                             if (newSeed.equals(newPassPhrase)) {
                                 throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                             }
-                            newOTP = formatOTP(generateOTP(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
+                            try {
+                                newOTP = formatOTP(generateOtpHash(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
+                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                                throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();
+                            }
                         } else {
                             throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
                         }
@@ -254,7 +266,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                         validateAlgorithm(newAlgorithm);
                         newSequenceNumber = algorithmSpec.getSequenceNumber();
                         validateSequenceNumber(newSequenceNumber);
-                        newSeed = new String(algorithmSpec.getSeed(), StandardCharsets.US_ASCII);
+                        newSeed = algorithmSpec.getSeed();
                         validateSeed(newSeed);
                         break;
                     default:
@@ -317,5 +329,14 @@ final class OTPSaslClient extends AbstractSaslClient {
         StringPrep.encode(passwordChars, b, StringPrep.PROFILE_SASL_STORED);
         Arrays.fill(passwordChars, (char) 0); // Wipe out the password
         return new String(b.toArray(), StandardCharsets.UTF_8);
+    }
+
+    private byte[] generateOtpHash(final String algorithm, final String passPhrase, final String seed, final int newSequenceNumber) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        PasswordFactory otpFactory = PasswordFactory.getInstance(algorithm);
+        OneTimePasswordAlgorithmSpec otpSpec = new OneTimePasswordAlgorithmSpec(algorithm, seed, newSequenceNumber);
+        EncryptablePasswordSpec passwordSpec = new EncryptablePasswordSpec(passPhrase.toCharArray(), otpSpec);
+        OneTimePassword otPassword = (OneTimePassword) otpFactory.generatePassword(passwordSpec);
+
+        return otPassword.getHash();
     }
 }

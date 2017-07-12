@@ -62,11 +62,14 @@ import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.MaskedPasswordSpec;
+import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
+
+import javax.security.sasl.SaslException;
 
 /**
  * The Elytron-provided password factory SPI implementation, which supports all the provided password types.
@@ -450,6 +453,18 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_OTP_SHA1: {
                 if (keySpec instanceof OneTimePasswordSpec) {
                     return new OneTimePasswordImpl(algorithm, (OneTimePasswordSpec) keySpec);
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
+                    final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
+                    try {
+                        if ( parameterSpec instanceof OneTimePasswordAlgorithmSpec){
+                            return new OneTimePasswordImpl(algorithm, encryptableSpec.getPassword(), (OneTimePasswordAlgorithmSpec) parameterSpec);
+                        } else {
+                            break;
+                        }
+                    } catch (SaslException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
                 }
                 break;
             }

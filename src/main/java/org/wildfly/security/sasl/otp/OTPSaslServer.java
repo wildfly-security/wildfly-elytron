@@ -35,7 +35,6 @@ import static org.wildfly.security.sasl.otp.OTPUtil.validateSeed;
 import static org.wildfly.security.sasl.otp.OTPUtil.validateSequenceNumber;
 import static org.wildfly.security.sasl.otp.OTPUtil.validateUserName;
 
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
@@ -126,7 +125,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 }
                 previousAlgorithm = previousPassword.getAlgorithm();
                 validateAlgorithm(previousAlgorithm);
-                previousSeed = new String(previousPassword.getSeed(), StandardCharsets.US_ASCII);
+                previousSeed = previousPassword.getSeed();
                 validateSeed(previousSeed);
                 previousSequenceNumber = previousPassword.getSequenceNumber();
                 validateSequenceNumber(previousSequenceNumber);
@@ -159,7 +158,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                         } else {
                             currentHash = convertFromWords(di.drainToString(), previousAlgorithm);
                         }
-                        passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed.getBytes(StandardCharsets.US_ASCII), previousSequenceNumber - 1);
+                        passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed, previousSequenceNumber - 1);
                         algorithm = previousAlgorithm;
                         break;
                     }
@@ -189,12 +188,12 @@ final class OTPSaslServer extends AbstractSaslServer {
                             } else {
                                 newHash = convertFromWords(di.drainToString(), newAlgorithm);
                             }
-                            passwordSpec = new OneTimePasswordSpec(newHash, newSeed.getBytes(StandardCharsets.US_ASCII), newSequenceNumber);
+                            passwordSpec = new OneTimePasswordSpec(newHash, newSeed, newSequenceNumber);
                             algorithm = newAlgorithm;
                         } catch (SaslException e) {
                             // If the new params or new OTP could not be processed for any reason, the sequence
                             // number should be decremented if a valid current OTP is provided
-                            passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed.getBytes(StandardCharsets.US_ASCII), previousSequenceNumber - 1);
+                            passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed, previousSequenceNumber - 1);
                             algorithm = previousAlgorithm;
                             verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
                             throw log.mechOTPReinitializationFailed(e).toSaslException();
