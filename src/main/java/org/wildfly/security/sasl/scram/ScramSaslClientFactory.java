@@ -132,21 +132,21 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
     public String[] getMechanismNames(final Map<String, ?> props) {
         if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return new String[] {
-                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
                 SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS
             };
         } else {
             return new String[] {
-                SaslMechanismInformation.Names.SCRAM_SHA_1,
-                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_256,
-                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_384,
-                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_512,
                 SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_512,
+                SaslMechanismInformation.Names.SCRAM_SHA_384,
+                SaslMechanismInformation.Names.SCRAM_SHA_256,
+                SaslMechanismInformation.Names.SCRAM_SHA_1
             };
         }
     }
