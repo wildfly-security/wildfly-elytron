@@ -1919,7 +1919,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
             final SecurityDomain domain = capturedIdentity.getSecurityDomain();
 
-            SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), capturedIdentity.getPublicCredentials(), capturedIdentity.getPrivateCredentialsPrivate())));
+            SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), IdentityCredentials.NONE, IdentityCredentials.NONE)));
             authorizedIdentity = authorizedIdentity.withPublicCredentials(publicCredentials).withPrivateCredentials(privateCredentials);
             if (log.isTraceEnabled()) {
                 log.tracef("Authorizing principal %s.", authenticationPrincipal.getName());

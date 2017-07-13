@@ -56,8 +56,13 @@ import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.permission.ElytronPermission;
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -289,6 +294,15 @@ public final class SecurityDomain {
         if (principal != null) serverAuthenticationContext.setAuthenticationPrincipal(principal);
         if (serverAuthenticationContext.verifyEvidence(evidence)) {
             if (serverAuthenticationContext.authorize()) {
+                if (evidence instanceof PasswordGuessEvidence) {
+                    PasswordGuessEvidence passwordGuessEvidence = PasswordGuessEvidence.class.cast(evidence);
+                    serverAuthenticationContext.addPrivateCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordGuessEvidence.getGuess())));
+                } else if (evidence instanceof BearerTokenEvidence) {
+                    BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
+                    serverAuthenticationContext.addPrivateCredential(new BearerTokenCredential(tokenEvidence.getToken()));
+                } else {
+                    log.tracef("Evidence [%s] does not map to a supported credential type. Credentials are not available from authorized identity and identity propagation may not work", evidence.getClass().getName());
+                }
                 serverAuthenticationContext.succeed();
                 return serverAuthenticationContext.getAuthorizedIdentity();
             } else {
