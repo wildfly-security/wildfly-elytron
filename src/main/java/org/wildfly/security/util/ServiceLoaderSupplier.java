@@ -18,13 +18,17 @@
 
 package org.wildfly.security.util;
 
+import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.util._private.Arrays2;
+
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.function.Supplier;
-
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  * A supplier which uses a service loader to find all instances of the given service, and return them as an array.  The
@@ -38,29 +42,41 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
     private final ClassLoader classLoader;
     private int hashCode;
     private volatile E[] result;
+    private final AccessControlContext acc;
 
     public ServiceLoaderSupplier(final Class<E> service, final ClassLoader classLoader) {
         this.service = service;
         this.classLoader = classLoader;
+        this.acc = AccessController.getContext() ;
     }
 
     public E[] get() {
         if (result == null) {
             synchronized (this) {
                 if (result == null) {
-                    ArrayList<E> list = new ArrayList<>();
-                    ServiceLoader<E> loader = ServiceLoader.load(service, classLoader);
-                    Iterator<E> iterator = loader.iterator();
-                    for (;;) try {
-                        if (! iterator.hasNext()) {
-                            return (result = list.toArray(Arrays2.createArray(service, list.size()))).clone();
-                        }
-                        list.add(iterator.next());
-                    } catch (ServiceConfigurationError ignored) {}
+                    if (WildFlySecurityManager.isChecking()) {
+                        result = AccessController.doPrivileged((PrivilegedAction<E[]>) () -> loadServices(service, classLoader), acc);
+                    } else {
+                        result = loadServices(service, classLoader);
+                    }
                 }
             }
         }
         return result.clone();
+    }
+
+    private E[] loadServices(final Class<E> service, final ClassLoader classLoader) {
+        ArrayList<E> list = new ArrayList<>();
+        ServiceLoader<E> loader = ServiceLoader.load(service, classLoader);
+        Iterator<E> iterator = loader.iterator();
+        for (;;) try {
+            if (! iterator.hasNext()) {
+                return list.toArray(Arrays2.createArray(service, list.size()));
+            }
+            list.add(iterator.next());
+        } catch (ServiceConfigurationError ignored) {
+            // explicitly ignored
+        }
     }
 
     public int hashCode() {
