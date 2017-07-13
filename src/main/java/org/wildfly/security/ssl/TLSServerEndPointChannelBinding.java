@@ -30,13 +30,13 @@ import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 
 /**
- * Utilities for handling the "tls-server-endpoint" channel binding strategy used by various types
+ * Utilities for handling the "tls-server-end-point" channel binding strategy used by various types
  * of authentication mechanisms.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class TLSServerEndPointChannelBinding {
-    public static final String TLS_SERVER_ENDPOINT = "tls-server-endpoint";
+    public static final String TLS_SERVER_ENDPOINT = "tls-server-end-point";
 
     private TLSServerEndPointChannelBinding() {}
 
@@ -82,7 +82,7 @@ public final class TLSServerEndPointChannelBinding {
      */
     public static void handleChannelBindingCallback(ChannelBindingCallback channelBindingCallback, X509Certificate[] serverCerts) throws UnsupportedCallbackException {
         if (serverCerts != null && serverCerts.length > 0) {
-            // tls-server-endpoint
+            // tls-server-end-point
             final X509Certificate serverCert = serverCerts[0];
             final String digestAlgorithm = TLSServerEndPointChannelBinding.getDigestAlgorithm(serverCert.getSigAlgOID());
             if (digestAlgorithm != null) try {
