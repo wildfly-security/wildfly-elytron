@@ -24,6 +24,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -1001,7 +1002,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                         log.trace("Peer unverified", e);
                         peerCerts = null;
                     }
-                    serverCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getLocalCertificates());
+                    final Certificate[] localCertificates = sslCallback.getSslSession().getLocalCertificates();
+                    serverCerts = localCertificates != null ? X500.asX509CertificateArray(localCertificates) : null;
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof ChannelBindingCallback) {
                     TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, serverCerts);
