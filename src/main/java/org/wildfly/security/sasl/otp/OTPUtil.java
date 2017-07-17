@@ -316,9 +316,15 @@ class OTPUtil {
     public static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
             case ALGORITHM_OTP_MD5:
-                return MessageDigest.getInstance(MD5);
+                return MessageDigest.getInstance("MD5");
             case ALGORITHM_OTP_SHA1:
-                return MessageDigest.getInstance(SHA1);
+                return MessageDigest.getInstance("SHA-1");
+            case ALGORITHM_OTP_SHA_256:
+                return MessageDigest.getInstance("SHA-256");
+            case ALGORITHM_OTP_SHA_384:
+                return MessageDigest.getInstance("SHA-384");
+            case ALGORITHM_OTP_SHA_512:
+                return MessageDigest.getInstance("SHA-512");
             default:
                 throw new NoSuchAlgorithmException();
         }
@@ -330,6 +336,12 @@ class OTPUtil {
                 return MD5;
             case ALGORITHM_OTP_SHA1:
                 return SHA1;
+            case ALGORITHM_OTP_SHA_256:
+                return SHA256;
+            case ALGORITHM_OTP_SHA_384:
+                return SHA384;
+            case ALGORITHM_OTP_SHA_512:
+                return SHA512;
             default:
                 throw new NoSuchAlgorithmException();
         }
@@ -363,8 +375,15 @@ class OTPUtil {
     }
 
     public static void validateAlgorithm(String algorithm) throws SaslException {
-        if ((! algorithm.equals(ALGORITHM_OTP_MD5)) && (! algorithm.equals(ALGORITHM_OTP_SHA1))) {
-            throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
+        switch (algorithm) {
+            case ALGORITHM_OTP_MD5:
+            case ALGORITHM_OTP_SHA1:
+            case ALGORITHM_OTP_SHA_256:
+            case ALGORITHM_OTP_SHA_384:
+            case ALGORITHM_OTP_SHA_512:
+                return;
+            default:
+                throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
         }
     }
 

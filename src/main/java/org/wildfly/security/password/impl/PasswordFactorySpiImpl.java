@@ -450,7 +450,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
             case ALGORITHM_OTP_MD5:
-            case ALGORITHM_OTP_SHA1: {
+            case ALGORITHM_OTP_SHA1:
+            case ALGORITHM_OTP_SHA_256:
+            case ALGORITHM_OTP_SHA_384:
+            case ALGORITHM_OTP_SHA_512: {
                 if (keySpec instanceof OneTimePasswordSpec) {
                     return new OneTimePasswordImpl(algorithm, (OneTimePasswordSpec) keySpec);
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
@@ -577,7 +580,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_OTP_MD5:
-            case ALGORITHM_OTP_SHA1: {
+            case ALGORITHM_OTP_SHA1:
+            case ALGORITHM_OTP_SHA_256:
+            case ALGORITHM_OTP_SHA_384:
+            case ALGORITHM_OTP_SHA_512: {
                 return (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm()));
             }
             default: {
@@ -712,7 +718,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 break;
             }
             case ALGORITHM_OTP_MD5:
-            case ALGORITHM_OTP_SHA1: {
+            case ALGORITHM_OTP_SHA1:
+            case ALGORITHM_OTP_SHA_256:
+            case ALGORITHM_OTP_SHA_384:
+            case ALGORITHM_OTP_SHA_512: {
                 if (password instanceof OneTimePasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
                 } else if (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm())) {

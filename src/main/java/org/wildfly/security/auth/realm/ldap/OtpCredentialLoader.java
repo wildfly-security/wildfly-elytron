@@ -63,6 +63,9 @@ class OtpCredentialLoader implements CredentialPersister {
             switch (algorithmName) {
                 case OneTimePassword.ALGORITHM_OTP_MD5: return SupportLevel.POSSIBLY_SUPPORTED;
                 case OneTimePassword.ALGORITHM_OTP_SHA1: return SupportLevel.POSSIBLY_SUPPORTED;
+                case OneTimePassword.ALGORITHM_OTP_SHA_256: return SupportLevel.POSSIBLY_SUPPORTED;
+                case OneTimePassword.ALGORITHM_OTP_SHA_384: return SupportLevel.POSSIBLY_SUPPORTED;
+                case OneTimePassword.ALGORITHM_OTP_SHA_512: return SupportLevel.POSSIBLY_SUPPORTED;
                 default: return SupportLevel.UNSUPPORTED;
             }
         }
