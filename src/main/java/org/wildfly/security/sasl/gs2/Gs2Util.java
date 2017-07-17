@@ -49,16 +49,18 @@ class Gs2Util {
             return WildFlySasl.NO_NAMES;
         }
         ArrayList<String> saslNames = new ArrayList<String>();
+        ArrayList<String> nonPlusSaslNames = new ArrayList<>();
         String name;
         for (int i = 0; i < mechanismOids.length; i++) {
             name = getSaslNameForMechanism(mechanismOids[i]);
             // Note: SPNEGO must not be used as a GS2 mechanism (see https://tools.ietf.org/html/rfc5801#section-14.3).
             // Future mechanisms that negotiate other mechanisms would need to be forbidden as well.
             if (! name.equals(SPNEGO)) {
-                saslNames.add(name);
+                nonPlusSaslNames.add(name);
                 saslNames.add(name + PLUS_SUFFIX);
             }
         }
+        saslNames.addAll(nonPlusSaslNames);
         return saslNames.toArray(new String[saslNames.size()]);
     }
 
