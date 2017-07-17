@@ -932,6 +932,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4026, value = "Could not create trust manager [%s]")
     IllegalStateException sslErrorCreatingTrustManager(String name, @Cause Throwable cause);
 
+    @Message(id = 4027, value = "SecurityDomain of SSLContext does not support X509PeerCertificateChainEvidence verification")
+    IllegalArgumentException securityDomainOfSSLContextDoesNotSupportX509();
+
     /* mechanism package */
 
     @Message(id = 5001, value = "[%s] Authentication mechanism exchange received a message after authentication was already complete")
