@@ -117,14 +117,13 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
                 }
             } else if (authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported()) {
                 final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
-                if (authenticationContext.verifyEvidence(evidence)) {
-                    ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
-                    authenticationContext.succeed();
-                } else if (authenticationOptional) {
-                    ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
-                    return;
-                } else {
-                    throw ElytronMessages.log.notTrusted(principal);
+                if (! authenticationContext.verifyEvidence(evidence)) {
+                    if (authenticationOptional) {
+                        ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
+                        return;
+                    } else {
+                        throw ElytronMessages.log.notTrusted(principal);
+                    }
                 }
             }
             if (! authenticationContext.authorize()) {
