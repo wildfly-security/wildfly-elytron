@@ -76,6 +76,6 @@ sn: My Last Name
 uid: userWithOtp
 otpAlgorithm: otp-sha1
 otpHash: YWJjZA==
-otpSeed: ZWZnaA==
+otpSeed: efgh
 otpSequence: 1234
 otpTimeout: 1441211642

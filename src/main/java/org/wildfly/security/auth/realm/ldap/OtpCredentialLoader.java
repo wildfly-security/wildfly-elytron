@@ -21,7 +21,6 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.NoSuchAttributeException;
 
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -128,13 +127,21 @@ class OtpCredentialLoader implements CredentialPersister {
                     return null;
                 }
 
-                PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithmAttribute.get(), providers);
+                Object algorithm = algorithmAttribute.get();
+                Object hash = hashAttribute.get();
+                Object seed = seedAttribute.get();
+                Object sequence = sequenceAttribute.get();
+
+                if (algorithm == null || hash == null || seed == null || sequence == null || ! (algorithm instanceof String) || ! (hash instanceof String) || ! (seed instanceof String) || ! (sequence instanceof String)) {
+                    return null;
+                }
+
+                PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithm, providers);
                 Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(
-                                CodePointIterator.ofString((String) hashAttribute.get())
+                                CodePointIterator.ofString((String) hash)
                                         .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
-                                new String (CodePointIterator.ofString((String) seedAttribute.get())
-                                        .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII),
-                                Integer.parseInt((String) sequenceAttribute.get())));
+                                (String) seed,
+                                Integer.parseInt((String) sequence)));
                 if (credentialType.isAssignableFrom(PasswordCredential.class)) {
                     return credentialType.cast(new PasswordCredential(password));
                 }
@@ -158,7 +165,7 @@ class OtpCredentialLoader implements CredentialPersister {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(algorithmAttributeName, password.getAlgorithm());
                 attributes.put(hashAttributeName, ByteIterator.ofBytes(password.getHash()).base64Encode().drainToString());
-                attributes.put(seedAttributeName, ByteIterator.ofBytes(password.getSeed().getBytes(StandardCharsets.US_ASCII)).base64Encode().drainToString());
+                attributes.put(seedAttributeName, password.getSeed());
                 attributes.put(sequenceAttributeName, Integer.toString(password.getSequenceNumber()));
 
                 context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
