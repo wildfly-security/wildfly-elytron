@@ -315,7 +315,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         break;
                     }
                     case OneTimePassword.ALGORITHM_OTP_MD5:
-                    case OneTimePassword.ALGORITHM_OTP_SHA1: {
+                    case OneTimePassword.ALGORITHM_OTP_SHA1:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_256:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_384:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_512: {
                         final OneTimePasswordSpec passwordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), OneTimePasswordSpec.class);
                         encoder.startSequence();
                         encoder.encodeOctetString(passwordSpec.getHash());
@@ -602,7 +605,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         break;
                     }
                     case OneTimePassword.ALGORITHM_OTP_MD5:
-                    case OneTimePassword.ALGORITHM_OTP_SHA1: {
+                    case OneTimePassword.ALGORITHM_OTP_SHA1:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_256:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_384:
+                    case OneTimePassword.ALGORITHM_OTP_SHA_512: {
                         decoder.startSequence();
                         final byte[] hash = decoder.decodeOctetString();
                         final String seed = decoder.decodeIA5String();

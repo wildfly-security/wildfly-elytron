@@ -63,6 +63,9 @@ import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_SHA1_RC4_40_ECB;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_MD5;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA1;
+import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA_256;
+import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA_384;
+import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA_512;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
@@ -196,6 +199,9 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SCRAM_SHA_512, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_MD5, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_SHA1, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_SHA_256, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_SHA_384, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_SHA_512, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_DES, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_DES_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_3DES, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));

@@ -20,8 +20,6 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.otp.OTP.MD5;
-import static org.wildfly.security.sasl.otp.OTP.SHA1;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
@@ -149,9 +147,15 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
     private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
             case ALGORITHM_OTP_MD5:
-                return MessageDigest.getInstance(MD5);
+                return MessageDigest.getInstance("MD5");
             case ALGORITHM_OTP_SHA1:
-                return MessageDigest.getInstance(SHA1);
+                return MessageDigest.getInstance("SHA-1");
+            case ALGORITHM_OTP_SHA_256:
+                return MessageDigest.getInstance("SHA-256");
+            case ALGORITHM_OTP_SHA_384:
+                return MessageDigest.getInstance("SHA-384");
+            case ALGORITHM_OTP_SHA_512:
+                return MessageDigest.getInstance("SHA-512");
             default:
                 throw new NoSuchAlgorithmException();
         }

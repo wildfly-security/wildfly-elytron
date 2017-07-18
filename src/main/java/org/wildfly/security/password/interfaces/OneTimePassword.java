@@ -44,6 +44,21 @@ public interface OneTimePassword extends OneWayPassword {
     String ALGORITHM_OTP_SHA1 = "otp-sha1";
 
     /**
+     * The algorithm name "otp-sha256".
+     */
+    String ALGORITHM_OTP_SHA_256 = "otp-sha256";
+
+    /**
+     * The algorithm name "otp-sha384".
+     */
+    String ALGORITHM_OTP_SHA_384 = "otp-sha384";
+
+    /**
+     * The algorithm name "otp-sha512".
+     */
+    String ALGORITHM_OTP_SHA_512 = "otp-sha512";
+
+    /**
      * The constant size of the hash, in bytes.
      */
     int OTP_HASH_SIZE = 8;

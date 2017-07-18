@@ -42,6 +42,9 @@ public final class OTP {
     // Supported algorithms
     public static final String MD5 = "md5";
     public static final String SHA1 = "sha1";
+    public static final String SHA256 = "sha256";
+    public static final String SHA384 = "sha384";
+    public static final String SHA512 = "sha512";
 
     // Response types
     public static final String HEX_RESPONSE = "hex";
