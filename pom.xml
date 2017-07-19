@@ -116,6 +116,21 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- This enables the resolution of ${groupId:artifactId} like props
+                             to their real paths in the local Maven repository.
+                             We use this to pass jmockit.jar as a javaagent in surefire's argLine -->
+                        <id>getClasspathFilenames</id>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -141,7 +156,7 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>${modular.jdk.args}</argLine>
+                        <argLine>-javaagent:${org.jmockit:jmockit:jar} -XX:-UseSplitVerifier ${modular.jdk.args}</argLine>
                     </configuration>
                 </plugin>
 
