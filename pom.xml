@@ -102,6 +102,7 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>**/*.xsd</include>
+                    <include>META-INF/LICENSE.txt</include>
                 </includes>
                 <filtering>true</filtering>
             </resource>
