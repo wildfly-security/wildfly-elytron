@@ -102,10 +102,10 @@ public final class ScramServer {
             }
             if (cbindFlag == 'p') {
                 if (! mechanism.isPlus()) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType == null || bindingData == null) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
                 }
                 if (bi.next() != '=') {
                     throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
@@ -116,15 +116,18 @@ public final class ScramServer {
                 binding = true;
             } else if (cbindFlag == 'y') {
                 if (mechanism.isPlus()) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                }
+                if (bindingType != null || bindingData != null) {
+                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = true;
             } else if (cbindFlag == 'n') {
                 if (mechanism.isPlus()) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = false;
             } else {

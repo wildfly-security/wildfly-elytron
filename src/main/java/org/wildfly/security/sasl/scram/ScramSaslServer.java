@@ -31,6 +31,7 @@ import org.wildfly.security.mechanism.scram.ScramFinalServerMessage;
 import org.wildfly.security.mechanism.scram.ScramInitialClientMessage;
 import org.wildfly.security.mechanism.scram.ScramInitialServerResult;
 import org.wildfly.security.mechanism.scram.ScramServer;
+import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
 /**
@@ -108,6 +109,13 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
             }
             throw Assert.impossibleSwitchCase(state);
+        } catch (ScramServerException cause) {
+            ok = false;
+            setNegotiationState(FAILED_STATE);
+            if (log.isDebugEnabled()) {
+                log.debugf(cause, "[%s] error when evaluating message from client during state [%s]: %s", getMechanismName(), state, cause.getError().getText());
+            }
+            return cause.getError().getMessageBytes();
         } catch (AuthenticationMechanismException e) {
             throw e.toSaslException();
         } finally {
