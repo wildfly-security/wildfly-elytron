@@ -217,7 +217,12 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         }
                         checkAuthorizationID();
                         try {
-                            tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssContext.getDelegCred()), true));
+                            GSSCredential gssCredential = gssContext.getDelegCred();
+                            if (gssCredential != null) {
+                                tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
+                            } else {
+                                log.trace("No GSSCredential delegated during authentication.");
+                            }
                         } catch (UnsupportedCallbackException | GSSException e) {
                             // ignored
                         } catch (SaslException e) {
@@ -244,7 +249,12 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         }
                         checkAuthorizationID();
                         try {
-                            tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssContext.getDelegCred()), true));
+                            GSSCredential gssCredential = gssContext.getDelegCred();
+                            if (gssCredential != null) {
+                                tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
+                            } else {
+                                log.trace("No GSSCredential delegated during authentication.");
+                            }
                         } catch (UnsupportedCallbackException | GSSException e) {
                             // ignored
                         } catch (SaslException e) {
