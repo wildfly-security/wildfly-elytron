@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -52,10 +53,12 @@ public class FileAuditEndpoint implements AuditEndpoint {
     private File file;
     private FileDescriptor fileDescriptor;
     private OutputStream outputStream;
+    protected final Clock clock;
 
     FileAuditEndpoint(Builder builder) throws IOException {
         this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
         this.syncOnAccept = builder.syncOnAccept;
+        this.clock = builder.clock;
         setFile(builder.location.toFile());
     }
 
@@ -120,7 +123,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
     @Override
     public void accept(EventPriority t, String u) throws IOException {
         if (!accepting) return;
-        Instant instant = Instant.now();
+        Instant instant = clock.instant();
 
         synchronized(this) {
             if (!accepting) return; // We may have been waiting to get in here.
@@ -175,6 +178,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
 
     public static class Builder {
 
+        private Clock clock = Clock.systemUTC();
         private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = () -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
         private Path location = new File("audit.log").toPath();
         private boolean syncOnAccept = true;
@@ -215,6 +219,19 @@ public class FileAuditEndpoint implements AuditEndpoint {
          */
         public Builder setSyncOnAccept(boolean syncOnAccept) {
             this.syncOnAccept = syncOnAccept;
+
+            return this;
+        }
+
+        /**
+         * Sets the {@link Clock} instance the resulting {@link FileAuditEndpoint} should use to query the current time.
+         * For testing purposes only, therefore package visible.
+         *
+         * @param clock the clock to query the current time
+         * @return this builder
+         */
+        Builder setClock(Clock clock) {
+            this.clock = clock;
 
             return this;
         }

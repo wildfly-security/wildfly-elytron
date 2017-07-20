@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.util.TestClock;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -48,7 +49,7 @@ public class PeriodicRotatingFileAuditEndpointTest {
     static File logDirFile;
     static Path logFile;
     static ZoneId UTC = ZoneId.of("UTC");
-    Instant currentTime;
+    static TestClock clock;
 
     @BeforeClass
     public static void init() throws Exception {
@@ -71,6 +72,7 @@ public class PeriodicRotatingFileAuditEndpointTest {
     public void testBase() throws Exception {
         AuditEndpoint endpoint = PeriodicRotatingFileAuditEndpoint.builder()
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message");
         endpoint.close();
@@ -83,11 +85,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(365,ChronoUnit.DAYS);
+        clock.plus(365,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(365,ChronoUnit.DAYS);
+        clock.plus(365,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970","audit.1971");
@@ -99,11 +102,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(32,ChronoUnit.DAYS);
+        clock.plus(32,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(32,ChronoUnit.DAYS);
+        clock.plus(32,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01","audit.1970-02");
@@ -115,12 +119,13 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         //1 January 1970 is a Thursday
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(4,ChronoUnit.DAYS);
+        clock.plus(4,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(7,ChronoUnit.DAYS);
+        clock.plus(7,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01","audit.1970-01-02");
@@ -132,11 +137,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww-dd")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(1,ChronoUnit.DAYS);
+        clock.plus(1,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(1,ChronoUnit.DAYS);
+        clock.plus(1,ChronoUnit.DAYS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01-01","audit.1970-01-01-02");
@@ -148,11 +154,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww-dd-a")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(12,ChronoUnit.HOURS);
+        clock.plus(12,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(12,ChronoUnit.HOURS);
+        clock.plus(12,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01-01-AM","audit.1970-01-01-01-PM");
@@ -164,11 +171,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww-dd-a-hh")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(1,ChronoUnit.HOURS);
+        clock.plus(1,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(1,ChronoUnit.HOURS);
+        clock.plus(1,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01-01-AM-12","audit.1970-01-01-01-AM-01");
@@ -180,11 +188,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww-dd-a-HH")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(1,ChronoUnit.HOURS);
+        clock.plus(1,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(1,ChronoUnit.HOURS);
+        clock.plus(1,ChronoUnit.HOURS);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01-01-AM-00","audit.1970-01-01-01-AM-01");
@@ -196,11 +205,12 @@ public class PeriodicRotatingFileAuditEndpointTest {
                 .setTimeZone(UTC)
                 .setSuffix(".yyyy-MM-ww-dd-a-HH_mm")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
-        currentTime = currentTime.plus(1,ChronoUnit.MINUTES);
+        clock.plus(1,ChronoUnit.MINUTES);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
-        currentTime = currentTime.plus(1,ChronoUnit.MINUTES);
+        clock.plus(1,ChronoUnit.MINUTES);
         endpoint.accept(EventPriority.CRITICAL, "testing log message 3");
         endpoint.close();
         assertFiles("audit", "audit.1970-01-01-01-AM-00_00","audit.1970-01-01-01-AM-00_01");
@@ -208,17 +218,11 @@ public class PeriodicRotatingFileAuditEndpointTest {
 
     @Before
     public void mockTime() {
-        currentTime = Instant.EPOCH.truncatedTo(ChronoUnit.DAYS);
-        new MockUp<System>() {
-            @Mock
-            public long currentTimeMillis() {
-                return currentTime.toEpochMilli();
-            }
-        };
+        clock = new TestClock(Instant.EPOCH.truncatedTo(ChronoUnit.DAYS));
         new MockUp<File>() {
             @Mock
             public long lastModified() {
-                return currentTime.toEpochMilli();
+                return clock.millis();
             }
         };
     }
