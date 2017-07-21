@@ -153,6 +153,13 @@ public final class ScramClient {
         final byte[] salt;
         final int iterationCount;
         try {
+            if (bi.peekNext() == 'e') {
+                bi.next();
+                if (bi.next() == '=') {
+                    throw log.scramServerRejectedAuthentication(mechanism.toString(), ScramServerErrorCode.fromErrorString(bi.delimitedBy(',').asUtf8String().drainToString()));
+                }
+                throw log.mechInvalidMessageReceived(mechanism.toString());
+            }
             if (bi.next() != 'r' || bi.next() != '=') {
                 throw log.mechInvalidMessageReceived(mechanism.toString());
             }

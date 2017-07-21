@@ -20,6 +20,7 @@ package org.wildfly.security.sasl.scram;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.wildfly.security.sasl.scram.ScramCallbackHandlerUtils.createClientCallbackHandler;
 
 import java.security.AccessController;
@@ -189,6 +190,75 @@ public class BasicScramSelfTest extends BaseTestCase {
                         .build();
 
         testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS, saslServer, clientFactory, clientHandler, "user", props);
+    }
+
+    @Test
+    public void testNonPlusClientWithoutBindingWithPlusServer() throws Exception {
+        byte[] digest = new byte[]{(byte) 0x1d, (byte) 0x96, (byte) 0xee, (byte) 0x3a, (byte) 0x52, (byte) 0x9b, (byte) 0x5a, (byte) 0x5f, (byte) 0x9e, (byte) 0x47, (byte) 0xc0, (byte) 0x1f, (byte) 0x22, (byte) 0x9a, (byte) 0x2c, (byte) 0xb8, (byte) 0xa6, (byte) 0xe1, (byte) 0x5f, (byte) 0x7d};
+        byte[] salt = new byte[]{(byte) 0x41, (byte) 0x25, (byte) 0xc2, (byte) 0x47, (byte) 0xe4, (byte) 0x3a, (byte) 0xb1, (byte) 0xe9, (byte) 0x3c, (byte) 0x6d, (byte) 0xff, (byte) 0x76};
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = obtainSaslClientFactory();
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "false");
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword(ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096))
+                        .setProperties(new HashMap<>(props))
+                        .setChannelBinding("same-type2", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x12})
+                        .build();
+
+        assertNotNull(clientFactory);
+
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] {SaslMechanismInformation.Names.SCRAM_SHA_1}, "user", "test", "localhost", props, clientHandler);
+        assertNotNull(saslClient);
+        assertTrue(saslClient instanceof ScramSaslClient);
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        try {
+            do {
+                message = saslClient.evaluateChallenge(message);
+                if (message == null) break;
+                message = saslServer.evaluateResponse(message);
+            } while (message != null);
+            fail("SaslException expected");
+        } catch (SaslException cause) {
+            assertTrue(cause.getMessage().contains("server-does-support-channel-binding"));
+        }
+    }
+
+    @Test
+    public void testPlusClientWithBindingWithNonPlusServer() throws Exception {
+        byte[] digest = new byte[]{(byte) 0x1d, (byte) 0x96, (byte) 0xee, (byte) 0x3a, (byte) 0x52, (byte) 0x9b, (byte) 0x5a, (byte) 0x5f, (byte) 0x9e, (byte) 0x47, (byte) 0xc0, (byte) 0x1f, (byte) 0x22, (byte) 0x9a, (byte) 0x2c, (byte) 0xb8, (byte) 0xa6, (byte) 0xe1, (byte) 0x5f, (byte) 0x7d};
+        byte[] salt = new byte[]{(byte) 0x41, (byte) 0x25, (byte) 0xc2, (byte) 0x47, (byte) 0xe4, (byte) 0x3a, (byte) 0xb1, (byte) 0xe9, (byte) 0x3c, (byte) 0x6d, (byte) 0xff, (byte) 0x76};
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = new ChannelBindingSaslClientFactory(obtainSaslClientFactory(), "same-type2", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x12});
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "false");
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword(ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096))
+                        .setProperties(new HashMap<>(props))
+                        .build();
+
+        assertNotNull(clientFactory);
+
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] {SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS}, "user", "test", "localhost", props, clientHandler);
+        assertNotNull(saslClient);
+        assertTrue(saslClient instanceof ScramSaslClient);
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        try {
+            do {
+                message = saslClient.evaluateChallenge(message);
+                if (message == null) break;
+                message = saslServer.evaluateResponse(message);
+            } while (message != null);
+            fail("SaslException expected");
+        } catch (SaslException cause) {
+            assertTrue(cause.getMessage().contains("server-does-not-support-channel-binding"));
+        }
     }
 
     private void testAuthentication(String mechanism, SaslServer saslServer, CallbackHandler clientHandler, String authorizationId, Map<String, ?> clientProps) throws Exception {

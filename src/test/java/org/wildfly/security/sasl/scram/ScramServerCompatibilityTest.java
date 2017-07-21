@@ -352,7 +352,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
-     * Client does support channel binding and know the server does not
+     * Client does support channel binding and know the server does not and binding type or data is not sent
      */
     @Test
     public void testBindingCorrectY() throws Exception {
@@ -375,6 +375,25 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertTrue(saslServer.isComplete());
     }
 
+    /**
+     * Client does support channel binding, believe the server supports and tries to send bind info
+     */
+    @Test
+    public void testBindingCorrectYWithChannelBinding() throws Exception {
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
+
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword(password)
+                        .setChannelBinding("same-type", new byte[]{(byte) 0x00, (byte) 0x2C, (byte) 0xFF})
+                        .build();
+        byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("e=server-does-not-support-channel-binding", new String(message, StandardCharsets.UTF_8));
+        assertFalse(saslServer.isComplete());
+    }
 
     /**
      * Client does support channel binding but thinks the server does not
@@ -396,11 +415,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
 
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
-        try {
-            saslServer.evaluateResponse(message);
-            fail("SaslException not throwed");
-        } catch (SaslException e) {
-        }
+        assertEquals("e=server-does-support-channel-binding", new String(saslServer.evaluateResponse(message), StandardCharsets.UTF_8));
         assertFalse(saslServer.isComplete());
     }
 
