@@ -59,7 +59,7 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
         this.timeZone = builder.timeZone;
 
         final File file = getFile();
-        calcNextRollover(file != null && file.lastModified() > 0 ? file.lastModified() : System.currentTimeMillis());
+        calcNextRollover(file != null && file.lastModified() > 0 ? file.lastModified() : clock.millis());
     }
 
     @Override

@@ -90,7 +90,7 @@ public class SizeRotatingFileAuditEndpoint extends FileAuditEndpoint {
      */
     private void rotate(final File file) throws IOException {
         closeStreams();
-        final String suffix = dateTimeFormatter != null ? dateTimeFormatter.format(ZonedDateTime.now()) : "";
+        final String suffix = dateTimeFormatter != null ? dateTimeFormatter.format(ZonedDateTime.now(clock)) : "";
         final Path fileWithSuffix = Paths.get(file.getAbsolutePath() + suffix);
         Files.deleteIfExists(Paths.get(fileWithSuffix + "." + maxBackupIndex));
         for (int i = maxBackupIndex - 1; i >= 1; i--) {

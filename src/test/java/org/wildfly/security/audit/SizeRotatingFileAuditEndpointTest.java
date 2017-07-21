@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.util.TestClock;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -47,7 +48,7 @@ public class SizeRotatingFileAuditEndpointTest {
     static File logDirFile;
     static Path logFile;
     static ZoneId UTC = ZoneId.of("UTC");
-    Instant currentTime;
+    static TestClock clock;
 
     @BeforeClass
     public static void init() throws Exception {
@@ -59,6 +60,7 @@ public class SizeRotatingFileAuditEndpointTest {
     public void testBase() throws Exception {
         AuditEndpoint endpoint = SizeRotatingFileAuditEndpoint.builder()
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message");
         endpoint.close();
@@ -73,12 +75,13 @@ public class SizeRotatingFileAuditEndpointTest {
                 .setRotateSize(60)
                 .setSuffix(".yyyy-MM-dd")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         int i = 0;
         for (;i < 15; i++) {
             endpoint.accept(EventPriority.CRITICAL, "testing log message "+i);
         }
-        currentTime = currentTime.plus(1, ChronoUnit.DAYS);
+        clock.plus(1, ChronoUnit.DAYS);
         for (;i < 30; i++) {
             endpoint.accept(EventPriority.CRITICAL, "testing log message "+i);
         }
@@ -96,6 +99,7 @@ public class SizeRotatingFileAuditEndpointTest {
                 .setRotateSize(1)
                 .setSuffix(".yyyy-MM-dd")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 1");
         endpoint.close();
@@ -106,6 +110,7 @@ public class SizeRotatingFileAuditEndpointTest {
                 .setRotateSize(1)
                 .setSuffix(".yyyy-MM-dd")
                 .setLocation(logFile)
+                .setClock(clock)
                 .build();
         endpoint.accept(EventPriority.CRITICAL, "testing log message 2");
         endpoint.close();
@@ -129,17 +134,11 @@ public class SizeRotatingFileAuditEndpointTest {
 
     @Before
     public void mockTime() {
-        currentTime = Instant.EPOCH.truncatedTo(ChronoUnit.DAYS);
-        new MockUp<System>() {
-            @Mock
-            public long currentTimeMillis() {
-                return currentTime.toEpochMilli();
-            }
-        };
+        clock = new TestClock(Instant.EPOCH.truncatedTo(ChronoUnit.DAYS));
         new MockUp<File>() {
             @Mock
             public long lastModified() {
-                return currentTime.toEpochMilli();
+                return clock.millis();
             }
         };
     }
