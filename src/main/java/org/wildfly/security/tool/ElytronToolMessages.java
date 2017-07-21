@@ -123,11 +123,20 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Alias \"%s\" does not exist")
     String aliasDoesNotExist(String alias);
 
+    @Message(id = NONE, value = "Alias \"%s\" of type \"%s\"does not exist")
+    String aliasDoesNotExist(String alias, String type);
+
     @Message(id = NONE, value = "Alias \"%s\" has been successfully stored")
     String aliasStored(String alias);
 
+    @Message(id = NONE, value = "Alias \"%s\" of type \"%s\" has been successfully stored")
+    String aliasStored(String alias, String type);
+
     @Message(id = NONE, value = "Alias \"%s\" has been successfully removed")
     String aliasRemoved(String alias);
+
+    @Message(id = NONE, value = "Alias \"%s\" of type \"%s\" has been successfully removed")
+    String aliasRemoved(String alias, String type);
 
     @Message(id = NONE, value = "Credential store command summary:%n--------------------------------------%n%s")
     String commandSummary(String command);

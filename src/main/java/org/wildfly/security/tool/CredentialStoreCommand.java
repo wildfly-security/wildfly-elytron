@@ -234,17 +234,29 @@ class CredentialStoreCommand extends Command {
             }
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
-            System.out.println(ElytronToolMessages.msg.aliasStored(alias));
+            if (entryType != null) {
+                System.out.println(ElytronToolMessages.msg.aliasStored(alias, entryType));
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasStored(alias));
+            }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);
             if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
                 credentialStore.remove(alias, entryTypeToCredential(entryType));
                 credentialStore.flush();
-                System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
+                if (entryType != null) {
+                    System.out.println(ElytronToolMessages.msg.aliasRemoved(alias, entryType));
+                } else {
+                    System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
+                }
                 setStatus(ElytronTool.ElytronToolExitStatus_OK);
             } else {
-                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                if (entryType != null) {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+                } else {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                }
                 setStatus(ALIAS_NOT_FOUND);
             }
 
@@ -255,7 +267,11 @@ class CredentialStoreCommand extends Command {
                 System.out.println(ElytronToolMessages.msg.aliasExists(alias));
             } else {
                 setStatus(ALIAS_NOT_FOUND);
-                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                if (entryType != null) {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+                } else {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                }
             }
         } else if (cmdLine.hasOption(ALIASES_PARAM)) {
             Set<String> aliases = credentialStore.getAliases();
@@ -295,6 +311,9 @@ class CredentialStoreCommand extends Command {
                 }
                 com.append("/subsystem=elytron/credential-store=test:add-alias(alias=");
                 com.append(cmdLine.getOptionValue(ADD_ALIAS_PARAM));
+                if (entryType != null) {
+                    com.append(",entry-type=\"").append(entryType).append("\"");
+                }
                 com.append(",secret-value=\"");
                 com.append(secret);
                 com.append("\")");
