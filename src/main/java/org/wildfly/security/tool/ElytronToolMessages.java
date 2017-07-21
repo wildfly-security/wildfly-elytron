@@ -176,7 +176,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "\"vault\" command is used convert PicketBox Security Vault to credential store using default implementation (KeyStoreCredentialStore).")
     String cmdVaultHelpHeader();
 
-    @Message(id = NONE, value = "Vault keystore URL")
+    @Message(id = NONE, value = "Vault keystore URL (defaults to \"vault.keystore\")")
     String cmdLineVaultKeyStoreURL();
 
     @Message(id = NONE, value = "Vault keystore password:%n" +
@@ -184,16 +184,16 @@ public interface ElytronToolMessages extends BasicLogger {
                                 "- used as password for new converted credential store")
     String cmdLineVaultKeyStorePassword();
 
-    @Message(id = NONE, value = "Vault directory containing encrypted files")
+    @Message(id = NONE, value = "Vault directory containing encrypted files (defaults to \"vault\")")
     String cmdLineVaultEncryptionDirectory();
 
-    @Message(id = NONE, value = "8 character salt")
+    @Message(id = NONE, value = "8 character salt (defaults to \"12345678\")")
     String cmdVaultLineSalt();
 
-    @Message(id = NONE, value = "Iteration count")
+    @Message(id = NONE, value = "Iteration count (defaults to \"23\")")
     String cmdLineVaultIterationCount();
 
-    @Message(id = NONE, value = "Vault master key alias within key store")
+    @Message(id = NONE, value = "Vault master key alias within key store (defaults to \"vault\")")
     String cmdLineVaultKeyStoreAlias();
 
     @Message(id = NONE, value = "Configuration parameters for credential store in form of: \"parameter1=value1; ... ;parameterN=valueN\"%n" +
@@ -226,7 +226,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Print summary of conversion")
     String cmdLineVaultPrintSummary();
 
-    @Message(id = NONE, value = "Location of credential store storage file")
+    @Message(id = NONE, value = "Location of credential store storage file (defaults to \"converted-vault.cr-store\" in vault encryption directory)")
     String cmdLineVaultCSLocationDesc();
 
     @Message(id = 8, value = "Cannot locate admin key with alias \"%s\" or it is of improper type")
