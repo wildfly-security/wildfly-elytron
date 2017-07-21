@@ -21,6 +21,9 @@ package org.wildfly.security.util;
 import org.junit.Test;
 import org.wildfly.security.pem.Pem;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 
@@ -47,6 +50,16 @@ public class PemTest {
         assertParsing(KeyPairGenerator.getInstance("EC").generateKeyPair().getPublic());
     }
 
+    /**
+     * Motivated by ELY-1301
+     */
+    @Test
+    public void testParsePemX509CertificateCacert() throws Exception {
+        URL url = PemTest.class.getResource("/ca/cacert.pem");
+        byte[] bytes = Files.readAllBytes(Paths.get(url.toURI()));
+        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(bytes)));
+    }
+
     private void assertParsing(PublicKey publicKey) {
         ByteStringBuilder publicKeyPem = new ByteStringBuilder();
 
@@ -57,4 +70,5 @@ public class PemTest {
         assertNotNull(parsedKey);
         assertArrayEquals(publicKey.getEncoded(), parsedKey.getEncoded());
     }
+
 }
