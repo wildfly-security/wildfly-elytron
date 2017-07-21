@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.crypto.SecretKeyFactory;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,6 +50,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -86,12 +89,25 @@ public class KeyStoreCredentialStoreTest {
 
         // a hack to make JCE believe that it has verified the signature of the JAR that contains the
         // WildFlyElytronProvider, as when running from Maven the classes are in target/classes, not in a JAR file
-        final Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
-        final Field verificationResults = jceSecurity.getDeclaredField("verificationResults");
-        verificationResults.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        final Map<Provider, Object> results = (Map<Provider, Object>) verificationResults.get(null);
-        results.put(provider, Boolean.TRUE);
+        // This hack is not ncessary on OpenJDK
+        final String vendor = System.getProperty("java.vendor");
+        if ("Oracle Corporation".equals(vendor)) {
+            final Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
+            final Field verificationResults = jceSecurity.getDeclaredField("verificationResults");
+            verificationResults.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            final Map<Provider, Object> results = (Map<Provider, Object>) verificationResults.get(null);
+            results.put(provider, Boolean.TRUE);
+        } else if ("IBM Corporation".equals(vendor)) {
+            final Class<?> bClass = Class.forName("javax.crypto.b");
+            final Field iMapField = bClass.getDeclaredField("i");
+            iMapField.setAccessible(true);
+            final Map<Provider, Object> iMap = (Map<Provider, Object>) iMapField.get(null);
+            iMap.put(provider, Boolean.TRUE);
+        }
+        /* Make sure the above hack was successful */
+        assertNotNull(SecretKeyFactory.getInstance("1.2.840.113549.1.7.1", provider));
+        assertNotNull(SecretKeyFactory.getInstance("1.2.840.113549.1.7.1"));
 
         passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(keyStorePassword));
