@@ -279,13 +279,14 @@ class CredentialStoreCommand extends Command {
             throw ElytronToolMessages.msg.actionToPerformNotDefined();
         }
 
+        // ELY-1294 allow to validate parameters without --summary.
+        String password = csPassword == null ? "" : csPassword;
+        if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+            password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
+        }
 
         if (printSummary) {
             StringBuilder com = new StringBuilder();
-            String password = csPassword == null ? "" : csPassword;
-            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
-            }
 
             if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
                 if (implProps.get("create") != null && implProps.get("create").equals("true")) {
