@@ -83,16 +83,28 @@ public final class TLSServerEndPointChannelBinding {
     public static void handleChannelBindingCallback(ChannelBindingCallback channelBindingCallback, X509Certificate[] serverCerts) throws UnsupportedCallbackException {
         if (serverCerts != null && serverCerts.length > 0) {
             // tls-server-end-point
-            final X509Certificate serverCert = serverCerts[0];
-            final String digestAlgorithm = TLSServerEndPointChannelBinding.getDigestAlgorithm(serverCert.getSigAlgOID());
-            if (digestAlgorithm != null) try {
-                final MessageDigest messageDigest = MessageDigest.getInstance(digestAlgorithm);
-                channelBindingCallback.setBindingData(messageDigest.digest(serverCert.getEncoded()));
-                channelBindingCallback.setBindingType(TLS_SERVER_ENDPOINT);
+            try {
+                final byte[] bindingData = getChannelBindingData(serverCerts[0]);
+                if (bindingData != null) {
+                    channelBindingCallback.setBindingData(bindingData);
+                    channelBindingCallback.setBindingType(TLS_SERVER_ENDPOINT);
+                    return;
+                }
             } catch (CertificateEncodingException | NoSuchAlgorithmException e) {
                 // fail silently
             }
         }
         CallbackUtil.unsupported(channelBindingCallback);
+    }
+
+    static byte[] getChannelBindingData(X509Certificate serverCert) throws NoSuchAlgorithmException, CertificateEncodingException {
+        if (serverCert == null) {
+            return null;
+        }
+        final String digestAlgorithm = TLSServerEndPointChannelBinding.getDigestAlgorithm(serverCert.getSigAlgOID());
+        if (digestAlgorithm == null) {
+            return null;
+        }
+        return MessageDigest.getInstance(digestAlgorithm).digest(serverCert.getEncoded());
     }
 }
