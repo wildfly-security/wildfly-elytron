@@ -25,11 +25,12 @@ import java.security.spec.AlgorithmParameterSpec;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * A credential source which is backed by an entry in a credential store.
@@ -72,18 +73,22 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
         } catch (UnsupportedCredentialTypeException e) {
             return SupportLevel.UNSUPPORTED;
         } catch (GeneralSecurityException e) {
-            throw ElytronMessages.log.unableToReadCredential(e);
+            throw log.unableToReadCredential(e);
         }
     }
 
     public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
         Assert.checkNotNullParam("credentialType", credentialType);
         try {
-            return credentialStoreFactory.create().retrieve(alias, credentialType, algorithmName, parameterSpec);
+            final CredentialStore credentialStore = credentialStoreFactory.create();
+            if (log.isTraceEnabled()) {
+                log.tracef("CredentialStoreCredentialSource: obtaining credential: type = %s  algorithm = %s  exists = %b", alias, credentialType, credentialStore.exists(alias, credentialType));
+            }
+            return credentialStore.retrieve(alias, credentialType, algorithmName, parameterSpec);
         } catch (UnsupportedCredentialTypeException e) {
             return null;
         } catch (GeneralSecurityException e) {
-            throw ElytronMessages.log.unableToReadCredential(e);
+            throw log.unableToReadCredential(e);
         }
     }
 }

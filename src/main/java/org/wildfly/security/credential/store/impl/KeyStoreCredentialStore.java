@@ -42,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -413,19 +414,23 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         try (Hold hold = lockForRead()) {
             final TopEntry topEntry = cache.get(toLowercase(credentialAlias));
             if (topEntry == null) {
+                log.trace("KeyStoreCredentialStore: alias not found in cache");
                 return null;
             }
             if (topEntry.getMap().containsKey(credentialType)) {
+                log.trace("KeyStoreCredentialStore: contains exact type");
                 midEntry = topEntry.getMap().get(credentialType);
             } else {
                 // loose (slow) match
                 final Iterator<MidEntry> iterator = topEntry.getMap().values().iterator();
                 for (;;) {
                     if (! iterator.hasNext()) {
+                        log.trace("KeyStoreCredentialStore: no assignable found");
                         return null;
                     }
                     MidEntry item = iterator.next();
                     if (credentialType.isAssignableFrom(item.getCredentialType())) {
+                        log.trace("KeyStoreCredentialStore: assignable found");
                         midEntry = item;
                         break;
                     }
@@ -443,6 +448,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
             }
             if (bottomEntry == null) {
+                log.tracef("KeyStoreCredentialStore: no entry for algorithm %s", credentialAlgorithm);
                 return null;
             }
             if (parameterSpec != null) {
@@ -457,6 +463,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
             }
             if (ksAlias == null) {
+                log.tracef("KeyStoreCredentialStore: no entry for parameterSpec %s", parameterSpec);
                 return null;
             }
             entry = keyStore.getEntry(ksAlias, convertParameter(protectionParameter));
@@ -465,6 +472,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         }
         if (entry == null) {
             // odd, but we can handle it
+            log.trace("KeyStoreCredentialStore: null entry");
             return null;
         }
         final Class<? extends Credential> matchedCredentialType = midEntry.getCredentialType();
@@ -767,6 +775,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     public void flush() throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
             final Path dataLocation = externalPath == null ? location : externalPath;
+            log.tracef("KeyStoreCredentialStore: flushing into %s", dataLocation);
             if (dataLocation != null) try {
                 final char[] storePassword = getStorePassword(protectionParameter);
                 try (AtomicFileOutputStream os = new AtomicFileOutputStream(dataLocation)) {
@@ -830,6 +839,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             keyStore = getKeyStoreInstance(type);
         }
         if (create) {
+            log.tracef("KeyStoreCredentialStore: creating empty backing KeyStore  dataLocation = %s  external = %b", dataLocation, useExternalStorage);
             if (dataLocation == null) {
                 try {
                     keyStore.load(null, null);
@@ -845,6 +855,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
         try {
             if (dataLocation != null && Files.exists(dataLocation)) {
+                log.tracef("KeyStoreCredentialStore: loading backing KeyStore %s  external = %b", dataLocation, useExternalStorage);
                 char[] password = getStorePassword(protectionParameter);
                 try (InputStream fileStream = Files.newInputStream(dataLocation)) {
                     if (useExternalStorage) {
@@ -922,7 +933,12 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             }
         }
         try {
-            return KeyStore.getInstance(type);
+            if (log.isTraceEnabled()) {
+                log.tracef("Obtaining KeyStore instance of type %s, providers: %s", type, Arrays.toString(Security.getProviders()));
+            }
+            KeyStore ks = KeyStore.getInstance(type);
+            log.tracef("Obtained KeyStore instance: %s", ks);
+            return ks;
         } catch (KeyStoreException e) {
             throw log.cannotInitializeCredentialStore(e);
         }
