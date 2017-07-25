@@ -52,8 +52,8 @@ public interface ElytronToolMessages extends BasicLogger {
     String commandExecuteException();
 
     // CredentialStore command parameters descriptions
-    @Message(id = NONE, value = "Missing arguments. Printing general help message:")
-    String missingArgumentsHelp();
+    @Message(id = NONE, value = "Printing general help message:")
+    String generalHelpTitle();
 
     @Message(id = NONE, value = "Location of credential store storage file")
     String cmdLineStoreLocationDesc();

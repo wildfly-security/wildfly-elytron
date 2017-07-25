@@ -95,15 +95,17 @@ public class ElytronTool {
                     }
                     System.exit(command.getStatus());
                 }
-            } else if ("--help".equals(args[0]) || "-h".equals(args[0]) || (command != null && newArgs.length == 0)) {
-                if (command != null) {
-                    command.help();
-                } else {
-                    tool.generalHelp();
-                }
+            } else if ("--help".equals(args[0]) || "-h".equals(args[0])) {
+                tool.generalHelp();
+            } else if (command != null) {
+                command.help();
             } else {
-                System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
-                System.exit(ElytronToolExitStatus_unrecognizedCommand);
+                if (args[0].trim().isEmpty() && newArgs.length == 0) {
+                    tool.generalHelp();
+                } else {
+                    System.err.println(ElytronToolMessages.msg.commandOrAliasNotFound(args[0]));
+                    System.exit(ElytronToolExitStatus_unrecognizedCommand);
+                }
             }
         } else {
             // no arguments supplied, print general help message and exist.
@@ -112,7 +114,7 @@ public class ElytronTool {
     }
 
     private void generalHelp() {
-        System.out.print(ElytronToolMessages.msg.missingArgumentsHelp());
+        System.out.print(ElytronToolMessages.msg.generalHelpTitle());
         System.out.println();
         for (Command c: commandRegistry.values()) {
             if (scriptName != null) {
