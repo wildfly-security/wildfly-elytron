@@ -22,6 +22,8 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import javax.net.ssl.SSLSession;
 
+import org.wildfly.security.ssl.SSLConnection;
+
 /**
  * A callback which provides information to the callback handler about the established SSLSession.
  *
@@ -32,15 +34,16 @@ public final class SSLCallback implements ExtendedCallback {
     /**
      * @serial The SSL session.
      */
-    private final SSLSession sslSession;
+    private final SSLConnection sslConnection;
 
     /**
      * Construct a new instance.
      *
-     * @param sslSession the {@link SSLSession}
+     * @param sslConnection the SSL connection (must not be {@code null})
      */
-    public SSLCallback(final SSLSession sslSession) {
-        this.sslSession = checkNotNullParam("sslSession", sslSession);
+    public SSLCallback(final SSLConnection sslConnection) {
+        checkNotNullParam("sslConnection", sslConnection);
+        this.sslConnection = sslConnection;
     }
 
     /**
@@ -49,7 +52,15 @@ public final class SSLCallback implements ExtendedCallback {
      * @return the SSL session in force
      */
     public SSLSession getSslSession() {
-        return sslSession;
+        return sslConnection.getSession();
     }
 
+    /**
+     * Get the SSL connection.
+     *
+     * @return the SSL connection
+     */
+    public SSLConnection getSslConnection() {
+        return sslConnection;
+    }
 }
