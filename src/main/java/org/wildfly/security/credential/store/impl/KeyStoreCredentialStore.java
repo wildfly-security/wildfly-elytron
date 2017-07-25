@@ -1281,7 +1281,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             writeBytes(entry.getSecretKey().getEncoded(), entryOos);
             entryOos.flush();
 
-            encrypt.init(Cipher.ENCRYPT_MODE, storageSecretKey);
+            encrypt.init(Cipher.ENCRYPT_MODE, storageSecretKey, (AlgorithmParameterSpec) null); // ELY-1308: third param need to workaround BouncyCastle bug
             int blockSize = encrypt.getBlockSize();
             if (blockSize == 0) throw log.algorithmNotBlockBased(encrypt.getAlgorithm());
             Assert.checkMaximumParameter("cipher block size", 256, blockSize);
