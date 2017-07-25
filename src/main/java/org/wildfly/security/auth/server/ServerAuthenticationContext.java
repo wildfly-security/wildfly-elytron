@@ -1082,8 +1082,9 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                         }
                         if (principal != null) {
                             setAuthenticationPrincipal(principal);
-                            authorize();
-                            authorizedIdentity = getAuthorizedIdentity();
+                            if (authorize()) {
+                                authorizedIdentity = getAuthorizedIdentity();
+                            }
                         }
                     }
                     log.tracef("Handling CachedIdentityAuthorizeCallback: principal = %s  authorizedIdentity = %s", principal, authorizedIdentity);
