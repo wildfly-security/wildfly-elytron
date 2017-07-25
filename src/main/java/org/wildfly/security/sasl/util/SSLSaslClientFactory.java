@@ -31,27 +31,40 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.ssl.SSLConnection;
+
 /**
  * A SASL client factory which provides information about the security layer of the connection to the callback handler.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SSLSaslClientFactory extends AbstractDelegatingSaslClientFactory implements SaslClientFactory {
-    private final Supplier<SSLSession> sslSession;
+    private final Supplier<SSLConnection> sslConnectionSupplier;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param sslConnectionSupplier supplier of the current SSL connection
+     * @param delegate the delegate SASL client factory
+     */
+    public SSLSaslClientFactory(final Supplier<SSLConnection> sslConnectionSupplier, final SaslClientFactory delegate) {
+       super(delegate);
+       this.sslConnectionSupplier = checkNotNullParam("sslConnectionSupplier", sslConnectionSupplier);
+    }
 
     /**
      * Construct a new instance.
      *
      * @param delegate the delegate SASL client factory
      * @param sslSession supplier of the current SSLSession
+     * @deprecated Use {@link #SSLSaslClientFactory(Supplier, SaslClientFactory)} to avoid problems where a TLS client is acting as a SASL server.
      */
     public SSLSaslClientFactory(final SaslClientFactory delegate, final Supplier<SSLSession> sslSession) {
-       super(delegate);
-       this.sslSession = checkNotNullParam("sslSession", sslSession);
+       this(() -> SSLConnection.forSession(sslSession.get(), true), delegate);
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        final SSLQueryCallbackHandler newHandler = new SSLQueryCallbackHandler(cbh, sslSession);
+        final SSLQueryCallbackHandler newHandler = new SSLQueryCallbackHandler(cbh, sslConnectionSupplier);
         SaslClient saslClient = super.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, newHandler);
         newHandler.activate();
 
@@ -70,10 +83,10 @@ public final class SSLSaslClientFactory extends AbstractDelegatingSaslClientFact
 
     @SuppressWarnings("checkstyle:equalshashcode")
     public boolean equals(final SSLSaslClientFactory other) {
-        return super.equals(other) && Objects.equals(sslSession, other.sslSession);
+        return super.equals(other) && Objects.equals(sslConnectionSupplier, other.sslConnectionSupplier);
     }
 
     protected int calculateHashCode() {
-        return multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), Objects.hashCode(sslSession));
+        return multiHashOrdered(multiHashOrdered(super.calculateHashCode(), getClass().hashCode()), Objects.hashCode(sslConnectionSupplier));
     }
 }
