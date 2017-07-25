@@ -24,7 +24,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -86,7 +85,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
+import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -832,7 +831,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
-            private X509Certificate[] serverCerts;
+            private SSLConnection sslConnection;
             private X509Certificate[] peerCerts;
 
             @Override
@@ -995,18 +994,20 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SSLCallback) {
                     SSLCallback sslCallback = (SSLCallback) callback;
+                    this.sslConnection = sslCallback.getSslConnection();
 
                     try {
-                        peerCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
+                        peerCerts = X500.asX509CertificateArray(sslCallback.getSslConnection().getSession().getPeerCertificates());
                     } catch (SSLPeerUnverifiedException e) {
                         log.trace("Peer unverified", e);
                         peerCerts = null;
                     }
-                    final Certificate[] localCertificates = sslCallback.getSslSession().getLocalCertificates();
-                    serverCerts = localCertificates != null ? X500.asX509CertificateArray(localCertificates) : null;
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof ChannelBindingCallback) {
-                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, serverCerts);
+                    final SSLConnection sslConnection = this.sslConnection;
+                    if (sslConnection != null) {
+                        sslConnection.handleChannelBindingCallback((ChannelBindingCallback) callback);
+                    }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
