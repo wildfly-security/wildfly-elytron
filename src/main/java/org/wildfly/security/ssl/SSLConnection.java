@@ -31,6 +31,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.callback.ChannelBindingCallback;
 
 /**
  * An SSL connection of some sort.
@@ -92,6 +93,27 @@ public abstract class SSLConnection {
             }
             default: {
                 return null;
+            }
+        }
+    }
+
+    /**
+     * Populate the given channel binding callback with any channel binding data that might be present on this
+     * connection.  If no channel binding seems to be supported, then the callback will be left unpopulated.
+     *
+     * @param callback the binding callback to populate (must not be {@code null})
+     */
+    public void handleChannelBindingCallback(final ChannelBindingCallback callback) {
+        Assert.checkNotNullParam("callback", callback);
+        byte[] bindingData = getChannelBinding("tls-unique");
+        if (bindingData != null) {
+            callback.setBindingType("tls-unique");
+            callback.setBindingData(bindingData);
+        } else {
+            bindingData = getChannelBinding(TLS_SERVER_ENDPOINT);
+            if (bindingData != null) {
+                callback.setBindingType(TLS_SERVER_ENDPOINT);
+                callback.setBindingData(bindingData);
             }
         }
     }

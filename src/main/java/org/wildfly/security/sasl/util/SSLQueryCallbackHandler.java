@@ -24,12 +24,12 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.SSLCallback;
+import org.wildfly.security.ssl.SSLConnection;
 
 /**
  * A callback handler which delegates to another callback handler, passing the authentication's SSL/TLS information to that
@@ -39,7 +39,7 @@ import org.wildfly.security.auth.callback.SSLCallback;
  */
 public final class SSLQueryCallbackHandler implements CallbackHandler {
     private final CallbackHandler delegate;
-    private final Supplier<SSLSession> sslSession;
+    private final Supplier<SSLConnection> sslConnectionSupplier;
 
     private final AtomicBoolean once = new AtomicBoolean(true);
 
@@ -47,22 +47,22 @@ public final class SSLQueryCallbackHandler implements CallbackHandler {
      * Construct a new instance.
      *
      * @param delegate the delegate callback handler
-     * @param sslSession supplier for the current SSL session
+     * @param sslConnectionSupplier supplier for the current SSL connection
      */
-    public SSLQueryCallbackHandler(final CallbackHandler delegate, final Supplier<SSLSession> sslSession) {
+    public SSLQueryCallbackHandler(final CallbackHandler delegate, final Supplier<SSLConnection> sslConnectionSupplier) {
         this.delegate = delegate;
-        this.sslSession = checkNotNullParam("sslSession", sslSession);
+        this.sslConnectionSupplier = checkNotNullParam("sslConnectionSupplier", sslConnectionSupplier);
     }
 
     public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-        SSLSession sslSession;
-        if (! once.compareAndSet(true, false) || (sslSession = this.sslSession.get()) == null) {
+        SSLConnection sslConnection;
+        if (! once.compareAndSet(true, false) || (sslConnection = sslConnectionSupplier.get()) == null) {
             delegate.handle(callbacks);
             return;
         }
         final int length = callbacks.length;
         final Callback[] newCallbacks = new Callback[length + 1];
-        newCallbacks[0] = new SSLCallback(sslSession);
+        newCallbacks[0] = new SSLCallback(sslConnection);
         System.arraycopy(callbacks, 0, newCallbacks, 1, length);
         try {
             delegate.handle(newCallbacks);

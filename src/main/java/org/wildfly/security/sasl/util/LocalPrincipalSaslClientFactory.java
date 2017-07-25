@@ -107,7 +107,7 @@ public final class LocalPrincipalSaslClientFactory extends AbstractDelegatingSas
                         }
                     } else if (callback instanceof SSLCallback) {
                         // SSL callback always comes before name callback
-                        final SSLSession sslSession = ((SSLCallback) callback).getSslSession();
+                        final SSLSession sslSession = ((SSLCallback) callback).getSslConnection().getSession();
                         if (sslSession != null) {
                             final Principal localPrincipal = sslSession.getLocalPrincipal();
                             if (localPrincipal != null) {

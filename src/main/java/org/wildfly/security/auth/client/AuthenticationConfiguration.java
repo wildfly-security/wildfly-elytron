@@ -51,7 +51,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -116,13 +115,12 @@ import org.wildfly.security.sasl.util.SSLSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
-import org.wildfly.security.ssl.TLSServerEndPointChannelBinding;
+import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ProviderUtil;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
-import org.wildfly.security.x500.X500;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -1230,7 +1228,7 @@ public final class AuthenticationConfiguration {
             saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
         }
         if (sslSession != null) {
-            saslClientFactory = new SSLSaslClientFactory(saslClientFactory, () -> sslSession);
+            saslClientFactory = new SSLSaslClientFactory(() -> SSLConnection.forSession(sslSession, true), saslClientFactory);
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
         final SaslClientFactory finalSaslClientFactory = saslClientFactory;
@@ -1410,7 +1408,7 @@ public final class AuthenticationConfiguration {
         private final AuthenticationConfiguration config;
         private final CallbackHandler userCallbackHandler;
         private List<TrustedAuthority> trustedAuthorities;
-        private X509Certificate[] peerCerts;
+        private SSLConnection sslConnection;
 
         ClientCallbackHandler(final AuthenticationConfiguration config) {
             this.config = config;
@@ -1602,19 +1600,17 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                     SSLCallback sslCallback = (SSLCallback) callback;
-
-                    try {
-                        peerCerts = X500.asX509CertificateArray(sslCallback.getSslSession().getPeerCertificates());
-                    } catch (SSLPeerUnverifiedException e) {
-                        log.trace("Peer unverified", e);
-                    }
+                    this.sslConnection = sslCallback.getSslConnection();
                     continue;
                 } else if (callback instanceof ChannelBindingCallback) {
                     if (config.getUserCallbackKinds().contains(CallbackKind.CHANNEL_BINDING)) {
                         userCallbacks.add(callback);
                         continue;
                     }
-                    TLSServerEndPointChannelBinding.handleChannelBindingCallback((ChannelBindingCallback) callback, peerCerts);
+                    final SSLConnection sslConnection = this.sslConnection;
+                    if (sslConnection != null) {
+                        sslConnection.handleChannelBindingCallback((ChannelBindingCallback) callback);
+                    }
                     continue;
                 } else if (callback instanceof ChoiceCallback) { // Must come AFTER RealmChoiceCallback
                     if (config.getUserCallbackKinds().contains(CallbackKind.CHOICE)) {
