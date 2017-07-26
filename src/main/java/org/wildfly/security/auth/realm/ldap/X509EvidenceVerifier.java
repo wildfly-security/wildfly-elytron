@@ -29,6 +29,7 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -100,9 +101,12 @@ class X509EvidenceVerifier implements EvidenceVerifier {
 
             final int size = attribute.size();
             for (int i = 0; i < size; i++) {
-                BigInteger value = new BigInteger((String) attribute.get(i));
-                if (certificate.getSerialNumber().equals(value)) {
-                    return true;
+                Object attrSerialNumber = attribute.get(i);
+                if (attrSerialNumber != null){
+                    BigInteger value = new BigInteger((String) attrSerialNumber);
+                    if (certificate.getSerialNumber().equals(value)) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -130,8 +134,15 @@ class X509EvidenceVerifier implements EvidenceVerifier {
 
             final int size = attribute.size();
             for (int i = 0; i < size; i++) {
-                if (certificate.getSubjectDN().getName().equals(attribute.get(i))) {
-                    return true;
+                Object attrSubject = attribute.get(i);
+                if (attrSubject != null){
+
+                    X500Principal certSubjectX500Principal = certificate.getSubjectX500Principal();
+                    X500Principal attSubjectX500Principal = new X500Principal((String) attrSubject);
+
+                    if ( certSubjectX500Principal.equals(attSubjectX500Principal) ) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -163,9 +174,13 @@ class X509EvidenceVerifier implements EvidenceVerifier {
             try {
                 MessageDigest md = MessageDigest.getInstance(algorithm);
                 String digest = ByteIterator.ofBytes(md.digest(certificate.getEncoded())).hexEncode(true).drainToString();
+
                 for (int i = 0; i < size; i++) {
-                    if (digest.equalsIgnoreCase((String) attribute.get(i))) {
-                        return true;
+                    Object attrDigest = attribute.get(i);
+                    if (attrDigest != null){
+                        if (digest.equalsIgnoreCase((String) attrDigest)) {
+                            return true;
+                        }
                     }
                 }
             } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
@@ -202,8 +217,11 @@ class X509EvidenceVerifier implements EvidenceVerifier {
             final int size = attribute.size();
             try {
                 for (int i = 0; i < size; i++) {
-                    if (Arrays.equals(certificate.getEncoded(), (byte[]) attribute.get(i))) {
-                        return true;
+                    Object attrCertificate = attribute.get(i);
+                    if (attrCertificate != null){
+                        if (Arrays.equals(certificate.getEncoded(), (byte[]) attrCertificate)) {
+                            return true;
+                        }
                     }
                 }
             } catch (CertificateEncodingException e) {
