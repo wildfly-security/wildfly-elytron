@@ -27,7 +27,9 @@ import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
@@ -648,7 +650,13 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(char[] password) {
-        return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password));
+        try {
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, providerSupplier);
+            Password clearPassword = passwordFactory.translate(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password));
+            return usePassword(password == null ? null : clearPassword);
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            throw log.couldNotObtainCredentialWithCause(e);
+        }
     }
 
     /**
@@ -658,7 +666,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(String password) {
-        return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray()));
+        return usePassword(password == null ? null : password.toCharArray());
     }
 
     /**
