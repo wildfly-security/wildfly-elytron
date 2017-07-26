@@ -21,6 +21,8 @@ package org.wildfly.security.sasl.plain;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 
 import javax.security.auth.callback.Callback;
@@ -35,7 +37,10 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.CodePointIterator;
@@ -130,12 +135,14 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         // Propagate the identity to interested callback handlers
 
         try {
-            callbackHandler.handle(new Callback[] { new IdentityCredentialCallback(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray())), true) } );
+            final PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+            final Password clearPassword = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
+            callbackHandler.handle(new Callback[] { new IdentityCredentialCallback(new PasswordCredential(clearPassword), true) } );
         } catch (UnsupportedCallbackException e) {
             // ignored
         } catch (SaslException e) {
             throw e;
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw log.mechServerSideAuthenticationFailed(getMechanismName(), e).toSaslException();
         }
 
