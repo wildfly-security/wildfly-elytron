@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -92,8 +93,7 @@ public final class ElytronAuthenticator extends Authenticator {
                 return null;
             }
             final PasswordFactory factory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm(), client.getProviderSupplier(authenticationConfiguration));
-            final ClearPasswordSpec keySpec = factory.getKeySpec(twoWayPassword, ClearPasswordSpec.class);
-            password = keySpec.getEncodedPassword();
+            password = factory.getKeySpec(factory.translate(twoWayPassword), ClearPasswordSpec.class).getEncodedPassword();
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
                 // try again with a password callback
@@ -114,6 +114,9 @@ public final class ElytronAuthenticator extends Authenticator {
             return null;
         } catch (InvalidKeySpecException e){
             log.trace("InvalidKeySpecException getting ClearPasswordSpec:", e);
+            return null;
+        } catch (InvalidKeyException e) {
+            log.trace("InvalidKeyException getting ClearPasswordSpec:", e);
             return null;
         }
         final String name = nameCallback.getName();
