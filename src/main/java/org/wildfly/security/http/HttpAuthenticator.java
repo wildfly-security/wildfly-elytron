@@ -235,6 +235,10 @@ public class HttpAuthenticator {
                         // others may still be able to operate correctly.
                         evaluationFailed = true;
                         log.trace("Request evaluation for mechanism '%s' failed.", nextMechanism.getMechanismName(), e);
+                    } catch (IllegalStateException e) {
+                        evaluationFailed = true;
+                        log.trace("Request evaluation for mechanism '%s' failed.", nextMechanism.getMechanismName(), e);
+                        break;
                     }
 
                     if (isAuthenticated()) {

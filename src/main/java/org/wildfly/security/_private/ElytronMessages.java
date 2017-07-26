@@ -668,6 +668,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
     GeneralSecurityException initialLoginSkipped(long seconds);
 
+    @Message(id = 1166, value = "Empty Mechanism Configuration.")
+    IllegalStateException emptyMechanismConfiguration();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

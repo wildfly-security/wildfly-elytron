@@ -967,7 +967,11 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                 } else if (callback instanceof ServerCredentialCallback) {
                     final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
 
-                    CredentialSource serverCredentialSource = stateRef.get().getMechanismConfiguration().getServerCredentialSource();
+                    MechanismConfiguration mechanismConfiguration  = stateRef.get().getMechanismConfiguration();
+                    if (mechanismConfiguration == null) {
+                        throw log.emptyMechanismConfiguration();
+                    }
+                    CredentialSource serverCredentialSource = mechanismConfiguration.getServerCredentialSource();
 
                     final Class<? extends Credential> credentialType = serverCredentialCallback.getCredentialType();
                     final String algorithm = serverCredentialCallback.getAlgorithm();
@@ -1425,11 +1429,6 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
         private InitialState selectMechanismConfiguration() {
             MechanismConfiguration mechanismConfiguration = mechanismConfigurationSelector.selectConfiguration(mechanismInformation);
-            if (mechanismConfiguration == null) {
-                throw log.unableToSelectMechanismConfiguration(mechanismInformation.getMechanismType(),
-                        mechanismInformation.getMechanismName(), mechanismInformation.getHostName(),
-                        mechanismInformation.getProtocol());
-            }
             return new InitialState(capturedIdentity, mechanismConfiguration, mechanismConfigurationSelector, privateCredentials, publicCredentials);
         }
 
