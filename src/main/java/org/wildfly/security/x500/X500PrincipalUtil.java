@@ -21,6 +21,9 @@ package org.wildfly.security.x500;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -31,7 +34,6 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Decoder;
 import org.wildfly.security.asn1.DERDecoder;
-import sun.security.x509.X500Name;
 
 /**
  * A utility class for easily accessing details of an {@link X500Principal}.
@@ -41,15 +43,28 @@ import sun.security.x509.X500Name;
 public final class X500PrincipalUtil {
 
     private static final String[] NO_STRINGS = new String[0];
-    private static final boolean HAS_X500_NAME;
+    private static final Class<?> X500_NAME_CLASS;
+    private static final MethodHandle AS_X500_PRINCIPAL_HANDLE;
 
     static {
-        boolean hasX500Name = false;
+        Class<?> x500Name = null;
+        MethodHandle asX500PrincipalHandle = null;
         try {
-            Class.forName("sun.security.x509.X500Name", true, X500PrincipalUtil.class.getClassLoader());
-            hasX500Name = true;
-        } catch (Throwable t) {}
-        HAS_X500_NAME = hasX500Name;
+            x500Name = Class.forName("sun.security.x509.X500Name", true, X500PrincipalUtil.class.getClassLoader());
+            asX500PrincipalHandle = MethodHandles.publicLookup().unreflect(x500Name.getDeclaredMethod("asX500Principal"));
+        } catch (ClassNotFoundException e) {
+            /* expected on non OpenJDK/Oracle based runtimes */
+        } catch (IllegalAccessException e) {
+            final IllegalAccessError err = new IllegalAccessError(e.getMessage());
+            err.setStackTrace(e.getStackTrace());
+            throw err;
+        } catch (NoSuchMethodException e) {
+            final NoSuchMethodError err = new NoSuchMethodError(e.getMessage());
+            err.setStackTrace(e.getStackTrace());
+            throw err;
+        }
+        X500_NAME_CLASS = x500Name;
+        AS_X500_PRINCIPAL_HANDLE = asX500PrincipalHandle;
     }
 
     private X500PrincipalUtil() {
@@ -192,8 +207,14 @@ public final class X500PrincipalUtil {
         if (principal instanceof X500Principal) {
             return (X500Principal) principal;
         }
-        if (HAS_X500_NAME && principal instanceof X500Name) {
-            return ((X500Name) principal).asX500Principal();
+        if (X500_NAME_CLASS != null && X500_NAME_CLASS.isAssignableFrom(principal.getClass())) {
+            try {
+                return (X500Principal) AS_X500_PRINCIPAL_HANDLE.invoke(principal);
+            } catch (RuntimeException | Error ex) {
+                throw ex;
+            } catch (Throwable t) {
+                throw new UndeclaredThrowableException(t);
+            }
         }
         if (convert) {
             try {
