@@ -79,7 +79,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
     @Override
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
         /*
-         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronProvider' are also
          * updated.
          */
 
@@ -521,7 +521,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         }
 
         /*
-         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronProvider' are also
          * updated.
          */
 
@@ -546,6 +546,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_MD5:
             case ALGORITHM_DIGEST_SHA:
             case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512:{
                 return (password instanceof DigestPassword && algorithm.equals(password.getAlgorithm()));
             }
@@ -602,7 +603,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         }
 
         /*
-         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronProvider' are also
          * updated.
          */
 
@@ -654,6 +655,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_MD5:
             case ALGORITHM_DIGEST_SHA:
             case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512: {
                 if (password instanceof DigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
