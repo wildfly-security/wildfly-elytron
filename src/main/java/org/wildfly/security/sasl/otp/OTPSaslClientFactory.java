@@ -21,9 +21,12 @@ package org.wildfly.security.sasl.otp;
 import static org.wildfly.security.sasl.otp.OTPUtil.*;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -43,6 +46,16 @@ import org.wildfly.security.util.CodePointIterator;
  */
 @MetaInfServices(value = SaslClientFactory.class)
 public final class OTPSaslClientFactory implements SaslClientFactory {
+
+    private final Supplier<Provider[]> providers;
+
+    public OTPSaslClientFactory() {
+        providers = Security::getProviders;
+    }
+
+    public OTPSaslClientFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
+    }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Assert.checkNotNullParam("cbh", cbh);
@@ -65,7 +78,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
                         alternateDictionary = dictionaryPropertyToArray(alternateDictionaryProperty);
                         validateAlternateDictionary(alternateDictionary);
                     }
-                    final OTPSaslClient client = new OTPSaslClient(mechanism, secureRandom, alternateDictionary, protocol, serverName, cbh, authorizationId);
+                    final OTPSaslClient client = new OTPSaslClient(mechanism, secureRandom, alternateDictionary, protocol, serverName, cbh, authorizationId, providers);
                     client.init();
                     return client;
                 }

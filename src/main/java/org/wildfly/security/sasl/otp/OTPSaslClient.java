@@ -24,11 +24,13 @@ import static org.wildfly.security.sasl.otp.OTPUtil.*;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -62,12 +64,14 @@ final class OTPSaslClient extends AbstractSaslClient {
     private final String[] alternateDictionary;
     private NameCallback nameCallback;
     private String userName;
+    private Supplier<Provider[]> providers;
 
     OTPSaslClient(final String mechanismName, final SecureRandom secureRandom, final String[] alternateDictionary,
-            final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
+            final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, Supplier<Provider[]> providers) {
         super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
         this.secureRandom = secureRandom;
         this.alternateDictionary = alternateDictionary;
+        this.providers = providers;
     }
 
     @Override
@@ -332,7 +336,7 @@ final class OTPSaslClient extends AbstractSaslClient {
     }
 
     private byte[] generateOtpHash(final String algorithm, final String passPhrase, final String seed, final int newSequenceNumber) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PasswordFactory otpFactory = PasswordFactory.getInstance(algorithm);
+        PasswordFactory otpFactory = PasswordFactory.getInstance(algorithm, providers);
         OneTimePasswordAlgorithmSpec otpSpec = new OneTimePasswordAlgorithmSpec(algorithm, seed, newSequenceNumber);
         EncryptablePasswordSpec passwordSpec = new EncryptablePasswordSpec(passPhrase.toCharArray(), otpSpec);
         OneTimePassword otPassword = (OneTimePassword) otpFactory.generatePassword(passwordSpec);
