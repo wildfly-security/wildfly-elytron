@@ -20,16 +20,9 @@ package org.wildfly.security.tool;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
-import java.security.Security;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -348,45 +341,6 @@ class CredentialStoreCommand extends Command {
         } else {
             throw ElytronToolMessages.msg.unknownEntryType(entryType);
         }
-    }
-
-    private Supplier<Provider[]> getProvidersSupplier(final String providersList) {
-        return () -> {
-            if (providersList != null && !providersList.isEmpty()) {
-                final String[] providerNames = providersList.split(",");
-                List<Provider> providers = new ArrayList<>(providerNames.length);
-                for(String p: providerNames) {
-                    Provider provider = Security.getProvider(p.trim());
-                    if (provider != null) {
-                        providers.add(provider);
-                    }
-                }
-                ServiceLoader<Provider> providerLoader = ServiceLoader.load(Provider.class);
-                for (Provider provider : providerLoader) {
-                    for (String p : providerNames) {
-                        if (provider.getName().equals(p)) {
-                            providers.add(provider);
-                            break;
-                        }
-                    }
-                }
-                if (providers.isEmpty()) {
-                    throw ElytronToolMessages.msg.unknownProvider(providersList);
-                }
-                return providers.toArray(new Provider[providers.size()]);
-            } else {
-                // when no provider list is specified, load all Providers from service loader except WildFlyElytron Provider
-                ServiceLoader<Provider> providerLoader = ServiceLoader.load(Provider.class);
-                Iterator<Provider> providerIterator = providerLoader.iterator();
-                List<Provider> providers = new ArrayList<>();
-                while (providerIterator.hasNext()) {
-                    Provider provider = providerIterator.next();
-                    if (provider.getName().equals("WildFlyElytron")) continue;
-                    providers.add(provider);
-                }
-                return providers.toArray(new Provider[providers.size()]);
-            }
-        };
     }
 
     @Override
