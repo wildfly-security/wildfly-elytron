@@ -811,8 +811,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     }
 
     private Hold lockForWrite() {
-        readWriteLock.readLock().lock();
-        return () -> readWriteLock.readLock().unlock();
+        readWriteLock.writeLock().lock();
+        return () -> readWriteLock.writeLock().unlock();
     }
 
     private static final Pattern INDEX_PATTERN = Pattern.compile("(.+)/([a-z0-9_]+)/([-a-z0-9_]+)?/([2-7a-z]+)?$");
