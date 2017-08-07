@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.http;
 
+import org.ietf.jgss.GSSManager;
+
 /**
  * Constants used within HTTP based authentication.
  *
@@ -59,6 +61,9 @@ public class HttpConstants {
      */
     public static final String CONFIG_POST_LOCATION = CONFIG_BASE + ".post-location";
 
+    /**
+     * This allos a {@link GSSManager} instance to be passed into the authentication mechanisms.
+     */
     public static final String CONFIG_GSS_MANAGER = CONFIG_BASE + ".gss-manager";
 
     /*
