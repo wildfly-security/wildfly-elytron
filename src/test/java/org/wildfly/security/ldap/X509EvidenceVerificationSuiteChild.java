@@ -30,9 +30,13 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 /**
@@ -62,16 +66,19 @@ public class X509EvidenceVerificationSuiteChild {
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.POSSIBLY_SUPPORTED, credentialSupport);
 
-        X509Certificate scarab = loadCertificate("/ca/certs/04.pem"); // scarab
-        X509Certificate ca = loadCertificate("/ca/cacert.pem"); // ca
+        X509Certificate scarab = loadCertificate("scarab", "/ca/jks/scarab.keystore");
+        X509Certificate ca = loadCertificate("ca", "/ca/jks/ca.keystore"); // ca
         Evidence evidence = new X509PeerCertificateChainEvidence(scarab, ca);
         assertTrue(realmIdentity.verifyEvidence(evidence));
     }
 
-    private X509Certificate loadCertificate(String name) throws CertificateException {
-        CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-        InputStream is = X509EvidenceVerificationSuiteChild.class.getResourceAsStream(name);
-        return (X509Certificate) certificateFactory.generateCertificate(is);
+    private X509Certificate loadCertificate(String alias, String storePath) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+        KeyStore ks = KeyStore.getInstance("JKS");
+        try (InputStream in = X509EvidenceVerificationSuiteChild.class.getResourceAsStream(storePath)) {
+            ks.load(in, "Elytron".toCharArray());
+            Certificate result = ks.getCertificate(alias);
+            return (X509Certificate) result;
+        }
     }
 
 }
