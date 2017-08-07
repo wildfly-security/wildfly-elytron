@@ -87,6 +87,7 @@
         <version.checkstyle>6.8</version.checkstyle>
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
         <modular.jdk.args/>
+        <modular.jdk.props/>
     </properties>
 
     <build>
@@ -142,7 +143,7 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>-javaagent:${org.jmockit:jmockit:jar} ${modular.jdk.args}</argLine>
+                        <argLine>${modular.jdk.args} ${modular.jdk.props}</argLine>
                     </configuration>
                 </plugin>
 
@@ -263,7 +264,7 @@
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
             <version>${version.org.wildfly.common}</version>
-            <scope>provided</scope>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
 
         <dependency>
@@ -463,11 +464,11 @@
             </activation>
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.corba,java.sql 
-                </modular.jdk.args>
+                <modular.jdk.args>--add-modules java.corba,java.sql --illegal-access=permit</modular.jdk.args>
                 <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
                 <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
+                <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
                 <version.org.jboss.logging.tools>2.1.0.Beta1</version.org.jboss.logging.tools>
             </properties>
         </profile>
