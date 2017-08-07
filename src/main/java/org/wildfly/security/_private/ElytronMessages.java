@@ -1509,6 +1509,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6019, value = "Unable to authenticate using DIGEST mechanism - mechanism realm name (%s) is not valid")
     HttpAuthenticationException digestMechanismInvalidRealm(String realm);
 
+    @Message(id = 6020, value = "Scope unsuitable for use with authentication state '%s'")
+    IllegalArgumentException unsuitableScope(String scopeName);
+
+    @Message(id = 6021, value = "Unable to identify suitable HttpScope for mechanism state storage")
+    IllegalArgumentException unableToIdentifyHttpScope();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")

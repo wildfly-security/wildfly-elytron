@@ -27,6 +27,7 @@ import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
 
 import java.io.IOException;
 import java.security.PrivilegedActionException;
@@ -84,6 +85,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     private final CallbackHandler callbackHandler;
     private final GSSManager gssManager;
+    private final Scope[] storageScopes;
 
     SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
         checkNotNullParam("callbackHandler", callbackHandler);
@@ -91,6 +93,25 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
         this.callbackHandler = callbackHandler;
         this.gssManager = properties.containsKey(CONFIG_GSS_MANAGER) ? (GSSManager) properties.get(CONFIG_GSS_MANAGER) : GSSManager.getInstance();
+
+        String scopesProperty = (String) properties.get(CONFIG_STATE_SCOPES);
+        if (scopesProperty == null) {
+            storageScopes = new Scope[] { Scope.SESSION, Scope.CONNECTION };
+        } else {
+            String[] names = scopesProperty.split(",");
+            storageScopes = new Scope[names.length];
+            for (int i=0;i<names.length;i++) {
+                if ("NONE".equals(names[i])) {
+                    storageScopes[i] = null;
+                } else {
+                    Scope scope = Scope.valueOf(names[i]);
+                    if (scope == Scope.APPLICATION || scope == Scope.GLOBAL) {
+                        throw log.unsuitableScope(scope.name());
+                    }
+                    storageScopes[i] = scope;
+                }
+            }
+        }
     }
 
     @Override
@@ -160,6 +181,8 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.tracef("Caching GSSContext %s", gssContext);
                     storageScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
                     log.tracef("Caching KerberosTicket %s", kerberosTicket);
+                } else {
+                    log.trace("No HttpScope for storage, continuation will not be possible");
                 }
             } catch (GSSException e) {
                 throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
@@ -231,9 +254,14 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
                     return;
                 }
-            } else if (responseToken != null) {
+            } else if (responseToken != null && storageScope != null) {
                 log.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
+                return;
+            } else {
+                log.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
+                handleCallback(AuthenticationCompleteCallback.FAILED);
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                 return;
             }
         }
@@ -243,16 +271,29 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         request.noAuthenticationInProgress(this::sendBareChallenge);
     }
 
-    private HttpScope getStorageScope(HttpServerRequest request) {
-        HttpScope storageScope = request.getScope(Scope.CONNECTION);
-        return storageScope != null && storageScope.supportsAttachments() ? storageScope : null;
+    private HttpScope getStorageScope(HttpServerRequest request) throws HttpAuthenticationException {
+        for (Scope scope : storageScopes) {
+            if (scope == null) {
+                return null;
+            }
+            HttpScope httpScope = request.getScope(scope);
+            if (httpScope != null && httpScope.supportsAttachments()) {
+                if (log.isTraceEnabled()) {
+                    log.tracef("Using HttpScope '%s' with ID '%s'", scope.name(), httpScope.getID());
+                }
+                return httpScope;
+            }
+        }
+
+        throw log.unableToIdentifyHttpScope();
     }
 
     private IdentityCache createIdentityCache(final IdentityCache existingCache, final HttpScope httpScope, boolean forUpdate) {
         if (existingCache != null || // If we have a cache continue to use it.
                 httpScope == null || // If we don't have a scope we can't create a cache (existing cache is null so return it)
-                httpScope.supportsAttachments() == false || // It is not null but if it doesn't support attachments pointless to wrap in a cache
-                (httpScope.exists() == false && (forUpdate && httpScope.create() == false))) { // Doesn't exist and if update is requested can't be created
+                !httpScope.supportsAttachments() || // It is not null but if it doesn't support attachments pointless to wrap in a cache
+                (!httpScope.exists() && (!forUpdate || !httpScope.create())) // Doesn't exist and if update is requested can't be created
+                ) {
             return existingCache;
         }
 

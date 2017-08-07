@@ -66,6 +66,22 @@ public class HttpConstants {
      */
     public static final String CONFIG_GSS_MANAGER = CONFIG_BASE + ".gss-manager";
 
+    /**
+     * A comma separated list of scopes in preferred order the mechanism should attempt to use to persist state including the
+     * caching of any previously authenticated identity.
+     *
+     * Accepted values are: -
+     * <p><ul>
+     * <li>CONNECTION
+     * <li>SESSION
+     * <li>SSL_SESSION
+     * <li>NONE
+     * </ul></p>
+     *
+     * Presently only supported by the SPNEGO mechanism.
+     */
+    public static final String CONFIG_STATE_SCOPES = CONFIG_BASE + ".state-scopes";
+
     /*
      * Header Fields
      */
