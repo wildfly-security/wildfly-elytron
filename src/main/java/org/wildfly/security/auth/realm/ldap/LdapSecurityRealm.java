@@ -230,16 +230,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
         }
 
-        final DirContext dirContext;
+        final DirContext dirContext = obtainContext();
         final Stream<SearchResult> resultStream;
         final LdapSearch ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, pageSize, identityMapping.iteratorFilter);
         ldapSearch.setReturningAttributes(Collections.singleton(identityMapping.rdnIdentifier));
-        try {
-            dirContext = dirContextSupplier.get();
-            resultStream = ldapSearch.search(dirContext);
-        } catch (NamingException e) {
-            throw log.ldapRealmIdentitySearchFailed(e);
-        }
+
+        resultStream = ldapSearch.search(dirContext);
 
         Iterator<String> iterator = resultStream.map(entry -> {
             try {
@@ -503,10 +499,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public org.wildfly.security.authz.Attributes getAttributes() throws RealmUnavailableException {
-            DirContext context = null;
+            DirContext context = obtainContext();
             try {
-                context = dirContextSupplier.get();
-
                 LdapIdentity identity = getIdentity(context,
                         identityMapping.attributes.stream()
                         .map(AttributeMapping::getIdentityLdapName)
@@ -536,9 +530,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
 
                 return attributes.asReadOnly();
-
-            } catch (NamingException e) {
-                throw log.ldapRealmFailedObtainIdentityFromServer(name, e);
             } finally {
                 closeContext(context);
             }
@@ -863,12 +854,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public void delete() throws RealmUnavailableException {
-            DirContext context;
-            try {
-                context = dirContextSupplier.get();
-            } catch (NamingException e) {
-                throw log.ldapRealmFailedDeleteIdentityFromServer(e);
-            }
+            DirContext context = obtainContext();
             try {
                 LdapIdentity identity = getIdentity(context);
                 if (identity == null) {
@@ -889,12 +875,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 throw log.ldapRealmNotConfiguredToSupportCreatingIdentities();
             }
 
-            DirContext context;
-            try {
-                context = dirContextSupplier.get();
-            } catch (NamingException e) {
-                throw log.ldapRealmFailedCreateIdentityOnServer(e);
-            }
+            DirContext context = obtainContext();
             try {
                 LdapName distinguishName = (LdapName) identityMapping.newIdentityParent.clone();
                 distinguishName.add(new Rdn(identityMapping.rdnIdentifier, name));
@@ -911,12 +892,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override public void setAttributes(org.wildfly.security.authz.Attributes attributes) throws RealmUnavailableException {
             log.debugf("Trying to set attributes for principal [%s].", name);
-            DirContext context;
-            try {
-                context = dirContextSupplier.get();
-            } catch (Exception e) {
-                throw log.ldapRealmAttributesSettingFailed(name, e);
-            }
+            DirContext context = obtainContext();
             try {
                 LdapIdentity identity = getIdentity(context);
                 if (identity == null) {
