@@ -290,6 +290,9 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_MASKED_MD5_DES, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_MASKED_MD5_DES_CBC_PKCS5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_MASKED_MD5_3DES, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));

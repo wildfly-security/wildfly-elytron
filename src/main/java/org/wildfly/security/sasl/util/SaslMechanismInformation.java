@@ -242,6 +242,9 @@ public final class SaslMechanismInformation {
     static final Set<String> SCRAM_SHA_256_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> SCRAM_SHA_384_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_384, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> SCRAM_SHA_512_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_512, ClearPassword.ALGORITHM_CLEAR);
+    static final Set<String> OTP_ALGORITHMS = nSet(OneTimePassword.ALGORITHM_OTP_MD5, OneTimePassword.ALGORITHM_OTP_SHA1,
+            OneTimePassword.ALGORITHM_OTP_SHA_256, OneTimePassword.ALGORITHM_OTP_SHA_384,
+            OneTimePassword.ALGORITHM_OTP_SHA_512);
     static final Set<String> JUST_PLAIN = singleton(ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> JUST_DSA = singleton("DSA");
     static final Set<String> JUST_EC = singleton("EC");
@@ -572,6 +575,9 @@ public final class SaslMechanismInformation {
             case Names.SCRAM_SHA_512:
             case Names.SCRAM_SHA_512_PLUS: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? SCRAM_SHA_512_AND_PLAIN : emptySet();
+            }
+            case Names.OTP: {
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? OTP_ALGORITHMS : emptySet();
             }
             case Names.IEC_ISO_9798_M_DSA_SHA1:
             case Names.IEC_ISO_9798_U_DSA_SHA1:
