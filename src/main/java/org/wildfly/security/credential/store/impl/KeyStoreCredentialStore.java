@@ -74,6 +74,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.EmptyProvider;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -944,7 +945,9 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
             } else {
                 // keystore without file (e.g. PKCS11)
-                keyContainingKeyStore.load(null, storePassword);
+                synchronized (EmptyProvider.getInstance()) {
+                    keyContainingKeyStore.load(null, storePassword);
+                }
             }
             externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, storePassword, keyStore);
         } catch(IOException | GeneralSecurityException e) {
