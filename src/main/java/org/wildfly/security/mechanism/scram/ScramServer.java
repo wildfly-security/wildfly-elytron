@@ -111,23 +111,23 @@ public final class ScramServer {
                     throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
                 }
                 if (! bindingType.equals(bi.delimitedBy(',').asUtf8String().drainToString())) {
-                    throw log.mechChannelBindingTypeMismatch(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
                 binding = true;
             } else if (cbindFlag == 'y') {
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = true;
             } else if (cbindFlag == 'n') {
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = false;
             } else {
@@ -260,33 +260,30 @@ public final class ScramServer {
             final boolean binding = initialResponse.isBinding();
             if (cbindFlag == 'p') {
                 if (! binding) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_SUPPORTED);
                 }
                 if (bindingType == null || bindingData == null) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
                 }
                 if (ibi.next() != '=') {
                     throw log.mechInvalidMessageReceived(mechanism.toString());
                 }
                 if (! bindingType.equals(ibi.delimitedBy(',').asUtf8String().drainToString())) {
-                    throw log.mechChannelBindingTypeMismatch(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
             } else if (cbindFlag == 'y') {
-                if (! binding) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
-                }
                 if (mechanism.isPlus()) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
             } else if (cbindFlag == 'n') {
                 if (binding) {
-                    throw log.mechChannelBindingNotSupported(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (mechanism.isPlus()) {
-                    throw log.mechChannelBindingNotProvided(mechanism.toString());
+                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
             } else {
                 throw log.mechInvalidMessageReceived(mechanism.toString());
@@ -317,7 +314,7 @@ public final class ScramServer {
 
             // channel binding data
             if (bindingData != null && ! ibi.contentEquals(ByteIterator.ofBytes(bindingData))) {
-                throw log.mechChannelBindingChanged(mechanism.toString());
+                throw new ScramServerException(log.mechChannelBindingChanged(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDINGS_DONT_MATCH);
             }
 
             bi.next(); // skip delim
