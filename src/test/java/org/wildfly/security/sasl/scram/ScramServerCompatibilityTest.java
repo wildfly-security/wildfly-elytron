@@ -376,10 +376,10 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
-     * Client does support channel binding, believe the server supports and tries to send bind info
+     * Client does support channel binding, believes the server does not, but it does
      */
     @Test
-    public void testBindingCorrectYWithChannelBinding() throws Exception {
+    public void testBindingIncorrectYWithServerChannelBinding() throws Exception {
         mockNonce("3rfcNHYJY1ZVvWVs7j");
         final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
@@ -391,7 +391,27 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
                         .build();
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("e=server-does-not-support-channel-binding", new String(message, StandardCharsets.UTF_8));
+        assertEquals("e=server-does-support-channel-binding", new String(message, StandardCharsets.UTF_8));
+        assertFalse(saslServer.isComplete());
+    }
+
+    /**
+     * Client does not support channel binding, and the server does support
+     */
+    @Test
+    public void testBindingIncorrectNWithChannelBinding() throws Exception {
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
+
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword(password)
+                        .setChannelBinding("same-type", new byte[]{(byte) 0x00, (byte) 0x2C, (byte) 0xFF})
+                        .build();
+        byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("e=server-does-support-channel-binding", new String(message, StandardCharsets.UTF_8));
         assertFalse(saslServer.isComplete());
     }
 
@@ -480,11 +500,8 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         //         c="p=same-type,\00\2C\FF"
         message = "c=cD1zYW1lLXR5cGUsLAAs/w==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=H8mpU86Osa2lDJvFElvu7qys7LE=".getBytes(StandardCharsets.UTF_8);
-        try {
-            saslServer.evaluateResponse(message);
-            fail("SaslException not throwed");
-        } catch (SaslException e) {
-        }
+        message = saslServer.evaluateResponse(message);
+        assertEquals("e=channel-bindings-dont-match", new String(message, StandardCharsets.UTF_8));
         assertFalse(saslServer.isComplete());
     }
 }
