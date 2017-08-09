@@ -27,6 +27,7 @@ import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
 
 import java.io.IOException;
 import java.security.PrivilegedActionException;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -49,8 +51,13 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpScope;
@@ -74,9 +81,11 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     private static final String GSS_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".GSSContext";
     private static final String KERBEROS_TICKET = SpnegoAuthenticationMechanism.class.getName() + ".KerberosTicket";
+    private static final String CACHED_IDENTITY_KEY = SpnegoAuthenticationMechanism.class.getName() + ".elytron-identity";
 
     private final CallbackHandler callbackHandler;
     private final GSSManager gssManager;
+    private final Scope[] storageScopes;
 
     SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
         checkNotNullParam("callbackHandler", callbackHandler);
@@ -84,6 +93,25 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
         this.callbackHandler = callbackHandler;
         this.gssManager = properties.containsKey(CONFIG_GSS_MANAGER) ? (GSSManager) properties.get(CONFIG_GSS_MANAGER) : GSSManager.getInstance();
+
+        String scopesProperty = (String) properties.get(CONFIG_STATE_SCOPES);
+        if (scopesProperty == null) {
+            storageScopes = new Scope[] { Scope.SESSION, Scope.CONNECTION };
+        } else {
+            String[] names = scopesProperty.split(",");
+            storageScopes = new Scope[names.length];
+            for (int i=0;i<names.length;i++) {
+                if ("NONE".equals(names[i])) {
+                    storageScopes[i] = null;
+                } else {
+                    Scope scope = Scope.valueOf(names[i]);
+                    if (scope == Scope.APPLICATION || scope == Scope.GLOBAL) {
+                        throw log.unsuitableScope(scope.name());
+                    }
+                    storageScopes[i] = scope;
+                }
+            }
+        }
     }
 
     @Override
@@ -93,16 +121,34 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        HttpScope connectionScope = request.getScope(Scope.CONNECTION);
-        GSSContext gssContext = connectionScope != null ? connectionScope.getAttachment(GSS_CONTEXT_KEY, GSSContext.class) : null;
-        KerberosTicket kerberosTicket = connectionScope != null ? connectionScope.getAttachment(KERBEROS_TICKET, KerberosTicket.class) : null;
+        HttpScope storageScope = getStorageScope(request);
+        IdentityCache identityCache = null;
+
+        identityCache = createIdentityCache(identityCache, storageScope, false);
+        if (identityCache != null && attemptReAuthentication(identityCache, request)) {
+            log.trace("Successfully authorized using cached identity");
+            return;
+        }
+
+        // If the scope does not already exist it can't have previously been used to store state.
+        boolean scopeIsUsable = storageScope != null && storageScope.exists();
+        GSSContext gssContext = scopeIsUsable ? storageScope.getAttachment(GSS_CONTEXT_KEY, GSSContext.class) : null;
+        KerberosTicket kerberosTicket = scopeIsUsable ? storageScope.getAttachment(KERBEROS_TICKET, KerberosTicket.class) : null;
         log.tracef("Evaluating SPNEGO request: cached GSSContext = %s", gssContext);
 
         // Do we already have a cached identity? If so use it.
-        if (gssContext != null && gssContext.isEstablished() && authorizeCachedGSSContext(gssContext)) {
-            log.trace("Successfully authorized using cached identity");
-            request.authenticationComplete();
-            return;
+        if (gssContext != null && gssContext.isEstablished()) {
+            identityCache = createIdentityCache(identityCache, storageScope, true);
+
+            if (authorizeSrcName(gssContext, identityCache)) {
+                log.trace("Successfully authorized using cached GSSContext");
+                request.authenticationComplete();
+                return;
+            } else {
+                clearAttachments(storageScope);
+                gssContext = null;
+                kerberosTicket = null;
+            }
         }
 
         if (gssContext == null) { // init GSSContext
@@ -130,11 +176,13 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                             serviceGssCredential.getName(), Arrays2.objectToString(serviceGssCredential.getMechs()));
                 }
 
-                if (connectionScope != null) {
-                    connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
+                if (storageScope != null) {
+                    storageScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
                     log.tracef("Caching GSSContext %s", gssContext);
-                    connectionScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
+                    storageScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
                     log.tracef("Caching KerberosTicket %s", kerberosTicket);
+                } else {
+                    log.trace("No HttpScope for storage, continuation will not be possible");
                 }
             } catch (GSSException e) {
                 throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
@@ -166,7 +214,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             } catch (PrivilegedActionException e) {
                 log.trace("Call to acceptSecContext failed.", e.getCause());
                 handleCallback(AuthenticationCompleteCallback.FAILED);
-                clearAttachments(connectionScope);
+                clearAttachments(storageScope);
                 request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                 return;
             }
@@ -179,7 +227,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 } catch (GSSException e) {
                     log.trace("Unable to access delegated credential despite being delegated.", e);
                     handleCallback(AuthenticationCompleteCallback.FAILED);
-                    clearAttachments(connectionScope);
+                    clearAttachments(storageScope);
                     request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                     return;
                 }
@@ -193,25 +241,8 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
                 log.trace("GSSContext established, authorizing...");
 
-                final GSSName srcName;
-                try {
-                    srcName = gssContext.getSrcName();
-                    if (srcName == null) {
-                        log.trace("Authorization failed - srcName of GSSContext (name of initiator) is null - wrong realm or kdc?");
-                        handleCallback(AuthenticationCompleteCallback.FAILED);
-                        clearAttachments(connectionScope);
-                        request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
-                        return;
-                    }
-                } catch (GSSException e) {
-                    log.trace("Unable to obtain srcName from established GSSContext.", e);
-                    handleCallback(AuthenticationCompleteCallback.FAILED);
-                    clearAttachments(connectionScope);
-                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
-                    return;
-                }
-
-                if (authorizeSrcName(srcName, gssContext)) {
+                identityCache = createIdentityCache(identityCache, storageScope, true);
+                if (authorizeSrcName(gssContext, identityCache)) {
                     log.trace("GSSContext established and authorized - authentication complete");
                     request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
 
@@ -219,19 +250,75 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 } else {
                     log.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
+                    clearAttachments(storageScope);
                     request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
                     return;
                 }
-            } else if (responseToken != null) {
+            } else if (responseToken != null && storageScope != null) {
                 log.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
+                return;
+            } else {
+                log.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
+                handleCallback(AuthenticationCompleteCallback.FAILED);
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                 return;
             }
         }
 
         log.trace("Request lacks valid authentication credentials");
-        clearAttachments(connectionScope);
+        clearAttachments(storageScope);
         request.noAuthenticationInProgress(this::sendBareChallenge);
+    }
+
+    private HttpScope getStorageScope(HttpServerRequest request) throws HttpAuthenticationException {
+        for (Scope scope : storageScopes) {
+            if (scope == null) {
+                return null;
+            }
+            HttpScope httpScope = request.getScope(scope);
+            if (httpScope != null && httpScope.supportsAttachments()) {
+                if (log.isTraceEnabled()) {
+                    log.tracef("Using HttpScope '%s' with ID '%s'", scope.name(), httpScope.getID());
+                }
+                return httpScope;
+            }
+        }
+
+        throw log.unableToIdentifyHttpScope();
+    }
+
+    private IdentityCache createIdentityCache(final IdentityCache existingCache, final HttpScope httpScope, boolean forUpdate) {
+        if (existingCache != null || // If we have a cache continue to use it.
+                httpScope == null || // If we don't have a scope we can't create a cache (existing cache is null so return it)
+                !httpScope.supportsAttachments() || // It is not null but if it doesn't support attachments pointless to wrap in a cache
+                (!httpScope.exists() && (!forUpdate || !httpScope.create())) // Doesn't exist and if update is requested can't be created
+                ) {
+            return existingCache;
+        }
+
+        return new IdentityCache() {
+
+            @Override
+            public CachedIdentity remove() {
+                CachedIdentity cachedIdentity = get();
+
+                httpScope.setAttachment(CACHED_IDENTITY_KEY, null);
+
+                return cachedIdentity;
+            }
+
+            @Override
+            public void put(SecurityIdentity identity) {
+                httpScope.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(SPNEGO_NAME, identity));
+            }
+
+            @Override
+            public CachedIdentity get() {
+                return httpScope.getAttachment(CACHED_IDENTITY_KEY, CachedIdentity.class);
+            }
+        };
+
     }
 
     private static void clearAttachments(HttpScope scope) {
@@ -261,35 +348,73 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         }
     }
 
-    private boolean authorizeCachedGSSContext(GSSContext gssContext) throws HttpAuthenticationException {
+    private boolean attemptReAuthentication(IdentityCache identityCache, HttpServerRequest request) throws HttpAuthenticationException {
+        CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(identityCache);
         try {
-            GSSName srcName = gssContext.getSrcName();
-            boolean authorized = srcName != null && authorizeSrcName(srcName, gssContext);
-            if (authorized && gssContext.getCredDelegState()) {
-                GSSCredential gssCredential = gssContext.getDelegCred();
-                if (gssCredential != null) {
-                    log.trace("Associating delegated GSSCredential with identity.");
-                    handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
-                } else {
-                    log.trace("No GSSCredential delegated from client.");
-                }
-            }
-            return authorized;
-        } catch (GSSException e) {
-            log.trace("GSSException while obtaining srcName of GSSContext (name of initiator)");
-            handleCallback(AuthenticationCompleteCallback.FAILED);
-            throw log.mechServerSideAuthenticationFailed(SPNEGO_NAME, e).toHttpAuthenticationException();
+            callbackHandler.handle(new Callback[] { authorizeCallback });
+        } catch (IOException | UnsupportedCallbackException e) {
+            throw new HttpAuthenticationException(e);
         }
+        if (authorizeCallback.isAuthorized()) {
+            try {
+                handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
+            } catch (IOException e) {
+                throw new HttpAuthenticationException(e);
+            }
+            request.authenticationComplete(null, identityCache::remove);
+            return true;
+        }
+
+        return false;
     }
 
-    private boolean authorizeSrcName(GSSName srcName, GSSContext gssContext) throws HttpAuthenticationException {
+    private boolean authorizeSrcName(GSSContext gssContext, IdentityCache identityCache) throws HttpAuthenticationException {
+        final GSSName srcName;
+        try {
+            srcName = gssContext.getSrcName();
+            if (srcName == null) {
+                log.trace("Authorization failed - srcName of GSSContext (name of initiator) is null - wrong realm or kdc?");
+                return false;
+            }
+        } catch (GSSException e) {
+            log.trace("Unable to obtain srcName from established GSSContext.", e);
+            return false;
+        }
+
+        final BooleanSupplier authorizedFunction;
+        final Callback authorizeCallBack;
+
+        if (gssContext.getCredDelegState()) {
+            try {
+                GSSCredential credential = gssContext.getDelegCred();
+                log.tracef("Credential delegation enabled, delegated credential = %s", credential);
+                MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, new IdentityCredentialCallback(new GSSKerberosCredential(credential), true));
+            } catch (UnsupportedCallbackException ignored) {
+                // ignored
+            } catch (AuthenticationMechanismException e) {
+                throw e.toHttpAuthenticationException();
+            } catch (GSSException e) {
+                throw new HttpAuthenticationException(e);
+            }
+        } else {
+            log.trace("Credential delegation not enabled");
+        }
+
         boolean authorized = false;
         try {
             String clientName = srcName.toString();
-            AuthorizeCallback authorize = new AuthorizeCallback(clientName, clientName);
-            callbackHandler.handle(new Callback[] {authorize});
 
-            authorized = authorize.isAuthorized();
+            if (identityCache != null) {
+                CachedIdentityAuthorizeCallback cacheCallback = new CachedIdentityAuthorizeCallback(new NamePrincipal(clientName), identityCache, true);
+                authorizedFunction = cacheCallback::isAuthorized;
+                authorizeCallBack = cacheCallback;
+            } else {
+                AuthorizeCallback plainCallback = new AuthorizeCallback(clientName, clientName);
+                authorizedFunction = plainCallback::isAuthorized;
+                authorizeCallBack = plainCallback;
+            }
+            callbackHandler.handle(new Callback[] { authorizeCallBack });
+            authorized = authorizedFunction.getAsBoolean();
             log.tracef("Authorized by callback handler = %b  clientName = [%s]", authorized, clientName);
         } catch (IOException e) {
             log.trace("IOException during AuthorizeCallback handling", e);
@@ -297,25 +422,10 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         } catch (UnsupportedCallbackException ignored) {
         }
 
-        if (authorized) { // credential delegation
-            if (gssContext.getCredDelegState()) {
-                try {
-                    GSSCredential credential = gssContext.getDelegCred();
-                    log.tracef("Credential delegation enabled, delegated credential = %s", credential);
-                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, new IdentityCredentialCallback(new GSSKerberosCredential(credential), true));
-                } catch (UnsupportedCallbackException ignored) {
-                    // ignored
-                } catch (AuthenticationMechanismException e) {
-                    throw e.toHttpAuthenticationException();
-                } catch (GSSException e) {
-                    throw new HttpAuthenticationException(e);
-                }
-            } else {
-                log.trace("Credential delegation not enabled");
-            }
+        if (authorized) {
+            // If we fail the caller may still decide to try and continue authentication.
+            handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
         }
-
-        handleCallback(authorized ? AuthenticationCompleteCallback.SUCCEEDED : AuthenticationCompleteCallback.FAILED);
         return authorized;
     }
 

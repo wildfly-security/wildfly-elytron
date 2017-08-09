@@ -75,6 +75,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.EmptyProvider;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -820,8 +821,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     }
 
     private Hold lockForWrite() {
-        readWriteLock.readLock().lock();
-        return () -> readWriteLock.readLock().unlock();
+        readWriteLock.writeLock().lock();
+        return () -> readWriteLock.writeLock().unlock();
     }
 
     private static final Pattern INDEX_PATTERN = Pattern.compile("(.+)/([a-z0-9_]+)/([-a-z0-9_]+)?/([2-7a-z]+)?$");
@@ -960,7 +961,9 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
             } else {
                 // keystore without file (e.g. PKCS11)
-                keyContainingKeyStore.load(null, storePassword);
+                synchronized (EmptyProvider.getInstance()) {
+                    keyContainingKeyStore.load(null, storePassword);
+                }
             }
             externalStorage.init(cryptographicAlgorithm, encryptionKeyAlias, keyContainingKeyStore, storePassword, keyStore);
         } catch(IOException | GeneralSecurityException e) {
