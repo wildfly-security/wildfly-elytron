@@ -202,7 +202,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                 ByteStringBuilder gs2HeaderExcludingNonStdFlag = new ByteStringBuilder();
                 gs2HeaderExcludingNonStdFlag.append(message, gs2HeaderStartIndex, gs2HeaderLength);
                 try {
-                    ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag, gs2CbFlagPUsed, bindingData);
+                    ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag.toArray(), gs2CbFlagPUsed, bindingData);
                     gssContext.setChannelBinding(channelBinding);
                 } catch (GSSException e) {
                     throw log.mechUnableToSetChannelBinding(getMechanismName(), e).toSaslException();
