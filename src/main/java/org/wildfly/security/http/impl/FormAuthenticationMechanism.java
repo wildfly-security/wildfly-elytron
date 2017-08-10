@@ -119,7 +119,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public void put(SecurityIdentity  identity) {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (!session.exists()) {
+                if (session == null || !session.exists()) {
                     return;
                 }
 
@@ -130,7 +130,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public CachedIdentity get() {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (!session.exists()) {
+                if (session == null || !session.exists()) {
                     return null;
                 }
 
@@ -141,7 +141,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public CachedIdentity remove() {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (!session.exists()) {
+                if (session == null || !session.exists()) {
                     return null;
                 }
 
@@ -177,7 +177,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
                     HttpScope session = getSessionScope(request, true);
                     HttpServerMechanismsResponder responder = null;
-                    if (session.exists()) {
+                    if (session != null && session.exists()) {
                         String postAuthenticationPath;
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
@@ -284,7 +284,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         // Save the current request.
         URI requestURI = request.getRequestURI();
         HttpScope session = getSessionScope(request, true);
-        if (session.supportsAttachments()) {
+        if (session != null && session.supportsAttachments()) {
             StringBuilder sb = new StringBuilder();
             sb.append(requestURI.getScheme());
             sb.append("://");
@@ -352,7 +352,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     private HttpScope getSessionScope(HttpServerRequest request, boolean createSession) {
         HttpScope scope = request.getScope(Scope.SESSION);
 
-        if (!scope.exists() && createSession) {
+        if (scope != null &&!scope.exists() && createSession) {
             scope.create();
         }
 
