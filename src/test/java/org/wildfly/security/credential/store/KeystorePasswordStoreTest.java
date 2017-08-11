@@ -18,6 +18,7 @@
 package org.wildfly.security.credential.store;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
@@ -25,7 +26,16 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Supplier;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -403,5 +413,158 @@ public class KeystorePasswordStoreTest {
         cs.store(passwordAlias1, createCredentialFromPassword(newPassword1));
         Assert.assertArrayEquals(newPassword1,
             getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
+    }
+
+    @Test
+    public void testParallelAccessToCS()
+        throws UnsupportedCredentialTypeException, CredentialStoreException, NoSuchAlgorithmException {
+        HashMap<String, String> csAttributes = new HashMap<>();
+
+        csAttributes.put("location", stores.get("ONE"));
+        csAttributes.put("keyStoreType", "JCEKS");
+        csAttributes.put("create", Boolean.TRUE.toString());
+
+
+        CredentialStore cs = newCredentialStoreInstance();
+        cs.initialize(csAttributes, new CredentialStore.CredentialSourceProtectionParameter(
+            IdentityCredentials.NONE.withCredential(createCredentialFromPassword("test".toCharArray()))));
+
+        cs.flush();
+
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        ReadWriteLock readWriteLock = getCsLock(cs);
+        try {
+            // store
+            Supplier<Callable<Object>> storeTask = () -> prepareParallelCsStoreTask(cs, executor, readWriteLock);
+            testAccessFromMultipleCredentialStores(cs, executor, storeTask);
+            // remove
+            Supplier<Callable<Object>> removeTask = () -> prepareParallelCsRemoveTask(cs, executor, readWriteLock);
+            testAccessFromMultipleCredentialStores(cs, executor, removeTask);
+        } finally {
+            executor.shutdown();
+            if (readWriteLock.readLock().tryLock()) {
+                readWriteLock.readLock().unlock();
+            }
+        }
+    }
+
+    private void testAccessFromMultipleCredentialStores(CredentialStore cs, final ExecutorService executor,
+        Supplier<Callable<Object>> csTask) {
+        try {
+            Callable<Object> task = csTask.get();// prepareParallelCsStoreTask(cs, executor, readWriteLock);
+
+            Future<Object> task1Future = executor.submit(task);
+            task1Future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Callable<Object> prepareParallelCsStoreTask(CredentialStore cs, final ExecutorService executor, ReadWriteLock readWriteLock) {
+        Callable<Object> task1 = new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                String aliasName = addRandomSuffix("alias");
+
+                readWriteLock.readLock().lock();
+
+                Callable<Object> task2 = new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        cs.store(aliasName, createCredentialFromPassword("secret".toCharArray()));
+                        return null;
+                    }
+                };
+
+                Future<Object> task2Future = executor.submit(task2);
+                try{
+                    task2Future.get(1, TimeUnit.SECONDS);
+                    Assert.fail("We expect timeout.");
+                } catch (TimeoutException e) {
+                    // expected
+                }
+
+                if (cs.exists(aliasName, PasswordCredential.class)) {
+                    throw new IllegalStateException(String.format("Alias '%s' doesn't must exist yet!", aliasName));
+                }
+
+                readWriteLock.readLock().unlock();
+                task2Future.get(1, TimeUnit.SECONDS);
+
+                if (!cs.exists(aliasName, PasswordCredential.class)) {
+                    throw new IllegalStateException(String.format("Alias '%s' have to exist!", aliasName));
+                }
+                return null;
+            }
+        };
+        return task1;
+    }
+
+    private Callable<Object> prepareParallelCsRemoveTask(CredentialStore cs, final ExecutorService executor,
+        ReadWriteLock readWriteLock) {
+        Callable<Object> task1 = new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                String aliasName = addRandomSuffix("alias");
+                cs.store(aliasName, createCredentialFromPassword("secret".toCharArray()));
+
+                readWriteLock.readLock().lock();
+
+                Callable<Object> task2 = new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        cs.remove(aliasName, PasswordCredential.class);
+                        return null;
+                    }
+                };
+
+                Future<Object> task2Future = executor.submit(task2);
+                try {
+                    task2Future.get(1, TimeUnit.SECONDS);
+                    Assert.fail("We expect timeout.");
+                } catch (TimeoutException e) {
+                    // expected
+                }
+
+                if (!cs.exists(aliasName, PasswordCredential.class)) {
+                    throw new IllegalStateException(String.format("Alias '%s' must exist!", aliasName));
+                }
+
+                readWriteLock.readLock().unlock();
+                task2Future.get(1, TimeUnit.SECONDS);
+
+                if (cs.exists(aliasName, PasswordCredential.class)) {
+                    throw new IllegalStateException(String.format("Alias '%s' should be deleted!", aliasName));
+                }
+                return null;
+            }
+        };
+        return task1;
+    }
+
+    private ReadWriteLock getCsLock(CredentialStore cs) {
+        ReadWriteLock readWriteLock;
+        try{
+            Field f = CredentialStore.class.getDeclaredField("spi");
+            f.setAccessible(true);
+            KeyStoreCredentialStore csSpi = (KeyStoreCredentialStore) f.get(cs);
+            f.setAccessible(false);
+
+            f = KeyStoreCredentialStore.class.getDeclaredField("readWriteLock");
+            f.setAccessible(true);
+            readWriteLock = (ReadWriteLock) f.get(csSpi);
+            f.setAccessible(false);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return readWriteLock;
+    }
+
+    protected static String addRandomSuffix(String str) {
+        return str + "_" + getRandomString();
+    }
+
+    private static String getRandomString() {
+        return RandomStringUtils.randomAlphanumeric(10);
     }
 }
