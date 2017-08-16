@@ -103,13 +103,11 @@ class Gs2Util {
      * @param bindingData the channel binding data
      * @return the {@code ChannelBinding}
      */
-    public static ChannelBinding createChannelBinding(ByteStringBuilder header, boolean gs2CbFlagPUsed, byte[] bindingData) {
-        byte[] appData;
+    public static ChannelBinding createChannelBinding(byte[] header, boolean gs2CbFlagPUsed, byte[] bindingData) {
+        ByteStringBuilder appData = new ByteStringBuilder(header);
         if (gs2CbFlagPUsed) {
-            appData = (header.append(bindingData)).toArray();
-        } else {
-            appData = header.toArray();
+            appData.append(bindingData);
         }
-        return new ChannelBinding(appData);
+        return new ChannelBinding(appData.toArray());
     }
 }

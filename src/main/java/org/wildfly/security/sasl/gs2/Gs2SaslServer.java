@@ -160,7 +160,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         throw log.mechChannelBindingTypeMismatch(getMechanismName()).toSaslException();
                     }
                     skipDelimiter(bi);
-                } else if (b == 'y' || b == 'n') {
+                } else if (b == 'y') {
+                    if (plus || (bindingType != null && bindingData != null)) {
+                        // server supports channel binding
+                        throw log.mechChannelBindingNotProvided(getMechanismName()).toSaslException();
+                    }
+                    skipDelimiter(bi);
+                } else if (b == 'n') {
                     if (plus) {
                         throw log.mechChannelBindingNotProvided(getMechanismName()).toSaslException();
                     }
@@ -202,7 +208,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                 ByteStringBuilder gs2HeaderExcludingNonStdFlag = new ByteStringBuilder();
                 gs2HeaderExcludingNonStdFlag.append(message, gs2HeaderStartIndex, gs2HeaderLength);
                 try {
-                    ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag, gs2CbFlagPUsed, bindingData);
+                    ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag.toArray(), gs2CbFlagPUsed, bindingData);
                     gssContext.setChannelBinding(channelBinding);
                 } catch (GSSException e) {
                     throw log.mechUnableToSetChannelBinding(getMechanismName(), e).toSaslException();

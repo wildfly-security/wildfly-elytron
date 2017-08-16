@@ -116,7 +116,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
         gs2HeaderExcludingNonStdFlag = createGs2HeaderExcludingNonStdFlag();
         try {
             boolean gs2CbFlagPUsed = ((bindingData != null) && plus);
-            ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag, gs2CbFlagPUsed, bindingData);
+            ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag.toArray(), gs2CbFlagPUsed, bindingData);
             gssContext.setChannelBinding(channelBinding);
         } catch (GSSException e) {
             throw log.mechUnableToSetChannelBinding(getMechanismName(), e).toSaslException();
