@@ -160,7 +160,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         throw log.mechChannelBindingTypeMismatch(getMechanismName()).toSaslException();
                     }
                     skipDelimiter(bi);
-                } else if (b == 'y' || b == 'n') {
+                } else if (b == 'y') {
+                    if (plus || (bindingType != null && bindingData != null)) {
+                        // server supports channel binding
+                        throw log.mechChannelBindingNotProvided(getMechanismName()).toSaslException();
+                    }
+                    skipDelimiter(bi);
+                } else if (b == 'n') {
                     if (plus) {
                         throw log.mechChannelBindingNotProvided(getMechanismName()).toSaslException();
                     }
