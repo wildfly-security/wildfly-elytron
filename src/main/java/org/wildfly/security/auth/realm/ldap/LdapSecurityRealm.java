@@ -1000,6 +1000,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         private DirContext context;
         private NamingEnumeration<SearchResult> result;
         private byte[] cookie;
+        private ReferralException referralException;
 
         public LdapSearch(String searchDn, boolean searchRecursive, int pageSize, String filter, String... filterArgs) {
             this(searchDn, searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE, pageSize, filter, filterArgs);
@@ -1033,11 +1034,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             context = ctx;
             cookie = null;
             try {
-                result = searchWithPagination();
+                try {
+                    result = searchWithPagination();
+                } catch (ReferralException e) {
+                    referralException = e;
+                }
                 return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
 
                     boolean finished = false;
                     Set<Object> followedReferrals = new HashSet<>();
+                    boolean exceptionWasFollowed = false;
+                    boolean execute = false;
 
                     @Override
                     public boolean tryAdvance(Consumer<? super SearchResult> action) {
@@ -1047,6 +1054,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                         try {
                             while (true) {
                                 try {
+                                    if(execute) {
+                                        execute = false;
+                                        result = searchWithPagination();
+                                    }
+
+                                    if(referralException != null && !exceptionWasFollowed) {
+                                        exceptionWasFollowed = true;
+                                        throw referralException;
+                                    }
+
                                     if ( ! result.hasMore()) { // end of page
                                         if ( ! (pageSize != 0 && context instanceof LdapContext) ) {
                                             log.trace("Identity iterating - pagination not supported - end of list");
@@ -1083,12 +1100,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                     if (followedReferrals.add(e.getReferralInfo())) { // follow
                                         log.debugf("Next referral following in identity iterating: [%s]", e.getReferralInfo());
                                         context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
-                                        result = searchWithPagination();
+                                        execute = true;
                                     } else { // already searched - skip
                                         if (e.skipReferral()) {
                                             log.debugf("Referral skipped, continue: [%s]", e.getReferralInfo());
                                             context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
-                                            result = searchWithPagination();
+                                            execute = true;
                                         } else {
                                             log.debugf("Referral skipped and no more elements: [%s]", e.getReferralInfo());
                                             finished = true;
@@ -1099,7 +1116,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                             }
                         } catch (NamingException | IOException e) {
                             try {
-                                result.close();
+                                if(result != null){
+                                    result.close();
+                                }
                             } catch (NamingException ex) {
                                 log.trace("Unable to close result", ex);
                             }
