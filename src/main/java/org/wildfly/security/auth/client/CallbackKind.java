@@ -82,6 +82,10 @@ public enum CallbackKind {
     CHANNEL_BINDING,
     ;
 
+    public static EnumSet<CallbackKind> getDefaultSet() {
+        return EnumSet.of(PRINCIPAL, CREDENTIAL, REALM, PEER_PRINCIPAL, PEER_CREDENTIAL);
+    }
+
     private static final int fullSize = values().length;
 
     /**
