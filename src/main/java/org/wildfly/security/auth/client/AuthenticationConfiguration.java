@@ -136,6 +136,13 @@ public final class AuthenticationConfiguration {
     private static final String[] NO_STRINGS = new String[0];
 
     private static final EnumSet<CallbackKind> NO_CALLBACK_KINDS = EnumSet.noneOf(CallbackKind.class);
+    private static final EnumSet<CallbackKind> DEFAULT_CALLBACK_KINDS = EnumSet.of(
+            CallbackKind.PRINCIPAL,
+            CallbackKind.CREDENTIAL,
+            CallbackKind.REALM,
+            CallbackKind.PEER_PRINCIPAL,
+            CallbackKind.PEER_CREDENTIAL
+    );
 
     private static final int SET_PRINCIPAL = 0;
     private static final int SET_HOST = 1;
@@ -691,7 +698,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
-        return callbackHandler == null ? this : new AuthenticationConfiguration(this, SET_USER_CBH, callbackHandler, SET_USER_CB_KINDS, EnumSet.allOf(CallbackKind.class));
+        return callbackHandler == null ? this : new AuthenticationConfiguration(this, SET_USER_CBH, callbackHandler, SET_USER_CB_KINDS, DEFAULT_CALLBACK_KINDS);
     }
 
     /**
