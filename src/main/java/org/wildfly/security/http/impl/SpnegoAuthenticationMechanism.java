@@ -175,15 +175,6 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.tracef("Using SpnegoAuthenticationMechanism to authenticate %s using the following mechanisms: [%s]",
                             serviceGssCredential.getName(), Arrays2.objectToString(serviceGssCredential.getMechs()));
                 }
-
-                if (storageScope != null) {
-                    storageScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
-                    log.tracef("Caching GSSContext %s", gssContext);
-                    storageScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
-                    log.tracef("Caching KerberosTicket %s", kerberosTicket);
-                } else {
-                    log.trace("No HttpScope for storage, continuation will not be possible");
-                }
             } catch (GSSException e) {
                 throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
             }
@@ -202,6 +193,18 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         // Do we have an incoming response to a challenge? If so, process it.
         if (challenge.isPresent()) {
             log.trace("Processing incoming response to a challenge...");
+
+            // We only need to store the scope if we have a challenge otherwise the next round
+            // trip will be a new response anyway.
+            if (storageScope != null && (storageScope.exists() || storageScope.create())) {
+                storageScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
+                log.tracef("Caching GSSContext %s", gssContext);
+                storageScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
+                log.tracef("Caching KerberosTicket %s", kerberosTicket);
+            } else {
+                storageScope = null;
+                log.trace("No usable HttpScope for storage, continuation will not be possible");
+            }
 
             byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
 
@@ -282,6 +285,10 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.tracef("Using HttpScope '%s' with ID '%s'", scope.name(), httpScope.getID());
                 }
                 return httpScope;
+            } else {
+                if (log.isTraceEnabled()) {
+                    log.tracef(httpScope == null ? "HttpScope %s not supported" : "HttpScope %s does not support attachments", scope);
+                }
             }
         }
 
