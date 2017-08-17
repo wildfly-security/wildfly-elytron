@@ -282,6 +282,10 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.tracef("Using HttpScope '%s' with ID '%s'", scope.name(), httpScope.getID());
                 }
                 return httpScope;
+            } else {
+                if (log.isTraceEnabled()) {
+                    log.tracef(httpScope == null ? "HttpScope %s not supported" : "HttpScope %s does not support attachments", scope);
+                }
             }
         }
 
