@@ -62,7 +62,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         setFile(builder.location.toFile());
     }
 
-    protected void setFile(final File file) throws IOException {
+    void setFile(final File file) throws IOException {
         boolean ok = false;
         final FileOutputStream fos = new FileOutputStream(file, true);
         try {
@@ -84,7 +84,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
     }
 
-    protected File getFile() {
+    File getFile() {
         return file;
     }
 
@@ -105,7 +105,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * @param bytes the data.
      * @throws IOException if an I/O error occurs.
      */
-    protected void write(byte[] bytes) throws IOException {
+    void write(byte[] bytes) throws IOException {
         outputStream.write(bytes);
     }
 
@@ -116,7 +116,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      *
      * @param instant
      */
-    protected void preWrite(Instant instant) {
+    void preWrite(Instant instant) {
         // NO-OP by default
     }
 
@@ -166,7 +166,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * Close opened file streams.
      * Must be called synchronized block together with reopening using {@code setFile()}.
      */
-    protected void closeStreams() throws IOException {
+    void closeStreams() throws IOException {
         outputStream.flush();
         fileDescriptor.sync();
         outputStream.close();
