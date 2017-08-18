@@ -82,7 +82,7 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
     public int hashCode() {
         int hc = hashCode;
         if (hc == 0) {
-            hc = service.hashCode() * 19 + classLoader.hashCode();
+            hc = service.hashCode() * 19 + (classLoader != null ? classLoader.hashCode() : 0);
             if (hc == 0) hc = 1;
             return hashCode = hc;
         }
