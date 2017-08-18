@@ -21,6 +21,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.audit;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -62,7 +63,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         setFile(builder.location.toFile());
     }
 
-    protected void setFile(final File file) throws IOException {
+    void setFile(final File file) throws IOException {
         boolean ok = false;
         final FileOutputStream fos = new FileOutputStream(file, true);
         try {
@@ -84,7 +85,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
     }
 
-    protected File getFile() {
+    File getFile() {
         return file;
     }
 
@@ -105,7 +106,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * @param bytes the data.
      * @throws IOException if an I/O error occurs.
      */
-    protected void write(byte[] bytes) throws IOException {
+    void write(byte[] bytes) throws IOException {
         outputStream.write(bytes);
     }
 
@@ -116,7 +117,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      *
      * @param instant
      */
-    protected void preWrite(Instant instant) {
+    void preWrite(Instant instant) {
         // NO-OP by default
     }
 
@@ -125,26 +126,20 @@ public class FileAuditEndpoint implements AuditEndpoint {
         if (!accepting) return;
         Instant instant = clock.instant();
 
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(dateTimeFormatterSupplier.get().format(instant).getBytes(StandardCharsets.UTF_8));
+        baos.write(',');
+        baos.write(t.toString().getBytes(StandardCharsets.UTF_8));
+        baos.write(',');
+        baos.write(u.getBytes(StandardCharsets.UTF_8));
+        baos.write(LINE_TERMINATOR);
+        byte[] toWrite = baos.toByteArray();
+
         synchronized(this) {
             if (!accepting) return; // We may have been waiting to get in here.
 
             preWrite(instant);
-
-            boolean started = false;
-
-            try {
-                write(dateTimeFormatterSupplier.get()
-                        .format(instant)
-                        .getBytes(StandardCharsets.UTF_8));
-                started = true;
-                write(new byte[]{','});
-                write(t.toString().getBytes(StandardCharsets.UTF_8));
-                write(new byte[]{','});
-                write(u.getBytes(StandardCharsets.UTF_8));
-                write(LINE_TERMINATOR);
-            } catch (IOException e) {
-                throw started ? audit.partialSecurityEventWritten(e) : e;
-            }
+            write(toWrite);
 
             if (syncOnAccept) {
                 outputStream.flush();
@@ -166,7 +161,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * Close opened file streams.
      * Must be called synchronized block together with reopening using {@code setFile()}.
      */
-    protected void closeStreams() throws IOException {
+    void closeStreams() throws IOException {
         outputStream.flush();
         fileDescriptor.sync();
         outputStream.close();
