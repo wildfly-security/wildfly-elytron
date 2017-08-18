@@ -22,7 +22,6 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
-import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -251,7 +250,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
-                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
+                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
                     return;
                 }
             } else if (responseToken != null && storageScope != null) {
