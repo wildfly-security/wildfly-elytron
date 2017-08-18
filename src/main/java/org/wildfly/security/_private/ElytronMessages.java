@@ -1873,8 +1873,7 @@ public interface ElytronMessages extends BasicLogger {
 
     /* Audit Exceptions */
 
-    @Message(id = 11000, value = "Partial SecurityEvent written.")
-    IOException partialSecurityEventWritten(@Cause IOException cause);
+    // 11000 - Unused in any Final release
 
     @LogMessage(level = Logger.Level.FATAL)
     @Message(id = 11001, value = "Endpoint unable to handle SecurityEvent priority=%s, message=%s")
