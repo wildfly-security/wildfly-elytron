@@ -138,15 +138,10 @@ public class HttpAuthenticator {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
                         boolean atLeastOneChallenge = false;
-                        boolean statusSet = false;
                         for (HttpServerMechanismsResponder responder : responders) {
                             try {
                                 responder.sendResponse(this);
                                 atLeastOneChallenge = true;
-                                if (statusSet == false && statusCode > 0 && statusCode != OK) {
-                                    httpExchangeSpi.setStatusCode(statusCode);
-                                    statusSet = true;
-                                }
                             } catch (HttpAuthenticationException e) {
                                 log.trace("HTTP authentication mechanism unable to send challenge.", e);
                             }
@@ -154,7 +149,9 @@ public class HttpAuthenticator {
                         if (atLeastOneChallenge == false) {
                             throw log.httpAuthenticationNoSuccessfulResponder();
                         }
-                        if (statusSet == false) {
+                        if (statusCode > 0) {
+                            httpExchangeSpi.setStatusCode(statusCode);
+                        } else {
                             httpExchangeSpi.setStatusCode(OK);
                         }
                     } else {
@@ -319,9 +316,7 @@ public class HttpAuthenticator {
                 throw log.statusCodeNotNow();
             }
 
-            if (this.statusCode < 0 || statusCode != OK) {
-                this.statusCode = statusCode;
-            }
+            this.statusCode = statusCode;
         }
 
         @Override
@@ -336,7 +331,7 @@ public class HttpAuthenticator {
 
         @Override
         public boolean forward(String path) {
-            int statusCode = httpExchangeSpi.forward(path);
+            int statusCode = httpExchangeSpi.forward(path); // starts response, any following statusCode setting will be ignored
             if (statusCode > 0) {
                 setStatusCode(statusCode);
 
