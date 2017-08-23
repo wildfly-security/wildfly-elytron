@@ -1195,10 +1195,34 @@ public abstract class ByteIterator extends NumericIterator {
         return b;
     }
 
+    /**
+     * Drains up to {@code dst.length} bytes from this iterator into the given {@code dst} array.
+     * An attempt is made to drain as many as {@code dst.length} bytes, but a smaller number may
+     * be drained.
+     * <p>
+     * The number of bytes actually drained is returned as an integer. Unlike
+     * {@link InputStream#read(byte[], int, int)}, this method never returns a negative result.
+     *
+     * @param dst the buffer into which the data is drained
+     * @return the total number of bytes drained into {@code dst}, always greater or equal to {@code 0}
+     */
     public int drain(byte[] dst) {
         return drain(dst, 0, dst.length);
     }
 
+    /**
+     * Drains up to {@code len} bytes from this iterator into the given {@code dst} array.
+     * An attempt is made to drain as many as {@code len} bytes, but a smaller number may
+     * be drained.
+     * <p>
+     * The number of bytes actually drained is returned as an integer. Unlike
+     * {@link InputStream#read(byte[], int, int)}, this method never returns a negative result.
+     *
+     * @param dst the buffer into which the data is drained
+     * @param offs the start offset in array {@code dst} at which the data is written.
+     * @param len the maximum number of bytes to drain
+     * @return the total number of bytes drained into {@code dst}, always greater or equal to {@code 0}
+     */
     public int drain(byte[] dst, int offs, int len) {
         for (int i = 0; i < len; i ++) {
             if (! hasNext()) return i;
@@ -1479,11 +1503,31 @@ public abstract class ByteIterator extends NumericIterator {
             }
 
             public int read(final byte[] b) throws IOException {
-                return drain(b);
+                final int result = drain(b);
+                /* As drain(byte[] dst) never returns a negative result,
+                 * we need to perform some additional checks to honor
+                 * the contract of InputStream.read(byte[]). Citing from its JavaDoc:
+                 *
+                 * If the length of <code>b</code> is zero, then no bytes are read and
+                 * <code>0</code> is returned; otherwise, there is an attempt to read at
+                 * least one byte. If no byte is available because the stream is at the
+                 * end of the file, the value <code>-1</code> is returned; otherwise, at
+                 * least one byte is read and stored into <code>b</code>. */
+                return result == 0 ? (b.length == 0 ? 0 : -1) : result;
             }
 
             public int read(final byte[] b, final int off, final int len) throws IOException {
-                return drain(b, off, len);
+                final int result = drain(b, off, len);
+                /* As drain(byte[] dst, int offs, int len) never returns a negative result,
+                 * we need to perform some additional checks to honor
+                 * the contract of InputStream.read(byte[], int, int). Citing from its JavaDoc:
+                 *
+                 * <p> If <code>len</code> is zero, then no bytes are read and
+                 * <code>0</code> is returned; otherwise, there is an attempt to read at
+                 * least one byte. If no byte is available because the stream is at end of
+                 * file, the value <code>-1</code> is returned; otherwise, at least one
+                 * byte is read and stored into <code>b</code>. */
+                return result == 0 ? (len == 0 ? 0 : -1) : result;
             }
         };
     }
