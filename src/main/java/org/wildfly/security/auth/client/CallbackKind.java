@@ -18,9 +18,22 @@
 
 package org.wildfly.security.auth.client;
 
+import org.wildfly.security.auth.callback.ChannelBindingCallback;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.ParameterCallback;
+import org.wildfly.security.auth.callback.PasswordResetCallback;
+import org.wildfly.security.auth.callback.SSLCallback;
+import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
+
 import java.util.EnumSet;
 
 import javax.security.auth.callback.ChoiceCallback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.TextInputCallback;
+import javax.security.auth.callback.TextOutputCallback;
+import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 
 /**
@@ -29,27 +42,27 @@ import javax.security.sasl.RealmChoiceCallback;
  */
 public enum CallbackKind {
     /**
-     * Callbacks which select a user name or principal.
+     * Callbacks which select a user name or principal: client side {@link NameCallback}
      */
     PRINCIPAL,
     /**
-     * Callbacks which select a credential to use for authentication.
+     * Callbacks which select a credential to use for authentication: {@link PasswordCallback} and {@link CredentialCallback}
      */
     CREDENTIAL,
     /**
-     * Callbacks which handle local credential-reset requests.
+     * Callbacks which handle local credential-reset requests: {@link PasswordResetCallback}
      */
     CREDENTIAL_RESET,
     /**
-     * Callbacks which select the mechanism realm.
+     * Callbacks which select the mechanism realm: {@link RealmChoiceCallback} and {@link RealmCallback}
      */
     REALM,
     /**
-     * Callbacks which accept the peer's name or principal.
+     * Callbacks which accept the peer's name or principal: server side {@link NameCallback}
      */
     PEER_PRINCIPAL,
     /**
-     * Callbacks which handle or verify the peer's credentials.
+     * Callbacks which handle or verify the peer's credentials: {@link EvidenceVerifyCallback}
      */
     PEER_CREDENTIAL,
     /**
@@ -57,27 +70,27 @@ public enum CallbackKind {
      */
     CHOICE,
     /**
-     * Callbacks which select algorithm parameters to use for authentication.
+     * Callbacks which select algorithm parameters to use for authentication: {@link ParameterCallback}
      */
     PARAMETERS,
     /**
-     * Callbacks which accept the server's trusted authorities.
+     * Callbacks which accept the server's trusted authorities: {@link TrustedAuthoritiesCallback}
      */
     SERVER_TRUSTED_AUTHORITIES,
     /**
-     * Callbacks which provide general output.
+     * Callbacks which provide general output: {@link TextOutputCallback}
      */
     GENERAL_OUTPUT,
     /**
-     * Callbacks which provide general input.
+     * Callbacks which provide general input: {@link TextInputCallback}
      */
     GENERAL_INPUT,
     /**
-     * Callbacks which deal with SSL configuration.
+     * Callbacks which deal with SSL configuration: {@link SSLCallback}
      */
     SSL,
     /**
-     * Callbacks which configure channel binding options.
+     * Callbacks which configure channel binding options: {@link ChannelBindingCallback}
      */
     CHANNEL_BINDING,
     ;
