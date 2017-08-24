@@ -186,8 +186,46 @@
                             <artifactId>apiviz</artifactId>
                             <version>1.3.2.GA</version>
                         </docletArtifact>
-                        <excludePackageNames>*._private</excludePackageNames>
+                        <show>protected</show>
+                        <sourceFileIncludes>
+                            <include>org/wildfly/security/*.java</include>
+                            <include>org/wildfly/security/auth/*.java</include>
+                            <include>org/wildfly/security/auth/callback/*.java</include>
+                            <include>org/wildfly/security/auth/client/*.java</include>
+                            <include>org/wildfly/security/auth/permission/*.java</include>
+                            <include>org/wildfly/security/auth/principal/*.java</include>
+                            <include>org/wildfly/security/auth/server/*.java</include>
+                            <include>org/wildfly/security/auth/server/event/*.java</include>
+                            <include>org/wildfly/security/auth/util/*.java</include>
+                            <include>org/wildfly/security/authz/*.java</include>
+                            <include>org/wildfly/security/credential/*.java</include>
+                            <include>org/wildfly/security/credential/source/*.java</include>
+                            <include>org/wildfly/security/credential/store/*.java</include>
+                            <include>org/wildfly/security/evidence/*.java</include>
+                            <include>org/wildfly/security/http/*.java</include>
+                            <include>org/wildfly/security/key/*.java</include>
+                            <include>org/wildfly/security/manager/*.java</include>
+                            <include>org/wildfly/security/manager/action/*.java</include>
+                            <include>org/wildfly/security/mechanism/*.java</include>
+                            <include>org/wildfly/security/password/*.java</include>
+                            <include>org/wildfly/security/password/interfaces/*.java</include>
+                            <include>org/wildfly/security/password/spec/*.java</include>
+                            <include>org/wildfly/security/permission/*.java</include>
+                            <include>org/wildfly/security/sasl/util/*.java</include>
+                            <include>org/wildfly/security/ssl/*.java</include>
+                        </sourceFileIncludes>
+                        <destDir>api-javadoc</destDir>
                     </configuration>
+                    <executions>
+                        <execution><!-- mvn javadoc:javadoc@full-javadoc -->
+                            <id>full-javadoc</id>
+                            <configuration>
+                                <destDir>full-javadoc</destDir>
+                                <show>private</show>
+                                <excludePackageNames>-</excludePackageNames>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <!-- Checkstyle -->
