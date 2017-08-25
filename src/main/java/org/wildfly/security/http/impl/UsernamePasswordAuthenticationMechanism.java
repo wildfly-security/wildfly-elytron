@@ -29,9 +29,12 @@ import javax.security.sasl.RealmCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -72,7 +75,13 @@ abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuth
 
             callbackHandler.handle(callbacks);
 
-            return evidenceVerifyCallback.isVerified();
+            if(evidenceVerifyCallback.isVerified()) {
+                IdentityCredentialCallback credentialUpdateCallback = new IdentityCredentialCallback(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password)), true);
+                callbackHandler.handle(new Callback[]{credentialUpdateCallback});
+                return true;
+            } else {
+                return false;
+            }
         } catch (UnsupportedCallbackException e) {
             return false;
         } catch (IOException e) {
