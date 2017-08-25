@@ -26,10 +26,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
-import java.io.InputStream;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -46,7 +42,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -384,7 +379,7 @@ class EntityUtil {
      * <pre>
      *      CertData ::= CHOICE {
      *          certificateSet     SET SIZE (1..MAX) OF Certificate,
-     *          certURL            IA5String
+     *          certURL            IA5String (Note: No support for certificate URL)
      *      }
      * </pre>
      * </p>
@@ -398,55 +393,10 @@ class EntityUtil {
         X509Certificate[] peerCertChain;
         if (decoder.peekType() == SET_TYPE) {
             peerCertChain = decodeX509CertificateChain(decoder);
-        } else if (decoder.peekType() == IA5_STRING_TYPE) {
-            try {
-                X509Certificate peerCert = getCertificateFromUrl(decoder.decodeIA5String());
-                peerCertChain = new X509Certificate[] {peerCert};
-            } catch (IOException e) {
-                throw log.asnUnableToReadCertificateData(e);
-            }
         } else {
             throw log.asnUnexpectedTag();
         }
         return peerCertChain;
-    }
-
-    /**
-     * Obtain an X509Certificate using the given URL.
-     *
-     * @param certUrl the URL to the X.509 certificate to use, as a string, must be a non-relative URL
-     * @return the X.509 certificate
-     * @throws IOException if the X.509 certificate cannot be obtained
-     */
-    public static X509Certificate getCertificateFromUrl(String certUrl) throws IOException {
-        try {
-            return getCertificateFromUrl(new URL(certUrl));
-        } catch (MalformedURLException e) {
-            throw log.asnUnableToReadCertificateFromUrl(certUrl, e);
-        }
-    }
-
-    /**
-     * Obtain an X509Certificate using the given URL.
-     *
-     * @param certUrl the URL to the X.509 certificate to use
-     * @return the X.509 certificate
-     * @throws IOException if the X.509 certificate cannot be obtained
-     */
-    public static X509Certificate getCertificateFromUrl(URL certUrl) throws IOException {
-        Assert.checkNotNullParam("certUrl", certUrl);
-        X509Certificate cert;
-        InputStream in = null;
-        try {
-            in = certUrl.openStream();
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            cert = (X509Certificate) certFactory.generateCertificate(in);
-        } catch (CertificateException e) {
-            throw log.asnUnableToReadCertificateFromUrl(certUrl.toString(), e);
-        } finally {
-            safeClose(in);
-        }
-        return cert;
     }
 
     /**

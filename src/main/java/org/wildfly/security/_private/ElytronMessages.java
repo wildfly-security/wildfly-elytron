@@ -1228,13 +1228,13 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5099, value = "[%s] Unable to verify server signature")
     AuthenticationMechanismException mechUnableToVerifyServerSignature(String mechName, @Cause Throwable cause);
 
-    @Message(id = 5100, value = "[%s] Unable to obtain other side certificate from URL \"%s\"")
-    AuthenticationMechanismException mechUnableToObtainServerCertificate(String mechName, String url, @Cause Throwable cause);
+    // @Message(id = 5100, value = "[%s] Unable to obtain other side certificate from URL \"%s\"")
+    // AuthenticationMechanismException mechUnableToObtainServerCertificate(String mechName, String url, @Cause Throwable cause);
 
-    @Message(id = 5101, value = "[%s] Callback handler not provided URL of server certificate")
+    @Message(id = 5101, value = "[%s] Callback handler not provided server certificate")
     AuthenticationMechanismException mechCallbackHandlerNotProvidedServerCertificate(String mechName);
 
-    @Message(id = 5102, value = "[%s] Callback handler not provided URL of client certificate")
+    @Message(id = 5102, value = "[%s] Callback handler not provided client certificate")
     AuthenticationMechanismException mechCallbackHandlerNotProvidedClientCertificate(String mechName);
 
     @Message(id = 5103, value = "[%s] Server identifier mismatch")

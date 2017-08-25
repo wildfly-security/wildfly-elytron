@@ -22,7 +22,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.entity.Entity.keyType;
 
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -145,7 +144,6 @@ final class EntitySaslServer extends AbstractSaslServer {
                 X509Certificate clientCert;
                 X509Certificate[] serverCertChain = null;
                 X509Certificate serverCert = null;
-                URL serverCertUrl = null;
                 PrivateKey privateKey = null;
                 String clientName;
                 List<GeneralName> entityB = null;
@@ -269,7 +267,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     // }
                     // CertData ::= CHOICE {
                     //      certificateSet  SET SIZE (1..MAX) OF Certificate
-                    //      certURL         IA5String
+                    //      certURL         IA5String (Note: No support for certificate URL)
                     // }
                     // SIGNATURE { ToBeSigned } ::= SEQUENCE {
                     //      algorithm       AlgorithmIdentifier,
@@ -298,14 +296,8 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                         // certB
                         encoder.startExplicit(1);
-                        if ((serverCertChain != null) && (serverCertChain.length > 0)) {
-                            EntityUtil.encodeX509CertificateChain(encoder, serverCertChain);
-                        } else if (serverCertUrl != null) {
-                            // Use a certificate URL instead
-                            encoder.encodeIA5String(serverCertUrl.toString());
-                        } else {
-                            throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
-                        }
+                        if (serverCertChain == null || serverCertChain.length == 0) throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+                        EntityUtil.encodeX509CertificateChain(encoder, serverCertChain);
                         encoder.endExplicit();
 
                         // Private key

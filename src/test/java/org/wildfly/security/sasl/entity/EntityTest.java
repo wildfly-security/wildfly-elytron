@@ -471,8 +471,8 @@ public class EntityTest extends BaseTestCase {
             fail("Expected SaslException not thrown");
         } catch (SaslException expected) {
             // The example specifies the client's certificate using a fake URL (http://certs-r-us.com/cert?ih=hvcNAQEFBQADgYEAghAGhYTRgkFj&sn=EP9uElY3KDegjlr)
-            // so we can actually make use of it.
-            assertTrue(expected.getCause().getMessage().contains("certificate"));
+            // We do not support certificate URL
+            assertTrue(expected.getCause().getMessage().contains("Unexpected ASN.1 tag encountered"));
         }
         assertFalse(saslServer.isComplete());
     }

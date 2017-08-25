@@ -22,8 +22,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.entity.Entity.keyType;
 
-import java.io.IOException;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -71,7 +69,6 @@ final class EntitySaslClient extends AbstractSaslClient {
     private byte[] randomA;
     private byte[] randomB;
     private X509Certificate[] clientCertChain;
-    private URL clientCertUrl;
 
     EntitySaslClient(final String mechanismName, final boolean mutual, final Signature signature, final SecureRandom secureRandom, final String protocol,
             final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
@@ -142,7 +139,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                 // }
                 // CertData ::= CHOICE {
                 //      certificateSet  SET SIZE (1..MAX) OF Certificate
-                //      certURL         IA5String
+                //      certURL         IA5String (Note: No support for certificate URL)
                 // }
                 // SIGNATURE { ToBeSigned } ::= SEQUENCE {
                 //      algorithm       AlgorithmIdentifier,
@@ -162,7 +159,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                         EntityUtil.encodeGeneralNames(encoder, entityB);
                     }
 
-                    // certA (try obtaining a certificate chain first)
+                    // certA (try obtaining a certificate chain)
                     encoder.startExplicit(1);
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     trustedAuthoritiesCallback.setTrustedAuthorities(trustedAuthorities); // Server's preferred certificates
@@ -318,20 +315,10 @@ final class EntitySaslClient extends AbstractSaslClient {
     @Override
     public void dispose() throws SaslException {
         clientCertChain = null;
-        clientCertUrl = null;
     }
 
     private X509Certificate getClientCertificate() throws SaslException {
-        if ((clientCertChain != null) && (clientCertChain.length > 0)) {
-            return clientCertChain[0];
-        } else if (clientCertUrl != null) {
-            try {
-                return EntityUtil.getCertificateFromUrl(clientCertUrl);
-            } catch (IOException e) {
-                throw log.mechUnableToObtainServerCertificate(getMechanismName(), clientCertUrl.toString(), e).toSaslException();
-            }
-        } else {
-            throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
-        }
+        if (clientCertChain == null || clientCertChain.length == 0) throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+        return clientCertChain[0];
     }
 }
