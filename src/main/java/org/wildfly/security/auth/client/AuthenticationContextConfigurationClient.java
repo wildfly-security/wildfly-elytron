@@ -128,13 +128,22 @@ public final class AuthenticationContextConfigurationClient {
         if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
             configuration = configuration.useName(userInfo);
         }
-        final SecurityDomain forwardSecurityDomain = configuration.forwardSecurityDomain;
-        if (forwardSecurityDomain != null) {
-            final SecurityIdentity securityIdentity = forwardSecurityDomain.getCurrentSecurityIdentity();
+        // capture forwards
+        final SecurityDomain authenticationNameForwardSecurityDomain = configuration.authenticationNameForwardSecurityDomain;
+        if (authenticationNameForwardSecurityDomain != null) {
+            configuration = configuration.useForwardedAuthenticationIdentity(null).usePrincipal(authenticationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal());
+        }
+        final SecurityDomain authenticationCredentialsForwardSecurityDomain = configuration.authenticationCredentialsForwardSecurityDomain;
+        if (authenticationCredentialsForwardSecurityDomain != null) {
+            final SecurityIdentity securityIdentity = authenticationCredentialsForwardSecurityDomain.getCurrentSecurityIdentity();
             final IdentityCredentials privateCredentials = securityIdentity.getPrivateCredentials();
             final IdentityCredentials publicCredentials = securityIdentity.getPublicCredentials();
             // private overrides public
-            configuration = configuration.useForwardedIdentity(null).usePrincipal(securityIdentity.getPrincipal()).useCredentials(publicCredentials.with(privateCredentials));
+            configuration = configuration.useForwardedAuthenticationCredentials(null).useCredentials(publicCredentials.with(privateCredentials));
+        }
+        final SecurityDomain authorizationNameForwardSecurityDomain = configuration.authorizationNameForwardSecurityDomain;
+        if (authorizationNameForwardSecurityDomain != null) {
+            configuration = configuration.useForwardedAuthorizationIdentity(null).useAuthorizationPrincipal(authorizationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal());
         }
         final AccessControlContext capturedContext = configuration.getCapturedContext();
         if (capturedContext == null) {
