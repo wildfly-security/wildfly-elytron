@@ -157,7 +157,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
-    @Message(id = 1006, value = "No realm name found in users property file - file must contain \"#$REALM_NAME=RealmName$\" line")
+    @Message(id = 1006, value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line")
     RealmUnavailableException noRealmFoundInProperties();
 
     @LogMessage(level = Logger.Level.DEBUG)

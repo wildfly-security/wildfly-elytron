@@ -122,15 +122,22 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
-                return getCredential(credentialType, null);
+                return getCredential(credentialType, null, null);
             }
 
             @Override
             public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || ! PasswordCredential.class.isAssignableFrom(credentialType)) {
+                return getCredential(credentialType, algorithmName, null);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
+                    log.tracef("Unable to obtain credential for identity [%s]: exists = %b", principal, accountEntry != null);
                     return null;
                 }
-                boolean clear;
+
+                boolean clear; // whether should be clear or digested credential returned
                 if (algorithmName == null) {
                     clear = plainText;
                 } else if (ALGORITHM_CLEAR.equals(algorithmName)) {
@@ -138,6 +145,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 } else if (ALGORITHM_DIGEST_MD5.equals(algorithmName)) {
                     clear = false;
                 } else {
+                    log.tracef("Unable to obtain credential for identity [%s]: unsupported algorithm [%s]", principal, algorithmName);
                     return null;
                 }
 
@@ -149,10 +157,17 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
                 } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
-                    if (plainText) {
-                        AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
-                        passwordSpec = new EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
-                    } else {
+                    if (plainText) { // file contains clear passwords - needs to be digested
+                        AlgorithmParameterSpec spec = parameterSpec != null ? parameterSpec : new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
+                        passwordSpec = new EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), spec);
+                    } else { // already digested file - need to check realm name
+                        if (parameterSpec != null) { // when not null, type already checked in acquire support check
+                            if (! loadedState.getRealmName().equals(((DigestPasswordAlgorithmSpec) parameterSpec).getRealm()) ||
+                                ! accountEntry.getName().equals(((DigestPasswordAlgorithmSpec) parameterSpec).getUsername())) {
+                                log.tracef("Unable to obtain credential for identity [%s]: mismatched username/password between request and user file", algorithmName);
+                                return null; // no digest for given username+realm
+                            }
+                        }
                         byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
@@ -226,7 +241,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     @Override
     public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialType", credentialType);
-        return PasswordCredential.class.isAssignableFrom(credentialType) && (algorithmName == null || algorithmName.equals(ALGORITHM_CLEAR) && plainText || algorithmName.equals(ALGORITHM_DIGEST_MD5)) && parameterSpec == null ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+        return PasswordCredential.class.isAssignableFrom(credentialType) &&
+                (algorithmName == null || algorithmName.equals(ALGORITHM_CLEAR) && plainText || algorithmName.equals(ALGORITHM_DIGEST_MD5)) &&
+                (parameterSpec == null || parameterSpec instanceof DigestPasswordAlgorithmSpec)
+                ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
@@ -299,7 +317,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             if (realmName == null) {
-                if (defaultRealm != null) {
+                if (defaultRealm != null || plainText) {
                     realmName = defaultRealm;
                 } else {
                     throw log.noRealmFoundInProperties();
