@@ -450,6 +450,10 @@ public final class SecurityDomain {
         if (realmInfo == null) {
             realmInfo = this.realmMap.get(this.defaultRealmName);
         }
+        if (realmInfo == null) {
+            log.tracef("Unable to obtain RealmInfo [%s] and no default set - using empty", realmName);
+            realmInfo = EMPTY_REALM_INFO;
+        }
         return realmInfo;
     }
 
@@ -460,6 +464,10 @@ public final class SecurityDomain {
     /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
+     *
+     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
@@ -483,6 +491,10 @@ public final class SecurityDomain {
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
+     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
@@ -496,6 +508,10 @@ public final class SecurityDomain {
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
+     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     *
      * @param credentialType the exact credential type (must not be {@code null})
      * @return the level of support for this credential
      */
@@ -506,6 +522,10 @@ public final class SecurityDomain {
     /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
      * or definitely not verifiable.
+     *
+     * Evidence is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
+     * Evidence is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
@@ -526,6 +546,10 @@ public final class SecurityDomain {
     /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
      * or definitely not verifiable.
+     *
+     * Evidence is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
+     * Evidence is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})
      * @return the level of support for this evidence type
@@ -574,6 +598,8 @@ public final class SecurityDomain {
 
     /**
      * Get the current security identity for this domain.
+     *
+     * Code can be executed with given identity using {@link SecurityIdentity.runAs*} methods.
      *
      * @return the current security identity for this domain (not {@code null})
      */
@@ -969,14 +995,12 @@ public final class SecurityDomain {
                 sm.checkPermission(CREATE_SECURITY_DOMAIN);
             }
 
-            final String defaultRealmName = this.defaultRealmName;
-            Assert.checkNotNullParam("defaultRealmName", defaultRealmName);
             final LinkedHashMap<String, RealmInfo> realmMap = new LinkedHashMap<>(realms.size());
 
             for (RealmBuilder realmBuilder : realms.values()) {
                 realmMap.put(realmBuilder.getName(), new RealmInfo(realmBuilder));
             }
-            if (!realmMap.containsKey(defaultRealmName)) {
+            if (defaultRealmName != null && !realmMap.containsKey(defaultRealmName)) {
                 throw log.realmMapDoesNotContainDefault(defaultRealmName);
             }
 
