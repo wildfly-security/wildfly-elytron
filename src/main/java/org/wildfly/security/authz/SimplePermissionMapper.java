@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -66,7 +67,7 @@ public class SimplePermissionMapper implements PermissionMapper {
         PermissionVerifier result = null;
 
         for (Mapping current : mappings) {
-            if (current.principals.contains(permissionMappable.getPrincipal().getName()) || roles.containsAny(current.roles)) {
+            if (current.principalPredicate.test(permissionMappable.getPrincipal().getName()) || roles.containsAny(current.roles)) {
                     switch (mappingMode) {
                         case FIRST_MATCH:
                             return current.permissionVerifier;
@@ -128,15 +129,29 @@ public class SimplePermissionMapper implements PermissionMapper {
          *
          * @param principals the principal names to compare with the {@link PermissionMappable} principal.
          * @param roles the role names to compare with the roles being passed for mapping.
-         * @param permissionVerifer the {@link PermissionVerifier} to use in the event of a resulting match.
+         * @param permissionVerifier the {@link PermissionVerifier} to use in the event of a resulting match.
          * @return {@code this} builder to allow chaining.
          */
-        public Builder addMapping(Set<String> principals, Set<String> roles, PermissionVerifier permissionVerifer) {
+        public Builder addMapping(Set<String> principals, Set<String> roles, PermissionVerifier permissionVerifier) {
             assertNotBuilt();
-            mappings.add(new Mapping(principals, roles, permissionVerifer));
+            mappings.add(new Mapping(new HashSet<>(checkNotNullParam("principals", principals))::contains, roles, permissionVerifier));
 
             return this;
         }
+
+        /**
+         * Add a new mapping to a {@link PermissionVerifier}, if the {@link PermissionMappable} being mapped has a principal or any of the assigned roles are matched this mapping will be a match.
+         *
+         * @param permissionVerifier the {@link PermissionVerifier} to use in the event of a resulting match.
+         * @return {@code this} builder to allow chaining.
+         */
+        public Builder addMatchAllPrincipals(PermissionVerifier permissionVerifier) {
+            assertNotBuilt();
+            mappings.add(new Mapping(name -> true, Collections.emptySet(), permissionVerifier));
+
+            return this;
+        }
+
 
         /**
          * Build and return the resulting {@link PermissionMapper}.
@@ -157,16 +172,16 @@ public class SimplePermissionMapper implements PermissionMapper {
         }
     }
 
-    private static class Mapping {
+    static class Mapping {
 
-        private final Set<String> principals;
+        final Predicate<String> principalPredicate;
 
-        private final Set<String> roles;
+        final Set<String> roles;
 
-        private final PermissionVerifier permissionVerifier;
+        final PermissionVerifier permissionVerifier;
 
-        private Mapping(Set<String> principals, Set<String> roles, PermissionVerifier permissionVerifier) {
-            this.principals = new HashSet<>(checkNotNullParam("principals", principals));
+        Mapping(Predicate<String> principalPredicate, Set<String> roles, PermissionVerifier permissionVerifier) {
+            this.principalPredicate = principalPredicate;
             this.roles = Collections.unmodifiableSet(new HashSet<>(checkNotNullParam("roles", roles)));
             this.permissionVerifier = checkNotNullParam("permissionVerifier", permissionVerifier);
         }
