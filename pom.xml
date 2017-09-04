@@ -158,7 +158,7 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>${modular.jdk.args} ${modular.jdk.props}</argLine>
+                        <argLine>-javaagent:${org.jmockit:jmockit:jar} ${modular.jdk.args} ${modular.jdk.props}</argLine>
                     </configuration>
                 </plugin>
 
