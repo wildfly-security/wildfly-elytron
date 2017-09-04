@@ -47,7 +47,6 @@ import javax.naming.NamingException;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
-import javax.security.auth.callback.Callback;
 import javax.security.auth.login.LoginException;
 import javax.security.jacc.PolicyContextException;
 import javax.xml.namespace.QName;
@@ -66,12 +65,9 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.audit.EventPriority;
-import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -128,8 +124,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9, value = "Invalid name \"%s\"")
     IllegalArgumentException generalInvalidName(String str);
 
-    @Message(id = 10, value = "Identity locator field \"%s\" is not set")
-    IllegalStateException locatorFieldNotSet(String fieldName);
+    // @Message(id = 10, value = "Identity locator field \"%s\" is not set")
+    // IllegalStateException locatorFieldNotSet(String fieldName);
 
     @Message(id = 11, value = "Unable to create service for '%s.%s' ")
     NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
@@ -151,8 +147,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1003, value = "No authentication is in progress")
     IllegalStateException noAuthenticationInProgress();
 
-    @Message(id = 1004, value = "Authentication already complete on this context")
-    IllegalStateException authenticationAlreadyComplete();
+    // @Message(id = 1004, value = "Authentication already complete on this context")
+    // IllegalStateException authenticationAlreadyComplete();
 
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
@@ -170,11 +166,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1009, value = "Failed to instantiate custom CallbackHandler")
     RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
 
-    @Message(id = 1010, value = "Credential cannot be converted to a password")
-    FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
+    // @Message(id = 1010, value = "Credential cannot be converted to a password")
+    // FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
 
-    @Message(id = 1011, value = "Unrecognized principal type for %s")
-    IllegalArgumentException unrecognizedPrincipalType(Principal principal);
+    // @Message(id = 1011, value = "Unrecognized principal type for %s")
+    // IllegalArgumentException unrecognizedPrincipalType(Principal principal);
 
     @Message(id = 1012, value = "Filesystem-backed realm unexpectedly failed to open path \"%s\" for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmFailedToOpen(Path path, String finalName, @Cause IOException cause);
@@ -182,8 +178,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1013, value = "Filesystem-backed realm unexpectedly failed to read path \"%s\" for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmFailedToRead(Path path, String finalName, @Cause Exception cause);
 
-    @Message(id = 1014, value = "Invalid empty name given")
-    IllegalArgumentException invalidEmptyName();
+    // @Message(id = 1014, value = "Invalid empty name given")
+    // IllegalArgumentException invalidEmptyName();
 
     @Message(id = 1015, value = "Filesystem-backed realm encountered invalid file content in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidContent(Path path, int lineNumber, String name);
@@ -233,11 +229,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1030, value = "Unable to read credential")
     IOException unableToReadCredential(@Cause Exception e);
 
-    @Message(id = 1031, value = "Missing reference in extends")
-    IllegalArgumentException missingReferenceInExtends();
+    // @Message(id = 1031, value = "Missing reference in extends")
+    // IllegalArgumentException missingReferenceInExtends();
 
-    @Message(id = 1032, value = "Invalid combination of obtainable and verifiable")
-    IllegalArgumentException invalidCombinationOfObtainableAndVerifiable();
+    // @Message(id = 1032, value = "Invalid combination of obtainable and verifiable")
+    // IllegalArgumentException invalidCombinationOfObtainableAndVerifiable();
 
     @Message(id = 1033, value = "User does not exist")
     IllegalStateException userDoesNotExist();
@@ -254,14 +250,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1037, value = "Certificate chain is empty")
     IllegalArgumentException certificateChainIsEmpty();
 
-    @Message(id = 1038, value = "Could get not RSA key from query")
-    RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
+    // @Message(id = 1038, value = "Could get not RSA key from query")
+    // RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
 
-    @Message(id = 1039, value = "Invalid algorithm \"%s\"")
-    RuntimeException invalidAlgorithm(String algorithm, @Cause Throwable cause);
+    // @Message(id = 1039, value = "Invalid algorithm \"%s\"")
+    // RuntimeException invalidAlgorithm(String algorithm, @Cause Throwable cause);
 
-    @Message(id = 1040, value = "Could not parse private key")
-    RuntimeException couldNotParsePrivateKey(@Cause Throwable cause);
+    // @Message(id = 1040, value = "Could not parse private key")
+    // RuntimeException couldNotParsePrivateKey(@Cause Throwable cause);
 
     @Message(id = 1041, value = "Could not obtain credential")
     RuntimeException couldNotObtainCredential();
@@ -272,20 +268,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1043, value = "Invalid password key specification for algorithm \"%s\"")
     RuntimeException invalidPasswordKeySpecificationForAlgorithm(String algorithm, @Cause Throwable cause);
 
-    @Message(id = 1044, value = "Salt is expected when creating \"%s\" passwords")
-    RuntimeException saltIsExpectedWhenCreatingPasswords(String type);
+    // @Message(id = 1044, value = "Salt is expected when creating \"%s\" passwords")
+    // RuntimeException saltIsExpectedWhenCreatingPasswords(String type);
 
     @Message(id = 1045, value = "Could not obtain PasswordFactory for algorithm \"%s\"")
     RuntimeException couldNotObtainPasswordFactoryForAlgorithm(String algorithm, @Cause Throwable cause);
 
-    @Message(id = 1046, value = "Unknown password type or algorithm \"%s\"")
-    InvalidKeyException unknownPasswordTypeOrAlgorithm(String algorithm);
+    // @Message(id = 1046, value = "Unknown password type or algorithm \"%s\"")
+    // InvalidKeyException unknownPasswordTypeOrAlgorithm(String algorithm);
 
-    @Message(id = 1047, value = "Password-based credentials must be either a char[] or ClearPassword")
-    RuntimeException passwordBasedCredentialsMustBeCharsOrClearPassword();
+    // @Message(id = 1047, value = "Password-based credentials must be either a char[] or ClearPassword")
+    // RuntimeException passwordBasedCredentialsMustBeCharsOrClearPassword();
 
-    @Message(id = 1048, value = "Invalid password key for algorithm \"%s\"")
-    RuntimeException invalidPasswordKeyForAlgorithm(String algorithm, @Cause Throwable cause);
+    // @Message(id = 1048, value = "Invalid password key for algorithm \"%s\"")
+    // RuntimeException invalidPasswordKeyForAlgorithm(String algorithm, @Cause Throwable cause);
 
     @Message(id = 1049, value = "Could not open connection")
     RuntimeException couldNotOpenConnection(@Cause Throwable cause);
@@ -293,8 +289,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1050, value = "Could not execute query \"%s\"")
     RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
-    @Message(id = 1051, value = "Could not resolve password algorithm for credential name \"%s\"")
-    InvalidKeyException couldNotResolveAlgorithmByCredentialName(String credentialName);
+    // @Message(id = 1051, value = "Could not resolve password algorithm for credential name \"%s\"")
+    // InvalidKeyException couldNotResolveAlgorithmByCredentialName(String credentialName);
 
     @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
     RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
@@ -386,8 +382,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
-    @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity \"%s\" from server")
-    RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
+    // @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity \"%s\" from server")
+    // RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
 
     @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
     RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
@@ -419,8 +415,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
     AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
 
-    @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
-    AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
+    // @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
+    // AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
     @Message(id = 1090, value = "Unknown LDAP password scheme")
     InvalidKeySpecException unknownLdapPasswordScheme();
@@ -482,11 +478,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
     RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
 
-    @Message(id = 1110, value = "Peer identities were already set on this context")
-    IllegalStateException peerIdentitiesAlreadySet();
+    // @Message(id = 1110, value = "Peer identities were already set on this context")
+    // IllegalStateException peerIdentitiesAlreadySet();
 
-    @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
-    NamingException ldapRealmPagedControlNotProvidedByLdapContext();
+    // @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
+    // NamingException ldapRealmPagedControlNotProvidedByLdapContext();
 
     @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
     IllegalStateException cannotSucceedNotAuthorized();
@@ -580,14 +576,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1141, value = "No PEM content found")
     ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
-    ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
+    // @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
+    // ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
 
     @Message(id = 1143, value = "Invalid URL [%s]")
     ConfigXMLParseException xmlInvalidUrl(String url);
 
-    @Message(id = 1144, value = "Realm failed to obtain identity from cache")
-    RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
+    // @Message(id = 1144, value = "Realm failed to obtain identity from cache")
+    // RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
 
     @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
     IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
@@ -792,8 +788,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3013, value = "Permission collection must be read-only")
     SecurityException permissionCollectionMustBeReadOnly();
 
-    @Message(id = 3014, value = "Invalid character found in name \"%s\" at offset %d")
-    IllegalArgumentException invalidPermissionName(String name, int offset);
+    // @Message(id = 3014, value = "Invalid character found in name \"%s\" at offset %d")
+    // IllegalArgumentException invalidPermissionName(String name, int offset);
 
     @Message(id = 3015, value = "Could not load permission class \"%s\"")
     InvalidPermissionClassException permissionClassMissing(String className, @Cause ClassNotFoundException cause);
@@ -822,8 +818,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3023, value = "PublicKey parse error")
     IllegalArgumentException publicKeyParseError(@Cause Throwable cause);
 
-    @Message(id = 3024, value = "Unsupported key encoding format [%s]")
-    IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
+    // @Message(id = 3024, value = "Unsupported key encoding format [%s]")
+    // IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
 
     @Message(id = 3025, value = "Iteration count not specified for password based encryption")
     IllegalArgumentException iterationCountNotSpecified();
@@ -1058,8 +1054,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5041, value = "[%s] Iteration count %d is above the maximum of %d")
     AuthenticationMechanismException mechIterationCountIsTooHigh(String mechName, int iterationCount, int maximumIterationCount);
 
-    @Message(id = 5042, value = "[%s] Extensions unsupported")
-    AuthenticationMechanismException mechExtensionsUnsupported(String mechName);
+    // @Message(id = 5042, value = "[%s] Extensions unsupported")
+    // AuthenticationMechanismException mechExtensionsUnsupported(String mechName);
 
     @Message(id = 5043, value = "[%s] Invalid server message")
     AuthenticationMechanismException mechInvalidServerMessage(String mechName);
@@ -1076,8 +1072,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5047, value = "[%s] Authentication mechanism message is for mismatched mechanism \"%s\"")
     AuthenticationMechanismException mechUnmatchedMechanism(String mechName, String otherMechName);
 
-    @Message(id = 5048, value = "[%s] Server rejected authentication")
-    AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
+    // @Message(id = 5048, value = "[%s] Server rejected authentication")
+    // AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
 
     @Message(id = 5049, value = "[%s] Server authenticity cannot be verified")
     AuthenticationMechanismException mechServerAuthenticityCannotBeVerified(String mechName);
@@ -1094,8 +1090,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5053, value = "[%s] Callback handler failed for unknown reason")
     AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(String mechName, @Cause Throwable cause);
 
-    @Message(id = 5054, value = "[%s] Salt must be specified")
-    AuthenticationMechanismException mechSaltMustBeSpecified(String mechName);
+    // @Message(id = 5054, value = "[%s] Salt must be specified")
+    // AuthenticationMechanismException mechSaltMustBeSpecified(String mechName);
 
     @Message(id = 5055, value = "[%s] Authentication rejected (invalid proof)")
     AuthenticationMechanismException mechAuthenticationRejectedInvalidProof(String mechName);
@@ -1109,8 +1105,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5058, value = "[%s] Authentication failed")
     AuthenticationMechanismException mechAuthenticationFailed(String mechName);
 
-    @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
-    AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
+    // @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
+    // AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
 
     @Message(id = 5060, value = "Empty number")
     NumberFormatException emptyNumber();
@@ -1175,11 +1171,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5080, value = "[%s] Callback handler not provided user name")
     AuthenticationMechanismException mechNotProvidedUserName(String mechName);
 
-    @Message(id = 5081, value = "[%s] Callback handler not provided pre-digested password")
-    AuthenticationMechanismException mechNotProvidedPreDigested(String mechName);
+    // @Message(id = 5081, value = "[%s] Callback handler not provided pre-digested password")
+    // AuthenticationMechanismException mechNotProvidedPreDigested(String mechName);
 
-    @Message(id = 5082, value = "[%s] Callback handler not provided clear password")
-    AuthenticationMechanismException mechNotProvidedClearPassword(String mechName);
+    // @Message(id = 5082, value = "[%s] Callback handler not provided clear password")
+    // AuthenticationMechanismException mechNotProvidedClearPassword(String mechName);
 
     @Message(id = 5083, value = "[%s] Missing \"%s\" directive")
     AuthenticationMechanismException mechMissingDirective(String mechName, String directive);
@@ -1379,8 +1375,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
 
-    @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
-    AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
+    // @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
+    // AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
 
     @Message(id = 5150, value = "[%s] Authentication mechanism authorization ID is too long")
     AuthenticationMechanismException mechAuthorizationIdTooLong(String mechName);
@@ -1468,8 +1464,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6003, value = "An authentication attempt failed validation using mechanism '%s'.")
     String authenticationFailed(String mechanismName);
 
-    @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
-    IllegalStateException httpSessionNotSupported();
+    // @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
+    // IllegalStateException httpSessionNotSupported();
 
     @Message(id = 6005, value= "Attachments are not supported on this scope.")
     UnsupportedOperationException noAttachmentSupport();
@@ -1523,8 +1519,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7002, value = "Invalid general name type")
     ASN1Exception asnInvalidGeneralNameType();
 
-    @Message(id = 7003, value = "Invalid trusted authority type")
-    ASN1Exception asnInvalidTrustedAuthorityType();
+    // @Message(id = 7003, value = "Invalid trusted authority type")
+    // ASN1Exception asnInvalidTrustedAuthorityType();
 
     @Message(id = 7004, value = "Unexpected ASN.1 tag encountered")
     ASN1Exception asnUnexpectedTag();
@@ -1633,8 +1629,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8015, value = "Cannot verify password")
     InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
 
-    @Message(id = 8016, value = "DES crypt password hash must be %d bytes")
-    InvalidKeySpecException invalidKeySpecDesCryptPasswordHashMustBeBytes(int bytes);
+    // @Message(id = 8016, value = "DES crypt password hash must be %d bytes")
+    // InvalidKeySpecException invalidKeySpecDesCryptPasswordHashMustBeBytes(int bytes);
 
     @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
     InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
@@ -1642,8 +1638,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
     InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
 
-    @Message(id = 8019, value = "Unsupported parameter spec")
-    InvalidParameterSpecException invalidParameterSpecUnsupportedParameterSpec();
+    // @Message(id = 8019, value = "Unsupported parameter spec")
+    // InvalidParameterSpecException invalidParameterSpecUnsupportedParameterSpec();
 
     @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
     IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
@@ -1714,9 +1710,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8506, value = "Policy configuration with contextID [%s] is not in service state.")
     IllegalStateException authzPolicyConfigurationNotInService(String contextID);
 
-    @LogMessage(level = ERROR)
-    @Message(id = 8507, value = "Could not obtain dynamic permissions.")
-    void authzFailedGetDynamicPermissions(@Cause Throwable cause);
+    // @LogMessage(level = ERROR)
+    // @Message(id = 8507, value = "Could not obtain dynamic permissions.")
+    // void authzFailedGetDynamicPermissions(@Cause Throwable cause);
 
     @LogMessage(level = DEBUG)
     @Message(id = 8508, value = "Could not obtain authorized identity.")
