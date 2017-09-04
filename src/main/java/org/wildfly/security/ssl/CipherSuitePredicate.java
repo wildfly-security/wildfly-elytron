@@ -385,7 +385,7 @@ public abstract class CipherSuitePredicate {
             }
 
             boolean test(final MechanismDatabase.Entry entry) {
-                return entry.getOpenSslName().equals(name) || entry.getAliases().contains(name) || entry.getName().equals(name);
+                return entry.getOpenSslNames().contains(name) || entry.getAliases().contains(name) || entry.getName().equals(name);
             }
         };
     }
