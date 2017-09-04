@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -83,7 +84,7 @@ class MechanismDatabase {
                 log.warnInvalidStringCountForMechanismDatabaseEntry(name);
             } else {
                 boolean ok = true;
-                final String openSslName = strings[0];
+                final String[] openSslNames = strings[0].split("\\|");
                 final KeyAgreement key = KeyAgreement.forName(strings[1]);
                 if (key == null) {
                     log.warnInvalidKeyExchangeForMechanismDatabaseEntry(strings[1], name);
@@ -142,21 +143,23 @@ class MechanismDatabase {
                     byte2 = -1;
                 }
                 if (ok) {
-                    final Entry entry = new Entry(name, openSslName, new ArrayList<String>(0), key, auth, enc, digest, prot, export, level, fips, strBits, algBits);
+                    final Entry entry = new Entry(name, Arrays.asList(openSslNames), new ArrayList<String>(0), key, auth, enc, digest, prot, export, level, fips, strBits, algBits);
                     if (entriesByStdName.containsKey(name)) {
                         log.warnInvalidDuplicateMechanismDatabaseEntry(name);
                     } else {
                         entriesByStdName.put(name, entry);
                     }
-                    if (entriesByOSSLName.containsKey(openSslName)) {
-                        log.warnInvalidDuplicateOpenSslStyleAliasForMechanismDatabaseEntry(openSslName, name, entriesByOSSLName.get(openSslName).getName());
-                    } else {
-                        entriesByOSSLName.put(openSslName, entry);
-                    }
-                    if (key == KeyAgreement.DHE) {
-                        final String newKey = join("-", replaceEdh(openSslName.split("-")));
-                        if (!entriesByOSSLName.containsKey(newKey)) {
-                            entriesByOSSLName.put(newKey, entry);
+                    for (String openSslName : openSslNames) {
+                        if (entriesByOSSLName.containsKey(openSslName)) {
+                            log.warnInvalidDuplicateOpenSslStyleAliasForMechanismDatabaseEntry(openSslName, name, entriesByOSSLName.get(openSslName).getName());
+                        } else {
+                            entriesByOSSLName.put(openSslName, entry);
+                        }
+                        if (key == KeyAgreement.DHE) {
+                            final String newKey = join("-", replaceEdh(openSslName.split("-")));
+                            if (!entriesByOSSLName.containsKey(newKey)) {
+                                entriesByOSSLName.put(newKey, entry);
+                            }
                         }
                     }
                     addTo(entriesByKeyExchange, key, entry);
@@ -259,7 +262,7 @@ class MechanismDatabase {
 
     static final class Entry {
         private final String name;
-        private final String openSslName;
+        private final List<String> openSslNames;
         private final List<String> aliases;
         private final KeyAgreement keyAgreement;
         private final Authentication authentication;
@@ -272,9 +275,9 @@ class MechanismDatabase {
         private final int strengthBits;
         private final int algorithmBits;
 
-        Entry(final String name, final String openSslName, final List<String> aliases, final KeyAgreement keyAgreement, final Authentication authentication, final Encryption encryption, final Digest digest, final Protocol protocol, final boolean export, final SecurityLevel level, final boolean fips, final int strengthBits, final int algorithmBits) {
+        Entry(final String name, final List<String> openSslNames, final List<String> aliases, final KeyAgreement keyAgreement, final Authentication authentication, final Encryption encryption, final Digest digest, final Protocol protocol, final boolean export, final SecurityLevel level, final boolean fips, final int strengthBits, final int algorithmBits) {
             this.name = name;
-            this.openSslName = openSslName;
+            this.openSslNames = openSslNames;
             this.aliases = aliases;
             this.keyAgreement = keyAgreement;
             this.authentication = authentication;
@@ -292,8 +295,8 @@ class MechanismDatabase {
             return name;
         }
 
-        public String getOpenSslName() {
-            return openSslName;
+        public List<String> getOpenSslNames() {
+            return openSslNames;
         }
 
         public List<String> getAliases() {
@@ -341,7 +344,7 @@ class MechanismDatabase {
         }
 
         public String toString() {
-            return getName() + "/" + getOpenSslName();
+            return getName() + "/" + String.join("|", openSslNames);
         }
     }
 }

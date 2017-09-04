@@ -29,4 +29,18 @@ public class MechanismDatabaseTest {
         final MechanismDatabase.Entry entry = instance.getCipherSuiteOpenSSLName("NULL-MD5");
         Assert.assertNotNull(entry);
     }
+
+    @Test
+    public void testEdhDheMapping() {
+        final MechanismDatabase instance = MechanismDatabase.getInstance();
+        MechanismDatabase.Entry entry;
+        entry = instance.getCipherSuiteOpenSSLName("EXP-DHE-RSA-DES-CBC-SHA");
+        Assert.assertNotNull(entry);
+        entry = instance.getCipherSuiteOpenSSLName("DHE-DSS-CBC-SHA");
+        Assert.assertNotNull(entry);
+        entry = instance.getCipherSuiteOpenSSLName("EDH-DSS-DES-CBC-SHA");
+        Assert.assertNotNull(entry);
+        System.out.println(entry);
+    }
+
 }
