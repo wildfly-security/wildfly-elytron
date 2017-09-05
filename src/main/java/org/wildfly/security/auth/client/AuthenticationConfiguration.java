@@ -25,7 +25,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -143,14 +142,14 @@ public final class AuthenticationConfiguration {
     private static final int SET_PROTOCOL = 2;
     private static final int SET_REALM = 3;
     private static final int SET_AUTHZ_PRINCIPAL = 4;
-    private static final int SET_FWD_DOMAIN = 5;
+    private static final int SET_FWD_AUTH_NAME_DOMAIN = 5;
     private static final int SET_USER_CBH = 6;
     private static final int SET_USER_CB_KINDS = 7;
     private static final int SET_CRED_SOURCE = 8;
     private static final int SET_PROVIDER_SUPPLIER = 9;
     private static final int SET_KEY_MGR_FAC = 10;
     private static final int SET_SASL_SELECTOR = 11;
-    // unused 12
+    private static final int SET_FWD_AUTH_CRED_DOMAIN = 12;
     private static final int SET_PRINCIPAL_RW = 13;
     private static final int SET_SASL_FAC_SUP = 14;
     private static final int SET_PARAM_SPECS = 15;
@@ -160,6 +159,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_KRB_SEC_FAC = 20;
     private static final int SET_SASL_PROTOCOL = 21;
+    private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 22;
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             WildFlySecurityManager.isChecking() ?
@@ -192,7 +192,9 @@ public final class AuthenticationConfiguration {
     final String setProtocol;
     final String setRealm;
     final Principal setAuthzPrincipal;
-    final SecurityDomain forwardSecurityDomain;
+    final SecurityDomain authenticationNameForwardSecurityDomain;
+    final SecurityDomain authenticationCredentialsForwardSecurityDomain;
+    final SecurityDomain authorizationNameForwardSecurityDomain;
     final CallbackHandler userCallbackHandler;
     final EnumSet<CallbackKind> userCallbackKinds;
     final CredentialSource credentialSource;
@@ -221,7 +223,9 @@ public final class AuthenticationConfiguration {
         this.setProtocol = null;
         this.setRealm = null;
         this.setAuthzPrincipal = null;
-        this.forwardSecurityDomain = null;
+        this.authenticationNameForwardSecurityDomain = null;
+        this.authenticationCredentialsForwardSecurityDomain = null;
+        this.authorizationNameForwardSecurityDomain = null;
         this.userCallbackHandler = null;
         this.userCallbackKinds = NO_CALLBACK_KINDS;
         this.credentialSource = IdentityCredentials.NONE;
@@ -255,7 +259,9 @@ public final class AuthenticationConfiguration {
         this.setProtocol = what == SET_PROTOCOL ? (String) value : original.setProtocol;
         this.setRealm = what == SET_REALM ? (String) value : original.setRealm;
         this.setAuthzPrincipal = what == SET_AUTHZ_PRINCIPAL ? (Principal) value : original.setAuthzPrincipal;
-        this.forwardSecurityDomain = what == SET_FWD_DOMAIN ? (SecurityDomain) value : original.forwardSecurityDomain;
+        this.authenticationNameForwardSecurityDomain = what == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value : original.authenticationNameForwardSecurityDomain;
+        this.authenticationCredentialsForwardSecurityDomain = what == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value : original.authenticationCredentialsForwardSecurityDomain;
+        this.authorizationNameForwardSecurityDomain = what == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value : original.authorizationNameForwardSecurityDomain;
         this.userCallbackHandler = what == SET_USER_CBH ? (CallbackHandler) value : original.userCallbackHandler;
         this.userCallbackKinds = (what == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value : original.userCallbackKinds).clone();
         this.credentialSource = what == SET_CRED_SOURCE ? (CredentialSource) value : original.credentialSource;
@@ -292,7 +298,9 @@ public final class AuthenticationConfiguration {
         this.setProtocol = what1 == SET_PROTOCOL ? (String) value1 : what2 == SET_PROTOCOL ? (String) value2 : original.setProtocol;
         this.setRealm = what1 == SET_REALM ? (String) value1 : what2 == SET_REALM ? (String) value2 : original.setRealm;
         this.setAuthzPrincipal = what1 == SET_AUTHZ_PRINCIPAL ? (Principal) value1 : what2 == SET_AUTHZ_PRINCIPAL ? (Principal) value2 : original.setAuthzPrincipal;
-        this.forwardSecurityDomain = what1 == SET_FWD_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_DOMAIN ? (SecurityDomain) value2 : original.forwardSecurityDomain;
+        this.authenticationNameForwardSecurityDomain = what1 == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value2 : original.authenticationNameForwardSecurityDomain;
+        this.authenticationCredentialsForwardSecurityDomain = what1 == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value2 : original.authenticationCredentialsForwardSecurityDomain;
+        this.authorizationNameForwardSecurityDomain = what1 == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value2 : original.authorizationNameForwardSecurityDomain;
         this.userCallbackHandler = what1 == SET_USER_CBH ? (CallbackHandler) value1 : what2 == SET_USER_CBH ? (CallbackHandler) value2 : original.userCallbackHandler;
         this.userCallbackKinds = (what1 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value1 : what2 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value2 : original.userCallbackKinds).clone();
         this.credentialSource = what1 == SET_CRED_SOURCE ? (CredentialSource) value1 : what2 == SET_CRED_SOURCE ? (CredentialSource) value2 : original.credentialSource;
@@ -325,7 +333,9 @@ public final class AuthenticationConfiguration {
         this.setProtocol = original.setProtocol;
         this.setRealm = original.setRealm;
         this.setAuthzPrincipal = original.setAuthzPrincipal;
-        this.forwardSecurityDomain = original.forwardSecurityDomain;
+        this.authenticationNameForwardSecurityDomain = original.authenticationNameForwardSecurityDomain;
+        this.authenticationCredentialsForwardSecurityDomain = original.authenticationCredentialsForwardSecurityDomain;
+        this.authorizationNameForwardSecurityDomain = original.authorizationNameForwardSecurityDomain;
         this.userCallbackHandler = original.userCallbackHandler;
         this.userCallbackKinds = original.userCallbackKinds;
         this.credentialSource = original.credentialSource;
@@ -350,7 +360,9 @@ public final class AuthenticationConfiguration {
         this.setProtocol = getOrDefault(other.setProtocol, original.setProtocol);
         this.setRealm = getOrDefault(other.setRealm, original.setRealm);
         this.setAuthzPrincipal = getOrDefault(other.setAuthzPrincipal, original.setAuthzPrincipal);
-        this.forwardSecurityDomain = getOrDefault(other.forwardSecurityDomain, original.forwardSecurityDomain);
+        this.authenticationNameForwardSecurityDomain = getOrDefault(other.authenticationNameForwardSecurityDomain, original.authenticationNameForwardSecurityDomain);
+        this.authenticationCredentialsForwardSecurityDomain = getOrDefault(other.authenticationCredentialsForwardSecurityDomain, original.authenticationCredentialsForwardSecurityDomain);
+        this.authorizationNameForwardSecurityDomain = getOrDefault(other.authorizationNameForwardSecurityDomain, original.authorizationNameForwardSecurityDomain);
         this.userCallbackHandler = getOrDefault(other.userCallbackHandler, original.userCallbackHandler);
         this.userCallbackKinds = getOrDefault(other.userCallbackKinds, original.userCallbackKinds).clone();
         this.credentialSource = other.credentialSource == IdentityCredentials.NONE ? original.credentialSource : other.credentialSource;
@@ -380,7 +392,7 @@ public final class AuthenticationConfiguration {
     // test method
 
     Principal getPrincipal() {
-        return forwardSecurityDomain != null ? forwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal() : principal;
+        return authenticationNameForwardSecurityDomain != null ? authenticationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal() : principal;
     }
 
     String getHost() {
@@ -482,7 +494,7 @@ public final class AuthenticationConfiguration {
     }
 
     Principal getAuthorizationPrincipal() {
-        return setAuthzPrincipal;
+        return authorizationNameForwardSecurityDomain != null ? authorizationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal() : setAuthzPrincipal;
     }
 
     Supplier<Provider[]> getProviderSupplier() {
@@ -508,8 +520,8 @@ public final class AuthenticationConfiguration {
     }
 
     CredentialSource getCredentialSource() {
-        if (forwardSecurityDomain != null) {
-            return doPrivileged((PrivilegedAction<IdentityCredentials>) () -> forwardSecurityDomain.getCurrentSecurityIdentity().getPrivateCredentials(), capturedAccessContext);
+        if (authenticationCredentialsForwardSecurityDomain != null) {
+            return doPrivileged((PrivilegedAction<IdentityCredentials>) () -> authenticationCredentialsForwardSecurityDomain.getCurrentSecurityIdentity().getPrivateCredentials(), capturedAccessContext);
         } else {
             return credentialSource;
         }
@@ -977,10 +989,51 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useForwardedIdentity(SecurityDomain securityDomain) {
-        if (Objects.equals(forwardSecurityDomain, securityDomain)) {
+        return useForwardedAuthenticationIdentity(securityDomain).useForwardedAuthenticationCredentials(securityDomain);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which forwards the authentication name
+     * from the current identity of the given security domain.
+     *
+     * @param securityDomain the security domain
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useForwardedAuthenticationIdentity(SecurityDomain securityDomain) {
+        if (Objects.equals(authenticationNameForwardSecurityDomain, securityDomain)) {
             return this;
         } else {
-            return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, securityDomain != null ? AccessController.getContext() : null, SET_FWD_DOMAIN, securityDomain);
+            return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, securityDomain != null ? getContext() : null, SET_FWD_AUTH_NAME_DOMAIN, securityDomain);
+        }
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which forwards the authentication
+     * credentials from the current identity of the given security domain.
+     *
+     * @param securityDomain the security domain
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useForwardedAuthenticationCredentials(SecurityDomain securityDomain) {
+        if (Objects.equals(authenticationCredentialsForwardSecurityDomain, securityDomain)) {
+            return this;
+        } else {
+            return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, securityDomain != null ? getContext() : null, SET_FWD_AUTH_CRED_DOMAIN, securityDomain);
+        }
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which forwards the authorization name
+     * from the current identity of the given security domain.
+     *
+     * @param securityDomain the security domain
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useForwardedAuthorizationIdentity(SecurityDomain securityDomain) {
+        if (Objects.equals(authorizationNameForwardSecurityDomain, securityDomain)) {
+            return this;
+        } else {
+            return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, securityDomain != null ? getContext() : null, SET_FWD_AUTHZ_NAME_DOMAIN, securityDomain);
         }
     }
 
@@ -1281,7 +1334,9 @@ public final class AuthenticationConfiguration {
             && Objects.equals(setProtocol, other.setProtocol)
             && Objects.equals(setRealm, other.setRealm)
             && Objects.equals(setAuthzPrincipal, other.setAuthzPrincipal)
-            && Objects.equals(forwardSecurityDomain, other.forwardSecurityDomain)
+            && Objects.equals(authenticationNameForwardSecurityDomain, other.authenticationNameForwardSecurityDomain)
+            && Objects.equals(authenticationCredentialsForwardSecurityDomain, other.authenticationCredentialsForwardSecurityDomain)
+            && Objects.equals(authorizationNameForwardSecurityDomain, other.authorizationNameForwardSecurityDomain)
             && Objects.equals(userCallbackHandler, other.userCallbackHandler)
             && Objects.equals(userCallbackKinds, other.userCallbackKinds)
             && Objects.equals(credentialSource, other.credentialSource)
@@ -1307,7 +1362,8 @@ public final class AuthenticationConfiguration {
         int hashCode = this.hashCode;
         if (hashCode == 0) {
             hashCode = Objects.hash(
-                principal, setHost, setProtocol, setRealm, setAuthzPrincipal, forwardSecurityDomain, userCallbackHandler, credentialSource,
+                principal, setHost, setProtocol, setRealm, setAuthzPrincipal, authenticationNameForwardSecurityDomain,
+                authenticationCredentialsForwardSecurityDomain, authorizationNameForwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
                 mechanismProperties, kerberosSecurityFactory, saslProtocol) * 19 + setPort;
             if (hashCode == 0) {
@@ -1333,7 +1389,9 @@ public final class AuthenticationConfiguration {
             if (saslProtocol != null) b.append("sasl-protocol-name=").append(saslProtocol).append(',');
             if (setPort != -1) b.append("set-port=").append(setPort).append(',');
             if (setRealm != null) b.append("set-realm=").append(setRealm).append(',');
-            if (forwardSecurityDomain != null) b.append("forwarding-authentication,");
+            if (authenticationNameForwardSecurityDomain != null) b.append("forwarding-authentication-name,");
+            if (authenticationCredentialsForwardSecurityDomain != null) b.append("forwarding-authentication-credentials,");
+            if (authorizationNameForwardSecurityDomain != null) b.append("forwarding-authorization-name,");
             if (userCallbackHandler != null) b.append("user-callback-handler=").append(userCallbackHandler).append(',');
             if (! userCallbackKinds.isEmpty()) b.append("user-callback-kinds=").append(userCallbackKinds).append(',');
             if (credentialSource != null && credentialSource != CredentialSource.NONE && credentialSource != IdentityCredentials.NONE) b.append("credentials-present,");
