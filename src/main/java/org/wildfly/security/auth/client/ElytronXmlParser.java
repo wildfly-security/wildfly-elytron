@@ -32,12 +32,14 @@ import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
@@ -91,6 +93,7 @@ import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -115,7 +118,11 @@ import org.wildfly.security.x500.X500;
  */
 public final class ElytronXmlParser {
 
-    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader()), Security::getProviders);
+    private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = WildFlySecurityManager.isChecking() ?
+            AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader())) :
+            new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader());
+
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, Security::getProviders);
 
     static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
 
@@ -765,10 +772,11 @@ public final class ElytronXmlParser {
                     }
                     case "use-service-loader": {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 11);
+                        foundBits = setBit(foundBits, 2);
                         final String moduleName = parseModuleRefType(reader);
-                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
-                        Supplier<Provider[]> serviceLoaderSupplier = new ServiceLoaderSupplier<>(Provider.class, classLoader);
+                        Supplier<Provider[]> serviceLoaderSupplier = (moduleName == null) ?
+                                ELYTRON_PROVIDER_SUPPLIER :
+                                new ServiceLoaderSupplier<>(Provider.class, ModuleLoader.getClassLoaderFromModule(reader, moduleName));
                         providerSupplier = providerSupplier == null ? serviceLoaderSupplier : ProviderUtil.aggregate(providerSupplier, serviceLoaderSupplier);
                         break;
                     }
