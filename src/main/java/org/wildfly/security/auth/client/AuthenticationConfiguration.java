@@ -98,6 +98,7 @@ import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -160,6 +161,12 @@ public final class AuthenticationConfiguration {
     private static final int SET_KRB_SEC_FAC = 20;
     private static final int SET_SASL_PROTOCOL = 21;
 
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
+            WildFlySecurityManager.isChecking() ?
+                    AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader())) :
+                    new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()),
+            Security::getProviders);
+
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
      * remapping of any kind, and always uses an anonymous principal.
@@ -219,7 +226,7 @@ public final class AuthenticationConfiguration {
         this.userCallbackKinds = NO_CALLBACK_KINDS;
         this.credentialSource = IdentityCredentials.NONE;
         this.setPort = -1;
-        this.providerSupplier = ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()), Security::getProviders);
+        this.providerSupplier = DEFAULT_PROVIDER_SUPPLIER;
         this.keyManagerFactory = null;
         this.saslMechanismSelector = null;
         this.principalRewriter = null;
@@ -999,7 +1006,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useDefaultProviders() {
-        return useProviders(ProviderUtil.aggregate(new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()), Security::getProviders));
+        return useProviders(DEFAULT_PROVIDER_SUPPLIER);
     }
 
     /**
