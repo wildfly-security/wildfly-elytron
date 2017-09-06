@@ -70,6 +70,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
 import org.wildfly.security.FixedSecurityFactory;
@@ -96,6 +97,7 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
+import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -830,6 +832,19 @@ public final class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useKeyManagerCredential(X509KeyManager keyManager) {
         return new AuthenticationConfiguration(this, SET_KEY_MGR_FAC, new FixedSecurityFactory<>(keyManager));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses local kerberos ticket cache
+     * to acquire the credential required for authentication.
+     *
+     * @param mechanismOids array of oid's indicating the mechanisms over which the credential is to be acquired
+     * @return the new configuration
+     *
+     * @since 1.2.0
+     */
+    public AuthenticationConfiguration useLocalKerberosCredential(Oid[] mechanismOids) {
+        return useCredentials(getCredentialSource().with(LocalKerberosCredentialSource.builder().setMechanismOids(mechanismOids).build()));
     }
 
     /**

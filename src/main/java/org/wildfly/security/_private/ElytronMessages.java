@@ -638,6 +638,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
     IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
 
+    @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
+    ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
+
+    @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
+    ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

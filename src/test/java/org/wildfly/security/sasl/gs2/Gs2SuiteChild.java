@@ -26,8 +26,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.wildfly.security.sasl.gs2.Gs2.GS2_KRB5;
 import static org.wildfly.security.sasl.gs2.Gs2.GS2_KRB5_PLUS;
-import static org.wildfly.security.sasl.gs2.Gs2.OID_KRB5;
-import static org.wildfly.security.sasl.gs2.Gs2.OID_SPNEGO;
 import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO;
 import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO_PLUS;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
@@ -73,6 +71,7 @@ import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.SaslMechanismSelector;
@@ -427,15 +426,15 @@ public class Gs2SuiteChild extends BaseTestCase {
 
     @Test
     public void testGetSaslNameForMechanismOid() throws Exception {
-        assertEquals(GS2_KRB5, Gs2.getSaslNameForMechanism(new Oid("1.2.840.113554.1.2.2"), false));
-        assertEquals(SPNEGO_PLUS, Gs2.getSaslNameForMechanism(new Oid("1.3.6.1.5.5.2"), true));
+        assertEquals(GS2_KRB5, Gs2.getSaslNameForMechanism(GSSCredentialSecurityFactory.KERBEROS_V5, false));
+        assertEquals(SPNEGO_PLUS, Gs2.getSaslNameForMechanism(GSSCredentialSecurityFactory.SPNEGO, true));
         assertEquals("GS2-DT4PIK22T6A-PLUS", Gs2.getSaslNameForMechanism(new Oid("1.3.6.1.5.5.1.1"), true));
     }
 
     @Test
     public void testGetMechanismForSaslName() throws Exception {
-        assertEquals(OID_KRB5, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "GS2-KRB5-PLUS"));
-        assertEquals(OID_SPNEGO, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "SPNEGO"));
+        assertEquals(GSSCredentialSecurityFactory.KERBEROS_V5, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "GS2-KRB5-PLUS"));
+        assertEquals(GSSCredentialSecurityFactory.SPNEGO, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "SPNEGO"));
     }
 
     private SaslServer getIndirectSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
@@ -470,7 +469,7 @@ public class Gs2SuiteChild extends BaseTestCase {
                 credential = Subject.doAs(serverSubject, new PrivilegedExceptionAction<GSSCredential>() {
                     public GSSCredential run() throws SaslException {
                         try {
-                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, OID_KRB5, GSSCredential.ACCEPT_ONLY);
+                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, GSSCredentialSecurityFactory.KERBEROS_V5, GSSCredential.ACCEPT_ONLY);
                         } catch (GSSException e) {
                             throw new SaslException(e.getMessage());
                         }
@@ -571,7 +570,7 @@ public class Gs2SuiteChild extends BaseTestCase {
                 credential = Subject.doAs(clientSubject, new PrivilegedExceptionAction<GSSCredential>() {
                     public GSSCredential run() throws SaslException {
                         try {
-                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, OID_KRB5, GSSCredential.INITIATE_ONLY);
+                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, GSSCredentialSecurityFactory.KERBEROS_V5, GSSCredential.INITIATE_ONLY);
                         } catch (GSSException e) {
                             throw new SaslException(e.getMessage());
                         }
