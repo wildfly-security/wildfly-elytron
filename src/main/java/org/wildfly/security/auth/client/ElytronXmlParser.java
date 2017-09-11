@@ -2365,8 +2365,11 @@ public final class ElytronXmlParser {
         }
 
         InputStream createStream() throws IOException {
-            final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-            final InputStream stream = contextClassLoader.getResourceAsStream(resourceName);
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader == null) {
+                classLoader = ElytronXmlParser.class.getClassLoader();
+            }
+            final InputStream stream = classLoader.getResourceAsStream(resourceName);
             if (stream == null) throw new FileNotFoundException(resourceName);
             return stream;
         }
