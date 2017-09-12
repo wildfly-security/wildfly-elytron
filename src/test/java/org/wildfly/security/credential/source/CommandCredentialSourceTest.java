@@ -78,5 +78,4 @@ public class CommandCredentialSourceTest {
                 + CredentialCommand.class.getName() + (argument != null ? delimiter + argument : "");
         return extOption + cmd;
     }
-
 }
