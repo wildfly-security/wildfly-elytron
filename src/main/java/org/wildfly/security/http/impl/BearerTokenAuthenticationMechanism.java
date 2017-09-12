@@ -20,7 +20,11 @@ package org.wildfly.security.http.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
+import static org.wildfly.security.http.HttpConstants.REALM;
+import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
+import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,14 +34,18 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
+import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 
@@ -72,10 +80,10 @@ class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMech
 
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-        List<String> authorizationValues = request.getRequestHeaderValues("Authorization");
+        List<String> authorizationValues = request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
 
         if (authorizationValues == null || authorizationValues.isEmpty()) {
-            request.authenticationFailed("Bearer token required", response -> response.setStatusCode(401));
+            request.authenticationFailed("Bearer token required", this::unauthorizedResponse);
             return;
         } else if (authorizationValues.size() > 1) {
             request.authenticationFailed("Multiple Authorization headers found", response -> response.setStatusCode(400));
@@ -120,4 +128,32 @@ class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMech
             log.tracef("Unsupported callback [%s]", callback);
         }
     }
+
+    private void unauthorizedResponse(HttpServerResponse response) throws HttpAuthenticationException {
+        StringBuilder sb = new StringBuilder("Bearer");
+        String realmName = getRealmName();
+
+        if (realmName != null) {
+            sb.append(" ").append(REALM).append("=\"").append(realmName).append("\"");
+        }
+
+        response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
+        response.setStatusCode(UNAUTHORIZED);
+    }
+
+    private String getRealmName() throws HttpAuthenticationException {
+        try {
+            AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
+            callbackHandler.handle(new Callback[] { availableRealmsCallback });
+            String[] realmNames = availableRealmsCallback.getRealmNames();
+            if (realmNames != null && realmNames.length > 0) {
+                return realmNames[0];
+            }
+        } catch (UnsupportedCallbackException ignored) {
+        } catch (IOException e) {
+            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(BEARER_TOKEN, e).toHttpAuthenticationException();
+        }
+        return null;
+    }
+
 }
