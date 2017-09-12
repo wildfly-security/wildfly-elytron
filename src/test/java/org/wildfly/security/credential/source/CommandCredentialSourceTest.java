@@ -73,4 +73,5 @@ public class CommandCredentialSourceTest {
         builder.addCommand("-cp").addCommand(System.getProperty("java.class.path"))
                 .addCommand(CredentialCommand.class.getName());
     }
+
 }
