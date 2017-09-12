@@ -168,7 +168,7 @@ public final class SecurityDomain {
             classLoader = currentThread.getContextClassLoader();
         }
 
-        return CLASS_LOADER_DOMAIN_MAP.get(classLoader);
+        return classLoader != null ? CLASS_LOADER_DOMAIN_MAP.get(classLoader) : null;
     }
 
     /**
