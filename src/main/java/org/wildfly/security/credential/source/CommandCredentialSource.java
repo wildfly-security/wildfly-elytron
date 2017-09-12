@@ -80,6 +80,7 @@ public final class CommandCredentialSource implements CredentialSource {
         try {
             process = AccessController.doPrivileged((PrivilegedExceptionAction<Process>) processBuilder::start);
         } catch (PrivilegedActionException e) {
+            e.printStackTrace();
             try {
                 throw e.getCause();
             } catch (IOException | RuntimeException | Error e2) {
@@ -95,6 +96,7 @@ public final class CommandCredentialSource implements CredentialSource {
             try (InputStream output = process.getInputStream()) {
                 try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(output, outputCharset))) {
                     line = outputReader.readLine();
+                    System.out.println(String.format("Command output = %s", line));
                 }
             }
             final int exitCode;
@@ -111,12 +113,16 @@ public final class CommandCredentialSource implements CredentialSource {
             if (log.isTraceEnabled()) {
                 log.tracef("Exit code from password command = %d", Integer.valueOf(exitCode));
             }
+            System.out.println(String.format("Exit code from password command = %d", Integer.valueOf(exitCode)));
 
             if (line == null) {
                 return null;
             }
 
             return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, line.toCharArray())));
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            throw e;
         } finally {
             // better clean up just in case
             process.destroyForcibly();
