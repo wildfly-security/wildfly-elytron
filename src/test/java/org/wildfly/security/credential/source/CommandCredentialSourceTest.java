@@ -38,7 +38,8 @@ public class CommandCredentialSourceTest {
         final CommandCredentialSource credentialSource = builder.build();
         final PasswordCredential credential = credentialSource.getCredential(PasswordCredential.class);
         assertNotNull(credential);
-        final Password password = credential.castAndApply(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, PasswordCredential::getPassword);
+        final Password password = credential.castAndApply(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR,
+                PasswordCredential::getPassword);
         assertNotNull(password);
         final ClearPassword clearPassword = password.castAs(ClearPassword.class, ClearPassword.ALGORITHM_CLEAR);
         assertNotNull(clearPassword);
@@ -55,28 +56,22 @@ public class CommandCredentialSourceTest {
 
     private static void addJava(final CommandCredentialSource.Builder builder) {
         // First check for java.exe or java as the binary
+        System.out.println("java.home=" + System.getProperty("java.home"));
+        System.out.println("java.class.path=" + System.getProperty("java.class.path"));
+
         File java = new File(System.getProperty("java.home"), "/bin/java");
+        System.out.println("java exists=" + java.exists());
+        System.out.println("java isFile=" + java.isFile());
         File javaExe = new File(System.getProperty("java.home"), "/bin/java.exe");
+        System.out.println("java.exe exists=" + javaExe.exists());
+        System.out.println("java.exe isFile=" + javaExe.isFile());
+
         builder.addCommand(java.exists() ? java.getAbsolutePath() : javaExe.getAbsolutePath());
     }
 
     private static void addCommand(final CommandCredentialSource.Builder builder) {
-        builder.addCommand("-cp").addCommand(System.getProperty("java.class.path")).addCommand(CredentialCommand.class.getName());
-    }
-
-    private static String buildExternalCommand(final String extOption, final String delimiter, final String argument) {
-        // First check for java.exe or java as the binary
-        File java = new File(System.getProperty("java.home"), "/bin/java");
-        File javaExe = new File(System.getProperty("java.home"), "/bin/java.exe");
-        String jre;
-        if (java.exists())
-            jre = java.getAbsolutePath();
-        else
-            jre = javaExe.getAbsolutePath();
-        // Build the command to run this jre
-        String cmd = jre + delimiter + "-cp" + delimiter + System.getProperty("java.class.path") + delimiter
-                + CredentialCommand.class.getName() + (argument != null ? delimiter + argument : "");
-        return extOption + cmd;
+        builder.addCommand("-cp").addCommand(System.getProperty("java.class.path"))
+                .addCommand(CredentialCommand.class.getName());
     }
 
 }
