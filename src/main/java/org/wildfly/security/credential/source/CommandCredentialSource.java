@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.charset.Charset;
 import java.security.AccessControlContext;
@@ -36,6 +38,10 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -66,11 +72,13 @@ public final class CommandCredentialSource implements CredentialSource {
         outputCharset = builder.outputCharset;
     }
 
-    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType,
+            final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
         return credentialType == PasswordCredential.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
-    public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+    public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName,
+            final AlgorithmParameterSpec parameterSpec) throws IOException {
         if (credentialType != PasswordCredential.class) {
             return null;
         }
@@ -90,23 +98,39 @@ public final class CommandCredentialSource implements CredentialSource {
             }
         }
         try {
-            final String line;
+            String line = null;
             process.getOutputStream().close();
-            process.getErrorStream().close();
-            try (InputStream output = process.getInputStream()) {
-                try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(output, outputCharset))) {
-                    line = outputReader.readLine();
-                    System.out.println(String.format("Command output = %s", line));
-                }
+            // process.getErrorStream().close();
+            // try (InputStream output = process.getInputStream()) {
+            // try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(output, outputCharset))) {
+            // line = outputReader.readLine();
+            // System.out.println(String.format("Command output = %s", line));
+            // }
+            // }
+
+            ExecutorService executorService = Executors.newFixedThreadPool(2);
+            try {
+                Future<String> stdErrReader = executorService.submit(() -> readStream(process.getErrorStream()));
+                Future<String> stdOutReader = executorService.submit(() -> readStream(process.getInputStream()));
+                line = stdOutReader.get();
+                System.out.println("Command output stdOut=" + line);
+                System.out.println("Command output stdErr=" + stdErrReader.get());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } finally {
+                executorService.shutdown();
             }
+
             final int exitCode;
             try {
                 exitCode = process.waitFor();
             } catch (InterruptedException e) {
                 process.destroyForcibly();
-                while (process.isAlive()) try {
-                    process.waitFor();
-                } catch (InterruptedException ignored) {}
+                while (process.isAlive())
+                    try {
+                        process.waitFor();
+                    } catch (InterruptedException ignored) {
+                    }
                 Thread.currentThread().interrupt();
                 throw log.credentialCommandInterrupted();
             }
@@ -119,7 +143,8 @@ public final class CommandCredentialSource implements CredentialSource {
                 return null;
             }
 
-            return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, line.toCharArray())));
+            return credentialType
+                    .cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, line.toCharArray())));
         } catch (IOException | RuntimeException e) {
             e.printStackTrace();
             throw e;
@@ -127,6 +152,24 @@ public final class CommandCredentialSource implements CredentialSource {
             // better clean up just in case
             process.destroyForcibly();
         }
+    }
+
+    private String readStream(InputStream inputStream) {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while (null != (line = br.readLine())) {
+                if (sb.length() > 0) {
+                    sb.append(File.separator);
+                }
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(new StringWriter()));
+            return sw.toString();
+        }
+        return sb.toString();
     }
 
     /**
@@ -143,7 +186,8 @@ public final class CommandCredentialSource implements CredentialSource {
      */
     public static final class Builder {
         Charset outputCharset = Charset.defaultCharset();
-        SecurityFactory<PasswordFactory> passwordFactoryFactory = () -> PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        SecurityFactory<PasswordFactory> passwordFactoryFactory = () -> PasswordFactory
+                .getInstance(ClearPassword.ALGORITHM_CLEAR);
         Function<ProcessBuilder, ProcessBuilder> builderProcessor = Function.identity();
 
         Builder() {
@@ -166,8 +210,8 @@ public final class CommandCredentialSource implements CredentialSource {
         }
 
         /**
-         * Add a command string supplier result to the list of command strings.  If the supplier returns {@code null} or
-         * an empty string, no string is added at that time.  The supplier is evaluated every time a command is run.
+         * Add a command string supplier result to the list of command strings. If the supplier returns {@code null} or an empty
+         * string, no string is added at that time. The supplier is evaluated every time a command is run.
          *
          * @param commandStringSupplier the string supplier to get the string from (must not be {@code null})
          * @return this builder
@@ -176,15 +220,16 @@ public final class CommandCredentialSource implements CredentialSource {
             checkNotNullParam("commandString", commandStringSupplier);
             builderProcessor = builderProcessor.andThen(pb -> {
                 final String string = commandStringSupplier.get();
-                if (string != null && ! string.isEmpty()) pb.command().add(string);
+                if (string != null && !string.isEmpty())
+                    pb.command().add(string);
                 return pb;
             });
             return this;
         }
 
         /**
-         * Add a command string provider to the list of command strings.  The provider can add multiple strings to
-         * the consumer that is provided to it.  The provider must not provide {@code null} or empty strings.
+         * Add a command string provider to the list of command strings. The provider can add multiple strings to the consumer
+         * that is provided to it. The provider must not provide {@code null} or empty strings.
          *
          * @param consumer the consumer which can provide the command strings to add (must not be {@code null})
          * @return this builder
@@ -218,8 +263,7 @@ public final class CommandCredentialSource implements CredentialSource {
         }
 
         /**
-         * Add multiple environment values to the process environment.  The consumer is called once for every command
-         * execution.
+         * Add multiple environment values to the process environment. The consumer is called once for every command execution.
          *
          * @param consumer a consumer which can provide key-value pairs to add to the environment (must not be {@code null})
          * @return this builder
@@ -227,7 +271,8 @@ public final class CommandCredentialSource implements CredentialSource {
         public Builder addEnvironment(Consumer<BiConsumer<String, String>> consumer) {
             checkNotNullParam("consumer", consumer);
             builderProcessor = builderProcessor.andThen(pb -> {
-                consumer.accept((key, value) -> pb.environment().put(checkNotEmptyParam("key", checkNotNullParam("key", key)), checkNotEmptyParam("value", checkNotNullParam("value", value))));
+                consumer.accept((key, value) -> pb.environment().put(checkNotEmptyParam("key", checkNotNullParam("key", key)),
+                        checkNotEmptyParam("value", checkNotNullParam("value", value))));
                 return pb;
             });
             return this;
@@ -262,7 +307,7 @@ public final class CommandCredentialSource implements CredentialSource {
         }
 
         /**
-         * Set the provider to use to find the password factory.  If this method is not called, the default is used.
+         * Set the provider to use to find the password factory. If this method is not called, the default is used.
          *
          * @param provider the provider to use (must not be {@code null})
          * @return this builder
@@ -274,8 +319,8 @@ public final class CommandCredentialSource implements CredentialSource {
         }
 
         /**
-         * Set the output character set (encoding) to expect from the process.  If this method is not called, the
-         * system default character set is used.
+         * Set the output character set (encoding) to expect from the process. If this method is not called, the system default
+         * character set is used.
          *
          * @param charset the character set to use (must not be {@code null})
          * @return this builder
