@@ -46,23 +46,28 @@ public final class TruncatedMessageDigest extends MessageDigest {
         this.bytes = bytes;
     }
 
+    @Override
     public void update(final byte input) {
         delegate.update(input);
     }
 
+    @Override
     public void update(final byte[] input, final int offset, final int len) {
         delegate.update(input, offset, len);
     }
 
+    @Override
     public void update(final byte[] input) {
         delegate.update(input);
     }
 
+    @Override
     public byte[] digest() {
         final byte[] digest = delegate.digest();
         return digest.length > bytes ? Arrays.copyOf(digest, bytes) : digest;
     }
 
+    @Override
     public int digest(final byte[] buf, final int offset, final int len) throws DigestException {
         Assert.checkNotNullParam("buf", buf);
         if (bytes > len) {
@@ -73,29 +78,36 @@ public final class TruncatedMessageDigest extends MessageDigest {
         return bytes;
     }
 
+    @Override
     public byte[] digest(final byte[] input) {
         update(input);
         return digest();
     }
 
+    @Override
     public void reset() {
         delegate.reset();
     }
 
+    @Override
     public Object clone() throws CloneNotSupportedException {
         return new TruncatedMessageDigest((MessageDigest) delegate.clone(), bytes);
     }
 
+    @Override
     protected void engineUpdate(final byte input) {
     }
 
+    @Override
     protected void engineUpdate(final byte[] input, final int offset, final int len) {
     }
 
+    @Override
     protected byte[] engineDigest() {
         return null;
     }
 
+    @Override
     protected void engineReset() {
     }
 }

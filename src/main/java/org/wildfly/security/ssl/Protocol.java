@@ -72,6 +72,12 @@ public enum Protocol {
         this.name = name;
     }
 
+    /**
+     * Gets an enum item for given protocol name.
+     *
+     * @param name the protocol name
+     * @return an enum item
+     */
     public static Protocol forName(final String name) {
         return map.get(name);
     }

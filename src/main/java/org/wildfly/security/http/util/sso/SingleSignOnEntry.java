@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentMap;
 import org.wildfly.security.cache.CachedIdentity;
 
 /**
+ * Single sign-on cache entry.
+ *
  * @author Paul Ferraro
  */
 public interface SingleSignOnEntry {

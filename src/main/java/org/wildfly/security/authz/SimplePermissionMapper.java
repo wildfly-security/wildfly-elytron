@@ -43,7 +43,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * It is possible that multiple mappings could be matched during the call to {@link #mapPermissions(PermissionMappable, Roles)}
  * and this is why the ordering is important, by default only the first match will be used however this can be overridden by
- * calling {@link Builder#setMappingMode(MappingMode)} to choose a different mode to combine the resulting
+ * calling {@link Builder#setMappingMode(SimplePermissionMapper.MappingMode)} to choose a different mode to combine the resulting
  * {@link PermissionVerifier} instances.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
@@ -100,6 +100,9 @@ public class SimplePermissionMapper implements PermissionMapper {
         return new Builder();
     }
 
+    /**
+     * A builder for simple permission mappers.
+     */
     public static class Builder {
 
         private boolean built = false;
@@ -188,6 +191,9 @@ public class SimplePermissionMapper implements PermissionMapper {
 
     }
 
+    /**
+     * Mode defining behaviour when multiple mappings are found.
+     */
     public enum MappingMode {
 
         /**

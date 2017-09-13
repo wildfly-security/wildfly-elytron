@@ -33,7 +33,7 @@ import org.jboss.logmanager.handlers.TcpOutputStream;
 import javax.net.SocketFactory;
 
 /**
- * An {@link AuditEndpoint} that logs to syslog.
+ * An audit endpoint that logs to syslog server.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -44,7 +44,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     private final SyslogHandler syslogHandler;
 
     /**
-     * Creates a new {@link AuditEndpoint} that logs to syslog.
+     * Creates a new audit endpoint that logs to syslog server.
      */
     SyslogAuditEndpoint(Builder builder) throws IOException {
         SyslogHandler.Protocol protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
@@ -59,13 +59,13 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     }
 
     @Override
-    public void accept(EventPriority t, String u) throws IOException {
+    public void accept(EventPriority priority, String message) throws IOException {
         if (!accepting) return;
 
         synchronized(this) {
             if (!accepting) return;
 
-            syslogHandler.doPublish(new ExtLogRecord(toLevel(t), u, SyslogAuditEndpoint.class.getName()));
+            syslogHandler.doPublish(new ExtLogRecord(toLevel(priority), message, SyslogAuditEndpoint.class.getName()));
         }
     }
 
@@ -96,10 +96,18 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         }
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link SyslogAuditEndpoint}.
+     *
+     * @return a new {@link Builder} capable of building a {@link SyslogAuditEndpoint}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for syslog audit endpoint.
+     */
     public static class Builder {
 
         private InetAddress serverAddress;

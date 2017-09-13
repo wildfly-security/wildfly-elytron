@@ -20,7 +20,7 @@ package org.wildfly.security.evidence;
 import org.wildfly.common.Assert;
 
 /**
- * An {@link Evidence} that usually holds a bearer security token.
+ * A piece of evidence that is comprised of a bearer security token.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */

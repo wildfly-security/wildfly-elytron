@@ -44,6 +44,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
 /**
+ * Utils to be used by authentication mechanism (SASL or HTTP) implementations.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MechanismUtil {

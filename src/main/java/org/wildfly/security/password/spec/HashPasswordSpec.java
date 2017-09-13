@@ -20,14 +20,30 @@ package org.wildfly.security.password.spec;
 
 import org.wildfly.common.Assert;
 
+/**
+ * A password specification for a password represented by a hash.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 public final class HashPasswordSpec implements PasswordSpec {
+
     private final byte[] digest;
 
+    /**
+     * Construct new instance.
+     *
+     * @param digest the password hash
+     */
     public HashPasswordSpec(final byte[] digest) {
         Assert.checkNotNullParam("digest", digest);
         this.digest = digest;
     }
 
+    /**
+     * Get a password hash.
+     *
+     * @return the password hash
+     */
     public byte[] getDigest() {
         return digest;
     }

@@ -28,8 +28,6 @@ import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
-import org.wildfly.security.auth.server.SecurityIdentity;
-
 /**
  * Server side representation of a HTTP request.
  *
@@ -41,7 +39,7 @@ public interface HttpServerRequest extends HttpServerScopes {
      * Get a list of all of the values set for the specified header within the HTTP request.
      *
      * @param headerName the not {@code null} name of the header the values are required for.
-     * @return a {@link List<String>} of the values set for this header, if the header is not set on the request then
+     * @return a list of the values set for this header, if the header is not set on the request then
      *         {@code null} should be returned.
      */
     List<String> getRequestHeaderValues(final String headerName);
@@ -125,8 +123,6 @@ public interface HttpServerRequest extends HttpServerScopes {
      * the identity of the request.
      *
      * If this form is called no response is expected from this mechanism.
-     *
-     * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
      */
     default void authenticationComplete() {
         authenticationComplete(null);

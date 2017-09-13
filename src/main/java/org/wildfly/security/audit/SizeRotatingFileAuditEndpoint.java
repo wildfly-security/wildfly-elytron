@@ -32,8 +32,12 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.audit;
 
 /**
- * An audit endpoint which rotates the log at the size of the log.
- *
+ * An audit endpoint which rotates the log when log file size reach given value.
+ * <p>
+ * Moves old log records into files tagged by index - the older has the higher index.
+ * When index reach {@code maxBackupIndex}, the oldest log file is removed,
+ * so there are at most {@code maxBackupIndex + 1} log files.
+ * <p>
  * Based on {@link org.jboss.logmanager.handlers.PeriodicSizeRotatingFileHandler}.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
@@ -104,10 +108,18 @@ public class SizeRotatingFileAuditEndpoint extends FileAuditEndpoint {
         setFile(file);
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link SizeRotatingFileAuditEndpoint}.
+     *
+     * @return a new {@link Builder} capable of building a {@link SizeRotatingFileAuditEndpoint}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for size rotating file audit endpoints.
+     */
     public static class Builder extends FileAuditEndpoint.Builder {
 
         private long rotateSize = 0xa0000L; // 10 MB by default
@@ -139,7 +151,7 @@ public class SizeRotatingFileAuditEndpoint extends FileAuditEndpoint {
          * <p/>
          * The suffix must be a string understood by the  {@link java.time.format.DateTimeFormatter}.
          * <p/>
-         * <b>Note:</b> Files will be rotated for the same suffix until reach the maximum backup index configured {@see #setMaxBackupIndex(int)}.
+         * <b>Note:</b> Files will be rotated for the same suffix until reach the maximum backup index configured by {@link #setMaxBackupIndex(int)}.
          * If the suffix is resolved to a new value, any files rotated with a different suffix will not be deleted.
          * For example if the suffix is .yyyy-DD-mm, the maximum size was reached 20 times on the same day and the maxBackupIndex
          * was set to 10, then there will only be 10 files kept. What will not be purged is files from a previous day.

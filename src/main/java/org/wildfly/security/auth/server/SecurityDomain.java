@@ -465,9 +465,9 @@ public final class SecurityDomain {
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
-     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
-     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
-     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     * Credential is {@link SupportLevel#SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel#POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel#UNSUPPORTED}.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
@@ -491,9 +491,9 @@ public final class SecurityDomain {
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
-     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
-     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
-     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     * Credential is {@link SupportLevel#SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel#POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel#UNSUPPORTED}.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
@@ -508,9 +508,9 @@ public final class SecurityDomain {
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for
      * some identities), or definitely not obtainable.
      *
-     * Credential is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
-     * Credential is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
-     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     * Credential is {@link SupportLevel#SUPPORTED}, if it is supported by all realms of the domain.
+     * Credential is {@link SupportLevel#POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel#UNSUPPORTED}.
      *
      * @param credentialType the exact credential type (must not be {@code null})
      * @return the level of support for this credential
@@ -523,9 +523,9 @@ public final class SecurityDomain {
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
      * or definitely not verifiable.
      *
-     * Evidence is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
-     * Evidence is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
-     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     * Evidence is {@link SupportLevel#SUPPORTED}, if it is supported by all realms of the domain.
+     * Evidence is {@link SupportLevel#POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel#UNSUPPORTED}.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
@@ -547,9 +547,9 @@ public final class SecurityDomain {
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
      * or definitely not verifiable.
      *
-     * Evidence is {@link SupportLevel.SUPPORTED}, if it is supported by all realms of the domain.
-     * Evidence is {@link SupportLevel.POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
-     * Otherwise it is {@link SupportLevel.UNSUPPORTED}.
+     * Evidence is {@link SupportLevel#SUPPORTED}, if it is supported by all realms of the domain.
+     * Evidence is {@link SupportLevel#POSSIBLY_SUPPORTED} if it is supported or possibly supported by at least one realm of the domain.
+     * Otherwise it is {@link SupportLevel#UNSUPPORTED}.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})
      * @return the level of support for this evidence type
@@ -599,7 +599,7 @@ public final class SecurityDomain {
     /**
      * Get the current security identity for this domain.
      *
-     * Code can be executed with given identity using {@link SecurityIdentity.runAs*} methods.
+     * Code can be executed with given identity using {@code SecurityIdentity.runAs*} methods.
      *
      * @return the current security identity for this domain (not {@code null})
      */
@@ -1132,6 +1132,11 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Constructs this realm info and adds it into the domain.
+         *
+         * @return the security domain builder
+         */
         public Builder build() {
             assertNotBuilt();
             return parent.addRealm(this);
@@ -1156,6 +1161,11 @@ public final class SecurityDomain {
         }
     }
 
+    /**
+     * Gets {@link ScheduledExecutorService} for authentication related scheduled task (like authentication timeout).
+     *
+     * @return the executor service
+     */
     public static ScheduledExecutorService getScheduledExecutorService() {
         return ScheduledExecutorServiceProvider.INSTANCE;
     }

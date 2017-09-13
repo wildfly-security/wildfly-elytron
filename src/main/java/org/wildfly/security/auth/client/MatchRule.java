@@ -23,6 +23,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.net.URI;
 
 /**
+ * A rule used for deciding which authentication configuration to use.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class MatchRule {

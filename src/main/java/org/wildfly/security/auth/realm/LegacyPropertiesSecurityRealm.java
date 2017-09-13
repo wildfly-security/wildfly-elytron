@@ -252,6 +252,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return PasswordGuessEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
+    /**
+     * Loads this properties security realm from the given user and groups input streams.
+     *
+     * @param usersStream the input stream from which the realm users are loaded
+     * @param groupsStream the input stream from which the roles of realm users are loaded
+     * @throws IOException if there is problem while reading the input streams or invalid content is loaded from streams
+     */
     public void load(InputStream usersStream, InputStream groupsStream) throws IOException {
         Map<String, AccountEntry> accounts = new HashMap<>();
         Properties groups = new Properties();
@@ -333,14 +340,27 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         loadedState.set(new LoadedState(accounts, realmName, System.currentTimeMillis()));
     }
 
+    /**
+     * Get the time when the realm was last loaded.
+     *
+     * @return the time when the realm was last loaded (number of milliseconds since the standard base time)
+     */
     public long getLoadTime() {
         return loadedState.get().getLoadTime();
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link LegacyPropertiesSecurityRealm}.
+     *
+     * @return a new {@link Builder} capable of building a {@link LegacyPropertiesSecurityRealm}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for legacy properties security realms.
+     */
     public static class Builder {
 
         private Supplier<Provider[]> providers = Security::getProviders;

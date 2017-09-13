@@ -36,6 +36,8 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.Version;
 
 /**
+ * A set of rules and authentication configurations to use with a client for establishing a connection.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class AuthenticationContext implements Contextual<AuthenticationContext> {

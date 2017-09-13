@@ -33,13 +33,19 @@ public final class SecurityAuthenticationFailedEvent extends SecurityAuthenticat
     /**
      * Constructor for a new instance.
      *
-     * @param securityIdentity the {@link SecurityIdentity} that failed authentication.
+     * @param securityIdentity the {@link SecurityIdentity} that failed authentication ({@code null} when identity does not exists)
+     * @param principal the principal used to that failed authentication (filled event if identity does not exists)
      */
     public SecurityAuthenticationFailedEvent(SecurityIdentity securityIdentity, Principal principal) {
         super(securityIdentity, false);
         this.principal = principal;
     }
 
+    /**
+     * Gets the principal used to the failed authentication.
+     *
+     * @return the principal used to that failed authentication (filled event if identity does not exists)
+     */
     public Principal getPrincipal() {
         return principal;
     }

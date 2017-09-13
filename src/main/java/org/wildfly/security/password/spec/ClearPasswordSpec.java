@@ -20,14 +20,30 @@ package org.wildfly.security.password.spec;
 
 import org.wildfly.common.Assert;
 
+/**
+ * A password specification for clear passwords.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
 public final class ClearPasswordSpec implements PasswordSpec {
+
     private final char[] encodedPassword;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param encodedPassword the password
+     */
     public ClearPasswordSpec(final char[] encodedPassword) {
         Assert.checkNotNullParam("encodedPassword", encodedPassword);
         this.encodedPassword = encodedPassword;
     }
 
+    /**
+     * Get the password characters.
+     *
+     * @return the password characters
+     */
     public char[] getEncodedPassword() {
         return encodedPassword;
     }

@@ -33,7 +33,7 @@ import org.wildfly.security.auth.server.event.SecurityEventVisitor;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
 
 /**
- * A formatter for security events that converts the event to a simple String.
+ * A formatter for security events that converts events into human-readable strings.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -41,9 +41,6 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
 
     private final Supplier<DateTimeFormatter> dateFormatSupplier;
 
-    /**
-     *
-     */
     SimpleSecurityEventFormatter(Builder builder) {
         this.dateFormatSupplier = builder.dateTimeFormatterSupplier;
     }
@@ -114,12 +111,15 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     /**
      * Create a new builder.
      *
-     * @return a new builder.
+     * @return a new builder
      */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for simple security event formatter.
+     */
     public static class Builder {
 
         private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = ()  -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
@@ -128,11 +128,11 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
         }
 
         /**
-         * Set a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
-         * The supplied DateTimeFormatter has to have a time zone configured.
+         * Set a supplier of formatter to format any dates in the resulting output.
+         * The supplied {@link DateTimeFormatter} has to have a time zone configured.
          *
-         * @param dateTimeFormatterSupplier a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
-         * @return {@code this} builder.
+         * @param dateTimeFormatterSupplier a supplier of formatter to format dates in the resulting output
+         * @return this builder
          */
         public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
             this.dateTimeFormatterSupplier = checkNotNullParam("dateTimeFormatterSupplier", dateTimeFormatterSupplier);
@@ -141,12 +141,11 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
         }
 
         /**
-         * Build a new {@link SecurityEventVisitor} which will convert {@link SecurityEvent} instances into a simple String
-         *
+         * Build a new {@link SecurityEventVisitor} which will convert events into human-readable strings.
+         * <p>
          * Once built the Builder can continue to be configured to create additional instances.
          *
-         * @return a new {@link SecurityEventVisitor} which will convert {@link SecurityEvent} instances into a simple String
-         *         Strings.
+         * @return a new {@link SecurityEventVisitor} which will convert events into human-readable strings
          */
         public SecurityEventVisitor<Void, String> build() {
             return new SimpleSecurityEventFormatter(this);

@@ -31,11 +31,18 @@ public final class WriteSecurityPropertyAction implements PrivilegedAction<Void>
     private final String key;
     private final String value;
 
+    /**
+     * Construct a security action.
+     *
+     * @param key the security property name to set
+     * @param value the security property value to set
+     */
     public WriteSecurityPropertyAction(final String key, final String value) {
         this.key = key;
         this.value = value;
     }
 
+    @Override
     public Void run() {
         Security.setProperty(key, value);
         return null;

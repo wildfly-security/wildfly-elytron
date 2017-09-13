@@ -53,7 +53,7 @@ public class CachingSecurityRealm implements SecurityRealm {
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached.
      * @param cache the {@link RealmIdentityCache} instance
      */
     public CachingSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
@@ -255,6 +255,11 @@ public class CachingSecurityRealm implements SecurityRealm {
         cache.clear();
     }
 
+    /**
+     * Gets wrapped backing realm.
+     *
+     * @return the wrapped backing realm
+     */
     protected CacheableSecurityRealm getCacheableRealm() {
         return realm;
     }

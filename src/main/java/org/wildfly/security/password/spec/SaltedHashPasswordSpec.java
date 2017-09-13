@@ -29,6 +29,12 @@ public class SaltedHashPasswordSpec implements PasswordSpec {
     private final byte[] hash;
     private final byte[] salt;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param hash the password hash bytes
+     * @param salt the salt bytes
+     */
     public SaltedHashPasswordSpec(final byte[] hash, final byte[] salt) {
         Assert.checkNotNullParam("hash", hash);
         Assert.checkNotNullParam("salt", salt);
@@ -36,10 +42,20 @@ public class SaltedHashPasswordSpec implements PasswordSpec {
         this.salt = salt;
     }
 
+    /**
+     * Get a password hash bytes.
+     *
+     * @return the password hash
+     */
     public byte[] getHash() {
         return this.hash;
     }
 
+    /**
+     * Get the salt bytes.
+     *
+     * @return the salt bytes
+     */
     public byte[] getSalt() {
         return this.salt;
     }

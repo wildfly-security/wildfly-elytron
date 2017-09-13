@@ -171,6 +171,7 @@ public final class AuthenticationConfiguration {
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
      * remapping of any kind, and always uses an anonymous principal.
+     * @deprecated to obtain empty configuration use {@link #empty()} method instead
      */
     @Deprecated
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration();
@@ -638,6 +639,12 @@ public final class AuthenticationConfiguration {
         }
     }
 
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given credential to authenticate.
+     *
+     * @param credential the credential to authenticate
+     * @return the new configuration
+     */
     public AuthenticationConfiguration useCredential(Credential credential) {
         if (credential == null) return this;
         final CredentialSource credentialSource = this.credentialSource;

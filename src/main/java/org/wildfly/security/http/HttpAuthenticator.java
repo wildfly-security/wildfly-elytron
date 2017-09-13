@@ -373,10 +373,10 @@ public class HttpAuthenticator {
         }
 
         /**
-         * Set the {@link Supplier<List<HttpServerAuthenticationMechanism>>} to use to obtain the actual {@link HttpServerAuthenticationMechanism} instances based
-         * on the configured policy.
+         * Set the supplier to use to obtain list of {@link HttpServerAuthenticationMechanism} implementations
+         * instances to use, based on the configured policy.
          *
-         * @param mechanismSupplier the {@link Supplier<List<HttpServerAuthenticationMechanism>>} with the configured authentication policy.
+         * @param mechanismSupplier the {@link Supplier} with the configured authentication policy
          * @return the {@link Builder} to allow method call chaining.
          */
         public Builder setMechanismSupplier(Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier) {

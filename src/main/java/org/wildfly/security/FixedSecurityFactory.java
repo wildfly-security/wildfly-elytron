@@ -21,15 +21,24 @@ package org.wildfly.security;
 import java.security.GeneralSecurityException;
 
 /**
+ * A {@link SecurityFactory} implementation which returns specified object every time.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class FixedSecurityFactory<T> implements SecurityFactory<T> {
+
     private final T value;
 
+    /**
+     * Creates a new factory instance.
+     *
+     * @param value the value to be returned on create
+     */
     public FixedSecurityFactory(final T value) {
         this.value = value;
     }
 
+    @Override
     public T create() throws GeneralSecurityException {
         return value;
     }

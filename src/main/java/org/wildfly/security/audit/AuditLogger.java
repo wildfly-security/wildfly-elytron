@@ -38,23 +38,25 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
     private final Function<SecurityEvent, EventPriority> priorityMapper;
     private final Function<SecurityEvent, String> messageFormatter;
 
-    /**
-     *
-     */
     AuditLogger(Builder builder) {
         auditEndpoint = checkNotNullParam("auditEndpoint", builder.auditEndpoint);
         priorityMapper = checkNotNullParam("priorityMapper", builder.priorityMapper);
         messageFormatter = checkNotNullParam("messageFormatter", builder.messageFormatter);
     }
 
+    /**
+     * Accept security event to be processed by audit endpoints.
+     *
+     * @param event security event to be processed
+     */
     @Override
-    public void accept(SecurityEvent t) {
+    public void accept(SecurityEvent event) {
         try {
-            EventPriority priority = priorityMapper.apply(t);
+            EventPriority priority = priorityMapper.apply(event);
             if (priority == EventPriority.OFF)
                 return;
 
-            String formatted = messageFormatter.apply(t);
+            String formatted = messageFormatter.apply(event);
             try {
                 auditEndpoint.accept(priority, formatted);
             } catch (Throwable throwable) {
@@ -65,10 +67,18 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
         }
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link AuditLogger}.
+     *
+     * @return a new {@link Builder} capable of building a {@link AuditLogger}
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for audit logger instances.
+     */
     public static class Builder {
 
         private ExceptionBiConsumer<EventPriority, String, IOException> auditEndpoint;
@@ -114,6 +124,11 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
             return this;
         }
 
+        /**
+         * Construct a new audit logger instance.
+         *
+         * @return the built audit logger.
+         */
         public Consumer<SecurityEvent> build() {
             return new AuditLogger(this);
         }

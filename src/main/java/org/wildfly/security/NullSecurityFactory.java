@@ -21,6 +21,8 @@ package org.wildfly.security;
 import java.security.GeneralSecurityException;
 
 /**
+ * A {@link SecurityFactory} implementation which returns null every time.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class NullSecurityFactory<T> implements SecurityFactory<T> {
@@ -30,11 +32,18 @@ public final class NullSecurityFactory<T> implements SecurityFactory<T> {
     NullSecurityFactory() {
     }
 
+    /**
+     * Gets an instance of this singleton class.
+     *
+     * @param <T> the type of the security factory
+     * @return the only instance of this factory
+     */
     @SuppressWarnings("unchecked")
     public static <T> NullSecurityFactory<T> getInstance() {
         return (NullSecurityFactory<T>) INSTANCE;
     }
 
+    @Override
     public T create() throws GeneralSecurityException {
         return null;
     }

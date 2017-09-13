@@ -20,7 +20,7 @@ package org.wildfly.security.password.spec;
 import org.wildfly.common.Assert;
 
 /**
- * A {@link PasswordSpec} for a one-time password.
+ * A {@link PasswordSpec} for a one-time password as defined in RFC 2289.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
@@ -30,6 +30,13 @@ public final class OneTimePasswordSpec implements PasswordSpec {
     private final String seed;
     private final int sequenceNumber;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param hash the hash bytes
+     * @param seed the seed
+     * @param sequenceNumber the sequence number
+     */
     public OneTimePasswordSpec(final byte[] hash, final String seed, final int sequenceNumber) {
         Assert.checkNotNullParam("hash", hash);
         Assert.checkNotNullParam("seed", seed);
@@ -38,14 +45,29 @@ public final class OneTimePasswordSpec implements PasswordSpec {
         this.sequenceNumber = sequenceNumber;
     }
 
+    /**
+     * Gets the hash.
+     *
+     * @return the hash
+     */
     public byte[] getHash() {
         return hash;
     }
 
+    /**
+     * Gets the seed.
+     *
+     * @return the seed
+     */
     public String getSeed() {
         return seed;
     }
 
+    /**
+     * Gets the sequence number.
+     *
+     * @return the sequence number
+     */
     public int getSequenceNumber() {
         return sequenceNumber;
     }
