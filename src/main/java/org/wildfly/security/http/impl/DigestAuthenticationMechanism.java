@@ -84,18 +84,14 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     private final NonceManager nonceManager;
     private final String configuredRealm;
     private final String domain;
+    private final String algorithm;
 
-    /**
-     *
-     * @param callbackHandler
-     * @param nonceManager
-     * @param configuredRealm
-     */
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, String algorithm, Supplier<Provider[]> providers) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
+        this.algorithm = algorithm;
         this.providers = providers;
     }
 
@@ -162,14 +158,15 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         } else {
             throw httpDigest.mechMissingDirective(RESPONSE);
         }
-        String algorithm = convertToken(ALGORITHM, responseTokens.get(ALGORITHM));
-        if (MD5.equals(algorithm) == false) {
+        String algorithm = responseTokens.containsKey(ALGORITHM) ?
+                convertToken(ALGORITHM, responseTokens.get(ALGORITHM)) : MD5;
+        if ( ! this.algorithm.equals(algorithm)) {
             throw httpDigest.mechUnsupportedAlgorithm(algorithm);
         }
 
         MessageDigest messageDigest;
         try {
-            messageDigest = MessageDigest.getInstance(MD5);
+            messageDigest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw httpDigest.mechMacAlgorithmNotSupported(e);
         }
@@ -333,7 +330,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         if (stale) {
             sb.append(", ").append(STALE).append("=true");
         }
-        sb.append(", ").append(ALGORITHM).append("=").append(MD5);
+        sb.append(", ").append(ALGORITHM).append("=").append(algorithm);
         sb.append(", ").append(QOP).append("=").append(AUTH);
 
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());

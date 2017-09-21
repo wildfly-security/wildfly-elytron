@@ -122,6 +122,8 @@ public class HttpConstants {
     public static final String BASIC_NAME = "BASIC";
     public static final String CLIENT_CERT_NAME = "CLIENT_CERT";
     public static final String DIGEST_NAME = "DIGEST";
+    public static final String DIGEST_SHA256_NAME = "DIGEST-SHA-256";
+    public static final String DIGEST_SHA512_256_NAME = "DIGEST-SHA-512-256";
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
     public static final String BEARER_TOKEN = "BEARER_TOKEN";
@@ -149,7 +151,6 @@ public class HttpConstants {
 
     public static final String MD5 = "MD5";
     public static final String SHA256 = "SHA-256";
-
+    public static final String SHA512_256 = "SHA-512-256";
 
 }
-
