@@ -233,14 +233,14 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         if (digest_urp == null) {
             digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false, false);
         }
-        if (digest_urp == null) {
-            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
-        }
-        realm = realmCallback.getText();
         String userName = nameCallback.getName();
         if (userName == null) {
             throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
         }
+        if (digest_urp == null) {
+            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
+        }
+        realm = realmCallback.getText();
 
         // username
         digestResponse.append("username=\"");
