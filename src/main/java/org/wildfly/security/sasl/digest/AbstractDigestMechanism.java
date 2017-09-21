@@ -522,6 +522,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
+        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
+        if (username == null) {
+            return null;
+        }
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
         char[] passwordChars;
         try {
@@ -535,7 +539,6 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             log.credentialDestroyingFailed(e);
         }
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
-        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
         byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
         Arrays.fill(passwordChars, (char)0); // wipe out the password
         return digest_urp;
@@ -558,6 +561,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
+        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
+        if (username == null) {
+            return null;
+        }
         char[] passwordChars = passwordCallback.getPassword();
         passwordCallback.clearPassword();
         if (passwordChars == null) {
@@ -567,7 +574,6 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
         }
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
-        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
         byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
         Arrays.fill(passwordChars, (char)0); // wipe out the password
         return digest_urp;
