@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslScram;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -47,7 +47,7 @@ class ScramSaslClient extends AbstractSaslClient {
     private ScramFinalClientMessage finalResponse;
 
     ScramSaslClient(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final ScramClient scramClient) {
-        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
+        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true, saslScram);
         this.scramClient = scramClient;
         setNegotiationState(ST_NEW);
     }
@@ -64,7 +64,7 @@ class ScramSaslClient extends AbstractSaslClient {
             switch (state) {
                 case ST_NEW: {
                     // initial response
-                    if (challenge.length != 0) throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                    if (challenge.length != 0) throw saslScram.mechInitialChallengeMustBeEmpty().toSaslException();
                     this.initialResponse = scramClient.getInitialResponse();
                     setNegotiationState(ST_R1_SENT);
                     ok = true;

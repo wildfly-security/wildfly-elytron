@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.sasl;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,7 +68,7 @@ public final class SecurityIdentitySaslServerFactory extends AbstractDelegatingS
 
             public Object getNegotiatedProperty(final String propName) {
                 if (! isComplete()) {
-                    throw log.mechAuthenticationNotComplete(getMechanismName());
+                    throw sasl.mechAuthenticationNotComplete();
                 }
                 return propName.equals(WildFlySasl.SECURITY_IDENTITY) ? securityIdentity : super.getNegotiatedProperty(propName);
             }

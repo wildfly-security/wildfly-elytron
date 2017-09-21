@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.sasl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,7 +33,6 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.util.CodePointIterator;
@@ -100,7 +100,7 @@ public final class LegacyRealmListSaslServerFactory extends AbstractDelegatingSa
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanism, e).toSaslException();
+            throw sasl.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
         }
         if (realms == null) {
             realms = new String[] { serverName };

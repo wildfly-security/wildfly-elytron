@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.oauth2;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -43,7 +44,7 @@ public final class OAuth2SaslServerFactory implements SaslServerFactory {
 
         switch (mechanism) {
             case SaslMechanismInformation.Names.OAUTHBEARER:
-                return new OAuth2SaslServer(mechanism, protocol, serverName, cbh, new OAuth2Server(mechanism, cbh, props));
+                return new OAuth2SaslServer(mechanism, protocol, serverName, cbh, new OAuth2Server(cbh, props, ElytronMessages.saslOAuth2));
             default: {
                 return null;
             }

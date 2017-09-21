@@ -94,6 +94,25 @@ public interface ElytronMessages extends BasicLogger {
     ElytronMessages audit = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.audit");
     ElytronMessages xmlLog = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.xml");
     ElytronMessages tls = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.tls");
+    ElytronMessages sasl = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl");
+    ElytronMessages saslAnonymous = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.anonymous");
+    ElytronMessages saslDigest = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.digest");
+    ElytronMessages saslEntity = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.entity");
+    ElytronMessages saslExternal = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.external");
+    ElytronMessages saslGs2 = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gs2");
+    ElytronMessages saslGssapi = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi");
+    ElytronMessages saslLocal = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.local");
+    ElytronMessages saslOAuth2 = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.oauth2");
+    ElytronMessages saslOTP = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.otp");
+    ElytronMessages saslPlain = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.plain");
+    ElytronMessages saslScram = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.scram");
+    ElytronMessages httpSpnego = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.spnego");
+    ElytronMessages httpClientCert = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.cert");
+    ElytronMessages httpDigest = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.digest");
+    ElytronMessages httpUserPass = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.password");
+    ElytronMessages httpForm = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.form");
+    ElytronMessages httpBearer = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.bearer");
+    ElytronMessages httpBasic = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.basic");
 
     @LogMessage
     @Message(id = 1, value = "WildFly Elytron version %s")
@@ -945,46 +964,46 @@ public interface ElytronMessages extends BasicLogger {
 
     /* mechanism package */
 
-    @Message(id = 5001, value = "[%s] Authentication mechanism exchange received a message after authentication was already complete")
-    AuthenticationMechanismException mechMessageAfterComplete(String mechName);
+    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
+    AuthenticationMechanismException mechMessageAfterComplete();
 
-    @Message(id = 5002, value = "[%s] Authentication mechanism user name contains an invalid or disallowed character")
-    AuthenticationMechanismException mechUserNameContainsInvalidCharacter(String mechName);
+    @Message(id = 5002, value = "Authentication mechanism user name contains an invalid or disallowed character")
+    AuthenticationMechanismException mechUserNameContainsInvalidCharacter();
 
     // 5003
 
-    @Message(id = 5004, value = "[%s] Authentication mechanism authorization failed")
-    AuthenticationMechanismException mechAuthorizationFailed(String mechName, @Cause Throwable cause);
+    @Message(id = 5004, value = "Authentication mechanism authorization failed")
+    AuthenticationMechanismException mechAuthorizationFailed(@Cause Throwable cause);
 
-    @Message(id = 5005, value = "[%s] Authentication mechanism authentication is not yet complete")
-    IllegalStateException mechAuthenticationNotComplete(String mechName);
+    @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
+    IllegalStateException mechAuthenticationNotComplete();
 
-    @Message(id = 5006, value = "[%s] Authentication mechanism does not support security layer (wrapping/unwrapping)")
-    IllegalStateException mechNoSecurityLayer(String mechName);
+    @Message(id = 5006, value = "Authentication mechanism does not support security layer (wrapping/unwrapping)")
+    IllegalStateException mechNoSecurityLayer();
 
-    @Message(id = 5007, value = "[%s] Invalid authentication mechanism negotiation message received")
-    AuthenticationMechanismException mechInvalidMessageReceived(String mechName);
+    @Message(id = 5007, value = "Invalid authentication mechanism negotiation message received")
+    AuthenticationMechanismException mechInvalidMessageReceived();
 
-    @Message(id = 5008, value = "[%s] No authentication mechanism login name was given")
-    AuthenticationMechanismException mechNoLoginNameGiven(String mechName);
+    @Message(id = 5008, value = "No authentication mechanism login name was given")
+    AuthenticationMechanismException mechNoLoginNameGiven();
 
-    @Message(id = 5009, value = "[%s] No authentication mechanism password was given")
-    AuthenticationMechanismException mechNoPasswordGiven(String mechName);
+    @Message(id = 5009, value = "No authentication mechanism password was given")
+    AuthenticationMechanismException mechNoPasswordGiven();
 
-    @Message(id = 5010, value = "[%s] Authentication mechanism authentication failed due to one or more malformed fields")
-    AuthenticationMechanismException mechMalformedFields(String mechName, @Cause IllegalArgumentException ex);
+    @Message(id = 5010, value = "Authentication mechanism authentication failed due to one or more malformed fields")
+    AuthenticationMechanismException mechMalformedFields(@Cause IllegalArgumentException ex);
 
-    @Message(id = 5011, value = "[%s] Authentication mechanism message is too long")
-    AuthenticationMechanismException mechMessageTooLong(String mechName);
+    @Message(id = 5011, value = "Authentication mechanism message is too long")
+    AuthenticationMechanismException mechMessageTooLong();
 
-    @Message(id = 5012, value = "[%s] Authentication mechanism server-side authentication failed")
-    AuthenticationMechanismException mechServerSideAuthenticationFailed(String mechName, @Cause Exception e);
+    @Message(id = 5012, value = "Authentication mechanism server-side authentication failed")
+    AuthenticationMechanismException mechServerSideAuthenticationFailed(@Cause Exception e);
 
-    @Message(id = 5013, value = "[%s] Authentication mechanism password not verified")
-    AuthenticationMechanismException mechPasswordNotVerified(String mechName);
+    @Message(id = 5013, value = "Authentication mechanism password not verified")
+    AuthenticationMechanismException mechPasswordNotVerified();
 
-    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
-    AuthenticationMechanismException mechAuthorizationFailed(String mechName, String userName, String authorizationId);
+    @Message(id = 5014, value = "Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
+    AuthenticationMechanismException mechAuthorizationFailed(String userName, String authorizationId);
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, int offset, String string);
@@ -995,91 +1014,91 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
 
-    @Message(id = 5018, value = "[%s] Channel binding data changed")
-    AuthenticationMechanismException mechChannelBindingChanged(String mechName);
+    @Message(id = 5018, value = "Channel binding data changed")
+    AuthenticationMechanismException mechChannelBindingChanged();
 
-    @Message(id = 5019, value = "[%s] No token was given")
-    AuthenticationMechanismException mechNoTokenGiven(String mechanismName);
+    @Message(id = 5019, value = "No token was given")
+    AuthenticationMechanismException mechNoTokenGiven();
 
     @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedEnd(String string);
 
     // 5021
 
-    @Message(id = 5022, value = "[%s] Initial challenge must be empty")
-    AuthenticationMechanismException mechInitialChallengeMustBeEmpty(String mechName);
+    @Message(id = 5022, value = "Initial challenge must be empty")
+    AuthenticationMechanismException mechInitialChallengeMustBeEmpty();
 
-    @Message(id = 5023, value = "[%s] Unable to set channel binding")
-    AuthenticationMechanismException mechUnableToSetChannelBinding(String mechName, @Cause Exception e);
+    @Message(id = 5023, value = "Unable to set channel binding")
+    AuthenticationMechanismException mechUnableToSetChannelBinding(@Cause Exception e);
 
     @Message(id = 5024, value = "Failed to determine channel binding status")
     AuthenticationMechanismException mechFailedToDetermineChannelBindingStatus(@Cause Exception e);
 
-    @Message(id = 5025, value = "[%s] Mutual authentication not enabled")
-    AuthenticationMechanismException mechMutualAuthenticationNotEnabled(String mechName);
+    @Message(id = 5025, value = "Mutual authentication not enabled")
+    AuthenticationMechanismException mechMutualAuthenticationNotEnabled();
 
-    @Message(id = 5026, value = "[%s] Unable to map SASL mechanism name to a GSS-API OID")
-    AuthenticationMechanismException mechMechanismToOidMappingFailed(String mechName, @Cause Exception e);
+    @Message(id = 5026, value = "Unable to map SASL mechanism name to a GSS-API OID")
+    AuthenticationMechanismException mechMechanismToOidMappingFailed(@Cause Exception e);
 
-    @Message(id = 5027, value = "[%s] Unable to dispose of GSSContext")
-    AuthenticationMechanismException mechUnableToDisposeGssContext(String mechName, @Cause Exception e);
+    @Message(id = 5027, value = "Unable to dispose of GSSContext")
+    AuthenticationMechanismException mechUnableToDisposeGssContext(@Cause Exception e);
 
-    @Message(id = 5028, value = "[%s] Unable to create name for acceptor")
-    AuthenticationMechanismException mechUnableToCreateNameForAcceptor(String mechName, @Cause Exception e);
+    @Message(id = 5028, value = "Unable to create name for acceptor")
+    AuthenticationMechanismException mechUnableToCreateNameForAcceptor(@Cause Exception e);
 
-    @Message(id = 5029, value = "[%s] Unable to create GSSContext")
-    AuthenticationMechanismException mechUnableToCreateGssContext(String mechName, @Cause Exception e);
+    @Message(id = 5029, value = "Unable to create GSSContext")
+    AuthenticationMechanismException mechUnableToCreateGssContext(@Cause Exception e);
 
-    @Message(id = 5030, value = "[%s] Unable to set GSSContext request flags")
-    AuthenticationMechanismException mechUnableToSetGssContextRequestFlags(String mechName, @Cause Exception e);
+    @Message(id = 5030, value = "Unable to set GSSContext request flags")
+    AuthenticationMechanismException mechUnableToSetGssContextRequestFlags(@Cause Exception e);
 
-    @Message(id = 5031, value = "[%s] Unable to accept SASL client message")
-    AuthenticationMechanismException mechUnableToAcceptClientMessage(String mechName, @Cause Exception e);
+    @Message(id = 5031, value = "Unable to accept SASL client message")
+    AuthenticationMechanismException mechUnableToAcceptClientMessage(@Cause Exception e);
 
-    @Message(id = 5032, value = "[%s] GSS-API mechanism mismatch between SASL client and server")
-    AuthenticationMechanismException mechGssApiMechanismMismatch(String mechName);
+    @Message(id = 5032, value = "GSS-API mechanism mismatch between SASL client and server")
+    AuthenticationMechanismException mechGssApiMechanismMismatch();
 
-    @Message(id = 5033, value = "[%s] Channel binding not supported for this SASL mechanism")
-    AuthenticationMechanismException mechChannelBindingNotSupported(String mechName);
+    @Message(id = 5033, value = "Channel binding not supported for this SASL mechanism")
+    AuthenticationMechanismException mechChannelBindingNotSupported();
 
-    @Message(id = 5034, value = "[%s] Channel binding type mismatch between SASL client and server")
-    AuthenticationMechanismException mechChannelBindingTypeMismatch(String mechName);
+    @Message(id = 5034, value = "Channel binding type mismatch between SASL client and server")
+    AuthenticationMechanismException mechChannelBindingTypeMismatch();
 
-    @Message(id = 5035, value = "[%s] Channel binding not provided by client")
-    AuthenticationMechanismException mechChannelBindingNotProvided(String mechName);
+    @Message(id = 5035, value = "Channel binding not provided by client")
+    AuthenticationMechanismException mechChannelBindingNotProvided();
 
-    @Message(id = 5036, value = "[%s] Unable to determine peer name")
-    AuthenticationMechanismException mechUnableToDeterminePeerName(String mechName, @Cause Exception e);
+    @Message(id = 5036, value = "Unable to determine peer name")
+    AuthenticationMechanismException mechUnableToDeterminePeerName(@Cause Exception e);
 
-    @Message(id = 5037, value = "[%s] Authentication mechanism client refuses to initiate authentication")
-    AuthenticationMechanismException mechClientRefusesToInitiateAuthentication(String mechName);
+    @Message(id = 5037, value = "Authentication mechanism client refuses to initiate authentication")
+    AuthenticationMechanismException mechClientRefusesToInitiateAuthentication();
 
-    @Message(id = 5038, value = "[%s] Nonces do not match")
-    AuthenticationMechanismException mechNoncesDoNotMatch(String mechName);
+    @Message(id = 5038, value = "Nonces do not match")
+    AuthenticationMechanismException mechNoncesDoNotMatch();
 
-    @Message(id = 5039, value = "[%s] Invalid length of nonce received")
-    AuthenticationMechanismException invalidNonceLength(String mechName);
+    @Message(id = 5039, value = "Invalid length of nonce received")
+    AuthenticationMechanismException invalidNonceLength();
 
-    @Message(id = 5040, value = "[%s] Iteration count %d is below the minimum of %d")
-    AuthenticationMechanismException mechIterationCountIsTooLow(String mechName, int iterationCount, int minimumIterationCount);
+    @Message(id = 5040, value = "Iteration count %d is below the minimum of %d")
+    AuthenticationMechanismException mechIterationCountIsTooLow(int iterationCount, int minimumIterationCount);
 
-    @Message(id = 5041, value = "[%s] Iteration count %d is above the maximum of %d")
-    AuthenticationMechanismException mechIterationCountIsTooHigh(String mechName, int iterationCount, int maximumIterationCount);
+    @Message(id = 5041, value = "Iteration count %d is above the maximum of %d")
+    AuthenticationMechanismException mechIterationCountIsTooHigh(int iterationCount, int maximumIterationCount);
 
     // @Message(id = 5042, value = "[%s] Extensions unsupported")
     // AuthenticationMechanismException mechExtensionsUnsupported(String mechName);
 
-    @Message(id = 5043, value = "[%s] Invalid server message")
-    AuthenticationMechanismException mechInvalidServerMessage(String mechName);
+    @Message(id = 5043, value = "Invalid server message")
+    AuthenticationMechanismException mechInvalidServerMessage();
 
-    @Message(id = 5044, value = "[%s] Invalid server message")
-    AuthenticationMechanismException mechInvalidServerMessageWithCause(String mechName, @Cause Throwable cause);
+    @Message(id = 5044, value = "Invalid server message")
+    AuthenticationMechanismException mechInvalidServerMessageWithCause(@Cause Throwable cause);
 
-    @Message(id = 5045, value = "[%s] Invalid client message")
-    AuthenticationMechanismException mechInvalidClientMessage(String mechName);
+    @Message(id = 5045, value = "Invalid client message")
+    AuthenticationMechanismException mechInvalidClientMessage();
 
-    @Message(id = 5046, value = "[%s] Invalid client message")
-    AuthenticationMechanismException mechInvalidClientMessageWithCause(String mechName, @Cause Throwable cause);
+    @Message(id = 5046, value = "Invalid client message")
+    AuthenticationMechanismException mechInvalidClientMessageWithCause(@Cause Throwable cause);
 
     @Message(id = 5047, value = "[%s] Authentication mechanism message is for mismatched mechanism \"%s\"")
     AuthenticationMechanismException mechUnmatchedMechanism(String mechName, String otherMechName);
@@ -1087,35 +1106,35 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5048, value = "[%s] Server rejected authentication")
     // AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
 
-    @Message(id = 5049, value = "[%s] Server authenticity cannot be verified")
-    AuthenticationMechanismException mechServerAuthenticityCannotBeVerified(String mechName);
+    @Message(id = 5049, value = "Server authenticity cannot be verified")
+    AuthenticationMechanismException mechServerAuthenticityCannotBeVerified();
 
-    @Message(id = 5050, value = "[%s] Callback handler does not support user name")
-    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportUserName(String mechName, @Cause Throwable cause);
+    @Message(id = 5050, value = "Callback handler does not support user name")
+    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportUserName(@Cause Throwable cause);
 
-    @Message(id = 5051, value = "[%s] Callback handler does not support credential acquisition")
-    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportCredentialAcquisition(String mechName, @Cause Throwable cause);
+    @Message(id = 5051, value = "Callback handler does not support credential acquisition")
+    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportCredentialAcquisition(@Cause Throwable cause);
 
-    @Message(id = 5052, value = "[%s] Callback handler does not support authorization")
-    AuthenticationMechanismException mechAuthorizationUnsupported(String mechName, @Cause Throwable cause);
+    @Message(id = 5052, value = "Callback handler does not support authorization")
+    AuthenticationMechanismException mechAuthorizationUnsupported(@Cause Throwable cause);
 
-    @Message(id = 5053, value = "[%s] Callback handler failed for unknown reason")
-    AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(String mechName, @Cause Throwable cause);
+    @Message(id = 5053, value = "Callback handler failed for unknown reason")
+    AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
 
     // @Message(id = 5054, value = "[%s] Salt must be specified")
     // AuthenticationMechanismException mechSaltMustBeSpecified(String mechName);
 
-    @Message(id = 5055, value = "[%s] Authentication rejected (invalid proof)")
-    AuthenticationMechanismException mechAuthenticationRejectedInvalidProof(String mechName);
+    @Message(id = 5055, value = "Authentication rejected (invalid proof)")
+    AuthenticationMechanismException mechAuthenticationRejectedInvalidProof();
 
-    @Message(id = 5056, value = "[%s] Client sent extra message")
-    AuthenticationMechanismException mechClientSentExtraMessage(String mechName);
+    @Message(id = 5056, value = "Client sent extra message")
+    AuthenticationMechanismException mechClientSentExtraMessage();
 
-    @Message(id = 5057, value = "[%s] Server sent extra message")
-    AuthenticationMechanismException mechServerSentExtraMessage(String mechName);
+    @Message(id = 5057, value = "Server sent extra message")
+    AuthenticationMechanismException mechServerSentExtraMessage();
 
-    @Message(id = 5058, value = "[%s] Authentication failed")
-    AuthenticationMechanismException mechAuthenticationFailed(String mechName);
+    @Message(id = 5058, value = "Authentication failed")
+    AuthenticationMechanismException mechAuthenticationFailed();
 
     // @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
     // AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
@@ -1129,59 +1148,59 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5062, value = "Too big number")
     NumberFormatException tooBigNumber();
 
-    @Message(id = 5063, value = "[%s] Cannot get clear password from two way password")
-    AuthenticationMechanismException mechCannotGetTwoWayPasswordChars(String mechName, @Cause Throwable cause);
+    @Message(id = 5063, value = "Cannot get clear password from two way password")
+    AuthenticationMechanismException mechCannotGetTwoWayPasswordChars(@Cause Throwable cause);
 
-    @Message(id = 5064, value = "[%s] Hashing algorithm not supported")
-    AuthenticationMechanismException mechMacAlgorithmNotSupported(String mechName, @Cause Throwable cause);
+    @Message(id = 5064, value = "Hashing algorithm not supported")
+    AuthenticationMechanismException mechMacAlgorithmNotSupported(@Cause Throwable cause);
 
-    @Message(id = 5065, value = "[%s] keyword cannot be empty")
-    AuthenticationMechanismException mechKeywordCannotBeEmpty(String mechName);
+    @Message(id = 5065, value = "keyword cannot be empty")
+    AuthenticationMechanismException mechKeywordCannotBeEmpty();
 
-    @Message(id = 5066, value = "[%s] No value found for keyword: %s")
-    AuthenticationMechanismException mechNoValueFoundForKeyword(String mechName, String keyword);
+    @Message(id = 5066, value = "No value found for keyword: %s")
+    AuthenticationMechanismException mechNoValueFoundForKeyword(String keyword);
 
-    @Message(id = 5067, value = "[%s] '=' expected after keyword: %s")
-    AuthenticationMechanismException mechKeywordNotFollowedByEqual(String mechName, String keyword);
+    @Message(id = 5067, value = "'=' expected after keyword: %s")
+    AuthenticationMechanismException mechKeywordNotFollowedByEqual(String keyword);
 
-    @Message(id = 5068, value = "[%s] Unmatched quote found for value: %s")
-    AuthenticationMechanismException mechUnmatchedQuoteFoundForValue(String mechName, String value);
+    @Message(id = 5068, value = "Unmatched quote found for value: %s")
+    AuthenticationMechanismException mechUnmatchedQuoteFoundForValue(String value);
 
-    @Message(id = 5069, value = "[%s] Expecting comma or linear whitespace after quoted string: %s")
-    AuthenticationMechanismException mechExpectingCommaOrLinearWhitespaceAfterQuoted(String mechName, String value);
+    @Message(id = 5069, value = "Expecting comma or linear whitespace after quoted string: %s")
+    AuthenticationMechanismException mechExpectingCommaOrLinearWhitespaceAfterQuoted(String value);
 
-    @Message(id = 5070, value = "[%s] MessageType must equal to %d, but it is %d")
-    AuthenticationMechanismException mechMessageTypeMustEqual(String mechName, int expected, int actual);
+    @Message(id = 5070, value = "MessageType must equal to %d, but it is %d")
+    AuthenticationMechanismException mechMessageTypeMustEqual(int expected, int actual);
 
-    @Message(id = 5071, value = "[%s] Bad sequence number while unwrapping: expected %d, but %d received")
-    AuthenticationMechanismException mechBadSequenceNumberWhileUnwrapping(String mechName, int expected, int actual);
+    @Message(id = 5071, value = "Bad sequence number while unwrapping: expected %d, but %d received")
+    AuthenticationMechanismException mechBadSequenceNumberWhileUnwrapping(int expected, int actual);
 
-    @Message(id = 5072, value = "[%s] Problem during crypt")
-    AuthenticationMechanismException mechProblemDuringCrypt(String mechName, @Cause Throwable cause);
+    @Message(id = 5072, value = "Problem during crypt")
+    AuthenticationMechanismException mechProblemDuringCrypt(@Cause Throwable cause);
 
-    @Message(id = 5073, value = "[%s] Problem during decrypt")
-    AuthenticationMechanismException mechProblemDuringDecrypt(String mechName, @Cause Throwable cause);
+    @Message(id = 5073, value = "Problem during decrypt")
+    AuthenticationMechanismException mechProblemDuringDecrypt(@Cause Throwable cause);
 
-    @Message(id = 5074, value = "[%s] Unknown cipher \"%s\"")
-    AuthenticationMechanismException mechUnknownCipher(String mechName, String cipher);
+    @Message(id = 5074, value = "Unknown cipher \"%s\"")
+    AuthenticationMechanismException mechUnknownCipher(String cipher);
 
-    @Message(id = 5075, value = "[%s] Authorization ID changed unexpectedly")
-    AuthenticationMechanismException mechAuthorizationIdChanged(String mechName);
+    @Message(id = 5075, value = "Authorization ID changed unexpectedly")
+    AuthenticationMechanismException mechAuthorizationIdChanged();
 
-    @Message(id = 5076, value = "[%s] Problem getting required cipher. Check your transformation mapper settings.")
-    AuthenticationMechanismException mechProblemGettingRequiredCipher(String mechName, @Cause Throwable cause);
+    @Message(id = 5076, value = "Problem getting required cipher. Check your transformation mapper settings.")
+    AuthenticationMechanismException mechProblemGettingRequiredCipher(@Cause Throwable cause);
 
-    @Message(id = 5077, value = "[%s] No common protection layer between client and server")
-    AuthenticationMechanismException mechNoCommonProtectionLayer(String mechName);
+    @Message(id = 5077, value = "No common protection layer between client and server")
+    AuthenticationMechanismException mechNoCommonProtectionLayer();
 
-    @Message(id = 5078, value = "[%s] No common cipher between client and server")
-    AuthenticationMechanismException mechNoCommonCipher(String mechName);
+    @Message(id = 5078, value = "No common cipher between client and server")
+    AuthenticationMechanismException mechNoCommonCipher();
 
-    @Message(id = 5079, value = "[%s] No ciphers offered by server")
-    AuthenticationMechanismException mechNoCiphersOfferedByServer(String mechName);
+    @Message(id = 5079, value = "No ciphers offered by server")
+    AuthenticationMechanismException mechNoCiphersOfferedByServer();
 
-    @Message(id = 5080, value = "[%s] Callback handler not provided user name")
-    AuthenticationMechanismException mechNotProvidedUserName(String mechName);
+    @Message(id = 5080, value = "Callback handler not provided user name")
+    AuthenticationMechanismException mechNotProvidedUserName();
 
     // @Message(id = 5081, value = "[%s] Callback handler not provided pre-digested password")
     // AuthenticationMechanismException mechNotProvidedPreDigested(String mechName);
@@ -1189,38 +1208,38 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5082, value = "[%s] Callback handler not provided clear password")
     // AuthenticationMechanismException mechNotProvidedClearPassword(String mechName);
 
-    @Message(id = 5083, value = "[%s] Missing \"%s\" directive")
-    AuthenticationMechanismException mechMissingDirective(String mechName, String directive);
+    @Message(id = 5083, value = "Missing \"%s\" directive")
+    AuthenticationMechanismException mechMissingDirective(String directive);
 
-    @Message(id = 5084, value = "[%s] nonce-count must equal to %d, but it is %d")
-    AuthenticationMechanismException mechNonceCountMustEqual(String mechName, int expected, int actual);
+    @Message(id = 5084, value = "nonce-count must equal to %d, but it is %d")
+    AuthenticationMechanismException mechNonceCountMustEqual(int expected, int actual);
 
-    @Message(id = 5085, value = "[%s] Server is set to not support %s charset")
-    AuthenticationMechanismException mechUnsupportedCharset(String mechName, String charset);
+    @Message(id = 5085, value = "Server is set to not support %s charset")
+    AuthenticationMechanismException mechUnsupportedCharset(String charset);
 
-    @Message(id = 5086, value = "[%s] Charset can be only \"utf-8\" or unspecified (to use ISO 8859-1)")
-    AuthenticationMechanismException mechUnknownCharset(String mechName);
+    @Message(id = 5086, value = "Charset can be only \"utf-8\" or unspecified (to use ISO 8859-1)")
+    AuthenticationMechanismException mechUnknownCharset();
 
-    @Message(id = 5087, value = "[%s] Client selected realm not offered by server (%s)")
-    AuthenticationMechanismException mechDisallowedClientRealm(String mechName, String clientRealm);
+    @Message(id = 5087, value = "Client selected realm not offered by server (%s)")
+    AuthenticationMechanismException mechDisallowedClientRealm(String clientRealm);
 
-    @Message(id = 5088, value = "[%s] digest-uri \"%s\" not accepted")
-    AuthenticationMechanismException mechMismatchedWrongDigestUri(String mechName, String actual);
+    @Message(id = 5088, value = "digest-uri \"%s\" not accepted")
+    AuthenticationMechanismException mechMismatchedWrongDigestUri(String actual);
 
-    @Message(id = 5089, value = "[%s] Unexpected qop value: \"%s\"")
-    AuthenticationMechanismException mechUnexpectedQop(String mechName, String qop);
+    @Message(id = 5089, value = "Unexpected qop value: \"%s\"")
+    AuthenticationMechanismException mechUnexpectedQop(String qop);
 
-    @Message(id = 5090, value = "[%s] Wrapping is not configured")
-    IllegalStateException wrappingNotConfigured(String mechName);
+    @Message(id = 5090, value = "Wrapping is not configured")
+    IllegalStateException wrappingNotConfigured();
 
-    @Message(id = 5091, value = "[%s] Authentication name string is too long")
-    AuthenticationMechanismException mechAuthenticationNameTooLong(String mechName);
+    @Message(id = 5091, value = "Authentication name string is too long")
+    AuthenticationMechanismException mechAuthenticationNameTooLong();
 
-    @Message(id = 5092, value = "[%s] Authentication name is empty")
-    AuthenticationMechanismException mechAuthenticationNameIsEmpty(String mechName);
+    @Message(id = 5092, value = "Authentication name is empty")
+    AuthenticationMechanismException mechAuthenticationNameIsEmpty();
 
-    @Message(id = 5093, value = "[%s] Authorization for anonymous access is denied")
-    AuthenticationMechanismException mechAnonymousAuthorizationDenied(String mechName);
+    @Message(id = 5093, value = "Authorization for anonymous access is denied")
+    AuthenticationMechanismException mechAnonymousAuthorizationDenied();
 
     @Message(id = 5094, value = "Required padded length (%d) is less than length of conversion result (%d)")
     IllegalArgumentException requiredNegativePadding(int totalLength, int hexLength);
@@ -1234,41 +1253,41 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5097, value = "Unable to determine subject name from X.509 certificate")
     IllegalStateException unableToDetermineSubjectName(@Cause Throwable cause);
 
-    @Message(id = 5098, value = "[%s] Unable to verify client signature")
-    AuthenticationMechanismException mechUnableToVerifyClientSignature(String mechName, @Cause Throwable cause);
+    @Message(id = 5098, value = "Unable to verify client signature")
+    AuthenticationMechanismException mechUnableToVerifyClientSignature(@Cause Throwable cause);
 
-    @Message(id = 5099, value = "[%s] Unable to verify server signature")
-    AuthenticationMechanismException mechUnableToVerifyServerSignature(String mechName, @Cause Throwable cause);
+    @Message(id = 5099, value = "Unable to verify server signature")
+    AuthenticationMechanismException mechUnableToVerifyServerSignature(@Cause Throwable cause);
 
     // @Message(id = 5100, value = "[%s] Unable to obtain other side certificate from URL \"%s\"")
     // AuthenticationMechanismException mechUnableToObtainServerCertificate(String mechName, String url, @Cause Throwable cause);
 
-    @Message(id = 5101, value = "[%s] Callback handler not provided server certificate")
-    AuthenticationMechanismException mechCallbackHandlerNotProvidedServerCertificate(String mechName);
+    @Message(id = 5101, value = "Callback handler not provided server certificate")
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedServerCertificate();
 
-    @Message(id = 5102, value = "[%s] Callback handler not provided client certificate")
-    AuthenticationMechanismException mechCallbackHandlerNotProvidedClientCertificate(String mechName);
+    @Message(id = 5102, value = "Callback handler not provided client certificate")
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedClientCertificate();
 
-    @Message(id = 5103, value = "[%s] Server identifier mismatch")
-    AuthenticationMechanismException mechServerIdentifierMismatch(String mechName);
+    @Message(id = 5103, value = "Server identifier mismatch")
+    AuthenticationMechanismException mechServerIdentifierMismatch();
 
-    @Message(id = 5104, value = "[%s] Client identifier mismatch")
-    AuthenticationMechanismException mechClientIdentifierMismatch(String mechName);
+    @Message(id = 5104, value = "Client identifier mismatch")
+    AuthenticationMechanismException mechClientIdentifierMismatch();
 
-    @Message(id = 5105, value = "[%s] Unable to determine client name")
-    AuthenticationMechanismException mechUnableToDetermineClientName(String mechName, @Cause Throwable cause);
+    @Message(id = 5105, value = "Unable to determine client name")
+    AuthenticationMechanismException mechUnableToDetermineClientName(@Cause Throwable cause);
 
-    @Message(id = 5106, value = "[%s] Callback handler not provided private key")
-    AuthenticationMechanismException mechCallbackHandlerNotProvidedPrivateKey(String mechName);
+    @Message(id = 5106, value = "Callback handler not provided private key")
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedPrivateKey();
 
-    @Message(id = 5107, value = "[%s] Unable to create signature")
-    AuthenticationMechanismException mechUnableToCreateSignature(String mechName, @Cause Throwable cause);
+    @Message(id = 5107, value = "Unable to create signature")
+    AuthenticationMechanismException mechUnableToCreateSignature(@Cause Throwable cause);
 
-    @Message(id = 5108, value = "[%s] Unable to create response token")
-    AuthenticationMechanismException mechUnableToCreateResponseToken(String mechName, @Cause Throwable cause);
+    @Message(id = 5108, value = "Unable to create response token")
+    AuthenticationMechanismException mechUnableToCreateResponseToken(@Cause Throwable cause);
 
-    @Message(id = 5109, value = "[%s] Unable to create response token")
-    AuthenticationMechanismException mechUnableToCreateResponseTokenWithCause(String mechName, @Cause Throwable cause);
+    @Message(id = 5109, value = "Unable to create response token")
+    AuthenticationMechanismException mechUnableToCreateResponseTokenWithCause(@Cause Throwable cause);
 
     @Message(id = 5110, value = "Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)")
     IllegalArgumentException invalidValueForTrustedAuthorityType();
@@ -1282,53 +1301,53 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5113, value = "Unable to initialize OID of Kerberos V5")
     RuntimeException unableToInitialiseOid(@Cause Throwable cause);
 
-    @Message(id = 5114, value = "[%s] Receive buffer requested '%d' is greater than supported maximum '%d'")
-    AuthenticationMechanismException mechReceiveBufferIsGreaterThanMaximum(String mechName, int requested, int maximum);
+    @Message(id = 5114, value = "Receive buffer requested '%d' is greater than supported maximum '%d'")
+    AuthenticationMechanismException mechReceiveBufferIsGreaterThanMaximum(int requested, int maximum);
 
-    @Message(id = 5115, value = "[%s] Unable to wrap message")
-    AuthenticationMechanismException mechUnableToWrapMessage(String mechName, @Cause Throwable cause);
+    @Message(id = 5115, value = "Unable to wrap message")
+    AuthenticationMechanismException mechUnableToWrapMessage(@Cause Throwable cause);
 
-    @Message(id = 5116, value = "[%s] Unable to unwrap message")
-    AuthenticationMechanismException mechUnableToUnwrapMessage(String mechName, @Cause Throwable cause);
+    @Message(id = 5116, value = "Unable to unwrap message")
+    AuthenticationMechanismException mechUnableToUnwrapMessage(@Cause Throwable cause);
 
-    @Message(id = 5117, value = "[%s] Unable to unwrap security layer negotiation message")
-    AuthenticationMechanismException mechUnableToUnwrapSecurityLayerNegotiationMessage(String mechName, @Cause Throwable cause);
+    @Message(id = 5117, value = "Unable to unwrap security layer negotiation message")
+    AuthenticationMechanismException mechUnableToUnwrapSecurityLayerNegotiationMessage(@Cause Throwable cause);
 
-    @Message(id = 5118, value = "[%s] Invalid message of length %d on unwrapping")
-    AuthenticationMechanismException mechInvalidMessageOnUnwrapping(String mechName, int length);
+    @Message(id = 5118, value = "Invalid message of length %d on unwrapping")
+    AuthenticationMechanismException mechInvalidMessageOnUnwrapping(int length);
 
-    @Message(id = 5119, value = "[%s] Negotiated mechanism was not Kerberos V5")
-    AuthenticationMechanismException mechNegotiatedMechanismWasNotKerberosV5(String mechName);
+    @Message(id = 5119, value = "Negotiated mechanism was not Kerberos V5")
+    AuthenticationMechanismException mechNegotiatedMechanismWasNotKerberosV5();
 
-    @Message(id = 5120, value = "[%s] Insufficient levels of protection available for supported security layers")
-    AuthenticationMechanismException mechInsufficientQopsAvailable(String mechName);
+    @Message(id = 5120, value = "Insufficient levels of protection available for supported security layers")
+    AuthenticationMechanismException mechInsufficientQopsAvailable();
 
-    @Message(id = 5121, value = "[%s] Unable to generate security layer challenge")
-    AuthenticationMechanismException mechUnableToGenerateChallenge(String mechName, @Cause Throwable cause);
+    @Message(id = 5121, value = "Unable to generate security layer challenge")
+    AuthenticationMechanismException mechUnableToGenerateChallenge(@Cause Throwable cause);
 
-    @Message(id = 5122, value = "[%s] Client selected a security layer that was not offered by server")
-    AuthenticationMechanismException mechSelectedUnofferedQop(String mechName);
+    @Message(id = 5122, value = "Client selected a security layer that was not offered by server")
+    AuthenticationMechanismException mechSelectedUnofferedQop();
 
-    @Message(id = 5123, value = "[%s] No security layer selected but message length received")
-    AuthenticationMechanismException mechNoSecurityLayerButLengthReceived(String mechName);
+    @Message(id = 5123, value = "No security layer selected but message length received")
+    AuthenticationMechanismException mechNoSecurityLayerButLengthReceived();
 
-    @Message(id = 5124, value = "[%s] Unable to get maximum size of message before wrap")
-    AuthenticationMechanismException mechUnableToGetMaximumSizeOfMessage(String mechName, @Cause Throwable cause);
+    @Message(id = 5124, value = "Unable to get maximum size of message before wrap")
+    AuthenticationMechanismException mechUnableToGetMaximumSizeOfMessage(@Cause Throwable cause);
 
-    @Message(id = 5125, value = "[%s] Unable to handle response from server")
-    AuthenticationMechanismException mechUnableToHandleResponseFromServer(String mechName, @Cause Throwable cause);
+    @Message(id = 5125, value = "Unable to handle response from server")
+    AuthenticationMechanismException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
 
-    @Message(id = 5126, value = "[%s] Bad length of message for negotiating security layer")
-    AuthenticationMechanismException mechBadLengthOfMessageForNegotiatingSecurityLayer(String mechName);
+    @Message(id = 5126, value = "Bad length of message for negotiating security layer")
+    AuthenticationMechanismException mechBadLengthOfMessageForNegotiatingSecurityLayer();
 
-    @Message(id = 5127, value = "[%s] No security layer supported by server but maximum message size received: \"%d\"")
-    AuthenticationMechanismException mechReceivedMaxMessageSizeWhenNoSecurityLayer(String mechName, int length);
+    @Message(id = 5127, value = "No security layer supported by server but maximum message size received: \"%d\"")
+    AuthenticationMechanismException mechReceivedMaxMessageSizeWhenNoSecurityLayer(int length);
 
-    @Message(id = 5128, value = "[%s] Failed to read challenge file")
-    AuthenticationMechanismException mechFailedToReadChallengeFile(String mechName, @Cause Throwable cause);
+    @Message(id = 5128, value = "Failed to read challenge file")
+    AuthenticationMechanismException mechFailedToReadChallengeFile(@Cause Throwable cause);
 
-    @Message(id = 5129, value = "[%s] Failed to create challenge file")
-    AuthenticationMechanismException mechFailedToCreateChallengeFile(String mechName, @Cause Throwable cause);
+    @Message(id = 5129, value = "Failed to create challenge file")
+    AuthenticationMechanismException mechFailedToCreateChallengeFile(@Cause Throwable cause);
 
     @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
     IllegalArgumentException invalidNonAsciiSpace(int input);
@@ -1390,8 +1409,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
     // AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
 
-    @Message(id = 5150, value = "[%s] Authentication mechanism authorization ID is too long")
-    AuthenticationMechanismException mechAuthorizationIdTooLong(String mechName);
+    @Message(id = 5150, value = "Authentication mechanism authorization ID is too long")
+    AuthenticationMechanismException mechAuthorizationIdTooLong();
 
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
     AuthenticationMechanismException mechInvalidOTPAlgorithm(String algorithm);
@@ -1399,11 +1418,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5152, value = "Invalid OTP response type")
     AuthenticationMechanismException mechInvalidOTPResponseType();
 
-    @Message(id = 5153, value = "[%s] Incorrect parity in SASL client message")
-    AuthenticationMechanismException mechIncorrectParity(String mechName);
+    @Message(id = 5153, value = "Incorrect parity in SASL client message")
+    AuthenticationMechanismException mechIncorrectParity();
 
-    @Message(id = 5154, value = "[%s] Invalid character in seed")
-    AuthenticationMechanismException mechInvalidCharacterInSeed(String mechName);
+    @Message(id = 5154, value = "Invalid character in seed")
+    AuthenticationMechanismException mechInvalidCharacterInSeed();
 
     @Message(id = 5155, value = "Invalid OTP seed, must be between 1 and 16 characters long")
     AuthenticationMechanismException mechInvalidOTPSeed();
@@ -1423,44 +1442,44 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5160, value = "Invalid OTP alternate dictionary")
     AuthenticationMechanismException mechInvalidOTPAlternateDictionary();
 
-    @Message(id = 5161, value = "[%s] Unable to retrieve password for \"%s\"")
-    AuthenticationMechanismException mechUnableToRetrievePassword(String mechName, String userName);
+    @Message(id = 5161, value = "Unable to retrieve password for \"%s\"")
+    AuthenticationMechanismException mechUnableToRetrievePassword(String userName);
 
-    @Message(id = 5162, value = "[%s] Unable to update password for \"%s\"")
-    AuthenticationMechanismException mechUnableToUpdatePassword(String mechName, String userName);
+    @Message(id = 5162, value = "Unable to update password for \"%s\"")
+    AuthenticationMechanismException mechUnableToUpdatePassword(String userName);
 
-    @Message(id = 5163, value = "[%s] Authentication mechanism server timed out")
-    AuthenticationMechanismException mechServerTimedOut(String mechName);
+    @Message(id = 5163, value = "Authentication mechanism server timed out")
+    AuthenticationMechanismException mechServerTimedOut();
 
-    @Message(id = 5164, value = "[%s] Unable to obtain exclusive access for \"%s\"")
-    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String mechName, String userName);
+    @Message(id = 5164, value = "Unable to obtain exclusive access for \"%s\"")
+    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String userName);
 
     @Message(id = 5165, value = "OTP re-initialization failed")
     AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
 
-    @Message(id = 5166, value = "[%s] Server rejected authentication")
-    ScramServerException scramServerRejectedAuthentication(String mechName, @Param ScramServerErrorCode errorCode);
+    @Message(id = 5166, value = "Server rejected authentication")
+    ScramServerException scramServerRejectedAuthentication(@Param ScramServerErrorCode errorCode);
 
     @Message(id = 5167, value = "Invalid OTP password format type")
     AuthenticationMechanismException mechInvalidOTPPasswordFormatType();
 
-    @Message(id = 5168, value = "[%s] Unsupported algorithm selected \"%s\"")
-    AuthenticationMechanismException mechUnsupportedAlgorithm(String mechName, String algorithm);
+    @Message(id = 5168, value = "Unsupported algorithm selected \"%s\"")
+    AuthenticationMechanismException mechUnsupportedAlgorithm(String algorithm);
 
-    @Message(id = 5169, value = "[%s] Clients response token does not match expected token")
-    String mechResponseTokenMismatch(String mechName);
+    @Message(id = 5169, value = "Clients response token does not match expected token")
+    String mechResponseTokenMismatch();
 
-    @Message(id = 5170, value = "[%s] Problem during crypt: The encrypted result is null. The input data has a length of zero or too short to result in a new block.")
-    AuthenticationMechanismException mechProblemDuringCryptResultIsNull(String mechName);
+    @Message(id = 5170, value = "Problem during crypt: The encrypted result is null. The input data has a length of zero or too short to result in a new block.")
+    AuthenticationMechanismException mechProblemDuringCryptResultIsNull();
 
-    @Message(id = 5171, value = "[%s] Problem during decrypt: The decrypted result is null. The input data has a length of zero or too short to result in a new block.")
-    AuthenticationMechanismException mechProblemDuringDecryptResultIsNull(String mechName);
+    @Message(id = 5171, value = "Problem during decrypt: The decrypted result is null. The input data has a length of zero or too short to result in a new block.")
+    AuthenticationMechanismException mechProblemDuringDecryptResultIsNull();
 
     @Message(id = 5172, value = "Unable to locate MechanismConfiguration for mechanism.")
     AuthenticationMechanismException unableToLocateMechanismConfiguration(@Cause Throwable cause);
 
-    @Message(id = 5173, value = "[%s] Unable to obtain server credential.")
-    AuthenticationMechanismException unableToObtainServerCredential(String mechName);
+    @Message(id = 5173, value = "Unable to obtain server credential.")
+    AuthenticationMechanismException unableToObtainServerCredential();
 
     /* http package */
 
@@ -1473,8 +1492,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6002, value = "An authentication attempt for user '%s' failed validation using mechanism '%s'.")
     String authenticationFailed(String username, String mechanismName);
 
-    @Message(id = 6003, value = "An authentication attempt failed validation using mechanism '%s'.")
-    String authenticationFailed(String mechanismName);
+    @Message(id = 6003, value = "An authentication attempt failed validation.")
+    String authenticationFailed();
 
     // @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
     // IllegalStateException httpSessionNotSupported();
@@ -1482,8 +1501,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6005, value= "Attachments are not supported on this scope.")
     UnsupportedOperationException noAttachmentSupport();
 
-    @Message(id = 6006, value = "An authorization check for user '%s' failed using mechanism '%s'.")
-    String authorizationFailed(String username, String mechanismName);
+    @Message(id = 6006, value = "An authorization check for user '%s' failed.")
+    String authorizationFailed(String username);
 
     @Message(id = 6007, value = "Username or password missing from authentication attempt.")
     String usernameOrPasswordMissing();

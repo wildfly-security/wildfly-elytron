@@ -30,12 +30,11 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslWrapper;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslGssapi;
 
 /**
  * Base class for the SaslServer and SaslClient implementations implementing the GSSAPI mechanism as defined by RFC 4752
@@ -59,11 +58,10 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         try {
             KERBEROS_V5 = new Oid("1.2.840.113554.1.2.2");
         } catch (GSSException e) {
-            throw ElytronMessages.log.unableToInitialiseOid(e);
+            throw saslGssapi.unableToInitialiseOid(e);
         }
     }
 
-    private final ElytronMessages log;
     protected GSSContext gssContext;
     protected final int configuredMaxReceiveBuffer;
     protected int actualMaxReceiveBuffer;
@@ -73,17 +71,15 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     protected QOP selectedQop;
 
     protected AbstractGssapiMechanism(String mechanismName, String protocol, String serverName, Map<String, ?> props,
-            final CallbackHandler callbackHandler, final ElytronMessages log) throws SaslException {
-        super(mechanismName, protocol, serverName, callbackHandler);
+            final CallbackHandler callbackHandler) throws SaslException {
+        super(mechanismName, protocol, serverName, callbackHandler, saslGssapi);
         Assert.checkNotNullParam("callbackHandler", callbackHandler);
         if (props == null) props = Collections.emptyMap();
-
-        this.log = log;
 
         if (props.containsKey(Sasl.MAX_BUFFER)) {
             configuredMaxReceiveBuffer = Integer.parseInt((String) props.get(Sasl.MAX_BUFFER));
             if (configuredMaxReceiveBuffer > DEFAULT_MAX_BUFFER_SIZE) {
-                throw log.mechReceiveBufferIsGreaterThanMaximum(getMechanismName(), configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE).toSaslException();
+                throw saslGssapi.mechReceiveBufferIsGreaterThanMaximum(configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE).toSaslException();
             }
         } else {
             configuredMaxReceiveBuffer = DEFAULT_MAX_BUFFER_SIZE;
@@ -95,9 +91,9 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         }
         orderedQops = parsePreferredQop((String) props.get(Sasl.QOP));
 
-        if (log.isTraceEnabled()) {
-            log.tracef("configuredMaxReceiveBuffer=%d", configuredMaxReceiveBuffer);
-            log.tracef("relaxComplianceChecks=%b", relaxComplianceChecks);
+        if (saslGssapi.isTraceEnabled()) {
+            saslGssapi.tracef("configuredMaxReceiveBuffer=%d", configuredMaxReceiveBuffer);
+            saslGssapi.tracef("relaxComplianceChecks=%b", relaxComplianceChecks);
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < orderedQops.length; i++) {
                 if (i > 0) {
@@ -106,7 +102,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 sb.append(orderedQops[i]);
             }
 
-            log.tracef("QOP={%s}", sb.toString());
+            saslGssapi.tracef("QOP={%s}", sb.toString());
         }
     }
 
@@ -145,10 +141,10 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     @Override
     public void dispose() throws SaslException {
         try {
-            log.trace("dispose");
+            saslGssapi.trace("dispose");
             gssContext.dispose();
         } catch (GSSException e) {
-            throw log.mechUnableToDisposeGssContext(getMechanismName(), e).toSaslException();
+            throw saslGssapi.mechUnableToDisposeGssContext(e).toSaslException();
         } finally {
             gssContext = null;
         }
@@ -162,7 +158,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 for (int i = 0; i < qopNames.length; i++) {
                     QOP mapped = QOP.mapFromName(qopNames[i]);
                     if (mapped == null) {
-                        throw log.mechUnexpectedQop(getMechanismName(), qopNames[i]).toSaslException();
+                        throw saslGssapi.mechUnexpectedQop(qopNames[i]).toSaslException();
                     }
                     preferredQop[i] = mapped;
 
@@ -258,10 +254,10 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             MessageProp prop = new MessageProp(0, confidential);
             try {
                 byte[] response = gssContext.wrap(outgoing, offset, len, prop);
-                log.tracef("Wrapping message of length '%d' resulting message of length '%d'", len, response.length);
+                saslGssapi.tracef("Wrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw log.mechUnableToWrapMessage(getMechanismName(), e).toSaslException();
+                throw saslGssapi.mechUnableToWrapMessage(e).toSaslException();
             }
         }
 
@@ -270,10 +266,10 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             MessageProp prop = new MessageProp(0, confidential);
             try {
                 byte[] response = gssContext.unwrap(incoming, offset, len, prop);
-                log.tracef("Unwrapping message of length '%d' resulting message of length '%d'", len, response.length);
+                saslGssapi.tracef("Unwrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw log.mechUnableToUnwrapMessage(getMechanismName(), e).toSaslException();
+                throw saslGssapi.mechUnableToUnwrapMessage(e).toSaslException();
             }
         }
 

@@ -31,7 +31,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import static org.wildfly.common.Assert.assertTrue;
-import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -40,23 +39,23 @@ public class OAuth2Client {
 
     private static final String KV_DELIMITER = "%x01";
 
-    private final String mechanismName;
     private final CallbackHandler callbackHandler;
     private final String authorizationId;
+    private ElytronMessages log;
 
-    public OAuth2Client(String mechanismName, String authorizationId, CallbackHandler callbackHandler) {
-        this.mechanismName = mechanismName;
+    public OAuth2Client(String authorizationId, CallbackHandler callbackHandler, ElytronMessages log) {
         this.authorizationId = authorizationId;
         this.callbackHandler = callbackHandler;
+        this.log = log;
     }
 
     public OAuth2InitialClientMessage getInitialResponse() throws AuthenticationMechanismException {
         final CredentialCallback credentialCallback = new CredentialCallback(BearerTokenCredential.class);
 
         try {
-            MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, credentialCallback);
+            MechanismUtil.handleCallbacks(log, this.callbackHandler, credentialCallback);
         } catch (UnsupportedCallbackException e) {
-            throw ElytronMessages.log.mechCallbackHandlerDoesNotSupportUserName(this.mechanismName, e);
+            throw log.mechCallbackHandlerDoesNotSupportUserName(e);
         }
 
         assertTrue(credentialCallback.isCredentialTypeSupported(BearerTokenCredential.class));
@@ -64,7 +63,7 @@ public class OAuth2Client {
         final String token = credentialCallback.applyToCredential(BearerTokenCredential.class, BearerTokenCredential::getToken);
 
         if (token == null) {
-            throw ElytronMessages.log.mechNoTokenGiven(this.mechanismName);
+            throw log.mechNoTokenGiven();
         }
 
         final ByteStringBuilder encoded = new ByteStringBuilder();

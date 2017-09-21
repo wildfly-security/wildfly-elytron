@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.digest;
 
+import static org.wildfly.security._private.ElytronMessages.saslDigest;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +44,6 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 
@@ -84,7 +85,7 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanism, e).toSaslException();
+            throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
         }
         final boolean defaultRealm;
         if (realms == null) {

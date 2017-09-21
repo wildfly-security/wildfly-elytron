@@ -19,7 +19,7 @@ package org.wildfly.security.http.impl;
 
 import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpForm;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_ERROR_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_LOGIN_PAGE;
@@ -163,7 +163,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         String password = request.getFirstParameterValue(PASSWORD);
 
         if (username == null || password == null) {
-            error(log.usernameOrPasswordMissing(), request);
+            error(httpForm.usernameOrPasswordMissing(), request);
             return;
         }
 
@@ -172,7 +172,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             if (authenticate(null, username, passwordChars)) {
                 IdentityCache identityCache = createIdentityCache(request, true);
                 if (authorize(username, request, identityCache)) {
-                    log.debugf("User [%s] authenticated successfully using FormAuthenticationMechanism", username);
+                    httpForm.debugf("User [%s] authenticated successfully", username);
                     succeed();
 
                     HttpScope session = getSessionScope(request, true);
@@ -182,7 +182,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
                             postAuthenticationPath = originalPath;
-                            log.tracef("User redirected to original path [%s]", postAuthenticationPath);
+                            httpForm.tracef("User redirected to original path [%s]", postAuthenticationPath);
                         } else {
                             URI requestUri = request.getRequestURI();
                             String currentPath = requestUri.getPath();
@@ -195,7 +195,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                             sb.append(currentPath.substring(0, currentPath.indexOf(DEFAULT_POST_LOCATION)));
 
                             postAuthenticationPath = sb.toString();
-                            log.tracef("User redirected to default path [%s]", postAuthenticationPath);
+                            httpForm.tracef("User redirected to default path [%s]", postAuthenticationPath);
                         }
                         session.setAttachment(LOCATION_KEY, null);
                         responder = (response) -> sendRedirect(response, postAuthenticationPath);
@@ -205,13 +205,13 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                     // no resumeRequest here, need to redirect first
                     return;
                 } else {
-                    log.debugf("User [%s] authorization failed", username);
+                    httpForm.debugf("User [%s] authorization failed", username);
                     failAndRedirectToErrorPage(request, username);
                     return;
                 }
 
             } else {
-                log.debugf("User [%s] authentication failed", username);
+                httpForm.debugf("User [%s] authentication failed", username);
                 failAndRedirectToErrorPage(request, username);
                 return;
             }
@@ -223,7 +223,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     private boolean authorize(String username, HttpServerRequest request, IdentityCache identityCache) throws HttpAuthenticationException {
-        log.tracef("Authorizing username: [%s], Request URI: [%s], Context path: [%s]", username, request.getRequestURI(), this.contextPath);
+        httpForm.tracef("Authorizing username: [%s], Request URI: [%s], Context path: [%s]", username, request.getRequestURI(), this.contextPath);
 
         if (identityCache != null) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(username, identityCache);
@@ -238,13 +238,13 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
-        if (log.isTraceEnabled()) {
+        if (httpForm.isTraceEnabled()) {
             HttpScope sessionScope = getSessionScope(request, false);
             if (sessionScope != null && sessionScope.exists()) {
-                log.tracef("Trying to re-authenticate session %s using FormAuthenticationMechanism. Request URI: [%s], Context path: [%s]",
+                httpForm.tracef("Trying to re-authenticate session %s. Request URI: [%s], Context path: [%s]",
                         sessionScope.getID(), request.getRequestURI(), this.contextPath);
             } else {
-                log.tracef("Trying to re-authenticate using FormAuthenticationMechanism. There is no session attached to the following request. " +
+                httpForm.tracef("Trying to re-authenticate. There is no session attached to the following request. " +
                         "Request URI: [%s], Context path: [%s]", request.getRequestURI(), this.contextPath);
             }
         }
@@ -277,7 +277,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             identityCache.remove();
         }
         fail();
-        error(log.authorizationFailed(username, FORM_NAME), request);
+        error(httpForm.authorizationFailed(username), request);
     }
 
     void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {

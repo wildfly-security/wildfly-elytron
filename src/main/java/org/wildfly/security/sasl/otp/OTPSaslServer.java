@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOTP;
 import static org.wildfly.security.sasl.otp.OTP.EXT;
 import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
@@ -80,7 +80,7 @@ final class OTPSaslServer extends AbstractSaslServer {
     private String authorizationID;
 
     OTPSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Supplier<Provider[]> providers) {
-        super(mechanismName, protocol, serverName, callbackHandler);
+        super(mechanismName, protocol, serverName, callbackHandler, saslOTP);
         this.providers = providers;
     }
 
@@ -90,7 +90,7 @@ final class OTPSaslServer extends AbstractSaslServer {
 
     public String getAuthorizationID() {
         if (! isComplete()) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslOTP.mechAuthenticationNotComplete();
         }
         return authorizationID;
     }
@@ -117,11 +117,11 @@ final class OTPSaslServer extends AbstractSaslServer {
                 CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
                 handleCallbacks(exclusiveNameCallback, credentialCallback);
                 if (! exclusiveNameCallback.hasExclusiveAccess()) {
-                    throw log.mechUnableToObtainExclusiveAccess(getMechanismName(), userName).toSaslException();
+                    throw saslOTP.mechUnableToObtainExclusiveAccess(userName).toSaslException();
                 }
                 final OneTimePassword previousPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(OneTimePassword.class));
                 if (previousPassword == null) {
-                    throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
+                    throw saslOTP.mechUnableToRetrievePassword(userName).toSaslException();
                 }
                 previousAlgorithm = previousPassword.getAlgorithm();
                 validateAlgorithm(previousAlgorithm);
@@ -196,15 +196,15 @@ final class OTPSaslServer extends AbstractSaslServer {
                             passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed, previousSequenceNumber - 1);
                             algorithm = previousAlgorithm;
                             verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
-                            throw log.mechOTPReinitializationFailed(e).toSaslException();
+                            throw saslOTP.mechOTPReinitializationFailed(e).toSaslException();
                         }
                         break;
                     }
                     default:
-                        throw log.mechInvalidOTPResponseType().toSaslException();
+                        throw saslOTP.mechInvalidOTPResponseType().toSaslException();
                 }
                 if (cpi.hasNext()) {
-                    throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
+                    throw saslOTP.mechInvalidMessageReceived().toSaslException();
                 }
                 verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
 
@@ -215,14 +215,14 @@ final class OTPSaslServer extends AbstractSaslServer {
                 final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
                 handleCallbacks(authorizeCallback);
                 if (! authorizeCallback.isAuthorized()) {
-                    throw log.mechAuthorizationFailed(getMechanismName(), userName, authorizationID).toSaslException();
+                    throw saslOTP.mechAuthorizationFailed(userName, authorizationID).toSaslException();
                 }
                 negotiationComplete();
                 return null;
             }
             case COMPLETE_STATE: {
                   if (response != null && response.length != 0) {
-                      throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
+                      throw saslOTP.mechMessageAfterComplete().toSaslException();
                   }
                   return null;
             }
@@ -247,7 +247,7 @@ final class OTPSaslServer extends AbstractSaslServer {
     private void verifyAndUpdateCredential(final byte[] currentHash, final String newAlgorithm,
             final OneTimePasswordSpec newPasswordSpec) throws SaslException {
         if (! Arrays.equals(previousHash, hashAndFold(previousAlgorithm, currentHash))) {
-            throw log.mechPasswordNotVerified(getMechanismName()).toSaslException();
+            throw saslOTP.mechPasswordNotVerified().toSaslException();
         }
         updateCredential(newAlgorithm, newPasswordSpec);
     }
@@ -259,7 +259,7 @@ final class OTPSaslServer extends AbstractSaslServer {
             final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(new PasswordCredential(newPassword));
             handleCallbacks(exclusiveNameCallback, credentialUpdateCallback);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();
+            throw saslOTP.mechUnableToUpdatePassword(userName).toSaslException();
         }
     }
 

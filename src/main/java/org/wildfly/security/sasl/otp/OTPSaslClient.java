@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOTP;
 import static org.wildfly.security.sasl.otp.OTP.*;
 import static org.wildfly.security.sasl.otp.OTPUtil.*;
 
@@ -68,7 +68,7 @@ final class OTPSaslClient extends AbstractSaslClient {
 
     OTPSaslClient(final String mechanismName, final SecureRandom secureRandom, final String[] alternateDictionary,
             final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, Supplier<Provider[]> providers) {
-        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
+        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true, saslOTP);
         this.secureRandom = secureRandom;
         this.alternateDictionary = alternateDictionary;
         this.providers = providers;
@@ -84,7 +84,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         switch (state) {
             case ST_NEW: {
                 if ((challenge != null) && (challenge.length != 0)) {
-                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                    throw saslOTP.mechInitialChallengeMustBeEmpty().toSaslException();
                 }
 
                 // Construct the initial response which consists of the authorization identity, if provided,
@@ -121,12 +121,12 @@ final class OTPSaslClient extends AbstractSaslClient {
                 validateSeed(seed);
                 skipDelims(di, cpi);
                 if (! di.drainToString().startsWith(EXT)) {
-                    throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
+                    throw saslOTP.mechInvalidMessageReceived().toSaslException();
                 }
                 if (cpi.hasNext()) {
                     skipDelims(di, cpi);
                     if (cpi.hasNext()) {
-                        throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
+                        throw saslOTP.mechInvalidMessageReceived().toSaslException();
                     }
                 }
 
@@ -153,15 +153,15 @@ final class OTPSaslClient extends AbstractSaslClient {
                             final String passPhrase = getPasswordFromPasswordChars(passPhraseChars);
                             validatePassPhrase(passPhrase);
                             if (seed.equals(passPhrase)) {
-                                throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
+                                throw saslOTP.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                             }
                             try {
                                 otp = formatOTP(generateOtpHash(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
                             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                                throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
+                                throw saslOTP.mechUnableToRetrievePassword(userName).toSaslException();
                             }
                         } else {
-                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                            throw saslOTP.mechNoPasswordGiven().toSaslException();
                         }
                         break;
                     case DIRECT_OTP:
@@ -172,7 +172,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                         otp = getOTP(passwordCallback);
                         break;
                     default:
-                        throw log.mechInvalidOTPPasswordFormatType().toSaslException();
+                        throw saslOTP.mechInvalidOTPPasswordFormatType().toSaslException();
                 }
                 negotiationComplete();
                 return createOTPResponse(algorithm, seed, otp, responseType);
@@ -246,15 +246,15 @@ final class OTPSaslClient extends AbstractSaslClient {
                             final String newPassPhrase = getPasswordFromPasswordChars(newPassPhraseChars);
                             validatePassPhrase(newPassPhrase);
                             if (newSeed.equals(newPassPhrase)) {
-                                throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
+                                throw saslOTP.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                             }
                             try {
                                 newOTP = formatOTP(generateOtpHash(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
                             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                                throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();
+                                throw saslOTP.mechUnableToUpdatePassword(userName).toSaslException();
                             }
                         } else {
-                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                            throw saslOTP.mechNoPasswordGiven().toSaslException();
                         }
                         break;
                     case DIRECT_OTP:
@@ -264,7 +264,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                         newOTP = getOTP(passwordCallback);
                         OneTimePasswordAlgorithmSpec algorithmSpec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
                         if (algorithmSpec == null) {
-                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                            throw saslOTP.mechNoPasswordGiven().toSaslException();
                         }
                         newAlgorithm = algorithmSpec.getAlgorithm();
                         validateAlgorithm(newAlgorithm);
@@ -274,13 +274,13 @@ final class OTPSaslClient extends AbstractSaslClient {
                         validateSeed(newSeed);
                         break;
                     default:
-                        throw log.mechInvalidOTPPasswordFormatType().toSaslException();
+                        throw saslOTP.mechInvalidOTPPasswordFormatType().toSaslException();
                 }
                 response.append(createInitResponse(newAlgorithm, newSeed, newSequenceNumber, newOTP));
                 break;
             }
             default:
-                throw log.mechInvalidOTPResponseType().toSaslException();
+                throw saslOTP.mechInvalidOTPResponseType().toSaslException();
         }
         return response.toArray();
     }
@@ -306,7 +306,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         try {
             newDigestAlgorithm = messageDigestAlgorithm(newAlgorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechInvalidOTPAlgorithm(newAlgorithm).toSaslException();
+            throw saslOTP.mechInvalidOTPAlgorithm(newAlgorithm).toSaslException();
         }
         initResponse.append(newDigestAlgorithm);
         initResponse.append(' ');
@@ -324,7 +324,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         if (passwordChars != null) {
             return getPasswordFromPasswordChars(passwordChars);
         } else {
-            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+            throw saslOTP.mechNoPasswordGiven().toSaslException();
         }
     }
 

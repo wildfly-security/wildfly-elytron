@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.localuser;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslLocal;
 
 import java.io.Closeable;
 import java.io.File;
@@ -54,7 +54,7 @@ public final class LocalUserClient extends AbstractSaslClient {
     private static final byte UTF8NUL = 0x00;
 
     LocalUserClient(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler, final String authorizationId) {
-        super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, authorizationId, true);
+        super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, authorizationId, true, saslLocal);
 
         if (props == null) {
             quietAuth = false;
@@ -95,7 +95,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         while (t < 8) {
                             int r = stream.read(challenge, t, 8-t);
                             if (r < 0) {
-                                throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
+                                throw saslLocal.mechInvalidServerMessage().toSaslException();
                             } else {
                                 t += r;
                             }
@@ -104,7 +104,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         safeClose(stream);
                     }
                 } catch (IOException e) {
-                    throw log.mechFailedToReadChallengeFile(getMechanismName(), e).toSaslException();
+                    throw saslLocal.mechFailedToReadChallengeFile(e).toSaslException();
                 }
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;

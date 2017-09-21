@@ -18,7 +18,7 @@
 package org.wildfly.security.http.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpDigest;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
@@ -60,7 +60,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -125,11 +124,11 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
                 if (current.startsWith(CHALLENGE_PREFIX)) {
                     byte[] rawHeader = current.substring(CHALLENGE_PREFIX.length()).getBytes(UTF_8);
                     try {
-                        HashMap<String, byte[]> responseTokens = parseResponse(rawHeader, UTF_8, false, getMechanismName());
+                        HashMap<String, byte[]> responseTokens = parseResponse(rawHeader, UTF_8, false, httpDigest);
                         validateResponse(responseTokens, request);
                         return;
                     } catch (AuthenticationMechanismException e) {
-                        log.trace("Failed to parse or validate the response", e);
+                        httpDigest.trace("Failed to parse or validate the response", e);
                         request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(selectRealm(), response, false));
                         return;
                     }
@@ -150,7 +149,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             String nonceCountHex = convertToken(REALM, responseTokens.get(NC));
             nonceCount = Integer.parseInt(nonceCountHex, 16);
             if (nonceCount < 0) {
-                throw log.invalidNonceCount(nonceCount);
+                throw httpDigest.invalidNonceCount(nonceCount);
             }
         }
         /*
@@ -166,35 +165,35 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         if (responseTokens.containsKey(URI)) {
             digestUri = responseTokens.get(URI);
         } else {
-            throw log.mechMissingDirective(getMechanismName(), URI);
+            throw httpDigest.mechMissingDirective(URI);
         }
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
             response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
         } else {
-            throw log.mechMissingDirective(getMechanismName(), RESPONSE);
+            throw httpDigest.mechMissingDirective(RESPONSE);
         }
         String algorithm = convertToken(ALGORITHM, responseTokens.get(ALGORITHM));
         if (MD5.equals(algorithm) == false) {
-            throw log.mechUnsupportedAlgorithm(getMechanismName(), algorithm);
+            throw httpDigest.mechUnsupportedAlgorithm(algorithm);
         }
 
         MessageDigest messageDigest;
         try {
             messageDigest = MessageDigest.getInstance(MD5);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e);
+            throw httpDigest.mechMacAlgorithmNotSupported(e);
         }
 
         if (!checkRealm(messageRealm)) {
-            throw log.mechDisallowedClientRealm(getMechanismName(), messageRealm);
+            throw httpDigest.mechDisallowedClientRealm(messageRealm);
         }
 
         String selectedRealm = selectRealm();
 
         if (username.length() == 0) {
             fail();
-            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
 
@@ -202,7 +201,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (hA1 == null) {
             fail();
-            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
 
@@ -210,7 +209,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (Arrays.equals(response, calculatedResponse) == false) {
             fail();
-            request.authenticationFailed(log.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
 
@@ -234,7 +233,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             }
         } else {
             fail();
-            request.authenticationFailed(log.authorizationFailed(username, getMechanismName()), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
+            request.authenticationFailed(httpDigest.authorizationFailed(username), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
     }
 
@@ -285,7 +284,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         byte[] response = null;
         // The mechanism configuration understands the realm name so fully pre-digested may be possible.
-        response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5, getMechanismName());
+        response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5);
         if (response != null) {
             return response;
         }
@@ -301,7 +300,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
     private String convertToken(final String name, final byte[] value) throws AuthenticationMechanismException {
         if (value == null) {
-            throw log.mechMissingDirective(getMechanismName(), name);
+            throw httpDigest.mechMissingDirective(name);
         }
 
         return new String(value, UTF_8);
@@ -320,7 +319,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         try {
             if (configuredRealm != null) {
                 if (!checkRealm(configuredRealm)) {
-                    throw log.digestMechanismInvalidRealm(configuredRealm);
+                    throw httpDigest.digestMechanismInvalidRealm(configuredRealm);
                 }
                 return configuredRealm;
             }
@@ -328,7 +327,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             if (realms != null && realms.length > 0) {
                 return realms[0];
             }
-            throw log.digestMechanismRequireRealm();
+            throw httpDigest.digestMechanismRequireRealm();
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         }
@@ -344,7 +343,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } catch (AuthenticationMechanismException e) {
             throw e;
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(DIGEST_NAME, e);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
         }
     }
 
@@ -367,7 +366,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         response.setStatusCode(UNAUTHORIZED);
     }
 
-    public byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm, String mechanismName) throws AuthenticationMechanismException {
+    public byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm) throws AuthenticationMechanismException {
         final String realmName = realmCallback.getDefaultText();
         final String userName = nameCallback.getDefaultName();
         final DigestPasswordAlgorithmSpec parameterSpec;
@@ -384,12 +383,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(mechanismName, e);
+                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(mechanismName, e);
+                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
             }
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(mechanismName, t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
     }
 
@@ -401,19 +400,19 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
             }
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
-        char[] passwordChars = getTwoWayPasswordChars(getMechanismName(), password, providers);
+        char[] passwordChars = getTwoWayPasswordChars(password, providers, httpDigest);
         try {
             password.destroy();
         } catch(DestroyFailedException e) {
-            log.credentialDestroyingFailed(e);
+            httpDigest.credentialDestroyingFailed(e);
         }
         String realm = realmCallback.getDefaultText();
         String username = nameCallback.getDefaultName();
@@ -430,17 +429,17 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             if (e.getCallback() == passwordCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
             }
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
         char[] passwordChars = passwordCallback.getPassword();
         passwordCallback.clearPassword();
         if (passwordChars == null) {
-            throw log.mechNoPasswordGiven(getMechanismName());
+            throw httpDigest.mechNoPasswordGiven();
         }
         String realm = realmCallback.getDefaultText();
         String username = nameCallback.getDefaultName();
@@ -459,7 +458,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } catch (UnsupportedCallbackException e) {
             return false;
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
     }
 
@@ -467,7 +466,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         try {
             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
     }
 
@@ -475,7 +474,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         try {
             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
     }
 }

@@ -19,7 +19,7 @@
 package org.wildfly.security.credential.source;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOAuth2;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -148,15 +147,15 @@ public class OAuth2CredentialSource implements CredentialSource {
 
                         try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
                             StringBuffer response = reader.lines().reduce(new StringBuffer(), StringBuffer::append, (buffer1, buffer2) -> buffer1);
-                            log.errorf(ioe, "Unexpected response from server [%s]. Response: [%s]", tokenEndpointUri, response);
+                            saslOAuth2.errorf(ioe, "Unexpected response from server [%s]. Response: [%s]", tokenEndpointUri, response);
                         } catch (IOException ignore) {
                         }
                     }
 
-                    throw log.mechUnableToHandleResponseFromServer("OAuth2CredentialSource", ioe);
+                    throw saslOAuth2.mechUnableToHandleResponseFromServer(ioe);
                 }
             } catch (Exception cause) {
-                throw log.mechCallbackHandlerFailedForUnknownReason("OAuth2CredentialSource", cause);
+                throw saslOAuth2.mechCallbackHandlerFailedForUnknownReason(cause);
             }
         }
 
@@ -171,7 +170,7 @@ public class OAuth2CredentialSource implements CredentialSource {
     }
 
     private HttpURLConnection openConnection() throws IOException {
-        log.debugf("Opening connection to [%s]", tokenEndpointUri);
+        saslOAuth2.debugf("Opening connection to [%s]", tokenEndpointUri);
         HttpURLConnection connection = (HttpURLConnection) tokenEndpointUri.openConnection();
         SSLContext sslContext = resolveSSLContext();
 
@@ -216,7 +215,7 @@ public class OAuth2CredentialSource implements CredentialSource {
                 try {
                     return contextConfigurationClient.getSSLContext(tokenEndpointUrl.toURI(), AuthenticationContext.captureCurrent());
                 } catch (Exception cause) {
-                    throw log.failedToObtainSSLContext(cause);
+                    throw saslOAuth2.failedToObtainSSLContext(cause);
                 }
             }
         };
@@ -344,7 +343,7 @@ public class OAuth2CredentialSource implements CredentialSource {
             }
             return new OAuth2CredentialSource(tokenEndpointUrl, authenticationHandler.andThen(parameters -> {
                 if (!parameters.containsKey("client_id") || !parameters.containsKey("client_secret")) {
-                    throw ElytronMessages.log.oauth2ClientCredentialsNotProvided();
+                    throw saslOAuth2.oauth2ClientCredentialsNotProvided();
                 }
             }), scopes, sslContextSupplier, hostnameVerifierSupplier);
         }

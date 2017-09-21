@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.sasl.digest._private;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslDigest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -166,7 +166,7 @@ public final class DigestUtil {
         Arrays.fill(retValue, (byte) '0');
         byte[] hex = Integer.toString(input, 16).getBytes(StandardCharsets.UTF_8);
         if (hex.length > totalLength) {
-            throw log.requiredNegativePadding(totalLength, hex.length);
+            throw saslDigest.requiredNegativePadding(totalLength, hex.length);
         }
 
         int from = totalLength - hex.length;
@@ -181,7 +181,7 @@ public final class DigestUtil {
         try {
             mac.init(ks);
         } catch (InvalidKeyException e) {
-            throw log.mechInvalidKeyForDigestHMAC().toSaslException();
+            throw saslDigest.mechInvalidKeyForDigestHMAC().toSaslException();
         }
         byte[] buffer = new byte[len + 4];
         integerByteOrdered(sequenceNumber, buffer, 0, 4);

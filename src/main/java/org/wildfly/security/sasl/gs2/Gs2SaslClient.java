@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.gs2;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslGs2;
 import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.gs2.Gs2Util.TOKEN_HEADER_TAG;
 
@@ -65,7 +65,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
 
     Gs2SaslClient(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId,
             final Map<String, ?> props, final GSSManager gssManager, final boolean plus, final String bindingType, final byte[] bindingData) throws SaslException {
-        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
+        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true, saslGs2);
         this.bindingType = bindingType;
         this.plus = plus;
         this.bindingData = bindingData;
@@ -73,7 +73,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
         try {
             mechanism = Gs2.getMechanismForSaslName(gssManager, mechanismName);
         } catch (GSSException e) {
-            throw log.mechMechanismToOidMappingFailed(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechMechanismToOidMappingFailed(e).toSaslException();
         }
 
         // Create a GSSContext
@@ -82,7 +82,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
         try {
             acceptorName = gssManager.createName(acceptorNameStr, GSSName.NT_HOSTBASED_SERVICE, mechanism);
         } catch (GSSException e) {
-            throw log.mechUnableToCreateNameForAcceptor(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechUnableToCreateNameForAcceptor(e).toSaslException();
         }
 
         // Attempt to obtain a credential
@@ -93,12 +93,12 @@ final class Gs2SaslClient extends AbstractSaslClient {
             tryHandleCallbacks(credentialCallback);
             credential = credentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getGssCredential);
         } catch (UnsupportedCallbackException e) {
-            log.trace("Unable to obtain GSSCredential, ignored (act as the default initiator principal instead)", e);
+            saslGs2.trace("Unable to obtain GSSCredential, ignored (act as the default initiator principal instead)", e);
         }
         try {
             gssContext = gssManager.createContext(acceptorName, mechanism, credential, GSSContext.INDEFINITE_LIFETIME);
         } catch (GSSException e) {
-            throw log.mechUnableToCreateGssContext(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechUnableToCreateGssContext(e).toSaslException();
         }
 
         try {
@@ -110,7 +110,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
             gssContext.requestCredDeleg(delegateCredential);
             gssContext.requestMutualAuth(true); // Required
         } catch (GSSException e) {
-            throw log.mechUnableToSetGssContextRequestFlags(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechUnableToSetGssContextRequestFlags(e).toSaslException();
         }
 
         gs2HeaderExcludingNonStdFlag = createGs2HeaderExcludingNonStdFlag();
@@ -119,7 +119,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
             ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag.toArray(), gs2CbFlagPUsed, bindingData);
             gssContext.setChannelBinding(channelBinding);
         } catch (GSSException e) {
-            throw log.mechUnableToSetChannelBinding(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechUnableToSetChannelBinding(e).toSaslException();
         }
     }
 
@@ -127,7 +127,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
         try {
             gssContext.dispose();
         } catch (GSSException e) {
-            throw log.mechUnableToDisposeGssContext(getMechanismName(), e).toSaslException();
+            throw saslGs2.mechUnableToDisposeGssContext(e).toSaslException();
         } finally {
             gssContext = null;
         }
@@ -142,7 +142,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
             case ST_INITIAL_CHALLENGE: {
                 assert gssContext.isEstablished() == false;
                 if ((challenge != null) && (challenge.length != 0)) {
-                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                    throw saslGs2.mechInitialChallengeMustBeEmpty().toSaslException();
                 }
                 try {
                     byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
@@ -151,7 +151,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
                     setNegotiationState(ST_CHALLENGE_RESPONSE);
                     return modifyInitialContextToken(response);
                 } catch (GSSException e) {
-                    throw log.mechUnableToCreateResponseTokenWithCause(getMechanismName(), e).toSaslException();
+                    throw saslGs2.mechUnableToCreateResponseTokenWithCause(e).toSaslException();
                 }
             }
             case ST_CHALLENGE_RESPONSE: {
@@ -160,13 +160,13 @@ final class Gs2SaslClient extends AbstractSaslClient {
                     byte[] response = gssContext.initSecContext(challenge, 0, challenge.length);
                     if (gssContext.isEstablished()) {
                         if (!gssContext.getMutualAuthState()) {
-                            throw log.mechMutualAuthenticationNotEnabled(getMechanismName()).toSaslException();
+                            throw saslGs2.mechMutualAuthenticationNotEnabled().toSaslException();
                         }
                         negotiationComplete();
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw log.mechUnableToCreateResponseTokenWithCause(getMechanismName(), e).toSaslException();
+                    throw saslGs2.mechUnableToCreateResponseTokenWithCause(e).toSaslException();
                 }
             }
         }

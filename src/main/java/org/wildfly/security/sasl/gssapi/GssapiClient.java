@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.gssapi;
 
+import static org.wildfly.security._private.ElytronMessages.saslGssapi;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,9 +36,7 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
-import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -50,8 +49,6 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  */
 class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
-    private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.client");
-
     private static final int INITIAL_CHALLENGE_STATE = 1;
     private static final int CHALLENGE_RESPONSE_STATE = 2;
     private static final int SECURITY_LAYER_NEGOTIATION_STATE = 3;
@@ -60,7 +57,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
     GssapiClient(final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler callbackHandler, final String authorizationId) throws SaslException {
-        super(SaslMechanismInformation.Names.GSSAPI, protocol, serverName, props, callbackHandler, log);
+        super(SaslMechanismInformation.Names.GSSAPI, protocol, serverName, props, callbackHandler);
 
         this.authorizationId = authorizationId;
 
@@ -68,13 +65,13 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
         GSSManager manager = GSSManager.getInstance();
 
         String acceptorNameString = protocol + "@" + serverName;
-        log.tracef("Acceptor Name '%s'", acceptorNameString);
+        saslGssapi.tracef("Acceptor Name '%s'", acceptorNameString);
         final GSSName acceptorName;
         try {
             // The client can use other name types but this should be added to the config.
             acceptorName = manager.createName(acceptorNameString, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
         } catch (GSSException e) {
-            throw log.mechUnableToCreateNameForAcceptor(getMechanismName(), e).toSaslException();
+            throw saslGssapi.mechUnableToCreateNameForAcceptor(e).toSaslException();
         }
 
         // Pull the credential if we have it.
@@ -82,10 +79,10 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
         Object credObj = props.get(Sasl.CREDENTIALS);
         if (credObj instanceof GSSCredential) {
-            log.trace("Using GSSCredential supplied in properties.");
+            saslGssapi.trace("Using GSSCredential supplied in properties.");
             credential = (GSSCredential) credObj;
         } else if (credObj instanceof GSSKerberosCredential) {
-            log.trace("Using GSSCredential supplied in properties.");
+            saslGssapi.trace("Using GSSCredential supplied in properties.");
             credential = ((GSSKerberosCredential) credObj).getGssCredential();
         }
 
@@ -100,7 +97,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     credential = kerberosCredential.getGssCredential();
                 }
             } catch (UnsupportedCallbackException e) {
-                log.trace("CallbackHandler does not support CredentialCallback", e);
+                saslGssapi.trace("CallbackHandler does not support CredentialCallback", e);
             }
         }
 
@@ -108,7 +105,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
         try {
             gssContext = manager.createContext(acceptorName, KERBEROS_V5, credential, GSSContext.INDEFINITE_LIFETIME);
         } catch (GSSException e) {
-            throw log.mechUnableToCreateGssContext(getMechanismName(), e).toSaslException();
+            throw saslGssapi.mechUnableToCreateGssContext(e).toSaslException();
         }
 
         try {
@@ -119,7 +116,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             if (props.containsKey(WildFlySasl.GSSAPI_DELEGATE_CREDENTIAL)) {
                 delegate = Boolean.parseBoolean((String) props.get(WildFlySasl.GSSAPI_DELEGATE_CREDENTIAL));
             }
-            log.tracef("Delegating credential = %b", delegate);
+            saslGssapi.tracef("Delegating credential = %b", delegate);
             if (delegate) {
                 gssContext.requestCredDeleg(true);
             }
@@ -140,26 +137,26 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
             boolean mayRequireSecurityLayer = mayRequireSecurityLater(orderedQops);
             boolean requestMutualAuth = serverAuth || mayRequireSecurityLayer;
-            log.tracef("Setting requering mutual authentication to %b", requestMutualAuth);
+            saslGssapi.tracef("Setting requering mutual authentication to %b", requestMutualAuth);
             gssContext.requestMutualAuth(requestMutualAuth);
 
             // Request sequence detection if a security layer could be requested.
             if (mayRequireSecurityLayer) {
-                log.trace("Requesting sequence detection.");
+                saslGssapi.trace("Requesting sequence detection.");
                 gssContext.requestSequenceDet(true);
             }
 
             // Need to set this is we may want confidentiality, integrity is always requested.
             for (QOP current : orderedQops) {
                 if (current == QOP.AUTH_CONF) {
-                    log.trace("Requesting confidentiality");
+                    saslGssapi.trace("Requesting confidentiality");
                     gssContext.requestConf(true);
                     break;
                 }
             }
 
         } catch (GSSException e) {
-            throw log.mechUnableToSetGssContextRequestFlags(getMechanismName(), e).toSaslException();
+            throw saslGssapi.mechUnableToSetGssContextRequestFlags(e).toSaslException();
         }
 
         // Channel Binding Is Not Supported
@@ -183,7 +180,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             }
         }
 
-        throw log.mechInsufficientQopsAvailable(getMechanismName()).toSaslException();
+        throw saslGssapi.mechInsufficientQopsAvailable().toSaslException();
     }
 
     private boolean isCompatibleWithGssContext(final QOP qop) {
@@ -220,22 +217,22 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 // provides the first token from the client
                 assert gssContext.isEstablished() == false;
                 if (message.length > 0) {
-                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                    throw saslGssapi.mechInitialChallengeMustBeEmpty().toSaslException();
                 }
 
                 try {
                     byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
                     if (gssContext.isEstablished()) {
-                        log.trace("GSSContext established, transitioning to negotiate security layer.");
+                        saslGssapi.trace("GSSContext established, transitioning to negotiate security layer.");
                         setNegotiationState(SECURITY_LAYER_NEGOTIATION_STATE);
                     } else {
-                        log.trace("GSSContext not established, expecting subsequent exchanges.");
+                        saslGssapi.trace("GSSContext not established, expecting subsequent exchanges.");
                         setNegotiationState(CHALLENGE_RESPONSE_STATE);
                     }
 
                     return response;
                 } catch (GSSException e) {
-                    throw log.mechUnableToCreateResponseToken(getMechanismName(), e).toSaslException();
+                    throw saslGssapi.mechUnableToCreateResponseToken(e).toSaslException();
                 }
             case CHALLENGE_RESPONSE_STATE:
                 // This state is to handle the subsequent exchange of tokens up until the point the
@@ -246,15 +243,15 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     byte[] response = gssContext.initSecContext(message, 0, message.length);
 
                     if (gssContext.isEstablished()) {
-                        log.trace("GSSContext established, transitioning to negotiate security layer.");
+                        saslGssapi.trace("GSSContext established, transitioning to negotiate security layer.");
                         setNegotiationState(SECURITY_LAYER_NEGOTIATION_STATE);
                         if (response == null) response = NO_BYTES;
                     } else {
-                        log.trace("GSSContext not established, expecting subsequent exchanges.");
+                        saslGssapi.trace("GSSContext not established, expecting subsequent exchanges.");
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw log.mechUnableToHandleResponseFromServer(getMechanismName(), e).toSaslException();
+                    throw saslGssapi.mechUnableToHandleResponseFromServer(e).toSaslException();
                 }
             case SECURITY_LAYER_NEGOTIATION_STATE:
                 assert gssContext.isEstablished();
@@ -263,16 +260,16 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 try {
                     byte[] unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
                     if (unwrapped.length != 4) {
-                        throw log.mechBadLengthOfMessageForNegotiatingSecurityLayer(getMechanismName()).toSaslException();
+                        throw saslGssapi.mechBadLengthOfMessageForNegotiatingSecurityLayer().toSaslException();
                     }
 
                     byte qopByte = unwrapped[0];
                     selectedQop = findAgreeableQop(qopByte);
                     maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
-                    log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
+                    saslGssapi.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
                     if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
                             && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
-                        throw log.mechReceivedMaxMessageSizeWhenNoSecurityLayer(getMechanismName(), maxBuffer).toSaslException();
+                        throw saslGssapi.mechReceivedMaxMessageSizeWhenNoSecurityLayer(maxBuffer).toSaslException();
                     }
                     maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
 
@@ -283,7 +280,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                         baos.write(new byte[] { 0x00, 0x00, 0x00 });
                     } else {
                         actualMaxReceiveBuffer = configuredMaxReceiveBuffer!=0 ? configuredMaxReceiveBuffer : maxBuffer;
-                        log.tracef("Out max buffer %d", actualMaxReceiveBuffer);
+                        saslGssapi.tracef("Out max buffer %d", actualMaxReceiveBuffer);
                         baos.write(intToNetworkOrderBytes(actualMaxReceiveBuffer));
                     }
 
@@ -296,17 +293,17 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     response = gssContext.wrap(response, 0, response.length, msgProp);
 
                     if (selectedQop != QOP.AUTH) {
-                        log.trace("Setting message wrapper.");
+                        saslGssapi.trace("Setting message wrapper.");
                         setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
                     }
 
-                    log.trace("Negotiation Complete");
+                    saslGssapi.trace("Negotiation Complete");
                     negotiationComplete();
                     return response;
                 } catch (IOException e) {
-                    throw log.mechUnableToCreateResponseToken(getMechanismName(), e).toSaslException();
+                    throw saslGssapi.mechUnableToCreateResponseToken(e).toSaslException();
                 } catch (GSSException e) {
-                    throw log.mechUnableToUnwrapSecurityLayerNegotiationMessage(getMechanismName(), e).toSaslException();
+                    throw saslGssapi.mechUnableToUnwrapSecurityLayerNegotiationMessage(e).toSaslException();
                 }
         }
         throw Assert.impossibleSwitchCase(state);

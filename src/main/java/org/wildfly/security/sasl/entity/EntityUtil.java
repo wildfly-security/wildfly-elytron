@@ -22,7 +22,7 @@ import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.x500.GeneralName.*;
 import static org.wildfly.security.x500.TrustedAuthority.*;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslEntity;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -153,7 +153,7 @@ class EntityUtil {
                 omitParametersField = true;
                 break;
             }
-            default: throw log.asnUnrecognisedAlgorithm(algorithm);
+            default: throw saslEntity.asnUnrecognisedAlgorithm(algorithm);
         }
         encodeAlgorithmIdentifier(encoder, algorithmOid(algorithm), omitParametersField);
     }
@@ -337,7 +337,7 @@ class EntityUtil {
                                 break out;
                             }
                             break;
-                        default: throw log.asnInvalidGeneralNameType();
+                        default: throw saslEntity.asnInvalidGeneralNameType();
                     }
                 }
             }
@@ -357,7 +357,7 @@ class EntityUtil {
      */
     public static X509Certificate[] decodeX509CertificateChain(final DERDecoder decoder) throws ASN1Exception {
         if (decoder.peekType() != SET_TYPE) {
-            throw log.asnUnexpectedTag();
+            throw saslEntity.asnUnexpectedTag();
         }
         byte[] certChain = decoder.drainElement();
         try {
@@ -394,7 +394,7 @@ class EntityUtil {
         if (decoder.peekType() == SET_TYPE) {
             peerCertChain = decodeX509CertificateChain(decoder);
         } else {
-            throw log.asnUnexpectedTag();
+            throw saslEntity.asnUnexpectedTag();
         }
         return peerCertChain;
     }
@@ -457,7 +457,7 @@ class EntityUtil {
                                 break out;
                             }
                             break;
-                        default: throw log.asnInvalidGeneralNameType();
+                        default: throw saslEntity.asnInvalidGeneralNameType();
                     }
                 }
             }
@@ -504,7 +504,7 @@ class EntityUtil {
         } catch (CertificateParsingException e) {
             // Ignore unless the subject name is empty
             if (certSubjectName == null) {
-                throw log.unableToDetermineSubjectName(e);
+                throw saslEntity.unableToDetermineSubjectName(e);
             }
         }
         List<GeneralName> certNames;
@@ -549,7 +549,7 @@ class EntityUtil {
                 return new IPAddress((String) name);
             case REGISTERED_ID:
                 return new RegisteredID((String) name);
-            default: throw log.asnInvalidGeneralNameType();
+            default: throw saslEntity.asnInvalidGeneralNameType();
         }
     }
 

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.anonymous;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslAnonymous;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -50,7 +50,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
      * @param authorizationId the possibly {@code null} protocol-dependent name used for authorization
      */
     protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
-        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true);
+        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true, saslAnonymous);
         setNegotiationState(INITIAL_STATE);
     }
 
@@ -59,19 +59,19 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
         switch (state) {
             case INITIAL_STATE:
                 if (message != null && message.length > 0) {
-                    throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
+                    throw saslAnonymous.mechInvalidServerMessage().toSaslException();
                 }
                 NameCallback nameCallback = new NameCallback("Authentication name", "anonymous");
                 handleCallbacks(nameCallback);
                 String name = nameCallback.getName();
                 if (name == null) {
-                    throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
+                    throw saslAnonymous.mechNotProvidedUserName().toSaslException();
                 }
                 if (name.length() > 255) {
-                    throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
+                    throw saslAnonymous.mechAuthenticationNameTooLong().toSaslException();
                 }
                 if (name.isEmpty()) {
-                    throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
+                    throw saslAnonymous.mechAuthenticationNameIsEmpty().toSaslException();
                 }
                 ByteStringBuilder b = new ByteStringBuilder();
                 StringPrep.encode(name, b, 0

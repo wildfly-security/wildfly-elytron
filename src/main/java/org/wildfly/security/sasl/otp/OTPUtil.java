@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOTP;
 import static org.wildfly.security.password.interfaces.OneTimePassword.*;
 import static org.wildfly.security.sasl.otp.OTP.*;
 
@@ -31,7 +31,6 @@ import java.util.Random;
 
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -98,7 +97,7 @@ class OTPUtil {
         try {
             messageDigest = getMessageDigest(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
+            throw saslOTP.mechInvalidOTPAlgorithm(algorithm).toSaslException();
         }
         return hashAndFold(algorithm, messageDigest, input);
     }
@@ -171,7 +170,7 @@ class OTPUtil {
                 return convertToWords(otp, alternateDictionary);
             }
             default:
-                throw log.mechInvalidOTPResponseType().toSaslException();
+                throw saslOTP.mechInvalidOTPResponseType().toSaslException();
         }
     }
 
@@ -197,7 +196,7 @@ class OTPUtil {
         try {
             messageDigest = getMessageDigest(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
+            throw saslOTP.mechInvalidOTPAlgorithm(algorithm).toSaslException();
         }
         for (int i = 0; i < 6; i++) {
             word = di.drainToString();
@@ -208,7 +207,7 @@ class OTPUtil {
                         // The first word could not be found, switch to using an alternate dictionary instead
                         useStandardDictionary = false;
                     } else {
-                        throw log.mechInvalidOTP().toSaslException();
+                        throw saslOTP.mechInvalidOTP().toSaslException();
                     }
                 }
             }
@@ -226,7 +225,7 @@ class OTPUtil {
                 otpValue |= ((((long) dictionaryIndex) & 0x7fc) >> 2);
                 parity = dictionaryIndex & 0x3;
                 if (parity != calculateParity(otpValue)) {
-                    throw log.mechIncorrectParity(SaslMechanismInformation.Names.OTP).toSaslException();
+                    throw saslOTP.mechIncorrectParity().toSaslException();
                 }
             }
         }
@@ -298,7 +297,7 @@ class OTPUtil {
             case INIT_HEX_RESPONSE:
                 return 3;
             default:
-                throw log.mechInvalidOTPResponseType().toSaslException();
+                throw saslOTP.mechInvalidOTPResponseType().toSaslException();
         }
     }
 
@@ -309,7 +308,7 @@ class OTPUtil {
             case DIRECT_OTP:
                 return 1;
             default:
-                throw log.mechInvalidOTPPasswordFormatType().toSaslException();
+                throw saslOTP.mechInvalidOTPPasswordFormatType().toSaslException();
         }
     }
 
@@ -349,28 +348,28 @@ class OTPUtil {
 
     public static void validateAlternateDictionary(String[] dictionary) throws SaslException {
         if ((dictionary == null) || (dictionary.length != DICTIONARY_SIZE)) {
-            throw log.mechInvalidOTPAlternateDictionary().toSaslException();
+            throw saslOTP.mechInvalidOTPAlternateDictionary().toSaslException();
         }
         for (int i = 0; i < dictionary.length; i++) {
             if (searchStandardDictionary(dictionary[i]) >= 0) {
-                throw log.mechInvalidOTPAlternateDictionary().toSaslException();
+                throw saslOTP.mechInvalidOTPAlternateDictionary().toSaslException();
             }
         }
     }
 
     public static void validateUserName(String userName) throws SaslException {
         if (userName == null) {
-            throw log.mechNoLoginNameGiven(SaslMechanismInformation.Names.OTP).toSaslException();
+            throw saslOTP.mechNoLoginNameGiven().toSaslException();
         } else if (userName.length() > MAX_AUTHENTICATION_ID_LENGTH) {
-            throw log.mechAuthenticationNameTooLong(SaslMechanismInformation.Names.OTP).toSaslException();
+            throw saslOTP.mechAuthenticationNameTooLong().toSaslException();
         } else if (userName.isEmpty()) {
-            throw log.mechAuthenticationNameIsEmpty(SaslMechanismInformation.Names.OTP).toSaslException();
+            throw saslOTP.mechAuthenticationNameIsEmpty().toSaslException();
         }
     }
 
     public static void validateAuthorizationId(String authorizationId) throws SaslException {
         if ((authorizationId != null) && (authorizationId.length() > MAX_AUTHORIZATION_ID_LENGTH)) {
-            throw log.mechAuthorizationIdTooLong(SaslMechanismInformation.Names.OTP).toSaslException();
+            throw saslOTP.mechAuthorizationIdTooLong().toSaslException();
         }
     }
 
@@ -383,24 +382,24 @@ class OTPUtil {
             case ALGORITHM_OTP_SHA_512:
                 return;
             default:
-                throw log.mechInvalidOTPAlgorithm(algorithm).toSaslException();
+                throw saslOTP.mechInvalidOTPAlgorithm(algorithm).toSaslException();
         }
     }
 
     public static void validateSequenceNumber(int sequenceNumber) throws SaslException {
         if (sequenceNumber < 1) {
-            throw log.mechInvalidOTPSequenceNumber().toSaslException();
+            throw saslOTP.mechInvalidOTPSequenceNumber().toSaslException();
         }
     }
 
     public static void validateSeed(String seed) throws SaslException {
         if ((seed.length() < MIN_SEED_LENGTH) || (seed.length() > MAX_SEED_LENGTH)) {
-            throw log.mechInvalidOTPSeed().toSaslException();
+            throw saslOTP.mechInvalidOTPSeed().toSaslException();
         }
         // Must only contain alphanumeric characters
         for (int i = 0; i < seed.length(); i++) {
             if (! Character.isLetterOrDigit(seed.charAt(i))) {
-                throw log.mechInvalidCharacterInSeed(SaslMechanismInformation.Names.OTP).toSaslException();
+                throw saslOTP.mechInvalidCharacterInSeed().toSaslException();
             }
         }
     }
@@ -408,7 +407,7 @@ class OTPUtil {
     public static void validatePassPhrase(String passPhrase) throws SaslException {
         if ((passPhrase == null) || (passPhrase.length() < MIN_PASS_PHRASE_LENGTH)
                 || (passPhrase.length() > MAX_PASS_PHRASE_LENGTH)) {
-            throw log.mechInvalidOTPPassPhrase().toSaslException();
+            throw saslOTP.mechInvalidOTPPassPhrase().toSaslException();
         }
     }
 
@@ -423,7 +422,7 @@ class OTPUtil {
     public static void skipDelims(CodePointIterator di, CodePointIterator cpi, int...delims) throws SaslException {
         while ((! di.hasNext()) && cpi.hasNext()) {
             if (! isDelim(cpi.next(), delims)) {
-                throw log.mechInvalidMessageReceived(SaslMechanismInformation.Names.OTP).toSaslException();
+                throw saslOTP.mechInvalidMessageReceived().toSaslException();
             }
         }
     }

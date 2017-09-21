@@ -18,8 +18,6 @@
 
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.nio.ByteBuffer;
 import java.security.DigestException;
 import java.security.GeneralSecurityException;
@@ -33,7 +31,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.wildfly.security.http.HttpConstants;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
@@ -58,6 +56,8 @@ class NonceManager {
     private final long nonceSessionTime;
     private final boolean singleUse;
     private final String algorithm;
+    private ElytronMessages log;
+
 
     /**
      * @param validityPeriod the time in ms that nonces are valid for in ms.
@@ -66,11 +66,33 @@ class NonceManager {
      * @param keySize the number of bytes to use in the private key of this node.
      * @param algorithm the message digest algorithm to use when creating the digest portion of the nonce.
      */
+
+    @Deprecated
     NonceManager(long validityPeriod, long nonceSessionTime, boolean singleUse, int keySize, String algorithm) {
         this.validityPeriodNano = validityPeriod * 1000000;
         this.nonceSessionTime = nonceSessionTime;
         this.singleUse = singleUse;
         this.algorithm = algorithm;
+        this.log = ElytronMessages.log;
+
+        this.privateKey = new byte[keySize];
+        new SecureRandom().nextBytes(privateKey);
+    }
+
+    /**
+     * @param validityPeriod the time in ms that nonces are valid for in ms.
+     * @param nonceSessionTime the time in ms a nonce is usable for after it's last use where nonce counts are in use.
+     * @param singleUse are nonces single use?
+     * @param keySize the number of bytes to use in the private key of this node.
+     * @param algorithm the message digest algorithm to use when creating the digest portion of the nonce.
+     * @param log mechanism specific logger.
+     */
+    NonceManager(long validityPeriod, long nonceSessionTime, boolean singleUse, int keySize, String algorithm, ElytronMessages log) {
+        this.validityPeriodNano = validityPeriod * 1000000;
+        this.nonceSessionTime = nonceSessionTime;
+        this.singleUse = singleUse;
+        this.algorithm = algorithm;
+        this.log = log;
 
         this.privateKey = new byte[keySize];
         new SecureRandom().nextBytes(privateKey);
@@ -162,7 +184,7 @@ class NonceManager {
             ByteIterator byteIterator = CodePointIterator.ofChars(nonce.toCharArray()).base64Decode();
             byte[] nonceBytes = byteIterator.drain();
             if (nonceBytes.length != PREFIX_LENGTH + messageDigest.getDigestLength()) {
-                throw log.invalidNonceLength(HttpConstants.DIGEST_NAME);
+                throw log.invalidNonceLength();
             }
 
             if (Arrays2.equals(nonceBytes, PREFIX_LENGTH, digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest)) == false) {

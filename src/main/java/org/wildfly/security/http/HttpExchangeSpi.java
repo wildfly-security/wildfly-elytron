@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpClientCert;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -96,7 +96,7 @@ public interface HttpExchangeSpi extends HttpServerScopes {
             try {
                 return sslSession.getPeerCertificates();
             } catch (SSLPeerUnverifiedException e) {
-                log.trace("CLIENT-CERT Peer Unverified", e);
+                httpClientCert.trace("Peer Unverified", e);
             }
         }
 

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.mechanism.scram;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslScram;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -37,7 +37,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
@@ -108,13 +107,13 @@ public final class ScramClient {
         final NameCallback nameCallback = authorizationId == null || authorizationId.isEmpty() ?
                 new NameCallback("User name") : new NameCallback("User name", authorizationId);
         try {
-            MechanismUtil.handleCallbacks(mechanism.toString(), callbackHandler, nameCallback);
+            MechanismUtil.handleCallbacks(saslScram, callbackHandler, nameCallback);
         } catch (UnsupportedCallbackException e) {
-            throw ElytronMessages.log.mechCallbackHandlerDoesNotSupportUserName(mechanism.toString(), e);
+            throw saslScram.mechCallbackHandlerDoesNotSupportUserName(e);
         }
         final String name = nameCallback.getName();
         if (name == null) {
-            throw ElytronMessages.log.mechNoLoginNameGiven(mechanism.toString());
+            throw saslScram.mechNoLoginNameGiven();
         }
         final ByteStringBuilder encoded = new ByteStringBuilder();
         final boolean binding;
@@ -156,48 +155,48 @@ public final class ScramClient {
             if (bi.peekNext() == 'e') {
                 bi.next();
                 if (bi.next() == '=') {
-                    throw log.scramServerRejectedAuthentication(mechanism.toString(), ScramServerErrorCode.fromErrorString(bi.delimitedBy(',').asUtf8String().drainToString()));
+                    throw saslScram.scramServerRejectedAuthentication(ScramServerErrorCode.fromErrorString(bi.delimitedBy(',').asUtf8String().drainToString()));
                 }
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             if (bi.next() != 'r' || bi.next() != '=') {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             final byte[] clientNonce = initialResponse.getRawNonce();
             if (! bi.limitedTo(clientNonce.length).contentEquals(ByteIterator.ofBytes(clientNonce))) {
-                throw log.mechNoncesDoNotMatch(mechanism.toString());
+                throw saslScram.mechNoncesDoNotMatch();
             }
             serverNonce = bi.delimitedBy(',').drain();
             bi.next(); // it's a ,
             if (bi.next() != 's' || bi.next() != '=') {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             salt = bi.delimitedBy(',').base64Decode().drain();
             bi.next(); // it's a ,
             if (bi.next() != 'i' || bi.next() != '=') {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             iterationCount = ScramUtil.parsePosInt(bi);
             if (iterationCount < minimumIterationCount) {
-                throw log.mechIterationCountIsTooLow(mechanism.toString(), iterationCount, minimumIterationCount);
+                throw saslScram.mechIterationCountIsTooLow(iterationCount, minimumIterationCount);
             }
             if (iterationCount > maximumIterationCount) {
-                throw log.mechIterationCountIsTooHigh(mechanism.toString(), iterationCount, maximumIterationCount);
+                throw saslScram.mechIterationCountIsTooHigh(iterationCount, maximumIterationCount);
             }
         } catch (NoSuchElementException | DecodeException | NumberFormatException ex) {
-            throw log.mechInvalidMessageReceived(mechanism.toString());
+            throw saslScram.mechInvalidMessageReceived();
         }
         return new ScramInitialServerMessage(initialResponse, serverNonce, salt, iterationCount, challenge);
     }
 
     public ScramFinalClientMessage handleInitialChallenge(ScramInitialClientMessage initialResponse, ScramInitialServerMessage initialChallenge) throws AuthenticationMechanismException {
-        boolean trace = log.isTraceEnabled();
+        boolean trace = saslScram.isTraceEnabled();
 
         if (initialResponse.getMechanism() != mechanism) {
-            throw log.mechUnmatchedMechanism(mechanism.toString(), initialResponse.getMechanism().toString());
+            throw saslScram.mechUnmatchedMechanism(mechanism.toString(), initialResponse.getMechanism().toString());
         }
         if (initialChallenge.getMechanism() != mechanism) {
-            throw log.mechUnmatchedMechanism(mechanism.toString(), initialChallenge.getMechanism().toString());
+            throw saslScram.mechUnmatchedMechanism(mechanism.toString(), initialChallenge.getMechanism().toString());
         }
 
         final boolean plus = mechanism.isPlus();
@@ -206,7 +205,7 @@ public final class ScramClient {
         encoded.append('c').append('=');
         ByteStringBuilder b2 = new ByteStringBuilder();
         if (bindingData != null) {
-            if(trace) log.tracef("[C] Binding data: %s%n", ByteIterator.ofBytes(bindingData).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Binding data: %s%n", ByteIterator.ofBytes(bindingData).hexEncode().drainToString());
             if (plus) {
                 b2.append("p=");
                 b2.append(bindingType);
@@ -249,9 +248,10 @@ public final class ScramClient {
             mechanism.getPasswordAlgorithm(),
             parameters,
             parameters,
-            providers);
+            providers,
+            saslScram);
         final byte[] saltedPassword = password.getDigest();
-        if (trace) log.tracef("[C] Client salted password: %s", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
+        if (trace) saslScram.tracef("[C] Client salted password: %s", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
 
         try {
             final Mac mac = Mac.getInstance(getMechanism().getHmacName());
@@ -259,31 +259,31 @@ public final class ScramClient {
 
             mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
             final byte[] clientKey = mac.doFinal(ScramUtil.CLIENT_KEY_BYTES);
-            if(trace) log.tracef("[C] Client key: %s", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Client key: %s", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
             final byte[] storedKey = messageDigest.digest(clientKey);
-            if(trace) log.tracef("[C] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
             mac.init(new SecretKeySpec(storedKey, mac.getAlgorithm()));
             final byte[] initialResponseBytes = initialResponse.getRawMessageBytes();
             mac.update(initialResponseBytes, initialResponse.getInitialPartIndex(), initialResponseBytes.length - initialResponse.getInitialPartIndex());
-            if (trace) log.tracef("[C] Using client first message: %s%n", ByteIterator.ofBytes(initialResponseBytes, initialResponse.getInitialPartIndex(), initialResponseBytes.length - initialResponse.getInitialPartIndex()).hexEncode().drainToString());
+            if (trace) saslScram.tracef("[C] Using client first message: %s%n", ByteIterator.ofBytes(initialResponseBytes, initialResponse.getInitialPartIndex(), initialResponseBytes.length - initialResponse.getInitialPartIndex()).hexEncode().drainToString());
             mac.update((byte) ',');
             mac.update(initialChallenge.getRawMessageBytes());
-            if(trace) log.tracef("[C] Using server first message: %s%n", ByteIterator.ofBytes(initialChallenge.getRawMessageBytes()).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Using server first message: %s%n", ByteIterator.ofBytes(initialChallenge.getRawMessageBytes()).hexEncode().drainToString());
             mac.update((byte) ',');
             encoded.updateMac(mac);
-            if(trace) log.tracef("[C] Using client final message without proof: %s%n", ByteIterator.ofBytes(encoded.toArray()).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Using client final message without proof: %s%n", ByteIterator.ofBytes(encoded.toArray()).hexEncode().drainToString());
             final byte[] clientProof = mac.doFinal();
-            if(trace) log.tracef("[C] Client signature: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Client signature: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
             ScramUtil.xor(clientProof, clientKey);
-            if(trace) log.tracef("[C] Client proof: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Client proof: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
             int proofStart = encoded.length();
             // proof
             encoded.append(',').append('p').append('=');
             encoded.appendLatin1(ByteIterator.ofBytes(clientProof).base64Encode());
-            if(trace) log.tracef("[C] Client final message: %s%n", ByteIterator.ofBytes(encoded.toArray()).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Client final message: %s%n", ByteIterator.ofBytes(encoded.toArray()).hexEncode().drainToString());
             return new ScramFinalClientMessage(initialResponse, initialChallenge, password, clientProof, encoded.toArray(), proofStart);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw log.mechMacAlgorithmNotSupported(mechanism.toString(), e);
+            throw saslScram.mechMacAlgorithmNotSupported(e);
         }
     }
 
@@ -294,25 +294,25 @@ public final class ScramClient {
             int c = bi.next();
             if (c == 'e') {
                 if (bi.next() == '=') {
-                    throw log.scramServerRejectedAuthentication(mechanism.toString(), ScramServerErrorCode.fromErrorString(bi.delimitedBy(',').asUtf8String().drainToString()));
+                    throw saslScram.scramServerRejectedAuthentication(ScramServerErrorCode.fromErrorString(bi.delimitedBy(',').asUtf8String().drainToString()));
                 }
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             } else if (c == 'v' && bi.next() == '=') {
                 sig = bi.delimitedBy(',').base64Decode().drain();
             } else {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             if (bi.hasNext()) {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
         } catch (IllegalArgumentException e) {
-            throw log.mechInvalidMessageReceived(mechanism.toString());
+            throw saslScram.mechInvalidMessageReceived();
         }
         return new ScramFinalServerMessage(sig, messageBytes);
     }
 
     public void verifyFinalChallenge(final ScramFinalClientMessage finalResponse, final ScramFinalServerMessage finalChallenge) throws AuthenticationMechanismException {
-        boolean trace = log.isTraceEnabled();
+        boolean trace = saslScram.isTraceEnabled();
 
         try {
             final Mac mac = Mac.getInstance(getMechanism().getHmacName());
@@ -321,7 +321,7 @@ public final class ScramClient {
             ScramDigestPassword password = finalResponse.getPassword();
             mac.init(new SecretKeySpec(password.getDigest(), mac.getAlgorithm()));
             byte[] serverKey = mac.doFinal(ScramUtil.SERVER_KEY_BYTES);
-            if(trace) log.tracef("[C] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
             mac.init(new SecretKeySpec(serverKey, mac.getAlgorithm()));
             byte[] clientFirstMessage = finalResponse.getInitialResponse().getRawMessageBytes();
             int bareStart = finalResponse.getInitialResponse().getInitialPartIndex();
@@ -333,12 +333,12 @@ public final class ScramClient {
             byte[] clientFinalMessage = finalResponse.getRawMessageBytes();
             mac.update(clientFinalMessage, 0, finalResponse.getProofOffset());
             byte[] serverSignature = mac.doFinal();
-            if(trace) log.tracef("[C] Recovered server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[C] Recovered server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
             if (! Arrays.equals(finalChallenge.getRawServerSignature(), serverSignature)) {
-                throw log.mechServerAuthenticityCannotBeVerified(mechanism.toString());
+                throw saslScram.mechServerAuthenticityCannotBeVerified();
             }
         } catch (IllegalArgumentException | InvalidKeyException | NoSuchAlgorithmException e) {
-            throw log.mechMacAlgorithmNotSupported(mechanism.toString(), e);
+            throw saslScram.mechMacAlgorithmNotSupported(e);
         }
     }
 }

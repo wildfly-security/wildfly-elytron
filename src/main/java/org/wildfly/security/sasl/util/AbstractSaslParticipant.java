@@ -19,8 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import org.wildfly.common.Assert;
-
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.security._private.ElytronMessages;
 
 import java.util.Map;
 
@@ -55,6 +54,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
     private final CallbackHandler callbackHandler;
     private final String protocol;
     private final String serverName;
+    private ElytronMessages log;
 
     private int state = -1;
     private SaslWrapper wrapper;
@@ -66,12 +66,31 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @param protocol the protocol
      * @param serverName the server name
      * @param callbackHandler the callback handler
+     * @param log mechanism specific logger
      */
+    protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, ElytronMessages log) {
+        this.callbackHandler = callbackHandler;
+        this.mechanismName = mechanismName;
+        this.protocol = protocol;
+        this.serverName = serverName;
+        this.log = log;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param mechanismName the name of the defined mechanism
+     * @param protocol the protocol
+     * @param serverName the server name
+     * @param callbackHandler the callback handler
+     */
+    @Deprecated
     protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler) {
         this.callbackHandler = callbackHandler;
         this.mechanismName = mechanismName;
         this.protocol = protocol;
         this.serverName = serverName;
+        this.log = ElytronMessages.sasl;
     }
 
     /**
@@ -84,7 +103,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         try {
             tryHandleCallbacks(callbacks);
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+            throw log.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
         }
     }
 
@@ -102,7 +121,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         } catch (SaslException | UnsupportedCallbackException e) {
             throw e;
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t).toSaslException();
+            throw log.mechCallbackHandlerFailedForUnknownReason(t).toSaslException();
         }
     }
 
@@ -173,9 +192,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         boolean ok = false;
         try {
             if (state == COMPLETE_STATE) {
-                throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
+                throw log.mechMessageAfterComplete().toSaslException();
             } else if (state == FAILED_STATE) {
-                throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                throw log.mechAuthenticationFailed().toSaslException();
             }
             byte[] result = evaluateMessage(state, message);
             ok = true;
@@ -209,10 +228,10 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @exception IllegalStateException if wrapping is not configured
      */
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-        if (isComplete() == false) throw log.mechAuthenticationNotComplete(getMechanismName());
+        if (isComplete() == false) throw log.mechAuthenticationNotComplete();
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
-            throw log.wrappingNotConfigured(getMechanismName());
+            throw log.wrappingNotConfigured();
         }
         if(len == 0) {
             return NO_BYTES;
@@ -231,10 +250,10 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @exception IllegalStateException if wrapping is not configured
      */
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-        if (isComplete() == false) throw log.mechAuthenticationNotComplete(getMechanismName());
+        if (isComplete() == false) throw log.mechAuthenticationNotComplete();
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
-            throw log.wrappingNotConfigured(getMechanismName());
+            throw log.wrappingNotConfigured();
         }
         if(len == 0) {
             return NO_BYTES;
@@ -258,7 +277,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      */
     protected void assertComplete() {
         if (isComplete() == false) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete();
         }
     }
 

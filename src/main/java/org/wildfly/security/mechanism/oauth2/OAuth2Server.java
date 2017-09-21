@@ -18,8 +18,6 @@
 
 package org.wildfly.security.mechanism.oauth2;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -50,14 +48,14 @@ public class OAuth2Server {
     public static final String CONFIG_OPENID_CONFIGURATION_URL = "openid-configuration";
     private static final String KV_DELIMITER = "%x01";
 
-    private final String mechanismName;
     private final CallbackHandler callbackHandler;
     private final Map<String, ?> serverConfig;
+    private ElytronMessages log;
 
-    public OAuth2Server(String mechanismName, CallbackHandler callbackHandler, Map<String, ?> serverConfig) {
-        this.mechanismName = mechanismName;
+    public OAuth2Server(CallbackHandler callbackHandler, Map<String, ?> serverConfig, ElytronMessages log) {
         this.callbackHandler = callbackHandler;
         this.serverConfig = serverConfig;
+        this.log = log;
     }
 
     public OAuth2InitialClientMessage parseInitialClientMessage(byte[] fromBytes) throws AuthenticationMechanismException {
@@ -68,7 +66,7 @@ public class OAuth2Server {
             final char cbindFlag = (char) byteIterator.next();
 
             if (cbindFlag != 'n') {
-                throw ElytronMessages.log.mechChannelBindingNotSupported(this.mechanismName);
+                throw log.mechChannelBindingNotSupported();
             }
 
             String authorizationID = null;
@@ -78,11 +76,11 @@ public class OAuth2Server {
 
                 if (c == 'a') {
                     if (byteIterator.next() != '=') {
-                        throw log.mechInvalidClientMessage(this.mechanismName);
+                        throw log.mechInvalidClientMessage();
                     }
                     authorizationID = byteIterator.delimitedBy(',').asUtf8String().drainToString();
                     if (byteIterator.next() != ',') {
-                        throw ElytronMessages.log.mechInvalidClientMessage(this.mechanismName);
+                        throw ElytronMessages.log.mechInvalidClientMessage();
                     }
                 }
             }
@@ -90,12 +88,12 @@ public class OAuth2Server {
             String auth = getValue("auth", byteIterator.asUtf8String().drainToString());
 
             if (auth == null) {
-                throw log.mechInvalidClientMessage(this.mechanismName);
+                throw log.mechInvalidClientMessage();
             }
 
             return new OAuth2InitialClientMessage(authorizationID, auth, messageBytes);
         } catch (NoSuchElementException ignored) {
-            throw ElytronMessages.log.mechInvalidMessageReceived(this.mechanismName);
+            throw ElytronMessages.log.mechInvalidMessageReceived();
         }
     }
 
@@ -119,9 +117,9 @@ public class OAuth2Server {
             EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
 
             try {
-                MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, evidenceVerifyCallback);
+                MechanismUtil.handleCallbacks(log, this.callbackHandler, evidenceVerifyCallback);
             } catch (UnsupportedCallbackException e) {
-                throw log.mechAuthorizationUnsupported(this.mechanismName, e);
+                throw log.mechAuthorizationUnsupported(e);
             }
 
             // successful verification, token is supposed to be valid and just respond with an empty message
@@ -129,9 +127,9 @@ public class OAuth2Server {
                 AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
 
                 try {
-                    MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, authorizeCallback);
+                    MechanismUtil.handleCallbacks(log, this.callbackHandler, authorizeCallback);
                 } catch (UnsupportedCallbackException e) {
-                    throw log.mechAuthorizationUnsupported(this.mechanismName, e);
+                    throw log.mechAuthorizationUnsupported(e);
                 }
 
                 if (authorizeCallback.isAuthorized()) {
@@ -142,7 +140,7 @@ public class OAuth2Server {
                     } catch (AuthenticationMechanismException e) {
                         throw e;
                     } catch (IOException e) {
-                        throw log.mechServerSideAuthenticationFailed(mechanismName, e);
+                        throw log.mechServerSideAuthenticationFailed(e);
                     }
                     return new byte[0];
                 }
@@ -151,7 +149,7 @@ public class OAuth2Server {
             return createErrorMessage();
         }
 
-        throw log.mechInvalidClientMessage(this.mechanismName);
+        throw log.mechInvalidClientMessage();
     }
 
     private byte[] createErrorMessage() {
