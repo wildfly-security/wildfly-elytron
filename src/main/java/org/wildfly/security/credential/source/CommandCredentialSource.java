@@ -21,6 +21,7 @@ package org.wildfly.security.credential.source;
 import static org.wildfly.common.Assert.checkNotEmptyParam;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static java.security.AccessController.doPrivileged;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,6 +46,8 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.manager.action.CreateThreadAction;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
@@ -88,10 +91,23 @@ public final class CommandCredentialSource implements CredentialSource {
                 throw new UndeclaredThrowableException(throwable);
             }
         }
-        try {
+        try (final InputStream errorStream = process.getErrorStream()) {
+            Runnable errorReader = () -> {
+                BufferedReader bufferedErrorReader = new BufferedReader(new InputStreamReader(errorStream, outputCharset));
+                String line;
+                try {
+                    while ((line = bufferedErrorReader.readLine()) != null) {
+                        log.trace(String.format("CommandCredentialSource Error Input '%s'", line));
+                    }
+                } catch (IOException ignored) {}
+            };
+            Thread thread = WildFlySecurityManager.isChecking()
+                    ? doPrivileged(new CreateThreadAction(errorReader, "Error Stream Reader"))
+                    : new Thread(errorReader, "Error Stream Reader");
+            thread.start();
+
             final String line;
             process.getOutputStream().close();
-            process.getErrorStream().close();
             try (InputStream output = process.getInputStream()) {
                 try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(output, outputCharset))) {
                     line = outputReader.readLine();
