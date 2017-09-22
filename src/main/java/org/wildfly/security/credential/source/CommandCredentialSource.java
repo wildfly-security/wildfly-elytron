@@ -21,6 +21,7 @@ package org.wildfly.security.credential.source;
 import static org.wildfly.common.Assert.checkNotEmptyParam;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static java.security.AccessController.doPrivileged;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +33,7 @@ import java.nio.charset.Charset;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
@@ -45,6 +47,7 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
@@ -54,6 +57,11 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class CommandCredentialSource implements CredentialSource {
+
+    private static final File NULL_FILE = new File(
+            (WildFlySecurityManager.isChecking() ? doPrivileged((PrivilegedAction<String>) () -> System.getProperty("os.name")) : System.getProperty("os.name"))
+            .startsWith("Windows") ? "NUL" : "/dev/null");
+
     private final Function<ProcessBuilder, ProcessBuilder> builderProcessor;
     private final PasswordFactory passwordFactory;
     private final AccessControlContext context;
@@ -76,6 +84,7 @@ public final class CommandCredentialSource implements CredentialSource {
         }
         final ProcessBuilder processBuilder = builderProcessor.apply(new ProcessBuilder());
         processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE); // we want to capture the output of the process
+        processBuilder.redirectError(NULL_FILE);
         final Process process;
         try {
             process = AccessController.doPrivileged((PrivilegedExceptionAction<Process>) processBuilder::start);
@@ -91,7 +100,6 @@ public final class CommandCredentialSource implements CredentialSource {
         try {
             final String line;
             process.getOutputStream().close();
-            process.getErrorStream().close();
             try (InputStream output = process.getInputStream()) {
                 try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(output, outputCharset))) {
                     line = outputReader.readLine();
