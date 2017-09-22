@@ -51,7 +51,7 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     @Override
     public String handleUnknownEvent(SecurityEvent event, Void param) {
         checkNotNullParam("event", event);
-        StringBuilder stringBuilder = new StringBuilder('{');
+        StringBuilder stringBuilder = new StringBuilder("{");
         handleUnknownEvent(event, stringBuilder);
         return stringBuilder.append('}').toString();
     }
@@ -71,7 +71,7 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     @Override
     public String handleDefiniteOutcomeEvent(SecurityDefiniteOutcomeEvent event, Void param) {
         checkNotNullParam("event", event);
-        StringBuilder stringBuilder = new StringBuilder('{');
+        StringBuilder stringBuilder = new StringBuilder("{");
         handleDefiniteOutcomeEvent(event, stringBuilder);
         return stringBuilder.append('}').toString();
     }
@@ -84,7 +84,7 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     @Override
     public String handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, Void param) {
         checkNotNullParam("event", event);
-        StringBuilder stringBuilder = new StringBuilder('{');
+        StringBuilder stringBuilder = new StringBuilder("{");
         handleAuthenticationFailedEvent(event, stringBuilder);
         return stringBuilder.append('}').toString();
     }
@@ -97,7 +97,7 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
     @Override
     public String handlePermissionCheckEvent(SecurityPermissionCheckEvent event, Void param) {
         checkNotNullParam("event", event);
-        StringBuilder stringBuilder = new StringBuilder('{');
+        StringBuilder stringBuilder = new StringBuilder("{");
         handlePermissionCheckEvent(event, stringBuilder);
         return stringBuilder.append('}').toString();
     }
