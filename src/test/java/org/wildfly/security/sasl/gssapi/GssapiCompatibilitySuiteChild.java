@@ -55,8 +55,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.wildfly.security.ExcludedOnIbmJdk;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
@@ -72,6 +74,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(JMockit.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Category(ExcludedOnIbmJdk.class)
 public class GssapiCompatibilitySuiteChild {
 
     protected boolean wildfly = true; // whether use WildFly or JDK SASL provider, set to false to obtain/verify reference output
