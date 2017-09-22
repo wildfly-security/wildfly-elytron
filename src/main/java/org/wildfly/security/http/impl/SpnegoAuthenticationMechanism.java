@@ -263,7 +263,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             } else {
                 log.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
                 handleCallback(AuthenticationCompleteCallback.FAILED);
-                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
                 return;
             }
         }
