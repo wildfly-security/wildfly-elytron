@@ -19,7 +19,8 @@
 package org.wildfly.security.x500;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.*;
+import static org.wildfly.security.asn1.ASN1.IA5_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.PRINTABLE_STRING_TYPE;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -52,17 +53,17 @@ public final class X500PrincipalUtil {
         try {
             x500Name = Class.forName("sun.security.x509.X500Name", true, X500PrincipalUtil.class.getClassLoader());
             asX500PrincipalHandle = MethodHandles.publicLookup().unreflect(x500Name.getDeclaredMethod("asX500Principal"));
-        } catch (ClassNotFoundException e) {
-            /* expected on non OpenJDK/Oracle based runtimes */
-        } catch (IllegalAccessException e) {
-            final IllegalAccessError err = new IllegalAccessError(e.getMessage());
-            err.setStackTrace(e.getStackTrace());
-            throw err;
-        } catch (NoSuchMethodException e) {
-            final NoSuchMethodError err = new NoSuchMethodError(e.getMessage());
-            err.setStackTrace(e.getStackTrace());
-            throw err;
+        } catch (Throwable t) {
+            /*
+             * This is intended to be a best efforts optimisation, if it fails for ANY reason we don't support the optimisation
+             * and resort to default behaviour.
+             *
+             * Throwing any Exception or Error from this static block results in a NoClassDefFoundError for any access to the
+             * class and subsequently even the non-optimised scenario is unavailable.
+             */
+            log.trace("X550Name.asX500Principal() is not available.", t);
         }
+
         X500_NAME_CLASS = x500Name;
         AS_X500_PRINCIPAL_HANDLE = asX500PrincipalHandle;
     }
