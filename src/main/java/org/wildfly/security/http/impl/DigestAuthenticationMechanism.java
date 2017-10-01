@@ -64,6 +64,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
@@ -143,7 +144,8 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
          *
          * We act on the validity at the end where we can let the client know if it is stale.
          */
-        boolean nonceValid = nonceManager.useNonce(nonce, messageRealm.getBytes(UTF_8));
+        byte[] salt = messageRealm.getBytes(UTF_8);
+        boolean nonceValid = nonceManager.useNonce(nonce, salt);
 
         String username = convertToken(USERNAME, responseTokens.get(USERNAME));
         byte[] digestUri;
@@ -205,11 +207,28 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (authorize(username)) {
             succeed();
-            request.authenticationComplete();
+            request.authenticationComplete(new HttpServerMechanismsResponder() {
+                @Override
+                public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
+                    try {
+                        sendAuthenticationInfoHeader(response, nonce, salt);
+                    } catch (AuthenticationMechanismException e) {
+                        throw new HttpAuthenticationException(e);
+                    }
+                }
+            });
         } else {
             fail();
             request.authenticationFailed(log.authorizationFailed(username, getMechanismName()), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
+    }
+
+    public void sendAuthenticationInfoHeader(final HttpServerResponse response, String currentNonce, byte[] salt) throws AuthenticationMechanismException {
+        String nextNonce = currentNonce;
+        if(!nonceManager.useNonce(currentNonce, salt)) {
+            nextNonce = nonceManager.generateNonce(salt);
+        }
+        response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=" + nextNonce);
     }
 
     /**
