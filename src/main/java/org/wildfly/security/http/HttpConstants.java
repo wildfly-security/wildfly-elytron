@@ -90,6 +90,7 @@ public class HttpConstants {
     public static final String CHARSET = "charset";
     public static final String DOMAIN = "domain";
     public static final String NEGOTIATE = "Negotiate";
+    public static final String NEXT_NONCE = "nextnonce";
     public static final String NONCE = "nonce";
     public static final String OPAQUE = "opaque";
     public static final String REALM = "realm";
@@ -103,6 +104,7 @@ public class HttpConstants {
      * Header Names
      */
 
+    public static final String AUTHENTICATION_INFO = "Authentication-Info";
     public static final String AUTHORIZATION = "Authorization";
     public static final String HOST = "Host";
     public static final String LOCATION = "Location";
