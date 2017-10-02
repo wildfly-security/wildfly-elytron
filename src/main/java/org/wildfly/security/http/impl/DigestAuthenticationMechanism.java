@@ -223,7 +223,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         }
     }
 
-    public void sendAuthenticationInfoHeader(final HttpServerResponse response, String currentNonce, byte[] salt) throws AuthenticationMechanismException {
+    private void sendAuthenticationInfoHeader(final HttpServerResponse response, String currentNonce, byte[] salt) throws AuthenticationMechanismException {
         String nextNonce = currentNonce;
         if(!nonceManager.useNonce(currentNonce, salt)) {
             nextNonce = nonceManager.generateNonce(salt);
