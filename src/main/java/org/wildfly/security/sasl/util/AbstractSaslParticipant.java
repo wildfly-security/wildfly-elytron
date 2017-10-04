@@ -269,6 +269,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @return the property value or {@code null} if not defined
      */
     public Object getNegotiatedProperty(final String propName) {
+        assertComplete();
         return null;
     }
 
