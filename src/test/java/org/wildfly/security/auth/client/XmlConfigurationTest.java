@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
-import java.util.Collections;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -65,7 +64,9 @@ public class XmlConfigurationTest {
     }
 
     private static ConfigurationXMLStreamReader openFile(byte[] xmlBytes, String fileName) throws ConfigXMLParseException {
-        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(Collections.singleton(ElytronXmlParser.NS_ELYTRON_1_0));
+
+
+        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(ElytronXmlParser.KNOWN_NAMESPACES.keySet());
     }
 
     @Test
@@ -597,4 +598,46 @@ public class XmlConfigurationTest {
         }
         fail("Expected exception");
     }
+
+    @Test
+    public void testLocalKerberosIn10() throws Exception {
+        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<configuration>" +
+                "    <authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+                "        <authentication-configurations>\n" +
+                "            <configuration name=\"conf\">\n" +
+                "                <credentials>\n" +
+                "                    <local-kerberos mechanism-names=\"KRB5\" />\n" +
+                "                </credentials>\n" +
+                "            </configuration>\n" +
+                "        </authentication-configurations>\n" +
+                "    </authentication-client>\n" +
+                "</configuration>").getBytes(StandardCharsets.UTF_8);
+        try {
+            ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+        } catch (XMLStreamException e) {
+            assertTrue(e.getMessage().contains("Unexpected element \"local-kerberos\""));
+            return;
+        }
+        fail("local-kerberos should be unsupported in urn:elytron:1.0");
+    }
+
+    @Test
+    public void testLocalKerberosIn11() throws Exception {
+        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<configuration>" +
+                "    <authentication-client xmlns=\"urn:elytron:client:1.1\">\n" +
+                "        <authentication-configurations>\n" +
+                "            <configuration name=\"conf\">\n" +
+                "                <credentials>\n" +
+                "                    <local-kerberos mechanism-names=\"KRB5\" />\n" +
+                "                </credentials>\n" +
+                "            </configuration>\n" +
+                "        </authentication-configurations>\n" +
+                "    </authentication-client>\n" +
+                "</configuration>").getBytes(StandardCharsets.UTF_8);
+        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+        factory.create();
+    }
+
 }

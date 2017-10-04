@@ -127,6 +127,7 @@
             <xsd:element name="public-key-pem" type="xsd:string"/>
             <xsd:element name="bearer-token" type="bearer-token-type"/>
             <xsd:element name="oauth2-bearer-token" type="oauth2-bearer-token-type"/>
+            <xsd:element name="local-kerberos" type="local-kerberos-type"/>
         </xsd:choice>
     </xsd:complexType>
 
@@ -374,4 +375,30 @@
     <xsd:complexType name="uri-type">
         <xsd:attribute name="uri" type="xsd:anyURI" use="required"/>
     </xsd:complexType>
+
+    <xsd:complexType name="local-kerberos-type">
+        <xsd:attribute name="mechanism-names" type="stringListType" default="KRB5 SPNEGO">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The mechanism names the credential should be usable with.
+                    Names will be converted to OIDs and used together with OIDs from mechanism-oids attribute.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="mechanism-oids" type="stringListType">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The mechanism OIDs the credential should be usable with.
+                    Will be used together with OIDs derived from names from mechanism-names attribute.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:simpleType name="stringListType">
+        <xsd:annotation>
+            <xsd:documentation>A list of String.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:list itemType="xsd:string"/>
+    </xsd:simpleType>
 </xsd:schema>

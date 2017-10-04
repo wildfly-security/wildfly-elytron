@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
+import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
 import org.wildfly.security.util.Alphabet.Base32Alphabet;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -42,26 +43,10 @@ public final class Gs2 {
     // Non-OID-derived mechanism names
     public static final String GS2_KRB5 = "GS2-KRB5";
     public static final String GS2_KRB5_PLUS = "GS2-KRB5-PLUS";
-    public static final Oid OID_KRB5;
-    static {
-        try {
-            OID_KRB5 = new Oid("1.2.840.113554.1.2.2");
-        } catch (GSSException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     // SPNEGO must not be used as a GS2 mechanism
     public static final String SPNEGO = "SPNEGO";
     public static final String SPNEGO_PLUS = "SPNEGO-PLUS";
-    public static final Oid OID_SPNEGO;
-    static {
-        try {
-            OID_SPNEGO = new Oid("1.3.6.1.5.5.2");
-        } catch (GSSException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * Get the SASL mechanism name that corresponds to the given GSS-API mechanism object identifier.
@@ -78,14 +63,14 @@ public final class Gs2 {
         }
 
         // Non-OID-derived SASL mechanism names
-        if (mechanismOid.equals(OID_KRB5)) {
+        if (mechanismOid.equals(GSSCredentialSecurityFactory.KERBEROS_V5)) {
             if (plus) {
                 return GS2_KRB5_PLUS;
             } else {
                 return GS2_KRB5;
             }
         }
-        if (mechanismOid.equals(OID_SPNEGO)) {
+        if (mechanismOid.equals(GSSCredentialSecurityFactory.SPNEGO)) {
             if (plus) {
                 return SPNEGO_PLUS;
             } else {
@@ -140,10 +125,10 @@ public final class Gs2 {
             saslMechanismName = saslMechanismName.substring(0, plusSuffixIndex);
         }
         if (saslMechanismName.equals(GS2_KRB5)) {
-            return OID_KRB5;
+            return GSSCredentialSecurityFactory.KERBEROS_V5;
         }
         if (saslMechanismName.equals(SPNEGO)) {
-            return OID_SPNEGO;
+            return GSSCredentialSecurityFactory.SPNEGO;
         }
         Oid[] mechanisms = gssManager.getMechs();
         if (mechanisms == null) {
