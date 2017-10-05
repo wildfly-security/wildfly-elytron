@@ -49,6 +49,9 @@ import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class XmlConfigurationTest {
+
+    static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
+
     private static final Provider provider = new WildFlyElytronProvider();
 
     public XmlConfigurationTest() {
@@ -65,7 +68,7 @@ public class XmlConfigurationTest {
     }
 
     private static ConfigurationXMLStreamReader openFile(byte[] xmlBytes, String fileName) throws ConfigXMLParseException {
-        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(Collections.singleton(ElytronXmlParser.NS_ELYTRON_1_0));
+        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(Collections.singleton(NS_ELYTRON_1_0));
     }
 
     @Test

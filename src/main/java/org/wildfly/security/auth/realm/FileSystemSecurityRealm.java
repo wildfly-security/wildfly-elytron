@@ -109,6 +109,7 @@ import org.wildfly.security.util.CodePointIterator;
 public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
     static final String ELYTRON_1_0 = "urn:elytron:1.0";
+    static final String ELYTRON_1_0_1 = "urn:elytron:1.0.1";
     static final ElytronPermission CREATE_SECURITY_REALM = ElytronPermission.forName("createSecurityRealm");
 
     private final Path root;
@@ -536,6 +537,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         streamWriter.writeStartDocument();
                         streamWriter.writeCharacters("\n");
                         streamWriter.writeStartElement("identity");
+                        // Continue to write using 1.0 as not using any features added in 1.0.1
                         streamWriter.writeDefaultNamespace(ELYTRON_1_0);
                         streamWriter.writeEndElement();
                         streamWriter.writeEndDocument();
@@ -674,6 +676,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             streamWriter.writeStartDocument();
             streamWriter.writeCharacters("\n");
             streamWriter.writeStartElement("identity");
+            // Continue to write using 1.0 as not using any features added in 1.0.1
             streamWriter.writeDefaultNamespace(ELYTRON_1_0);
 
             if (newIdentity.getCredentials().size() > 0) {
@@ -787,7 +790,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int tag = streamReader.nextTag();
-            if (tag != START_ELEMENT || ! ELYTRON_1_0.equals(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
+            if (tag != START_ELEMENT || ! validNamespace(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             return parseIdentityContents(streamReader, skipCredentials, skipAttributes);
@@ -811,7 +814,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     }
                     return new LoadedIdentity(name, credentials, attributes);
                 }
-                if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                if (! validNamespace(streamReader.getNamespaceURI())) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if (! gotCredentials && "credentials".equals(streamReader.getLocalName())) {
@@ -843,7 +846,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
             List<Credential> credentials = new ArrayList<>();
             do {
-                if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                if (! validNamespace(streamReader.getNamespaceURI())) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
@@ -1000,7 +1003,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
             Attributes attributes = new MapAttributes();
             do {
-                if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                if (! validNamespace(streamReader.getNamespaceURI())) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("attribute".equals(streamReader.getLocalName())) {
@@ -1053,6 +1056,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     }
                 }
             }
+        }
+
+        private boolean validNamespace(final String namespace) {
+            return ELYTRON_1_0.equals(namespace) || ELYTRON_1_0_1.equals(namespace);
         }
     }
 
