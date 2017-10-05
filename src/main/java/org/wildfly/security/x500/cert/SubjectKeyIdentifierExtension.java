@@ -18,11 +18,18 @@
 
 package org.wildfly.security.x500.cert;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.x500.X500;
 
 /**
- * Subject key identifier extension as defined by <a href="https://tools.ietf.org/html/rfc5280#section-4.2.1.2">RFC 5280 § 4.2.1.2</a>.
+ * Subject key identifier extension defined in <a href="https://tools.ietf.org/html/rfc5280#section-4.2.1.2">RFC 5280 § 4.2.1.2</a> as:
+ *
+ * <pre>
+ *      SubjectKeyIdentifier ::= KeyIdentifier
+ *      KeyIdentifier ::= OCTET STRING
+ * </pre>
+ *
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -33,10 +40,11 @@ public final class SubjectKeyIdentifierExtension extends X509CertificateExtensio
     /**
      * Construct a new instance.
      *
-     * @param keyIdentifier the key identifier to specify, or {@code null} to leave it out
+     * @param keyIdentifier the key identifier to specify (must not be {@code null})
      */
     public SubjectKeyIdentifierExtension(final byte[] keyIdentifier) {
         super(false);
+        Assert.checkNotNullParam("keyIdentifier", keyIdentifier);
         this.keyIdentifier = keyIdentifier;
     }
 
@@ -45,11 +53,6 @@ public final class SubjectKeyIdentifierExtension extends X509CertificateExtensio
     }
 
     public void encodeTo(final ASN1Encoder encoder) {
-        encoder.startSequence();
-        if (keyIdentifier != null) {
-            encoder.encodeImplicit(0);
-            encoder.encodeOctetString(keyIdentifier);
-        }
-        encoder.endSequence();
+        encoder.encodeOctetString(keyIdentifier);
     }
 }
