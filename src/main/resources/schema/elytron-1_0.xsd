@@ -167,7 +167,7 @@
             <xsd:element name="global" type="empty-type" />
             <xsd:element name="use-service-loader" type="module-ref-type" />
         </xsd:all>
-    </xsd:complexType>   
+    </xsd:complexType>
 
     <xsd:element name="abstract-sasl-factories" abstract="true"/>
     <xsd:element name="use-provider-sasl-factory" substitutionGroup="abstract-sasl-factories" type="empty-type" />
@@ -196,6 +196,7 @@
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -209,7 +210,7 @@
         <xsd:choice minOccurs="0" maxOccurs="1">
             <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
-            <xsd:element name="credential-store" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
         <xsd:attribute name="alias" type="xsd:string" use="optional"/>
