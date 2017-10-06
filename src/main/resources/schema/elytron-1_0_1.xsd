@@ -19,8 +19,8 @@
   -->
 
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            targetNamespace="urn:elytron:1.0"
-            xmlns="urn:elytron:1.0"
+            targetNamespace="urn:elytron:1.0.1"
+            xmlns="urn:elytron:1.0.1"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified"
             version="1.0">
@@ -196,6 +196,7 @@
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -209,6 +210,7 @@
         <xsd:choice minOccurs="0" maxOccurs="1">
             <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
         <xsd:attribute name="alias" type="xsd:string" use="optional"/>

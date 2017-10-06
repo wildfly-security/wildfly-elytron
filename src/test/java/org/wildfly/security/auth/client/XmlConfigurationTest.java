@@ -24,12 +24,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -43,29 +46,60 @@ import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class XmlConfigurationTest {
+
+    static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
+
     private static final Provider provider = new WildFlyElytronProvider();
+
+    private static Map<String, String> stores = new HashMap<>();
+    private static String BASE_STORE_DIRECTORY = "target/ks-cred-stores";
+    static {
+        stores.put("ONE", BASE_STORE_DIRECTORY + "/ladybird_cs.jceks");
+    }
 
     public XmlConfigurationTest() {
     }
 
+    /**
+     * Clean all Credential Stores registered in {@link XmlConfigurationTest#stores}.
+     */
+    public static void cleanCredentialStores() {
+        File dir = new File(BASE_STORE_DIRECTORY);
+        dir.mkdirs();
+
+        for (String f: stores.values()) {
+            File file = new File(f);
+            file.delete();
+        }
+    }
+
     @BeforeClass
-    public static void registerProvider() {
+    public static void setUp() throws Exception {
         Security.addProvider(provider);
+        cleanCredentialStores();
+        // setup vaults that need to be complete before a test starts
+        CredentialStoreBuilder.get().setKeyStoreFile(stores.get("ONE"))
+                .setKeyStoreType("JCEKS")
+                .setKeyStorePassword("secret_store_ONE")
+                .addPassword("ladybird", "Elytron")
+                .addPassword("ladybirdkey", "Elytron")
+                .build();
     }
 
     @AfterClass
-    public static void removeProvider() {
+    public static void tearDown() {
         Security.removeProvider(provider.getName());
     }
 
     private static ConfigurationXMLStreamReader openFile(byte[] xmlBytes, String fileName) throws ConfigXMLParseException {
-        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(Collections.singleton(ElytronXmlParser.NS_ELYTRON_1_0));
+        return ClientConfiguration.getInstance(URI.create(fileName), () -> new ByteArrayInputStream(xmlBytes)).readConfiguration(Collections.singleton(NS_ELYTRON_1_0));
     }
 
     @Test
@@ -597,4 +631,45 @@ public class XmlConfigurationTest {
         }
         fail("Expected exception");
     }
+
+    @Test
+    public void testCredentialStoreIntegrationWithKeyStoreSSLConfiguration() throws Exception {
+        final String alias = "ladybird";
+        final byte[] xmlBytes = ("<configuration>\n" +
+                "<authentication-client xmlns=\"urn:elytron:1.0.1\">\n" +
+                    "<credential-stores>\n" +
+                    "    <credential-store name=\"store1\" type=\"" + KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE + "\">\n" +
+                    "        <protection-parameter-credentials>\n" +
+                    "            <clear-password password=\"secret_store_ONE\"/>\n" +
+                    "        </protection-parameter-credentials>\n" +
+                    "        <attributes>\n" +
+                    "            <attribute name=\"keyStoreType\" value=\"JCEKS\"/>\n" +
+                    "            <attribute name=\"location\" value=\"" + stores.get("ONE") +"\"/>\n" +
+                    "        </attributes>\n" +
+                    "    </credential-store>\n" +
+                    "</credential-stores>\n" +
+                    "<key-stores>\n" +
+                        "<key-store name=\"ladybird\" type=\"JKS\">\n" +
+                            "<file name=\"target/test-classes/ca/jks/ladybird.keystore\"/>\n" +
+                            "<credential-store-reference store=\"store1\" alias=\"ladybird\"/>\n" +
+                        "</key-store>\n" +
+                    "</key-stores>\n" +
+                    "<ssl-contexts>\n" +
+                        "<ssl-context name=\"my-ssl\">\n" +
+                            "<key-store-ssl-certificate key-store-name=\"ladybird\" alias=\"" + alias + "\">\n" +
+                                "<credential-store-reference store=\"store1\" alias=\"ladybirdkey\"/>\n" +
+                            "</key-store-ssl-certificate>\n" +
+                        "</ssl-context>\n" +
+                    "</ssl-contexts>\n" +
+                    "<ssl-context-rules>\n" +
+                        "<rule use-ssl-context=\"my-ssl\">\n" +
+                            "<match-host name=\"localhost\"/>\n" +
+                        "</rule>\n" +
+                    "</ssl-context-rules>\n" +
+                "</authentication-client>\n" +
+                "</configuration>").getBytes(StandardCharsets.UTF_8);
+        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+        factory.create();
+    }
+
 }
