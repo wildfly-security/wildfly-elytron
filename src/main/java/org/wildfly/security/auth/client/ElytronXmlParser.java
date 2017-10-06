@@ -128,17 +128,23 @@ public final class ElytronXmlParser {
 
     private enum Version {
 
-        VERSION_1_0("urn:elytron:1.0"),
-        VERSION_1_0_1("urn:elytron:1.0.1");
+        VERSION_1_0("urn:elytron:1.0", null),
+        VERSION_1_0_1("urn:elytron:1.0.1", VERSION_1_0);
 
         final String namespace;
 
-        Version(String namespace) {
+        /*
+         * In the future we could support multiple parents but wait until that becomes a reality before adding it.
+         */
+        final Version parent;
+
+        Version(String namespace, Version parent) {
             this.namespace = namespace;
+            this.parent = parent;
         }
 
         boolean isAtLeast(Version version) {
-            return this.equals(version);
+            return this.equals(version) || (parent != null ? parent.isAtLeast(version) : false);
         }
 
     }
@@ -1204,7 +1210,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "credential-store-reference": {
-                        if (gotCredential) {
+                        if (gotCredential || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
@@ -1333,7 +1339,9 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "credential-store-reference": {
-                        if (keyStoreCredential != null) throw reader.unexpectedElement();
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
+                            throw reader.unexpectedElement();
+                        }
                         final XMLLocation nestedLocation = reader.getLocation();
                         ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
                         keyStoreCredential = () -> {

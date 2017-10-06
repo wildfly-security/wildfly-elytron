@@ -636,7 +636,7 @@ public class XmlConfigurationTest {
     public void testCredentialStoreIntegrationWithKeyStoreSSLConfiguration() throws Exception {
         final String alias = "ladybird";
         final byte[] xmlBytes = ("<configuration>\n" +
-                "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+                "<authentication-client xmlns=\"urn:elytron:1.0.1\">\n" +
                     "<credential-stores>\n" +
                     "    <credential-store name=\"store1\" type=\"" + KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE + "\">\n" +
                     "        <protection-parameter-credentials>\n" +
