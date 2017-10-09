@@ -20,7 +20,12 @@ package org.wildfly.security.auth.client;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.URI;
+
+import org.wildfly.common.net.CidrAddress;
+import org.wildfly.common.net.Inet;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -328,16 +333,71 @@ public abstract class MatchRule {
     }
 
     /**
-     * Create a new rule which is the same as this rule, but also matches the given host name.
+     * Determine whether this rule matches based on network.
+     *
+     * @return {@code true} if the rule matches based on network, {@code false} otherwise
+     */
+    public boolean isNetworkMatched() {
+        return parent.isNetworkMatched();
+    }
+
+    /**
+     * Get the network that this rule matches, or {@code null} if this rule does not match by network.
+     *
+     * @return the network that this rule matches, or {@code null} if there is none
+     */
+    public CidrAddress getMatchNetwork() {
+        return parent.getMatchNetwork();
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given host name.  If the given string
+     * appears to be an IP address or a CIDR network specification, then it is treated as such.
      *
      * @param hostSpec the host name to match
      * @return the new rule
      */
     public final MatchRule matchHost(String hostSpec) {
         if (hostSpec == null || hostSpec.equals("*")) {
-            return without(MatchHostRule.class);
+            return without(MatchHostRule.class).without(MatchNetworkRule.class);
+        }
+        final CidrAddress cidrAddress = Inet.parseCidrAddress(hostSpec);
+        if (cidrAddress != null) {
+            return new MatchNetworkRule(this, cidrAddress);
+        }
+        final InetAddress inetAddress = Inet.parseInetAddress(hostSpec);
+        if (inetAddress != null) {
+            return new MatchNetworkRule(this, CidrAddress.create(inetAddress, inetAddress instanceof Inet6Address ? 128 : 32));
         }
         return new MatchHostRule(this, hostSpec);
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given Internet address.
+     *
+     * @param inetAddress the address to match
+     * @return the new rule
+     */
+    public final MatchRule matchAddress(InetAddress inetAddress) {
+        if (inetAddress == null) {
+            return without(MatchHostRule.class).without(MatchNetworkRule.class);
+        } else {
+            return new MatchNetworkRule(this, CidrAddress.create(inetAddress, inetAddress instanceof Inet6Address ? 128 : 32));
+        }
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given Internet network address.
+     *
+     * @param cidrAddress the network to match
+     * @return the new rule
+     */
+    public final MatchRule matchNetwork(CidrAddress cidrAddress) {
+        if (cidrAddress == null) {
+            return without(MatchHostRule.class).without(MatchNetworkRule.class);
+        } else {
+            return new MatchNetworkRule(this, cidrAddress);
+        }
     }
 
     // path
