@@ -189,7 +189,7 @@
             <!-- Access source type -->
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="file" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="load-from" type="uri-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="uri" type="uri-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="resource" type="name-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
             <!-- Protection parameter -->
