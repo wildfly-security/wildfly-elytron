@@ -612,12 +612,18 @@ public class DEREncoder implements ASN1Encoder {
             }
         }
         if (length > 127) {
+            // bit 8 of the first octet has value "1" and bits 7-1 give the number of additional length octets
             dest.append((byte) (numLengthOctets | 0x80));
         }
         for (int i = (numLengthOctets - 1) * 8; i >= 0; i -= 8) {
             dest.append((byte) (length >> i));
         }
-        return numLengthOctets;
+        if (length > 127) {
+            // include the first octet
+            return 1 + numLengthOctets;
+        } else {
+            return numLengthOctets;
+        }
     }
 
     private void updateCurrentBuffer() {
