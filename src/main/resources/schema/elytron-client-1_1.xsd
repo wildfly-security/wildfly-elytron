@@ -191,7 +191,7 @@
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="file" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="uri" type="uri-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="resource" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="resource" type="resource-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
             <!-- Protection parameter -->
             <xsd:choice minOccurs="0" maxOccurs="1">
@@ -325,6 +325,11 @@
 
     <xsd:complexType name="name-type">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="resource-type">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="module-name" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="names-list-type">
