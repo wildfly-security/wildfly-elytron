@@ -1389,8 +1389,9 @@ public final class ElytronXmlParser {
                         final KeyStore.ProtectionParameter protectionParameter;
                         final KeyStore.Entry entry = finalKeyStoreCredential == null ? null : finalKeyStoreCredential.get();
                         if (entry instanceof PasswordEntry) {
-                            final Password password = ((PasswordEntry) entry).getPassword();
+                            Password password = ((PasswordEntry) entry).getPassword();
                             final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                            password = passwordFactory.translate(password);
                             final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                             protectionParameter = new KeyStore.PasswordProtection(spec.getEncodedPassword());
                         } else if (entry instanceof KeyStore.SecretKeyEntry) {

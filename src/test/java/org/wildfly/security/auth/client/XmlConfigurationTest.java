@@ -679,9 +679,17 @@ public class XmlConfigurationTest {
                                 "<credential-store-reference store=\"store1\" alias=\"ladybirdkey\"/>\n" +
                             "</key-store-ssl-certificate>\n" +
                         "</ssl-context>\n" +
+                        "<ssl-context name=\"my-second-ssl\">\n" +
+                            "<key-store-ssl-certificate key-store-name=\"ladybird\" alias=\"" + alias + "\">\n" +
+                                "<credential-store-reference clear-text=\"Elytron\"/>\n" +
+                            "</key-store-ssl-certificate>\n" +
+                        "</ssl-context>\n" +
                     "</ssl-contexts>\n" +
                     "<ssl-context-rules>\n" +
                         "<rule use-ssl-context=\"my-ssl\">\n" +
+                            "<match-host name=\"localhost\"/>\n" +
+                        "</rule>\n" +
+                        "<rule use-ssl-context=\"my-second-ssl\">\n" +
                             "<match-host name=\"localhost\"/>\n" +
                         "</rule>\n" +
                     "</ssl-context-rules>\n" +
