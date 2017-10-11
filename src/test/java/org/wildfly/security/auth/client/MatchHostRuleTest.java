@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.wildfly.common.net.Inet;
 
 /**
  * @author Tomas Hofman (thofman@redhat.com)
@@ -36,6 +37,11 @@ public class MatchHostRuleTest {
         // prefixes or suffixes shouldn't match
         Assert.assertFalse(MatchRule.ALL.matchHost("security.wildfly").matches(new URI("remote+http://security.wildfly.org:9990")));
         Assert.assertFalse(MatchRule.ALL.matchHost("wildfly.org").matches(new URI("remote+http://security.wildfly.org:9990")));
+
+        // unless we have a suffix rule
+        Assert.assertTrue(MatchRule.ALL.matchHost("*.wildfly.org").matches(new URI("remote+http://wildfly.org:9990")));
+        Assert.assertTrue(MatchRule.ALL.matchHost("*.wildfly.org").matches(new URI("remote+http://security.wildfly.org:9990")));
+        Assert.assertFalse(MatchRule.ALL.matchHost("*.test.wildfly.org").matches(new URI("remote+http://security.wildfly.org:9990")));
     }
 
     @Test
@@ -48,6 +54,7 @@ public class MatchHostRuleTest {
     public void testIPv4Matching() throws URISyntaxException {
         // equivalent IPv4 addresses should match
         Assert.assertTrue(MatchRule.ALL.matchHost("127.0.0.1").matches(new URI("remote+http://127.0.0.1:9990")));
+        Assert.assertTrue(MatchRule.ALL.matchAddress(Inet.parseInetAddress("127.0.0.1")).matches(new URI("remote+http://127.0.0.1:9990")));
 
         // shortened IPv4 addresses are not supported
         Assert.assertFalse(MatchRule.ALL.matchHost("127.1").matches(new URI("remote+http://127.0.0.1:9990")));
@@ -56,6 +63,10 @@ public class MatchHostRuleTest {
         // prefixes shouldn't match
         Assert.assertFalse(MatchRule.ALL.matchHost("1.2.3.4").matches(new URI("remote+http://1.2.3.40:9990")));
         Assert.assertFalse(MatchRule.ALL.matchHost("1.2.30").matches(new URI("remote+http://1.2.30.1:9990")));
+
+        // unless we have a prefix rule
+        Assert.assertTrue(MatchRule.ALL.matchHost("1.2.3.4/24").matches(new URI("remote+http://1.2.3.40:9990")));
+        Assert.assertTrue(MatchRule.ALL.matchHost("1.2.30.0/24").matches(new URI("remote+http://1.2.30.1:9990")));
     }
 
     @Test
@@ -81,6 +92,8 @@ public class MatchHostRuleTest {
         Assert.assertTrue(MatchRule.ALL.matchHost("0:0:0:0:ffff:0:192.0.2.128").matches(new URI("remote+http://[::ffff:0:192.0.2.128]:9990")));
         Assert.assertTrue(MatchRule.ALL.matchHost("::ffff:0:192.0.2.128").matches(new URI("remote+http://[0:0:0:0:ffff:0:192.0.2.128]:9990")));
         Assert.assertTrue(MatchRule.ALL.matchHost("::ffff:0:192.0.2.128").matches(new URI("remote+http://[::ffff:0:192.0.2.128]:9990")));
+
+        Assert.assertTrue(MatchRule.ALL.matchHost("::ffff:0:0:0/96").matches(new URI("remote+http://[::ffff:0:192.0.2.128]:9990")));
 
         // different case
         Assert.assertTrue(MatchRule.ALL.matchHost("::ffff:0:1").matches(new URI("remote+http://[0:0:0:0:0:FFFF:0:1]:9990")));
