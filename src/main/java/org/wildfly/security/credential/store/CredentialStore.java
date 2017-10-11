@@ -39,7 +39,7 @@ import org.wildfly.security.credential.source.CredentialSource;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class CredentialStore {
+public final class CredentialStore {
 
     /**
      * JCA service type for a credential store.
@@ -140,7 +140,7 @@ public class CredentialStore {
      * @param spi {@link CredentialStoreSpi} instance
      * @param type JCA type of CredentialStore
      */
-    protected CredentialStore(Provider provider, CredentialStoreSpi spi, String type) {
+    CredentialStore(Provider provider, CredentialStoreSpi spi, String type) {
         this.provider = provider;
         this.spi = spi;
         this.type = type;
