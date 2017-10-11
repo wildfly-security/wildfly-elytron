@@ -223,7 +223,9 @@
                             <configuration>
                                 <destDir>full-javadoc</destDir>
                                 <show>private</show>
-                                <excludePackageNames>-</excludePackageNames>
+                                <sourceFileIncludes>
+                                    <include>**\/\*.java</include>
+                                </sourceFileIncludes>
                             </configuration>
                         </execution>
                     </executions>
