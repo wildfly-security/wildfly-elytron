@@ -100,7 +100,8 @@ public final class AuthenticationContextConfigurationClient {
 
     /**
      * Get the authentication configuration which matches the given URI and type, or {@link AuthenticationConfiguration#EMPTY} if there is none, setting
-     * a default protocol port.
+     * a default protocol port.  The user name, host, port, and protocol from the URI are copied into the configuration when the configuration does not already
+     * establish values for those fields.
      *
      * @param uri the URI to match (must not be {@code null})
      * @param authenticationContext the authentication context to examine (must not be {@code null})
@@ -114,6 +115,40 @@ public final class AuthenticationContextConfigurationClient {
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
         final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority);
         AuthenticationConfiguration configuration = node != null ? node.getConfiguration() : AuthenticationConfiguration.empty();
+        configuration = initializeConfiguration(uri, configuration);
+        configuration = establishOverrides(uri, protocolDefaultPort, configuration);
+
+        log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
+                uri, protocolDefaultPort, abstractType, abstractTypeAuthority, node != null ? node.rule : null, configuration);
+
+        return configuration;
+    }
+
+    /**
+     * Get the authentication configuration which matches the given URI and type, or {@link AuthenticationConfiguration#EMPTY} if there is none.
+     * The user name from the URI is copied into the configuration if the configuration does not already establish a value for that field.
+     * No host, port, or protocol information is copied to the resultant configuration from the URI.
+     *
+     * @param uri the URI to match (must not be {@code null})
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @param abstractType the abstract type (may be {@code null})
+     * @param abstractTypeAuthority the abstract type authority (may be {@code null})
+     * @return the matching configuration
+     */
+    public AuthenticationConfiguration getAuthenticationConfigurationNoOverrides(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority) {
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
+        final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority);
+        AuthenticationConfiguration configuration = node != null ? node.getConfiguration() : AuthenticationConfiguration.empty();
+        configuration = initializeConfiguration(uri, configuration);
+
+        log.tracef("getAuthenticationConfiguration uri=%s, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
+                uri, abstractType, abstractTypeAuthority, node != null ? node.rule : null, configuration);
+
+        return configuration;
+    }
+
+    private static AuthenticationConfiguration establishOverrides(final URI uri, final int protocolDefaultPort, AuthenticationConfiguration configuration) {
         final String uriHost = uri.getHost();
         if (uriHost != null && configuration.setHost == null) {
             configuration = configuration.useHost(uriHost);
@@ -124,12 +159,20 @@ public final class AuthenticationContextConfigurationClient {
             // use the URI port in this configuration
             configuration = configuration.usePort(port);
         }
+        final String scheme = uri.getScheme();
+        if (scheme != null && configuration.setProtocol == null) {
+            configuration = configuration.useProtocol(scheme);
+        }
+        return configuration;
+    }
+
+    private static AuthenticationConfiguration initializeConfiguration(final URI uri, AuthenticationConfiguration configuration) {
+        final SecurityDomain authenticationNameForwardSecurityDomain = configuration.authenticationNameForwardSecurityDomain;
         final String userInfo = uri.getUserInfo();
-        if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
+        if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance() && authenticationNameForwardSecurityDomain == null) {
             configuration = configuration.useName(userInfo);
         }
         // capture forwards
-        final SecurityDomain authenticationNameForwardSecurityDomain = configuration.authenticationNameForwardSecurityDomain;
         if (authenticationNameForwardSecurityDomain != null) {
             configuration = configuration.useForwardedAuthenticationIdentity(null).usePrincipal(authenticationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal());
         }
@@ -149,10 +192,6 @@ public final class AuthenticationContextConfigurationClient {
         if (capturedContext == null) {
             configuration = configuration.withCapturedAccessControlContext();
         }
-
-        log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
-                uri, protocolDefaultPort, abstractType, abstractTypeAuthority, node != null ? node.rule : null, configuration);
-
         return configuration;
     }
 
