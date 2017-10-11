@@ -1196,7 +1196,7 @@ public final class ElytronXmlParser {
         boolean gotCredential = false;
 
         String fileSource = null;
-        String resourceSource = null;
+        ExceptionSupplier<InputStream, IOException> resourceSource = null;
         URI uriSource = null;
 
         while (reader.hasNext()) {
@@ -1268,7 +1268,7 @@ public final class ElytronXmlParser {
                             throw reader.unexpectedElement();
                         }
                         gotSource = true;
-                        resourceSource = parseNameType(reader);
+                        resourceSource = parseResourceType(reader, xmlVersion);
                         break;
                     }
                     case "uri": {
@@ -1389,8 +1389,9 @@ public final class ElytronXmlParser {
                         final KeyStore.ProtectionParameter protectionParameter;
                         final KeyStore.Entry entry = finalKeyStoreCredential == null ? null : finalKeyStoreCredential.get();
                         if (entry instanceof PasswordEntry) {
-                            final Password password = ((PasswordEntry) entry).getPassword();
+                            Password password = ((PasswordEntry) entry).getPassword();
                             final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                            password = passwordFactory.translate(password);
                             final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                             protectionParameter = new KeyStore.PasswordProtection(spec.getEncodedPassword());
                         } else if (entry instanceof KeyStore.SecretKeyEntry) {
@@ -1794,6 +1795,51 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return name;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code resource-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param xmlVersion the version of the XML being parsed
+     * @return An {@code ExceptionSupplier<InputStream, IOException>} for the referenced resource
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static ExceptionSupplier<InputStream, IOException> parseResourceType(ConfigurationXMLStreamReader reader, Version xmlVersion) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String name = null;
+        String module = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            if (reader.getAttributeLocalName(i).equals("name")) {
+                name = reader.getAttributeValueResolved(i);
+            } else if (reader.getAttributeLocalName(i).equals("module-name") && xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                module = reader.getAttributeValueResolved(i);
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (name == null) {
+            throw missingAttribute(reader, "name");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                final String resourceName = name;
+                final ClassLoader classLoader = module != null ? ModuleLoader.getClassLoaderFromModule(reader, module) : Thread.currentThread().getContextClassLoader();
+                return () -> {
+                    ClassLoader actualClassLoader = classLoader != null ? classLoader : ElytronXmlParser.class.getClassLoader();
+                    final InputStream stream = actualClassLoader.getResourceAsStream(resourceName);
+                    if (stream == null) throw new FileNotFoundException(resourceName);
+                    return stream;
+                };
             } else {
                 throw reader.unexpectedContent();
             }
@@ -2504,21 +2550,15 @@ public final class ElytronXmlParser {
 
     static final class ResourceLoadingKeyStoreFactory extends AbstractLoadingKeyStoreFactory {
 
-        private final String resourceName;
+        private final ExceptionSupplier<InputStream, IOException> resourceSupplier;
 
-        ResourceLoadingKeyStoreFactory(final ExceptionSupplier<KeyStore, ConfigXMLParseException> delegateFactory, final ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory, final String resourceName, final XMLLocation location) {
+        ResourceLoadingKeyStoreFactory(final ExceptionSupplier<KeyStore, ConfigXMLParseException> delegateFactory, final ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory, final ExceptionSupplier<InputStream, IOException> resourceSupplier, final XMLLocation location) {
             super(delegateFactory, passwordFactory, location);
-            this.resourceName = resourceName;
+            this.resourceSupplier = resourceSupplier;
         }
 
         InputStream createStream() throws IOException {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader == null) {
-                classLoader = ElytronXmlParser.class.getClassLoader();
-            }
-            final InputStream stream = classLoader.getResourceAsStream(resourceName);
-            if (stream == null) throw new FileNotFoundException(resourceName);
-            return stream;
+            return resourceSupplier.get();
         }
     }
 

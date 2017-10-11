@@ -102,7 +102,7 @@
     <xsd:complexType name="authentication-configuration-type">
         <xsd:all>
             <xsd:element name="set-host" type="name-type" minOccurs="0"/>
-            <xsd:element name="set-port" type="port-number-simple-type" minOccurs="0"/>
+            <xsd:element name="set-port" type="port-number-type" minOccurs="0"/>
             <xsd:element name="set-protocol" type="name-type" minOccurs="0"/>
             <xsd:element ref="abstract-user-spec"/>
             <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
@@ -266,9 +266,9 @@
         </xsd:annotation>
 
         <xsd:all minOccurs="0" maxOccurs="1">
-            <xsd:element name="attributes" type="attributes-type"/>
-            <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
-            <xsd:element name="providers" type="providers-type" />
+            <xsd:element name="attributes" type="attributes-type" minOccurs="0" />
+            <xsd:element name="protection-parameter-credentials" type="client-credentials-type" minOccurs="0" />
+            <xsd:element name="providers" type="providers-type" minOccurs="0" />
         </xsd:all>
 
         <xsd:attribute name="name" type="xsd:string" use="required" />
