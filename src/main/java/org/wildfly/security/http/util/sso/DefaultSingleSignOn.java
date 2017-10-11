@@ -28,7 +28,7 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
 
 /**
- * {@link SignleSignOn} implementation backed by a {@link DefaultSingleSignOnEntry}.
+ * {@link SingleSignOn} implementation backed by a {@link DefaultSingleSignOnEntry}.
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  * @author Paul Ferraro
  */

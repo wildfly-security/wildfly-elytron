@@ -51,7 +51,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
     /**
      * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
      *
-     * @param providerSupplier a {@link Supplier<Provider>} to supply the providers to use for locating the factories.
+     * @param providerSupplier a supplier of providers to use for locating the factories
      */
     public SecurityProviderServerMechanismFactory(Supplier<Provider[]> providerSupplier) {
         this.providerSupplier = checkNotNullParam("providerSupplier", providerSupplier);

@@ -24,6 +24,9 @@ package org.wildfly.security.auth.server.event;
  */
 public abstract class SecurityEventVisitor<P, R> {
 
+    /**
+     * Construct a security event visitor.
+     */
     protected SecurityEventVisitor() {
     }
 

@@ -44,6 +44,11 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
 
     private HttpServerAuthenticationMechanismFactory delegate;
 
+    /**
+     * Construct a wrapping mechanism factory instance.
+     *
+     * @param delegate the wrapped mechanism factory
+     */
     public SetMechanismInformationMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate) {
         this.delegate = delegate;
     }

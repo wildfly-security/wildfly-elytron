@@ -30,6 +30,13 @@ public class IteratedSaltedHashPasswordSpec implements PasswordSpec {
     private final byte[] salt;
     private final int iterationCount;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param hash the password hash bytes
+     * @param salt the salt bytes
+     * @param iterationCount the iteration count
+     */
     public IteratedSaltedHashPasswordSpec(byte[] hash, byte[] salt, int iterationCount) {
         Assert.checkNotNullParam("hash", hash);
         Assert.checkNotNullParam("salt", salt);
@@ -38,14 +45,29 @@ public class IteratedSaltedHashPasswordSpec implements PasswordSpec {
         this.iterationCount = iterationCount;
     }
 
+    /**
+     * Get a password hash bytes.
+     *
+     * @return the password hash
+     */
     public byte[] getHash() {
         return this.hash;
     }
 
+    /**
+     * Get the salt bytes.
+     *
+     * @return the salt bytes
+     */
     public byte[] getSalt() {
         return this.salt;
     }
 
+    /**
+     * Get the iteration count.
+     *
+     * @return the iteration count
+     */
     public int getIterationCount() {
         return this.iterationCount;
     }

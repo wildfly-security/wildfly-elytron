@@ -20,13 +20,13 @@
  * Audit logging related resources.
  *
  * Audit logging registers with the {@link org.wildfly.security.auth.server.SecurityDomain} by registering a
- * {@link java.util.function.Consumer<SecurityEvent>} to receive the emitted events.
+ * {@link java.util.function.Consumer} to receive the emitted {@link org.wildfly.security.auth.server.event.SecurityEvent}s.
  *
  * The audit logging framework is comprised of three core components.
  * <ol>
- * <li>Priority Mapper</li>
- * <li>Event Formatter</li>
- * <li>Audit Endpoint</li>
+ * <li>Priority Mapper ({@code Function<SecurityEvent, EventPriority>})</li>
+ * <li>Event Formatter ({@code Function<SecurityEvent, String>})</li>
+ * <li>Audit Endpoint ({@code ExceptionBiConsumer<EventPriority, String, IOException>})</li>
  * </ol>
  *
  * The priority mapper takes an incoming security event and maps it to one of nine priority levels including a level 'OFF' to

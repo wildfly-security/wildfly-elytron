@@ -23,7 +23,7 @@ import java.io.IOException;
 import org.wildfly.common.function.ExceptionBiConsumer;
 
 /**
- * An endpoint that recieves audit messages.
+ * An endpoint that receives audit messages.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

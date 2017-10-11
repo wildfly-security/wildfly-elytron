@@ -106,10 +106,18 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link GSSCredentialSecurityFactory}.
+     *
+     * @return a new {@link Builder} capable of building a {@link GSSCredentialSecurityFactory}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for GSS credential security factories.
+     */
     public static class Builder {
 
         private boolean built = false;
@@ -272,6 +280,12 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             return this;
         }
 
+        /**
+         * Construct a new {@link GSSKerberosCredential} security factory instance.
+         *
+         * @return the built factory instance
+         * @throws IOException when unable to use given KeyTab
+         */
         public SecurityFactory<GSSKerberosCredential> build() throws IOException {
             assertNotBuilt();
             if (checkKeyTab) {

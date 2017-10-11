@@ -29,17 +29,34 @@ public class IteratedHashPasswordSpec implements PasswordSpec {
     private final byte[] hash;
     private final int iterationCount;
 
+    /**
+     * Construct new instance.
+     *
+     * @param hash the password hash
+     * @param iterationCount the iteration count or cost
+     */
     public IteratedHashPasswordSpec(byte[] hash, int iterationCount) {
         Assert.checkNotNullParam("hash", hash);
         this.hash = hash;
         this.iterationCount = iterationCount;
     }
 
+    /**
+     * Get a password hash.
+     *
+     * @return the password hash
+     */
     public byte[] getHash() {
         return this.hash;
     }
 
+    /**
+     * Get an iteration count or cost.
+     *
+     * @return the iteration count or cost
+     */
     public int getIterationCount() {
         return this.iterationCount;
     }
+
 }

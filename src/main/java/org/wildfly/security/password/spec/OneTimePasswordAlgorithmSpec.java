@@ -25,7 +25,7 @@ import java.util.Objects;
 import org.wildfly.common.Assert;
 
 /**
- * Algorithm parameter specification for one-time password types.
+ * Algorithm parameter specification for one-time password types as defined in RFC 2289.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
@@ -37,6 +37,13 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
     private final String seed;
     private final int sequenceNumber;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param algorithm the OTP hash algorithm in "otp-<algorithm identifier>" form (see RFC 2289)
+     * @param seed the seed
+     * @param sequenceNumber the sequence number
+     */
     public OneTimePasswordAlgorithmSpec(final String algorithm, final String seed, final int sequenceNumber) {
         Assert.checkNotNullParam("algorithm", algorithm);
         Assert.checkNotNullParam("seed", seed);
@@ -45,14 +52,29 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
         this.sequenceNumber = sequenceNumber;
     }
 
+    /**
+     * Gets the OTP hash algorithm in "otp-<algorithm identifier>" form.
+     *
+     * @return the algorithm
+     */
     public String getAlgorithm() {
         return algorithm;
     }
 
+    /**
+     * Gets the seed.
+     *
+     * @return the seed
+     */
     public String getSeed() {
         return seed;
     }
 
+    /**
+     * Gets the sequence number.
+     *
+     * @return the sequence number
+     */
     public int getSequenceNumber() {
         return sequenceNumber;
     }

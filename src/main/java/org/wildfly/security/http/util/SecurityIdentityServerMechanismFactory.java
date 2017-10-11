@@ -37,7 +37,9 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.HttpServerRequest;
 
 /**
- *
+ * A {@link HttpServerAuthenticationMechanismFactory} that wraps authentication mechanism from delegating factory, so
+ * any request for {@code SECURITY_IDENTITY} negotiated property is caught and {@link SecurityIdentity} from
+ * the callback handler is returned instead.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -45,6 +47,11 @@ public class SecurityIdentityServerMechanismFactory implements HttpServerAuthent
 
     private final HttpServerAuthenticationMechanismFactory delegate;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param delegate the {@link HttpServerAuthenticationMechanismFactory} calls are delegated to.
+     */
     public SecurityIdentityServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate) {
         this.delegate = checkNotNullParam("delegate", delegate);
     }

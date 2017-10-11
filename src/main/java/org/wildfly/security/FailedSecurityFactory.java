@@ -21,15 +21,24 @@ package org.wildfly.security;
 import java.security.GeneralSecurityException;
 
 /**
+ * A {@link SecurityFactory} implementation which only throws specified exception on create.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class FailedSecurityFactory<T> implements SecurityFactory<T> {
+
     private final GeneralSecurityException exception;
 
+    /**
+     * Creates a new factory instance.
+     *
+     * @param exception the exception to be thrown on create
+     */
     public FailedSecurityFactory(final GeneralSecurityException exception) {
         this.exception = exception;
     }
 
+    @Override
     public T create() throws GeneralSecurityException {
         throw exception;
     }

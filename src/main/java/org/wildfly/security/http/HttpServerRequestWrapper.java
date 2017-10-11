@@ -32,12 +32,22 @@ import javax.net.ssl.SSLSession;
 import org.wildfly.common.Assert;
 
 /**
+ * A wrapper delegating any request to the delegated implementation.
+ * <p>
+ * Determined to be used as base class for {@link HttpServerRequest} without need to implement
+ * methods delegating requests to the delegated implementation.
+ *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class HttpServerRequestWrapper implements HttpServerRequest {
 
     private final HttpServerRequest delegate;
 
+    /**
+     * Construct new instance.
+     *
+     * @param delegate a request to which will be delegated any requests
+     */
     public HttpServerRequestWrapper(HttpServerRequest delegate) {
         Assert.checkNotNullParam("delegate", delegate);
         this.delegate = delegate;

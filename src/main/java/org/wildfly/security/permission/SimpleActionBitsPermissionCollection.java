@@ -51,6 +51,7 @@ public final class SimpleActionBitsPermissionCollection extends AbstractPermissi
         return permissionsRef.get().length;
     }
 
+    @Override
     protected void doAdd(final AbstractPermission<?> permission) {
         if (permission instanceof AbstractActionSetPermission<?>) {
             doAdd((AbstractActionSetPermission<?>) permission);
@@ -58,6 +59,11 @@ public final class SimpleActionBitsPermissionCollection extends AbstractPermissi
         throw ElytronMessages.log.invalidPermissionType(AbstractActionSetPermission.class, permission);
     }
 
+    /**
+     * Adds a permission.
+     *
+     * @param permission the non-{@code null} permission
+     */
     protected void doAdd(final AbstractActionSetPermission<?> permission) {
         AbstractActionSetPermission<?>[] oldVal, readVal, newVal;
         int count;

@@ -155,6 +155,9 @@ public final class MechanismConfiguration {
         return new Builder();
     }
 
+    /**
+     * A builder for authentication mechanism configuration.
+     */
     public static final class Builder {
         private static final MechanismRealmConfiguration[] NO_REALM_CONFIGS = new MechanismRealmConfiguration[0];
 
@@ -171,29 +174,59 @@ public final class MechanismConfiguration {
         Builder() {
         }
 
+        /**
+         * Set a principal transformer to apply before the realm is selected.
+         *
+         * @param preRealmRewriter a principal transformer to apply before the realm is selected
+         * @return this builder
+         */
         public Builder setPreRealmRewriter(final Function<Principal, Principal> preRealmRewriter) {
             checkNotNullParam("preRealmRewriter", preRealmRewriter);
             this.preRealmRewriter = preRealmRewriter;
             return this;
         }
 
+        /**
+         * Set a principal transformer to apply after the realm is selected.  Any previously set credential source will be overwritten.
+         *
+         * @param postRealmRewriter a principal transformer to apply after the realm is selected
+         * @return this builder
+         */
         public Builder setPostRealmRewriter(final Function<Principal, Principal> postRealmRewriter) {
             checkNotNullParam("postRealmRewriter", postRealmRewriter);
             this.postRealmRewriter = postRealmRewriter;
             return this;
         }
 
+        /**
+         * Set a final principal transformer to apply for this mechanism realm.  Any previously set credential source will be overwritten.
+         *
+         * @param finalRewriter a final principal transformer to apply for this mechanism realm
+         * @return this builder
+         */
         public Builder setFinalRewriter(final Function<Principal, Principal> finalRewriter) {
             checkNotNullParam("finalRewriter", finalRewriter);
             this.finalRewriter = finalRewriter;
             return this;
         }
 
+        /**
+         * Sets a realm mapper to be used by the mechanism.  Any previously set credential source will be overwritten.
+         *
+         * @param realmMapper a realm mapper to be used by the mechanism
+         * @return this builder
+         */
         public Builder setRealmMapper(final RealmMapper realmMapper) {
             this.realmMapper = realmMapper;
             return this;
         }
 
+        /**
+         * Adds a configuration for one of realms of this mechanism.
+         *
+         * @param configuration a configuration for one of realms of this mechanism
+         * @return this builder
+         */
         public Builder addMechanismRealm(MechanismRealmConfiguration configuration) {
             checkNotNullParam("configuration", configuration);
             List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
@@ -242,6 +275,8 @@ public final class MechanismConfiguration {
          * Build a new instance.  If no mechanism realms are offered, an empty collection should be provided for
          * {@code mechanismRealms}; otherwise, if the mechanism only supports one realm, the first will be used.  If the
          * mechanism does not support realms, {@code mechanismRealms} is ignored.
+         *
+         * @return a new instance
          */
         public MechanismConfiguration build() {
             List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;

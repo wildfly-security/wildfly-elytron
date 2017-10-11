@@ -111,6 +111,9 @@ public final class MechanismRealmConfiguration {
         return new Builder();
     }
 
+    /**
+     * A builder for mechanism realm configuration.
+     */
     public static final class Builder {
         private String realmName;
         private Function<Principal, Principal> preRealmRewriter = Function.identity();
@@ -124,12 +127,23 @@ public final class MechanismRealmConfiguration {
         Builder() {
         }
 
+        /**
+         * Sets a name of the realm to be presented by the mechanism.
+         * @param realmName a name of the realm to be presented by the mechanism
+         * @return this builder
+         */
         public Builder setRealmName(final String realmName) {
             this.realmName = realmName;
 
             return this;
         }
 
+        /**
+         * Set a principal transformer to apply before the realm is selected.
+         *
+         * @param preRealmRewriter a principal transformer to apply before the realm is selected
+         * @return this builder
+         */
         public Builder setPreRealmRewriter(final Function<Principal, Principal> preRealmRewriter) {
             Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
             this.preRealmRewriter = preRealmRewriter;
@@ -137,6 +151,12 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
+        /**
+         * Set a principal transformer to apply after the realm is selected.  Any previously set credential source will be overwritten.
+         *
+         * @param postRealmRewriter a principal transformer to apply after the realm is selected
+         * @return this builder
+         */
         public Builder setPostRealmRewriter(final Function<Principal, Principal> postRealmRewriter) {
             Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
             this.postRealmRewriter = postRealmRewriter;
@@ -144,6 +164,12 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
+        /**
+         * Set a final principal transformer to apply for this mechanism realm.  Any previously set credential source will be overwritten.
+         *
+         * @param finalRewriter a final principal transformer to apply for this mechanism realm
+         * @return this builder
+         */
         public Builder setFinalRewriter(final Function<Principal, Principal> finalRewriter) {
             Assert.checkNotNullParam("finalRewriter", finalRewriter);
             this.finalRewriter = finalRewriter;
@@ -151,11 +177,22 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
+        /**
+         * Sets a realm mapper to be used by the mechanism.  Any previously set credential source will be overwritten.
+         *
+         * @param realmMapper a realm mapper to be used by the mechanism
+         * @return this builder
+         */
         public Builder setRealmMapper(final RealmMapper realmMapper) {
             this.realmMapper = realmMapper;
             return this;
         }
 
+        /**
+         * Build a new instance.
+         *
+         * @return a new instance
+         */
         public MechanismRealmConfiguration build() {
             Assert.checkNotNullParam("realmName", realmName);
             return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper);

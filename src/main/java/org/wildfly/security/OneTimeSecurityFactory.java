@@ -23,12 +23,20 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.security.GeneralSecurityException;
 
 /**
+ * A {@link SecurityFactory} implementation which calls delegated factory at first and
+ * returns created object for any other create call. Thread safe.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class OneTimeSecurityFactory<T> implements SecurityFactory<T> {
     private volatile SecurityFactory<T> factory;
     private volatile T obj;
 
+    /**
+     * Creates a new factory instance.
+     *
+     * @param factory a security factory to use to obtain object which should be returned by this factory every time
+     */
     public OneTimeSecurityFactory(final SecurityFactory<T> factory) {
         this.factory = factory;
     }

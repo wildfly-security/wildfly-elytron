@@ -37,7 +37,7 @@ public interface MechanismConfigurationSelector {
     MechanismConfiguration selectConfiguration(MechanismInformation mechanismInformation);
 
     /**
-     * Create a simple {@link MechanismConfigurationSelector} that is paired with a {@link Predicate<MechanismInformation>} to
+     * Create a simple {@link MechanismConfigurationSelector} that is paired with a {@link Predicate} to
      * test if the configuration should be used for the supplied information.
      *
      * @param predicate the predicate to test the {@code MechanismInformation}
@@ -71,8 +71,8 @@ public interface MechanismConfigurationSelector {
      * Create a constant {@link MechanismConfigurationSelector} which will always return the same {@link MechanismConfiguration}
      * instance.
      *
-     * @param mechanismConfiguration
-     * @return
+     * @param mechanismConfiguration a configuration which will be always returned by created selector
+     * @return the new configuration selector
      */
     static MechanismConfigurationSelector constantSelector(final MechanismConfiguration mechanismConfiguration) {
         return information -> mechanismConfiguration;

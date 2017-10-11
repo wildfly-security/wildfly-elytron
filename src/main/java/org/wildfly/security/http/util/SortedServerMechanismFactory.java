@@ -31,7 +31,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
 /**
  * A {@link HttpServerAuthenticationMechanismFactory} which sorts the mechanism names returned using the provided
- * {@link Comparator<String>}.
+ * {@link Comparator}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

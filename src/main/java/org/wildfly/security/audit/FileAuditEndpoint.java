@@ -54,6 +54,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
     private File file;
     private FileDescriptor fileDescriptor;
     private OutputStream outputStream;
+    /**  Clock providing access to current time. */
     protected final Clock clock;
 
     FileAuditEndpoint(Builder builder) throws IOException {
@@ -98,40 +99,49 @@ public class FileAuditEndpoint implements AuditEndpoint {
     }
 
     /**
-     * Writes <code>bytes.length</code> bytes from the specified byte array
-     * to the underlying output stream managed by this class.
-     * The general contract for <code>write(bytes)</code> is that it must be
-     * invoked from a synchronization block surrounding one log message processing.
+     * Method called to write given byte array to the target local file.
+     * This method can be overridden by subclasses to modify data written into file (to encrypt them for example),
+     * or just for counting amount of written bytes for needs of log rotation and similar.
      *
-     * @param bytes the data.
-     * @throws IOException if an I/O error occurs.
+     * This method can be invoked only in synchronization block surrounding one log message processing.
+     *
+     * @param bytes the data to be written into the target local file
      */
     void write(byte[] bytes) throws IOException {
         outputStream.write(bytes);
     }
 
     /**
-     * The general contract for <code>preWrite(instant)</code> is that any method override
-     * must ensure thread safety invoking this method from a synchronization block
-     * surrounding one log message processing.
+     * Method called before writing into local file.
+     * This method is NO-OP by default. It is intended to be overridden by subclasses
+     * which need to perform some operation before every writing into the target local file.
      *
-     * @param instant
+     * This method can be invoked only in synchronization block surrounding one log message processing.
+     *
+     * @param instant time of the message acceptance
      */
     void preWrite(Instant instant) {
         // NO-OP by default
     }
 
+    /**
+     * Accept formatted security event message to be processed written into target local file.
+     *
+     * @param priority priority of the logged message
+     * @param message the logged message
+     * @throws IOException when writing into the target local file fails
+     */
     @Override
-    public void accept(EventPriority t, String u) throws IOException {
+    public void accept(EventPriority priority, String message) throws IOException {
         if (!accepting) return;
         Instant instant = clock.instant();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(dateTimeFormatterSupplier.get().format(instant).getBytes(StandardCharsets.UTF_8));
         baos.write(',');
-        baos.write(t.toString().getBytes(StandardCharsets.UTF_8));
+        baos.write(priority.toString().getBytes(StandardCharsets.UTF_8));
         baos.write(',');
-        baos.write(u.getBytes(StandardCharsets.UTF_8));
+        baos.write(message.getBytes(StandardCharsets.UTF_8));
         baos.write(LINE_TERMINATOR);
         byte[] toWrite = baos.toByteArray();
 
@@ -158,8 +168,8 @@ public class FileAuditEndpoint implements AuditEndpoint {
     }
 
     /**
-     * Close opened file streams.
-     * Must be called synchronized block together with reopening using {@code setFile()}.
+     * Close opened file streams. Can be called by subclasses for needs of target file changing.
+     * Must be called in synchronized block together with reopening using {@code setFile()}.
      */
     void closeStreams() throws IOException {
         outputStream.flush();
@@ -167,10 +177,18 @@ public class FileAuditEndpoint implements AuditEndpoint {
         outputStream.close();
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link FileAuditEndpoint}.
+     *
+     * @return a new {@link Builder} capable of building a {@link FileAuditEndpoint}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for file audit endpoints.
+     */
     public static class Builder {
 
         private Clock clock = Clock.systemUTC();
@@ -182,10 +200,10 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
 
         /**
-         * Set the {@link Supplier<DateTimeFormatter>} to obtain the formatter for dates.
-         * The supplied DateTimeFormatter has to have a time zone configured.
+         * Set the supplier to obtain the {@link DateTimeFormatter} for dates.
+         * The supplied formatter has to have a time zone configured.
          *
-         * @param dateTimeFormatterSupplier the {@link Supplier<DateTimeFormatter>} to obtain the formatter for dates.
+         * @param dateTimeFormatterSupplier the supplier to obtain the {@link DateTimeFormatter}
          * @return this builder.
          */
         public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
@@ -231,6 +249,11 @@ public class FileAuditEndpoint implements AuditEndpoint {
             return this;
         }
 
+        /**
+         * Construct a new file audit endpoint.
+         *
+         * @return the built file audit endpoint.
+         */
         public AuditEndpoint build() throws IOException {
             return new FileAuditEndpoint(this);
         }

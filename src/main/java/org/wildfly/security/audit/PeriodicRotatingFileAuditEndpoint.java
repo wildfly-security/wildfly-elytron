@@ -37,7 +37,8 @@ import static org.wildfly.security._private.ElytronMessages.audit;
 
 /**
  * An audit endpoint which rotates the log at a preset time interval.
- *
+ * Depending on set suffix, moves old log records into files tagged by timestamp.
+ * <p>
  * Based on {@link org.jboss.logmanager.handlers.PeriodicSizeRotatingFileHandler}.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
@@ -62,6 +63,12 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
         calcNextRollover(file != null && file.lastModified() > 0 ? file.lastModified() : clock.millis());
     }
 
+    /**
+     * Checks whether time-based log rotation should be done and if so, it moves current log file
+     * into time-tagged file and exchange target file to continue logging into new, non-time-tagged file.
+     *
+     * @param instant time of the message acceptance
+     */
     @Override
     protected void preWrite(Instant instant) {
         final long recordMillis = instant.toEpochMilli();
@@ -135,7 +142,7 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
     /**
      * Possible period values. Keep in strictly ascending order of magnitude.
      */
-    protected enum Period {
+    enum Period {
         MINUTE,
         HOUR,
         HALF_DAY,
@@ -146,10 +153,18 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
         NEVER,
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link PeriodicRotatingFileAuditEndpoint}.
+     *
+     * @return a new {@link Builder} capable of building a {@link PeriodicRotatingFileAuditEndpoint}.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for periodic rotating file audit endpoints.
+     */
     public static class Builder extends FileAuditEndpoint.Builder {
         DateTimeFormatter format;
         Period period = Period.NEVER;
@@ -163,7 +178,7 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
          * Set the configured time zone for this handler.
          *
          * @param timeZone the configured time zone
-         * @return this builder.
+         * @return this builder
          */
         public Builder setTimeZone(ZoneId timeZone) {
             this.timeZone = checkNotNullParam("timeZone", timeZone);
@@ -176,6 +191,7 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
          * The period of the rotation is automatically calculated based on the suffix.
          *
          * @param suffix the suffix
+         * @return this builder
          * @throws IllegalArgumentException if the suffix is not valid
          */
         public Builder setSuffix(String suffix) throws IllegalArgumentException {

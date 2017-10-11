@@ -15,40 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.audit;
 
 /**
- * The priority level of an audit event.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * Elytron Client enable remote clients to authenticate using Elytron.
+ * <p>
+ * When a connection is established, the client makes use of an authentication
+ * context, which gives rules that match which authentication configuration
+ * is used with an outbound connection.
  */
-public enum EventPriority {
-
-    /** Emergency - system is unusable */
-    EMERGENCY,
-
-    /** Action must be taken immediately */
-    ALERT,
-
-    /** Critical condition */
-    CRITICAL,
-
-    /** Error condition */
-    ERROR,
-
-    /** Warning condition */
-    WARNING,
-
-    /** Normal but significant condition */
-    NOTICE,
-
-    /** Informational message */
-    INFORMATIONAL,
-
-    /** Message for debugging/troubleshooting */
-    DEBUG,
-
-    /** No message should be emitted */
-    OFF;
-
-}
+package org.wildfly.security.auth.client;

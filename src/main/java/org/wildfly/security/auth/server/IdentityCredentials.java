@@ -260,6 +260,15 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
         return without(credentialType, algorithmName, null);
     }
 
+    /**
+     * Return a copy of this credential set without any credentials of the given type, algorithm name and
+     * parameter spec.  If the credential type and algorithm name is not found in this set, return this instance.
+     *
+     * @param credentialType the credential type to remove (must not be {@code null})
+     * @param algorithmName the algorithm name to remove, or {@code null} to match any algorithm name
+     * @param parameterSpec the parameter spec to remove, or {@code null} to match any parameter spec
+     * @return the new credential set (not {@code null})
+     */
     public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
         Assert.checkNotNullParam("credentialType", credentialType);
         return without(c -> c.matches(credentialType, algorithmName, parameterSpec));
@@ -296,18 +305,37 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
         return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED);
     }
 
+    /**
+     * Test whether some of the credentials in this set can verify an evidence of given class and algorithm name.
+     *
+     * @param evidenceClass the class of the evidence (must not be {@code null})
+     * @param algorithmName the algorithm name (may be {@code null} if the type of evidence does not support algorithm names)
+     * @return {@code true} if the evidence can be verified
+     */
     public boolean canVerify(Class<? extends Evidence> evidenceClass, String algorithmName) {
         return StreamSupport.stream(spliterator(), false)
                 .filter(credential -> credential.canVerify(evidenceClass, algorithmName))
                 .count() != 0;
     }
 
+    /**
+     * Test whether some of the credentials in this set can verify an evidence.
+     *
+     * @param evidence the evidence (must not be {@code null})
+     * @return {@code true} if the evidence can be verified
+     */
     public boolean canVerify(Evidence evidence) {
         return StreamSupport.stream(spliterator(), false)
                 .filter(credential -> credential.canVerify(evidence))
                 .count() != 0;
     }
 
+    /**
+     * Verify the given evidence.
+     *
+     * @param evidence the evidence to verify (must not be {@code null})
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
     public boolean verify(Evidence evidence) {
         return StreamSupport.stream(spliterator(), false)
                 .filter(credential -> credential.canVerify(evidence))

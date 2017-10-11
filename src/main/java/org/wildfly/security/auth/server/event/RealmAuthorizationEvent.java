@@ -23,9 +23,12 @@ import java.security.Principal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 
 /**
+ * A realm authorization event.  The realm identity may be destroyed at some point after the event is handled.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class RealmAuthorizationEvent extends RealmEvent {
+
     private final AuthorizationIdentity authorizationIdentity;
     private final Principal principal;
 

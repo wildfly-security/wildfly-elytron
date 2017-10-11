@@ -35,6 +35,12 @@ public final class DigestPasswordAlgorithmSpec implements AlgorithmParameterSpec
     private final String username;
     private final String realm;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param username the username
+     * @param realm the realm
+     */
     public DigestPasswordAlgorithmSpec(String username, String realm) {
         this.username = username;
         this.realm = realm;

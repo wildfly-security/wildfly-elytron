@@ -45,7 +45,7 @@ public interface HttpExchangeSpi extends HttpServerScopes {
      * Get a list of all of the values set for the specified header within the HTTP request.
      *
      * @param headerName the not {@code null} name of the header the values are required for.
-     * @return a {@link List<String>} of the values set for this header, if the header is not set on the request then {@code null} should be returned.
+     * @return a list of the values set for this header, if the header is not set on the request then {@code null} should be returned.
      */
     List<String> getRequestHeaderValues(final String headerName);
 
@@ -122,15 +122,17 @@ public interface HttpExchangeSpi extends HttpServerScopes {
 
     /**
      * Notification that authentication has failed using the mechanism specified.
-     * @param message
-     * @param mechanismName
+     *
+     * @param message an error message describing the failure
+     * @param mechanismName a failed mechanism name
      */
     void authenticationFailed(final String message, final String mechanismName);
 
     /**
      * Notification that authentication has failed for a specific mechanism due to being a bad request.
-     * @param error
-     * @param mechanismName
+     *
+     * @param error an exception to describe the error.
+     * @param mechanismName a failed mechanism name
      */
     void badRequest(final HttpAuthenticationException error, final String mechanismName);
 

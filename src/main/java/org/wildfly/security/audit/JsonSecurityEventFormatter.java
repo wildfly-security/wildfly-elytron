@@ -36,7 +36,7 @@ import org.wildfly.security.auth.server.event.SecurityEventVisitor;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
 
 /**
- * A formatter for security events that converts the event to a JSON String.
+ * A formatter for security events that converts events into JSON strings.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -44,9 +44,6 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
 
     private final Supplier<DateTimeFormatter> dateTimeFormatterSupplier;
 
-    /**
-     *
-     */
     JsonSecurityEventFormatter(Builder builder) {
         this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
     }
@@ -124,14 +121,17 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     }
 
     /**
-     * Create a new builder.
+     * Obtain a new {@link Builder} capable of building a {@link JsonSecurityEventFormatter}.
      *
-     * @return a new builder.
+     * @return a new {@link Builder} capable of building a {@link JsonSecurityEventFormatter}
      */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for JSON security event formatter.
+     */
     public static class Builder {
 
         private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = () -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
@@ -140,11 +140,11 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
         }
 
         /**
-         * Set a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
-         * The supplied DateTimeFormatter has to have a time zone configured.
+         * Set a supplier of formatter to format any dates in the resulting output.
+         * The supplied {@link DateTimeFormatter} has to have a time zone configured.
          *
-         * @param dateTimeFormatterSupplier a {@link Supplier<DateTimeFormatter>} to format any dates in the resulting output.
-         * @return {@code this} builder.
+         * @param dateTimeFormatterSupplier a supplier of formatter to format dates in the resulting output
+         * @return this builder
          */
         public Builder setDateTimeFormatterSupplier(Supplier<DateTimeFormatter> dateTimeFormatterSupplier) {
             this.dateTimeFormatterSupplier = checkNotNullParam("dateTimeFormatterSupplier", dateTimeFormatterSupplier);
@@ -152,13 +152,11 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
         }
 
         /**
-         * Build a new {@link SecurityEventVisitor} which will convert {@link SecurityEvent} instances into JSON formatted
-         * Strings.
-         *
+         * Build a new {@link SecurityEventVisitor} which will convert events into JSON formatted strings.
+         * <p>
          * Once built the Builder can continue to be configured to create additional instances.
          *
-         * @return a new {@link SecurityEventVisitor} which will convert {@link SecurityEvent} instances into JSON formatted
-         *         Strings.
+         * @return a new {@link SecurityEventVisitor} which will convert events into JSON formatted strings
          */
         public SecurityEventVisitor<?, String> build() {
             return new JsonSecurityEventFormatter(this);

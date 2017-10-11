@@ -335,7 +335,7 @@ public final class AuthenticationContextConfigurationClient {
      * @param uri the target URI (must not be {@code null})
      * @param configuration the authentication configuration (must not be {@code null})
      * @param offeredMechanisms the available mechanisms (must not be {@code null})
-     * @param factoryOperator A {@link UnaryOperator<SaslClientFactory>} to apply to the factory used.
+     * @param factoryOperator a {@link UnaryOperator} to apply to the {@link SaslClientFactory} used
      * @return the SASL client, or {@code null} if no clients were available or could be configured
      */
     public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration,  Collection<String> offeredMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
@@ -348,7 +348,7 @@ public final class AuthenticationContextConfigurationClient {
      * @param uri the target URI (must not be {@code null})
      * @param configuration the authentication configuration (must not be {@code null})
      * @param offeredMechanisms the available mechanisms (must not be {@code null})
-     * @param factoryOperator A {@link UnaryOperator<SaslClientFactory>} to apply to the factory used.
+     * @param factoryOperator a {@link UnaryOperator} to apply to the {@link SaslClientFactory} used
      * @param sslSession the SSL session active for this connection, or {@code null} for none
      * @return the SASL client, or {@code null} if no clients were available or could be configured
      */

@@ -23,8 +23,9 @@ import java.io.InputStream;
 import java.util.function.Consumer;
 
 /**
- * An attachment scope for use by an authentication mechanism, different scopes may be available to share Objects e.g.
- * Application, Session, Connection.
+ * An attachment scope for use by an authentication mechanism.
+ * <p>
+ * Different scopes may be available to share Objects e.g. Application, Session, Connection.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -33,14 +34,14 @@ public interface HttpScope {
     /**
      * Get the ID of this scope or (@code null} if IDs are not supported for this scope or the scope doesn't currently exist.
      *
-     * @return the ID of this scope or (@code null} if IDs are not supported for this scope or the scope doesn't currently exist..
+     * @return the ID of this scope or (@code null} if IDs are not supported for this scope or the scope doesn't currently exist.
      */
     default String getID() {
         return null;
     }
 
     /**
-     * Returns {@code true} if this scope exists.
+     * Tests whether this scope exists.
      *
      * @return {@code true} if this scope exists. Otherwise, {@code false}
      */
@@ -49,7 +50,7 @@ public interface HttpScope {
     }
 
     /**
-     * Create this scope..
+     * Create this scope.
      *
      * @return {@code true} if the scope was created. Otherwise, {@code false} indicating that this scope was already created or that creation is not support.
      */
@@ -58,9 +59,9 @@ public interface HttpScope {
     }
 
     /**
-     * Does this scope support attachments?
+     * Tests whether this scope support attachments.
      *
-     * @return {@code true} if this scope supports attachments, {@code false} otherwise}
+     * @return {@code true} if this scope supports attachments, {@code false} otherwise
      */
     default boolean supportsAttachments() {
         return false;
@@ -127,7 +128,7 @@ public interface HttpScope {
     }
 
     /**
-     * Does this scope support access to scope specific resources?
+     * Tests whether this scope support access to scope specific resources.
      *
      * @return {@code true} if this scope supports access to scope specific resources, {@code false} otherwise.
      */
@@ -139,14 +140,14 @@ public interface HttpScope {
      * Get the resource associated with the path specified.
      *
      * @param path the path to the resource.
-     * @return the {@link InputStream} of the resource or {@code null} if resources not supported or the specified resource is not found.
+     * @return the {@link InputStream} of the resource or {@code null} if resources is not supported or the specified resource is not found.
      */
     default InputStream getResource(final String path) {
         return null;
     }
 
     /**
-     * Does this scope support registration to receive notifications?
+     * Tests whether this scope support registration to receive notifications.
      *
      * @return {@code true} if this scope supports registration for notifications, {@code false} otherwise.
      */
@@ -155,9 +156,9 @@ public interface HttpScope {
     }
 
     /**
-     * Register a {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
+     * Register a notification consumer to receive notifications from this scope.
      *
-     * @param notificationConsumer the {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
+     * @param notificationConsumer the consumer to receive notifications from this scope.
      */
     default void registerForNotification(Consumer<HttpScopeNotification> notificationConsumer) {
     }
