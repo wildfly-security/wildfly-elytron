@@ -226,6 +226,15 @@ public interface ASN1Decoder {
     void decodeImplicit(int clazz, int number);
 
     /**
+     * Decode the next ASN.1 element as a boolean value.
+     *
+     * @return the decoded boolean value
+     * @throws ASN1Exception if the next element is not a boolean value
+     * @since 1.2.0
+     */
+    boolean decodeBoolean() throws ASN1Exception;
+
+    /**
      * Determine if the type of the next ASN.1 element matches the given type without
      * actually decoding the next element. This method can be used to determine if an
      * optional ASN.1 value has been included in the encoding or not.
