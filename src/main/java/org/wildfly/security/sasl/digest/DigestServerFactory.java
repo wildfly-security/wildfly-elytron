@@ -94,8 +94,8 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
             defaultRealm = false;
         }
 
-        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
-        Charset charset = (utf8==null || utf8.booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
+        final String utf8 = (String)props.get(WildFlySasl.USE_UTF8);
+        Charset charset = (utf8 == null || Boolean.valueOf(utf8).booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
 
         String qopsString = (String)props.get(Sasl.QOP);
         String[] qops = qopsString==null ? null : qopsString.split(",");
