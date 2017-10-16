@@ -195,6 +195,13 @@ public class ASN1 {
      */
     public static final String OID_SHA512_WITH_RSA = "1.2.840.113549.1.1.13";
 
+    /**
+     * Object identifier for the PKCS #9 {@code extensionRequest} attribute.
+     *
+     * @since 1.2.0
+     */
+    public static final String OID_EXTENSION_REQUEST = "1.2.840.113549.1.9.14";
+
     // 1.2.840.113549.2
 
     /**

@@ -1873,6 +1873,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10013, value = "Certificate serial number too large (cannot exceed 20 octets)")
     IllegalArgumentException serialNumberTooLarge();
 
+    @Message(id = 10014, value = "Failed to sign certification request info")
+    IllegalArgumentException certRequestInfoSigningFailed(@Cause Exception cause);
+
+    @Message(id = 10015, value = "No certificate given")
+    IllegalArgumentException noCertificateGiven();
+
     /* Audit Exceptions */
 
     // 11000 - Unused in any Final release
