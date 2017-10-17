@@ -39,6 +39,7 @@ import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Provider;
@@ -472,6 +473,12 @@ public final class ElytronXmlParser {
                         parseCertificateRevocationList(reader, trustManagerBuilder);
                         break;
                     }
+                    case "trust-manager": {
+                        if (isSet(foundBits, 7) || !xmlVersion.isAtLeast(Version.VERSION_1_1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 7);
+                        parseTrustManager(reader, trustManagerBuilder);
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag != END_ELEMENT) {
@@ -484,6 +491,7 @@ public final class ElytronXmlParser {
                 final String finalProviderName = providerName;
                 final PrivateKeyKeyStoreEntryCredentialFactory finalCredentialFactory = credentialFactory;
                 final ExceptionSupplier<KeyStore, ConfigXMLParseException> finalTrustStoreSupplier = trustStoreSupplier;
+                final boolean initTrustManager = finalTrustStoreSupplier != null || isSet(foundBits, 7);
                 sslContextsMap.putIfAbsent(name, () -> {
                     final SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
                     sslContextBuilder.setClientMode(true);
@@ -500,8 +508,10 @@ public final class ElytronXmlParser {
                         builder.addCredential(privateCredential);
                         sslContextBuilder.setKeyManager(builder.build());
                     }
-                    if (finalTrustStoreSupplier != null) {
-                        trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
+                    if (initTrustManager) {
+                        if (finalTrustStoreSupplier != null) {
+                            trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
+                        }
                         try {
                             sslContextBuilder.setTrustManager(trustManagerBuilder.build());
                         } catch (GeneralSecurityException e) {
@@ -520,13 +530,22 @@ public final class ElytronXmlParser {
     }
 
     private static class TrustManagerBuilder {
+        String providerName = null;
+        String algorithm = null;
         KeyStore trustStore;
         boolean crl = false;
         InputStream crlStream = null;
         int maxCertPath = 5;
 
+        void setProviderName(String providerName) {
+            this.providerName = providerName;
+        }
+
+        void setAlgorithm(String algorithm) {
+            this.algorithm = algorithm;
+        }
+
         void setTrustStore(KeyStore trustStore) {
-            checkNotNullParam("trustStore", trustStore);
             this.trustStore = trustStore;
         }
 
@@ -543,11 +562,13 @@ public final class ElytronXmlParser {
             this.maxCertPath = maxCertPath;
         }
 
-        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException {
-            final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
+        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException {
+            final String algorithm = this.algorithm != null ? this.algorithm : TrustManagerFactory.getDefaultAlgorithm();
+            final TrustManagerFactory trustManagerFactory = providerName == null ? TrustManagerFactory.getInstance(algorithm) : TrustManagerFactory.getInstance(algorithm, providerName);
             if (crl) {
                 return new X509CRLExtendedTrustManager(trustStore, trustManagerFactory, crlStream, maxCertPath, null);
+            } else {
+                trustManagerFactory.init(trustStore);
             }
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
                 if (trustManager instanceof X509TrustManager) {
@@ -592,6 +613,41 @@ public final class ElytronXmlParser {
                     }
                 }
                 if (maxCertPath != 0) builder.setMaxCertPath(maxCertPath);
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static void parseTrustManager(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String providerName = null;
+        String algorithm = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "provider-name": {
+                    if (providerName != null) throw reader.unexpectedAttribute(i);
+                    providerName = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "algorithm": {
+                    if (algorithm != null) throw reader.unexpectedAttribute(i);
+                    algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                builder.setProviderName(providerName);
+                builder.setAlgorithm(algorithm);
                 return;
             } else {
                 throw reader.unexpectedContent();
