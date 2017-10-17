@@ -61,7 +61,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
 
     @Override
     public String getAuthorizationID() {
-        if (! isComplete()) {
+        if (! complete) {
             throw log.mechAuthenticationNotComplete(getMechanismName());
         }
         return authorizedId;
@@ -178,6 +178,9 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
 
     @Override
     public Object getNegotiatedProperty(final String propName) {
+        if (! complete) {
+            throw log.mechAuthenticationNotComplete(getMechanismName());
+        }
         return null;
     }
 

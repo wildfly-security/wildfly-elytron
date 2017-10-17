@@ -79,7 +79,11 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
     }
 
     public Object getNegotiatedProperty(final String propName) {
-        return null;
+        if (complete) {
+            return null;
+        } else {
+            throw log.mechAuthenticationNotComplete(getMechanismName());
+        }
     }
 
     public void dispose() throws SaslException {
