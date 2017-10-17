@@ -25,8 +25,8 @@ import java.security.DigestException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +49,7 @@ class NonceManager {
 
     private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     private final AtomicInteger nonceCounter = new AtomicInteger();
-    private final Set<String> usedNonces = new HashSet<>();
+    private final Map<String, Integer> usedNonces = new HashMap<>();
 
     private final byte[] privateKey;
 
@@ -128,11 +128,12 @@ class NonceManager {
      * </ul>
      *
      * @param nonce the nonce supplied by the client.
+     * @param nonceCount the nonce count, or -1 if not present
      * @return {@code true} if the nonce can be used, {@code false} otherwise.
      * @throws AuthenticationMechanismException
      */
-    boolean useNonce(String nonce) throws AuthenticationMechanismException {
-        return useNonce(nonce, null);
+    boolean useNonce(String nonce, int nonceCount) throws AuthenticationMechanismException {
+        return useNonce(nonce, null, nonceCount);
     }
 
     /**
@@ -151,7 +152,7 @@ class NonceManager {
      * @return {@code true} if the nonce can be used, {@code false} otherwise.
      * @throws AuthenticationMechanismException
      */
-    boolean useNonce(final String nonce, byte[] salt) throws AuthenticationMechanismException {
+    boolean useNonce(final String nonce, byte[] salt, int nonceCount) throws AuthenticationMechanismException {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
             ByteIterator byteIterator = CodePointIterator.ofChars(nonce.toCharArray()).base64Decode();
@@ -174,21 +175,36 @@ class NonceManager {
                 }
                 return false;
             }
-
-            if (singleUse) {
-                synchronized(usedNonces) {
-                    boolean used = usedNonces.add(nonce);
-                    if (used) {
+            if(nonceCount > 0) {
+                synchronized (usedNonces) {
+                    Integer current = usedNonces.get(nonce);
+                    if(current == null) {
                         executor.schedule(() -> {
                             synchronized(usedNonces) {
                                 usedNonces.remove(nonce);
                             }
                         }, validityPeriodNano - age, TimeUnit.MILLISECONDS);
+                        usedNonces.put(nonce, nonceCount);
+                    } else if(nonceCount <= current) {
+                        return false;
+                    } else {
+                        usedNonces.put(nonce, nonceCount);
+                    }
+                }
+            } else if (singleUse) {
+                synchronized(usedNonces) {
+                    Integer used = usedNonces.put(nonce, 1);
+                    if (used == null) {
+                        executor.schedule(() -> {
+                            synchronized(usedNonces) {
+                                usedNonces.remove(nonce);
+                            }
+                        }, validityPeriodNano - age, TimeUnit.MILLISECONDS);
+                        return true;
                     } else {
                         log.tracef("Nonce %s rejected as previously used.", nonce);
+                        return false;
                     }
-
-                    return used;
                 }
 
             }
