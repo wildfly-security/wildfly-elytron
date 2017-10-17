@@ -39,7 +39,6 @@ import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Provider;
@@ -68,6 +67,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.xml.stream.Location;
 
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
@@ -421,7 +421,7 @@ public final class ElytronXmlParser {
         PrivateKeyKeyStoreEntryCredentialFactory credentialFactory = null;
         ExceptionSupplier<KeyStore, ConfigXMLParseException> trustStoreSupplier = null;
         DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
-        TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder();
+        TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder(providersSupplier, location);
 
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
@@ -530,12 +530,19 @@ public final class ElytronXmlParser {
     }
 
     private static class TrustManagerBuilder {
+        final Supplier<Provider[]> providers;
+        final Location xmlLocation;
         String providerName = null;
         String algorithm = null;
         KeyStore trustStore;
         boolean crl = false;
         InputStream crlStream = null;
         int maxCertPath = 5;
+
+        TrustManagerBuilder(Supplier<Provider[]> providers, Location xmlLocation) {
+            this.providers = providers;
+            this.xmlLocation = xmlLocation;
+        }
 
         void setProviderName(String providerName) {
             this.providerName = providerName;
@@ -562,9 +569,14 @@ public final class ElytronXmlParser {
             this.maxCertPath = maxCertPath;
         }
 
-        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException {
+        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException, ConfigXMLParseException {
             final String algorithm = this.algorithm != null ? this.algorithm : TrustManagerFactory.getDefaultAlgorithm();
-            final TrustManagerFactory trustManagerFactory = providerName == null ? TrustManagerFactory.getInstance(algorithm) : TrustManagerFactory.getInstance(algorithm, providerName);
+            Provider provider = findProvider(providers, providerName, TrustManagerFactory.class, algorithm);
+            if (provider == null) {
+                throw xmlLog.xmlUnableToIdentifyProvider(xmlLocation, providerName, "TrustManagerFactory", algorithm);
+            }
+
+            final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm, provider);
             if (crl) {
                 return new X509CRLExtendedTrustManager(trustStore, trustManagerFactory, crlStream, maxCertPath, null);
             } else {
