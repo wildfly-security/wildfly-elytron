@@ -131,6 +131,8 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         private boolean debug;
         private boolean wrapGssCredential;
         private boolean checkKeyTab;
+        private long lastFailTime = 0;
+        private long failCache = 0;
         private Map<String, Object> options;
 
         Builder() {
@@ -281,6 +283,20 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
+         * Set amount of seconds before new try to obtain {@link GSSCredential} should be done if it has failed last time.
+         * Allows to prevent long waiting to unavailable KDC on every authentication.
+         *
+         * @param seconds amount of seconds to cache fail state of the credential factory; 0 if the cache should not be used.
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setFailCache(final long seconds) {
+            assertNotBuilt();
+            this.failCache = seconds;
+
+            return this;
+        }
+
+        /**
          * Construct a new {@link GSSKerberosCredential} security factory instance.
          *
          * @return the built factory instance
@@ -299,6 +315,10 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         private GSSKerberosCredential createGSSCredential(Configuration configuration) throws GeneralSecurityException {
+            if (failCache != 0 && System.currentTimeMillis() - lastFailTime < failCache * 1000) {
+                throw log.initialLoginSkipped(failCache);
+            }
+
             final Subject subject = new Subject();
 
             try {
@@ -341,6 +361,9 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 });
 
             } catch (LoginException e) {
+                if (failCache != 0) {
+                    lastFailTime = System.currentTimeMillis();
+                }
                 throw log.unableToPerformInitialLogin(e);
             } catch (PrivilegedActionException e) {
                 if (e.getCause() instanceof GeneralSecurityException) {
