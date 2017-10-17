@@ -199,6 +199,7 @@
                 <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
+            <xsd:element name="providers" type="providers-type" minOccurs="0"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="type" type="xsd:string" use="required"/>

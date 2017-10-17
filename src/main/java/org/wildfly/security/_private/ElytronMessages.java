@@ -644,6 +644,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
     ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
 
+    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
+    ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

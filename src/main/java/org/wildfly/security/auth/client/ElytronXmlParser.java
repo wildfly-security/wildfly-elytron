@@ -23,6 +23,7 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
+import static org.wildfly.security.util.ProviderUtil.findProvider;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1151,12 +1152,14 @@ public final class ElytronXmlParser {
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap,
+            final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
         String provider = null;
         Boolean wrap = null;
+        DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
@@ -1194,6 +1197,7 @@ public final class ElytronXmlParser {
         ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory = null;
         boolean gotSource = false;
         boolean gotCredential = false;
+        boolean gotProviders = false;
 
         String fileSource = null;
         ExceptionSupplier<InputStream, IOException> resourceSource = null;
@@ -1211,7 +1215,7 @@ public final class ElytronXmlParser {
                         }
                         gotCredential = true;
                         final XMLLocation nestedLocation = reader.getLocation();
-                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entryFactory = parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providers);
+                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entryFactory = parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providersSupplier);
                         passwordFactory = () -> {
                             final KeyStore.Entry entry = entryFactory.get();
                             if (entry instanceof PasswordEntry) try {
@@ -1249,8 +1253,8 @@ public final class ElytronXmlParser {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
-                        final char[] clearPassword = ((ClearPassword) parseClearPassword(reader, providers).get()).getPassword();
-                        passwordFactory = () -> clearPassword;
+                        final ExceptionSupplier<Password, ConfigXMLParseException> clearPassword = parseClearPassword(reader, providersSupplier);
+                        passwordFactory = () -> ((ClearPassword)clearPassword.get()).getPassword();
                         break;
                     }
                     case "file": {
@@ -1280,10 +1284,21 @@ public final class ElytronXmlParser {
                         uriSource = parseUriType(reader);
                         break;
                     }
+                    case "providers": {
+                        if (gotProviders || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotProviders = true;
+                        Supplier<Provider[]> supplier = parseProvidersType(reader, xmlVersion);
+                        if (supplier != null) {
+                            providersSupplier.setSupplier(supplier);
+                        }
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = new KeyStoreCreateFactory(provider, type, location);
+                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = new KeyStoreCreateFactory(providersSupplier, provider, type, location);
                 if (wrap == Boolean.TRUE) {
                     keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
                 }
@@ -2476,19 +2491,25 @@ public final class ElytronXmlParser {
     }
 
     static final class KeyStoreCreateFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {
-        private final String provider;
+        private final String providerName;
+        private final Supplier<Provider[]> providers;
         private final String type;
         private final XMLLocation location;
 
-        KeyStoreCreateFactory(final String provider, final String type, final XMLLocation location) {
-            this.provider = provider;
+        KeyStoreCreateFactory(final Supplier<Provider[]> providers, final String providerName, final String type, final XMLLocation location) {
+            this.providerName = providerName;
+            this.providers = providers;
             this.type = type;
             this.location = location;
         }
 
         public KeyStore get() throws ConfigXMLParseException {
+            Provider provider = findProvider(providers, providerName, KeyStore.class, type);
+            if (provider == null) {
+                throw xmlLog.xmlUnableToIdentifyProvider(location, providerName, "KeyStore", type);
+            }
             try {
-                return provider == null ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
+                return KeyStore.getInstance(type, provider);
             } catch (GeneralSecurityException e) {
                 throw xmlLog.xmlFailedToCreateKeyStore(location, e);
             }
