@@ -68,8 +68,8 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         String selectedMech = select(mechanisms);
         if (selectedMech == null) return null;
 
-        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
-        Charset charset = (utf8==null || utf8.booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
+        final String utf8 = (String)props.get(WildFlySasl.USE_UTF8);
+        Charset charset = (utf8 == null || Boolean.valueOf(utf8).booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
 
         String qopsString = (String)props.get(Sasl.QOP);
         String[] qops = qopsString==null ? null : qopsString.split(",");
