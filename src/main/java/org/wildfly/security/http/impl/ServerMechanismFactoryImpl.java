@@ -24,6 +24,7 @@ import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.http.HttpConstants.CONFIG_SKIP_CERTIFICATE_VERIFICATION;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
@@ -108,7 +109,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case BASIC_NAME:
                 return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);
             case CLIENT_CERT_NAME:
-                return new ClientCertAuthenticationMechanism(callbackHandler);
+                return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
             case DIGEST_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_NAME, MD5, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
             case DIGEST_SHA256_NAME:

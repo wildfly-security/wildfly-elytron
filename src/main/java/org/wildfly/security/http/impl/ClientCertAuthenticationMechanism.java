@@ -22,6 +22,7 @@ import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
@@ -57,14 +58,17 @@ import org.wildfly.security.x500.X500;
 final class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private final CallbackHandler callbackHandler;
+    private final boolean skipVerification;
 
     /**
      * Construct a new instance of the {@code ClientCertAuthenticationMechanism} mechanism.
      *
      * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
+     * @param skipVerification whether the certificate verification using {@link EvidenceVerifyCallback} should be skipped
      */
-    ClientCertAuthenticationMechanism(CallbackHandler callbackHandler) {
+    ClientCertAuthenticationMechanism(CallbackHandler callbackHandler, boolean skipVerification) {
         this.callbackHandler = callbackHandler;
+        this.skipVerification = skipVerification;
     }
 
     /**
@@ -104,19 +108,24 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
         X509Certificate[] x509Certificates = X500.asX509CertificateArray(peerCertificates);
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
 
-        httpClientCert.tracef("Authenticating using following certificates: [%s]", x509Certificates);
+        if (httpClientCert.isTraceEnabled()) {
+            httpClientCert.tracef("Authenticating using following certificates: [%s]", Arrays.toString(x509Certificates));
+        }
 
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
-        try {
-            MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, callback);
-        } catch (AuthenticationMechanismException e) {
-            throw e.toHttpAuthenticationException();
-        } catch (UnsupportedCallbackException e) {
-            throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
+        if (! skipVerification) {
+            try {
+                MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, callback);
+            } catch (AuthenticationMechanismException e) {
+                throw e.toHttpAuthenticationException();
+            } catch (UnsupportedCallbackException e) {
+                throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
+            }
         }
         boolean verified = callback.isVerified();
-        httpClientCert.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b", verified);
-        if (verified) {
+        httpClientCert.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b  verification skipped: %b", verified, skipVerification);
+
+        if (verified || skipVerification) {
             final BooleanSupplier authorizedFunction;
             final Callback authorizeCallBack;
             if (cacheFunction != null) {
