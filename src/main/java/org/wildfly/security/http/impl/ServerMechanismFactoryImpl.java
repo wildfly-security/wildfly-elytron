@@ -61,12 +61,13 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     }
 
     /*
-     * 60 Second Nonce Validity
-     * Single User
+     * 5  Minutes Initial Nonce Validity
+     * 15 Minutes Validity Since Last Use With Nonce Count
+     * Single Use
      * 20 Byte Private Key (Gives us at least enough material for SHA-256 to digest))
-     * MD5 Digest Algorithm
+     * SHA256 Digest Algorithm
      */
-    private static NonceManager nonceManager = new NonceManager(60000, true, 20, SHA256);
+    private static NonceManager nonceManager = new NonceManager(300000, 900000, true, 20, SHA256);
 
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)

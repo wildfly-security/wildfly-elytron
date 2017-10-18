@@ -144,17 +144,17 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         String nonce = convertToken(NONCE, responseTokens.get(NONCE));
         String messageRealm = convertToken(REALM, responseTokens.get(REALM));
         int nonceCount;
-        if(!responseTokens.containsKey(NC)) {
+        if (!responseTokens.containsKey(NC)) {
             nonceCount = -1;
         } else {
             String nonceCountHex = convertToken(REALM, responseTokens.get(NC));
             nonceCount = Integer.parseInt(nonceCountHex, 16);
-            if(nonceCount < 0) {
+            if (nonceCount < 0) {
                 throw log.invalidNonceCount(nonceCount);
             }
         }
         /*
-         * We want to get the nonce checkes ASAP so it is recorded as used in case some intermittent failure prevents validation.
+         * We want to get the nonce checked ASAP so it is recorded as used in case some intermittent failure prevents validation.
          *
          * We act on the validity at the end where we can let the client know if it is stale.
          */
@@ -221,23 +221,24 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (authorize(username)) {
             succeed();
-            request.authenticationComplete(new HttpServerMechanismsResponder() {
-                @Override
-                public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
-                    try {
+            if (nonceCount < 0) {
+                request.authenticationComplete(new HttpServerMechanismsResponder() {
+                    @Override
+                    public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
                         sendAuthenticationInfoHeader(response, salt);
-                    } catch (AuthenticationMechanismException e) {
-                        throw new HttpAuthenticationException(e);
                     }
-                }
-            });
+                });
+            } else {
+                // If we had a nonce count using it would extend the life of the nonce so we don't need to issue a new one.
+                request.authenticationComplete();
+            }
         } else {
             fail();
             request.authenticationFailed(log.authorizationFailed(username, getMechanismName()), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
     }
 
-    private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) throws AuthenticationMechanismException {
+    private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) {
         String nextNonce = nonceManager.generateNonce(salt);
         response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=\"" + nextNonce + "\"");
     }
