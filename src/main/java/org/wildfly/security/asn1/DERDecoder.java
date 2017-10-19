@@ -36,6 +36,8 @@ import org.wildfly.security.util.ByteIterator;
  */
 public class DERDecoder implements ASN1Decoder {
 
+    private static final int BOOLEAN_FALSE = 0;
+
     private final ByteIterator bi;
     private final ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
     private int implicitTag = -1;
@@ -376,6 +378,19 @@ public class DERDecoder implements ASN1Decoder {
         if (implicitTag == -1) {
             implicitTag = clazz | number;
         }
+    }
+
+    @Override
+    public boolean decodeBoolean() throws ASN1Exception {
+        readTag(BOOLEAN_TYPE);
+        int length = readLength();
+        if (length != 1) {
+            throw log.asnInvalidLengthForBooleanTypeTag();
+        }
+        if (! bi.hasNext()) {
+            throw log.asnUnexpectedEndOfInput();
+        }
+        return bi.next() != BOOLEAN_FALSE;
     }
 
     @Override

@@ -407,4 +407,13 @@ public class DERDecoderTest {
         decoder.endSetOf();
         assertFalse(decoder.hasNextElement());
     }
+
+    @Test
+    public void testDecodeBoolean() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {1, 1, -1});
+        assertTrue(decoder.decodeBoolean());
+
+        decoder = new DERDecoder(new byte[] {1, 1, 0});
+        assertFalse(decoder.decodeBoolean());
+    }
 }

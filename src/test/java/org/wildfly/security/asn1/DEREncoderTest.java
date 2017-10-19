@@ -486,4 +486,19 @@ public class DEREncoderTest {
         byte[] expected = new byte[] {49, -127, -79, 48, -127, -82, 4, 86, 48, 84, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 49, 59, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 4, 84, 49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114};
         assertArrayEquals(expected, target.toArray());
     }
+
+    @Test
+    public void testEncodeBoolean() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.encodeBoolean(true);
+        byte[] expected = new byte[] {1, 1, -1};
+        assertArrayEquals(expected, target.toArray());
+
+        target = new ByteStringBuilder();
+        encoder = new DEREncoder(target);
+        encoder.encodeBoolean(false);
+        expected = new byte[] {1, 1, 0};
+        assertArrayEquals(expected, target.toArray());
+    }
 }

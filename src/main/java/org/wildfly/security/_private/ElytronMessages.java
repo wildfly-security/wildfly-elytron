@@ -1591,6 +1591,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7023, value = "Unexpected character byte for printable string")
     ASN1Exception asnUnexpectedCharacterByteForPrintableString();
 
+    @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
+    ASN1Exception asnInvalidLengthForBooleanTypeTag();
+
     /* password package */
 
     @Message(id = 8001, value = "Unrecognized key spec algorithm")
