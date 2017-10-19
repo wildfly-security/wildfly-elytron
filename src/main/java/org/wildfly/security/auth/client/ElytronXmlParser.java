@@ -23,6 +23,7 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
+import static org.wildfly.security.util.ProviderUtil.findProvider;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -66,6 +67,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.xml.stream.Location;
 
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
@@ -419,7 +421,7 @@ public final class ElytronXmlParser {
         PrivateKeyKeyStoreEntryCredentialFactory credentialFactory = null;
         ExceptionSupplier<KeyStore, ConfigXMLParseException> trustStoreSupplier = null;
         DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
-        TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder();
+        TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder(providersSupplier, location);
 
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
@@ -471,6 +473,12 @@ public final class ElytronXmlParser {
                         parseCertificateRevocationList(reader, trustManagerBuilder);
                         break;
                     }
+                    case "trust-manager": {
+                        if (isSet(foundBits, 7) || !xmlVersion.isAtLeast(Version.VERSION_1_1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 7);
+                        parseTrustManager(reader, trustManagerBuilder);
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag != END_ELEMENT) {
@@ -483,6 +491,7 @@ public final class ElytronXmlParser {
                 final String finalProviderName = providerName;
                 final PrivateKeyKeyStoreEntryCredentialFactory finalCredentialFactory = credentialFactory;
                 final ExceptionSupplier<KeyStore, ConfigXMLParseException> finalTrustStoreSupplier = trustStoreSupplier;
+                final boolean initTrustManager = finalTrustStoreSupplier != null || isSet(foundBits, 7);
                 sslContextsMap.putIfAbsent(name, () -> {
                     final SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
                     sslContextBuilder.setClientMode(true);
@@ -499,8 +508,10 @@ public final class ElytronXmlParser {
                         builder.addCredential(privateCredential);
                         sslContextBuilder.setKeyManager(builder.build());
                     }
-                    if (finalTrustStoreSupplier != null) {
-                        trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
+                    if (initTrustManager) {
+                        if (finalTrustStoreSupplier != null) {
+                            trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
+                        }
                         try {
                             sslContextBuilder.setTrustManager(trustManagerBuilder.build());
                         } catch (GeneralSecurityException e) {
@@ -519,13 +530,29 @@ public final class ElytronXmlParser {
     }
 
     private static class TrustManagerBuilder {
+        final Supplier<Provider[]> providers;
+        final Location xmlLocation;
+        String providerName = null;
+        String algorithm = null;
         KeyStore trustStore;
         boolean crl = false;
         InputStream crlStream = null;
         int maxCertPath = 5;
 
+        TrustManagerBuilder(Supplier<Provider[]> providers, Location xmlLocation) {
+            this.providers = providers;
+            this.xmlLocation = xmlLocation;
+        }
+
+        void setProviderName(String providerName) {
+            this.providerName = providerName;
+        }
+
+        void setAlgorithm(String algorithm) {
+            this.algorithm = algorithm;
+        }
+
         void setTrustStore(KeyStore trustStore) {
-            checkNotNullParam("trustStore", trustStore);
             this.trustStore = trustStore;
         }
 
@@ -542,11 +569,18 @@ public final class ElytronXmlParser {
             this.maxCertPath = maxCertPath;
         }
 
-        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException {
-            final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
+        X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException, ConfigXMLParseException {
+            final String algorithm = this.algorithm != null ? this.algorithm : TrustManagerFactory.getDefaultAlgorithm();
+            Provider provider = findProvider(providers, providerName, TrustManagerFactory.class, algorithm);
+            if (provider == null) {
+                throw xmlLog.xmlUnableToIdentifyProvider(xmlLocation, providerName, "TrustManagerFactory", algorithm);
+            }
+
+            final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm, provider);
             if (crl) {
                 return new X509CRLExtendedTrustManager(trustStore, trustManagerFactory, crlStream, maxCertPath, null);
+            } else {
+                trustManagerFactory.init(trustStore);
             }
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
                 if (trustManager instanceof X509TrustManager) {
@@ -591,6 +625,41 @@ public final class ElytronXmlParser {
                     }
                 }
                 if (maxCertPath != 0) builder.setMaxCertPath(maxCertPath);
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static void parseTrustManager(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String providerName = null;
+        String algorithm = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "provider-name": {
+                    if (providerName != null) throw reader.unexpectedAttribute(i);
+                    providerName = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "algorithm": {
+                    if (algorithm != null) throw reader.unexpectedAttribute(i);
+                    algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                builder.setProviderName(providerName);
+                builder.setAlgorithm(algorithm);
                 return;
             } else {
                 throw reader.unexpectedContent();
@@ -1151,12 +1220,14 @@ public final class ElytronXmlParser {
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap,
+            final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
         String provider = null;
         Boolean wrap = null;
+        DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
@@ -1194,6 +1265,7 @@ public final class ElytronXmlParser {
         ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory = null;
         boolean gotSource = false;
         boolean gotCredential = false;
+        boolean gotProviders = false;
 
         String fileSource = null;
         ExceptionSupplier<InputStream, IOException> resourceSource = null;
@@ -1211,7 +1283,7 @@ public final class ElytronXmlParser {
                         }
                         gotCredential = true;
                         final XMLLocation nestedLocation = reader.getLocation();
-                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entryFactory = parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providers);
+                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entryFactory = parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providersSupplier);
                         passwordFactory = () -> {
                             final KeyStore.Entry entry = entryFactory.get();
                             if (entry instanceof PasswordEntry) try {
@@ -1249,8 +1321,8 @@ public final class ElytronXmlParser {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
-                        final char[] clearPassword = ((ClearPassword) parseClearPassword(reader, providers).get()).getPassword();
-                        passwordFactory = () -> clearPassword;
+                        final ExceptionSupplier<Password, ConfigXMLParseException> clearPassword = parseClearPassword(reader, providersSupplier);
+                        passwordFactory = () -> ((ClearPassword)clearPassword.get()).getPassword();
                         break;
                     }
                     case "file": {
@@ -1280,10 +1352,21 @@ public final class ElytronXmlParser {
                         uriSource = parseUriType(reader);
                         break;
                     }
+                    case "providers": {
+                        if (gotProviders || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotProviders = true;
+                        Supplier<Provider[]> supplier = parseProvidersType(reader, xmlVersion);
+                        if (supplier != null) {
+                            providersSupplier.setSupplier(supplier);
+                        }
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = new KeyStoreCreateFactory(provider, type, location);
+                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = new KeyStoreCreateFactory(providersSupplier, provider, type, location);
                 if (wrap == Boolean.TRUE) {
                     keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
                 }
@@ -2476,19 +2559,25 @@ public final class ElytronXmlParser {
     }
 
     static final class KeyStoreCreateFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {
-        private final String provider;
+        private final String providerName;
+        private final Supplier<Provider[]> providers;
         private final String type;
         private final XMLLocation location;
 
-        KeyStoreCreateFactory(final String provider, final String type, final XMLLocation location) {
-            this.provider = provider;
+        KeyStoreCreateFactory(final Supplier<Provider[]> providers, final String providerName, final String type, final XMLLocation location) {
+            this.providerName = providerName;
+            this.providers = providers;
             this.type = type;
             this.location = location;
         }
 
         public KeyStore get() throws ConfigXMLParseException {
+            Provider provider = findProvider(providers, providerName, KeyStore.class, type);
+            if (provider == null) {
+                throw xmlLog.xmlUnableToIdentifyProvider(location, providerName, "KeyStore", type);
+            }
             try {
-                return provider == null ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
+                return KeyStore.getInstance(type, provider);
             } catch (GeneralSecurityException e) {
                 throw xmlLog.xmlFailedToCreateKeyStore(location, e);
             }
