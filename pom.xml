@@ -56,7 +56,7 @@
     </scm>
 
     <properties>
-        <version.elytron>1.2.0.Beta6</version.elytron>
+        <version.elytron>1.2.0.Beta8</version.elytron>
         <version.commons-cli>1.3.1</version.commons-cli>
         <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.0.6.Final</version.org.jboss.logmanager>
