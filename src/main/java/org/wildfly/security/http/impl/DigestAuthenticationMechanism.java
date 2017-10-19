@@ -20,8 +20,12 @@ package org.wildfly.security.http.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
+import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.CNONCE;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
+import static org.wildfly.security.http.HttpConstants.NC;
+import static org.wildfly.security.http.HttpConstants.QOP;
 import static org.wildfly.security.http.HttpConstants.URI;
 import static org.wildfly.security.http.HttpConstants.DOMAIN;
 import static org.wildfly.security.http.HttpConstants.MD5;
@@ -139,13 +143,23 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private void validateResponse(HashMap<String, byte[]> responseTokens, final HttpServerRequest request) throws AuthenticationMechanismException, HttpAuthenticationException {
         String nonce = convertToken(NONCE, responseTokens.get(NONCE));
         String messageRealm = convertToken(REALM, responseTokens.get(REALM));
+        int nonceCount;
+        if (!responseTokens.containsKey(NC)) {
+            nonceCount = -1;
+        } else {
+            String nonceCountHex = convertToken(REALM, responseTokens.get(NC));
+            nonceCount = Integer.parseInt(nonceCountHex, 16);
+            if (nonceCount < 0) {
+                throw log.invalidNonceCount(nonceCount);
+            }
+        }
         /*
-         * We want to get the nonce checkes ASAP so it is recorded as used in case some intermittent failure prevents validation.
+         * We want to get the nonce checked ASAP so it is recorded as used in case some intermittent failure prevents validation.
          *
          * We act on the validity at the end where we can let the client know if it is stale.
          */
         byte[] salt = messageRealm.getBytes(UTF_8);
-        boolean nonceValid = nonceManager.useNonce(nonce, salt);
+        boolean nonceValid = nonceManager.useNonce(nonce, salt, nonceCount);
 
         String username = convertToken(USERNAME, responseTokens.get(USERNAME));
         byte[] digestUri;
@@ -192,7 +206,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             return;
         }
 
-        byte[] calculatedResponse = calculateResponseDigest(messageDigest, hA1, nonce, request.getRequestMethod(), digestUri);
+        byte[] calculatedResponse = calculateResponseDigest(messageDigest, hA1, nonce, request.getRequestMethod(), digestUri, responseTokens.get(QOP), responseTokens.get(CNONCE), responseTokens.get(NC));
 
         if (Arrays.equals(response, calculatedResponse) == false) {
             fail();
@@ -207,28 +221,26 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         if (authorize(username)) {
             succeed();
-            request.authenticationComplete(new HttpServerMechanismsResponder() {
-                @Override
-                public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
-                    try {
-                        sendAuthenticationInfoHeader(response, nonce, salt);
-                    } catch (AuthenticationMechanismException e) {
-                        throw new HttpAuthenticationException(e);
+            if (nonceCount < 0) {
+                request.authenticationComplete(new HttpServerMechanismsResponder() {
+                    @Override
+                    public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
+                        sendAuthenticationInfoHeader(response, salt);
                     }
-                }
-            });
+                });
+            } else {
+                // If we had a nonce count using it would extend the life of the nonce so we don't need to issue a new one.
+                request.authenticationComplete();
+            }
         } else {
             fail();
             request.authenticationFailed(log.authorizationFailed(username, getMechanismName()), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
     }
 
-    private void sendAuthenticationInfoHeader(final HttpServerResponse response, String currentNonce, byte[] salt) throws AuthenticationMechanismException {
-        String nextNonce = currentNonce;
-        if(!nonceManager.useNonce(currentNonce, salt)) {
-            nextNonce = nonceManager.generateNonce(salt);
-        }
-        response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=" + nextNonce);
+    private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) {
+        String nextNonce = nonceManager.generateNonce(salt);
+        response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=\"" + nextNonce + "\"");
     }
 
     /**
@@ -246,7 +258,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         return false;
     }
 
-    private byte[] calculateResponseDigest(MessageDigest messageDigest, byte[] hA1, String nonce, String method, byte[] digestUri) {
+    private byte[] calculateResponseDigest(MessageDigest messageDigest, byte[] hA1, String nonce, String method, byte[] digestUri, byte[] qop, byte[] cnonce, byte[] nc) {
         messageDigest.update(method.getBytes(UTF_8));
         messageDigest.update(COLON);
         byte[] hA2 = messageDigest.digest(digestUri);
@@ -254,6 +266,14 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         messageDigest.update(ByteIterator.ofBytes(hA1).hexEncode().drainToString().getBytes(UTF_8));
         messageDigest.update(COLON);
         messageDigest.update(nonce.getBytes(UTF_8));
+        if(qop != null) {
+            messageDigest.update(COLON);
+            messageDigest.update(nc);
+            messageDigest.update(COLON);
+            messageDigest.update(cnonce);
+            messageDigest.update(COLON);
+            messageDigest.update(qop);
+        }
         messageDigest.update(COLON);
 
         return messageDigest.digest(ByteIterator.ofBytes(hA2).hexEncode().drainToString().getBytes(UTF_8));
@@ -341,6 +361,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             sb.append(", ").append(STALE).append("=true");
         }
         sb.append(", ").append(ALGORITHM).append("=").append(MD5);
+        sb.append(", ").append(QOP).append("=").append(AUTH);
 
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setStatusCode(UNAUTHORIZED);

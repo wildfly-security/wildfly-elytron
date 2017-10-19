@@ -85,15 +85,20 @@ public class HttpConstants {
     /*
      * Header Fields
      */
-
     public static final String ALGORITHM = "algorithm";
+    public static final String AUTH = "auth";
+    public static final String AUTH_PARAM = "auth-param";
     public static final String CHARSET = "charset";
+    public static final String CNONCE = "cnonce";
     public static final String DOMAIN = "domain";
+    public static final String NC = "nc";
     public static final String NEGOTIATE = "Negotiate";
     public static final String NEXT_NONCE = "nextnonce";
     public static final String NONCE = "nonce";
     public static final String OPAQUE = "opaque";
+    public static final String QOP = "qop";
     public static final String REALM = "realm";
+    public static final String RSPAUTH = "rspauth";
     public static final String RESPONSE = "response";
     public static final String STALE = "stale";
     public static final String URI = "uri";

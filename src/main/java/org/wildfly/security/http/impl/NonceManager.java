@@ -25,9 +25,10 @@ import java.security.DigestException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,22 +50,25 @@ class NonceManager {
 
     private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     private final AtomicInteger nonceCounter = new AtomicInteger();
-    private final Set<String> usedNonces = new HashSet<>();
+    private final Map<String, NonceState> usedNonces = new HashMap<>();
 
     private final byte[] privateKey;
 
     private final long validityPeriodNano;
+    private final long nonceSessionTime;
     private final boolean singleUse;
     private final String algorithm;
 
     /**
      * @param validityPeriod the time in ms that nonces are valid for in ms.
+     * @param nonceSessionTime the time in ms a nonce is usable for after it's last use where nonce counts are in use.
      * @param singleUse are nonces single use?
      * @param keySize the number of bytes to use in the private key of this node.
      * @param algorithm the message digest algorithm to use when creating the digest portion of the nonce.
      */
-    NonceManager(long validityPeriod, boolean singleUse, int keySize, String algorithm) {
+    NonceManager(long validityPeriod, long nonceSessionTime, boolean singleUse, int keySize, String algorithm) {
         this.validityPeriodNano = validityPeriod * 1000000;
+        this.nonceSessionTime = nonceSessionTime;
         this.singleUse = singleUse;
         this.algorithm = algorithm;
 
@@ -128,11 +132,12 @@ class NonceManager {
      * </ul>
      *
      * @param nonce the nonce supplied by the client.
+     * @param nonceCount the nonce count, or -1 if not present
      * @return {@code true} if the nonce can be used, {@code false} otherwise.
      * @throws AuthenticationMechanismException
      */
-    boolean useNonce(String nonce) throws AuthenticationMechanismException {
-        return useNonce(nonce, null);
+    boolean useNonce(String nonce, int nonceCount) throws AuthenticationMechanismException {
+        return useNonce(nonce, null, nonceCount);
     }
 
     /**
@@ -151,19 +156,13 @@ class NonceManager {
      * @return {@code true} if the nonce can be used, {@code false} otherwise.
      * @throws AuthenticationMechanismException
      */
-    boolean useNonce(final String nonce, byte[] salt) throws AuthenticationMechanismException {
+    boolean useNonce(final String nonce, byte[] salt, int nonceCount) throws AuthenticationMechanismException {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
             ByteIterator byteIterator = CodePointIterator.ofChars(nonce.toCharArray()).base64Decode();
             byte[] nonceBytes = byteIterator.drain();
             if (nonceBytes.length != PREFIX_LENGTH + messageDigest.getDigestLength()) {
                 throw log.invalidNonceLength(HttpConstants.DIGEST_NAME);
-            }
-
-            long age = System.nanoTime() - ByteBuffer.wrap(nonceBytes, Integer.BYTES, Long.BYTES).getLong();
-            if (age < 0 || age > validityPeriodNano) {
-                log.tracef("Nonce %s rejected due to age %d (ns) being less than 0 or greater than the validity period %d (ns)", nonce, age, validityPeriodNano);
-                return false;
             }
 
             if (Arrays2.equals(nonceBytes, PREFIX_LENGTH, digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest)) == false) {
@@ -175,22 +174,72 @@ class NonceManager {
                 return false;
             }
 
-            if (singleUse) {
-                synchronized(usedNonces) {
-                    boolean used = usedNonces.add(nonce);
-                    if (used) {
-                        executor.schedule(() -> {
-                            synchronized(usedNonces) {
-                                usedNonces.remove(nonce);
+            long age = System.nanoTime() - ByteBuffer.wrap(nonceBytes, Integer.BYTES, Long.BYTES).getLong();
+            if(nonceCount > 0) {
+                synchronized (usedNonces) {
+                    NonceState nonceState = usedNonces.get(nonce);
+                    if (nonceState != null && nonceState.highestNonceCount < 0) {
+                        log.tracef("Nonce %s rejected due to previously being used without a nonce count", nonce);
+                        return false;
+                    } else if (nonceState != null) {
+                        if (nonceCount > nonceState.highestNonceCount) {
+                            if (nonceState.futureCleanup.cancel(true)) {
+                                nonceState.highestNonceCount = nonceCount;
+                            } else {
+                                log.tracef("Nonce %s rejected as unable to cancel clean up, likely at expiration time", nonce);
+                                return false;
                             }
-                        }, validityPeriodNano - age, TimeUnit.MILLISECONDS);
+                        } else {
+                            log.tracef("Nonce %s rejected due to highest seen nonce count %d being equal to or higher than the nonce count received %d",
+                                    nonce, nonceState.highestNonceCount, nonceCount);
+                            return false;
+                        }
                     } else {
-                        log.tracef("Nonce %s rejected as previously used.", nonce);
+                        if (age < 0 || age > validityPeriodNano) {
+                            log.tracef("Nonce %s rejected due to age %d (ns) being less than 0 or greater than the validity period %d (ns)",
+                                    nonce, age, validityPeriodNano);
+                            return false;
+                        }
+                        nonceState = new NonceState();
+                        nonceState.highestNonceCount = nonceCount;
+                        usedNonces.put(nonce, nonceState);
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Currently %d nonces being tracked", usedNonces.size());
+                        }
                     }
 
-                    return used;
+                    nonceState.futureCleanup = executor.schedule(() -> {
+                        synchronized (usedNonces) {
+                            usedNonces.remove(nonce);
+                        }
+                    }, nonceSessionTime, TimeUnit.MILLISECONDS);
+                }
+            } else {
+                if (age < 0 || age > validityPeriodNano) {
+                    log.tracef("Nonce %s rejected due to age %d (ns) being less than 0 or greater than the validity period %d (ns)", nonce, age, validityPeriodNano);
+                    return false;
                 }
 
+                if (singleUse) {
+                    synchronized(usedNonces) {
+                        NonceState nonceState = usedNonces.get(nonce);
+                        if (nonceState != null) {
+                            log.tracef("Nonce %s rejected due to previously being used", nonce);
+                            return false;
+                        } else {
+                            nonceState = new NonceState();
+                            usedNonces.put(nonce, nonceState);
+                            if (log.isTraceEnabled()) {
+                                log.tracef("Currently %d nonces being tracked", usedNonces.size());
+                            }
+                            executor.schedule(() -> {
+                                synchronized(usedNonces) {
+                                    usedNonces.remove(nonce);
+                                }
+                            }, validityPeriodNano - age, TimeUnit.NANOSECONDS);
+                        }
+                    }
+                }
             }
 
             return true;
@@ -198,5 +247,10 @@ class NonceManager {
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private static class NonceState {
+        private ScheduledFuture futureCleanup;
+        private int highestNonceCount = -1;
     }
 }

@@ -1520,6 +1520,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6021, value = "Unable to identify suitable HttpScope for mechanism state storage")
     IllegalArgumentException unableToIdentifyHttpScope();
 
+    @Message(id = 6022, value = "Invalid nonce count %s")
+    HttpAuthenticationException invalidNonceCount(int nonceCount);
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
