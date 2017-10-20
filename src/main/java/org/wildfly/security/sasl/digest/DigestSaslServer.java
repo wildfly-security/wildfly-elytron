@@ -49,10 +49,11 @@ import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
- * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
+ * A server implementation of RFC 2831 {@code DIGEST} SASL mechanism.
  *
+ * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
+final class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
     private final Predicate<String> digestUriAccepted;
     private final boolean defaultRealm;

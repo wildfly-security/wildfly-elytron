@@ -35,7 +35,7 @@ import org.wildfly.security.sasl.util.AbstractSaslClient;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class ScramSaslClient extends AbstractSaslClient {
+final class ScramSaslClient extends AbstractSaslClient {
 
     private static final int ST_NEW = 1;
     private static final int ST_R1_SENT = 2;

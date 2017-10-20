@@ -49,7 +49,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
      * @param callbackHandler the callback handler to use for authentication
      * @param authorizationId the possibly {@code null} protocol-dependent name used for authorization
      */
-    protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
+    AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
         super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true);
         setNegotiationState(INITIAL_STATE);
     }

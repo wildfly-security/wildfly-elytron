@@ -30,7 +30,7 @@ import javax.security.sasl.SaslException;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class SubjectWrappingSaslClient implements SaslClient {
+final class SubjectWrappingSaslClient implements SaslClient {
 
     private final SaslClient wrapped;
     private final Subject subject;

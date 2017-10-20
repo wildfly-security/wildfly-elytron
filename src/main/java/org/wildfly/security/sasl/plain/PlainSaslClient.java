@@ -40,7 +40,7 @@ import org.wildfly.security.util.ByteStringBuilder;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class PlainSaslClient implements SaslClient, SaslWrapper {
+final class PlainSaslClient implements SaslClient, SaslWrapper {
 
     private final String authorizationId;
     private final CallbackHandler cbh;

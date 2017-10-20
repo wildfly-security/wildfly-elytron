@@ -124,7 +124,7 @@ public final class LocalPrincipalSaslClientFactory extends AbstractDelegatingSas
         }
     }
 
-    class LocalPrincipalSaslClient extends AbstractDelegatingSaslClient {
+    final class LocalPrincipalSaslClient extends AbstractDelegatingSaslClient {
         private final Supplier<Principal> principalSupplier;
 
         LocalPrincipalSaslClient(final SaslClient delegate, final Supplier<Principal> principalSupplier) {
@@ -132,6 +132,7 @@ public final class LocalPrincipalSaslClientFactory extends AbstractDelegatingSas
             this.principalSupplier = principalSupplier;
         }
 
+        @Override
         public Object getNegotiatedProperty(final String propName) {
             // The mechanism might be smart enough to know its principal; if so, use their value instead of our guess.
             final Object value = super.getNegotiatedProperty(propName);

@@ -34,7 +34,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-class OAuth2SaslClient extends AbstractSaslClient {
+final class OAuth2SaslClient extends AbstractSaslClient {
 
     private static final int S_FIRST_MESSAGE = 1;
     private static final int S_FINAL_SERVER_RESPONSE = 2;

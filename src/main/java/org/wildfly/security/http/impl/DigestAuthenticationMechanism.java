@@ -84,7 +84,7 @@ import org.wildfly.security.util.ByteIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+final class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private static final String CHALLENGE_PREFIX = "Digest ";
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
@@ -367,7 +367,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         response.setStatusCode(UNAUTHORIZED);
     }
 
-    public byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm, String mechanismName) throws AuthenticationMechanismException {
+    private byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm, String mechanismName) throws AuthenticationMechanismException {
         final String realmName = realmCallback.getDefaultText();
         final String userName = nameCallback.getDefaultName();
         final DigestPasswordAlgorithmSpec parameterSpec;
@@ -393,7 +393,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         }
     }
 
-    protected byte[] getSaltedPasswordFromTwoWay(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
+    private byte[] getSaltedPasswordFromTwoWay(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
         CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
         try {
             callbackHandler.handle(new Callback[] {realmCallback, nameCallback, credentialCallback});
@@ -422,7 +422,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         return digest_urp;
     }
 
-    protected byte[] getSaltedPasswordFromPasswordCallback(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
+    private byte[] getSaltedPasswordFromPasswordCallback(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
         PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         try {
             callbackHandler.handle(new Callback[] {realmCallback, nameCallback, passwordCallback});
@@ -449,7 +449,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         return digest_urp;
     }
 
-    protected boolean authorize(String username) throws AuthenticationMechanismException {
+    private boolean authorize(String username) throws AuthenticationMechanismException {
         AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, username);
 
         try {
@@ -463,7 +463,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         }
     }
 
-    protected void succeed() throws AuthenticationMechanismException {
+    private void succeed() throws AuthenticationMechanismException {
         try {
             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
         } catch (Throwable t) {
@@ -471,7 +471,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         }
     }
 
-    protected void fail() throws AuthenticationMechanismException {
+    private void fail() throws AuthenticationMechanismException {
         try {
             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
         } catch (Throwable t) {
