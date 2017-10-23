@@ -41,11 +41,13 @@ public class JdkClientJdkServerSuiteChild extends BaseGssapiTests {
 
     private static Subject clientSubject;
     private static Subject serverSubject;
+    private static Subject unboundServerSubject;
 
     @BeforeClass
     public static void initialise() throws LoginException {
         clientSubject = loginClient();
-        serverSubject = loginServer(GssapiTestSuite.serverKeyTab);
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab, false);
+        unboundServerSubject = loginServer(GssapiTestSuite.serverKeyTab, true);
     }
 
     @AfterClass
@@ -63,11 +65,11 @@ public class JdkClientJdkServerSuiteChild extends BaseGssapiTests {
     }
 
     @Override
-    protected SaslServer getSaslServer(final VerificationMode mode) throws Exception {
+    protected SaslServer getSaslServer(final VerificationMode mode, final boolean unboundServer) throws Exception {
         Map<String, String> props = Collections.emptyMap();
-        SaslServer baseServer = createServer(serverSubject, false, mode, props);
+        SaslServer baseServer = createServer(serverSubject, false, unboundServer, mode, props);
 
-        return new SubjectWrappingSaslServer(baseServer, serverSubject);
+        return new SubjectWrappingSaslServer(baseServer, unboundServer ? unboundServerSubject : serverSubject);
     }
 
 }

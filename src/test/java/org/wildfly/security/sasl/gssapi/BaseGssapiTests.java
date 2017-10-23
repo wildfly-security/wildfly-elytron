@@ -80,7 +80,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
     @Test
     public void obtainServer1Subject() throws Exception {
-        Subject subject = loginServer(GssapiTestSuite.serverKeyTab);
+        Subject subject = loginServer(GssapiTestSuite.serverKeyTab, false);
         assertNotNull(subject);
     }
 
@@ -97,27 +97,32 @@ public abstract class BaseGssapiTests extends BaseTestCase {
          * lower than DEBUG
          */
 
-        testSasl(false, VerificationMode.NONE);
+        testSasl(false, VerificationMode.NONE, false);
     }
 
     @Test
     public void authenticateClientAndServer() throws Exception {
-        testSasl(true, VerificationMode.NONE);
+        testSasl(true, VerificationMode.NONE, false);
     }
 
     @Test
     public void authenticateIntegrityQop() throws Exception {
-        testSasl(false, VerificationMode.INTEGRITY);
+        testSasl(false, VerificationMode.INTEGRITY, false);
     }
 
     @Test
     public void authenticateConfidentialityQop() throws Exception {
-        testSasl(false, VerificationMode.CONFIDENTIALITY);
+        testSasl(false, VerificationMode.CONFIDENTIALITY, false);
     }
 
-    private void testSasl(final boolean authServer, final VerificationMode mode) throws Exception {
+    @Test
+    public void authenticateUnboundServer() throws Exception {
+        testSasl(false, VerificationMode.CONFIDENTIALITY, true);
+    }
+
+    private void testSasl(final boolean authServer, final VerificationMode mode, final boolean unboundServer) throws Exception {
         SaslClient client = getSaslClient(authServer, mode);
-        SaslServer server = getSaslServer(mode);
+        SaslServer server = getSaslServer(mode, unboundServer);
 
         try {
             byte[] exchange = new byte[0];
@@ -130,6 +135,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
             assertTrue(client.isComplete());
             assertTrue(server.isComplete());
             assertEquals("Authorization ID", "jduke@WILDFLY.ORG", server.getAuthorizationID());
+            assertEquals("Bound server name", TEST_SERVER_1, server.getNegotiatedProperty(Sasl.BOUND_SERVER_NAME));
 
             assertEquals("Server QOP", mode.getQop(), server.getNegotiatedProperty(Sasl.QOP));
             assertEquals("Client QOP", mode.getQop(), client.getNegotiatedProperty(Sasl.QOP));
@@ -183,7 +189,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     /**
      * @param mode quality-of-protection to use
      */
-    protected abstract SaslServer getSaslServer(final VerificationMode mode) throws Exception;
+    protected abstract SaslServer getSaslServer(final VerificationMode mode, final boolean unboundServer) throws Exception;
 
     /*
      * Client Creation Methods
@@ -223,7 +229,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
      * Server Creation Methods
      */
 
-    SaslServer createServer(final Subject subject, final boolean wildFlyProvider, final VerificationMode mode, final Map<String, String> baseProps)
+    SaslServer createServer(final Subject subject, final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps)
             throws SaslException {
 
         try {
@@ -231,7 +237,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
                 @Override
                 public SaslServer run() throws Exception {
-                    return createServer(wildFlyProvider, mode, baseProps);
+                    return createServer(wildFlyProvider, unboundServer, mode, baseProps);
                 }
 
             });
@@ -245,13 +251,13 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
     }
 
-    private SaslServer createServer(final boolean wildFlyProvider, final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
+    private SaslServer createServer(final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
         SaslServerFactory factory = findSaslServerFactory(wildFlyProvider);
 
         Map<String, String> props = new HashMap<String, String>(baseProps);
         props.put(Sasl.QOP, mode.getQop());
 
-        return factory.createSaslServer(GSSAPI, "sasl", TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
+        return factory.createSaslServer(GSSAPI, "sasl", unboundServer ? null : TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
     }
 
     /*

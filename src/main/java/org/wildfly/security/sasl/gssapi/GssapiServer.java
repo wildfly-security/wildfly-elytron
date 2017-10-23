@@ -28,6 +28,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
@@ -55,6 +56,7 @@ final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
     private static final int SECURITY_LAYER_RECEIVER = 3;
 
     private String authorizationId;
+    private String boundServerName;
 
     private byte offeredSecurityLayer;
 
@@ -82,11 +84,18 @@ final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
         try {
             if (ourCredential == null) {
-                // According to the Javadoc we will have a protocol and server name.
-                String localName = protocol + "@" + serverName;
-                saslGssapi.tracef("Our name '%s'", localName);
+                GSSName ourName;
 
-                GSSName ourName = manager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
+                if (serverName != null) {
+                    // According to the Javadoc we will have a protocol and server name.
+                    String localName = protocol + "@" + serverName;
+                    saslGssapi.tracef("Our name is '%s'", localName);
+                    ourName = manager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
+                } else {
+                    saslGssapi.tracef("Our name is unbound");
+                    ourName = null;
+                }
+
                 ourCredential = manager.createCredential(ourName, GSSContext.INDEFINITE_LIFETIME, KERBEROS_V5,
                         GSSCredential.ACCEPT_ONLY);
             }
@@ -249,6 +258,14 @@ final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
                 this.selectedQop = selectedQop;
 
+                try {
+                    String targetName = gssContext.getTargName().toString();
+                    String[] targetNameParts = targetName.split("[/@]");
+                    boundServerName = targetNameParts.length > 1 ? targetNameParts[1] : targetName;
+                } catch (GSSException e) {
+                    throw saslGssapi.mechUnableToDetermineBoundServerName(e).toSaslException();
+                }
+
                 final String authenticationId;
                 try {
                     authenticationId = gssContext.getSrcName().toString();
@@ -294,5 +311,14 @@ final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 return null;
         }
         throw Assert.impossibleSwitchCase(state);
+    }
+
+    @Override
+    public Object getNegotiatedProperty(String propName) {
+        assertComplete();
+        if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
+            return boundServerName;
+        }
+        return super.getNegotiatedProperty(propName);
     }
 }

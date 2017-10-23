@@ -96,30 +96,30 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         }
 
         final String utf8 = (String)props.get(WildFlySasl.USE_UTF8);
-        Charset charset = (utf8 == null || Boolean.valueOf(utf8).booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
+        Charset charset = (utf8 == null || Boolean.parseBoolean(utf8)) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
 
         String qopsString = (String)props.get(Sasl.QOP);
-        String[] qops = qopsString==null ? null : qopsString.split(",");
+        String[] qops = qopsString == null ? null : qopsString.split(",");
 
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final String defaultDigestUri = (protocol + "/" + serverName).toLowerCase(Locale.ROOT);
-        Predicate<String> digestUriTest = defaultDigestUri::equals;
-
+        final Predicate<String> protocolTest;
         String alternativeProtocols = (String)props.get(WildFlySasl.ALTERNATIVE_PROTOCOLS);
-        if (alternativeProtocols == null) alternativeProtocols = (String)props.get(WildFlySasl.ALTERNATIVE_PROTOCOLS);
         if (alternativeProtocols != null) {
-            final Set<String> acceptableUris = new HashSet<>();
+            final Set<String> acceptableProtocols = new HashSet<>();
+            acceptableProtocols.add(protocol.toLowerCase(Locale.ROOT));
+
             StringTokenizer parser = new StringTokenizer(alternativeProtocols, ", \t\n");
             while (parser.hasMoreTokens()) {
-                String digestUri = (parser.nextToken().trim() + "/" + serverName).toLowerCase(Locale.ROOT);
-                acceptableUris.add(digestUri);
+                acceptableProtocols.add(parser.nextToken().trim().toLowerCase(Locale.ROOT));
             }
-            digestUriTest = digestUriTest.or(acceptableUris::contains);
+            protocolTest = acceptableProtocols::contains;
+        } else {
+            protocolTest = protocol.toLowerCase(Locale.ROOT)::equals;
         }
 
-        final DigestSaslServer server = new DigestSaslServer(realms, defaultRealm, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, digestUriTest, providers);
+        final DigestSaslServer server = new DigestSaslServer(realms, defaultRealm, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, protocolTest, providers);
         server.init();
         return server;
     }
