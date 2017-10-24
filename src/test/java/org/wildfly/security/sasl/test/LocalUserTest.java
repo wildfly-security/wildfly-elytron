@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
@@ -408,6 +409,33 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue("Temporary file was created.", file.exists());
         server.dispose();
         assertFalse("Temporary file was deleted.", file.exists());
+    }
+
+    /**
+     * Test a successful exchange with minimal callback handler.
+     */
+    @Test
+    public void testMinimalCallbackHandler() throws Exception {
+        SaslServer server = new SaslServerBuilder(LocalUserServerFactory.class, LOCAL_USER)
+                .setUserName("George")
+                .build();
+
+        CallbackHandler clientCallback = callbacks -> {
+            throw new UnsupportedCallbackException(null);
+        };
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, "George", "TestProtocol", "TestServer", Collections.emptyMap(), clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] response = client.evaluateChallenge(new byte[0]);
+        byte[] challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+
+        server.dispose();
     }
 
 

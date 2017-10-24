@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
@@ -112,9 +113,14 @@ public final class LocalUserClient extends AbstractSaslClient {
                     final NameCallback nameCallback = authenticationId != null && ! authenticationId.isEmpty() ?
                             new OptionalNameCallback("User name", authenticationId) : new OptionalNameCallback("User name");
                     final RealmCallback realmCallback = new RealmCallback("User realm");
-                    handleCallbacks(nameCallback, realmCallback);
-                    authenticationId = nameCallback.getName();
-                    authenticationRealm = realmCallback.getText();
+
+                    try {
+                        tryHandleCallbacks(nameCallback, realmCallback);
+                        authenticationId = nameCallback.getName();
+                        authenticationRealm = realmCallback.getText();
+                    } catch (UnsupportedCallbackException e) {
+                        log.trace("CallbackHandler does not support name or realm callback", e);
+                    }
                 }
                 if (authenticationId == null) authenticationId = "";
                 if (authenticationRealm == null) authenticationRealm = "";
