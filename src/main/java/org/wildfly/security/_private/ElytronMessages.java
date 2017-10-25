@@ -647,6 +647,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
     ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
 
+    @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
+    GeneralSecurityException initialLoginSkipped(long seconds);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
