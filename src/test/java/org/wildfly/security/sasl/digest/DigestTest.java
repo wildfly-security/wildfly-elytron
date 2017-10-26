@@ -500,7 +500,7 @@ public class DigestTest extends BaseTestCase {
                 .addMechanismRealm("TestRealm")
                 .build();
 
-        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestRealm", null);
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestRealm", null, "George");
 
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
@@ -531,7 +531,7 @@ public class DigestTest extends BaseTestCase {
                 .build();
 
 
-        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestServer", null);
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestServer", null, "George");
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
@@ -560,7 +560,7 @@ public class DigestTest extends BaseTestCase {
                 .setServerName("TestServer")
                 .build();
 
-        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "bad", "TestRealm", null);
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "bad", "TestRealm", null, "George");
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
 
@@ -579,6 +579,7 @@ public class DigestTest extends BaseTestCase {
 
     /**
      * Test that verification fails for a bad username with a pre-hashed password.
+     * Client should fail because it does not have digest for username Borris, only for George.
      */
     @Test
     public void testBadUsername_PreHashedClient() throws Exception {
@@ -592,7 +593,7 @@ public class DigestTest extends BaseTestCase {
                 .setServerName("TestServer")
                 .build();
 
-        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("Borris", "gpwd", "TestRealm", null);
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("Borris", "gpwd", "TestRealm", null, "George");
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
@@ -622,7 +623,7 @@ public class DigestTest extends BaseTestCase {
                 .setServerName("TestServer")
                 .build();
 
-        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "BadRealm", "BadRealm");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "BadRealm", "TestRealm", "George");
 
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");

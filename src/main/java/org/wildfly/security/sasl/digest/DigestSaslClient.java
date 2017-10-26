@@ -36,10 +36,6 @@ import java.util.LinkedList;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.RealmCallback;
-import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
@@ -68,7 +64,6 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     private int maxbuf = DEFAULT_MAXBUF;
     private String cipher_opts;
 
-    private final String authorizationId;
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
 
@@ -207,46 +202,17 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
             digestResponse.append(DELIMITER);
         }
 
-        String realm = null;
-        if (realms != null && realms.length > 0) {
-            try {
-                if (realms.length > 1) {
-                    final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
-                    tryHandleCallbacks(realmChoiceCallBack);
-                    realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
-                } else {
-                    realm = realms[0];
-                }
-            } catch (UnsupportedCallbackException e) {
-                throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
-            }
+        username = authorizationId; // default username is authzid
+
+        if (realms != null && realms.length >= 1) {
+            realm = realms[0]; // default realm is first realm from selection
         }
 
-        NameCallback nameCallback = authorizationId != null && ! authorizationId.isEmpty() ?
-                new NameCallback("User name", authorizationId) : new NameCallback("User name");
+        byte[] digest_urp = handleUserRealmPasswordCallbacks(realms, false, false);
 
-        // get password
-        RealmCallback realmCallback = realm != null ?
-                new RealmCallback("User realm", realm) : new RealmCallback("User realm");
-        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback, false);
-        if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, false, false);
-        }
-        if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false, false);
-        }
-
-        String userName = nameCallback.getName();
-        if (userName == null) {
-            throw saslDigest.mechNotProvidedUserName().toSaslException();
-        }
-        if (digest_urp == null) {
-            throw saslDigest.mechCallbackHandlerDoesNotSupportCredentialAcquisition(null).toSaslException();
-        }
-        realm = realmCallback.getText();
         // username
         digestResponse.append("username=\"");
-        digestResponse.append(DigestQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
+        digestResponse.append(DigestQuote.quote(username).getBytes(serverHashedURPUsingcharset));
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
@@ -327,7 +293,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     }
 
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
-        byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
+        byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authorizationId, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
             throw saslDigest.mechServerAuthenticityCannotBeVerified().toSaslException();
         }
