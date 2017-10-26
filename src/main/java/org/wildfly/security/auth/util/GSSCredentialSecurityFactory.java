@@ -131,7 +131,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         private boolean debug;
         private boolean wrapGssCredential;
         private boolean checkKeyTab;
-        private long lastFailTime = 0;
+        private volatile long lastFailTime = 0;
         private long failCache = 0;
         private Map<String, Object> options;
 
