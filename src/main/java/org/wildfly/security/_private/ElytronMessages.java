@@ -1894,6 +1894,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10016, value = "Unable to determine key size")
     IllegalArgumentException unableToDetermineKeySize();
 
+    @Message(id = 10017, value = "No DN given")
+    IllegalArgumentException noDnGiven();
+
+    @Message(id = 10018, value = "Failed to generate self-signed X.509 certificate")
+    IllegalArgumentException selfSignedCertificateGenerationFailed(@Cause Exception cause);
+
+    @Message(id = 10019, value = "Unable to determine default compatible signature algorithm name for key algorithm name \"%s\"")
+    IllegalArgumentException unableToDetermineDefaultCompatibleSignatureAlgorithmName(String keyAlgorithmName);
+
     /* Audit Exceptions */
 
     // 11000 - Unused in any Final release
