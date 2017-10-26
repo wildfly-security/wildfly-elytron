@@ -19,6 +19,7 @@
 package org.wildfly.security.x500.cert;
 
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.x500.cert.CertUtil.getDefaultCompatibleSignatureAlgorithmName;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -453,24 +454,6 @@ public final class PKCS10CertificateSigningRequest {
                 return messageDigest.digest();
             } catch (NoSuchAlgorithmException e) {
                 throw new IllegalStateException(e);
-            }
-        }
-
-        private static String getDefaultCompatibleSignatureAlgorithmName(final PrivateKey signingKey) {
-            final String signingKeyAlgorithm = signingKey.getAlgorithm();
-            switch (signingKeyAlgorithm) {
-                case "DSA": {
-                    return "SHA1withDSA";
-                }
-                case "RSA": {
-                    return "SHA256withRSA";
-                }
-                case "EC": {
-                    return "SHA256withECDSA";
-                }
-                default: {
-                    return null;
-                }
             }
         }
     }
