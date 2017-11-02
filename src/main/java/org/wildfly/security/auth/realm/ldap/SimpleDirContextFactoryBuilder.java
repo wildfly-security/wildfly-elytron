@@ -474,7 +474,7 @@ public class SimpleDirContextFactoryBuilder {
                 current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
                 WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
             } else {
-                current = getClass().getClassLoader();
+                current = Thread.currentThread().getContextClassLoader();
                 Thread.currentThread().setContextClassLoader(targetClassLoader);
             }
             return current;
