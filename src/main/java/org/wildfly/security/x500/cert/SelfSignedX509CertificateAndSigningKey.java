@@ -20,6 +20,7 @@ package org.wildfly.security.x500.cert;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.CertUtil.getDefaultCompatibleSignatureAlgorithmName;
+import static org.wildfly.security.x500.cert.CertUtil.getX509CertificateExtension;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -196,6 +197,84 @@ public final class SelfSignedX509CertificateAndSigningKey {
         }
 
         /**
+         * Add an X.509 certificate extension using the given extension name and string value. If an extension with the same name already exists,
+         * an exception is thrown. The following extension names and values are supported:
+         *
+         * <ul>
+         *   <li> {@code name: BasicConstraints} <br/>
+         *        {@code value: ca:{true|false}[,pathlen:<len>]} where {@code ca} indicates whether or not the subject
+         *        is a CA. If {@code ca} is true, {@code pathlen} indicates the path length constraint.
+         *   </li>
+         *   <br/>
+         *   <li> {@code name: KeyUsage} <br/>
+         *        {@code value: usage(,usage)*} where {@code value} is a list of the allowed key usages, where each
+         *        {@code usage} value must be one of the following ({@code usage} values are case-sensitive):
+         *        <ul>
+         *            <li>{@code digitalSignature}</li>
+         *            <li>{@code nonRepudiation}</li>
+         *            <li>{@code keyEncipherment}</li>
+         *            <li>{@code dataEncipherment}</li>
+         *            <li>{@code keyAgreement}</li>
+         *            <li>{@code keyCertSign}</li>
+         *            <li>{@code cRLSign}</li>
+         *            <li>{@code encipherOnly}</li>
+         *            <li>{@code decipherOnly}</li>
+         *        </ul>
+         *   </li>
+         *   <li> {@code name: ExtendedKeyUsage} <br/>
+         *        {@code value: usage(,usage)*} where {@code value} is a list of the allowed key purposes, where each
+         *        {@code usage} value must be one of the following ({@code usage} values are case-sensitive):
+         *        <ul>
+         *            <li>{@code serverAuth}</li>
+         *            <li>{@code clientAuth}</li>
+         *            <li>{@code codeSigning}</li>
+         *            <li>{@code emailProtection}</li>
+         *            <li>{@code timeStamping}</li>
+         *            <li>{@code OCSPSigning}</li>
+         *            <li>any OID string</li>
+         *        </ul>
+         *   </li>
+         *   <li> {@code name SubjectAlternativeName} <br/>
+         *        {@code value: type:val(,type:val)*} where {@code value} is a list of {@code type:val} pairs, where
+         *        {@code type} can be {@code EMAIL}, {@code URI}, {@code DNS}, {@code IP}, or {@code OID} and {@code val}
+         *        is a string value for the {@code type}.
+         *   </li>
+         *   <br/>
+         *   <li> {@code name: IssuerAlternativeName} <br/>
+         *        {@code value: type:val(,type:val)*} where {@code value} is a list of {@code type:val} pairs, where
+         *        {@code type} can be {@code EMAIL}, {@code URI}, {@code DNS}, {@code IP}, or {@code OID} and {@code val}
+         *        is a string value for the {@code type}.
+         *   </li>
+         *   <br/>
+         *   <li> {@code name: AuthorityInformationAccess} <br/>
+         *        {@code value: method:location-type:location-value(,method:location-type:location-value)*} where
+         *        {@code value} is a list of {@code method:location-type:location-value} triples, where {@code method} can be
+         *        {@code ocsp}, {@code caIssuers}, or any OID and {@code location-type:location-value} can be any
+         *        {@code type:val} pair as defined for the {@code SubjectAlternativeName} extension.
+         *   </li>
+         *   <br/>
+         *   <li> {@code name: SubjectInformationAccess} <br/>
+         *        {@code value: method:location-type:location-value(,method:location-type:location-value)*} where
+         *        {@code value} is a list of {@code method:location-type:location-value} triples, where {@code method} can be
+         *        {@code timeStamping}, {@code caRepository}, or any OID and {@code location-type:location-value} can be
+         *        any {@code type:val} pair as defined for the {@code SubjectAlternativeName} extension.
+         *   </li>
+         * </ul>
+         *
+         * @param critical whether the extension should be marked as critical
+         * @param extensionName the extension name (must not be {@code null})
+         * @param extensionValue the extension value, as a string (must not be {@code null})
+         * @return this builder instance
+         * @throws IllegalArgumentException if an extension with the same name has already been added or if an
+         * error occurs while attempting to add the extension
+         */
+        public Builder addExtension(boolean critical, String extensionName, String extensionValue) throws IllegalArgumentException {
+            Assert.checkNotNullParam("name", extensionName);
+            Assert.checkNotNullParam("value", extensionValue);
+            return addExtension(getX509CertificateExtension(critical, extensionName, extensionValue));
+        }
+
+        /**
          * Add or replace an X.509 certificate extension. If an extension with the same OID already exists, it is replaced
          * and returned.
          *
@@ -207,6 +286,22 @@ public final class SelfSignedX509CertificateAndSigningKey {
             final String oid = extension.getId();
             Assert.checkNotNullParam("extension.getOid()", oid);
             return extensionsByOid.put(oid, extension);
+        }
+
+        /**
+         * Add or replace an X.509 certificate extension. If an extension with the same name already exists, it is replaced
+         * and returned. See {@link SelfSignedX509CertificateAndSigningKey.Builder#addExtension(boolean, String, String)}
+         * for the supported extension names and values.
+         *
+         * @param critical whether the extension should be marked as critical
+         * @param extensionName the extension name (must not be {@code null})
+         * @param extensionValue the extension value, as a string (must not be {@code null})
+         * @return the existing extension or {@code null} if no other extension with the same OID existed or if an
+         * error occurs while attempting to add the extension
+         */
+        public X509CertificateExtension addOrReplaceExtension(boolean critical, String extensionName, String extensionValue) {
+            Assert.checkNotNullParam("name", extensionName);
+            return addOrReplaceExtension(getX509CertificateExtension(critical, extensionName, extensionValue));
         }
 
         /**

@@ -107,4 +107,19 @@ public enum KeyUsage {
         return false;
     }
 
+    static KeyUsage forName(final String name) {
+        switch (name) {
+            case "digitalSignature": return digitalSignature;
+            case "nonRepudiation": return nonRepudiation;
+            case "keyEncipherment": return keyEncipherment;
+            case "dataEncipherment": return dataEncipherment;
+            case "keyAgreement": return keyAgreement;
+            case "keyCertSign": return keyCertSign;
+            case "cRLSign": return cRLSign;
+            case "encipherOnly": return encipherOnly;
+            case "decipherOnly": return decipherOnly;
+            default: return null;
+        }
+    }
+
 }

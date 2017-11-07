@@ -144,6 +144,60 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
     }
 
     @Test
+    public void testSelfSignedCertificateWithStringExtensionValues() throws Exception {
+        SelfSignedX509CertificateAndSigningKey selfSignedX509CertificateAndSigningKey = populateBasicBuilder()
+                .addExtension(true, "BasicConstraints", "CA:true,pathlen:2")
+                .addExtension(true, "KeyUsage", "digitalSignature,keyCertSign,cRLSign")
+                .addExtension(false, "ExtendedKeyUsage", "clientAuth,timeStamping")
+                .addExtension(false, "SubjectAlternativeName", "email:bobsmith@example.com,DNS:bobsmith.example.com")
+                .addExtension(false, "IssuerAlternativeName", "IP:10.20.30.40,uri:http://some.url.com")
+                .addExtension(false, "AuthorityInfoAccess", "ocsp:uri:10.20.30.40:8080,caIssuers:DNS:issuers.example.com")
+                .addExtension(false, "SubjectInfoAccess", "timeStamping:IP:11.22.33.44,caRepository:uri:http://another.url.com")
+                .build();
+        X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+
+        assertEquals(2, certificate.getCriticalExtensionOIDs().size());
+        assertEquals(5, certificate.getNonCriticalExtensionOIDs().size());
+
+        assertEquals(2, certificate.getBasicConstraints());
+        boolean[] keyUsage = certificate.getKeyUsage();
+        assertNotNull(keyUsage);
+        assertTrue(KeyUsage.digitalSignature.in(keyUsage));
+        assertTrue(KeyUsage.keyCertSign.in(keyUsage));
+        assertTrue(KeyUsage.cRLSign.in(keyUsage));
+        assertEquals(Arrays.asList(X500.OID_KP_CLIENT_AUTH, X500.OID_KP_TIME_STAMPING), certificate.getExtendedKeyUsage());
+
+        Collection<List<?>> names = certificate.getSubjectAlternativeNames();
+        assertEquals(2, names.size());
+        Iterator<List<?>> iterator = names.iterator();
+        List<?> item = iterator.next();
+        assertEquals(2, item.size());
+        assertEquals(Integer.valueOf(GeneralName.RFC_822_NAME), item.get(0));
+        assertEquals("bobsmith@example.com", item.get(1));
+        item = iterator.next();
+        assertEquals(2, item.size());
+        assertEquals(Integer.valueOf(GeneralName.DNS_NAME), item.get(0));
+        assertEquals("bobsmith.example.com", item.get(1));
+
+        names = certificate.getIssuerAlternativeNames();
+        assertEquals(2, names.size());
+        iterator = names.iterator();
+        item = iterator.next();
+        assertEquals(2, item.size());
+        assertEquals(Integer.valueOf(GeneralName.IP_ADDRESS), item.get(0));
+        assertEquals("10.20.30.40", item.get(1));
+        item = iterator.next();
+        assertEquals(2, item.size());
+        assertEquals(Integer.valueOf(GeneralName.URI_NAME), item.get(0));
+        assertEquals("http://some.url.com", item.get(1));
+
+        byte[] authorityInfoAccessExtension = certificate.getExtensionValue(X500.OID_PE_AUTHORITY_INFO_ACCESS);
+        assertNotNull(authorityInfoAccessExtension);
+        byte[] subjectInfoAccessExtension = certificate.getExtensionValue(X500.OID_PE_SUBJECT_INFO_ACCESS);
+        assertNotNull(subjectInfoAccessExtension);
+    }
+
+    @Test
     public void testSelfSignedCertificateWithNotValidBeforeAndAfterDates() throws Exception {
         final ZonedDateTime notValidBeforeDate = ZonedDateTime.of(2017, 10, 31, 23, 59, 59, 0, ZoneOffset.UTC);
         final ZonedDateTime notValidAfterDate = ZonedDateTime.of(2027, 10, 31, 23, 59, 59, 0, ZoneOffset.UTC);

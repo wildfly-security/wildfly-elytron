@@ -39,7 +39,18 @@ public final class KeyUsageExtension extends X509CertificateExtension {
      * @param keyUsage the key usage bits (must not be {@code null})
      */
     public KeyUsageExtension(final KeyUsage... keyUsage) {
-        super(true);
+        this(true, keyUsage);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param critical {@code true} to mark this extension as critical, {@code false} to mark it as non-critical
+     * @param keyUsage the key usage bits (must not be {@code null})
+     * @since 1.2.0
+     */
+    public KeyUsageExtension(final boolean critical, final KeyUsage... keyUsage) {
+        super(critical);
         Assert.checkNotNullParam("keyUsage", keyUsage);
         this.keyUsage = EnumSet.copyOf(Arrays.asList(keyUsage));
     }

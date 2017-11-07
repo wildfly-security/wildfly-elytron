@@ -1903,6 +1903,21 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10019, value = "Unable to determine default compatible signature algorithm name for key algorithm name \"%s\"")
     IllegalArgumentException unableToDetermineDefaultCompatibleSignatureAlgorithmName(String keyAlgorithmName);
 
+    @Message(id = 10020, value = "Creating an X.509 certificate extension from a string value is not supported for extension name \"%s\"")
+    IllegalArgumentException certificateExtensionCreationFromStringNotSupported(String extensionName);
+
+    @Message(id = 10021, value = "Invalid X.509 certificate extension string value \"%s\"")
+    IllegalArgumentException invalidCertificateExtensionStringValue(String extensionValue);
+
+    @Message(id = 10022, value = "Failed to create X.509 certificate extension from string value")
+    IllegalArgumentException certificateExtensionCreationFromStringFailed(@Cause Exception cause);
+
+    @Message(id = 10023, value = "X.509 certificate extension \"%s\" must be non-critical")
+    IllegalArgumentException certificateExtensionMustBeNonCritical(String extensionName);
+
+    @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
+    IllegalArgumentException invalidCertificateExtensionStringValue();
+
     /* Audit Exceptions */
 
     // 11000 - Unused in any Final release
