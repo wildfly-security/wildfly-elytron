@@ -215,7 +215,7 @@ public class DigestUtil {
             }
         }
 
-        Charset chosenCharset = bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
+        Charset chosenCharset = StandardCharsets.UTF_8; // bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
 
         ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
         urp.append(username.getBytes(chosenCharset));

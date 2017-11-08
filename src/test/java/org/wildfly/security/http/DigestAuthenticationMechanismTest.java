@@ -30,6 +30,7 @@ import java.util.Map;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.SHA256;
+import static org.wildfly.security.http.HttpConstants.SHA512_256;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 
 /**
@@ -100,4 +101,34 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Assert.assertEquals(Status.COMPLETE, request2.getResult());
     }
 
+    @Test
+    public void testSha512_256() throws Exception {
+        mockDigestNonce("5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK");
+        Map<String, Object> props = new HashMap<>();
+        props.put(CONFIG_REALM, "api@example.org");
+        HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA512_256, props, getCallbackHandler("J\u00E4s\u00F8n Doe", "api@example.org", "Secret, or not?"));
+
+        TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
+        mechanism.evaluateRequest(request1);
+        Assert.assertEquals(Status.NO_AUTH, request1.getResult());
+        TestingHttpServerResponse response = request1.getResponse();
+        Assert.assertEquals(UNAUTHORIZED, response.getStatusCode());
+        Assert.assertEquals("Digest realm=\"api@example.org\", nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\", opaque=\"00000000000000000000000000000000\", algorithm=SHA-512-256, qop=auth", response.getAuthenticateHeader());
+
+        TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
+                "Digest username=\"J\u00E4s\u00F8n Doe\",\n" + // TODO: username*=UTF-8''J%C3%A4s%C3%B8n%20Doe,
+                "       realm=\"api@example.org\",\n" +
+                "       uri=\"/doe.json\",\n" +
+                "       algorithm=SHA-512-256,\n" +
+                "       nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\",\n" +
+                "       nc=00000001,\n" +
+                "       cnonce=\"NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v\",\n" +
+                "       qop=auth,\n" +
+                "       response=\"3798d4131c277846293534c3edc11bd8a5e4cdcbff78b05db9d95eeb1cec68a5\",\n" +
+                "       opaque=\"00000000000000000000000000000000\",\n" +
+                "       userhash=false"
+        });
+        mechanism.evaluateRequest(request2);
+        Assert.assertEquals(Status.COMPLETE, request2.getResult());
+    }
 }

@@ -138,6 +138,8 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
                 return MessageDigest.getInstance("SHA-384");
             case ALGORITHM_DIGEST_SHA_512:
                 return MessageDigest.getInstance("SHA-512");
+            case ALGORITHM_DIGEST_SHA_512_256:
+                return MessageDigest.getInstance("SHA-512-256");
             default:
                 throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }

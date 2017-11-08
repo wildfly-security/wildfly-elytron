@@ -466,6 +466,7 @@ public abstract class SaslMechanismPredicate {
                 case "SHA-256": return SaslMechanismInformation.HASH_SHA_256.test(mechName);
                 case "SHA-384": return SaslMechanismInformation.HASH_SHA_384.test(mechName);
                 case "SHA-512": return SaslMechanismInformation.HASH_SHA_512.test(mechName);
+                case "SHA-512-256": return SaslMechanismInformation.HASH_SHA_512_256.test(mechName);
                 default: return false;
             }
         }

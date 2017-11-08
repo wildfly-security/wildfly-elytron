@@ -69,7 +69,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteIterator;
 
 /**
- * Implementation of the HTTP DIGEST authentication mechanism.
+ * Implementation of the HTTP DIGEST authentication mechanism as defined in RFC 7616.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

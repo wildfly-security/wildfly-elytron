@@ -59,6 +59,11 @@ public interface DigestPassword extends OneWayPassword {
     String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
 
     /**
+     * The algorithm name "digest-sha-512-256". (Using SHA-512/256)
+     */
+    String ALGORITHM_DIGEST_SHA_512_256 = "digest-sha-512-256";
+
+    /**
      * Get the username this {@link Password} is associated with.
      * <p>
      * Generally a {@link Password} should not need to know this information but this is an integral part of how the

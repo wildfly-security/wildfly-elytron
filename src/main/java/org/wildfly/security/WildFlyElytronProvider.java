@@ -33,6 +33,7 @@ import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_384;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512_256;
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_128;
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256;
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_HMAC_SHA224_AES_128;
@@ -114,6 +115,7 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.credential.store.impl.MapCredentialStore;
 import org.wildfly.security.credential.store.impl.VaultCredentialStore;
+import org.wildfly.security.digest.Sha512_256MessageDigest;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.key.RSAParameterSpiImpl;
@@ -164,6 +166,7 @@ public class WildFlyElytronProvider extends Provider {
         putAlgorithmParametersImplementations();
         put("Alg.Alias.Data.OID.1.2.840.113549.1.7.1", "Data");
         putService(new Service(this, "SecretKeyFactory", "1.2.840.113549.1.7.1", RawSecretKeyFactory.class.getName(), Collections.emptyList(), Collections.emptyMap()));
+        putService(new Service(this, "MessageDigest", "SHA-512-256", Sha512_256MessageDigest.class.getName(), Collections.emptyList(), Collections.emptyMap()));
     }
 
     private void putAlgorithmParametersImplementations() {
@@ -182,6 +185,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_256, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_384, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_512, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_512_256, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
@@ -274,6 +278,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_512_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));

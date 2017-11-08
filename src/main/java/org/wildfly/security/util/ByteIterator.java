@@ -111,7 +111,7 @@ public abstract class ByteIterator extends NumericIterator {
     }
 
     public long getBE64() throws NoSuchElementException {
-        return (long)next() << 52 | (long)next() << 48 | (long)next() << 40 | (long)next() << 32 | (long)next() << 24 | (long)next() << 16 | (long)next() << 8 | (long)next();
+        return (long)next() << 56 | (long)next() << 48 | (long)next() << 40 | (long)next() << 32 | (long)next() << 24 | (long)next() << 16 | (long)next() << 8 | (long)next();
     }
 
     public int getPackedBE32() throws NoSuchElementException {
