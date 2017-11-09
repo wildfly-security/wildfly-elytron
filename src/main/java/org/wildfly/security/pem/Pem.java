@@ -41,6 +41,7 @@ import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.x500.cert.PKCS10CertificateSigningRequest;
 
 /**
  * A class containing utilities which can handle the PEM format.  See <a href="https://tools.ietf.org/html/rfc7468">RFC 7468</a>
@@ -53,6 +54,7 @@ public final class Pem {
     private static final String PUBLIC_KEY_FORMAT = "PUBLIC KEY";
     private static final String CERTIFICATE_FORMAT = "CERTIFICATE";
     private static final String PRIVATE_KEY_FORMAT = "PRIVATE KEY";
+    private static final String CERTIFICATE_REQUEST_FORMAT = "CERTIFICATE REQUEST";
 
     /**
      * Parse arbitrary PEM content.  The given function is used to parse the content of the PEM representation and produce
@@ -316,5 +318,18 @@ public final class Pem {
         } catch (Exception e) {
             throw log.publicKeyParseError(e);
         }
+    }
+
+    /**
+     * Generate PEM content containing a PKCS #10 certificate signing request.
+     *
+     * @param target the target byte string builder (must not be {@code null})
+     * @param certificateSigningRequest the PKCS #10 certificate signing request (must not be {@code null})
+     * @since 1.2.0
+     */
+    public static void generatePemPKCS10CertificateSigningRequest(ByteStringBuilder target, PKCS10CertificateSigningRequest certificateSigningRequest) {
+        Assert.checkNotNullParam("target", target);
+        Assert.checkNotNullParam("certificateSigningRequest", certificateSigningRequest);
+        generatePemContent(target, CERTIFICATE_REQUEST_FORMAT, ByteIterator.ofBytes(certificateSigningRequest.getEncoded()));
     }
 }
