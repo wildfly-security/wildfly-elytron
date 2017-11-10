@@ -69,56 +69,70 @@ public final class FlexibleIdentityAssociation implements Scoped, Supplier<Secur
     }
 
     public <T, U, R> R runAsFunction(final BiFunction<T, U, R> action, final T parameter1, final U parameter2) {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            return action.apply(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        return securityIdentity.runAsSupplierEx(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                return action.apply(parameter1, parameter2);
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 
     public <T, U> void runAsConsumer(final BiConsumer<T, U> action, final T parameter1, final U parameter2) {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            action.accept(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        securityIdentity.runAs(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                action.accept(parameter1, parameter2);
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 
     public <T> void runAsObjIntConsumer(final ObjIntConsumer<T> action, final T parameter1, final int parameter2) {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            action.accept(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        securityIdentity.runAs(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                action.accept(parameter1, parameter2);
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 
     public <T, U, R, E extends Exception> R runAsFunctionEx(final ExceptionBiFunction<T, U, R, E> action, final T parameter1, final U parameter2) throws E {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            return action.apply(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        return securityIdentity.runAsSupplierEx(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                return action.apply(parameter1, parameter2);
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 
     public <T, U, E extends Exception> void runAsConsumerEx(final ExceptionBiConsumer<T, U, E> action, final T parameter1, final U parameter2) throws E {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            action.accept(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        securityIdentity.runAsSupplierEx(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                action.accept(parameter1, parameter2);
+                return null;
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 
     public <T, E extends Exception> void runAsObjIntConsumerEx(final ExceptionObjIntConsumer<T, E> action, final T parameter1, final int parameter2) throws E {
-        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
-        try {
-            action.accept(parameter1, parameter2);
-        } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
-        }
+        securityIdentity.runAsSupplierEx(() -> {
+            final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+            try {
+                action.accept(parameter1, parameter2);
+                return null;
+            } finally {
+                securityDomain.setCurrentSecurityIdentity(old);
+            }
+        });
     }
 }
