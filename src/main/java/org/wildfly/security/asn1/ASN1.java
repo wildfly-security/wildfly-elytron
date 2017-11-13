@@ -131,6 +131,13 @@ public class ASN1 {
      */
     public static final String OID_SHA1_WITH_DSA = "1.2.840.10040.4.3";
 
+    /**
+     * Object identifier for the SHA256 with DSA signature algorithm.
+     *
+     * @since 1.2.0
+     */
+    public static final String OID_SHA256_WITH_DSA = "2.16.840.1.101.3.4.3.2";
+
     // 1.2.840.10045
 
     /**
@@ -361,6 +368,9 @@ public class ASN1 {
             }
             case "SHA1withDSA": {
                 return OID_SHA1_WITH_DSA;
+            }
+            case "SHA256withDSA": {
+                return OID_SHA256_WITH_DSA;
             }
             case "NONEwithECDSA": {
                 return null;
