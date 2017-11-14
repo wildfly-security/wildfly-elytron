@@ -61,20 +61,28 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Assert.checkNotNullParam("cbh", cbh);
         if (props == null) props = Collections.emptyMap();
-        final ChannelBindingCallback callback = new ChannelBindingCallback();
-        try {
-            cbh.handle(new Callback[] { callback });
-        } catch (SaslException e) {
-            throw e;
-        } catch (IOException e) {
-            throw saslScram.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
-        } catch (UnsupportedCallbackException e) {
-            // ignored
-        }
-        final String bindingType = callback.getBindingType();
-        final byte[] bindingData = callback.getBindingData();
-        boolean bindingOk = bindingType != null && bindingData != null;
+
         boolean bindingRequired = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
+        boolean bindingUnsupported = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED));
+
+        ChannelBindingCallback callback = null;
+        boolean bindingOk = false;
+        if (! bindingUnsupported) {
+            callback = new ChannelBindingCallback();
+            try {
+                cbh.handle(new Callback[] { callback });
+            } catch (SaslException e) {
+                throw e;
+            } catch (IOException e) {
+                throw saslScram.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
+            } catch (UnsupportedCallbackException e) {
+                // ignored
+            }
+            final String bindingType = callback.getBindingType();
+            final byte[] bindingData = callback.getBindingData();
+            bindingOk = bindingType != null && bindingData != null;
+        }
+
         int minimumIterationCount = ScramUtil.getIntProperty(props, WildFlySasl.SCRAM_MIN_ITERATION_COUNT, 4096);
         int maximumIterationCount = ScramUtil.getIntProperty(props, WildFlySasl.SCRAM_MAX_ITERATION_COUNT, 32768);
         try {
@@ -129,15 +137,28 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
-            return new String[] {
-                SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
-                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS
-            };
-        } else {
-            return new String[] {
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED))) {
+                return WildFlySasl.NO_NAMES;
+            }
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+                return new String[] {
+                        SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
+                        SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
+                        SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
+                        SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS
+                };
+            }
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED))) {
+                return new String[] {
+                        SaslMechanismInformation.Names.SCRAM_SHA_512,
+                        SaslMechanismInformation.Names.SCRAM_SHA_384,
+                        SaslMechanismInformation.Names.SCRAM_SHA_256,
+                        SaslMechanismInformation.Names.SCRAM_SHA_1
+                };
+            }
+        }
+        return new String[] {
                 SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
                 SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
                 SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
@@ -146,7 +167,6 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
                 SaslMechanismInformation.Names.SCRAM_SHA_384,
                 SaslMechanismInformation.Names.SCRAM_SHA_256,
                 SaslMechanismInformation.Names.SCRAM_SHA_1
-            };
-        }
+        };
     }
 }

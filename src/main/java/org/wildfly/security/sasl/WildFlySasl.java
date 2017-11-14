@@ -82,10 +82,17 @@ public final class WildFlySasl {
 
     /**
      * A flag indicating that a mechanism which supports channel binding is required.  A value of "true" indicates that
-     * channel binding is required; any other value (or lack of this property) indicates that channel binding is not
-     * required.
+     * channel binding is required and all non-PLUS SCRAM and GS2 SASL mechanisms should be disabled; any other value
+     * (or lack of this property) indicates that channel binding is not required.
      */
     public static final String CHANNEL_BINDING_REQUIRED = "wildfly.sasl.channel-binding-required";
+
+    /**
+     * A flag allowing to use non-PLUS SCRAM mechanism even when channel binding is available (authenticating over SSL)
+     * and PLUS mechanisms are supported by server. A value of "true" indicates that PLUS SCRAM and GS2 mechanisms
+     * should be disabled; any other value (or lack of this property) indicates that channel binding can be used.
+     */
+    public static final String CHANNEL_BINDING_UNSUPPORTED = "wildfly.sasl.channel-binding-unsupported";
 
     /**
      * A flag indicating that all possible supported mechanism names should be returned, regardless of the presence

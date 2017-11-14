@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.saslGs2;
 import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -63,9 +64,32 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         this(GSSManager.getInstance());
     }
 
-    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props,
+    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, Map<String, ?> props,
             final CallbackHandler cbh) throws SaslException {
         Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
+        boolean bindingRequired = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
+        boolean bindingUnsupported = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED));
+
+        boolean bindingOk = false;
+        String bindingType = null;
+        byte[] bindingData = null;
+        if (! bindingUnsupported) {
+            ChannelBindingCallback callback = new ChannelBindingCallback();
+            try {
+                cbh.handle(new Callback[] { callback });
+            } catch (SaslException e) {
+                throw e;
+            } catch (IOException e) {
+                throw saslGs2.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
+            } catch (UnsupportedCallbackException e) {
+                // ignored
+            }
+            bindingType = callback.getBindingType();
+            bindingData = callback.getBindingData();
+            bindingOk = bindingType != null && bindingData != null;
+        }
+
         GSSManager gssManager = this.gssManager;
         final String[] supportedMechs;
         try {
@@ -74,27 +98,10 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
             throw saslGs2.mechGettingSupportedMechanismsFailed(e).toSaslException();
         }
         if (! Gs2Util.isIncluded(mechanism, supportedMechs)) return null;
+        boolean plus = mechanism.endsWith(PLUS_SUFFIX);
+        if (plus && ! bindingOk) return null;
+        if (! plus && bindingRequired) return null;
 
-        boolean plus = false;
-        final ChannelBindingCallback channelBindingCallback = new ChannelBindingCallback();
-        try {
-            cbh.handle(new Callback[] { channelBindingCallback });
-        } catch (SaslException e) {
-            throw e;
-        } catch (IOException e) {
-            throw saslGs2.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
-        } catch (UnsupportedCallbackException e) {
-            // Ignored
-        }
-        final String bindingType = channelBindingCallback.getBindingType();
-        final byte[] bindingData = channelBindingCallback.getBindingData();
-        boolean bindingOk = (bindingType != null) && (bindingData != null);
-        boolean bindingRequired = props != null && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
-        if (mechanism.endsWith(PLUS_SUFFIX)) {
-            if (! bindingOk) return null;
-            plus = true;
-        }
-        if (bindingRequired && ! plus) return null;
         final Gs2SaslServer server = new Gs2SaslServer(mechanism, protocol, serverName, cbh, gssManager, plus, bindingType, bindingData);
         server.init();
         return server;
@@ -105,12 +112,21 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         try {
             names = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
+            saslGs2.trace("Obtaining GS2 mechanism names has failed", e);
             return WildFlySasl.NO_NAMES;
         }
-        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
-            return Gs2Util.getPlusMechanisms(names);
-        } else {
-            return names;
+
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED))) {
+                return WildFlySasl.NO_NAMES;
+            }
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+                return Gs2Util.getPlusMechanisms(names);
+            }
+            if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED))) {
+                return Gs2Util.getNonPlusMechanisms(names);
+            }
         }
+        return names;
     }
 }
