@@ -18,8 +18,19 @@
 
 package org.wildfly.security.x500;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
+import java.security.Principal;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import org.wildfly.common.Assert;
 
 /**
  * Useful X500 constants and utilities.
@@ -137,4 +148,113 @@ public final class X500 {
             return Arrays.copyOf(certificates, certificates.length, X509Certificate[].class);
         }
     }
+
+    /**
+     * Convert an unordered array of certificates into an ordered X.509 certificate chain.
+     *
+     * @param firstPublicKey the public key that should be in the first certificate in the ordered X.509 certificate
+     *                       chain (may not be {@code null})
+     * @param certificates the unordered array of certificates (may not be {@code null})
+     * @return the ordered X.509 certificate chain, as an array
+     * @throws IllegalArgumentException if the given unordered array of certificates cannot be converted into an ordered X.509 certificate chain
+     */
+    public static X509Certificate[] asOrderedX509CertificateChain(PublicKey firstPublicKey, Certificate[] certificates) throws IllegalArgumentException {
+        Assert.checkNotNullParam("firstPublicKey", firstPublicKey);
+        Assert.checkNotNullParam("certificates", certificates);
+        X509Certificate[] x509Certificates;
+        try {
+            x509Certificates = asX509CertificateArray(certificates);
+        } catch (ArrayStoreException e) {
+            throw log.nonX509CertificateInCertificateArray();
+        }
+        boolean foundFirstCertificate = false;
+        for (int i = 0; i < x509Certificates.length; i++) {
+            if (x509Certificates[i].getPublicKey().equals(firstPublicKey)) {
+                foundFirstCertificate = true;
+                swapCertificates(x509Certificates, 0, i);
+                break;
+            }
+        }
+        if (! foundFirstCertificate) {
+            throw log.startingPublicKeyNotFoundInCertificateArray();
+        }
+        X509Certificate currentCertificate = x509Certificates[0];
+        for (int i = 1; i < x509Certificates.length - 1; i++) {
+            boolean issuerCertificateFound = false;
+            for (int j = i; j < x509Certificates.length; j++) {
+                if (issuedBy(currentCertificate, x509Certificates[j])) {
+                    swapCertificates(x509Certificates, i, j);
+                    issuerCertificateFound = true;
+                    currentCertificate = x509Certificates[i];
+                    break;
+                }
+            }
+            if (! issuerCertificateFound) {
+                throw log.incompleteCertificateArray();
+            }
+        }
+        return x509Certificates;
+    }
+
+    /**
+     * Create an X.509 certificate chain given the first certificate that should be in the chain and a map of certificates.
+     *
+     * @param firstCertificate the certificate that should be first in the newly created X.509 certificate chain
+     * @param certificatesMap a map of distinguished names to certificates to use to create the X.509 certificate chain
+     * @return the newly created X.509 certificate chain, as an array
+     * @throws IllegalArgumentException if the X.509 certificate chain could not be created
+     */
+    public static X509Certificate[] createX509CertificateChain(final X509Certificate firstCertificate,
+                                                               final HashMap<Principal, HashSet<X509Certificate>> certificatesMap) throws IllegalArgumentException {
+        Assert.checkNotNullParam("firstCertificate", firstCertificate);
+        Assert.checkNotNullParam("certificatesMap", certificatesMap);
+        final ArrayList<X509Certificate> certificateChain = new ArrayList<>();
+        if (createX509CertificateChain(firstCertificate, certificateChain, certificatesMap)) {
+            Collections.reverse(certificateChain);
+            return certificateChain.toArray(new X509Certificate[certificateChain.size()]);
+        }
+        throw log.unableToCreateCertificateChainFromCertificateMap();
+    }
+
+    private static void swapCertificates(Certificate[] certificates, int i, int j) {
+        Certificate tempCertificate = certificates[i];
+        certificates[i] = certificates[j];
+        certificates[j] = tempCertificate;
+    }
+
+    private static boolean issuedBy(final X509Certificate certificate, X509Certificate issuer) {
+        if (issuer.getSubjectDN().equals(certificate.getIssuerDN())) {
+            try {
+                certificate.verify(issuer.getPublicKey());
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static boolean createX509CertificateChain(final X509Certificate firstCertificate, final ArrayList<X509Certificate> certificateChain,
+                                                      final HashMap<Principal, HashSet<X509Certificate>> certificatesMap) {
+        if (issuedBy(firstCertificate, firstCertificate)) {
+            // self-signed
+            certificateChain.add(firstCertificate);
+            return true;
+        }
+        final HashSet<X509Certificate> issuerCertificates = certificatesMap.get(firstCertificate.getIssuerDN());
+        if (issuerCertificates == null || issuerCertificates.isEmpty()) {
+            return false;
+        }
+        for (X509Certificate issuerCertificate : issuerCertificates) {
+            if (issuedBy(firstCertificate, issuerCertificate)) {
+                // recurse
+                if (createX509CertificateChain(issuerCertificate, certificateChain, certificatesMap)) {
+                    certificateChain.add(firstCertificate);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

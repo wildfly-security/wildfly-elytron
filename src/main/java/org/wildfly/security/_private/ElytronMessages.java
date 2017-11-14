@@ -1918,6 +1918,18 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
     IllegalArgumentException invalidCertificateExtensionStringValue();
 
+    @Message(id = 10025, value = "Non-X.509 certificate found in certificate array")
+    IllegalArgumentException nonX509CertificateInCertificateArray();
+
+    @Message(id = 10026, value = "Starting public key not found in certificate array")
+    IllegalArgumentException startingPublicKeyNotFoundInCertificateArray();
+
+    @Message(id = 10027, value = "Incomplete certificate array")
+    IllegalArgumentException incompleteCertificateArray();
+
+    @Message(id = 10028, value = "Unable to create X.509 certificate chain from map of certificates")
+    IllegalArgumentException unableToCreateCertificateChainFromCertificateMap();
+
     /* Audit Exceptions */
 
     // 11000 - Unused in any Final release
