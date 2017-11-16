@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
+import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_384;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
 
 import java.security.Provider;
@@ -77,6 +78,11 @@ public class DigestPasswordTest {
     @Test
     public void testSHA256() throws Exception {
         performTest(ALGORITHM_DIGEST_SHA_256, "220a5eadca08cfb9523ff67b0e40f63909864a124b71584bf2b28ae8538f1150");
+    }
+
+    @Test
+    public void testSHA384() throws Exception {
+        performTest(ALGORITHM_DIGEST_SHA_384, "3f1e6e07e78fbca5f9ffc25703cb523a29fb4dc0f43a539e44b81de2dfb24dd943e955ed3e4ae46c578456a6edb20d47");
     }
 
     @Test

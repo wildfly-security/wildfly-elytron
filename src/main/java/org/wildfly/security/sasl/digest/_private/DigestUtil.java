@@ -62,6 +62,7 @@ public final class DigestUtil {
             case SaslMechanismInformation.Names.DIGEST_MD5: return DigestPassword.ALGORITHM_DIGEST_MD5;
             case SaslMechanismInformation.Names.DIGEST_SHA: return DigestPassword.ALGORITHM_DIGEST_SHA;
             case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
             case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
             default: return null;
         }
@@ -72,6 +73,7 @@ public final class DigestUtil {
             case SaslMechanismInformation.Names.DIGEST_MD5: return "MD5";
             case SaslMechanismInformation.Names.DIGEST_SHA: return "SHA";
             case SaslMechanismInformation.Names.DIGEST_SHA_256: return "SHA-256";
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: return "SHA-384";
             case SaslMechanismInformation.Names.DIGEST_SHA_512: return "SHA-512";
             default: return null;
         }

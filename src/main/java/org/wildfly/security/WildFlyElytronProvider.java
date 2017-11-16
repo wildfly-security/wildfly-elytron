@@ -31,6 +31,7 @@ import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_C
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
+import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_384;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_128;
 import static org.wildfly.security.password.interfaces.MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256;
@@ -179,6 +180,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_MD5, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_256, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_384, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_512, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
@@ -270,6 +272,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
