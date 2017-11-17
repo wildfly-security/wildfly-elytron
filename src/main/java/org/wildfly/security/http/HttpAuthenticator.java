@@ -148,7 +148,7 @@ public class HttpAuthenticator {
                                     statusSet = true;
                                 }
                             } catch (HttpAuthenticationException e) {
-                                log.trace("HTTP authentication mechanism unable to send challenge.", e);
+                                log.trace("HTTP Authentication mechanism unable to send challenge.", e);
                             }
                         }
                         if (atLeastOneChallenge == false) {

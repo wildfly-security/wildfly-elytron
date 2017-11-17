@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslScram;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -53,7 +53,7 @@ final class ScramSaslServer extends AbstractSaslServer {
     private ScramInitialClientMessage initialClientMessage;
 
     ScramSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final ScramServer scramServer, final ChannelBindingCallback bindingCallback) {
-        super(mechanismName, protocol, serverName, callbackHandler);
+        super(mechanismName, protocol, serverName, callbackHandler, saslScram);
         this.scramServer = scramServer;
         this.bindingCallback = bindingCallback;
         setNegotiationState(S_NO_MESSAGE);
@@ -78,7 +78,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
                 case S_FIRST_MESSAGE: {
                     if (response == null || response.length == 0) {
-                        throw log.mechClientRefusesToInitiateAuthentication(getMechanismName()).toSaslException();
+                        throw saslScram.mechClientRefusesToInitiateAuthentication().toSaslException();
                     }
                     final ScramInitialClientMessage initialClientMessage = scramServer.parseInitialClientMessage(bindingCallback, response);
                     final ScramInitialServerResult initialServerResult = scramServer.evaluateInitialResponse(initialClientMessage);
@@ -99,21 +99,21 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
                 case COMPLETE_STATE: {
                     if (response != null && response.length != 0) {
-                        throw log.mechClientSentExtraMessage(getMechanismName()).toSaslException();
+                        throw saslScram.mechClientSentExtraMessage().toSaslException();
                     }
                     ok = true;
                     return null;
                 }
                 case FAILED_STATE: {
-                    throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                    throw saslScram.mechAuthenticationFailed().toSaslException();
                 }
             }
             throw Assert.impossibleSwitchCase(state);
         } catch (ScramServerException cause) {
             ok = false;
             setNegotiationState(FAILED_STATE);
-            if (log.isDebugEnabled()) {
-                log.debugf(cause, "[%s] error when evaluating message from client during state [%s]: %s", getMechanismName(), state, cause.getError().getText());
+            if (saslScram.isDebugEnabled()) {
+                saslScram.debugf(cause, "[%s] error when evaluating message from client during state [%s]: %s", getMechanismName(), state, cause.getError().getText());
             }
             return cause.getError().getMessageBytes();
         } catch (AuthenticationMechanismException e) {

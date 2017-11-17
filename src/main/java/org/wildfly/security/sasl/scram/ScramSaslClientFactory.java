@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslScram;
 
 import java.io.IOException;
 import java.security.Provider;
@@ -68,7 +68,7 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
+            throw saslScram.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
         } catch (UnsupportedCallbackException e) {
             // ignored
         }

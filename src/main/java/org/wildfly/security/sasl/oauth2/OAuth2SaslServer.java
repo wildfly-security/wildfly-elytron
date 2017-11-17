@@ -27,7 +27,7 @@ import org.wildfly.security.sasl.util.AbstractSaslServer;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOAuth2;
 
 /**
  * An OAuth2 Sasl Server based on RFC-7628.
@@ -41,7 +41,7 @@ final class OAuth2SaslServer extends AbstractSaslServer {
     private OAuth2Server oAuth2Server;
 
     OAuth2SaslServer(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, OAuth2Server oAuth2Server) {
-        super(mechanismName, protocol, serverName, callbackHandler);
+        super(mechanismName, protocol, serverName, callbackHandler, saslOAuth2);
         this.oAuth2Server = oAuth2Server;
         setNegotiationState(S_FIRST_MESSAGE);
     }
@@ -57,7 +57,7 @@ final class OAuth2SaslServer extends AbstractSaslServer {
             switch (state) {
                 case S_FIRST_MESSAGE: {
                     if (response == null || response.length == 0) {
-                        throw log.mechClientRefusesToInitiateAuthentication(getMechanismName()).toSaslException();
+                        throw saslOAuth2.mechClientRefusesToInitiateAuthentication().toSaslException();
                     }
 
                     OAuth2InitialClientMessage initialClientMessage = this.oAuth2Server.parseInitialClientMessage(response);
@@ -77,17 +77,17 @@ final class OAuth2SaslServer extends AbstractSaslServer {
                 }
                 case S_IN_ERROR: {
                     // client sent dummy client response, server fails the authentication
-                    throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                    throw saslOAuth2.mechAuthenticationFailed().toSaslException();
                 }
                 case COMPLETE_STATE: {
                     if (response != null && response.length != 0) {
-                        throw log.mechClientSentExtraMessage(getMechanismName()).toSaslException();
+                        throw saslOAuth2.mechClientSentExtraMessage().toSaslException();
                     }
                     ok = true;
                     return null;
                 }
                 case FAILED_STATE: {
-                    throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                    throw saslOAuth2.mechAuthenticationFailed().toSaslException();
                 }
             }
             throw Assert.impossibleSwitchCase(state);

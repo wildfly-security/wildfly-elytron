@@ -42,7 +42,7 @@ import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util._private.Arrays2;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslLocal;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -71,7 +71,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
     private final boolean useSecureRandom;
 
     LocalUserServer(final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler callbackHandler) {
-        super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler);
+        super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, saslLocal);
         if (props == null) props = Collections.emptyMap();
         String value;
         if (props.containsKey(LOCAL_USER_CHALLENGE_PATH)) {
@@ -175,14 +175,14 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
                 } catch (IOException e) {
-                    throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
+                    throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
                 }
 
                 final FileOutputStream fos;
                 try {
                     fos = new FileOutputStream(challengeFile);
                 } catch (FileNotFoundException e) {
-                    throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
+                    throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
                 }
                 boolean ok = false;
                 final byte[] bytes;
@@ -194,7 +194,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                         fos.close();
                         ok = true;
                     } catch (IOException e) {
-                        throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
+                        throw saslLocal.mechFailedToCreateChallengeFile(e).toSaslException();
                     }
                 } finally {
                     if (!ok) {
@@ -214,10 +214,10 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                 deleteChallenge();
                 final int length = message.length;
                 if (length < 8) {
-                    throw log.mechInvalidClientMessage(getMechanismName()).toSaslException();
+                    throw saslLocal.mechInvalidClientMessage().toSaslException();
                 }
                 if (!Arrays.equals(challengeBytes, Arrays.copyOf(message, 8))) {
-                    throw log.mechAuthenticationRejectedInvalidProof(getMechanismName()).toSaslException();
+                    throw saslLocal.mechAuthenticationRejectedInvalidProof().toSaslException();
                 }
                 String authenticationRealm;
                 String authenticationId;
@@ -238,7 +238,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                     authenticationId = defaultUser;
                 }
                 if (authenticationId == null || authenticationId.isEmpty()) {
-                    throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
+                    throw saslLocal.mechAuthenticationNameIsEmpty().toSaslException();
                 }
                 if (authorizationId == null || authorizationId.isEmpty()) {
                     // If no authorization ID is specified default to authentication ID
@@ -253,7 +253,7 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
                     handleCallbacks(realmCallback, nameCallback, authorizeCallback);
                 }
                 if (!authorizeCallback.isAuthorized()) {
-                    throw log.mechAuthorizationFailed(getMechanismName(), authenticationId, authorizationId).toSaslException();
+                    throw saslLocal.mechAuthorizationFailed(authenticationId, authorizationId).toSaslException();
                 }
                 negotiationComplete();
                 return null;

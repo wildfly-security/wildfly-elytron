@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.sasl;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -100,7 +100,7 @@ public final class AuthenticationTimeoutSaslServerFactory extends AbstractDelega
         @Override
         public synchronized byte[] evaluateResponse(final byte[] response) throws SaslException {
             if (terminated) {
-                throw log.mechServerTimedOut(getMechanismName()).toSaslException();
+                throw sasl.mechServerTimedOut().toSaslException();
             }
             try {
                 final byte[] challenge = delegate.evaluateResponse(response);

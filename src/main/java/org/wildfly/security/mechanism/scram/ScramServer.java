@@ -21,7 +21,7 @@ package org.wildfly.security.mechanism.scram;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.copyOfRange;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslScram;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -43,7 +43,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
@@ -102,39 +101,39 @@ public final class ScramServer {
             }
             if (cbindFlag == 'p') {
                 if (! mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotSupported(), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType == null || bindingData == null) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
                 }
                 if (bi.next() != '=') {
-                    throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
+                    throw saslScram.mechInvalidMessageReceived();
                 }
                 if (! bindingType.equals(bi.delimitedBy(',').asUtf8String().drainToString())) {
-                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
+                    throw new ScramServerException(saslScram.mechChannelBindingTypeMismatch(), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
                 binding = true;
             } else if (cbindFlag == 'y') {
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = true;
             } else if (cbindFlag == 'n') {
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = false;
             } else {
-                throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             if (bi.next() != ',') {
-                throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
 
             // authorization ID
@@ -142,14 +141,14 @@ public final class ScramServer {
             final String authorizationID;
             if (c == 'a') {
                 if (bi.next() != '=') {
-                    throw log.mechInvalidClientMessage(mechanism.toString());
+                    throw saslScram.mechInvalidClientMessage();
                 }
                 authorizationID = bi.delimitedBy(',').asUtf8String().drainToString();
                 bi.next(); // skip delimiter
             } else if (c == ',') {
                 authorizationID = null;
             } else {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
 
             final int initialPartIndex = bi.offset();
@@ -158,65 +157,65 @@ public final class ScramServer {
             final String authenticationName;
             if (bi.next() == 'n') {
                 if (bi.next() != '=') {
-                    throw log.mechInvalidClientMessage(mechanism.toString());
+                    throw saslScram.mechInvalidClientMessage();
                 }
                 ByteStringBuilder bsb = new ByteStringBuilder();
                 StringPrep.encode(bi.delimitedBy(',').asUtf8String().drainToString(), bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
                 authenticationName = new String(bsb.toArray(), StandardCharsets.UTF_8);
                 bi.next(); // skip delimiter
             } else {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
 
             // random nonce
             if (bi.next() != 'r' || bi.next() != '=') {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
             final byte[] nonce = bi.delimitedBy(',').drain();
 
             if (bi.hasNext()) {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
 
             return new ScramInitialClientMessage(mechanism, authorizationID, authenticationName, binding, bindingType, bindingData, nonce, initialPartIndex, response);
         } catch (NoSuchElementException ignored) {
-            throw ElytronMessages.log.mechInvalidMessageReceived(mechanism.toString());
+            throw saslScram.mechInvalidMessageReceived();
         }
     }
 
     public ScramInitialServerResult evaluateInitialResponse(final ScramInitialClientMessage clientMessage) throws AuthenticationMechanismException {
-        final boolean trace = log.isTraceEnabled();
+        final boolean trace = saslScram.isTraceEnabled();
 
         if (clientMessage.getMechanism() != mechanism) {
-            throw log.mechUnmatchedMechanism(mechanism.toString(), clientMessage.getMechanism().toString());
+            throw saslScram.mechUnmatchedMechanism(mechanism.toString(), clientMessage.getMechanism().toString());
         }
 
         // get salted password
         final NameCallback nameCallback = new NameCallback("Remote authentication name", clientMessage.getAuthenticationName());
 
         try {
-            MechanismUtil.handleCallbacks(mechanism.toString(), callbackHandler, nameCallback);
+            MechanismUtil.handleCallbacks(saslScram, callbackHandler, nameCallback);
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerDoesNotSupportUserName(mechanism.toString(), e);
+            throw saslScram.mechCallbackHandlerDoesNotSupportUserName(e);
         }
 
         final IteratedPasswordAlgorithmSpec generateParameters = new IteratedPasswordAlgorithmSpec(
             max(minimumIterationCount, min(maximumIterationCount, ScramDigestPassword.DEFAULT_ITERATION_COUNT))
         );
-        final ScramDigestPassword password = MechanismUtil.getPasswordCredential(clientMessage.getAuthenticationName(), callbackHandler, ScramDigestPassword.class, mechanism.getPasswordAlgorithm(), null, generateParameters, providers);
+        final ScramDigestPassword password = MechanismUtil.getPasswordCredential(clientMessage.getAuthenticationName(), callbackHandler, ScramDigestPassword.class, mechanism.getPasswordAlgorithm(), null, generateParameters, providers, saslScram);
 
         final byte[] saltedPasswordBytes = password.getDigest();
         final int iterationCount = password.getIterationCount();
         if (iterationCount < minimumIterationCount) {
-            throw log.mechIterationCountIsTooLow(mechanism.toString(), iterationCount, minimumIterationCount);
+            throw saslScram.mechIterationCountIsTooLow(iterationCount, minimumIterationCount);
         }
         if (iterationCount > maximumIterationCount) {
-            throw log.mechIterationCountIsTooHigh(mechanism.toString(), iterationCount, maximumIterationCount);
+            throw saslScram.mechIterationCountIsTooHigh(iterationCount, maximumIterationCount);
         }
         final byte[] salt = password.getSalt();
 
-        if(trace) log.tracef("[S] Salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
-        if(trace) log.tracef("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPasswordBytes).hexEncode().drainToString());
+        if(trace) saslScram.tracef("[S] Salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
+        if(trace) saslScram.tracef("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPasswordBytes).hexEncode().drainToString());
 
         ByteStringBuilder b = new ByteStringBuilder();
 
@@ -245,13 +244,13 @@ public final class ScramServer {
         Assert.checkNotNullParam("initialChallenge", initialChallenge);
         final ScramMechanism mechanism = initialResponse.getMechanism();
         if (mechanism != initialChallenge.getMechanism()) {
-            throw log.mechUnmatchedMechanism(mechanism.toString(), initialChallenge.getMechanism().toString());
+            throw saslScram.mechUnmatchedMechanism(mechanism.toString(), initialChallenge.getMechanism().toString());
         }
         byte[] response = bytes.clone();
         ByteIterator bi = ByteIterator.ofBytes(response);
         try {
             if (bi.next() != 'c' || bi.next() != '=') {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             ByteIterator ibi = bi.delimitedBy(',').base64Decode();
             char cbindFlag = (char) ibi.next();
@@ -260,36 +259,36 @@ public final class ScramServer {
             final boolean binding = initialResponse.isBinding();
             if (cbindFlag == 'p') {
                 if (! binding) {
-                    throw new ScramServerException(log.mechChannelBindingNotSupported(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_SUPPORTED);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotSupported(), ScramServerErrorCode.CHANNEL_BINDING_NOT_SUPPORTED);
                 }
                 if (bindingType == null || bindingData == null) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.CHANNEL_BINDING_NOT_PROVIDED);
                 }
                 if (ibi.next() != '=') {
-                    throw log.mechInvalidMessageReceived(mechanism.toString());
+                    throw saslScram.mechInvalidMessageReceived();
                 }
                 if (! bindingType.equals(ibi.delimitedBy(',').asUtf8String().drainToString())) {
-                    throw new ScramServerException(log.mechChannelBindingTypeMismatch(mechanism.toString()), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
+                    throw new ScramServerException(saslScram.mechChannelBindingTypeMismatch(), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
             } else if (cbindFlag == 'y') {
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
             } else if (cbindFlag == 'n') {
                 if (binding) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(log.mechChannelBindingNotProvided(mechanism.toString()), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
+                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
             } else {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
             if (ibi.next() != ',') {
-                throw log.mechInvalidMessageReceived(mechanism.toString());
+                throw saslScram.mechInvalidMessageReceived();
             }
 
             // authorization ID
@@ -297,37 +296,37 @@ public final class ScramServer {
             final String authorizationID;
             if (c == 'a') {
                 if (ibi.next() != '=') {
-                    throw log.mechInvalidClientMessage(mechanism.toString());
+                    throw saslScram.mechInvalidClientMessage();
                 }
                 authorizationID = ibi.delimitedBy(',').asUtf8String().drainToString();
                 ibi.next(); // skip delimiter
                 if (! authorizationID.equals(initialResponse.getAuthorizationId())) {
-                    throw log.mechAuthorizationIdChanged(mechanism.toString());
+                    throw saslScram.mechAuthorizationIdChanged();
                 }
             } else if (c == ',') {
                 if (initialResponse.getAuthorizationId() != null) {
-                    throw log.mechAuthorizationIdChanged(mechanism.toString());
+                    throw saslScram.mechAuthorizationIdChanged();
                 }
             } else {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
 
             // channel binding data
             if (bindingData != null && ! ibi.contentEquals(ByteIterator.ofBytes(bindingData))) {
-                throw new ScramServerException(log.mechChannelBindingChanged(mechanism.toString()), ScramServerErrorCode.CHANNEL_BINDINGS_DONT_MATCH);
+                throw new ScramServerException(saslScram.mechChannelBindingChanged(), ScramServerErrorCode.CHANNEL_BINDINGS_DONT_MATCH);
             }
 
             bi.next(); // skip delim
 
             // random nonce
             if (bi.next() != 'r' || bi.next() != '=') {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
             final byte[] clientNonce = initialResponse.getRawNonce();
             final byte[] serverNonce = initialChallenge.getRawServerNonce();
             if (! bi.delimitedBy(',').limitedTo(clientNonce.length).contentEquals(ByteIterator.ofBytes(clientNonce)) ||
                 ! bi.delimitedBy(',').limitedTo(serverNonce.length).contentEquals(ByteIterator.ofBytes(serverNonce))) {
-                throw log.mechNoncesDoNotMatch(mechanism.toString());
+                throw saslScram.mechNoncesDoNotMatch();
             }
 
             final int proofOffset = bi.offset();
@@ -336,25 +335,25 @@ public final class ScramServer {
 
             // proof
             if (bi.next() != 'p' || bi.next() != '=') {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
             final byte[] proof;
             proof = bi.delimitedBy(',').base64Decode().drain();
 
             if (bi.hasNext()) {
-                throw log.mechInvalidClientMessage(mechanism.toString());
+                throw saslScram.mechInvalidClientMessage();
             }
             return new ScramFinalClientMessage(initialResponse, initialChallenge, initialResult.getScramDigestPassword(), proof, response, proofOffset);
         } catch (NoSuchElementException ignored) {
-            throw log.mechInvalidMessageReceived(mechanism.toString());
+            throw saslScram.mechInvalidMessageReceived();
         }
     }
 
     public ScramFinalServerMessage evaluateFinalClientMessage(final ScramInitialServerResult initialResult, final ScramFinalClientMessage clientMessage) throws AuthenticationMechanismException {
-        final boolean trace = log.isTraceEnabled();
+        final boolean trace = saslScram.isTraceEnabled();
 
         if (clientMessage.getMechanism() != mechanism) {
-            throw log.mechUnmatchedMechanism(mechanism.toString(), clientMessage.getMechanism().toString());
+            throw saslScram.mechUnmatchedMechanism(mechanism.toString(), clientMessage.getMechanism().toString());
         }
 
         ByteStringBuilder b = new ByteStringBuilder();
@@ -373,14 +372,14 @@ public final class ScramServer {
             mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
             mac.update(ScramUtil.CLIENT_KEY_BYTES);
             clientKey = mac.doFinal();
-            if(trace) log.tracef("[S] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
 
             // stored key
             byte[] storedKey;
             messageDigest.reset();
             messageDigest.update(clientKey);
             storedKey = messageDigest.digest();
-            if(trace) log.tracef("[S] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
 
             // client signature
             mac.reset();
@@ -388,18 +387,18 @@ public final class ScramServer {
             final byte[] clientFirstMessage = clientMessage.getInitialResponse().getRawMessageBytes();
             final int clientFirstMessageBareStart = clientMessage.getInitialResponse().getInitialPartIndex();
             mac.update(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length - clientFirstMessageBareStart);
-            if(trace) log.tracef("[S] Using client first message: %s%n", ByteIterator.ofBytes(copyOfRange(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length)).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Using client first message: %s%n", ByteIterator.ofBytes(copyOfRange(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length)).hexEncode().drainToString());
             mac.update((byte) ',');
             final byte[] serverFirstMessage = initialResult.getScramInitialChallenge().getRawMessageBytes();
             mac.update(serverFirstMessage);
-            if(trace) log.tracef("[S] Using server first message: %s%n", ByteIterator.ofBytes(serverFirstMessage).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Using server first message: %s%n", ByteIterator.ofBytes(serverFirstMessage).hexEncode().drainToString());
             mac.update((byte) ',');
             final byte[] response = clientMessage.getRawMessageBytes();
             final int proofOffset = clientMessage.getProofOffset();
             mac.update(response, 0, proofOffset); // client-final-message-without-proof
-            if(trace) log.tracef("[S] Using client final message without proof: %s%n", ByteIterator.ofBytes(copyOfRange(response, 0, proofOffset)).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Using client final message without proof: %s%n", ByteIterator.ofBytes(copyOfRange(response, 0, proofOffset)).hexEncode().drainToString());
             byte[] clientSignature = mac.doFinal();
-            if(trace) log.tracef("[S] Client signature: %s%n", ByteIterator.ofBytes(clientSignature).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Client signature: %s%n", ByteIterator.ofBytes(clientSignature).hexEncode().drainToString());
 
             // server key
             byte[] serverKey;
@@ -407,7 +406,7 @@ public final class ScramServer {
             mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
             mac.update(ScramUtil.SERVER_KEY_BYTES);
             serverKey = mac.doFinal();
-            if(trace) log.tracef("[S] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
 
             // server signature
             byte[] serverSignature;
@@ -419,17 +418,17 @@ public final class ScramServer {
             mac.update((byte) ',');
             mac.update(response, 0, proofOffset); // client-final-message-without-proof
             serverSignature = mac.doFinal();
-            if(trace) log.tracef("[S] Server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
 
             final byte[] recoveredClientProof = clientMessage.getRawClientProof();
-            if(trace) log.tracef("[S] Client proof: %s%n", ByteIterator.ofBytes(recoveredClientProof).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Client proof: %s%n", ByteIterator.ofBytes(recoveredClientProof).hexEncode().drainToString());
 
             // now check the proof
             byte[] recoveredClientKey = clientSignature.clone();
             ScramUtil.xor(recoveredClientKey, recoveredClientProof);
-            if(trace) log.tracef("[S] Recovered client key: %s%n", ByteIterator.ofBytes(recoveredClientKey).hexEncode().drainToString());
+            if(trace) saslScram.tracef("[S] Recovered client key: %s%n", ByteIterator.ofBytes(recoveredClientKey).hexEncode().drainToString());
             if (! Arrays.equals(recoveredClientKey, clientKey)) {
-                throw log.mechAuthenticationRejectedInvalidProof(mechanism.toString());
+                throw saslScram.mechAuthenticationRejectedInvalidProof();
             }
 
             String userName = clientMessage.getInitialResponse().getAuthenticationName();
@@ -443,12 +442,12 @@ public final class ScramServer {
             }
             final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
             try {
-                MechanismUtil.handleCallbacks(mechanism.toString(), callbackHandler, authorizeCallback);
+                MechanismUtil.handleCallbacks(saslScram, callbackHandler, authorizeCallback);
             } catch (UnsupportedCallbackException e) {
-                throw log.mechAuthorizationUnsupported(mechanism.toString(), e);
+                throw saslScram.mechAuthorizationUnsupported(e);
             }
             if ( ! authorizeCallback.isAuthorized()) {
-                throw log.mechAuthorizationFailed(mechanism.toString(), userName, authorizationID);
+                throw saslScram.mechAuthorizationFailed(userName, authorizationID);
             }
 
             // == send response ==
@@ -458,7 +457,7 @@ public final class ScramServer {
 
             return new ScramFinalServerMessage(serverSignature, b.toArray());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw log.mechMacAlgorithmNotSupported(mechanism.toString(), e);
+            throw saslScram.mechMacAlgorithmNotSupported(e);
         }
     }
 

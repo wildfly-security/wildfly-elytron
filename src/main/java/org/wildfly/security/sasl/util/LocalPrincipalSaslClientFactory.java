@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.sasl;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -137,7 +137,7 @@ public final class LocalPrincipalSaslClientFactory extends AbstractDelegatingSas
         @Override
         public Object getNegotiatedProperty(final String propName) {
             if (! isComplete()) {
-                throw log.mechAuthenticationNotComplete(getMechanismName());
+                throw sasl.mechAuthenticationNotComplete();
             }
             // The mechanism might be smart enough to know its principal; if so, use their value instead of our guess.
             final Object value = super.getNegotiatedProperty(propName);

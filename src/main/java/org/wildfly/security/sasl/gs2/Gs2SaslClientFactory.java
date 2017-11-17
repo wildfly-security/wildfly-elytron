@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.gs2;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslGs2;
 import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;
@@ -75,7 +75,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         try {
             supportedMechanisms = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
-            throw log.mechGettingSupportedMechanismsFailed(e).toSaslException();
+            throw saslGs2.mechGettingSupportedMechanismsFailed(e).toSaslException();
         }
 
         String name = null;
@@ -94,7 +94,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
                 } catch (SaslException e) {
                     throw e;
                 } catch (IOException e) {
-                    throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
+                    throw saslGs2.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
                 } catch (UnsupportedCallbackException e) {
                     // Ignored
                 }

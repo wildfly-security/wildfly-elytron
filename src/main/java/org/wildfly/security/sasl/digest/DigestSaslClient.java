@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslDigest;
 import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH;
@@ -126,12 +126,12 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
                 return clientQop;
             }
         }
-        throw log.mechNoCommonProtectionLayer(getMechanismName()).toSaslException();
+        throw saslDigest.mechNoCommonProtectionLayer().toSaslException();
     }
 
     private String selectCipher(String ciphersFromServer) throws SaslException {
         if (ciphersFromServer == null) {
-            throw log.mechNoCiphersOfferedByServer(getMechanismName()).toSaslException();
+            throw saslDigest.mechNoCiphersOfferedByServer().toSaslException();
         }
 
         TransformationMapper trans = new DefaultTransformationMapper();
@@ -145,7 +145,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
             }
         }
 
-        throw log.mechNoCommonCipher(getMechanismName()).toSaslException();
+        throw saslDigest.mechNoCommonCipher().toSaslException();
     }
 
 
@@ -218,7 +218,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
                     realm = realms[0];
                 }
             } catch (UnsupportedCallbackException e) {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
             }
         }
 
@@ -235,15 +235,15 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
         if (digest_urp == null) {
             digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false, false);
         }
+
         String userName = nameCallback.getName();
         if (userName == null) {
-            throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
+            throw saslDigest.mechNotProvidedUserName().toSaslException();
         }
         if (digest_urp == null) {
-            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
+            throw saslDigest.mechCallbackHandlerDoesNotSupportCredentialAcquisition(null).toSaslException();
         }
         realm = realmCallback.getText();
-
         // username
         digestResponse.append("username=\"");
         digestResponse.append(DigestQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
@@ -258,7 +258,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
 
         // nonce
         if(nonce == null){
-            throw log.mechMissingDirective(getMechanismName(), "nonce").toSaslException();
+            throw saslDigest.mechMissingDirective("nonce").toSaslException();
         }
         digestResponse.append("nonce=\"");
         digestResponse.append(nonce);
@@ -329,7 +329,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
         byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
-            throw log.mechServerAuthenticityCannotBeVerified(getMechanismName()).toSaslException();
+            throw saslDigest.mechServerAuthenticityCannotBeVerified().toSaslException();
         }
     }
 
@@ -355,7 +355,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
         HashMap<String, byte[]> parsedChallenge;
         try {
-            parsedChallenge = parseResponse(message, charset, true, getMechanismName());
+            parsedChallenge = parseResponse(message, charset, true, saslDigest);
         } catch (AuthenticationMechanismException e) {
             throw e.toSaslException();
         }

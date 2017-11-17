@@ -27,7 +27,7 @@ import org.wildfly.security.sasl.util.AbstractSaslClient;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslOAuth2;
 
 /**
  * An OAuth2 Sasl Client based on RFC-7628.
@@ -41,7 +41,7 @@ final class OAuth2SaslClient extends AbstractSaslClient {
     private final OAuth2Client oauth2Client;
 
     OAuth2SaslClient(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, OAuth2Client oauth2Client) {
-        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
+        super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true, saslOAuth2);
         this.oauth2Client = oauth2Client;
         setNegotiationState(S_FIRST_MESSAGE);
     }
@@ -56,7 +56,7 @@ final class OAuth2SaslClient extends AbstractSaslClient {
             switch (state) {
                 case S_FIRST_MESSAGE: {
                     if (challenge.length != 0) {
-                        throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                        throw saslOAuth2.mechInitialChallengeMustBeEmpty().toSaslException();
                     }
 
                     OAuth2InitialClientMessage initialResponse = this.oauth2Client.getInitialResponse();

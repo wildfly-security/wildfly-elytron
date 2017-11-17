@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -55,7 +56,7 @@ public class DigestUtil {
      * @return
      * @throws AuthenticationMechanismException
      */
-    public static HashMap<String, byte[]> parseResponse(byte [] challenge, Charset charset, boolean multiRealm, String mechanismName) throws AuthenticationMechanismException {
+    public static HashMap<String, byte[]> parseResponse(byte [] challenge, Charset charset, boolean multiRealm, ElytronMessages log) throws AuthenticationMechanismException {
 
         HashMap<String, byte[]> response = new HashMap<String, byte[]> (MAX_PARSED_RESPONSE_SIZE);
         int i = skipWhiteSpace(challenge, 0);
@@ -75,11 +76,11 @@ public class DigestUtil {
             // parsing keyword
             if (insideKey) {
                 if (b == ',') {
-                    throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
+                    throw log.mechKeywordNotFollowedByEqual(key.toString());
                 }
                 else if (b == '=') {
                     if (key.length() == 0) {
-                        throw log.mechKeywordCannotBeEmpty(mechanismName);
+                        throw log.mechKeywordCannotBeEmpty();
                     }
                     insideKey = false;
                     i = skipWhiteSpace(challenge, i + 1);
@@ -91,7 +92,7 @@ public class DigestUtil {
                         }
                     }
                     else {
-                        throw log.mechNoValueFoundForKeyword(mechanismName, key.toString());
+                        throw log.mechNoValueFoundForKeyword(key.toString());
                     }
                 }
                 else if (isWhiteSpace(b)) {
@@ -100,10 +101,10 @@ public class DigestUtil {
                     if (key.length() > 0) {
                         if (i < challenge.length) {
                             if (challenge[i] != '=') {
-                                throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
+                                throw log.mechKeywordNotFollowedByEqual(key.toString());
                             }
                         } else {
-                            throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
+                            throw log.mechKeywordNotFollowedByEqual(key.toString());
                         }
                     }
                 }
@@ -121,7 +122,7 @@ public class DigestUtil {
                         i++;
                     }
                     else {
-                        throw log.mechUnmatchedQuoteFoundForValue(mechanismName, value.toString());
+                        throw log.mechUnmatchedQuoteFoundForValue(value.toString());
                     }
                 }
                 else if (b == '"') {
@@ -150,7 +151,7 @@ public class DigestUtil {
             // expect separator
             else if (expectSeparator) {
                 String val = new String(value.toArray(), charset);
-                throw log.mechExpectingCommaOrLinearWhitespaceAfterQuoted(mechanismName, val);
+                throw log.mechExpectingCommaOrLinearWhitespaceAfterQuoted(val);
             }
             else {
                 value.append(b);
@@ -159,7 +160,7 @@ public class DigestUtil {
         }
 
         if (insideQuotedValue) {
-            throw log.mechUnmatchedQuoteFoundForValue(mechanismName, value.toString());
+            throw log.mechUnmatchedQuoteFoundForValue(value.toString());
         }
 
         if (key.length() > 0) {
@@ -233,19 +234,18 @@ public class DigestUtil {
     /**
      * Get array of password chars from TwoWayPassword
      *
-     * @param mechName
      * @return
      * @throws SaslException
      */
-    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password, Supplier<Provider[]> providers) throws AuthenticationMechanismException {
+    public static char[] getTwoWayPasswordChars(TwoWayPassword password, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {
         if (password == null) {
-            throw log.mechNoPasswordGiven(mechName);
+            throw log.mechNoPasswordGiven();
         }
         try {
             PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm(), providers);
             return pf.getKeySpec(pf.translate(password), ClearPasswordSpec.class).getEncodedPassword();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
-            throw log.mechCannotGetTwoWayPasswordChars(mechName, e);
+            throw log.mechCannotGetTwoWayPasswordChars(e);
         }
     }
 }

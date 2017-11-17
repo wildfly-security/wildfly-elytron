@@ -36,7 +36,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpUserPass;
 
 /**
  * A base class for HTTP mechanisms that operate on validation of plain text usernames and passwords.
@@ -62,7 +62,7 @@ abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuth
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
         EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
 
-        log.debugf("Using UsernamePasswordAuthenticationMechanism for username authentication. Realm: [%s], Username: [%s].",
+        httpUserPass.debugf("Username authentication. Realm: [%s], Username: [%s].",
                 realmName, username);
 
         try {
@@ -92,7 +92,7 @@ abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuth
     }
 
     protected boolean authorize(String username) throws HttpAuthenticationException {
-        log.debugf("Using UsernamePasswordAuthenticationMechanism for username authorization. Username: [%s].",
+        httpUserPass.debugf("Username authorization. Username: [%s].",
                 username);
 
         AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, username);

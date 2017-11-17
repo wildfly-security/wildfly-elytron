@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.sasl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -277,7 +277,7 @@ public abstract class SaslMechanismSelector {
                             case '#': {
                                 // special of some sort
                                 if (! i.hasNext()) {
-                                    throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                 }
                                 offs = i.offset();
                                 cp = i.next();
@@ -285,10 +285,10 @@ public abstract class SaslMechanismSelector {
                                     case 'F': {
                                         // FAMILY or nothing
                                         if (! i.limitedTo(5).contentEquals("AMILY")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_FAMILY;
@@ -297,10 +297,10 @@ public abstract class SaslMechanismSelector {
                                     case 'T': {
                                         // TLS
                                         if (! i.limitedTo(2).contentEquals("LS")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_TLS;
@@ -309,10 +309,10 @@ public abstract class SaslMechanismSelector {
                                     case 'P': {
                                         // PLUS
                                         if (! i.limitedTo(3).contentEquals("LUS")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_PLUS;
@@ -321,10 +321,10 @@ public abstract class SaslMechanismSelector {
                                     case 'M': {
                                         // MUTUAL
                                         if (! i.limitedTo(5).contentEquals("UTUAL")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_MUTUAL;
@@ -333,10 +333,10 @@ public abstract class SaslMechanismSelector {
                                     case 'H': {
                                         // HASH
                                         if (! i.limitedTo(3).contentEquals("ASH")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_HASH;
@@ -345,17 +345,17 @@ public abstract class SaslMechanismSelector {
                                     case 'A': {
                                         // ALL
                                         if (! i.limitedTo(2).contentEquals("LL")) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_ALL;
                                         return true;
                                     }
                                     default: {
-                                        throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                        throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                     }
                                 }
                                 //throw Assert.unreachableCode();
@@ -393,7 +393,7 @@ public abstract class SaslMechanismSelector {
                             case '|': {
                                 cp = i.next();
                                 if (cp != '|') {
-                                    throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_OR;
@@ -402,7 +402,7 @@ public abstract class SaslMechanismSelector {
                             case '&': {
                                 cp = i.next();
                                 if (cp != '&') {
-                                    throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_AND;
@@ -411,7 +411,7 @@ public abstract class SaslMechanismSelector {
                             case '=': {
                                 cp = i.next();
                                 if (cp != '=') {
-                                    throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_EQ;
@@ -439,7 +439,7 @@ public abstract class SaslMechanismSelector {
                                     }
                                     //throw Assert.unreachableCode();
                                 } else {
-                                    throw log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
                                 }
                             }
                         }
@@ -559,7 +559,7 @@ public abstract class SaslMechanismSelector {
                 }
                 case TOK_MINUS: {
                     if (! t.hasNext()) {
-                        throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+                        throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
                     }
                     tok = t.next();
                     switch (tok) {
@@ -589,14 +589,14 @@ public abstract class SaslMechanismSelector {
         switch (tok) {
             case TOK_LPAREN: {
                 if (! t.hasNext()) {
-                    throw log.mechSelectorUnexpectedEnd(string);
+                    throw sasl.mechSelectorUnexpectedEnd(string);
                 }
                 final SaslMechanismPredicate result = parseIfPredicate(t, string);
                 if (! t.hasNext()) {
-                    throw log.mechSelectorUnexpectedEnd(string);
+                    throw sasl.mechSelectorUnexpectedEnd(string);
                 }
                 if (t.next() != TOK_RPAREN) {
-                    throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+                    throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
                 }
                 return result;
             }
@@ -622,7 +622,7 @@ public abstract class SaslMechanismSelector {
                 return parseTopLevelPredicate(t, string).not();
             }
             default: {
-                throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+                throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
             }
         }
     }
@@ -635,10 +635,10 @@ public abstract class SaslMechanismSelector {
         t.next(); // consume
         SaslMechanismPredicate ifTrue = parseIfPredicate(t, string);
         if (! t.hasNext()) {
-            throw log.mechSelectorUnexpectedEnd(string);
+            throw sasl.mechSelectorUnexpectedEnd(string);
         }
         if (t.next() != TOK_COLON) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         SaslMechanismPredicate ifFalse = parseIfPredicate(t, string);
         return SaslMechanismPredicate.matchIf(query, ifTrue, ifFalse);
@@ -694,30 +694,30 @@ public abstract class SaslMechanismSelector {
 
     private static SaslMechanismPredicate parseTopLevelPredicate(final Tokenizer t, final String string) {
         if (! t.hasNext()) {
-            throw log.mechSelectorUnexpectedEnd(string);
+            throw sasl.mechSelectorUnexpectedEnd(string);
         }
         return parseTopLevelPredicate(t, string, t.next());
     }
 
     private static String parseSpecialWithName(final String string, final Tokenizer t) {
         if (! t.hasNext()) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         if (t.next() != TOK_LPAREN) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         if (! t.hasNext()) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         if (t.next() != TOK_NAME) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         String familyName = t.getStringVal();
         if (! t.hasNext()) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         if (t.next() != TOK_RPAREN) {
-            throw log.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
+            throw sasl.mechSelectorTokenNotAllowed(tokToString(t), t.offset(), string);
         }
         return familyName;
     }

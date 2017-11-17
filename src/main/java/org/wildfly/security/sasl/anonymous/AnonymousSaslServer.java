@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.anonymous;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslAnonymous;
 
 import java.nio.charset.StandardCharsets;
 
@@ -47,7 +47,7 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
      * @param callbackHandler the callback handler
      */
     AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
-        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler);
+        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler, saslAnonymous);
         setNegotiationState(INITIAL_STATE);
     }
 
@@ -67,16 +67,16 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
                 } else {
                     // sanity check
                     if (length > 1020) {
-                        throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
+                        throw saslAnonymous.mechAuthenticationNameTooLong().toSaslException();
                     }
                     String name = new String(message, StandardCharsets.UTF_8);
                     if (name.length() > 255) {
-                        throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
+                        throw saslAnonymous.mechAuthenticationNameTooLong().toSaslException();
                     }
                     final AnonymousAuthorizationCallback callback = new AnonymousAuthorizationCallback(name);
                     handleCallbacks(callback);
                     if (! callback.isAuthorized()) {
-                        throw log.mechAnonymousAuthorizationDenied(getMechanismName()).toSaslException();
+                        throw saslAnonymous.mechAnonymousAuthorizationDenied().toSaslException();
                     }
                     negotiationComplete();
                     return null;

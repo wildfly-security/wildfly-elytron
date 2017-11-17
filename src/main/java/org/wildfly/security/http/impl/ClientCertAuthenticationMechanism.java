@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpClientCert;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 
 import java.security.cert.Certificate;
@@ -83,20 +83,20 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
         Function<SecurityDomain, IdentityCache> cacheFunction = createIdentityCacheFunction(request);
 
         if (cacheFunction!= null && attemptReAuthentication(request, cacheFunction)) {
-            log.trace("ClientCertAuthenticationMechanism: re-authentication succeed");
+            httpClientCert.trace("Re-authentication succeed");
             return;
         }
         if (attemptAuthentication(request, cacheFunction)) {
             return;
         }
-        log.trace("ClientCertAuthenticationMechanism: both, re-authentication and authentication, failed");
+        httpClientCert.trace("Both, re-authentication and authentication, failed");
         fail(request);
     }
 
     private boolean attemptAuthentication(HttpServerRequest request, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
         Certificate[] peerCertificates = request.getPeerCertificates();
         if (peerCertificates == null) {
-            log.trace("CLIENT-CERT Peer Unverified");
+            httpClientCert.trace("Peer Unverified");
             request.noAuthenticationInProgress();
             return true;
         }
@@ -104,18 +104,18 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
         X509Certificate[] x509Certificates = X500.asX509CertificateArray(peerCertificates);
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
 
-        log.tracef("Using ClientCertAuthenticationMechanism to authenticate the following certificates: [%s]", x509Certificates);
+        httpClientCert.tracef("Authenticating using following certificates: [%s]", x509Certificates);
 
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
         try {
-            MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, callback);
+            MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, callback);
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+            throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
         }
         boolean verified = callback.isVerified();
-        log.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b", verified);
+        httpClientCert.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b", verified);
         if (verified) {
             final BooleanSupplier authorizedFunction;
             final Callback authorizeCallBack;
@@ -131,17 +131,17 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
             }
 
             try {
-                MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallBack);
+                MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, authorizeCallBack);
             } catch (AuthenticationMechanismException e) {
                 throw e.toHttpAuthenticationException();
             } catch (UnsupportedCallbackException e) {
-                throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+                throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
             }
 
             boolean authorized = authorizedFunction.getAsBoolean();
-            log.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
+            httpClientCert.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
             if (authorized && succeed(request)) {
-                log.trace("ClientCertAuthenticationMechanism: authentication succeed");
+                httpClientCert.trace("Authentication succeed");
                 return true;
             }
         }
@@ -150,7 +150,7 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
 
     private boolean succeed(HttpServerRequest request) throws HttpAuthenticationException {
         try {
-            MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, AuthenticationCompleteCallback.SUCCEEDED);
+            MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, AuthenticationCompleteCallback.SUCCEEDED);
             request.authenticationComplete();
             return true;
         } catch (AuthenticationMechanismException e) {
@@ -163,8 +163,8 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
 
     private void fail(HttpServerRequest request) throws HttpAuthenticationException {
         try {
-            MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
-            request.authenticationFailed(log.authenticationFailed(CLIENT_CERT_NAME));
+            MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, AuthenticationCompleteCallback.FAILED);
+            request.authenticationFailed(httpClientCert.authenticationFailed());
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
@@ -175,14 +175,14 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
     private boolean attemptReAuthentication(HttpServerRequest request, Function<SecurityDomain, IdentityCache> cacheFunction) throws HttpAuthenticationException {
         CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(cacheFunction, true);
         try {
-            MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
+            MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, authorizeCallback);
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+            throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
         }
         boolean authorized = authorizeCallback.isAuthorized();
-        log.tracef("Identity was authorized by CachedIdentityAuthorizeCallback handler: %b", authorized);
+        httpClientCert.tracef("Identity was authorized by CachedIdentityAuthorizeCallback handler: %b", authorized);
         if (authorized) {
             return succeed(request);
         }

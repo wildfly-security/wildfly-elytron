@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.external;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslExternal;
 
 import java.nio.charset.StandardCharsets;
 
@@ -49,10 +49,10 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
         if (challenge.length != 0) {
-            throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
+            throw saslExternal.mechInvalidMessageReceived().toSaslException();
         }
         if (complete) {
-            throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
+            throw saslExternal.mechMessageAfterComplete().toSaslException();
         }
         complete = true;
         return authorizationId;
@@ -64,17 +64,17 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName());
+            throw saslExternal.mechNoSecurityLayer();
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName());
+            throw saslExternal.mechNoSecurityLayer();
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 
@@ -82,7 +82,7 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
         if (complete) {
             return null;
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 

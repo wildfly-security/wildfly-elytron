@@ -29,9 +29,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslException;
 
-import org.jboss.logging.Logger;
 import org.junit.Test;
-import org.wildfly.security._private.ElytronMessages;
 
 /**
  * Tests of Gssapi helpers (don't require started kerberos server)
@@ -43,7 +41,7 @@ public class GssapiUtilUnitTest extends AbstractGssapiMechanism {
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 throw new UnsupportedCallbackException(callbacks[0]);
             }
-        }, Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.GssapiUtilUnitTest"));
+        });
     }
 
     @Override

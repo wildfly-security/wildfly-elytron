@@ -20,7 +20,7 @@ package org.wildfly.security.http.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpBasic;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CHARSET;
@@ -39,7 +39,6 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
@@ -101,7 +100,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         } catch (HttpAuthenticationException e) {
             throw e;
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(BASIC_NAME, e).toHttpAuthenticationException();
+            throw httpBasic.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
         }
 
         if (configuredRealm != null) {
@@ -134,7 +133,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                     int colonPos = indexOf(decodedValue, ':');
                     if (colonPos <= 0) {
                         // We flag as failed so the browser is re-challenged - sending an error the browser believes it's input was valid.
-                        request.authenticationFailed(log.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(displayRealmName, response));
+                        request.authenticationFailed(httpBasic.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(displayRealmName, response));
                         return;
                     }
 
@@ -150,26 +149,26 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                         String username = usernameChars.toString();
 
                         if (authenticate(mechanismRealm, username, password)) {
-                            log.tracef("User %s authenticated successfully!", username);
+                            httpBasic.tracef("User %s authenticated successfully!", username);
                             if (authorize(username)) {
-                                log.debugf("User %s authorization succeeded!", username);
+                                httpBasic.debugf("User %s authorization succeeded!", username);
                                 succeed();
 
                                 request.authenticationComplete();
                                 return;
                             } else {
-                                log.debugf("User %s authorization failed.", username);
+                                httpBasic.debugf("User %s authorization failed.", username);
                                 fail();
 
-                                request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
+                                request.authenticationFailed(httpBasic.authorizationFailed(username), response -> prepareResponse(displayRealmName, response));
                                 return;
                             }
 
                         } else {
-                            log.debugf("User %s authentication failed.", username);
+                            httpBasic.debugf("User %s authentication failed.", username);
                             fail();
 
-                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
+                            request.authenticationFailed(httpBasic.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
                             return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {

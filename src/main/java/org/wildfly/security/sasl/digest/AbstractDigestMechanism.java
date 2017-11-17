@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslDigest;
 import static org.wildfly.security.mechanism.digest.DigestUtil.getTwoWayPasswordChars;
 import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.HASH_algorithm;
@@ -127,25 +127,25 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
      * @param callbackHandler
      */
     public AbstractDigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers, Supplier<Provider[]> providers) throws SaslException {
-        super(mechanismName, protocol, serverName, callbackHandler);
+        super(mechanismName, protocol, serverName, callbackHandler, saslDigest);
 
         secureRandomGenerator = new SecureRandom();
         hmacMD5 = getHmac();
 
         final String algorithm = messageDigestAlgorithm(mechanismName);
         if (algorithm == null) {
-            throw log.mechMacAlgorithmNotSupported(getMechanismName(), null).toSaslException();
+            throw saslDigest.mechMacAlgorithmNotSupported(null).toSaslException();
         }
         try { // H()
             this.messageDigest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechMacAlgorithmNotSupported(e).toSaslException();
         }
 
         try { // MD5()
             this.digest = MessageDigest.getInstance(HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechMacAlgorithmNotSupported(e).toSaslException();
         }
 
         this.format = format;
@@ -255,11 +255,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw log.mechMessageTypeMustEqual(getMechanismName(), 1, messageType).toSaslException();
+            throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw log.mechBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum).toSaslException();
+            throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
         }
 
         byte[] extractedMessageMac = new byte[10];
@@ -302,10 +302,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
             cipheredPart = wrapCipher.update(toCipher);
         } catch (Exception e) {
-            throw log.mechProblemDuringCrypt(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechProblemDuringCrypt(e).toSaslException();
         }
         if (cipheredPart == null){
-            throw log.mechProblemDuringCryptResultIsNull(getMechanismName()).toSaslException();
+            throw saslDigest.mechProblemDuringCryptResultIsNull().toSaslException();
         }
 
         byte[] result = new byte[cipheredPart.length + 6];
@@ -323,21 +323,21 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw log.mechMessageTypeMustEqual(getMechanismName(), 1, messageType).toSaslException();
+            throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw log.mechBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum).toSaslException();
+            throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
         }
 
         byte[] clearText = null;
         try {
             clearText = unwrapCipher.update(message, offset, len - 6);
         } catch (Exception e) {
-            throw log.mechProblemDuringDecrypt(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechProblemDuringDecrypt(e).toSaslException();
         }
         if (clearText == null){
-            throw log.mechProblemDuringDecryptResultIsNull(getMechanismName()).toSaslException();
+            throw saslDigest.mechProblemDuringDecryptResultIsNull().toSaslException();
         }
 
         byte[] hmac = new byte[10];
@@ -426,7 +426,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
             TransformationSpec transformationSpec = trans.getTransformationSpec(SaslMechanismInformation.Names.DIGEST_MD5, cipher);
             if (transformationSpec == null ) {
-                throw log.mechUnknownCipher(getMechanismName(), cipher).toSaslException();
+                throw saslDigest.mechUnknownCipher(cipher).toSaslException();
             }
             ciph = Cipher.getInstance(transformationSpec.getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
@@ -444,7 +444,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 IV = Arrays.copyOfRange(hmacKey, 8, 16); // last 8 bytes
                 cipherKey = create3desSecretKey(cipherKeyBytes);
             } else {
-                throw log.mechUnknownCipher(getMechanismName(), cipher).toSaslException();
+                throw saslDigest.mechUnknownCipher(cipher).toSaslException();
             }
 
             if (IV != null) {
@@ -453,7 +453,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 ciph.init((wrap ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE), cipherKey, secureRandomGenerator);
             }
         } catch (Exception e) {
-            throw log.mechProblemGettingRequiredCipher(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechProblemGettingRequiredCipher(e).toSaslException();
         }
 
         return ciph;
@@ -473,7 +473,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
           return Mac.getInstance(HMAC_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
+            throw saslDigest.mechMacAlgorithmNotSupported(e).toSaslException();
         }
     }
 
@@ -498,9 +498,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerDoesNotSupportUserName(e).toSaslException();
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
             }
         }
     }
@@ -517,9 +517,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerDoesNotSupportUserName(e).toSaslException();
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
             }
         }
         String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
@@ -529,14 +529,14 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
         char[] passwordChars;
         try {
-            passwordChars = getTwoWayPasswordChars(getMechanismName(), password, providers);
+            passwordChars = getTwoWayPasswordChars(password, providers, saslDigest);
         } catch (AuthenticationMechanismException e) {
             throw e.toSaslException();
         }
         try {
             password.destroy();
         } catch(DestroyFailedException e) {
-            log.credentialDestroyingFailed(e);
+            saslDigest.credentialDestroyingFailed(e);
         }
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
         byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
@@ -556,9 +556,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == passwordCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerDoesNotSupportUserName(e).toSaslException();
             } else {
-                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
+                throw saslDigest.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
             }
         }
         String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
@@ -568,10 +568,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         char[] passwordChars = passwordCallback.getPassword();
         passwordCallback.clearPassword();
         if (passwordChars == null) {
-            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+            throw saslDigest.mechNoPasswordGiven().toSaslException();
         }
         if ( ! readOnlyRealmUsername && nameCallback.getName() == null) {
-            throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
+            throw saslDigest.mechNotProvidedUserName().toSaslException();
         }
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
         byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);

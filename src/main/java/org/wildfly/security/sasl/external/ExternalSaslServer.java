@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.external;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslExternal;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +52,7 @@ final class ExternalSaslServer implements SaslServer {
 
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         if (complete) {
-            throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
+            throw saslExternal.mechMessageAfterComplete().toSaslException();
         }
         complete = true;
         String authorizationId;
@@ -61,7 +61,7 @@ final class ExternalSaslServer implements SaslServer {
         } else {
             authorizationId = Normalizer.normalize(new String(response, StandardCharsets.UTF_8), Normalizer.Form.NFKC);
             if (authorizationId.indexOf(0) != -1) {
-                throw log.mechUserNameContainsInvalidCharacter(getMechanismName()).toSaslException();
+                throw saslExternal.mechUserNameContainsInvalidCharacter().toSaslException();
             }
         }
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, authorizationId);
@@ -70,12 +70,12 @@ final class ExternalSaslServer implements SaslServer {
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw log.mechAuthorizationFailed(getMechanismName(), e).toSaslException();
+            throw saslExternal.mechAuthorizationFailed(e).toSaslException();
         } catch (UnsupportedCallbackException e) {
-            throw log.mechAuthorizationFailed(getMechanismName(), e).toSaslException();
+            throw saslExternal.mechAuthorizationFailed(e).toSaslException();
         }
         if (!authorizeCallback.isAuthorized()) {
-            throw log.mechAuthorizationFailed(getMechanismName(), null, authorizationId).toSaslException();
+            throw saslExternal.mechAuthorizationFailed(null, authorizationId).toSaslException();
         }
         this.authorizationID = authorizeCallback.getAuthorizedID();
         return null;
@@ -87,24 +87,24 @@ final class ExternalSaslServer implements SaslServer {
 
     public String getAuthorizationID() {
         if (! complete) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
         return authorizationID;
     }
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName());
+            throw saslExternal.mechNoSecurityLayer();
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.mechNoSecurityLayer(getMechanismName());
+            throw saslExternal.mechNoSecurityLayer();
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 
@@ -112,7 +112,7 @@ final class ExternalSaslServer implements SaslServer {
         if (complete) {
             return null;
         } else {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslExternal.mechAuthenticationNotComplete();
         }
     }
 

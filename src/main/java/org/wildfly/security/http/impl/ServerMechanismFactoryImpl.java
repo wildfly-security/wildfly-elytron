@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -67,7 +68,8 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
      * 20 Byte Private Key (Gives us at least enough material for SHA-256 to digest))
      * SHA256 Digest Algorithm
      */
-    private static NonceManager nonceManager = new NonceManager(300000, 900000, true, 20, SHA256);
+
+    private static NonceManager nonceManager = new NonceManager(300000, 900000, true, 20, SHA256, ElytronMessages.httpDigest);
 
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)

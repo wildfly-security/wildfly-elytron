@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.saslEntity;
 import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.entity.Entity.keyType;
 
@@ -72,7 +72,7 @@ final class EntitySaslServer extends AbstractSaslServer {
     private byte[] randomB;
 
     EntitySaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean mutual, final Signature signature, final SecureRandom secureRandom) {
-        super(mechanismName, protocol, serverName, callbackHandler);
+        super(mechanismName, protocol, serverName, callbackHandler, saslEntity);
         this.signature = signature;
         this.secureRandom = secureRandom;
         this.mutual = mutual;
@@ -85,7 +85,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
     public String getAuthorizationID() {
         if (! isComplete()) {
-            throw log.mechAuthenticationNotComplete(getMechanismName());
+            throw saslEntity.mechAuthenticationNotComplete();
         }
         return authorizationID;
     }
@@ -94,7 +94,7 @@ final class EntitySaslServer extends AbstractSaslServer {
         switch (state) {
             case ST_CHALLENGE: {
                 if ((response != null) && (response.length != 0)) {
-                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
+                    throw saslEntity.mechInitialChallengeMustBeEmpty().toSaslException();
                 }
                 // Construct TokenBA1, where:
                 // TokenBA1 ::= SEQUENCE {
@@ -133,7 +133,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
                     encoder.endSequence();
                 } catch (ASN1Exception e) {
-                    throw log.mechUnableToCreateResponseTokenWithCause(getMechanismName(), e).toSaslException();
+                    throw saslEntity.mechUnableToCreateResponseTokenWithCause(e).toSaslException();
                 }
                 setNegotiationState(ST_PROCESS_RESPONSE);
                 return tokenBA1.toArray();
@@ -165,7 +165,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
                     handleCallbacks(evidenceVerifyCallback);
                     if (! evidenceVerifyCallback.isVerified()) {
-                        throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                        throw saslEntity.mechAuthenticationFailed().toSaslException();
                     }
 
                     // Determine the authorization identity
@@ -206,14 +206,14 @@ final class EntitySaslServer extends AbstractSaslServer {
                         signature.update(tbsDataAB.toArray());
                         if (! signature.verify(clientSignature)) {
                             setNegotiationState(FAILED_STATE);
-                            throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
+                            throw saslEntity.mechAuthenticationFailed().toSaslException();
                         }
                     } catch (SignatureException | InvalidKeyException e) {
-                        throw log.mechUnableToVerifyClientSignature(getMechanismName(), e).toSaslException();
+                        throw saslEntity.mechUnableToVerifyClientSignature(e).toSaslException();
                     }
                     decoder.endSequence();
                 } catch (ASN1Exception e) {
-                    throw log.mechInvalidClientMessageWithCause(getMechanismName(), e).toSaslException();
+                    throw saslEntity.mechInvalidClientMessageWithCause(e).toSaslException();
                 }
 
                 // Get the server's certificate data, if necessary
@@ -228,27 +228,27 @@ final class EntitySaslServer extends AbstractSaslServer {
                             if ((serverCertChain != null) && (serverCertChain.length > 0)) {
                                 serverCert = serverCertChain[0];
                             } else {
-                                throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+                                throw saslEntity.mechCallbackHandlerNotProvidedServerCertificate().toSaslException();
                             }
                             privateKey = serverCertChainPrivateCredential.getPrivateKey();
                         } else {
-                            throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+                            throw saslEntity.mechCallbackHandlerNotProvidedServerCertificate().toSaslException();
                         }
                     } catch (UnsupportedCallbackException e) {
-                        throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+                        throw saslEntity.mechCallbackHandlerNotProvidedServerCertificate().toSaslException();
                     }
                 }
 
                 // Verify that entityB matches the server's distinguishing identifier
                 if ((entityB != null) && (! EntityUtil.matchGeneralNames(entityB, serverCert))) {
-                    throw log.mechServerIdentifierMismatch(getMechanismName()).toSaslException();
+                    throw saslEntity.mechServerIdentifierMismatch().toSaslException();
                 }
 
                 // Check the authorization id
                 AuthorizeCallback authorizeCallback = new AuthorizeCallback(clientName, authorizationID);
                 handleCallbacks(authorizeCallback);
                 if (! authorizeCallback.isAuthorized()) {
-                    throw log.mechAuthorizationFailed(getMechanismName(), clientName, authorizationID).toSaslException();
+                    throw saslEntity.mechAuthorizationFailed(clientName, authorizationID).toSaslException();
                 }
 
                 if (mutual) {
@@ -288,7 +288,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         } catch (CertificateParsingException e) {
                             // Ingore unless the subject name is empty
                             if (clientName.isEmpty()) {
-                                throw log.mechUnableToDetermineClientName(getMechanismName(), e).toSaslException();
+                                throw saslEntity.mechUnableToDetermineClientName(e).toSaslException();
                             }
                         }
                         encoder.encodeImplicit(0);
@@ -296,13 +296,13 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                         // certB
                         encoder.startExplicit(1);
-                        if (serverCertChain == null || serverCertChain.length == 0) throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
+                        if (serverCertChain == null || serverCertChain.length == 0) throw saslEntity.mechCallbackHandlerNotProvidedServerCertificate().toSaslException();
                         EntityUtil.encodeX509CertificateChain(encoder, serverCertChain);
                         encoder.endExplicit();
 
                         // Private key
                         if (privateKey == null) {
-                            throw log.mechCallbackHandlerNotProvidedPrivateKey(getMechanismName()).toSaslException();
+                            throw saslEntity.mechCallbackHandlerNotProvidedPrivateKey().toSaslException();
                         }
 
                         // TBSDataBA
@@ -322,7 +322,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                             signature.update(tbsDataBA.toArray());
                             signatureBytes = signature.sign();
                         } catch (SignatureException | InvalidKeyException e) {
-                            throw log.mechUnableToCreateSignature(getMechanismName(), e).toSaslException();
+                            throw saslEntity.mechUnableToCreateSignature(e).toSaslException();
                         }
 
                         encoder.startSequence();
@@ -332,7 +332,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                         encoder.endSequence();
                     } catch (ASN1Exception e) {
-                        throw log.mechUnableToCreateResponseTokenWithCause(getMechanismName(), e).toSaslException();
+                        throw saslEntity.mechUnableToCreateResponseTokenWithCause(e).toSaslException();
                     }
                     negotiationComplete();
                     return tokenBA2.toArray();
@@ -342,7 +342,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                 }
             } case COMPLETE_STATE: {
                   if (response != null && response.length != 0) {
-                      throw log.mechClientSentExtraMessage(getMechanismName()).toSaslException();
+                      throw saslEntity.mechClientSentExtraMessage().toSaslException();
                   }
                   return null;
             }

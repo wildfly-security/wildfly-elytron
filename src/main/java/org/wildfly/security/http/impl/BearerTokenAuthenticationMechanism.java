@@ -18,7 +18,7 @@
 
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security._private.ElytronMessages.httpBearer;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -34,7 +34,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
@@ -121,11 +120,11 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
 
     private void handleCallback(Callback callback) throws HttpAuthenticationException {
         try {
-            MechanismUtil.handleCallbacks(BEARER_TOKEN, callbackHandler, callback);
+            MechanismUtil.handleCallbacks(httpBearer, callbackHandler, callback);
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
-            log.tracef("Unsupported callback [%s]", callback);
+            httpBearer.tracef("Unsupported callback [%s]", callback);
         }
     }
 
@@ -151,7 +150,7 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
             }
         } catch (UnsupportedCallbackException ignored) {
         } catch (IOException e) {
-            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(BEARER_TOKEN, e).toHttpAuthenticationException();
+            throw httpBearer.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
         }
         return null;
     }
