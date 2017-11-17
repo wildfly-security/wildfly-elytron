@@ -54,7 +54,7 @@ import org.wildfly.security.x500.X500;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+final class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private final CallbackHandler callbackHandler;
 

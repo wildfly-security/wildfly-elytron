@@ -48,7 +48,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class LocalUserServer extends AbstractSaslServer implements SaslServer {
+final class LocalUserServer extends AbstractSaslServer implements SaslServer {
 
     // Should SecureRandom be used? Default to true
     public static final String LOCAL_USER_USE_SECURE_RANDOM = "wildfly.sasl.local-user.use-secure-random";
@@ -131,10 +131,12 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
         }
     }
 
+    @Override
     public void init() {
         setNegotiationState(INITIAL_CHALLENGE_STATE);
     }
 
+    @Override
     public String getAuthorizationID() {
         assertComplete();
 

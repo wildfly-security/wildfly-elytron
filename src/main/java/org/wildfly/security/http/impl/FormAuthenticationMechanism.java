@@ -55,7 +55,7 @@ import org.wildfly.security.http.Scope;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
+final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
 
     /*
      * These two could also be made configurable but defer until proven demand.
@@ -280,7 +280,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         error(log.authorizationFailed(username, FORM_NAME), request);
     }
 
-    void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+    private void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
         // Save the current request.
         URI requestURI = request.getRequestURI();
         HttpScope session = getSessionScope(request, true);
@@ -308,7 +308,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         sendPage(loginPage, request, response);
     }
 
-    void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+    private void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
         if (response.forward(page)) {
             return;
         }

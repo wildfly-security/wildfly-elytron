@@ -48,7 +48,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
+final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
     private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.client");
 

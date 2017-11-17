@@ -77,7 +77,7 @@ import org.wildfly.security.util._private.Arrays2;
  */
 abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
-    public static enum FORMAT {CLIENT, SERVER};
+    public enum FORMAT {CLIENT, SERVER};
 
 
     private static int NONCE_SIZE = 36;

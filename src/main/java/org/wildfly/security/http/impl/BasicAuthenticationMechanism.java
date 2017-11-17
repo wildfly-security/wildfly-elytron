@@ -51,7 +51,7 @@ import org.wildfly.security.util.ByteIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
+final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
 
     // TODO - Undertow also has a silent mode for HTTP authentication.
 
@@ -85,7 +85,7 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
 
     /**
      * @throws HttpAuthenticationException
-     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(org.wildfly.security.http.HttpRequest)
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(HttpServerRequest)
      */
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
@@ -186,7 +186,6 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
 
         request.noAuthenticationInProgress(response -> prepareResponse(displayRealmName, response));
     }
-
 
     private void prepareResponse(String realmName, HttpServerResponse response) {
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);

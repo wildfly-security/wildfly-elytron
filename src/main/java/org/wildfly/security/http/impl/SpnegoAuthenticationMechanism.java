@@ -74,7 +74,7 @@ import org.wildfly.security.util._private.Arrays2;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+public final class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private static final String CHALLENGE_PREFIX = NEGOTIATE + " ";
 

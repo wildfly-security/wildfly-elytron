@@ -30,7 +30,7 @@ import javax.security.sasl.SaslServer;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class SubjectWrappingSaslServer implements SaslServer {
+final class SubjectWrappingSaslServer implements SaslServer {
 
     private final SaslServer wrapped;
     private final Subject subject;

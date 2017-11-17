@@ -50,7 +50,7 @@ import org.wildfly.security.credential.GSSKerberosCredential;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
+final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
     private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.server");
 

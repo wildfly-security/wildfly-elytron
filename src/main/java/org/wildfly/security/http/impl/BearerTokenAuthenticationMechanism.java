@@ -63,7 +63,7 @@ import org.wildfly.security.mechanism.MechanismUtil;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 

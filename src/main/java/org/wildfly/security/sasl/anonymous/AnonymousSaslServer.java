@@ -46,7 +46,7 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
      * @param serverName the server name
      * @param callbackHandler the callback handler
      */
-    public AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
+    AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
         super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler);
         setNegotiationState(INITIAL_STATE);
     }

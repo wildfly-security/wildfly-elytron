@@ -53,9 +53,11 @@ import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
 
 /**
+ * A client implementation of RFC 2831 {@code DIGEST} SASL mechanism.
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
+final class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
     private static final byte STEP_TWO = 2;
     private static final byte STEP_FOUR = 4;
