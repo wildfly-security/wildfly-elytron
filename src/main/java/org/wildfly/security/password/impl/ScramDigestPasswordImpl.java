@@ -191,6 +191,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
     @Override
     boolean verify(char[] guess) throws InvalidKeyException {
+        if (guess.length == 0) return false;
         try {
             byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
             return Arrays.equals(this.digest, output);
