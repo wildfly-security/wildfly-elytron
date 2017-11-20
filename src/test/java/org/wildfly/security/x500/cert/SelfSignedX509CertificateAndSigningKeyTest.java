@@ -20,7 +20,6 @@ package org.wildfly.security.x500.cert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -73,8 +72,9 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
         assertEquals(2048, ((DSAKey) certificate.getPublicKey()).getParams().getP().bitLength());
         assertEquals(2048, ((DSAKey) signingKey).getParams().getP().bitLength());
         assertEquals(3, certificate.getVersion());
-        assertNull(certificate.getCriticalExtensionOIDs());
-        assertNull(certificate.getNonCriticalExtensionOIDs());
+        assertEquals(0, certificate.getCriticalExtensionOIDs().size());
+        assertEquals(1, certificate.getNonCriticalExtensionOIDs().size()); // including Subject Key Identifier extension
+        assertNotNull(certificate.getExtensionValue(X500.OID_CE_SUBJECT_KEY_IDENTIFIER));
         try {
             certificate.checkValidity();
         } catch (Exception e) {
@@ -123,7 +123,7 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
         X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
 
         assertEquals(2, certificate.getCriticalExtensionOIDs().size());
-        assertEquals(1, certificate.getNonCriticalExtensionOIDs().size());
+        assertEquals(2, certificate.getNonCriticalExtensionOIDs().size()); // including Subject Key Identifier extension
 
         assertEquals(usage, certificate.getExtendedKeyUsage());
         boolean[] keyUsage = certificate.getKeyUsage();
@@ -141,6 +141,8 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
         assertEquals(2, item.size());
         assertEquals(Integer.valueOf(GeneralName.DNS_NAME), item.get(0));
         assertEquals("bobsmith.example.com", item.get(1));
+
+        assertNotNull(certificate.getExtensionValue(X500.OID_CE_SUBJECT_KEY_IDENTIFIER));
     }
 
     @Test
@@ -157,7 +159,7 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
         X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
 
         assertEquals(2, certificate.getCriticalExtensionOIDs().size());
-        assertEquals(5, certificate.getNonCriticalExtensionOIDs().size());
+        assertEquals(6, certificate.getNonCriticalExtensionOIDs().size()); // including Subject Key Identifier extension
 
         assertEquals(2, certificate.getBasicConstraints());
         boolean[] keyUsage = certificate.getKeyUsage();
@@ -195,6 +197,8 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
         assertNotNull(authorityInfoAccessExtension);
         byte[] subjectInfoAccessExtension = certificate.getExtensionValue(X500.OID_PE_SUBJECT_INFO_ACCESS);
         assertNotNull(subjectInfoAccessExtension);
+
+        assertNotNull(certificate.getExtensionValue(X500.OID_CE_SUBJECT_KEY_IDENTIFIER));
     }
 
     @Test

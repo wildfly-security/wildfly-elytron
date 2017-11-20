@@ -20,10 +20,10 @@ package org.wildfly.security.x500.cert;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.CertUtil.getDefaultCompatibleSignatureAlgorithmName;
+import static org.wildfly.security.x500.cert.CertUtil.getKeyIdentifier;
 import static org.wildfly.security.x500.cert.CertUtil.getX509CertificateExtension;
 
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -40,7 +40,6 @@ import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1;
-import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -512,29 +511,5 @@ public final class PKCS10CertificateSigningRequest {
             encoder.endSequence();
         }
 
-        /**
-         * Get the key identifier, which is composed of the 160-bit SHA-1 hash of the value of the BIT STRING
-         * {@code subjectPublicKey} (excluding the tag, length, and number of unused bits), as per
-         * <a href="https://tools.ietf.org/html/rfc3280">RFC 3280</a>.
-         *
-         * @param publicKey the public key
-         * @return the key identifier
-         */
-        private static byte[] getKeyIdentifier(final PublicKey publicKey) {
-            DERDecoder decoder = new DERDecoder(publicKey.getEncoded());
-            decoder.startSequence();
-            decoder.skipElement(); // skip the algorithm
-            byte[] subjectPublicKey = decoder.decodeBitString();
-            decoder.endSequence();
-
-            final MessageDigest messageDigest;
-            try {
-                messageDigest = MessageDigest.getInstance("SHA-1");
-                messageDigest.update(subjectPublicKey);
-                return messageDigest.digest();
-            } catch (NoSuchAlgorithmException e) {
-                throw new IllegalStateException(e);
-            }
-        }
     }
 }

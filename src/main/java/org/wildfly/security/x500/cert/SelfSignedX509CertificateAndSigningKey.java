@@ -20,6 +20,7 @@ package org.wildfly.security.x500.cert;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.CertUtil.getDefaultCompatibleSignatureAlgorithmName;
+import static org.wildfly.security.x500.cert.CertUtil.getKeyIdentifier;
 import static org.wildfly.security.x500.cert.CertUtil.getX509CertificateExtension;
 
 import java.math.BigInteger;
@@ -373,6 +374,10 @@ public final class SelfSignedX509CertificateAndSigningKey {
                         throw log.unableToDetermineDefaultCompatibleSignatureAlgorithmName(signingKey.getAlgorithm());
                     }
                 }
+
+                // add the Subject Key Identifier extension if it's not already present
+                final X509CertificateExtension subjectKeyIdentifierExtension = new SubjectKeyIdentifierExtension(getKeyIdentifier(keyPair.getPublic()));
+                addExtension(subjectKeyIdentifierExtension);
 
                 // generate the self-signed certificate
                 X509CertificateBuilder certificateBuilder = new X509CertificateBuilder();
