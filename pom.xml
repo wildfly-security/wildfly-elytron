@@ -88,6 +88,8 @@
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
         <modular.jdk.args/>
         <modular.jdk.props/>
+        <!-- method signature check -->
+        <public.packages>org.wildfly.security,org.wildfly.security.auth,org.wildfly.security.auth.callback,org.wildfly.security.auth.client,org.wildfly.security.auth.permission,org.wildfly.security.auth.principal,org.wildfly.security.auth.server,org.wildfly.security.auth.util,org.wildfly.security.authz,org.wildfly.security.credential,org.wildfly.security.credential.source,org.wildfly.security.credential.store,org.wildfly.security.evidence,org.wildfly.security.http,org.wildfly.security.key,org.wildfly.security.manager,org.wildfly.security.manager.action,org.wildfly.security.mechanism,org.wildfly.security.password,org.wildfly.security.password.interfaces,org.wildfly.security.password.spec,org.wildfly.security.permission,org.wildfly.security.sasl.util,org.wildfly.security.ssl,org.wildfly.security.auth.server.event</public.packages>
     </properties>
 
     <build>
@@ -544,6 +546,53 @@
                 <!-- Surefire plugin's excluded test categories -->
                 <excludedGroups>org.wildfly.security.ExcludedOnIbmJdk</excludedGroups>
             </properties>
+        </profile>
+        
+        <profile>
+            <id>methodSignatureGenerate</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.netbeans.tools</groupId>
+                        <artifactId>sigtest-maven-plugin</artifactId>
+                        <version>1.0</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <packages>${public.packages}</packages>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>methodSignatureCheck</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.netbeans.tools</groupId>
+                        <artifactId>sigtest-maven-plugin</artifactId>
+                        <version>1.0</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <packages>${public.packages}</packages>
+                            <releaseVersion>1.1.8.Final</releaseVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+             </build>
         </profile>
     </profiles>
 
