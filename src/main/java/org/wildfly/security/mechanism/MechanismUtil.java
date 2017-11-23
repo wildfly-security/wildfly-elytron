@@ -162,7 +162,6 @@ public final class MechanismUtil {
         throw log.mechUnableToRetrievePassword(userName);
     }
 
-
     /**
      * A varargs wrapper method for callback handler invocation.
      *
@@ -180,5 +179,20 @@ public final class MechanismUtil {
         } catch (Throwable e) {
             throw log.mechCallbackHandlerFailedForUnknownReason(e);
         }
+    }
+
+    /**
+     * A varargs wrapper method for callback handler invocation.
+     *
+     * @param mechName the mechanism name to report for error purposes
+     * @param callbackHandler the callback handler
+     * @param callbacks the callbacks
+     * @throws AuthenticationMechanismException if the callback handler fails for some reason
+     * @throws UnsupportedCallbackException if the callback handler throws this exception
+     * @deprecated Use {@link #handleCallbacks(ElytronMessages, CallbackHandler, Callback...)} instead
+     */
+    @Deprecated
+    public static void handleCallbacks(String mechName, CallbackHandler callbackHandler, Callback... callbacks) throws AuthenticationMechanismException, UnsupportedCallbackException {
+        handleCallbacks(log, callbackHandler, callbacks);
     }
 }
