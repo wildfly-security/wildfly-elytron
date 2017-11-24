@@ -119,7 +119,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         authenticationId = nameCallback.getName();
                         authenticationRealm = realmCallback.getText();
                     } catch (UnsupportedCallbackException e) {
-                        log.trace("CallbackHandler does not support name or realm callback", e);
+                        saslLocal.trace("CallbackHandler does not support name or realm callback", e);
                     }
                 }
                 if (authenticationId == null) authenticationId = "";
