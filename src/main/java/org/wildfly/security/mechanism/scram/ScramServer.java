@@ -99,7 +99,7 @@ public final class ScramServer {
                 bindingType = null;
                 bindingData = null;
             }
-            if (cbindFlag == 'p') {
+            if (cbindFlag == 'p') { // channel binding used
                 if (! mechanism.isPlus()) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotSupported(), ScramServerErrorCode.SERVER_DOES_NOT_SUPPORT_CHANNEL_BINDING);
                 }
@@ -113,7 +113,7 @@ public final class ScramServer {
                     throw new ScramServerException(saslScram.mechChannelBindingTypeMismatch(), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
                 binding = true;
-            } else if (cbindFlag == 'y') {
+            } else if (cbindFlag == 'y') { // client believes server does not support channel binding
                 if (mechanism.isPlus()) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
@@ -121,11 +121,8 @@ public final class ScramServer {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = true;
-            } else if (cbindFlag == 'n') {
+            } else if (cbindFlag == 'n') { // client does not support channel binding
                 if (mechanism.isPlus()) {
-                    throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
-                }
-                if (bindingType != null || bindingData != null) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 binding = false;
@@ -257,7 +254,7 @@ public final class ScramServer {
             final String bindingType = initialResponse.getBindingType();
             final byte[] bindingData = initialResponse.getRawBindingData();
             final boolean binding = initialResponse.isBinding();
-            if (cbindFlag == 'p') {
+            if (cbindFlag == 'p') { // channel binding used
                 if (! binding) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotSupported(), ScramServerErrorCode.CHANNEL_BINDING_NOT_SUPPORTED);
                 }
@@ -270,14 +267,14 @@ public final class ScramServer {
                 if (! bindingType.equals(ibi.delimitedBy(',').asUtf8String().drainToString())) {
                     throw new ScramServerException(saslScram.mechChannelBindingTypeMismatch(), ScramServerErrorCode.UNSUPPORTED_CHANNEL_BINDING_TYPE);
                 }
-            } else if (cbindFlag == 'y') {
+            } else if (cbindFlag == 'y') { // client believes server does not support channel binding
                 if (mechanism.isPlus()) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
                 if (bindingType != null || bindingData != null) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
-            } else if (cbindFlag == 'n') {
+            } else if (cbindFlag == 'n') { // client does not support channel binding
                 if (binding) {
                     throw new ScramServerException(saslScram.mechChannelBindingNotProvided(), ScramServerErrorCode.SERVER_DOES_SUPPORT_CHANNEL_BINDING);
                 }
@@ -312,7 +309,7 @@ public final class ScramServer {
             }
 
             // channel binding data
-            if (bindingData != null && ! ibi.contentEquals(ByteIterator.ofBytes(bindingData))) {
+            if (binding && bindingData != null && ! ibi.contentEquals(ByteIterator.ofBytes(bindingData))) {
                 throw new ScramServerException(saslScram.mechChannelBindingChanged(), ScramServerErrorCode.CHANNEL_BINDINGS_DONT_MATCH);
             }
 

@@ -376,6 +376,34 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
+     * Client does support channel binding and know the server does not and binding type or data ARE sent.
+     * Presence of binding data usually mean channel binding is supported, but property
+     * {@link WildFlySasl#CHANNEL_BINDING_UNSUPPORTED} overrides it.
+     */
+    @Test
+    public void testBindingCorrectYWithServerChannelBinding() throws Exception {
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
+
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword(password)
+                        .setChannelBinding("same-type", new byte[]{(byte) 0x00, (byte) 0x2C, (byte) 0xFF})
+                        .setProperties(Collections.singletonMap(WildFlySasl.CHANNEL_BINDING_UNSUPPORTED, "true"))
+                        .build();
+        byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
+
+        //        c="y,,"
+        message = "c=eSws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=BjZF5dV+EkD3YCb3pH3IP8riMGw=".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("v=dsprQ5R2AGYt1kn4bQRwTAE0PTU=", new String(message, StandardCharsets.UTF_8));
+        assertTrue(saslServer.isComplete());
+    }
+
+    /**
      * Client does support channel binding, believes the server does not, but it does
      */
     @Test
@@ -397,9 +425,10 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
     /**
      * Client does not support channel binding, and the server does support
+     * Server should respect client does not support binding and not to force it.
      */
     @Test
-    public void testBindingIncorrectNWithChannelBinding() throws Exception {
+    public void testBindingCorrectNDisabledOnClient() throws Exception {
         mockNonce("3rfcNHYJY1ZVvWVs7j");
         final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
@@ -411,8 +440,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
                         .build();
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("e=server-does-support-channel-binding", new String(message, StandardCharsets.UTF_8));
-        assertFalse(saslServer.isComplete());
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
+
+        //        c="n,,"
+        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("v=rmF9pqV8S7suAoZWja4dJRkFsKQ=", new String(message, StandardCharsets.UTF_8));
+        assertTrue(saslServer.isComplete());
     }
 
     /**

@@ -33,7 +33,7 @@ import org.wildfly.security.util.ByteStringBuilder;
  */
 class Gs2Util {
 
-    public static final int TOKEN_HEADER_TAG = 0x60;
+    static final int TOKEN_HEADER_TAG = 0x60;
 
     /**
      * Get the array of supported SASL mechanism names that corresponds to the given array of GSS-API
@@ -44,7 +44,7 @@ class Gs2Util {
      * mechanism object identifiers
      * @throws GSSException if an error occurs while mapping the GSS-API object identifiers to SASL names
      */
-    public static String[] getSupportedSaslNamesForMechanisms(Oid[] mechanismOids) throws GSSException {
+    static String[] getSupportedSaslNamesForMechanisms(Oid[] mechanismOids) throws GSSException {
         if (mechanismOids == null) {
             return WildFlySasl.NO_NAMES;
         }
@@ -72,7 +72,7 @@ class Gs2Util {
      * @return {@code true} if the given name is among the given mechanism names and
      * {@code false} otherwise
      */
-    public static boolean isIncluded(String name, String[] mechanisms) {
+    static boolean isIncluded(String name, String[] mechanisms) {
         if ((name == null) || (mechanisms == null)) {
             return false;
         }
@@ -84,10 +84,20 @@ class Gs2Util {
         return false;
     }
 
-    public static String[] getPlusMechanisms(String[] mechanisms) {
+    static String[] getPlusMechanisms(String[] mechanisms) {
         ArrayList<String> plusMechanisms = new ArrayList<String>();
         for (String mechanism : mechanisms) {
             if (mechanism.endsWith(PLUS_SUFFIX)) {
+                plusMechanisms.add(mechanism);
+            }
+        }
+        return plusMechanisms.toArray(new String[plusMechanisms.size()]);
+    }
+
+    static String[] getNonPlusMechanisms(String[] mechanisms) {
+        ArrayList<String> plusMechanisms = new ArrayList<String>();
+        for (String mechanism : mechanisms) {
+            if (! mechanism.endsWith(PLUS_SUFFIX)) {
                 plusMechanisms.add(mechanism);
             }
         }
@@ -103,7 +113,7 @@ class Gs2Util {
      * @param bindingData the channel binding data
      * @return the {@code ChannelBinding}
      */
-    public static ChannelBinding createChannelBinding(byte[] header, boolean gs2CbFlagPUsed, byte[] bindingData) {
+    static ChannelBinding createChannelBinding(byte[] header, boolean gs2CbFlagPUsed, byte[] bindingData) {
         ByteStringBuilder appData = new ByteStringBuilder(header);
         if (gs2CbFlagPUsed) {
             appData.append(bindingData);
