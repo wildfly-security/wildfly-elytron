@@ -59,7 +59,6 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -1755,13 +1754,13 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8508, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
 
-    @Once
-    @LogMessage(level = WARN)
-    @Message(id = 8509, value = "Calling any of the Policy.getPermissions() methods is not supported; please see the "
-        + "Java Authorization Contract for Containers (JACC) specification (section \"1.4 Requirements\", item 1) and "
-        + "the Java SE API specification for the Policy.getPermissions() methods for more information.  Instead, use "
-        + "the Policy.implies() method for authorization checking.")
-    void getPermissionsNotSupported();
+    // @Once
+    // @LogMessage(level = WARN)
+    // @Message(id = 8509, value = "Calling any of the Policy.getPermissions() methods is not supported; please see the "
+    //     + "Java Authorization Contract for Containers (JACC) specification (section \"1.4 Requirements\", item 1) and "
+    //     + "the Java SE API specification for the Policy.getPermissions() methods for more information.  Instead, use "
+    //     + "the Policy.implies() method for authorization checking.")
+    // void getPermissionsNotSupported();
 
     /* credential package */
 
