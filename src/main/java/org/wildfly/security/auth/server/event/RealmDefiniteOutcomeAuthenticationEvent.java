@@ -27,7 +27,7 @@ import org.wildfly.security.evidence.Evidence;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class RealmDefiniteOutcomeAuthenticationEvent extends RealmAuthenticationEvent {
+public abstract class RealmDefiniteOutcomeAuthenticationEvent extends RealmAuthenticationEvent {
     private final Credential credential;
     private final Evidence evidence;
 
@@ -38,7 +38,7 @@ abstract class RealmDefiniteOutcomeAuthenticationEvent extends RealmAuthenticati
      * @param credential the actual credential value from the authentication (may be {@code null} if not known)
      * @param evidence the evidence used to authenticate (may be {@code null} if not known or not applicable)
      */
-    protected RealmDefiniteOutcomeAuthenticationEvent(final RealmIdentity realmIdentity, final Credential credential, final Evidence evidence) {
+    RealmDefiniteOutcomeAuthenticationEvent(final RealmIdentity realmIdentity, final Credential credential, final Evidence evidence) {
         super(realmIdentity);
         this.credential = credential;
         this.evidence = evidence;
