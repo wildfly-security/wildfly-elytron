@@ -34,8 +34,8 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.util.ByteIterator;
 
 /**

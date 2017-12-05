@@ -44,8 +44,8 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 

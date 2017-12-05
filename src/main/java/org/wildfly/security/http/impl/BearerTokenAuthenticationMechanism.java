@@ -45,8 +45,8 @@ import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.MechanismUtil;
 
 /**
  * <p>A {@link HttpServerAuthenticationMechanism} capable to perform authentication based on a bearer token.
