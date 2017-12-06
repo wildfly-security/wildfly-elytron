@@ -51,6 +51,20 @@ public class PemTest {
     }
 
     /**
+     * Motivated by ELY-1300
+     */
+    @Test
+    public void testParsePemX509Certificate01() throws Exception {
+
+        URL url = PemTest.class.getResource("/ca/certs/01.pem");
+
+        byte[] bytes = Files.readAllBytes(Paths.get(url.toURI()));
+
+        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(bytes)));
+
+    }
+
+    /**
      * Motivated by ELY-1301
      */
     @Test
