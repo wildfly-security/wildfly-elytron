@@ -55,6 +55,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -70,7 +71,6 @@ import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.ByteIterator;
 
 
 /**
@@ -191,7 +191,7 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
 
         message = saslServer.evaluateResponse(message);
         assertFalse(saslServer.isComplete());
-        assertEquals("{\"status\":\"invalid_token\"}", ByteIterator.ofBytes(message).base64Decode().asUtf8String().drainToString());
+        assertEquals("{\"status\":\"invalid_token\"}", ByteIterator.ofBytes(message).asUtf8String().base64Decode().asUtf8String().drainToString());
     }
 
     @Test

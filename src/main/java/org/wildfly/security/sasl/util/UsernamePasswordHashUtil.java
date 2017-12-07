@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.wildfly.security.util.ByteIterator;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * A utility class for generating both the {user-name : realm-value : passwd } hash

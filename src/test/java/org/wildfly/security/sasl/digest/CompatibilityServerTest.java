@@ -32,13 +32,13 @@ import javax.security.sasl.SaslServer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 
 import mockit.Mock;
 import mockit.MockUp;

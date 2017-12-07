@@ -18,7 +18,7 @@
 
 package org.wildfly.security.mechanism.digest;
 
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * Utility class used to convert string to quoted strings

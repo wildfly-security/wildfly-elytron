@@ -70,6 +70,11 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.codec.Base32Alphabet;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
@@ -96,10 +101,6 @@ import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.permission.ElytronPermission;
-import org.wildfly.security.util.Alphabet;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A simple filesystem-backed security realm.
@@ -191,7 +192,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         if (encoded) {
             String base32 = ByteIterator.ofBytes(new ByteStringBuilder().append(name).toArray())
-                    .base32Encode(Alphabet.Base32Alphabet.STANDARD, false).drainToString();
+                    .base32Encode(Base32Alphabet.STANDARD, false).drainToString();
             name = normalizedName + "-" + base32;
         }
 
@@ -205,7 +206,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             CodePointIterator it = CodePointIterator.ofString(fileName);
             it.delimitedBy('-').skipAll();
             it.next(); // skip '-'
-            fileName = it.base32Decode(Alphabet.Base32Alphabet.STANDARD, false)
+            fileName = it.base32Decode(Base32Alphabet.STANDARD, false)
                     .asUtf8String().drainToString();
         }
         return fileName;
@@ -970,9 +971,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } else if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("hash".equals(localName)) {
-                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain();
+                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Base64Alphabet.STANDARD, false).drain();
                 } else if ("seed".equals(localName)) {
-                    seed = new String(CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII);
+                    seed = new String(CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII);
                 } else if ("sequence".equals(localName)) {
                     sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
                 } else {

@@ -22,6 +22,10 @@ import java.security.GeneralSecurityException;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.wildfly.common.codec.Alphabet;
+import org.wildfly.common.codec.Base32Alphabet;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * Tests for PasswordBasedEncryptionUtil class.
@@ -43,12 +47,12 @@ public class PasswordBasedEncryptionUtilTest {
         String[] algorithms = {"PBEWithHmacSHA1andAES_128","PBEWithHmacSHA256AndAES_128","PBEWithMD5AndDES"};
 
         Alphabet[] alphabets = {
-                Alphabet.Base64Alphabet.STANDARD,
-                Alphabet.Base64Alphabet.PICKETBOX_COMPATIBILITY,
-                Alphabet.Base64Alphabet.BCRYPT,
-                Alphabet.Base64Alphabet.MOD_CRYPT,
-                Alphabet.Base64Alphabet.MOD_CRYPT_LE,
-                Alphabet.Base32Alphabet.STANDARD,
+            Base64Alphabet.STANDARD,
+            PasswordBasedEncryptionUtil.PICKETBOX_COMPATIBILITY,
+            ModularCrypt.BCRYPT,
+            ModularCrypt.MOD_CRYPT,
+            ModularCrypt.MOD_CRYPT_LE,
+            Base32Alphabet.STANDARD,
         };
 
         for(String algorithm : algorithms) {

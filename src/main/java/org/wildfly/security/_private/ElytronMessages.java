@@ -716,8 +716,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2012, value = "An empty alias filter was supplied")
     IllegalArgumentException emptyFilter();
 
-    @Message(id = 2013, value = "Filter is missing '+' or '-' at offest %d")
-    IllegalArgumentException missingPlusMinusAt(int position);
+    @Message(id = 2013, value = "Filter is missing '+' or '-' at offset %d")
+    IllegalArgumentException missingPlusMinusAt(long position);
 
     @Message(id = 2014, value = "Invalid first word '%s', must be one of ALL/NONE")
     IllegalArgumentException invalidFirstWord(String firstWord);
@@ -812,7 +812,7 @@ public interface ElytronMessages extends BasicLogger {
     DecodeException invalidBase64Character();
 
     @Message(id = 3010, value = "Malformed PEM content at offset %d")
-    IllegalArgumentException malformedPemContent(int offset);
+    IllegalArgumentException malformedPemContent(long offset);
 
     @Message(id = 3011, value = "Invalid PEM type (expected \"%s\", got \"%s\"")
     IllegalArgumentException invalidPemType(String expected, String actual);
@@ -1010,13 +1010,13 @@ public interface ElytronMessages extends BasicLogger {
     AuthenticationMechanismException mechAuthorizationFailed(String userName, String authorizationId);
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
-    IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, int offset, String string);
+    IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, long offset, String string);
 
     @Message(id = 5016, value = "Unrecognized token \"%s\" in mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnknownToken(String word, String string);
 
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
-    IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
+    IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
 
     @Message(id = 5018, value = "Channel binding data changed")
     AuthenticationMechanismException mechChannelBindingChanged();

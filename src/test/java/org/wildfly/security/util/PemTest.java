@@ -19,6 +19,8 @@
 package org.wildfly.security.util;
 
 import org.junit.Test;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.pem.Pem;
 
 import java.net.URL;

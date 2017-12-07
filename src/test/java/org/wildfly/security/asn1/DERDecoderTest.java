@@ -23,8 +23,8 @@ import static org.wildfly.security.asn1.util.ASN1.*;
 import static org.wildfly.security.pem.Pem.extractDerContent;
 
 import org.junit.Test;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.asn1.util.ASN1;
-import org.wildfly.security.util.CodePointIterator;
 
 import java.util.ArrayList;
 

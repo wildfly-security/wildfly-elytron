@@ -31,10 +31,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util._private.Arrays2;
 
 /**

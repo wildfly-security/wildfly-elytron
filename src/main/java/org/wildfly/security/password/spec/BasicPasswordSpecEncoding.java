@@ -19,12 +19,12 @@ package org.wildfly.security.password.spec;
 
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;

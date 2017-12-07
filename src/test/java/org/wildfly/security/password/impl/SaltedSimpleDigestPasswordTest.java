@@ -39,14 +39,14 @@ import java.util.Arrays;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.util.Alphabet.Base64Alphabet;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test case for the {@link SaltedSimpleDigestPassword} implementation.

@@ -37,13 +37,13 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -171,7 +171,7 @@ public final class ScramClient {
             if (bi.next() != 's' || bi.next() != '=') {
                 throw saslScram.mechInvalidMessageReceived();
             }
-            salt = bi.delimitedBy(',').base64Decode().drain();
+            salt = bi.delimitedBy(',').asUtf8String().base64Decode().drain();
             bi.next(); // it's a ,
             if (bi.next() != 'i' || bi.next() != '=') {
                 throw saslScram.mechInvalidMessageReceived();
@@ -298,7 +298,7 @@ public final class ScramClient {
                 }
                 throw saslScram.mechInvalidMessageReceived();
             } else if (c == 'v' && bi.next() == '=') {
-                sig = bi.delimitedBy(',').base64Decode().drain();
+                sig = bi.delimitedBy(',').asUtf8String().base64Decode().drain();
             } else {
                 throw saslScram.mechInvalidMessageReceived();
             }

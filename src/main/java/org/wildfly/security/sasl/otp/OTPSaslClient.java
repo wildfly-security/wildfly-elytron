@@ -38,6 +38,8 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.callback.ExtendedChoiceCallback;
 import org.wildfly.security.auth.callback.ParameterCallback;
 import org.wildfly.security.password.PasswordFactory;
@@ -46,8 +48,6 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * SaslClient for the OTP SASL mechanism as defined by

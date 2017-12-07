@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.X500;
 

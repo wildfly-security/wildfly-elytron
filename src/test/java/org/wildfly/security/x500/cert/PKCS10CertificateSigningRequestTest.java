@@ -33,8 +33,8 @@ import javax.security.auth.x500.X500Principal;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.util.Alphabet;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.X500;
 
@@ -238,6 +238,6 @@ public class PKCS10CertificateSigningRequestTest {
     }
 
     private static byte[] getEncoded(String csr) {
-        return CodePointIterator.ofChars(csr.toCharArray()).base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain();
+        return CodePointIterator.ofChars(csr.toCharArray()).base64Decode(Base64Alphabet.STANDARD, false).drain();
     }
 }

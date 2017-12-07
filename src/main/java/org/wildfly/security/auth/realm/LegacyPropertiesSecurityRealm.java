@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -64,8 +66,6 @@ import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -168,7 +168,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                                 return null; // no digest for given username+realm
                             }
                         }
-                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
                 }
@@ -196,7 +196,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     try {
-                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     } catch (DecodeException e) {
                         throw log.decodingHashedPasswordFromPropertiesRealmFailed(e);

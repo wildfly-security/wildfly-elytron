@@ -75,6 +75,9 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.codec.Base32Alphabet;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.EmptyProvider;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
@@ -116,10 +119,7 @@ import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.AtomicFileOutputStream;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -886,7 +886,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         log.logIgnoredUnrecognizedKeyStoreEntry(ksAlias);
                     } else if (algName != null) {
                         if (parameters != null) {
-                            byte[] encodedParameters = CodePointIterator.ofString(parameters).base32Decode(Alphabet.Base32Alphabet.LOWERCASE, false).drain();
+                            byte[] encodedParameters = CodePointIterator.ofString(parameters).base32Decode(Base32Alphabet.LOWERCASE, false).drain();
                             final AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(algName);
                             algorithmParameters.init(encodedParameters);
                             final AlgorithmParameterSpec parameterSpec = algorithmParameters.getParameterSpec(AlgorithmParameterSpec.class);
@@ -1010,7 +1010,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             if (parameterSpec != null) try {
                 final AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(algorithm);
                 algorithmParameters.init(parameterSpec);
-                ByteIterator.ofBytes(algorithmParameters.getEncoded()).base32Encode(Alphabet.Base32Alphabet.LOWERCASE, false).drainTo(b);
+                ByteIterator.ofBytes(algorithmParameters.getEncoded()).base32Encode(Base32Alphabet.LOWERCASE, false).drainTo(b);
             } catch (NoSuchAlgorithmException | InvalidParameterSpecException | IOException e) {
                 throw log.cannotWriteCredentialToStore(e);
             }

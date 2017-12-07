@@ -40,6 +40,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.SecretKeyCredential;
@@ -50,7 +51,6 @@ import org.wildfly.security.credential.store.CredentialStoreSpi;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.util.AtomicFileOutputStream;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Credential store implementation which uses the legacy "vault" format.

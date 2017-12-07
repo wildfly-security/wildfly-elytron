@@ -39,6 +39,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.password.Password;
@@ -54,7 +55,6 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of server side of SCRAM mechanism.

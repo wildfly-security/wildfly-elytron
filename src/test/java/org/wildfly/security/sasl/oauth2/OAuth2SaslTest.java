@@ -23,6 +23,7 @@ import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
@@ -33,7 +34,6 @@ import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.CodePointIterator;
 
 import javax.json.Json;
 import javax.json.JsonObject;

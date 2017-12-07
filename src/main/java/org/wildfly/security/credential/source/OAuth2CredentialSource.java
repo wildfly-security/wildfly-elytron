@@ -47,13 +47,13 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A {@link CredentialSource} capable of authenticating against a OAuth2 compliant authorization server and obtaining

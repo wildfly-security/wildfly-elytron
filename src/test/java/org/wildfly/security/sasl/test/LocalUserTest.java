@@ -39,13 +39,13 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.junit.Test;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test for the local user SASL mechanism, this will test both the client and server side.

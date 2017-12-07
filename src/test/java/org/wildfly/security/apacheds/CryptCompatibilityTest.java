@@ -33,12 +33,12 @@ import org.apache.directory.api.ldap.model.password.PasswordUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.util.Alphabet.Base64Alphabet;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link org.wildfly.security.password.interfaces.UnixDESCryptPassword UnixDESCryptPassword}
@@ -77,7 +77,7 @@ public class CryptCompatibilityTest {
 
         final short salt = (short) convertSaltRepresentation(saltBytes);
 
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
 
         SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
 
@@ -102,7 +102,7 @@ public class CryptCompatibilityTest {
 
         final short salt = (short) convertSaltRepresentation(saltBytes);
 
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
 
         SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
 
@@ -116,7 +116,7 @@ public class CryptCompatibilityTest {
         int salt = 0;
 
         for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Base64Alphabet.MOD_CRYPT.decode(saltBytes[i]));
+            salt = ( salt << 6 ) | ( 0x00ff & ModularCrypt.MOD_CRYPT.decode(saltBytes[i]));
         }
 
         return salt;

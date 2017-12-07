@@ -18,14 +18,14 @@
 
 package org.wildfly.security.mechanism.oauth2;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -88,7 +88,7 @@ public class OAuth2Client {
 
         // otherwise, server responded with a error message
         try {
-            String errorMessage = ByteIterator.ofBytes(serverMessage).base64Decode().asUtf8String().drainToString();
+            String errorMessage = ByteIterator.ofBytes(serverMessage).asUtf8String().base64Decode().asUtf8String().drainToString();
             log.debugf("Got error message from server [%s].", errorMessage);
         } catch (Exception e) {
             log.errorf(e, "Server returned an unexpected message that is probably an error but could not be parsed.");

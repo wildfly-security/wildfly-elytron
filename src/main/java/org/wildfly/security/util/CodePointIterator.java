@@ -29,8 +29,10 @@ import static org.wildfly.security.util.Alphabet.Base64Alphabet;
 /**
  * A code point by code point iterator.
  *
+ * @deprecated Use {@link org.wildfly.common.iteration.CodePointIterator} instead.
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public abstract class CodePointIterator extends NumericIterator {
 
     /**

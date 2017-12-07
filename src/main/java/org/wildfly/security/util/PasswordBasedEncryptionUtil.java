@@ -40,6 +40,11 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.codec.Alphabet;
+import org.wildfly.common.codec.Base32Alphabet;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * Password Based Encryption utility class for tooling.
@@ -149,15 +154,15 @@ public final class PasswordBasedEncryptionUtil {
     }
 
     private static boolean isBase64(Alphabet alphabet) {
-        return alphabet instanceof Alphabet.Base64Alphabet;
+        return alphabet instanceof Base64Alphabet;
     }
 
-    private static Alphabet.Base64Alphabet getAlphabet64(Alphabet alphabet) {
-        return (Alphabet.Base64Alphabet) alphabet;
+    private static Base64Alphabet getAlphabet64(Alphabet alphabet) {
+        return (Base64Alphabet) alphabet;
     }
 
-    private static Alphabet.Base32Alphabet getAlphabet32(Alphabet alphabet) {
-        return (Alphabet.Base32Alphabet) alphabet;
+    private static Base32Alphabet getAlphabet32(Alphabet alphabet) {
+        return (Base32Alphabet) alphabet;
     }
 
     private byte[] encrypt(byte[] payload) throws GeneralSecurityException {
@@ -191,10 +196,10 @@ public final class PasswordBasedEncryptionUtil {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream((picketBoxBase64.length() * 3) / 4);
         for (int i = 0, n = picketBoxBase64.length(); i < n;) {
-            int pos0 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
-            int pos1 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
-            int pos2 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
-            int pos3 = Alphabet.PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos0 = PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos1 = PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos2 = PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
+            int pos3 = PICKETBOX_COMPATIBILITY.decode(picketBoxBase64.charAt(i++));
             if (pos0 > -1) {
                 bos.write(((pos1 & 0x30) >>> 4) | (pos0 << 2));
             }
@@ -216,13 +221,13 @@ public final class PasswordBasedEncryptionUtil {
             case 2:
                 b1 = buffer[i++];
                 c = ((b0 & 3) << 4) | ((b1 & 0xf0) >>> 4);
-                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+                sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
             case 1:
                 b2 = buffer[i++];
                 c = ((b1 & 0xf) << 2) | ((b2 & 0xc0) >>> 6);
-                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+                sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
                 c = b2 & 0x3f;
-                sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+                sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
                 break;
         }
 
@@ -231,13 +236,13 @@ public final class PasswordBasedEncryptionUtil {
             b1 = buffer[pos++];
             b2 = buffer[pos++];
             c = (b0 & 0xfc) >>> 2;
-            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
             c = ((b0 & 3) << 4) | ((b1 & 0xf0) >>> 4);
-            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
             c = ((b1 & 0xf) << 2) | ((b2 & 0xc0) >>> 6);
-            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
             c = b2 & 0x3f;
-            sb.appendCodePoint(Alphabet.PICKETBOX_COMPATIBILITY.encode(c));
+            sb.appendCodePoint(PICKETBOX_COMPATIBILITY.encode(c));
         }
 
         return sb.toString();
@@ -264,7 +269,7 @@ public final class PasswordBasedEncryptionUtil {
         private byte[] cipherSalt;
 
         private Provider provider;
-        private Alphabet alphabet = Alphabet.Base64Alphabet.STANDARD;
+        private Alphabet alphabet = Base64Alphabet.STANDARD;
         private boolean usePadding = false;
         private IvParameterSpec ivSpec;
         private String encodedIV;
@@ -550,7 +555,7 @@ public final class PasswordBasedEncryptionUtil {
         public PasswordBasedEncryptionUtil build() throws GeneralSecurityException {
             if (picketBoxCompatibility) {
                 // in compatible mode use Alphabet.PICKETBOX_COMPATIBILITY and no padding with proper key material and algorithm
-                alphabet = Alphabet.PICKETBOX_COMPATIBILITY;
+                alphabet = PICKETBOX_COMPATIBILITY;
                 usePadding = false;
                 keyAlgorithm = DEFAULT_PICKETBOX_ALGORITHM;
                 password = DEFAULT_PICKETBOX_INITIAL_KEY_MATERIAL.toCharArray();
@@ -581,8 +586,8 @@ public final class PasswordBasedEncryptionUtil {
                 cipherIteration = iteration;
             }
             if (ivSpec == null && encodedIV != null) {
-                ByteIterator byteIterator = isBase64(alphabet) ? CodePointIterator.ofString(encodedIV).base64Decode(getAlphabet64(alphabet))
-                        : CodePointIterator.ofString(encodedIV).base32Decode(getAlphabet32(alphabet));
+                ByteIterator byteIterator = isBase64(alphabet) ? CodePointIterator.ofString(encodedIV).base64Decode(getAlphabet64(alphabet), false)
+                        : CodePointIterator.ofString(encodedIV).base32Decode(getAlphabet32(alphabet), false);
                 ivSpec = new IvParameterSpec(byteIterator.drain());
             }
 
@@ -590,4 +595,40 @@ public final class PasswordBasedEncryptionUtil {
         }
     }
 
+    /**
+     * The alphabet used by PicketBox project base 64 encoding.
+     * {@code 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./}
+     */
+    public static final Base64Alphabet PICKETBOX_COMPATIBILITY = new Base64Alphabet(false) {
+        public int encode(int val) {
+            if (val <= 9) {
+                return '0' + val;
+            } else if (val <= 35) {
+                return 'A' + val - 10;
+            } else if (val <= 61) {
+                return 'a' + val - 36;
+            } else if (val == 62) {
+                return '.';
+            } else {
+                assert val == 63;
+                return '/';
+            }
+        }
+
+        public int decode(int codePoint) {
+            if ('0' <= codePoint && codePoint <= '9') {
+                return codePoint - '0';
+            } else if ('A' <= codePoint && codePoint <= 'Z') {
+                return codePoint - 'A' + 10;
+            } else if ('a' <= codePoint && codePoint <= 'z') {
+                return codePoint - 'a' + 36;
+            } else if (codePoint == '.') {
+                return 62;
+            } else if (codePoint == '/') {
+                return 63;
+            } else {
+                return -1;
+            }
+        }
+    };
 }

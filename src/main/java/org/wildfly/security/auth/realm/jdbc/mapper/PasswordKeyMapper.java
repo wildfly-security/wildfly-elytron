@@ -31,6 +31,7 @@ import java.sql.Types;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.realm.jdbc.KeyMapper;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
@@ -46,7 +47,6 @@ import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * <p>A {@link KeyMapper} that knows how to map columns from a SQL query to attributes of specific {@link org.wildfly.security.password.Password} type

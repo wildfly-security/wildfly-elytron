@@ -21,8 +21,10 @@ package org.wildfly.security.util;
 /**
  * An alphabet.
  *
+ * @deprecated
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public abstract class Alphabet {
     final boolean littleEndian;
 

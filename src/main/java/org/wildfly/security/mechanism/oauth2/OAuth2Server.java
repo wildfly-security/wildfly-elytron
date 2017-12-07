@@ -29,6 +29,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
@@ -36,7 +37,6 @@ import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.util.ByteIterator;
 
 /**
  * An OAuth2 Sasl Server based on RFC-7628.

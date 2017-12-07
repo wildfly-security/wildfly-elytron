@@ -31,6 +31,7 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
@@ -38,7 +39,6 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>

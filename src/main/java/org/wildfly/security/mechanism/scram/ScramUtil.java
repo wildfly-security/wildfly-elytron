@@ -23,7 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
-import org.wildfly.security.util.ByteIterator;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

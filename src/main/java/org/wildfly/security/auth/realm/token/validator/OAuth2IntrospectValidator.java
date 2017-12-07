@@ -19,12 +19,12 @@
 package org.wildfly.security.auth.realm.token.validator;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 
 import javax.json.Json;
 import javax.json.JsonObject;

@@ -37,12 +37,12 @@ import javax.json.JsonObjectBuilder;
 import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

@@ -39,11 +39,11 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.util.ByteIterator;
 
 /**
  * Implementation of the HTTP BASIC authentication mechanism
@@ -127,7 +127,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
                 if (current.startsWith(CHALLENGE_PREFIX)) {
-                    byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).base64Decode().drain();
+                    byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).asUtf8String().base64Decode().drain();
 
                     // Note: A ':' can not be present in the username but it can be present in the password so the first ':' is the delimiter.
                     int colonPos = indexOf(decodedValue, ':');

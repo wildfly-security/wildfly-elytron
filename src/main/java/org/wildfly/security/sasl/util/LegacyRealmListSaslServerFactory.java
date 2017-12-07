@@ -33,9 +33,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A {@link SaslServerFactory} which uses the {@link AvailableRealmsCallback} to populate the legacy

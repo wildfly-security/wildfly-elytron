@@ -31,10 +31,10 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Locale;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
-import org.wildfly.security.util.ByteStringBuilder;
 
 import javax.security.sasl.SaslException;
 

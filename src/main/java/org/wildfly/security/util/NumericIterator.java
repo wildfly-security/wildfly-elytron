@@ -27,8 +27,10 @@ import java.util.NoSuchElementException;
  * Non-public numeric iterator base class.  It is important to keep this non-public to prevent type confusion between
  * byte and code point iterators, which are fundamentally incompatible.
  *
+ * @deprecated
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 abstract class NumericIterator {
 
     public abstract boolean hasNext();
