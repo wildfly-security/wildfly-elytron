@@ -42,7 +42,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.util.ByteIterator;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * A test case for the {@link LegacyPropertiesSecurityRealm}.

@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLSession;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * A selection specification for SASL client or server mechanisms.  The specification can be used to define the types,
@@ -251,7 +251,7 @@ public abstract class SaslMechanismSelector {
         private final CodePointIterator i;
         private int current = TOK_INVALID;
         private int next;
-        private int offs;
+        private long offs;
         private String stringVal;
         private String nextStringVal;
 
@@ -269,7 +269,7 @@ public abstract class SaslMechanismSelector {
             if (next == TOK_INVALID) {
                 int cp;
                 while (i.hasNext()) {
-                    int offs = i.offset();
+                    long offs = i.getIndex();
                     cp = i.next();
                     if (! Character.isWhitespace(cp)) {
                         // determine the token type, if valid
@@ -277,18 +277,18 @@ public abstract class SaslMechanismSelector {
                             case '#': {
                                 // special of some sort
                                 if (! i.hasNext()) {
-                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }
-                                offs = i.offset();
+                                offs = i.getIndex();
                                 cp = i.next();
                                 switch (cp) {
                                     case 'F': {
                                         // FAMILY or nothing
                                         if (! i.limitedTo(5).contentEquals("AMILY")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_FAMILY;
@@ -297,10 +297,10 @@ public abstract class SaslMechanismSelector {
                                     case 'T': {
                                         // TLS
                                         if (! i.limitedTo(2).contentEquals("LS")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_TLS;
@@ -309,10 +309,10 @@ public abstract class SaslMechanismSelector {
                                     case 'P': {
                                         // PLUS
                                         if (! i.limitedTo(3).contentEquals("LUS")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_PLUS;
@@ -321,10 +321,10 @@ public abstract class SaslMechanismSelector {
                                     case 'M': {
                                         // MUTUAL
                                         if (! i.limitedTo(5).contentEquals("UTUAL")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_MUTUAL;
@@ -333,10 +333,10 @@ public abstract class SaslMechanismSelector {
                                     case 'H': {
                                         // HASH
                                         if (! i.limitedTo(3).contentEquals("ASH")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_HASH;
@@ -345,17 +345,17 @@ public abstract class SaslMechanismSelector {
                                     case 'A': {
                                         // ALL
                                         if (! i.limitedTo(2).contentEquals("LL")) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         if (i.hasNext() && isNameChar(i.peekNext())) {
-                                            throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                            throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                         }
                                         this.offs = offs;
                                         this.next = TOK_ALL;
                                         return true;
                                     }
                                     default: {
-                                        throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                        throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                     }
                                 }
                                 //throw Assert.unreachableCode();
@@ -393,7 +393,7 @@ public abstract class SaslMechanismSelector {
                             case '|': {
                                 cp = i.next();
                                 if (cp != '|') {
-                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_OR;
@@ -402,7 +402,7 @@ public abstract class SaslMechanismSelector {
                             case '&': {
                                 cp = i.next();
                                 if (cp != '&') {
-                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_AND;
@@ -411,7 +411,7 @@ public abstract class SaslMechanismSelector {
                             case '=': {
                                 cp = i.next();
                                 if (cp != '=') {
-                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }
                                 this.offs = offs;
                                 this.next = TOK_EQ;
@@ -420,18 +420,18 @@ public abstract class SaslMechanismSelector {
                             default: {
                                 if (Character.isLetterOrDigit(cp) || cp == '_') {
                                     // name, probably
-                                    final int start = i.offset() - 1;
+                                    final long start = i.getIndex() - 1;
                                     for (;;) {
                                         if (! i.hasNext()) {
-                                            nextStringVal = string.substring(start);
+                                            nextStringVal = string.substring((int) start);
                                             this.offs = offs;
                                             next = TOK_NAME;
                                             return true;
                                         }
                                         cp = i.next();
                                         if (! isNameChar(cp)) {
-                                            nextStringVal = string.substring(start, i.offset() - 1);
-                                            i.prev();
+                                            switch (nextStringVal = string.substring((int) start, (int) i.getIndex() - 1)) {}
+                                            i.previous();
                                             this.offs = offs;
                                             next = TOK_NAME;
                                             return true;
@@ -439,7 +439,7 @@ public abstract class SaslMechanismSelector {
                                     }
                                     //throw Assert.unreachableCode();
                                 } else {
-                                    throw sasl.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                                    throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }
                             }
                         }
@@ -477,7 +477,7 @@ public abstract class SaslMechanismSelector {
         }
 
         int offset() {
-            return offs;
+            return (int) offs;
         }
 
         String getStringVal() {

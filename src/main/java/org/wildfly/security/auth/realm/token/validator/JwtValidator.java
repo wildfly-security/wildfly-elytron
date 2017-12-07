@@ -24,8 +24,8 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 import javax.json.Json;
 import javax.json.JsonArray;

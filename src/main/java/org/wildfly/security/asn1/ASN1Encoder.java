@@ -24,7 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.BitSet;
 import java.util.EnumSet;
 
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * An interface for encoding ASN.1 values.

@@ -38,8 +38,8 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.

@@ -24,7 +24,7 @@ import java.security.cert.Extension;
 
 import org.wildfly.security.asn1.ASN1Encodable;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * An X.509 certificate extension.

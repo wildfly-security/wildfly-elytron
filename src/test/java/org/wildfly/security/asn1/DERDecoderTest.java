@@ -19,7 +19,7 @@
 package org.wildfly.security.asn1;
 
 import org.junit.Test;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 import java.util.ArrayList;
 

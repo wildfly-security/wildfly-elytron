@@ -76,7 +76,7 @@ import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
-import org.wildfly.security.util.ByteIterator;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * Implementation of the HTTP DIGEST authentication mechanism.
@@ -168,7 +168,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         }
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
-            response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
+            response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).asUtf8String().hexDecode().drain();
         } else {
             throw httpDigest.mechMissingDirective(RESPONSE);
         }

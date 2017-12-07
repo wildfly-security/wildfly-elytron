@@ -19,7 +19,7 @@
 package org.wildfly.security.asn1;
 
 import org.junit.Test;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;

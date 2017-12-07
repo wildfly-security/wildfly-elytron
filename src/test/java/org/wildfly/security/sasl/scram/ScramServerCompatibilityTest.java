@@ -54,7 +54,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * Test of server side of SCRAM mechanism.

@@ -26,7 +26,7 @@ import org.ietf.jgss.ChannelBinding;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

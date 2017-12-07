@@ -26,8 +26,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * Tests of org.wildfly.security.sasl.util.ByteStringBuilder
