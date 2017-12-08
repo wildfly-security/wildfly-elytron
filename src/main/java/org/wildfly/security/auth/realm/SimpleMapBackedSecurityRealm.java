@@ -95,40 +95,54 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     /**
-     * Set the realm entry map.  Note that the entry map must <b>not</b> be modified after calling this method.
+     * Set the realm identity map.  Note that the entry map must <b>not</b> be modified after calling this method.
      * If it needs to be changed, pass in a new map that is a copy of the old map with the required changes.
      *
-     * @param map the password map
+     * @param map the identity map where key is an identity name and value is an identity entry
      */
-    public void setPasswordMap(final Map<String, SimpleRealmEntry> map) {
+    public void setIdentityMap(final Map<String, SimpleRealmEntry> map) {
         Assert.checkNotNullParam("map", map);
         this.map = map;
     }
 
     /**
-     * Set the password map to contain a single entry.
+     * Set the realm identity map.  Note that the entry map must <b>not</b> be modified after calling this method.
+     * If it needs to be changed, pass in a new map that is a copy of the old map with the required changes.
+     *
+     * @param map the identity map
+     * @deprecated Use {@link #setIdentityMap(Map)} instead.
+     */
+    @Deprecated
+    public void setPasswordMap(final Map<String, SimpleRealmEntry> map) {
+        setIdentityMap(map);
+    }
+
+    /**
+     * Set the realm identity map to contain a single entry.
      *
      * @param name the entry name
      * @param password the password
      * @param attributes the identity attributes
+     * @deprecated Use {@link #setIdentityMap(Map)} instead.
      */
+    @Deprecated
     public void setPasswordMap(final String name, final Password password, final Attributes attributes) {
-        Assert.checkNotNullParam("name", name);
-        Assert.checkNotNullParam("password", password);
-        Assert.checkNotNullParam("attributes", attributes);
-        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password)), attributes));
+        setIdentityMap(Collections.singletonMap(name, new SimpleRealmEntry(
+                Collections.singletonList(new PasswordCredential(password)),
+                attributes
+        )));
     }
 
     /**
-     * Set the password map to contain a single entry.
+     * Set the realm identity map to contain a single entry.
      *
      * @param name the entry name
      * @param password the password
+     * @deprecated Use {@link #setIdentityMap(Map)} instead.
      */
+    @Deprecated
     public void setPasswordMap(final String name, final Password password) {
-        Assert.checkNotNullParam("name", name);
-        Assert.checkNotNullParam("password", password);
-        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password))));
+        setPasswordMap(name, password, Attributes.EMPTY);
     }
 
     @Override

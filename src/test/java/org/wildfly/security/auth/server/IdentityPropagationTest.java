@@ -69,13 +69,13 @@ public class IdentityPropagationTest {
         Map<String, SimpleRealmEntry> users = new HashMap<>();
         addUser(users, "joe", "User");
         addUser(users, "bob", "User");
-        realm1.setPasswordMap(users);
+        realm1.setIdentityMap(users);
 
         SimpleMapBackedSecurityRealm realm2 = new SimpleMapBackedSecurityRealm();
         users = new HashMap<>();
         addUser(users, "sam", "Manager");
         addUser(users, "bob", "Manager");
-        realm2.setPasswordMap(users);
+        realm2.setIdentityMap(users);
 
         // domain1 contains both realms
         SecurityDomain.Builder builder = SecurityDomain.builder();

@@ -128,7 +128,7 @@ public class SecurityRealmIdentityCacheTest {
         addUser(users, "joe", "User");
         addUser(users, "bob", "User");
 
-        realm.setPasswordMap(users);
+        realm.setIdentityMap(users);
 
         if (cache == null) {
             cache = new RealmIdentityCache() {

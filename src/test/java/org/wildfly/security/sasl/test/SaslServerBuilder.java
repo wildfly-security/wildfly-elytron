@@ -50,6 +50,7 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
@@ -338,9 +339,12 @@ public class SaslServerBuilder {
             });
 
             if (passwordMap != null) {
-                mainRealm.setPasswordMap(passwordMap);
+                mainRealm.setIdentityMap(passwordMap);
             } else if (username != null) {
-                mainRealm.setPasswordMap(username, password);
+                mainRealm.setIdentityMap(Collections.singletonMap(username, new SimpleRealmEntry(
+                        Collections.singletonList(new PasswordCredential(password)),
+                        Attributes.EMPTY
+                )));
             }
         } else {
             final Path root = Paths.get(".", "target", "test-domains", String.valueOf(System.currentTimeMillis())).normalize();

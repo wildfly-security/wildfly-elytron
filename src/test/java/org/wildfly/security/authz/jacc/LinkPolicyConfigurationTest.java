@@ -25,12 +25,15 @@ import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.realm.SimpleRealmEntry;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -45,6 +48,7 @@ import java.security.ProtectionDomain;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -168,11 +172,17 @@ public class LinkPolicyConfigurationTest {
     private SecurityDomain createSecurityDomain(String userName, String... roles) throws Exception {
         SecurityDomain.Builder builder = SecurityDomain.builder();
         SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
-        MapAttributes attributes = new MapAttributes();
 
+        Password password = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(new ClearPasswordSpec(userName.toCharArray()));
+
+        MapAttributes attributes = new MapAttributes();
         attributes.addAll(RoleDecoder.KEY_ROLES, Arrays.asList(roles));
 
-        realm.setPasswordMap(userName, PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(new ClearPasswordSpec(userName.toCharArray())), attributes);
+
+        realm.setIdentityMap(Collections.singletonMap(userName, new SimpleRealmEntry(
+                Collections.singletonList(new PasswordCredential(password)),
+                attributes
+        )));
 
         builder.setDefaultRealmName("default");
 
