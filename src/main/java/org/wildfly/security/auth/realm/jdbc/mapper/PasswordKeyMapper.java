@@ -82,21 +82,6 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(ResultSet resultSet, Supplier<Provider[]> providers) {
-        try {
-            Credential map = map(resultSet, providers);
-
-            if (map != null) {
-                return SupportLevel.SUPPORTED;
-            }
-
-            return SupportLevel.UNSUPPORTED;
-        } catch (SQLException cause) {
-            throw log.couldNotObtainCredentialWithCause(cause);
-        }
-    }
-
-    @Override
     public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
         return PasswordCredential.class.isAssignableFrom(credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
     }
