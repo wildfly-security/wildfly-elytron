@@ -96,6 +96,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
+import org.wildfly.security.credential.source.FactoryCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -160,9 +161,8 @@ public final class AuthenticationConfiguration {
     private static final int SET_SASL_MECH_PROPS = 17;
     private static final int SET_ACCESS_CTXT = 18;
     private static final int SET_CALLBACK_INTERCEPT = 19;
-    private static final int SET_KRB_SEC_FAC = 20;
-    private static final int SET_SASL_PROTOCOL = 21;
-    private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 22;
+    private static final int SET_SASL_PROTOCOL = 20;
+    private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             WildFlySecurityManager.isChecking() ?
@@ -212,7 +212,6 @@ public final class AuthenticationConfiguration {
     final SecurityFactory<X509TrustManager> trustManagerFactory;
     final Map<String, ?> saslMechanismProperties;
     final Predicate<Callback> callbackIntercept;
-    final SecurityFactory<Credential> kerberosSecurityFactory;
     final String saslProtocol;
 
     // constructors
@@ -243,7 +242,6 @@ public final class AuthenticationConfiguration {
         this.trustManagerFactory = null;
         this.saslMechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
-        this.kerberosSecurityFactory = null;
         this.saslProtocol = null;
     }
 
@@ -279,7 +277,6 @@ public final class AuthenticationConfiguration {
         this.trustManagerFactory = what == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value : original.trustManagerFactory;
         this.saslMechanismProperties = what == SET_SASL_MECH_PROPS ? (Map<String, ?>) value : original.saslMechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
-        this.kerberosSecurityFactory = what == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value : original.kerberosSecurityFactory;
         this.saslProtocol = what == SET_SASL_PROTOCOL ? (String) value : original.saslProtocol;
         sanitazeOnMutation(what);
     }
@@ -318,7 +315,6 @@ public final class AuthenticationConfiguration {
         this.trustManagerFactory = what1 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value1 : what2 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value2 : original.trustManagerFactory;
         this.saslMechanismProperties = what1 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value2 : original.saslMechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
-        this.kerberosSecurityFactory = what1 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value1 : what2 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value2 : original.kerberosSecurityFactory;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
@@ -353,7 +349,6 @@ public final class AuthenticationConfiguration {
         this.trustManagerFactory = original.trustManagerFactory;
         this.saslMechanismProperties = original.saslMechanismProperties;
         this.callbackIntercept = original.callbackIntercept;
-        this.kerberosSecurityFactory = original.kerberosSecurityFactory;
         this.saslProtocol = original.saslProtocol;
     }
 
@@ -380,7 +375,6 @@ public final class AuthenticationConfiguration {
         this.trustManagerFactory = getOrDefault(other.trustManagerFactory, original.trustManagerFactory);
         this.saslMechanismProperties = getOrDefault(other.saslMechanismProperties, original.saslMechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
-        this.kerberosSecurityFactory = getOrDefault(other.kerberosSecurityFactory, original.kerberosSecurityFactory);
         this.saslProtocol =  getOrDefault(other.saslProtocol, original.saslProtocol);
         sanitazeOnMutation(SET_USER_CBH);
     }
@@ -517,10 +511,6 @@ public final class AuthenticationConfiguration {
 
     SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
         return keyManagerFactory;
-    }
-
-    SecurityFactory<Credential> getKerberosSecurityFactory() {
-        return this.kerberosSecurityFactory;
     }
 
     CredentialSource getCredentialSource() {
@@ -1206,17 +1196,19 @@ public final class AuthenticationConfiguration {
     }
 
     /**
-     * Create a new configuration which is the same as this ocnfiguration, but which uses the given kerberos security
+     * Create a new configuration which is the same as this configuration, but which uses the given kerberos security
      * factory to acquire the GSS credential required for authentication.
      *
      * @param kerberosSecurityFactory a reference to the kerberos security factory to be use
      * @return the new configuration
      */
+    @Deprecated
     public AuthenticationConfiguration useKerberosSecurityFactory(SecurityFactory<Credential> kerberosSecurityFactory) {
-        if (Objects.equals(this.kerberosSecurityFactory, kerberosSecurityFactory)) {
-            return this;
+        CredentialSource cs = getCredentialSource();
+        if (kerberosSecurityFactory != null) {
+            return cs != null ? new AuthenticationConfiguration(this, SET_CRED_SOURCE, cs.with(new FactoryCredentialSource(kerberosSecurityFactory))) : new AuthenticationConfiguration(this, SET_CRED_SOURCE, new FactoryCredentialSource(kerberosSecurityFactory));
         }
-        return new AuthenticationConfiguration(this, SET_KRB_SEC_FAC, kerberosSecurityFactory);
+        return this; // cs != null ? new AuthenticationConfiguration(this, SET_CRED_SOURCE, cs.without(GSSKerberosCredential.class)) : this;
     }
 
     /**
@@ -1406,7 +1398,6 @@ public final class AuthenticationConfiguration {
             && Objects.equals(parameterSpecs, other.parameterSpecs)
             && Objects.equals(trustManagerFactory, other.trustManagerFactory)
             && Objects.equals(saslMechanismProperties, other.saslMechanismProperties)
-            && Objects.equals(kerberosSecurityFactory, other.kerberosSecurityFactory)
             && Objects.equals(saslProtocol, other.saslProtocol);
     }
 
@@ -1422,7 +1413,7 @@ public final class AuthenticationConfiguration {
                 principal, setHost, setProtocol, setRealm, setAuthzPrincipal, authenticationNameForwardSecurityDomain,
                 authenticationCredentialsForwardSecurityDomain, authorizationNameForwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
-                saslMechanismProperties, kerberosSecurityFactory, saslProtocol) * 19 + setPort;
+                saslMechanismProperties, saslProtocol) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
             }
@@ -1460,7 +1451,6 @@ public final class AuthenticationConfiguration {
             if (! parameterSpecs.isEmpty()) b.append("parameter-specifications=").append(parameterSpecs).append(',');
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
             if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
-            if (kerberosSecurityFactory != null) b.append("kerberos-security-factory").append(kerberosSecurityFactory).append(',');
             b.setLength(b.length() - 1);
             return this.toString = b.toString();
         }
@@ -1609,21 +1599,6 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                    // special handling for GSS when a kerberos security factory is set
-                    final SecurityFactory<Credential> kerberosSecurityFactory = config.getKerberosSecurityFactory();
-                    if (kerberosSecurityFactory != null && credentialCallback.isCredentialTypeSupported(GSSKerberosCredential.class)) {
-                        final Credential credential;
-                        try {
-                            credential = kerberosSecurityFactory.create();
-                        } catch (GeneralSecurityException e) {
-                            throw log.unableToCreateKerberosCredential(e);
-                        }
-                        if (credential != null) {
-                            credentialCallback.setCredential(credential);
-                            continue;
-                        }
-                        // otherwise fall out to normal handling
-                    }
                     // special handling for X.509 when a key manager factory is set
                     final SecurityFactory<X509KeyManager> keyManagerFactory = config.getX509KeyManagerFactory();
                     if (keyManagerFactory != null) {
