@@ -17,20 +17,7 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.realm.CacheableSecurityRealm;
-import org.wildfly.security.auth.realm.jdbc.mapper.AttributeMapper;
-import org.wildfly.security.auth.server.RealmIdentity;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.SupportLevel;
-import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.evidence.Evidence;
-
-import javax.sql.DataSource;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.Provider;
@@ -39,13 +26,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import javax.sql.DataSource;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
+import org.wildfly.security.auth.realm.jdbc.mapper.AttributeMapper;
+import org.wildfly.security.auth.server.IdentityCredentials;
+import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * Security realm implementation backed by a database.
@@ -125,21 +125,13 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         @Override
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
-            SupportLevel support = SupportLevel.UNSUPPORTED;
-            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
-                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, r -> keyMapper.getCredentialSupport(r, providers));
-                        if (mapperSupport == SupportLevel.SUPPORTED) {
-                            return SupportLevel.SUPPORTED;
-                        } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
-                            support = SupportLevel.POSSIBLY_SUPPORTED;
-                        }
-                    }
-                }
+
+            JdbcIdentity identity = getIdentity();
+            if (identity != null) {
+                return identity.identityCredentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
 
-            return support;
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override
@@ -155,15 +147,10 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
-            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
-                        final Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
-                        if (credential != null && credential.matches(credentialType, algorithmName, parameterSpec)) {
-                            return credentialType.cast(credential);
-                        }
-                    }
-                }
+
+            JdbcIdentity identity = getIdentity();
+            if (identity != null) {
+                return identity.identityCredentials.getCredential(credentialType, algorithmName);
             }
 
             return null;
@@ -172,33 +159,22 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         @Override
         public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidenceType", evidenceType);
-            SupportLevel support = SupportLevel.UNSUPPORTED;
-            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, r -> keyMapper.getCredentialSupport(r, providers));
-                        if (mapperSupport == SupportLevel.SUPPORTED) {
-                            return SupportLevel.SUPPORTED;
-                        } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
-                            support = SupportLevel.POSSIBLY_SUPPORTED;
-                        }
-                    }
-                }
+
+            JdbcIdentity identity = getIdentity();
+            if (identity != null) {
+                return identity.identityCredentials.canVerify(evidenceType, algorithmName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
             }
 
-            return support;
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
 
-            if (exists()) {
-                for (Credential credential : this.identity.credentials) {
-                    if (credential.canVerify(evidence)) {
-                        return credential.verify(evidence);
-                    }
-                }
+            JdbcIdentity identity = getIdentity();
+            if (identity != null) {
+                return identity.identityCredentials.verify(evidence);
             }
 
             return false;
@@ -254,16 +230,17 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
                     return attributes;
                 })).map(attributes -> {
-                    List<Credential> credentials = new ArrayList<>();
+                    IdentityCredentials credentials = IdentityCredentials.NONE;
 
                     for (QueryConfiguration configuration : queryConfiguration) {
                         for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                            credentials.add(executePrincipalQuery(configuration, r -> keyMapper.map(r, providers)));
+                            credentials = credentials.withCredential(executePrincipalQuery(configuration, r -> keyMapper.map(r, providers)));
                         }
                     }
 
                     return new JdbcIdentity(attributes, credentials);
                 }).orElse(null);
+                // TODO We should cache we reached the orElse(null) to avoid repeating the SQL calls.
             }
 
             return this.identity;
@@ -304,11 +281,11 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         private class JdbcIdentity {
 
             private final Attributes attributes;
-            private List<Credential> credentials = new ArrayList<>();
+            private final IdentityCredentials identityCredentials;
 
-            JdbcIdentity(Attributes attributes, List<Credential> credentials) {
+            JdbcIdentity(Attributes attributes, IdentityCredentials identityCredentials) {
                 this.attributes = attributes;
-                this.credentials = credentials;
+                this.identityCredentials = identityCredentials;
             }
         }
     }
