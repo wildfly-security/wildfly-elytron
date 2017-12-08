@@ -234,51 +234,49 @@ public class PasswordKeyMapper implements KeyMapper {
 
         final ResultSetMetaData metaData = resultSet.getMetaData();
 
-        if (resultSet.next()) {
-            if (algorithmColumn > 0) {
-                algorithmName = resultSet.getString(algorithmColumn);
-                if (algorithmName == null) {
-                    algorithmName = getDefaultAlgorithm();
-                }
+        if (algorithmColumn > 0) {
+            algorithmName = resultSet.getString(algorithmColumn);
+            if (algorithmName == null) {
+                algorithmName = getDefaultAlgorithm();
             }
+        }
 
-            if (ClearPassword.ALGORITHM_CLEAR.equals(algorithmName)) {
+        if (ClearPassword.ALGORITHM_CLEAR.equals(algorithmName)) {
+            final String s = getStringColumn(metaData, resultSet, hashColumn);
+            if (s != null) {
+                clear = s.toCharArray();
+            } else {
+                hash = getBinaryColumn(metaData, resultSet, hashColumn);
+            }
+        } else {
+            if (saltColumn == -1 && iterationCountColumn == -1) {
+                // try modular crypt
                 final String s = getStringColumn(metaData, resultSet, hashColumn);
                 if (s != null) {
-                    clear = s.toCharArray();
-                } else {
-                    hash = getBinaryColumn(metaData, resultSet, hashColumn);
-                }
-            } else {
-                if (saltColumn == -1 && iterationCountColumn == -1) {
-                    // try modular crypt
-                    final String s = getStringColumn(metaData, resultSet, hashColumn);
-                    if (s != null) {
-                        final char[] chars = s.toCharArray();
-                        final String identified = ModularCrypt.identifyAlgorithm(chars);
-                        if (identified != null) {
-                            try {
-                                return new PasswordCredential(ModularCrypt.decode(chars));
-                            } catch (InvalidKeySpecException e) {
-                                // fall out (unlikely but possible)
-                            }
+                    final char[] chars = s.toCharArray();
+                    final String identified = ModularCrypt.identifyAlgorithm(chars);
+                    if (identified != null) {
+                        try {
+                            return new PasswordCredential(ModularCrypt.decode(chars));
+                        } catch (InvalidKeySpecException e) {
+                            // fall out (unlikely but possible)
                         }
                     }
                 }
-                hash = getBinaryColumn(metaData, resultSet, hashColumn);
             }
-
-            if (saltColumn > 0) {
-                salt = getBinaryColumn(metaData, resultSet, saltColumn);
-            }
-
-            if (iterationCountColumn > 0) {
-                iterationCount = resultSet.getInt(iterationCountColumn);
-            } else {
-                iterationCount = defaultIterationCount;
-            }
-
+            hash = getBinaryColumn(metaData, resultSet, hashColumn);
         }
+
+        if (saltColumn > 0) {
+            salt = getBinaryColumn(metaData, resultSet, saltColumn);
+        }
+
+        if (iterationCountColumn > 0) {
+            iterationCount = resultSet.getInt(iterationCountColumn);
+        } else {
+            iterationCount = defaultIterationCount;
+        }
+
 
         final PasswordFactory passwordFactory;
         try {

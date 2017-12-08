@@ -29,7 +29,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -112,6 +111,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
     private class JdbcRealmIdentity implements RealmIdentity {
 
         private final String name;
+        private boolean loaded = false;
         private JdbcIdentity identity;
 
         public JdbcRealmIdentity(String name) {
@@ -194,53 +194,54 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         }
 
         private JdbcIdentity getIdentity() {
-            if (this.identity == null) {
-                this.identity = JdbcSecurityRealm.this.queryConfiguration.stream().map(queryConfiguration -> executePrincipalQuery(queryConfiguration, resultSet -> {
-                    if (resultSet.next()) {
-                        MapAttributes attributes = new MapAttributes();
+            if (!loaded && this.identity == null) {
+                MapAttributes attributes = new MapAttributes();
+                IdentityCredentials credentials = IdentityCredentials.NONE;
+                boolean found = false;
 
-                        do {
-                            queryConfiguration.getColumnMappers(AttributeMapper.class).forEach(attributeMapper -> {
-                                try {
+                for (QueryConfiguration configuration : queryConfiguration) {
+                    String sql = configuration.getSql();
+
+                    log.tracef("Executing principalQuery %s with value %s", sql, name);
+
+                    try (Connection connection = getConnection(configuration);
+                            PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                        preparedStatement.setString(1, name);
+
+                        try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                            List<AttributeMapper> attributeMappers = configuration.getColumnMappers(AttributeMapper.class);
+                            List<KeyMapper> keyMappers = configuration.getColumnMappers(KeyMapper.class);
+                            while (resultSet.next()) {
+                                found = true;
+
+                                for (AttributeMapper attributeMapper : attributeMappers) {
                                     Object value = attributeMapper.map(resultSet, providers);
-
                                     if (value != null) {
-                                        attributes.addFirst(attributeMapper.getName(), value.toString());
+                                        if (attributes.containsKey(attributeMapper.getName())) {
+                                            attributes.get(attributeMapper.getName()).add(value.toString());
+                                        } else {
+                                            attributes.addFirst(attributeMapper.getName(), value.toString());
+                                        }
                                     }
-                                } catch (SQLException cause) {
-                                    throw log.ldapRealmFailedObtainAttributes(this.name, cause);
                                 }
-                            });
-                        } while (resultSet.next());
 
-                        return attributes;
-                    }
-
-                    return null;
-                })).collect(Collectors.reducing((lAttribute, rAttribute) -> {
-                    if (rAttribute == null) {
-                        return lAttribute;
-                    }
-
-                    MapAttributes attributes = new MapAttributes(lAttribute);
-
-                    for (Attributes.Entry rEntry : rAttribute.entries()) {
-                        attributes.get(rEntry.getKey()).addAll(rEntry);
-                    }
-
-                    return attributes;
-                })).map(attributes -> {
-                    IdentityCredentials credentials = IdentityCredentials.NONE;
-
-                    for (QueryConfiguration configuration : queryConfiguration) {
-                        for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                            credentials = credentials.withCredential(executePrincipalQuery(configuration, r -> keyMapper.map(r, providers)));
+                                for (KeyMapper keyMapper : keyMappers) {
+                                    Credential credential = keyMapper.map(resultSet, providers);
+                                    if (credential != null) {
+                                        credentials = credentials.withCredential(credential);
+                                    }
+                                }
+                            }
                         }
+                    } catch (SQLException e) {
+                        throw log.couldNotExecuteQuery(sql, e);
+                    } catch (Exception e) {
+                        throw log.unexpectedErrorWhenProcessingAuthenticationQuery(sql, e);
                     }
+                }
 
-                    return new JdbcIdentity(attributes, credentials);
-                }).orElse(null);
-                // TODO We should cache we reached the orElse(null) to avoid repeating the SQL calls.
+                this.identity = found ? new JdbcIdentity(attributes, credentials) : null;
+                loaded = true;
             }
 
             return this.identity;
@@ -252,29 +253,6 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
                 return dataSource.getConnection();
             } catch (Exception e) {
                 throw log.couldNotOpenConnection(e);
-            }
-        }
-
-        private <E> E executePrincipalQuery(QueryConfiguration configuration, ResultSetCallback<E> resultSetCallback) {
-            String sql = configuration.getSql();
-
-            log.tracef("Executing principalQuery %s with value %s", sql, name);
-
-            try (
-                    Connection connection = getConnection(configuration);
-                    PreparedStatement preparedStatement = connection.prepareStatement(sql)
-            ) {
-                preparedStatement.setString(1, name);
-
-                try (
-                        ResultSet resultSet = preparedStatement.executeQuery()
-                ) {
-                    return resultSetCallback.handle(resultSet);
-                }
-            } catch (SQLException e) {
-                throw log.couldNotExecuteQuery(sql, e);
-            } catch (Exception e) {
-                throw log.unexpectedErrorWhenProcessingAuthenticationQuery(sql, e);
             }
         }
 
