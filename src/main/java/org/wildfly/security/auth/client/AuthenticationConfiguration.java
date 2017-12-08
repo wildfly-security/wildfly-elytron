@@ -157,7 +157,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_SASL_FAC_SUP = 14;
     private static final int SET_PARAM_SPECS = 15;
     private static final int SET_TRUST_MGR_FAC = 16;
-    private static final int SET_MECH_PROPS = 17;
+    private static final int SET_SASL_MECH_PROPS = 17;
     private static final int SET_ACCESS_CTXT = 18;
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_KRB_SEC_FAC = 20;
@@ -210,7 +210,7 @@ public final class AuthenticationConfiguration {
     final Supplier<SaslClientFactory> saslClientFactorySupplier;
     final List<AlgorithmParameterSpec> parameterSpecs;
     final SecurityFactory<X509TrustManager> trustManagerFactory;
-    final Map<String, ?> mechanismProperties;
+    final Map<String, ?> saslMechanismProperties;
     final Predicate<Callback> callbackIntercept;
     final SecurityFactory<Credential> kerberosSecurityFactory;
     final String saslProtocol;
@@ -241,7 +241,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
         this.trustManagerFactory = null;
-        this.mechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
+        this.saslMechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.kerberosSecurityFactory = null;
         this.saslProtocol = null;
@@ -277,7 +277,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = what == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value : original.saslClientFactorySupplier;
         this.parameterSpecs = what == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value : original.parameterSpecs;
         this.trustManagerFactory = what == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value : original.trustManagerFactory;
-        this.mechanismProperties = what == SET_MECH_PROPS ? (Map<String, ?>) value : original.mechanismProperties;
+        this.saslMechanismProperties = what == SET_SASL_MECH_PROPS ? (Map<String, ?>) value : original.saslMechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.kerberosSecurityFactory = what == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value : original.kerberosSecurityFactory;
         this.saslProtocol = what == SET_SASL_PROTOCOL ? (String) value : original.saslProtocol;
@@ -316,7 +316,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = what1 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value1 : what2 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value2 : original.saslClientFactorySupplier;
         this.parameterSpecs = what1 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value1 : what2 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value2 : original.parameterSpecs;
         this.trustManagerFactory = what1 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value1 : what2 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value2 : original.trustManagerFactory;
-        this.mechanismProperties = what1 == SET_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_MECH_PROPS ? (Map<String, ?>) value2 : original.mechanismProperties;
+        this.saslMechanismProperties = what1 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value2 : original.saslMechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.kerberosSecurityFactory = what1 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value1 : what2 == SET_KRB_SEC_FAC ? (SecurityFactory<Credential>) value2 : original.kerberosSecurityFactory;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
@@ -351,7 +351,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = original.saslClientFactorySupplier;
         this.parameterSpecs = original.parameterSpecs;
         this.trustManagerFactory = original.trustManagerFactory;
-        this.mechanismProperties = original.mechanismProperties;
+        this.saslMechanismProperties = original.saslMechanismProperties;
         this.callbackIntercept = original.callbackIntercept;
         this.kerberosSecurityFactory = original.kerberosSecurityFactory;
         this.saslProtocol = original.saslProtocol;
@@ -378,7 +378,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = getOrDefault(other.saslClientFactorySupplier, original.saslClientFactorySupplier);
         this.parameterSpecs = getOrDefault(other.parameterSpecs, original.parameterSpecs);
         this.trustManagerFactory = getOrDefault(other.trustManagerFactory, original.trustManagerFactory);
-        this.mechanismProperties = getOrDefault(other.mechanismProperties, original.mechanismProperties);
+        this.saslMechanismProperties = getOrDefault(other.saslMechanismProperties, original.saslMechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.kerberosSecurityFactory = getOrDefault(other.kerberosSecurityFactory, original.kerberosSecurityFactory);
         this.saslProtocol =  getOrDefault(other.saslProtocol, original.saslProtocol);
@@ -1137,9 +1137,43 @@ public final class AuthenticationConfiguration {
      *
      * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
      * @return the new configuration.
+     * @deprecated use {@link #useSaslMechanismProperties(Map)}
      */
+    @Deprecated
     public AuthenticationConfiguration useMechanismProperties(Map<String, ?> mechanismProperties) {
-        return useMechanismProperties(mechanismProperties, false);
+        return useSaslMechanismProperties(mechanismProperties);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
+     * the {@code SaslClientFactory} when the mechanism is created.
+     *
+     * Existing properties defined on this authentication context will be retained unless overridden by new properties, any
+     * properties resulting with a value of {@code null} will be removed.
+     *
+     * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useSaslMechanismProperties(Map<String, ?> mechanismProperties) {
+        return useSaslMechanismProperties(mechanismProperties, false);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
+     * the {@code SaslClientFactory} when the mechanism is created.
+     *
+     * If exclusive the existing properties will be discarded and replaced with the new properties otherwise existing properties
+     * defined on this authentication context will be retained unless overridden by new properties, any properties resulting
+     * with a value of {@code null} will be removed.
+     *
+     * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
+     * @param exclusive should the provided properties be used exclusively or merged with the existing properties?
+     * @return the new configuration.
+     * @deprecated use {@link #useSaslMechanismProperties(Map, boolean)}
+     */
+    @Deprecated
+    public AuthenticationConfiguration useMechanismProperties(Map<String, ?> mechanismProperties, boolean exclusive) {
+        return useSaslMechanismProperties(mechanismProperties, exclusive);
     }
 
     /**
@@ -1154,12 +1188,12 @@ public final class AuthenticationConfiguration {
      * @param exclusive should the provided properties be used exclusively or merged with the existing properties?
      * @return the new configuration.
      */
-    public AuthenticationConfiguration useMechanismProperties(Map<String, ?> mechanismProperties, boolean exclusive) {
+    public AuthenticationConfiguration useSaslMechanismProperties(Map<String, ?> mechanismProperties, boolean exclusive) {
         if (!exclusive && (mechanismProperties == null || mechanismProperties.isEmpty())) return this;
-        final HashMap<String, Object> newMap = exclusive ? new HashMap<>() : new HashMap<>(this.mechanismProperties);
+        final HashMap<String, Object> newMap = exclusive ? new HashMap<>() : new HashMap<>(this.saslMechanismProperties);
         newMap.putAll(mechanismProperties);
         newMap.values().removeIf(Objects::isNull);
-        return new AuthenticationConfiguration(this, SET_MECH_PROPS, optimizeMap(newMap));
+        return new AuthenticationConfiguration(this, SET_SASL_MECH_PROPS, optimizeMap(newMap));
     }
 
     private static <K, V> Map<K, V> optimizeMap(Map<K, V> orig) {
@@ -1290,7 +1324,7 @@ public final class AuthenticationConfiguration {
         } else {
             return null;
         }
-        Map<String, ?> mechanismProperties = this.mechanismProperties;
+        Map<String, ?> mechanismProperties = this.saslMechanismProperties;
         if (! mechanismProperties.isEmpty()) {
             mechanismProperties = new HashMap<>(mechanismProperties);
             // special handling for JBOSS-LOCAL-USER quiet auth... only pass it through if we have a user callback
@@ -1371,7 +1405,7 @@ public final class AuthenticationConfiguration {
             && Objects.equals(saslClientFactorySupplier, other.saslClientFactorySupplier)
             && Objects.equals(parameterSpecs, other.parameterSpecs)
             && Objects.equals(trustManagerFactory, other.trustManagerFactory)
-            && Objects.equals(mechanismProperties, other.mechanismProperties)
+            && Objects.equals(saslMechanismProperties, other.saslMechanismProperties)
             && Objects.equals(kerberosSecurityFactory, other.kerberosSecurityFactory)
             && Objects.equals(saslProtocol, other.saslProtocol);
     }
@@ -1388,7 +1422,7 @@ public final class AuthenticationConfiguration {
                 principal, setHost, setProtocol, setRealm, setAuthzPrincipal, authenticationNameForwardSecurityDomain,
                 authenticationCredentialsForwardSecurityDomain, authorizationNameForwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
-                mechanismProperties, kerberosSecurityFactory, saslProtocol) * 19 + setPort;
+                saslMechanismProperties, kerberosSecurityFactory, saslProtocol) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
             }
@@ -1425,7 +1459,7 @@ public final class AuthenticationConfiguration {
             if (saslClientFactorySupplier != null) b.append("sasl-client-factory-supplier=").append(saslClientFactorySupplier).append(',');
             if (! parameterSpecs.isEmpty()) b.append("parameter-specifications=").append(parameterSpecs).append(',');
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
-            if (! mechanismProperties.isEmpty()) b.append("mechanism-properties=").append(mechanismProperties).append(',');
+            if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
             if (kerberosSecurityFactory != null) b.append("kerberos-security-factory").append(kerberosSecurityFactory).append(',');
             b.setLength(b.length() - 1);
             return this.toString = b.toString();
