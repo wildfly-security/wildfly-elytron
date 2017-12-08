@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
@@ -73,12 +74,14 @@ public class CachingSecurityRealm implements SecurityRealm {
         RealmIdentity cached = cache.get(principal);
 
         if (cached != null) {
+            log.tracef("Returning cached RealmIdentity for '%s'", principal);
             return cached;
         }
 
         RealmIdentity realmIdentity = getCacheableRealm().getRealmIdentity(principal);
 
         if (!realmIdentity.exists()) {
+            log.tracef("RealmIdentity for '%s' does not exist, skipping cache.'", principal);
             return realmIdentity;
         }
 
@@ -97,10 +100,17 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
                 if (credentials.contains(credentialType, algorithmName, parameterSpec)) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredentialAcquireSupport credentialType='%s' with algorithmName='%' known for pincipal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                    }
                     return credentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
                 }
                 Credential credential = identity.getCredential(credentialType, algorithmName, parameterSpec);
                 if (credential != null) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredentialAcquireSupport Credential for credentialType='%s' with algorithmName='%' obtained from identity - caching for principal='%s'",
+                                credentialType.getName(), algorithmName, principal.getName());
+                    }
                     credentials = credentials.withCredential(credential);
                 }
                 return credentials.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
@@ -109,10 +119,16 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
                 if (credentials.contains(credentialType)) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' cached, returning cached credential for principal='%s'", credentialType.getName(), principal.getName());
+                    }
                     return credentials.getCredential(credentialType);
                 }
                 Credential credential = identity.getCredential(credentialType);
                 if (credential != null) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' obtained from identity - caching for principal='%s'", credentialType.getName(), principal.getName());
+                    }
                     credentials = credentials.withCredential(credential);
                 }
                 return credentials.getCredential(credentialType);
@@ -121,10 +137,16 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
                 if (credentials.contains(credentialType, algorithmName)) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' with algorithmName='%' cached, returning cached credential for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                    }
                     return credentials.getCredential(credentialType, algorithmName);
                 }
                 Credential credential = identity.getCredential(credentialType, algorithmName);
                 if (credential != null) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' with algorithmName='%' obtained from identity - caching.", credentialType.getName(), algorithmName);
+                    }
                     credentials = credentials.withCredential(credential);
                 }
                 return credentials.getCredential(credentialType, algorithmName);
@@ -133,10 +155,16 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
                 if (credentials.contains(credentialType, algorithmName, parameterSpec)) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' with algorithmName='%' cached, returning cached credential for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                    }
                     return credentials.getCredential(credentialType, algorithmName, parameterSpec);
                 }
                 Credential credential = identity.getCredential(credentialType, algorithmName, parameterSpec);
                 if (credential != null) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("getCredential credentialType='%s' with algorithmName='%' obtained from identity - caching for principal='%s'", credentialType.getName(), algorithmName, principal.getName());
+                    }
                     credentials = credentials.withCredential(credential);
                 }
                 return credentials.getCredential(credentialType, algorithmName, parameterSpec);
@@ -144,6 +172,7 @@ public class CachingSecurityRealm implements SecurityRealm {
 
             @Override
             public void updateCredential(Credential credential) throws RealmUnavailableException {
+                log.tracef("updateCredential For principal='%s'", principal);
                 try {
                     identity.updateCredential(credential);
                 } finally {
@@ -155,15 +184,26 @@ public class CachingSecurityRealm implements SecurityRealm {
             public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
                 if (PasswordGuessEvidence.class.isAssignableFrom(evidenceType)) {
                     if (credentials.canVerify(evidenceType, algorithmName)) {
+                        if (log.isTraceEnabled()) {
+                            log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%' can verify from cache for principal='%s'", evidenceType.getName(), algorithmName, principal.getName());
+                        }
                         return SupportLevel.SUPPORTED;
                     }
                     Credential credential = identity.getCredential(PasswordCredential.class);
                     if (credential != null) {
+                        if (log.isTraceEnabled()) {
+                            log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%' credential obtained from identity and cached for principal='%s'",
+                                    evidenceType.getName(), algorithmName, principal.getName());
+                        }
                         credentials = credentials.withCredential(credential);
                         if (credential.canVerify(evidenceType, algorithmName)) {
                             return SupportLevel.SUPPORTED;
                         }
                     }
+                }
+                if (log.isTraceEnabled()) {
+                    log.tracef("getEvidenceVerifySupport evidenceType='%s' with algorithmName='%' falling back to direct support of identity for principal='%s'",
+                            evidenceType.getName(), algorithmName, principal.getName());
                 }
                 return identity.getEvidenceVerifySupport(evidenceType, algorithmName);
             }
@@ -172,10 +212,12 @@ public class CachingSecurityRealm implements SecurityRealm {
             public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
                 if (evidence instanceof PasswordGuessEvidence) {
                     if (credentials.canVerify(evidence)) {
+                        log.tracef("verifyEvidence For principal='%s' using cached credential", principal);
                         return credentials.verify(evidence);
                     }
                     Credential credential = identity.getCredential(PasswordCredential.class);
                     if (credential != null) {
+                        log.tracef("verifyEvidence Credential obtained from identity and cached for principal='%s'", principal);
                         credentials = credentials.withCredential(credential);
                         if (credential.canVerify(evidence)) {
                             return credential.verify(evidence);
@@ -183,6 +225,7 @@ public class CachingSecurityRealm implements SecurityRealm {
                     }
                     char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
                     Password password = ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, guess);
+                    log.tracef("verifyEvidence Falling back to direct support of identity for principal='%s'", principal);
                     if (identity.verifyEvidence(evidence)) {
                         credentials = credentials.withCredential(new PasswordCredential(password));
                         return true;
@@ -200,6 +243,7 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
                 if (authorizationIdentity == null) {
+                    log.tracef("getAuthorizationIdentity Caching AuthorizationIdentity for principal='%s'", principal);
                     authorizationIdentity = identity.getAuthorizationIdentity();
                 }
                 return authorizationIdentity;
@@ -208,6 +252,7 @@ public class CachingSecurityRealm implements SecurityRealm {
             @Override
             public Attributes getAttributes() throws RealmUnavailableException {
                 if (attributes == null) {
+                    log.tracef("getAttributes Caching Attributes for principal='%s'", principal);
                     attributes = identity.getAttributes();
                 }
                 return attributes;
@@ -219,6 +264,7 @@ public class CachingSecurityRealm implements SecurityRealm {
             }
         };
 
+        log.tracef("Created wrapper RealmIdentity for '%s' and placing in cache.", principal);
         cache.put(principal, cachedIdentity);
 
         return cachedIdentity;
