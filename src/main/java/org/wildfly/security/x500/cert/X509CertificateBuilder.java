@@ -45,7 +45,6 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A builder for X.509 certificates.
@@ -365,8 +364,7 @@ public final class X509CertificateBuilder {
     public X509Certificate build() throws CertificateException {
         byte[] tbsCertificate = getTBSBytes();
 
-        ByteStringBuilder b = new ByteStringBuilder();
-        DEREncoder derEncoder = new DEREncoder(b);
+        DEREncoder derEncoder = new DEREncoder();
         derEncoder.startSequence(); // Certificate
         derEncoder.writeEncoded(tbsCertificate);
 
@@ -390,7 +388,7 @@ public final class X509CertificateBuilder {
         }
         derEncoder.endSequence(); // Certificate
 
-        byte[] bytes = b.toArray();
+        byte[] bytes = derEncoder.getEncoded();
         final CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(bytes));
     }
@@ -439,8 +437,7 @@ public final class X509CertificateBuilder {
             throw log.extensionsNotAllowed();
         }
 
-        ByteStringBuilder b = new ByteStringBuilder();
-        DEREncoder derEncoder = new DEREncoder(b);
+        DEREncoder derEncoder = new DEREncoder();
 
         derEncoder.startSequence(); // TBSCertificate
 
@@ -484,10 +481,9 @@ public final class X509CertificateBuilder {
                 derEncoder.startSequence();
                 derEncoder.encodeObjectIdentifier(extension.getId());
                 if (extension.isCritical()) derEncoder.encodeBoolean(true);
-                final ByteStringBuilder sub = new ByteStringBuilder();
-                final DEREncoder subEncoder = new DEREncoder(sub);
+                final DEREncoder subEncoder = new DEREncoder();
                 extension.encodeTo(subEncoder);
-                derEncoder.encodeOctetString(sub);
+                derEncoder.encodeOctetString(subEncoder.getEncoded());
                 derEncoder.endSequence();
             }
             derEncoder.endSequence();
@@ -496,6 +492,6 @@ public final class X509CertificateBuilder {
 
         derEncoder.endSequence(); // TBSCertificate
 
-        return b.toArray();
+        return derEncoder.getEncoded();
     }
 }

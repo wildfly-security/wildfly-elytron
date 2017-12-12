@@ -48,7 +48,6 @@ import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.GeneralName.DNSName;
 import org.wildfly.security.x500.GeneralName.DirectoryName;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.x500.TrustedAuthority;
 
 /**
@@ -145,8 +144,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                 //      algorithm       AlgorithmIdentifier,
                 //      signature       BIT STRING
                 // }
-                ByteStringBuilder tokenAB = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(tokenAB);
+                final DEREncoder encoder = new DEREncoder();
                 try {
                     encoder.startSequence();
 
@@ -203,8 +201,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     }
 
                     // TBSDataAB
-                    ByteStringBuilder tbsDataAB = new ByteStringBuilder();
-                    final DEREncoder tbsEncoder = new DEREncoder(tbsDataAB);
+                    final DEREncoder tbsEncoder = new DEREncoder();
                     tbsEncoder.startSequence();
                     tbsEncoder.encodeOctetString(randomA);
                     tbsEncoder.encodeOctetString(randomB);
@@ -222,7 +219,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     byte[] signatureBytes;
                     try {
                         signature.initSign(privateKey);
-                        signature.update(tbsDataAB.toArray());
+                        signature.update(tbsEncoder.getEncoded());
                         signatureBytes = signature.sign();
                     } catch (SignatureException | InvalidKeyException e) {
                         throw saslEntity.mechUnableToCreateSignature(e).toSaslException();
@@ -238,7 +235,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     throw saslEntity.mechUnableToCreateResponseToken(e).toSaslException();
                 }
                 setNegotiationState(ST_RESPONSE_SENT);
-                return tokenAB.toArray();
+                return encoder.getEncoded();
             }
             case ST_RESPONSE_SENT: {
                 if (mutual) {
@@ -275,8 +272,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                         byte[] serverSignature = decoder.decodeBitString();
                         decoder.endSequence();
 
-                        ByteStringBuilder tbsDataBA = new ByteStringBuilder();
-                        final DEREncoder tbsEncoder = new DEREncoder(tbsDataBA);
+                        final DEREncoder tbsEncoder = new DEREncoder();
                         tbsEncoder.startSequence();
                         tbsEncoder.encodeOctetString(randomB);
                         tbsEncoder.encodeOctetString(randomA);
@@ -288,7 +284,7 @@ final class EntitySaslClient extends AbstractSaslClient {
 
                         try {
                             signature.initVerify(serverCert);
-                            signature.update(tbsDataBA.toArray());
+                            signature.update(tbsEncoder.getEncoded());
                             if (! signature.verify(serverSignature)) {
                                 setNegotiationState(FAILED_STATE);
                                 throw saslEntity.mechServerAuthenticityCannotBeVerified().toSaslException();

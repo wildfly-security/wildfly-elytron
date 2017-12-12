@@ -119,7 +119,6 @@ import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.AtomicFileOutputStream;
 import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.x500.X500;
 
@@ -249,24 +248,22 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 assert privateKey.getAlgorithm().equals(publicKey.getAlgorithm());
                 final X509EncodedKeySpec publicSpec = keyFactory.getKeySpec(keyFactory.translateKey(publicKey), X509EncodedKeySpec.class);
                 final PKCS8EncodedKeySpec privateSpec = keyFactory.getKeySpec(keyFactory.translateKey(privateKey), PKCS8EncodedKeySpec.class);
-                final ByteStringBuilder b = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(b);
+                final DEREncoder encoder = new DEREncoder();
                 encoder.startSequence();
                 encoder.writeEncoded(publicSpec.getEncoded());
                 encoder.writeEncoded(privateSpec.getEncoded());
                 encoder.endSequence();
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encoder.getEncoded(), DATA_OID));
             } else if (credentialClass == X509CertificateChainPublicCredential.class) {
                 final X509Certificate[] x509Certificates = credential.castAndApply(X509CertificateChainPublicCredential.class, X509CertificateChainPublicCredential::getCertificateChain);
-                final ByteStringBuilder b = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(b);
+                final DEREncoder encoder = new DEREncoder();
                 encoder.encodeInteger(x509Certificates.length);
                 encoder.startSequence();
                 for (X509Certificate x509Certificate : x509Certificates) {
                     encoder.writeEncoded(x509Certificate.getEncoded());
                 }
                 encoder.endSequence();
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encoder.getEncoded(), DATA_OID));
             } else if (credentialClass == X509CertificateChainPrivateCredential.class) {
                 @SuppressWarnings("ConstantConditions")
                 X509CertificateChainPrivateCredential cred = (X509CertificateChainPrivateCredential) credential;
@@ -276,8 +273,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             } else if (credentialClass == PasswordCredential.class) {
                 final Password password = credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword);
                 final String algorithm = password.getAlgorithm();
-                final ByteStringBuilder b = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(b);
+                final DEREncoder encoder = new DEREncoder();
                 final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                 switch (algorithm) {
                     case BCryptPassword.ALGORITHM_BCRYPT:
@@ -375,7 +371,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         }
                     }
                 }
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encoder.getEncoded(), DATA_OID));
             } else {
                 throw log.unsupportedCredentialType(credentialClass);
             }
@@ -507,8 +503,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final String matchedAlgorithm = bottomEntry.getAlgorithm();
                 assert matchedAlgorithm != null; // because KeyPairCredential is an AlgorithmCredential
                 // extract public and private segments
-                final ByteIterator bi = ByteIterator.ofBytes(encoded);
-                final DERDecoder decoder = new DERDecoder(bi);
+                final DERDecoder decoder = new DERDecoder(encoded);
                 decoder.startSequence();
                 final byte[] publicBytes = decoder.drainElement();
                 final byte[] privateBytes = decoder.drainElement();
@@ -530,8 +525,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final byte[] encoded = secretKey.getEncoded();
                 final String matchedAlgorithm = bottomEntry.getAlgorithm();
                 assert matchedAlgorithm != null; // because it is an AlgorithmCredential
-                final ByteIterator bi = ByteIterator.ofBytes(encoded);
-                final DERDecoder decoder = new DERDecoder(bi);
+                final DERDecoder decoder = new DERDecoder(encoded);
                 final CertificateFactory certificateFactory = CertificateFactory.getInstance(X_509);
                 final int count = decoder.decodeInteger().intValueExact();
                 final X509Certificate[] array = new X509Certificate[count];
@@ -573,8 +567,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final byte[] encoded = secretKey.getEncoded();
                 final String matchedAlgorithm = bottomEntry.getAlgorithm();
                 assert matchedAlgorithm != null; // because it is an AlgorithmCredential
-                final ByteIterator bi = ByteIterator.ofBytes(encoded);
-                final DERDecoder decoder = new DERDecoder(bi);
+                final DERDecoder decoder = new DERDecoder(encoded);
                 // we use algorithm-based encoding rather than a standard that encompasses all password types.
                 final PasswordSpec passwordSpec;
                 switch (matchedAlgorithm) {

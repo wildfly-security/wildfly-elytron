@@ -27,7 +27,6 @@ import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A builder for X.500 principals, defined in RFC 5280 as:
@@ -100,8 +99,7 @@ public final class X500PrincipalBuilder {
      * @throws IllegalArgumentException if the principal is somehow invalid
      */
     public X500Principal build() throws IllegalArgumentException {
-        final ByteStringBuilder b = new ByteStringBuilder();
-        final DEREncoder derEncoder = new DEREncoder(b);
+        final DEREncoder derEncoder = new DEREncoder();
         derEncoder.startSequence();
         for (Collection<X500AttributeTypeAndValue> itemSet : items) {
             derEncoder.startSet();
@@ -111,6 +109,6 @@ public final class X500PrincipalBuilder {
             derEncoder.endSet();
         }
         derEncoder.endSequence();
-        return new X500Principal(b.toArray());
+        return new X500Principal(derEncoder.getEncoded());
     }
 }

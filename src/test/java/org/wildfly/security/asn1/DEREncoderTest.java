@@ -43,147 +43,127 @@ public class DEREncoderTest {
 
     @Test
     public void testEncodeEmptyOctetString() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeOctetString("");
-        assertArrayEquals(new byte[] {4, 0}, target.toArray());
+        assertArrayEquals(new byte[] {4, 0}, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeOctetString(new ByteStringBuilder());
-        assertArrayEquals(new byte[] {4, 0}, target.toArray());
+        assertArrayEquals(new byte[] {4, 0}, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeOctetString(new byte[0]);
-        assertArrayEquals(new byte[] {4, 0}, target.toArray());
+        assertArrayEquals(new byte[] {4, 0}, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeOctetString() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeOctetString(new byte[] {1, 35, 69, 103, -119, -85, -51, -17});
         byte[] expected = new byte[] {4, 8, 1, 35, 69, 103, -119, -85, -51, -17};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeEmptyIA5String() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeIA5String(new byte[0]);
-        assertArrayEquals(new byte[] {22, 0}, target.toArray());
+        assertArrayEquals(new byte[] {22, 0}, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeIA5String(new ByteStringBuilder());
-        assertArrayEquals(new byte[] {22, 0}, target.toArray());
+        assertArrayEquals(new byte[] {22, 0}, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeIA5String("");
-        assertArrayEquals(new byte[] {22, 0}, target.toArray());
+        assertArrayEquals(new byte[] {22, 0}, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeIA5String() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeIA5String("test1@rsa.com");
         byte[] expected = new byte[] {22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeEmptyBitString() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeBitString(new byte[] {}, 0);
         byte[] expected = new byte[] {3, 1, 0};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeBitString("");
-        assertArrayEquals(new byte[] {3, 1, 0}, target.toArray());
+        assertArrayEquals(new byte[] {3, 1, 0}, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeBitString() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeBitString(new byte[] {110, 93, -64}, 6);
         byte[] expected = new byte[] {3, 4, 6, 110, 93, -64};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeBitStringUsingBinaryString() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeBitString("011011100101110111");
         byte[] expected = new byte[] {(byte)0x03, (byte)0x04, (byte)0x06, (byte)0x6e, (byte)0x5d, (byte)0xc0};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeObjectIdentifier() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeObjectIdentifier("2.25.196556539987194312349856245628873852187.1.128");
         byte[] expected = {6, 23, 105, -126, -89, -33, -76, -24, -97, -72, -72, -57, -75, -94, -46, -64, -128, -86, -82, -41, -118, 27, 1, -127, 0};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierTooFewComponents() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeObjectIdentifier("1");
     }
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierInvalidFirstComponent() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeObjectIdentifier("5.10");
     }
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierInvalidSecondComponent() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeObjectIdentifier("0.50");
     }
 
     @Test
     public void testEncodeNull() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeNull();
         byte[] expected = {5, 0};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test(expected=IllegalStateException.class)
     public void testEncodeEndSequenceBeforeStart() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.endSequence();
     }
 
     @Test(expected=IllegalStateException.class)
     public void testEncodeEndSetBeforeStart() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.endSequence();
     }
 
     @Test(expected=IllegalStateException.class)
     public void testEncodeEndExplicitBeforeStart() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startSequence();
         encoder.encodeIA5String("server1@test.com");
         encoder.endExplicit();
@@ -192,21 +172,19 @@ public class DEREncoderTest {
 
     @Test
     public void testEncodeSimpleSequence() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startSequence();
         encoder.encodeIA5String("this is a test");
         encoder.encodeOctetString(new byte[] {1, 35, 69, 103, -119, -85, -51, -17});
         encoder.encodeIA5String("test1@rsa.com");
         encoder.endSequence();
         byte[] expected = new byte[] {48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeComplexSequence() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSequence();
 
@@ -230,13 +208,12 @@ public class DEREncoderTest {
         encoder.endSequence();
 
         byte[] expected = new byte[] {48, 93, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 59, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 22, 7, 116, 104, 101, 32, 101, 110, 100};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeSimpleSet() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startSet();
         encoder.encodeNull();
         encoder.encodeOctetString(new byte[] {1, 35, 69, 103, -119, -85, -51, -17});
@@ -244,13 +221,12 @@ public class DEREncoderTest {
         encoder.encodeOctetString(new byte[] {1, 35, 69});
         encoder.endSet();
         byte[] expected = new byte[] {49, 28, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 4, 3, 1, 35, 69, 5, 0, 6, 9, 42, -126, -28, 116, -108, -91, -31, -90, 38};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeComplexSet() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSet();
 
@@ -273,13 +249,12 @@ public class DEREncoderTest {
         encoder.endSet();
 
         byte[] expected = new byte[] { 49, 67, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 6, 4, 42, 123, -119, 82, 49, 34, 4, 3, 1, 35, 69, 5, 0, 6, 5, 81, 58, -86, 80, 36, 49, 18, 5, 0, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109 };
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeSimpleSetOf() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSetOf();
         encoder.encodeObjectIdentifier("1.2.459.14587.225466");
@@ -288,13 +263,12 @@ public class DEREncoderTest {
         encoder.endSetOf();
 
         byte[] expected = new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeComplexSetOf() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSetOf();
 
@@ -311,13 +285,12 @@ public class DEREncoderTest {
         encoder.endSetOf();
 
         byte[] expected = new byte[] {49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeExplicit() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startExplicit(2);
         encoder.startSequence();
         encoder.encodeIA5String("this is a test");
@@ -326,23 +299,21 @@ public class DEREncoderTest {
         encoder.endSequence();
         encoder.endExplicit();
         byte[] expected = new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeImplicit() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeImplicit(2);
         encoder.encodeIA5String("server1.example.com");
         byte[] expected = new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testWriteEncoded() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startSet();
         encoder.encodeNull();
         encoder.writeEncoded(new byte[] {4, 8, 1, 35, 69, 103, -119, -85, -51, -17});
@@ -350,23 +321,21 @@ public class DEREncoderTest {
         encoder.encodeOctetString(new byte[] {1, 35, 69});
         encoder.endSet();
         byte[] expected = new byte[] {49, 28, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 4, 3, 1, 35, 69, 5, 0, 6, 9, 42, -126, -28, 116, -108, -91, -31, -90, 38};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testImplicitWriteEncoded() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeImplicit(3);
         encoder.writeEncoded(new byte[] {48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
         byte[] expected = new byte[] {-93,41,22,14,116,104,105,115,32,105,115,32,97,32,116,101,115,116,4,8,1,35,69,103,-119,-85,-51,-17,22,13,116,101,115,116,49,64,114,115,97,46,99,111,109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testFlush() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSequence();
 
@@ -388,15 +357,14 @@ public class DEREncoderTest {
         encoder.flush();
 
         byte[] expected = new byte[] {48, 84, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17,  49, 59, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeInteger() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeInteger(123);
-        DERDecoder decoder = new DERDecoder(target.toArray());
+        DERDecoder decoder = new DERDecoder(encoder.getEncoded());
         assertEquals(123, decoder.decodeInteger().intValue());
     }
 
@@ -413,8 +381,7 @@ public class DEREncoderTest {
         BigInteger q = keySpec.getQ();
         BigInteger g = keySpec.getG();
 
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
 
         encoder.startSequence();
         encoder.startSequence();
@@ -428,7 +395,7 @@ public class DEREncoderTest {
         encoder.encodeBitString(y);
         encoder.endSequence();
 
-        byte[] der = target.toArray();
+        byte[] der = encoder.getEncoded();
         DERDecoder decoder = new DERDecoder(der);
         decoder.startSequence();
         decoder.startSequence();
@@ -475,8 +442,7 @@ public class DEREncoderTest {
 
     @Test
     public void testEncodeLongFormLength() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.startSetOf();
         encoder.startSequence(); // the length of this sequence exceeds 127 bytes
         encoder.encodeOctetString(new byte[] {48, 84, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17,  49, 59, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
@@ -484,21 +450,19 @@ public class DEREncoderTest {
         encoder.endSequence();
         encoder.endSetOf();
         byte[] expected = new byte[] {49, -127, -79, 48, -127, -82, 4, 86, 48, 84, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 49, 59, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 4, 84, 49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 
     @Test
     public void testEncodeBoolean() throws Exception {
-        ByteStringBuilder target = new ByteStringBuilder();
-        DEREncoder encoder = new DEREncoder(target);
+        DEREncoder encoder = new DEREncoder();
         encoder.encodeBoolean(true);
         byte[] expected = new byte[] {1, 1, -1};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
 
-        target = new ByteStringBuilder();
-        encoder = new DEREncoder(target);
+        encoder = new DEREncoder();
         encoder.encodeBoolean(false);
         expected = new byte[] {1, 1, 0};
-        assertArrayEquals(expected, target.toArray());
+        assertArrayEquals(expected, encoder.getEncoded());
     }
 }

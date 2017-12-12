@@ -63,11 +63,10 @@ public abstract class AbstractAlgorithmParametersSpiImpl<P extends AlgorithmPara
     protected final void engineInit(final AlgorithmParameterSpec paramSpec) throws InvalidParameterSpecException {
         final Class<P> parameterType = getParameterType();
         if (parameterType.isInstance(paramSpec)) try {
-            ByteStringBuilder b = new ByteStringBuilder();
-            DEREncoder encoder = new DEREncoder(b);
+            DEREncoder encoder = new DEREncoder();
             final P cast = parameterType.cast(paramSpec);
             engineEncode(encoder, cast);
-            encoded = b.toArray();
+            encoded = encoder.getEncoded();
             this.parameterSpec = cast;
         } catch (ASN1Exception e) {
             throw log.failedToEncode(e);
@@ -83,8 +82,7 @@ public abstract class AbstractAlgorithmParametersSpiImpl<P extends AlgorithmPara
      * @throws IOException if decoding failed
      */
     protected final void engineInit(final byte[] params) throws IOException {
-        final ByteIterator bi = ByteIterator.ofBytes(params);
-        final DERDecoder decoder = new DERDecoder(bi);
+        final DERDecoder decoder = new DERDecoder(params);
         try {
             parameterSpec = engineDecode(decoder);
             encoded = params;

@@ -350,10 +350,9 @@ public final class PKCS10CertificateSigningRequest {
             final X509CertificateExtension subjectKeyIdentifierExtension = new SubjectKeyIdentifierExtension(getKeyIdentifier(publicKey));
             addExtension(subjectKeyIdentifierExtension);
 
-            ByteStringBuilder certificationRequest = new ByteStringBuilder();
-            DEREncoder encoder = new DEREncoder(certificationRequest);
+            DEREncoder encoder = new DEREncoder();
             encodeCertificationRequest(encoder);
-            return new PKCS10CertificateSigningRequest(this, certificationRequest.toArray());
+            return new PKCS10CertificateSigningRequest(this, encoder.getEncoded());
         }
 
         /**
@@ -370,15 +369,14 @@ public final class PKCS10CertificateSigningRequest {
          * @param encoder the DER encoder
          */
         private void encodeCertificationRequest(final DEREncoder encoder) {
-            ByteStringBuilder tbsCertificationRequestInfo = new ByteStringBuilder();
-            DEREncoder tbsEncoder = new DEREncoder(tbsCertificationRequestInfo);
+            DEREncoder tbsEncoder = new DEREncoder();
             encodeCertificationRequestInfo(tbsEncoder);
 
             byte[] signatureBytes;
             try {
                 final Signature signature = Signature.getInstance(signatureAlgorithmName);
                 signature.initSign(signingKey);
-                signature.update(tbsCertificationRequestInfo.toArray());
+                signature.update(tbsEncoder.getEncoded());
                 signatureBytes = signature.sign();
             } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
                 throw log.certRequestInfoSigningFailed(e);
@@ -386,7 +384,7 @@ public final class PKCS10CertificateSigningRequest {
 
             // CertificationRequest
             encoder.startSequence();
-            encoder.writeEncoded(tbsCertificationRequestInfo.toArray());
+            encoder.writeEncoded(tbsEncoder.getEncoded());
             encodeAlgorithmIdentifier(encoder);
             encoder.encodeBitString(signatureBytes);
             encoder.endSequence();
@@ -504,10 +502,9 @@ public final class PKCS10CertificateSigningRequest {
             if (extension.isCritical()) {
                 encoder.encodeBoolean(true);
             }
-            ByteStringBuilder sub = new ByteStringBuilder();
-            DEREncoder extensionEncoder = new DEREncoder(sub);
+            DEREncoder extensionEncoder = new DEREncoder();
             extension.encodeTo(extensionEncoder);
-            encoder.encodeOctetString(sub);
+            encoder.encodeOctetString(extensionEncoder.getEncoded());
             encoder.endSequence();
         }
 

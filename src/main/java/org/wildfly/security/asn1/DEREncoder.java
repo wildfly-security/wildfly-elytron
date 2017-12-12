@@ -60,11 +60,18 @@ public class DEREncoder implements ASN1Encoder {
     private int implicitTag = -1;
 
     /**
+     * Create a DER encoder.
+     */
+    public DEREncoder() {
+        this(new ByteStringBuilder());
+    }
+
+    /**
      * Create a DER encoder that writes its output to the given {@code ByteStringBuilder}.
      *
      * @param target the {@code ByteStringBuilder} to which the DER encoded values are written
      */
-    public DEREncoder(ByteStringBuilder target) {
+    DEREncoder(ByteStringBuilder target) {
         this.target = target;
         currentBuffer = target;
     }
@@ -206,8 +213,7 @@ public class DEREncoder implements ASN1Encoder {
         writeElement(OCTET_STRING_TYPE, str);
     }
 
-    @Override
-    public void encodeOctetString(ByteStringBuilder str) {
+    void encodeOctetString(ByteStringBuilder str) {
         writeElement(OCTET_STRING_TYPE, str);
     }
 
@@ -221,8 +227,7 @@ public class DEREncoder implements ASN1Encoder {
         writeElement(IA5_STRING_TYPE, str);
     }
 
-    @Override
-    public void encodeIA5String(ByteStringBuilder str) {
+    void encodeIA5String(ByteStringBuilder str) {
         writeElement(IA5_STRING_TYPE, str);
     }
 
@@ -473,6 +478,11 @@ public class DEREncoder implements ASN1Encoder {
                 endSet();
             }
         }
+    }
+
+    @Override
+    public byte[] getEncoded() {
+        return target.toArray();
     }
 
     private int validateFirstOIDComponent(long value) throws ASN1Exception {

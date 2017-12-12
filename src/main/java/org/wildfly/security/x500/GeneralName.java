@@ -33,7 +33,6 @@ import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A representation of an X.509 general name.
@@ -157,13 +156,12 @@ public abstract class GeneralName implements ASN1Encodable {
             super(OTHER_NAME);
             this.typeId = typeId;
             this.encodedValue = encodedValue;
-            ByteStringBuilder generalName = new ByteStringBuilder();
-            final DEREncoder encoder = new DEREncoder(generalName);
+            final DEREncoder encoder = new DEREncoder();
             encoder.startSequence();
             encoder.encodeObjectIdentifier(typeId);
             encoder.writeEncoded(encodedValue);
             encoder.endSequence();
-            encodedName = generalName.toArray();
+            encodedName = encoder.getEncoded();
         }
 
         public byte[] getName() {
@@ -330,12 +328,11 @@ public abstract class GeneralName implements ASN1Encodable {
         public X400Address(final byte[] encoded, final boolean valueBytesOnly) throws ASN1Exception {
             super(X400_ADDRESS);
             if (valueBytesOnly) {
-                ByteStringBuilder generalName = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(generalName);
+                final DEREncoder encoder = new DEREncoder();
                 encoder.startSequence();
                 encoder.writeEncoded(encoded);
                 encoder.endSequence();
-                encodedName = generalName.toArray();
+                encodedName = encoder.getEncoded();
             } else {
                 encodedName = encoded;
             }
@@ -450,12 +447,11 @@ public abstract class GeneralName implements ASN1Encodable {
         public EDIPartyName(final byte[] encoded, final boolean valueBytesOnly) throws ASN1Exception {
             super(EDI_PARTY_NAME);
             if (valueBytesOnly) {
-                ByteStringBuilder generalName = new ByteStringBuilder();
-                final DEREncoder encoder = new DEREncoder(generalName);
+                final DEREncoder encoder = new DEREncoder();
                 encoder.startSequence();
                 encoder.writeEncoded(encoded);
                 encoder.endSequence();
-                encodedName = generalName.toArray();
+                encodedName = encoder.getEncoded();
             } else {
                 encodedName = encoded;
             }
