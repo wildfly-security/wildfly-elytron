@@ -19,12 +19,13 @@
 package org.wildfly.security.manager;
 
 import java.io.FileDescriptor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.net.InetAddress;
 import java.security.AccessControlContext;
+import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.CodeSource;
+import java.security.DomainCombiner;
 import java.security.Permission;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -64,7 +65,6 @@ import static java.lang.System.getenv;
 import static java.lang.System.setProperty;
 import static java.lang.Thread.currentThread;
 import static java.security.AccessController.doPrivileged;
-import static java.security.AccessController.getContext;
 import static org.wildfly.security.manager.WildFlySecurityManagerPermission.doUncheckedPermission;
 import static org.wildfly.security.manager._private.SecurityMessages.access;
 
@@ -86,6 +86,12 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
 
     private static final boolean LOG_ONLY;
 
+    private static final PrivilegedAction<AccessControlContext> GET_CONTEXT_ACTION = new PrivilegedAction<AccessControlContext>() {
+        public AccessControlContext run() {
+            return AccessController.getContext();
+        }
+    };
+
     static class Context {
         boolean checking = true;
         boolean entered = false;
@@ -100,13 +106,11 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         }
     };
 
-    private static final Field PD_STACK;
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
     private static final int callerOffset;
 
     static {
-        PD_STACK = doPrivileged(new GetAccessibleDeclaredFieldAction(AccessControlContext.class, "context"));
         // Cannot be lambda due to JDK race conditions
         //noinspection Convert2Lambda,Anonymous2MethodRef
         INSTANCE = doPrivileged(new PrivilegedAction<WildFlySecurityManager>() {
@@ -249,7 +253,12 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     }
 
     public boolean implies(final Permission permission) {
-        return tryCheckPermission(permission, getProtectionDomainStack(getContext()));
+        try {
+            AccessController.checkPermission(permission);
+            return true;
+        } catch (AccessControlException e) {
+            return false;
+        }
     }
 
     /**
@@ -268,31 +277,20 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             if (ctx.entered) {
                 return;
             }
-            final ProtectionDomain[] stack;
-            ctx.entered = true;
             try {
-                stack = getProtectionDomainStack(context);
-                if (stack != null) {
-                    final ProtectionDomain deniedDomain = findAccessDenial(perm, stack);
-                    if (deniedDomain != null) {
-                        throw access.accessControlException(perm, perm, deniedDomain.getCodeSource(), deniedDomain.getClassLoader());
+                context.checkPermission(perm);
+            } catch (AccessControlException e) {
+                ctx.entered = true;
+                try {
+                    access.accessCheckFailed(e.getPermission(), null, null);
+                    if (! LOG_ONLY) {
+                        throw e;
                     }
+                } finally {
+                    ctx.entered = false;
                 }
-            } finally {
-                ctx.entered = false;
             }
         }
-    }
-
-    private static ProtectionDomain[] getProtectionDomainStack(final AccessControlContext context) {
-        final ProtectionDomain[] stack;
-        try {
-            stack = (ProtectionDomain[]) PD_STACK.get(context);
-        } catch (IllegalAccessException e) {
-            // should be impossible
-            throw new IllegalAccessError(e.getMessage());
-        }
-        return stack;
     }
 
     private static boolean doCheck() {
@@ -1519,14 +1517,8 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         ctx.entered = true;
         final AccessControlContext combined;
         try {
-            ProtectionDomain[] protectionDomainStack = getProtectionDomainStack(accessControlContext);
-            if (protectionDomainStack == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(2));
-            } else {
-                final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(2).getProtectionDomain();
-                combined = new AccessControlContext(finalDomains);
-            }
+            final ProtectionDomain addDomain = getCallerClass(2).getProtectionDomain();
+            combined = doPrivileged(GET_CONTEXT_ACTION, new AccessControlContext(accessControlContext, new MergeDomainCombiner(addDomain)));
         } finally {
             ctx.entered = false;
         }
@@ -1551,17 +1543,26 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         ctx.entered = true;
         final AccessControlContext combined;
         try {
-            ProtectionDomain[] protectionDomainStack = getProtectionDomainStack(accessControlContext);
-            if (protectionDomainStack == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(2));
-            } else {
-                final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(2).getProtectionDomain();
-                combined = new AccessControlContext(finalDomains);
-            }
+            final ProtectionDomain addDomain = getCallerClass(2).getProtectionDomain();
+            combined = doPrivileged(GET_CONTEXT_ACTION, new AccessControlContext(accessControlContext, new MergeDomainCombiner(addDomain)));
         } finally {
             ctx.entered = false;
         }
         return (T) doPrivileged(PA_TRAMPOLINE2, combined);
+    }
+
+    static class MergeDomainCombiner implements DomainCombiner {
+        private final ProtectionDomain addDomain;
+
+        MergeDomainCombiner(final ProtectionDomain addDomain) {
+            this.addDomain = addDomain;
+        }
+
+        public ProtectionDomain[] combine(final ProtectionDomain[] currentDomains, final ProtectionDomain[] assignedDomains) {
+            final ProtectionDomain[] copy = Arrays.copyOf(currentDomains, currentDomains.length + assignedDomains.length + 1, ProtectionDomain[].class);
+            System.arraycopy(assignedDomains, 0, copy, currentDomains.length, assignedDomains.length);
+            copy[currentDomains.length + assignedDomains.length] = addDomain;
+            return copy;
+        }
     }
 }
