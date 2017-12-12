@@ -25,6 +25,8 @@ import java.security.AlgorithmParametersSpi;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidParameterSpecException;
 
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.asn1.ASN1Decoder;
 import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.asn1.ASN1Exception;

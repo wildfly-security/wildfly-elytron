@@ -22,7 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.text.Normalizer;
 
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * Preparation of Internationalized Strings ("stringprep") by RFC 3454

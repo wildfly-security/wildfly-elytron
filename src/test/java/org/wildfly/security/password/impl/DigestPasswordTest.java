@@ -40,7 +40,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * Test case for {@link DigestPassword}.

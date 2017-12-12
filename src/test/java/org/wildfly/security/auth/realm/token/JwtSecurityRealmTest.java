@@ -42,7 +42,7 @@ import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

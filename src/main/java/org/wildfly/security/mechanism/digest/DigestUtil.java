@@ -37,7 +37,7 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * Common utility functions used by Digest authentication mechanisms.

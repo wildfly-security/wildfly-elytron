@@ -37,7 +37,7 @@ import org.kohsuke.MetaInfServices;
 import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * The client factory for the OTP SASL mechanism.

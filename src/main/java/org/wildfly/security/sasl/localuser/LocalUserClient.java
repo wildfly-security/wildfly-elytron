@@ -36,8 +36,8 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.OptionalNameCallback;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

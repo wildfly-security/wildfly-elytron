@@ -47,8 +47,8 @@ import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPassword {
     private static final long serialVersionUID = - 4107081797004604247L;

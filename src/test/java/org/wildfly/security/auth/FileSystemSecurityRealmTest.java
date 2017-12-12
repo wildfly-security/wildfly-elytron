@@ -48,7 +48,7 @@ import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 import java.io.File;
 import java.io.IOException;

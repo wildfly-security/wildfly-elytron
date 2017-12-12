@@ -43,9 +43,9 @@ import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * SaslServer for the GS2 mechanism family as defined by
@@ -193,11 +193,11 @@ final class Gs2SaslServer extends AbstractSaslServer {
                 int gs2HeaderLength;
                 if (nonStd) {
                     gs2HeaderStartIndex = 2;
-                    gs2HeaderLength = bi.offset() - 2;
+                    gs2HeaderLength = (int) (bi.getIndex() - 2);
                     token = bi.drain();
                 } else {
                     gs2HeaderStartIndex = 0;
-                    gs2HeaderLength = bi.offset();
+                    gs2HeaderLength = (int) bi.getIndex();
                     try {
                         token = restoreTokenHeader(bi.drain());
                     } catch (ASN1Exception e) {

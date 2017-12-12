@@ -24,7 +24,7 @@ import java.security.KeyStore;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * A utility to create the {@link Predicate} as used for filtering the aliases in a {@link KeyStore}.
@@ -143,7 +143,7 @@ public abstract class AliasFilter implements Predicate<String> {
                                     function = current::remove;
                                     break;
                                 default:
-                                    throw log.missingPlusMinusAt(i.offset());
+                                    throw log.missingPlusMinusAt(i.getIndex());
                             }
                             if (i.hasNext()) {
                                 current = function.apply(i.delimitedBy(':').drainToString());

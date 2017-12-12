@@ -38,8 +38,8 @@ import javax.crypto.Mac;
 import org.junit.Before;
 import org.junit.Test;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * Digest SASL utilities tests

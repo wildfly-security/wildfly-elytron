@@ -55,8 +55,8 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * SaslServer for the OTP SASL mechanism as defined by

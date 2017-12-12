@@ -27,7 +27,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * A builder for X.500 principals, defined in RFC 5280 as:

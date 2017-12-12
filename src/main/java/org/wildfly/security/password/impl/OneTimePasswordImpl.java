@@ -34,7 +34,7 @@ import java.util.Locale;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 import javax.security.sasl.SaslException;
 

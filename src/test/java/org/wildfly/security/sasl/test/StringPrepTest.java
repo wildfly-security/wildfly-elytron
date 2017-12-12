@@ -26,7 +26,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * Tests of org.wildfly.security.sasl.util.StringPrep by RFC 3454

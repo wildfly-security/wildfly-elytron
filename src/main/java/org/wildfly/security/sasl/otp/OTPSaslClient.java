@@ -46,8 +46,8 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * SaslClient for the OTP SASL mechanism as defined by

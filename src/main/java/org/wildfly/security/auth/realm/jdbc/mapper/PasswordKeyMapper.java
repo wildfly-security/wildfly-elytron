@@ -45,7 +45,7 @@ import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * <p>A {@link KeyMapper} that knows how to map columns from a SQL query to attributes of specific {@link org.wildfly.security.password.Password} type

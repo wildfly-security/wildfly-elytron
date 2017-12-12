@@ -50,7 +50,7 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.GeneralName.DNSName;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.x500.TrustedAuthority;
 
 /**

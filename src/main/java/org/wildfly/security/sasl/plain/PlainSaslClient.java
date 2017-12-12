@@ -33,7 +33,7 @@ import javax.security.sasl.SaslException;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * The {@code PLAIN} SASL client implementation.

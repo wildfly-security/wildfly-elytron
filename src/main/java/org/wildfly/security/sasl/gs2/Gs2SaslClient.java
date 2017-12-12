@@ -42,8 +42,8 @@ import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
 
 /**
  * SaslClient for the GS2 mechanism family as defined by

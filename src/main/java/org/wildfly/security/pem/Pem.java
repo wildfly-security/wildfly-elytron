@@ -38,9 +38,9 @@ import java.util.regex.Pattern;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.x500.cert.PKCS10CertificateSigningRequest;
 
 /**
@@ -78,12 +78,12 @@ public final class Pem {
             int cp = pemContent.next();
             if (cp == '-') break;
             if (! Character.isWhitespace(cp)) {
-                throw log.malformedPemContent(pemContent.offset());
+                throw log.malformedPemContent(pemContent.getIndex());
             }
         }
 
         if (! pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         String type = pemContent.delimitedBy('-').drainToString();
         final Matcher matcher = VALID_LABEL.matcher(type);
@@ -92,7 +92,7 @@ public final class Pem {
             throw log.malformedPemContent(matcher.start() + 11);
         }
         if (! pemContent.limitedTo(5).contentEquals("-----")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         CodePointIterator delimitedIterator = pemContent.delimitedBy('-').skip(Character::isWhitespace).skipCrLf();
         final ByteIterator byteIterator = delimitedIterator.base64Decode();
@@ -100,13 +100,13 @@ public final class Pem {
         delimitedIterator.skipAll(); // skip until '-'
 
         if (! pemContent.limitedTo(9).contentEquals("-----END ")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         if (! pemContent.limitedTo(type.length()).contentEquals(type)) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         if (! pemContent.limitedTo(5).contentEquals("-----")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         return result;
     }
@@ -141,7 +141,7 @@ public final class Pem {
                                 return new PemEntry<>(privateKey);
                             }
                             default: {
-                                throw log.malformedPemContent(pemContent.offset());
+                                throw log.malformedPemContent(pemContent.getIndex());
                             }
                         }
                     });
