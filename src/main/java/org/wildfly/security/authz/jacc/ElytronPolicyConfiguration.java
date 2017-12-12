@@ -51,10 +51,10 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
 
     private final String contextId;
     private final Map<String, Permissions> rolePermissions = Collections.synchronizedMap(new HashMap<>());
-    private State state = State.OPEN;
-    private Permissions uncheckedPermissions = new Permissions();
-    private Permissions excludedPermissions = new Permissions();
-    private Set<PolicyConfiguration> linkedPolicies = Collections.synchronizedSet(new LinkedHashSet<>());
+    private State state = State.OPEN; // needs synchronization
+    private volatile Permissions uncheckedPermissions = new Permissions(); // atomic reference + synchronized inside
+    private volatile Permissions excludedPermissions = new Permissions(); // atomic reference + synchronized inside
+    private volatile Set<PolicyConfiguration> linkedPolicies = Collections.synchronizedSet(new LinkedHashSet<>()); // atomic reference
 
     ElytronPolicyConfiguration(String contextID) {
         checkNotNullParam("contextID", contextID);
@@ -65,7 +65,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
     public void addToExcludedPolicy(Permission permission) throws PolicyContextException {
         checkNotNullParam("permission", permission);
 
-        synchronized (this) {
+        synchronized (this) { // prevents state change while adding
             checkIfInOpenState();
             this.excludedPermissions.add(permission);
         }
@@ -87,7 +87,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
         checkNotNullParam("roleName", roleName);
         checkNotNullParam("permission", permission);
 
-        synchronized (this) {
+        synchronized (this) { // prevents state change while adding
             checkIfInOpenState();
             this.rolePermissions.computeIfAbsent(roleName, s -> new Permissions()).add(permission);
         }
@@ -109,7 +109,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
     public void addToUncheckedPolicy(Permission permission) throws PolicyContextException {
         checkNotNullParam("permission", permission);
 
-        synchronized (this) {
+        synchronized (this) { // prevents state change while adding
             checkIfInOpenState();
             this.uncheckedPermissions.add(permission);
         }
@@ -128,7 +128,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
 
     @Override
     public void commit() throws PolicyContextException {
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             if (isDeleted()) {
                 throw log.authzInvalidStateForOperation(this.state.name());
             }
@@ -139,7 +139,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
 
     @Override
     public void delete() throws PolicyContextException {
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             transitionTo(State.DELETED);
             this.uncheckedPermissions = new Permissions();
             this.excludedPermissions = new Permissions();
@@ -164,7 +164,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
     public void linkConfiguration(PolicyConfiguration link) throws PolicyContextException {
         checkNotNullParam("link", link);
 
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             checkIfInOpenState();
             if (getContextID().equals(link.getContextID())) {
                 throw log.authzLinkSamePolicyConfiguration(getContextID());
@@ -186,7 +186,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
 
     @Override
     public void removeExcludedPolicy() throws PolicyContextException {
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             checkIfInOpenState();
             this.excludedPermissions = new Permissions();
         }
@@ -197,7 +197,7 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
         checkNotNullParam("roleName", roleName);
         checkNotNullParam("roleName", roleName);
 
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             checkIfInOpenState();
             this.rolePermissions.remove(roleName);
         }
@@ -205,38 +205,41 @@ class ElytronPolicyConfiguration implements PolicyConfiguration {
 
     @Override
     public void removeUncheckedPolicy() throws PolicyContextException {
-        synchronized (this) {
+        synchronized (this) { // prevents concurrent state changes
             checkIfInOpenState();
             this.uncheckedPermissions = new Permissions();
         }
     }
 
     Set<PolicyConfiguration> getLinkedPolicies() {
-        return this.linkedPolicies;
+        return this.linkedPolicies; // volatile/atomic reference - no synchronization needed
     }
 
     Permissions getUncheckedPermissions() {
-        return this.uncheckedPermissions;
+        return this.uncheckedPermissions; // volatile/atomic reference - no synchronization needed
     }
 
     Permissions getExcludedPermissions() {
-        return this.excludedPermissions;
+        return this.excludedPermissions; // volatile/atomic reference - no synchronization needed
     }
 
     Map<String, Permissions> getRolePermissions() {
         return this.rolePermissions;
     }
 
+    /* must not be called outside of synchronized(this) section */
     void transitionTo(State state) {
         this.state = state;
     }
 
+    /* must not be called outside of synchronized(this) section */
     private void checkIfInOpenState() {
         if (!State.OPEN.equals(this.state)) {
             throw log.authzInvalidStateForOperation(this.state.name());
         }
     }
 
+    /* must not be called outside of synchronized(this) section */
     private boolean isDeleted() {
         return State.DELETED.equals(this.state);
     }
