@@ -106,10 +106,10 @@ public final class PKCS10CertificateSigningRequest {
      *
      * @return this PKCS #10 certificate signing request in PEM format
      */
-    public ByteStringBuilder getPem() {
+    public byte[] getPem() {
         ByteStringBuilder pem = new ByteStringBuilder();
         Pem.generatePemPKCS10CertificateSigningRequest(pem, this);
-        return pem;
+        return pem.toArray();
     }
 
     /**

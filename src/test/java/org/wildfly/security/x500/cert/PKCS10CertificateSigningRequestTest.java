@@ -195,7 +195,7 @@ public class PKCS10CertificateSigningRequestTest {
                 "-----END CERTIFICATE REQUEST-----\n";
 
         PKCS10CertificateSigningRequest  csr = populateBasicBuilder().build();
-        assertEquals(expectedCsr, new String(csr.getPem().toArray(), StandardCharsets.UTF_8));
+        assertEquals(expectedCsr, new String(csr.getPem(), StandardCharsets.UTF_8));
     }
 
     // -- Unsuccessful certificate signing requests --
