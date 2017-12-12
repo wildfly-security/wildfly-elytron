@@ -43,7 +43,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * A {@link KeyStore} backed {@link SecurityRealm} implementation.

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.x500;
+package org.wildfly.security.x500.util;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.util.ASN1.IA5_STRING_TYPE;

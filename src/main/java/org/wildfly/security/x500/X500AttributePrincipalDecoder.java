@@ -26,6 +26,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.PrincipalDecoder;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * A principal decoder which decodes an attribute from an X.500 principal.

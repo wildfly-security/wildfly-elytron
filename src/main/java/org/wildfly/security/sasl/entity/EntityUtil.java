@@ -48,7 +48,7 @@ import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.X500;
-import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

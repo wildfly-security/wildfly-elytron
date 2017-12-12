@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.x500;
+package org.wildfly.security.x500.util;
 
 import static org.junit.Assert.*;
 
@@ -25,6 +25,7 @@ import javax.security.auth.x500.X500Principal;
 import org.junit.Test;
 import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
+import org.wildfly.security.x500.X500;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

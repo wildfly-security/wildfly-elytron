@@ -37,7 +37,7 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.credential.X509CertificateChainCredential;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
