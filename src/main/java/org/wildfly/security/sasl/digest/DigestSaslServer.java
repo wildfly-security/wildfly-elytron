@@ -36,10 +36,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
@@ -56,7 +54,7 @@ import org.wildfly.security.util.ByteStringBuilder;
 final class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
     private final Predicate<String> digestUriAccepted;
-    private final boolean defaultRealm;
+    private final boolean defaultRealm; // realms not defined, server name used as fallback
 
     DigestSaslServer(String[] realms, final boolean defaultRealm, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriAccepted, Supplier<Provider[]> providers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers, providers);
@@ -176,9 +174,9 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
 
         data = parsedDigestResponse.get("authzid");
         if (data != null) {
-            authzid = new String(data, StandardCharsets.UTF_8);
+            authorizationId = new String(data, StandardCharsets.UTF_8);
         } else {
-            authzid = null;
+            authorizationId = null;
         }
     }
 
@@ -201,21 +199,19 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
             }
         }
 
-        String userName;
         if (parsedDigestResponse.get("username") != null) {
-            userName = new String(parsedDigestResponse.get("username"), clientCharset);
+            username = new String(parsedDigestResponse.get("username"), clientCharset);
         } else {
             throw saslDigest.mechMissingDirective("username").toSaslException();
         }
 
-        String clientRealm;
         if (parsedDigestResponse.get("realm") != null) {
-            clientRealm = new String(parsedDigestResponse.get("realm"), clientCharset);
+            realm = new String(parsedDigestResponse.get("realm"), clientCharset);
         } else {
-            clientRealm = "";
+            realm = "";
         }
-        if (!arrayContains(realms, clientRealm)) {
-            throw saslDigest.mechDisallowedClientRealm(clientRealm).toSaslException();
+        if (!arrayContains(realms, realm)) {
+            throw saslDigest.mechDisallowedClientRealm(realm).toSaslException();
         }
 
         if (parsedDigestResponse.get("nonce") == null) {
@@ -256,23 +252,10 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
             }
         }
 
-        // get password
-        final NameCallback nameCallback = new NameCallback("User name", userName);
-        final RealmCallback realmCallback = new RealmCallback("User realm", clientRealm);
-        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback, defaultRealm);
-        if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, true, defaultRealm);
-        }
-        if (digest_urp == null) {
-            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, true, defaultRealm);
-        }
-        if (digest_urp == null) {
-            throw saslDigest.mechCallbackHandlerDoesNotSupportCredentialAcquisition(null).toSaslException();
-        }
+        byte[] digest_urp = handleUserRealmPasswordCallbacks(null, true, defaultRealm);
+        hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authorizationId, clientCharset);
 
-        hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authzid, clientCharset);
-
-        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, receivedClientUri, true);
+        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, receivedClientUri, true);
 
         // check response
         if (parsedDigestResponse.get("response") == null) {
@@ -285,17 +268,17 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
         createCiphersAndKeys();
 
         // authorization check
-        String authorizationId = (authzid == null || authzid.isEmpty()) ? userName : authzid;
-        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationId);
+        String authzid = (authorizationId == null || authorizationId.isEmpty()) ? username : authorizationId;
+        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, authzid);
         try {
             tryHandleCallbacks(authorizeCallback);
         } catch (UnsupportedCallbackException e) {
             throw saslDigest.mechAuthorizationUnsupported(e).toSaslException();
         }
         if (authorizeCallback.isAuthorized()) {
-            authzid = authorizeCallback.getAuthorizedID();
+            authorizationId = authorizeCallback.getAuthorizedID();
         } else {
-            throw saslDigest.mechAuthorizationFailed(userName, authorizationId).toSaslException();
+            throw saslDigest.mechAuthorizationFailed(username, authzid).toSaslException();
         }
 
         return createResponseAuth(parsedDigestResponse);
@@ -305,7 +288,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
 
-        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, receivedClientUri != null ? receivedClientUri : digestURI, false);
+        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, receivedClientUri != null ? receivedClientUri : digestURI, false);
 
         responseAuth.append(response_value);
         return responseAuth.toArray();
@@ -316,7 +299,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
      */
     @Override
     public String getAuthorizationID() {
-        return authzid;
+        return authorizationId;
     }
 
     /* (non-Javadoc)

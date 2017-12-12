@@ -37,9 +37,7 @@ import static org.wildfly.security.http.HttpConstants.STALE;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.USERNAME;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
-import static org.wildfly.security.mechanism.digest.DigestUtil.getTwoWayPasswordChars;
 import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
-import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,19 +49,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
 
-import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
-import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -72,10 +64,8 @@ import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
-import org.wildfly.security.password.TwoWayPassword;
-import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.util.ByteIterator;
 
 /**
@@ -278,23 +268,8 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     }
 
     private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String messageRealm) throws AuthenticationMechanismException {
-        final NameCallback nameCallback = new NameCallback("User name", username);
-        final RealmCallback realmCallback = new RealmCallback("User realm", messageRealm);
-
-        byte[] response = null;
-        // The mechanism configuration understands the realm name so fully pre-digested may be possible.
-        response = getPredigestedSaltedPassword(realmCallback, nameCallback, DigestPassword.ALGORITHM_DIGEST_MD5);
-        if (response != null) {
-            return response;
-        }
-
-        response = getSaltedPasswordFromTwoWay(messageDigest, realmCallback, nameCallback);
-        if (response != null) {
-            return response;
-        }
-
-        response = getSaltedPasswordFromPasswordCallback(messageDigest, realmCallback, nameCallback);
-        return response;
+        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, DigestPassword.ALGORITHM_DIGEST_MD5, messageDigest, providers, null, true, false);
+        return obtainer.handleUserRealmPasswordCallbacks();
     }
 
     private String convertToken(final String name, final byte[] value) throws AuthenticationMechanismException {
@@ -363,88 +338,6 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setStatusCode(UNAUTHORIZED);
-    }
-
-    private byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback, String passwordAlgorithm) throws AuthenticationMechanismException {
-        final String realmName = realmCallback.getDefaultText();
-        final String userName = nameCallback.getDefaultName();
-        final DigestPasswordAlgorithmSpec parameterSpec;
-        if (realmName != null && userName != null) {
-            parameterSpec = new DigestPasswordAlgorithmSpec(userName, realmName);
-        } else {
-            parameterSpec = null;
-        }
-        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm, parameterSpec);
-        try {
-            callbackHandler.handle(new Callback[] { realmCallback, nameCallback, credentialCallback });
-            return credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAndApply(DigestPassword.class, DigestPassword::getDigest));
-        } catch (UnsupportedCallbackException e) {
-            if (e.getCallback() == credentialCallback) {
-                return null;
-            } else if (e.getCallback() == nameCallback) {
-                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
-            } else {
-                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
-            }
-        } catch (Throwable t) {
-            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
-        }
-    }
-
-    private byte[] getSaltedPasswordFromTwoWay(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
-        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
-        try {
-            callbackHandler.handle(new Callback[] {realmCallback, nameCallback, credentialCallback});
-        } catch (UnsupportedCallbackException e) {
-            if (e.getCallback() == credentialCallback) {
-                return null;
-            } else if (e.getCallback() == nameCallback) {
-                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
-            } else {
-                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
-            }
-        } catch (Throwable t) {
-            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
-        }
-        TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
-        char[] passwordChars = getTwoWayPasswordChars(password, providers, httpDigest);
-        try {
-            password.destroy();
-        } catch(DestroyFailedException e) {
-            httpDigest.credentialDestroyingFailed(e);
-        }
-        String realm = realmCallback.getDefaultText();
-        String username = nameCallback.getDefaultName();
-        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
-        Arrays.fill(passwordChars, (char)0); // wipe out the password
-        return digest_urp;
-    }
-
-    private byte[] getSaltedPasswordFromPasswordCallback(MessageDigest messageDigest, RealmCallback realmCallback, NameCallback nameCallback) throws AuthenticationMechanismException {
-        PasswordCallback passwordCallback = new PasswordCallback("User password", false);
-        try {
-            callbackHandler.handle(new Callback[] {realmCallback, nameCallback, passwordCallback});
-        } catch (UnsupportedCallbackException e) {
-            if (e.getCallback() == passwordCallback) {
-                return null;
-            } else if (e.getCallback() == nameCallback) {
-                throw httpDigest.mechCallbackHandlerDoesNotSupportUserName(e);
-            } else {
-                throw httpDigest.mechCallbackHandlerFailedForUnknownReason(e);
-            }
-        } catch (Throwable t) {
-            throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
-        }
-        char[] passwordChars = passwordCallback.getPassword();
-        passwordCallback.clearPassword();
-        if (passwordChars == null) {
-            throw httpDigest.mechNoPasswordGiven();
-        }
-        String realm = realmCallback.getDefaultText();
-        String username = nameCallback.getDefaultName();
-        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
-        Arrays.fill(passwordChars, (char)0); // wipe out the password
-        return digest_urp;
     }
 
     private boolean authorize(String username) throws AuthenticationMechanismException {

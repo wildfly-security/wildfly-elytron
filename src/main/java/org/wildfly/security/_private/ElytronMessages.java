@@ -1480,6 +1480,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5173, value = "Unable to obtain server credential.")
     AuthenticationMechanismException unableToObtainServerCredential();
 
+    @Message(id = 5174, value = "Callback handler has not chosen realm")
+    AuthenticationMechanismException mechNotChosenRealm();
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")

@@ -46,11 +46,11 @@ public class DigestCallbackHandlerUtils {
         return createClientCallbackHandler(username, passwordFactory.generatePassword(new ClearPasswordSpec(password.toCharArray())), sentRealm);
     }
 
-    static CallbackHandler createDigestPwdClientCallbackHandler(final String username, final String password, final String realm, final String sentRealm) throws Exception {
+    static CallbackHandler createDigestPwdClientCallbackHandler(final String username, final String password, final String realm, final String sentRealm, final String sentUsername) throws Exception {
         byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
         KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
         PasswordFactory passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5);
-        return createClientCallbackHandler(username, passwordFactory.generatePassword(keySpec), sentRealm);
+        return createClientCallbackHandler(sentUsername, passwordFactory.generatePassword(keySpec), sentRealm);
     }
 
     private static CallbackHandler createClientCallbackHandler(final String username, final Password password, final String sentRealm) throws Exception {
