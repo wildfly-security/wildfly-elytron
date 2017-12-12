@@ -1618,6 +1618,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
     ASN1Exception asnInvalidLengthForBooleanTypeTag();
 
+    @Message(id = 7025, value = "Invalid general name for URI type: missing scheme")
+    ASN1Exception asnInvalidGeneralNameForUriTypeMissingScheme();
+
     /* password package */
 
     @Message(id = 8001, value = "Unrecognized key spec algorithm")

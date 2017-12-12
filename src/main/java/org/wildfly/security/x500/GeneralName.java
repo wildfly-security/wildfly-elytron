@@ -499,6 +499,13 @@ public abstract class GeneralName implements ASN1Encodable {
          */
         public URIName(final String name) {
             super(URI_NAME);
+            try {
+                if (! (new URI(name).isAbsolute())) {
+                    throw log.asnInvalidGeneralNameForUriTypeMissingScheme();
+                }
+            } catch (URISyntaxException e) {
+                throw log.asnInvalidGeneralNameForUriType(e);
+            }
             this.name = name;
         }
 

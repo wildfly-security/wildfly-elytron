@@ -153,7 +153,7 @@ public class SelfSignedX509CertificateAndSigningKeyTest {
                 .addExtension(false, "ExtendedKeyUsage", "clientAuth,timeStamping")
                 .addExtension(false, "SubjectAlternativeName", "email:bobsmith@example.com,DNS:bobsmith.example.com")
                 .addExtension(false, "IssuerAlternativeName", "IP:10.20.30.40,uri:http://some.url.com")
-                .addExtension(false, "AuthorityInfoAccess", "ocsp:uri:10.20.30.40:8080,caIssuers:DNS:issuers.example.com")
+                .addExtension(false, "AuthorityInfoAccess", "ocsp:uri:http://10.20.30.40:8080,caIssuers:DNS:issuers.example.com")
                 .addExtension(false, "SubjectInfoAccess", "timeStamping:IP:11.22.33.44,caRepository:uri:http://another.url.com")
                 .build();
         X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
