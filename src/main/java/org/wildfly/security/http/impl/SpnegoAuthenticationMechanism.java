@@ -64,8 +64,8 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util._private.Arrays2;
 

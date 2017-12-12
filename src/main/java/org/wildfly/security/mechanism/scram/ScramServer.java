@@ -44,8 +44,8 @@ import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;

@@ -20,35 +20,26 @@ package org.wildfly.security.mechanism;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.InvalidKeySpecException;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.TwoWayPassword;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
 /**
  * Utils to be used by authentication mechanism (SASL or HTTP) implementations.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ *
+ * @deprecated Should not be part of public API. Moved into internal {@link org.wildfly.security.mechanism._private.MechanismUtil}.
  */
+@Deprecated
 public final class MechanismUtil {
     private MechanismUtil() {}
 
@@ -88,78 +79,9 @@ public final class MechanismUtil {
      * @param log mechanism specific logger
      * @return the password
      */
+    @Deprecated
     public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec matchParameters, AlgorithmParameterSpec generateParameters, Supplier<Provider[]> providers, ElytronMessages log) throws AuthenticationMechanismException {
-        Assert.checkNotNullParam("userName", userName);
-        Assert.checkNotNullParam("callbackHandler", callbackHandler);
-        Assert.checkNotNullParam("passwordType", passwordType);
-        Assert.checkNotNullParam("passwordAlgorithm", passwordAlgorithm);
-        Assert.checkNotNullParam("providers", providers);
-        try {
-            final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm, providers);
-
-            CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm, matchParameters);
-
-            try {
-                MechanismUtil.handleCallbacks(log, callbackHandler, credentialCallback);
-                S password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword(passwordType));
-                if (password != null) {
-                    // update parameters to match requirement, if necessary
-                    return matchParameters != null ? passwordType.cast(passwordFactory.transform(password, matchParameters)) : password;
-                }
-                // fall out
-            } catch (UnsupportedCallbackException e) {
-                if (e.getCallback() != credentialCallback) {
-                    throw log.mechCallbackHandlerFailedForUnknownReason(e);
-                }
-                // fall out
-            } catch (InvalidAlgorithmParameterException | ClassCastException e) {
-                // fall out
-            }
-
-            credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
-
-            try {
-                MechanismUtil.handleCallbacks(log, callbackHandler, credentialCallback);
-                final TwoWayPassword twoWayPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword(TwoWayPassword.class));
-                if (twoWayPassword != null) {
-                    final PasswordFactory clearFactory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm(), providers);
-                    final ClearPasswordSpec spec = clearFactory.getKeySpec(clearFactory.translate(twoWayPassword), ClearPasswordSpec.class);
-                    if (matchParameters != null) {
-                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), generateParameters)));
-                    } else {
-                        return passwordType.cast(passwordFactory.generatePassword(spec));
-                    }
-                }
-            } catch (UnsupportedCallbackException e) {
-                if (e.getCallback() != credentialCallback) {
-                    throw log.mechCallbackHandlerFailedForUnknownReason(e);
-                }
-                // fall out
-            }
-
-            final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
-
-            try {
-                MechanismUtil.handleCallbacks(log, callbackHandler, passwordCallback);
-                final char[] password = passwordCallback.getPassword();
-                if (password != null) {
-                    if (matchParameters != null) {
-                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(password, generateParameters)));
-                    } else {
-                        return passwordType.cast(passwordFactory.generatePassword(new ClearPasswordSpec(password)));
-                    }
-                }
-            } catch (UnsupportedCallbackException e) {
-                if (e.getCallback() != passwordCallback) {
-                    throw log.mechCallbackHandlerFailedForUnknownReason(e);
-                }
-                // fall out
-            }
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
-            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(e);
-        }
-
-        throw log.mechUnableToRetrievePassword(userName);
+        return org.wildfly.security.mechanism._private.MechanismUtil.getPasswordCredential(userName, callbackHandler, passwordType, passwordAlgorithm, matchParameters, generateParameters, providers, log);
     }
 
     /**
@@ -171,14 +93,9 @@ public final class MechanismUtil {
      * @throws AuthenticationMechanismException if the callback handler fails for some reason
      * @throws UnsupportedCallbackException if the callback handler throws this exception
      */
+    @Deprecated
     public static void handleCallbacks(ElytronMessages log, CallbackHandler callbackHandler, Callback... callbacks) throws AuthenticationMechanismException, UnsupportedCallbackException {
-        try {
-            callbackHandler.handle(callbacks);
-        } catch (AuthenticationMechanismException | UnsupportedCallbackException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(e);
-        }
+        org.wildfly.security.mechanism._private.MechanismUtil.handleCallbacks(log, callbackHandler, callbacks);
     }
 
     /**
