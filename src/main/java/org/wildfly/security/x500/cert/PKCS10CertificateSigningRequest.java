@@ -39,7 +39,7 @@ import java.util.Map;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.asn1.ASN1;
+import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.util.ByteStringBuilder;

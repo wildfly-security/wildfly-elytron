@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.wildfly.security.asn1.ASN1.*;
+import static org.wildfly.security.asn1.util.ASN1.*;
 
 /**
  * Constants for the ISO/IEC 9798-3 authentication SASL mechanism.

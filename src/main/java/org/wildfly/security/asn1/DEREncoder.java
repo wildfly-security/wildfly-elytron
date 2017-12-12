@@ -19,7 +19,7 @@
 package org.wildfly.security.asn1;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.*;
+import static org.wildfly.security.asn1.util.ASN1.*;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;

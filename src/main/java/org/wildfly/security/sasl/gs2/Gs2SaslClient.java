@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.gs2;
 
 import static org.wildfly.security._private.ElytronMessages.saslGs2;
-import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
+import static org.wildfly.security.asn1.util.ASN1.APPLICATION_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.gs2.Gs2Util.TOKEN_HEADER_TAG;
 
 import java.util.Map;

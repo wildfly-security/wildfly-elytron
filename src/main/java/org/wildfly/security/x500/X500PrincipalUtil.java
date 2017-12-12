@@ -19,8 +19,8 @@
 package org.wildfly.security.x500;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.IA5_STRING_TYPE;
-import static org.wildfly.security.asn1.ASN1.PRINTABLE_STRING_TYPE;
+import static org.wildfly.security.asn1.util.ASN1.IA5_STRING_TYPE;
+import static org.wildfly.security.asn1.util.ASN1.PRINTABLE_STRING_TYPE;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

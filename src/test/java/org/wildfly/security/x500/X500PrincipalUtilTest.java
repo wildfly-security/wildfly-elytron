@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
 import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
-import org.wildfly.security.asn1.ASN1;
+import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
 
 /**

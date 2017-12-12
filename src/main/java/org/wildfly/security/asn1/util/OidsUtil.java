@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1;
+package org.wildfly.security.asn1.util;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
