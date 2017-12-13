@@ -65,16 +65,6 @@ public interface KeyMapper extends ColumnMapper {
         return SupportLevel.UNSUPPORTED;
     }
 
-    /**
-     * Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities), or definitely not
-     * obtainable based on the given {@link ResultSet}.
-     *
-     * <p>In this case the support is defined based on the query result, usually related with a specific account.
-     *
-     * @param resultSet the result set
-     * @return the level of support for a credential based on the given result set
-     */
-    SupportLevel getCredentialSupport(ResultSet resultSet, Supplier<Provider[]> providers);
 
     Credential map(ResultSet resultSet, Supplier<Provider[]> providers) throws SQLException;
 }

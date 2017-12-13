@@ -82,21 +82,6 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(ResultSet resultSet, Supplier<Provider[]> providers) {
-        try {
-            Credential map = map(resultSet, providers);
-
-            if (map != null) {
-                return SupportLevel.SUPPORTED;
-            }
-
-            return SupportLevel.UNSUPPORTED;
-        } catch (SQLException cause) {
-            throw log.couldNotObtainCredentialWithCause(cause);
-        }
-    }
-
-    @Override
     public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
         return PasswordCredential.class.isAssignableFrom(credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
     }
@@ -234,51 +219,49 @@ public class PasswordKeyMapper implements KeyMapper {
 
         final ResultSetMetaData metaData = resultSet.getMetaData();
 
-        if (resultSet.next()) {
-            if (algorithmColumn > 0) {
-                algorithmName = resultSet.getString(algorithmColumn);
-                if (algorithmName == null) {
-                    algorithmName = getDefaultAlgorithm();
-                }
+        if (algorithmColumn > 0) {
+            algorithmName = resultSet.getString(algorithmColumn);
+            if (algorithmName == null) {
+                algorithmName = getDefaultAlgorithm();
             }
+        }
 
-            if (ClearPassword.ALGORITHM_CLEAR.equals(algorithmName)) {
+        if (ClearPassword.ALGORITHM_CLEAR.equals(algorithmName)) {
+            final String s = getStringColumn(metaData, resultSet, hashColumn);
+            if (s != null) {
+                clear = s.toCharArray();
+            } else {
+                hash = getBinaryColumn(metaData, resultSet, hashColumn);
+            }
+        } else {
+            if (saltColumn == -1 && iterationCountColumn == -1) {
+                // try modular crypt
                 final String s = getStringColumn(metaData, resultSet, hashColumn);
                 if (s != null) {
-                    clear = s.toCharArray();
-                } else {
-                    hash = getBinaryColumn(metaData, resultSet, hashColumn);
-                }
-            } else {
-                if (saltColumn == -1 && iterationCountColumn == -1) {
-                    // try modular crypt
-                    final String s = getStringColumn(metaData, resultSet, hashColumn);
-                    if (s != null) {
-                        final char[] chars = s.toCharArray();
-                        final String identified = ModularCrypt.identifyAlgorithm(chars);
-                        if (identified != null) {
-                            try {
-                                return new PasswordCredential(ModularCrypt.decode(chars));
-                            } catch (InvalidKeySpecException e) {
-                                // fall out (unlikely but possible)
-                            }
+                    final char[] chars = s.toCharArray();
+                    final String identified = ModularCrypt.identifyAlgorithm(chars);
+                    if (identified != null) {
+                        try {
+                            return new PasswordCredential(ModularCrypt.decode(chars));
+                        } catch (InvalidKeySpecException e) {
+                            // fall out (unlikely but possible)
                         }
                     }
                 }
-                hash = getBinaryColumn(metaData, resultSet, hashColumn);
             }
-
-            if (saltColumn > 0) {
-                salt = getBinaryColumn(metaData, resultSet, saltColumn);
-            }
-
-            if (iterationCountColumn > 0) {
-                iterationCount = resultSet.getInt(iterationCountColumn);
-            } else {
-                iterationCount = defaultIterationCount;
-            }
-
+            hash = getBinaryColumn(metaData, resultSet, hashColumn);
         }
+
+        if (saltColumn > 0) {
+            salt = getBinaryColumn(metaData, resultSet, saltColumn);
+        }
+
+        if (iterationCountColumn > 0) {
+            iterationCount = resultSet.getInt(iterationCountColumn);
+        } else {
+            iterationCount = defaultIterationCount;
+        }
+
 
         final PasswordFactory passwordFactory;
         try {
