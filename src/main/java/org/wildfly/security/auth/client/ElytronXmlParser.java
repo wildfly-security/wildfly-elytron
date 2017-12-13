@@ -1288,7 +1288,7 @@ public final class ElytronXmlParser {
                             final KeyStore.Entry entry = entryFactory.get();
                             if (entry instanceof PasswordEntry) try {
                                 final Password password = ((PasswordEntry) entry).getPassword();
-                                final PasswordFactory passwordFactory1 = PasswordFactory.getInstance(password.getAlgorithm());
+                                final PasswordFactory passwordFactory1 = PasswordFactory.getInstance(password.getAlgorithm(), providersSupplier);
                                 final ClearPasswordSpec passwordSpec = passwordFactory1.getKeySpec(password, ClearPasswordSpec.class);
                                 return passwordSpec.getEncodedPassword();
                             } catch (GeneralSecurityException e) {
@@ -1394,10 +1394,14 @@ public final class ElytronXmlParser {
      * @param reader the XML stream reader
      * @param xmlVersion the version of parsed XML
      * @param keyStoresMap the map of key stores to use
+     * @param credentialStoresMap the map of credential stores to use
+     * @param providers supplier of providers for loading services
      * @return the key store entry factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    static ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Version xmlVersion,
+            final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap,
+            final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         final XMLLocation location = reader.getLocation();
         String keyStoreName = null;
@@ -1473,7 +1477,7 @@ public final class ElytronXmlParser {
                         final KeyStore.Entry entry = finalKeyStoreCredential == null ? null : finalKeyStoreCredential.get();
                         if (entry instanceof PasswordEntry) {
                             Password password = ((PasswordEntry) entry).getPassword();
-                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm(), providers);
                             password = passwordFactory.translate(password);
                             final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                             protectionParameter = new KeyStore.PasswordProtection(spec.getEncodedPassword());
