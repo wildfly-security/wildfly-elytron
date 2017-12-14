@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,8 +41,12 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLSession;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.manager.WildFlySecurityManager;
 
 
 /**
@@ -51,20 +57,25 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  */
 public class HttpAuthenticator {
 
+    private static final String AUTHENTICATED_PRINCIPAL_KEY = HttpAuthenticator.class.getName() + ".authenticated-principal";
+
     private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+    private final SecurityDomain securityDomain;
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
     private final boolean ignoreOptionalFailures;
+    private final String programaticMechanismName;
     private final Consumer<Runnable> logoutHandlerConsumer;
     private volatile boolean authenticated = false;
 
-    private HttpAuthenticator(final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier, final HttpExchangeSpi httpExchangeSpi,
-                              final boolean required, final boolean ignoreOptionalFailures, Consumer<Runnable> logoutHandlerConsumer) {
-        this.mechanismSupplier = mechanismSupplier;
-        this.httpExchangeSpi = httpExchangeSpi;
-        this.required = required;
-        this.ignoreOptionalFailures = ignoreOptionalFailures;
-        this.logoutHandlerConsumer = logoutHandlerConsumer;
+    private HttpAuthenticator(final Builder builder) {
+        this.mechanismSupplier = builder.mechanismSupplier;
+        this.securityDomain = builder.securityDomain;
+        this.programaticMechanismName = builder.programmaticMechanismName;
+        this.logoutHandlerConsumer = builder.logoutHandlerConsumer;
+        this.httpExchangeSpi = builder.httpExchangeSpi;
+        this.required = builder.required;
+        this.ignoreOptionalFailures = builder.ignoreOptionalFailures;
     }
 
     /**
@@ -75,11 +86,112 @@ public class HttpAuthenticator {
      * @throws HttpAuthenticationException
      */
     public boolean authenticate() throws HttpAuthenticationException {
+        if (restoreIdentity()) {
+            return true;
+        }
+
         return new AuthenticationExchange().authenticate();
     }
 
     private boolean isAuthenticated() {
         return authenticated;
+    }
+
+    /**
+     * Perform a login for the supplied username and password using the pre-configured mechanism name.
+     *
+     * @param username the username to use for authentication.
+     * @param password the password to use for authentication.
+     * @return A {@link SecurityIdentity} is authentication and authorization is successful.
+     */
+    public SecurityIdentity login(String username, String password) {
+        return login(username, password, programaticMechanismName);
+    }
+
+    /**
+     * Perform a login for the supplied username and password using the specified mechanism name.
+     *
+     * @param username the username to use for authentication.
+     * @param password the password to use for authentication.
+     * @return A {@link SecurityIdentity} is authentication and authorization is successful.
+     */
+    private SecurityIdentity login(String username, String password, String mechanismName) {
+        if (securityDomain == null) {
+            return null;
+        }
+
+        ServerAuthenticationContext authenticationContext;
+        if(WildFlySecurityManager.isChecking()) {
+            authenticationContext = AccessController.doPrivileged((PrivilegedAction<ServerAuthenticationContext>) () -> securityDomain.createNewAuthenticationContext());
+        } else {
+            authenticationContext = securityDomain.createNewAuthenticationContext();
+        }
+
+        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password.toCharArray());
+
+        try {
+            authenticationContext.setAuthenticationName(username);
+            if (authenticationContext.verifyEvidence(evidence)) {
+                if (authenticationContext.authorize()) {
+                    SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
+                    HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
+                    if (sessionScope != null && sessionScope.supportsAttachments()) {
+                        sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, username);
+                    }
+                    setupProgramaticLogout(sessionScope);
+
+                    httpExchangeSpi.authenticationComplete(authorizedIdentity, mechanismName);
+
+                    return authorizedIdentity;
+                } else {
+                    httpExchangeSpi.authenticationFailed("Authorization Failed", mechanismName);
+                }
+            } else {
+                httpExchangeSpi.authenticationFailed("Authentication Failed", mechanismName);
+            }
+        } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
+            httpExchangeSpi.authenticationFailed(e.getMessage(), mechanismName);
+        } finally {
+            evidence.destroy();
+        }
+
+        return null;
+    }
+
+    private boolean restoreIdentity() {
+        if (securityDomain == null) {
+            return false;
+        }
+
+        HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
+        if (sessionScope != null && sessionScope.supportsAttachments()) {
+            String principalName = sessionScope.getAttachment(AUTHENTICATED_PRINCIPAL_KEY, String.class);
+            if (principalName != null) {
+                ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
+                try {
+                    authenticationContext.setAuthenticationName(principalName);
+                    if (authenticationContext.authorize()) {
+                        SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
+                        httpExchangeSpi.authenticationComplete(authorizedIdentity, programaticMechanismName);
+                        setupProgramaticLogout(sessionScope);
+
+                        return true;
+                    } else {
+                        sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null); // Whatever was in there no longer works so just drop it.
+                    }
+                } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
+                    httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void setupProgramaticLogout(HttpScope sessionScope) {
+        logoutHandlerConsumer.accept(() -> {
+            sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null);
+        });
     }
 
     /**
@@ -364,10 +476,12 @@ public class HttpAuthenticator {
     public static class Builder {
 
         private Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+        private SecurityDomain securityDomain;
         private HttpExchangeSpi httpExchangeSpi;
         private boolean required;
         private boolean ignoreOptionalFailures;
         private Consumer<Runnable> logoutHandlerConsumer;
+        private String programmaticMechanismName;
 
         Builder() {
         }
@@ -381,6 +495,18 @@ public class HttpAuthenticator {
          */
         public Builder setMechanismSupplier(Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier) {
             this.mechanismSupplier = mechanismSupplier;
+
+            return this;
+        }
+
+        /**
+         * Set the {@link SecurityDomain} to use for programmatic authentication.
+         *
+         * @param securityDomain the {@link SecurityDomain} to use for programmatic authentication.
+         * @return the {@link Builder} to allow method call chaining.
+         */
+        public Builder setSecurityDomain(final SecurityDomain securityDomain) {
+            this.securityDomain = securityDomain;
 
             return this;
         }
@@ -444,12 +570,25 @@ public class HttpAuthenticator {
         }
 
         /**
+         * Set the mechanism name that should be used for programmatic authentication if one is not provided at the time of the call.
+         *
+         * @param programmaticMechanismName the name of the mechanism to use for programmatic authentication.
+         * @return the {@link Builder} to allow method call chaining.
+         */
+        public Builder setProgrammaticMechanismName(final String programmaticMechanismName) {
+            this.programmaticMechanismName = programmaticMechanismName;
+
+            return this;
+
+        }
+
+        /**
          * Build the new {@code HttpAuthenticator} instance.
          *
          * @return the new {@code HttpAuthenticator} instance.
          */
         public HttpAuthenticator build() {
-            return new HttpAuthenticator(mechanismSupplier, httpExchangeSpi, required, ignoreOptionalFailures, logoutHandlerConsumer);
+            return new HttpAuthenticator(this);
         }
 
     }
