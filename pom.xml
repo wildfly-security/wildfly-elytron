@@ -542,6 +542,31 @@
                 <excludedGroups>org.wildfly.security.ExcludedOnIbmJdk</excludedGroups>
             </properties>
         </profile>
+
+        <profile>
+            <id>stable-tests</id>
+            <activation>
+                <property>
+                    <name>stable-tests</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <!-- due to ELY-483, ELY-1298 and ELY-1474 -->
+                                <exclude>**/GssapiTestSuite.java</exclude>
+                                <!-- due to ELY-1295 -->
+                                <exclude>**/KeyStoreCredentialStoreTest.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
