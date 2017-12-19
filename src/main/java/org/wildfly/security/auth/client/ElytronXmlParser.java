@@ -829,7 +829,7 @@ public final class ElytronXmlParser {
                     case "credentials": {
                         if (isSet(foundBits, 9)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 9);
-                        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource = parseCredentialsType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providerSupplier);
+                        final ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource = parseCredentialsType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providerSupplier);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useCredentials(credentialSource.get()));
                         break;
                     }
@@ -1083,8 +1083,8 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "oauth2-bearer-token": {
-                        CredentialSource oauthCredentialSource = parseOAuth2BearerTokenType(reader, xmlVersion);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(oauthCredentialSource));
+                        final ExceptionSupplier<CredentialSource, ConfigXMLParseException> oauthCredentialSourceSupplier = parseOAuth2BearerTokenType(reader, credentialStoresMap, xmlVersion);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(oauthCredentialSourceSupplier.get()));
                         break;
                     }
                     case "local-kerberos": {
@@ -1618,23 +1618,23 @@ public final class ElytronXmlParser {
         }
         if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
         if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
-        return createCredentialStoreSupplier(reader.getLocation(), storeName, alias, clearText, credentialStoresMap);
-    }
-
-    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> createCredentialStoreSupplier(final XMLLocation location, final String storeName, final String alias, final String clearText, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) {
+        final XMLLocation finalLocation = reader.getLocation();
+        final String finalStoreName = storeName;
+        final String finalClearText = clearText;
+        final String finalAlias = alias;
         return () -> {
-            if (storeName != null) {
-                final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(storeName);
+            if (finalStoreName != null) {
+                final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(finalStoreName);
                 if (supplier == null) {
-                    throw xmlLog.xmlCredentialStoreNameNotDefined(location, storeName);
+                    throw xmlLog.xmlCredentialStoreNameNotDefined(finalLocation, finalStoreName);
                 }
                 final CredentialStore credentialStore = supplier.get();
-                return new CredentialStoreCredentialSource(credentialStore, alias);
-            } else if (clearText != null) {
-                final PasswordCredential passwordCredential = new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, clearText.toCharArray()));
+                return new CredentialStoreCredentialSource(credentialStore, finalAlias);
+            } else if (finalClearText != null) {
+                final PasswordCredential passwordCredential = new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, finalClearText.toCharArray()));
                 return IdentityCredentials.NONE.withCredential(passwordCredential);
             } else {
-                throw xmlLog.xmlInvalidCredentialStoreRef(location);
+                throw xmlLog.xmlInvalidCredentialStoreRef(finalLocation);
             }
         };
     }
@@ -2353,31 +2353,34 @@ public final class ElytronXmlParser {
      * @param xmlVersion the version of parsed XML
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static CredentialSource parseOAuth2BearerTokenType(ConfigurationXMLStreamReader reader, final Version xmlVersion) throws ConfigXMLParseException {
+    static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseOAuth2BearerTokenType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Version xmlVersion) throws ConfigXMLParseException {
         URI tokenEndpointUri = requireSingleURIAttribute(reader, "token-endpoint-uri");
-        OAuth2CredentialSource.Builder builder;
-        try {
-            builder = OAuth2CredentialSource.builder(tokenEndpointUri.toURL());
-        } catch (MalformedURLException e) {
-            throw xmlLog.xmlInvalidUrl(tokenEndpointUri.toString());
-        }
+        ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier = null;
+        builderSupplier = () -> {
+            try {
+                return OAuth2CredentialSource.builder(tokenEndpointUri.toURL());
+            } catch (MalformedURLException e) {
+                throw xmlLog.xmlInvalidUrl(tokenEndpointUri.toString());
+            }
+        };
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 checkElementNamespace(reader, xmlVersion);
                 switch (reader.getLocalName()) {
                     case "resource-owner-credentials": {
-                        builder = parseOAuth2ResourceOwnerCredentials(reader, builder);
+                        builderSupplier = parseOAuth2ResourceOwnerCredentials(reader, builderSupplier, credentialStoresMap, xmlVersion);
                         break;
                     }
                     case "client-credentials": {
-                        builder = parseOAuth2ClientCredentials(reader, builder);
+                        builderSupplier = parseOAuth2ClientCredentials(reader, builderSupplier, credentialStoresMap, xmlVersion);
                         break;
                     }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                return builder.build();
+                final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> finalBuilderSupplier = builderSupplier;
+                return () -> finalBuilderSupplier.get().build();
             } else {
                 throw reader.unexpectedContent();
             }
@@ -2389,11 +2392,13 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code oauth2-bearer-token-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @param builder the builder
+     * @param builderSupplier the builder supplier
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static OAuth2CredentialSource.Builder parseOAuth2ResourceOwnerCredentials(ConfigurationXMLStreamReader reader, OAuth2CredentialSource.Builder builder) throws ConfigXMLParseException {
+    static ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> parseOAuth2ResourceOwnerCredentials(ConfigurationXMLStreamReader reader, final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Version xmlVersion) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
+        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
+        XMLLocation nestedLocation = null;
         String userName = null;
         String password = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -2412,15 +2417,50 @@ public final class ElytronXmlParser {
                 default: throw reader.unexpectedAttribute(i);
             }
         }
+        if (userName == null) throw reader.missingRequiredAttribute(xmlVersion.namespace, "name");
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw reader.unexpectedElement();
-            } else if (tag == END_ELEMENT) {
-                if (userName != null && password != null) {
-                    return builder.useResourceOwnerPassword(userName, password);
+                checkElementNamespace(reader, xmlVersion);
+                if (!xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                   throw reader.unexpectedElement();
                 }
-                return builder;
+                if (reader.getLocalName() == "credential-store-reference") {
+                    if (password != null) {
+                        throw reader.unexpectedElement();
+                    }
+                    nestedLocation = reader.getLocation();
+                    credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
+                } else {
+                    throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                final String finalUserName = userName;
+                if (password != null) {
+                    final String finalPassword = password;
+                    return () -> builderSupplier.get().useResourceOwnerPassword(finalUserName, finalPassword);
+                }
+                if (credentialSourceSupplier != null) {
+                    final XMLLocation finalLocation = nestedLocation;
+                    final ExceptionSupplier<CredentialSource, ConfigXMLParseException> finalCredentialSourceSupplier = credentialSourceSupplier;
+                    return () -> {
+                        try {
+                            PasswordCredential passwordCredential = finalCredentialSourceSupplier.get().getCredential(PasswordCredential.class);
+                            if (passwordCredential == null) {
+                                throw new ConfigXMLParseException(xmlLog.couldNotObtainCredential(), reader);
+                            }
+                            char[] pass = passwordCredential.getPassword().castAndApply(ClearPassword.class, ClearPassword::getPassword);
+                            if (pass == null) {
+                                throw new ConfigXMLParseException(xmlLog.couldNotObtainCredential(), reader);
+                            }
+                            String finalPassword = String.valueOf(pass);
+                            return builderSupplier.get().useResourceOwnerPassword(finalUserName, finalPassword);
+                        } catch (IOException e) {
+                            throw xmlLog.xmlFailedToCreateCredential(finalLocation, e);
+                        }
+                    };
+                }
+                throw reader.missingRequiredAttribute(xmlVersion.namespace, "password");
             } else {
                 throw reader.unexpectedContent();
             }
@@ -2432,10 +2472,12 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code oauth2-client-credentials-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @param builder the builder
+     * @param builderSupplier the builder supplier
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static OAuth2CredentialSource.Builder parseOAuth2ClientCredentials(ConfigurationXMLStreamReader reader, OAuth2CredentialSource.Builder builder) throws ConfigXMLParseException {
+    static ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> parseOAuth2ClientCredentials(ConfigurationXMLStreamReader reader, final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Version xmlVersion) throws ConfigXMLParseException {
+        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
+        XMLLocation nestedLocation = null;
         String id = null;
         String secret = null;
         for (int i = 0; i < reader.getAttributeCount(); i ++) {
@@ -2457,12 +2499,47 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw reader.unexpectedElement();
-            } else if (tag == END_ELEMENT) {
-                if (id != null && secret != null) {
-                    return builder.clientCredentials(id, secret);
+                checkElementNamespace(reader, xmlVersion);
+                if (!xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                    throw reader.unexpectedElement();
                 }
-                return builder;
+                if (reader.getLocalName() == "credential-store-reference") {
+                    if (secret != null) {
+                        throw reader.unexpectedElement();
+                    }
+                    nestedLocation = reader.getLocation();
+                    credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
+                } else {
+                    throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                if (id == null) throw reader.unexpectedContent();
+                final String finalId = id;
+                if (secret != null) {
+                    final String finalSecret = secret;
+                    return () -> builderSupplier.get().clientCredentials(finalId, finalSecret);
+                }
+                if (credentialSourceSupplier != null) {
+                    final XMLLocation finalLocation = nestedLocation;
+                    final ExceptionSupplier<CredentialSource, ConfigXMLParseException> finalCredentialSourceSupplier = credentialSourceSupplier;
+                    return () -> {
+                        try {
+                            PasswordCredential passwordCredential = finalCredentialSourceSupplier.get().getCredential(PasswordCredential.class);
+                            if (passwordCredential == null) {
+                                throw new ConfigXMLParseException(xmlLog.couldNotObtainCredential(), reader);
+                            }
+                            char[] pass = passwordCredential.getPassword().castAndApply(ClearPassword.class, ClearPassword::getPassword);
+                            if (pass == null) {
+                                throw new ConfigXMLParseException(xmlLog.couldNotObtainCredential(), reader);
+                            }
+                            String finalPassword = String.valueOf(pass);
+                            return builderSupplier.get().clientCredentials(finalId, finalPassword);
+                        } catch (IOException e) {
+                            throw xmlLog.xmlFailedToCreateCredential(finalLocation, e);
+                        }
+                    };
+                }
+                throw reader.unexpectedContent();
             } else {
                 throw reader.unexpectedContent();
             }

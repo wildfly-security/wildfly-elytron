@@ -249,13 +249,19 @@
     </xsd:complexType>
 
     <xsd:complexType name="oauth2-client-credentials-type">
+        <xsd:all>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:all>
         <xsd:attribute name="client-id" type="xsd:string" use="required" />
-        <xsd:attribute name="client-secret" type="xsd:string" use="required" />
+        <xsd:attribute name="client-secret" type="xsd:string" use="optional" />
     </xsd:complexType>
 
     <xsd:complexType name="resource-owner-credentials-type">
+        <xsd:all>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required" />
-        <xsd:attribute name="password" type="xsd:string" use="required" />
+        <xsd:attribute name="password" type="xsd:string" use="optional" />
     </xsd:complexType>
 
     <!-- Credential Stores elements -->
