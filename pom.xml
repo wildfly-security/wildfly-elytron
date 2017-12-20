@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron</artifactId>
-    <version>1.2.0.Beta11</version>
+    <version>1.2.0.Beta12-SNAPSHOT</version>
 
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
