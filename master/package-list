@@ -1,6 +1,7 @@
 org.wildfly.security
 org.wildfly.security._private
 org.wildfly.security.asn1
+org.wildfly.security.asn1.util
 org.wildfly.security.audit
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
@@ -35,6 +36,7 @@ org.wildfly.security.manager
 org.wildfly.security.manager._private
 org.wildfly.security.manager.action
 org.wildfly.security.mechanism
+org.wildfly.security.mechanism._private
 org.wildfly.security.mechanism.digest
 org.wildfly.security.mechanism.oauth2
 org.wildfly.security.mechanism.scram
@@ -64,3 +66,4 @@ org.wildfly.security.util
 org.wildfly.security.util._private
 org.wildfly.security.x500
 org.wildfly.security.x500.cert
+org.wildfly.security.x500.util

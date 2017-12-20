@@ -1,4 +1,5 @@
 org.wildfly.security
+org.wildfly.security.asn1
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
@@ -23,3 +24,5 @@ org.wildfly.security.password.spec
 org.wildfly.security.permission
 org.wildfly.security.sasl.util
 org.wildfly.security.ssl
+org.wildfly.security.x500
+org.wildfly.security.x500.cert
