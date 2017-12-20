@@ -18,14 +18,15 @@
 
 package org.wildfly.security.asn1;
 
+import static org.junit.Assert.*;
+import static org.wildfly.security.asn1.util.ASN1.*;
+import static org.wildfly.security.pem.Pem.extractDerContent;
+
 import org.junit.Test;
+import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.util.CodePointIterator;
 
 import java.util.ArrayList;
-
-import static org.junit.Assert.*;
-import static org.wildfly.security.asn1.ASN1.*;
-import static org.wildfly.security.pem.Pem.extractDerContent;
 
 /**
  * Tests for DER decoding.

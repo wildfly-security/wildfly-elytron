@@ -24,7 +24,6 @@ import java.security.cert.Extension;
 
 import org.wildfly.security.asn1.ASN1Encodable;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * An X.509 certificate extension.
@@ -65,8 +64,8 @@ public abstract class X509CertificateExtension implements ASN1Encodable, Extensi
     }
 
     public byte[] getValue() {
-        final ByteStringBuilder b = new ByteStringBuilder();
-        encodeTo(new DEREncoder(b));
-        return b.toArray();
+        DEREncoder encoder = new DEREncoder();
+        encodeTo(encoder);
+        return encoder.getEncoded();
     }
 }

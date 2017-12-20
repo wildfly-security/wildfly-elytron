@@ -24,8 +24,6 @@ import java.time.ZonedDateTime;
 import java.util.BitSet;
 import java.util.EnumSet;
 
-import org.wildfly.security.util.ByteStringBuilder;
-
 /**
  * An interface for encoding ASN.1 values.
  *
@@ -111,13 +109,6 @@ public interface ASN1Encoder extends Flushable {
     void encodeOctetString(byte[] str);
 
     /**
-     * Encode an ASN.1 octet string value.
-     *
-     * @param str the {@code ByteStringBuilder} containing the octet string to encode
-     */
-    void encodeOctetString(ByteStringBuilder str);
-
-    /**
      * Encode an ASN.1 IA5 string value.
      *
      * @param str the IA5 string to encode
@@ -130,13 +121,6 @@ public interface ASN1Encoder extends Flushable {
      * @param str the byte array containing IA5 string to encode
      */
     void encodeIA5String(byte[] str);
-
-    /**
-     * Encode an ASN.1 IA5 string value.
-     *
-     * @param str the {@code ByteStringBuilder} containing the IA5 string to encode
-     */
-    void encodeIA5String(ByteStringBuilder str);
 
     /**
      * Encode an ASN.1 printable string value.
@@ -288,4 +272,11 @@ public interface ASN1Encoder extends Flushable {
      * Any unfinished sequences or sets will be ended.
      */
     void flush();
+
+    /**
+     * Get the ASN.1 encoded bytes.
+     *
+     * @return the ASN.1 encoded bytes
+     */
+    byte[] getEncoded();
 }

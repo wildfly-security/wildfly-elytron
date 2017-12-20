@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.wildfly.security.asn1.ASN1.*;
+import static org.wildfly.security.asn1.util.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.x500.GeneralName.*;
 import static org.wildfly.security.x500.TrustedAuthority.*;
@@ -48,7 +48,7 @@ import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.X500;
-import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

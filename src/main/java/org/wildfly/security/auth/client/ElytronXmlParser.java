@@ -82,7 +82,7 @@ import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.asn1.OidsUtil;
+import org.wildfly.security.asn1.util.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;

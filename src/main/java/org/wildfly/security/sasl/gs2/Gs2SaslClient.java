@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.gs2;
 
 import static org.wildfly.security._private.ElytronMessages.saslGs2;
-import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
+import static org.wildfly.security.asn1.util.ASN1.APPLICATION_SPECIFIC_MASK;
 import static org.wildfly.security.sasl.gs2.Gs2Util.TOKEN_HEADER_TAG;
 
 import java.util.Map;
@@ -42,7 +42,6 @@ import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -237,15 +236,14 @@ final class Gs2SaslClient extends AbstractSaslClient {
             //              -- ASN.1 structure not required
             //      }
             // MechType ::= OBJECT IDENTIFIER
-            final ByteIterator bi = ByteIterator.ofBytes(token);
-            final DERDecoder decoder = new DERDecoder(bi);
+            final DERDecoder decoder = new DERDecoder(token);
             decoder.decodeImplicit(APPLICATION_SPECIFIC_MASK, 0);
             decoder.startSequence();
             String decodedOid = decoder.decodeObjectIdentifier();
             if (! mechanism.equals(new Oid(decodedOid))) {
                 throw new GSSException(GSSException.DEFECTIVE_TOKEN);
             }
-            token = bi.drain();
+            token = decoder.drain();
         } else {
             // Set gs2-nonstd-flag
             nonStandard = true;

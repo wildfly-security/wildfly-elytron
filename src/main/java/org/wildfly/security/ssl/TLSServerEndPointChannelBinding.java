@@ -25,7 +25,7 @@ import java.security.cert.X509Certificate;
 
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.security.asn1.ASN1;
+import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 

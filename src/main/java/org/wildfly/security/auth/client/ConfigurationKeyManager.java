@@ -33,7 +33,7 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
-import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 final class ConfigurationKeyManager extends X509ExtendedKeyManager {
     private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer;

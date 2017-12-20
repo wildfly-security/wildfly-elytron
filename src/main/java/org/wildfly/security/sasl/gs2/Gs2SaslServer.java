@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.gs2;
 
 import static org.wildfly.security._private.ElytronMessages.saslGs2;
-import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
+import static org.wildfly.security.asn1.util.ASN1.APPLICATION_SPECIFIC_MASK;
 
 import java.io.IOException;
 
@@ -291,8 +291,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
      * @throws ASN1Exception if the mechanism OID cannot be DER encoded
      */
     private byte[] restoreTokenHeader(byte[] token) throws ASN1Exception {
-        ByteStringBuilder headerAndToken = new ByteStringBuilder();
-        final DEREncoder encoder = new DEREncoder(headerAndToken);
+        final DEREncoder encoder = new DEREncoder();
         encoder.encodeImplicit(APPLICATION_SPECIFIC_MASK, 0);
         encoder.startSequence();
         try {
@@ -302,7 +301,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         }
         encoder.writeEncoded(token);
         encoder.endSequence();
-        return headerAndToken.toArray();
+        return encoder.getEncoded();
     }
 
     private void storeBoundServerName() throws SaslException {

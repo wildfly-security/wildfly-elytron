@@ -36,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.asn1.ASN1;
+import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;

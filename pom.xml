@@ -190,6 +190,7 @@
                         <show>protected</show>
                         <sourceFileIncludes>
                             <include>org/wildfly/security/*.java</include>
+                            <include>org/wildfly/security/asn1/*.java</include>
                             <include>org/wildfly/security/auth/*.java</include>
                             <include>org/wildfly/security/auth/callback/*.java</include>
                             <include>org/wildfly/security/auth/client/*.java</include>
@@ -214,6 +215,8 @@
                             <include>org/wildfly/security/permission/*.java</include>
                             <include>org/wildfly/security/sasl/util/*.java</include>
                             <include>org/wildfly/security/ssl/*.java</include>
+                            <include>org/wildfly/security/x500/*.java</include>
+                            <include>org/wildfly/security/x500/cert/*.java</include>
                         </sourceFileIncludes>
                         <destDir>api-javadoc</destDir>
                     </configuration>

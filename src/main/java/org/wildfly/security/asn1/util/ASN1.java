@@ -16,14 +16,16 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1;
+package org.wildfly.security.asn1.util;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import org.wildfly.security.asn1.ASN1Decoder;
+import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
- * A class that contains ASN.1 constants.
+ * A class that contains ASN.1 constants and utilities.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
@@ -436,7 +438,7 @@ public class ASN1 {
         }
     }
 
-    static void validatePrintableByte(final int b) throws ASN1Exception {
+    public static void validatePrintableByte(final int b) throws ASN1Exception {
         switch (b) {
             case ' ':
             case '\'':

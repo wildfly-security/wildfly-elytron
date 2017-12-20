@@ -19,7 +19,7 @@
 package org.wildfly.security.asn1;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.*;
+import static org.wildfly.security.asn1.util.ASN1.*;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -67,7 +67,7 @@ public class DERDecoder implements ASN1Decoder {
      *
      * @param bi the {@code ByteIterator} from which DER encoded values will be decoded
      */
-    public DERDecoder(ByteIterator bi) {
+    DERDecoder(ByteIterator bi) {
         this.bi = bi;
     }
 
@@ -488,6 +488,11 @@ public class DERDecoder implements ASN1Decoder {
             throw log.asnUnexpectedEndOfInput();
         }
         return element;
+    }
+
+    @Override
+    public byte[] drain() {
+        return bi.drain();
     }
 
     private int readTag() throws ASN1Exception {
