@@ -254,6 +254,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512:
+            case ALGORITHM_DIGEST_SHA_512_256:
                 if (keySpec instanceof DigestPasswordSpec) {
                     return new DigestPasswordImpl(algorithm, (DigestPasswordSpec) keySpec);
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
@@ -656,7 +657,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA:
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_384:
-            case ALGORITHM_DIGEST_SHA_512: {
+            case ALGORITHM_DIGEST_SHA_512:
+            case ALGORITHM_DIGEST_SHA_512_256: {
                 if (password instanceof DigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
                 } else if (password instanceof DigestPassword  && algorithm.equals(password.getAlgorithm())) {

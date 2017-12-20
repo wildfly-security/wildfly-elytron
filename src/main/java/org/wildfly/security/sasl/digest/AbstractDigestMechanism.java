@@ -488,6 +488,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
             case SaslMechanismInformation.Names.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
             case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512_256: return DigestPassword.ALGORITHM_DIGEST_SHA_512_256;
             case SaslMechanismInformation.Names.DIGEST_MD5:     return DigestPassword.ALGORITHM_DIGEST_MD5;
             default: throw Assert.impossibleSwitchCase(mechanismName);
         }

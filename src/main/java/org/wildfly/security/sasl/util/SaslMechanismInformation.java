@@ -64,6 +64,7 @@ public final class SaslMechanismInformation {
         public static final String DIGEST_SHA_256 = "DIGEST-SHA-256";
         public static final String DIGEST_SHA_384 = "DIGEST-SHA-384";
         public static final String DIGEST_SHA_512 = "DIGEST-SHA-512";
+        public static final String DIGEST_SHA_512_256 = "DIGEST-SHA-512-256";
         public static final String SCRAM_SHA_1 = "SCRAM-SHA-1";
         public static final String SCRAM_SHA_1_PLUS = "SCRAM-SHA-1-PLUS";
         public static final String SCRAM_SHA_256 = "SCRAM-SHA-256";
@@ -123,6 +124,10 @@ public final class SaslMechanismInformation {
         Names.SCRAM_SHA_512_PLUS
     );
 
+    private static final Set<String> SHA_512_256_MECHS = nSet(
+            Names.DIGEST_SHA_512_256
+    );
+
     private static final Set<String> MUTUAL_MECHS = nSet(
         Names.IEC_ISO_9798_M_DSA_SHA1,
         Names.IEC_ISO_9798_M_ECDSA_SHA1,
@@ -172,6 +177,11 @@ public final class SaslMechanismInformation {
      * A predicate which is true when the mechanism uses SHA-512.
      */
     public static final Predicate<String> HASH_SHA_512 = SHA_512_MECHS::contains;
+
+    /**
+     * A predicate which is true when the mechanism uses SHA-512/256.
+     */
+    public static final Predicate<String> HASH_SHA_512_256 = SHA_512_256_MECHS::contains;
 
     /**
      * A predicate which is true when a GS2-family mechanism is being used.
@@ -238,6 +248,7 @@ public final class SaslMechanismInformation {
     static final Set<String> DIGEST_SHA_256_AND_PLAIN = nSet(DigestPassword.ALGORITHM_DIGEST_SHA_256, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> DIGEST_SHA_384_AND_PLAIN = nSet(DigestPassword.ALGORITHM_DIGEST_SHA_384, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> DIGEST_SHA_512_AND_PLAIN = nSet(DigestPassword.ALGORITHM_DIGEST_SHA_512, ClearPassword.ALGORITHM_CLEAR);
+    static final Set<String> DIGEST_SHA_512_256_AND_PLAIN = nSet(DigestPassword.ALGORITHM_DIGEST_SHA_512_256, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> SCRAM_SHA_1_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_1, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> SCRAM_SHA_256_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, ClearPassword.ALGORITHM_CLEAR);
     static final Set<String> SCRAM_SHA_384_AND_PLAIN = nSet(ScramDigestPassword.ALGORITHM_SCRAM_SHA_384, ClearPassword.ALGORITHM_CLEAR);
@@ -272,6 +283,7 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA_256:
             case Names.DIGEST_SHA_384:
             case Names.DIGEST_SHA_512:
+            case Names.DIGEST_SHA_512_256:
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS:
             case Names.SCRAM_SHA_256:
@@ -328,7 +340,8 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA:
             case Names.DIGEST_SHA_256:
             case Names.DIGEST_SHA_384:
-            case Names.DIGEST_SHA_512: {
+            case Names.DIGEST_SHA_512:
+            case Names.DIGEST_SHA_512_256: {
                 return DIGEST_AND_TWO_WAY;
             }
             case Names.SCRAM_SHA_1:
@@ -377,6 +390,7 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA_256:
             case Names.DIGEST_SHA_384:
             case Names.DIGEST_SHA_512:
+            case Names.DIGEST_SHA_512_256:
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS:
             case Names.SCRAM_SHA_256:
@@ -495,6 +509,9 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA_512: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? DIGEST_SHA_512_AND_PLAIN : emptySet();
             }
+            case Names.DIGEST_SHA_512_256: {
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? DIGEST_SHA_512_256_AND_PLAIN : emptySet();
+            }
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? SCRAM_SHA_1_AND_PLAIN : emptySet();
@@ -560,6 +577,9 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA_512: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? DIGEST_SHA_512_AND_PLAIN : emptySet();
             }
+            case Names.DIGEST_SHA_512_256: {
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? DIGEST_SHA_512_256_AND_PLAIN : emptySet();
+            }
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? SCRAM_SHA_1_AND_PLAIN : emptySet();
@@ -610,6 +630,7 @@ public final class SaslMechanismInformation {
             case Names.DIGEST_SHA_256:
             case Names.DIGEST_SHA_384:
             case Names.DIGEST_SHA_512:
+            case Names.DIGEST_SHA_512_256:
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS:
             case Names.SCRAM_SHA_256:

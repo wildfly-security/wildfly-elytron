@@ -32,6 +32,7 @@ abstract class AbstractDigestFactory {
 
     private static final String[] MECHS = {
         SaslMechanismInformation.Names.DIGEST_SHA_512,
+        SaslMechanismInformation.Names.DIGEST_SHA_512_256,
         SaslMechanismInformation.Names.DIGEST_SHA_256,
         SaslMechanismInformation.Names.DIGEST_SHA_384,
         SaslMechanismInformation.Names.DIGEST_SHA,
@@ -60,7 +61,8 @@ abstract class AbstractDigestFactory {
             case SaslMechanismInformation.Names.DIGEST_SHA:
             case SaslMechanismInformation.Names.DIGEST_SHA_256:
             case SaslMechanismInformation.Names.DIGEST_SHA_384:
-            case SaslMechanismInformation.Names.DIGEST_SHA_512: {
+            case SaslMechanismInformation.Names.DIGEST_SHA_512:
+            case SaslMechanismInformation.Names.DIGEST_SHA_512_256: {
                 return true;
             }
         }

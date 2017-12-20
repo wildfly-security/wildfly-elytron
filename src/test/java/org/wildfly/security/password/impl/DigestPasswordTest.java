@@ -25,6 +25,7 @@ import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_384;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512_256;
 
 import java.security.Provider;
 import java.security.Security;
@@ -88,6 +89,11 @@ public class DigestPasswordTest {
     @Test
     public void testSHA512() throws Exception {
         performTest(ALGORITHM_DIGEST_SHA_512, "b55e7d5d719b4ac1917abae97fa309e639fd86a9dfbd9e5807c196c3f483c19ddfd74d9b56b995d2b2493ed66b65b9015b95daeff76275a7b2bf42121676bc34");
+    }
+
+    @Test
+    public void testSHA512_256() throws Exception {
+        performTest(ALGORITHM_DIGEST_SHA_512_256, "524bfc3ed0cb625f5ce11074b833dbbc337d36bce866fcc48d84cd1f60fddf63");
     }
 
     private void performTest(final String algorithm, final String expectedHexDigest) throws Exception {

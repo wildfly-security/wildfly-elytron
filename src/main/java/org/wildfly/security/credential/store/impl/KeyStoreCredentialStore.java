@@ -307,7 +307,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     case DigestPassword.ALGORITHM_DIGEST_SHA:
                     case DigestPassword.ALGORITHM_DIGEST_SHA_256:
                     case DigestPassword.ALGORITHM_DIGEST_SHA_384:
-                    case DigestPassword.ALGORITHM_DIGEST_SHA_512: {
+                    case DigestPassword.ALGORITHM_DIGEST_SHA_512:
+                    case DigestPassword.ALGORITHM_DIGEST_SHA_512_256: {
                         final DigestPasswordSpec passwordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), DigestPasswordSpec.class);
                         encoder.startSequence();
                         encoder.encodeOctetString(passwordSpec.getUsername());
@@ -604,7 +605,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     case DigestPassword.ALGORITHM_DIGEST_SHA:
                     case DigestPassword.ALGORITHM_DIGEST_SHA_256:
                     case DigestPassword.ALGORITHM_DIGEST_SHA_384:
-                    case DigestPassword.ALGORITHM_DIGEST_SHA_512: {
+                    case DigestPassword.ALGORITHM_DIGEST_SHA_512:
+                    case DigestPassword.ALGORITHM_DIGEST_SHA_512_256: {
                         decoder.startSequence();
                         final String username = decoder.decodeOctetStringAsString();
                         final String realm = decoder.decodeOctetStringAsString();
