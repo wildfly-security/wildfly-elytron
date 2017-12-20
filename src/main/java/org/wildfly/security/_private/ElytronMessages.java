@@ -1483,6 +1483,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5174, value = "Callback handler has not chosen realm")
     AuthenticationMechanismException mechNotChosenRealm();
 
+    @Message(id = 5175, value = "Unable to determine bound server name")
+    AuthenticationMechanismException mechUnableToDetermineBoundServerName(@Cause Exception e);
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")

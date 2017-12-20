@@ -53,9 +53,9 @@ public class JaasUtil {
         return login("jduke", "theduke".toCharArray(), false, null);
     }
 
-    public static Subject loginServer(String keyTabFile) throws LoginException {
+    public static Subject loginServer(String keyTabFile, boolean unbound) throws LoginException {
         log.debug("loginServer");
-        return login("sasl/test_server_1", "servicepwd".toCharArray(), true, keyTabFile);
+        return login(unbound ? "*" : "sasl/test_server_1", "servicepwd".toCharArray(), true, keyTabFile);
     }
 
     static Subject login(final String userName, final char[] password, final boolean server, final String keyTabFile) throws LoginException {

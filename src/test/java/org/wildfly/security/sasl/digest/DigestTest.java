@@ -89,8 +89,8 @@ public class DigestTest extends BaseTestCase {
     }
 
     /*
-    *  Mechanism selection tests.
-    */
+     * Mechanism selection tests.
+     */
 
     @Test
     public void testPolicyIndirect_Server() throws Exception {
@@ -786,5 +786,36 @@ public class DigestTest extends BaseTestCase {
         return new DigestPasswordSpec(username, realm, urpHash);
     }
 
+    /**
+     * Test a successful exchange with unbound server name.
+     */
+    @Test
+    public void testUnboundServerName() throws Exception {
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .addMechanismRealm("TestRealm")
+                .setServerName(null) // unbound
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer5", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = client.evaluateChallenge(message);
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = server.evaluateResponse(message);
+        log.debug("Server response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        client.evaluateChallenge(message);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+        assertEquals("TestServer5", server.getNegotiatedProperty(Sasl.BOUND_SERVER_NAME));
+    }
 
 }

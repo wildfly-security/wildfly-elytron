@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
@@ -53,16 +54,16 @@ import org.wildfly.security.util.ByteStringBuilder;
  */
 final class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
-    private final Predicate<String> digestUriAccepted;
+    private final Predicate<String> digestUriProtocolAccepted;
     private final boolean defaultRealm; // realms not defined, server name used as fallback
 
-    DigestSaslServer(String[] realms, final boolean defaultRealm, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriAccepted, Supplier<Provider[]> providers) throws SaslException {
+    DigestSaslServer(String[] realms, final boolean defaultRealm, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Predicate<String> digestUriProtocolAccepted, Supplier<Provider[]> providers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers, providers);
         this.realms = realms;
         this.defaultRealm = defaultRealm;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
-        this.digestUriAccepted = digestUriAccepted;
+        this.digestUriProtocolAccepted = digestUriProtocolAccepted;
     }
 
     private static final byte STEP_ONE = 1;
@@ -74,6 +75,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
     private String[] qops;
     private int nonceCount = -1;
     private String receivedClientUri;
+    private String boundServerName = null;
 
     /**
      * Generates a digest challenge
@@ -234,9 +236,16 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
 
         if (parsedDigestResponse.get("digest-uri") != null) {
             receivedClientUri = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
-            if (! digestUriAccepted.test(receivedClientUri.toLowerCase(Locale.ROOT))) {
+            String[] parts = receivedClientUri.split("/", 2);
+            String expectedServerName = getServerName();
+
+            if (! digestUriProtocolAccepted.test(parts[0].toLowerCase(Locale.ROOT)) ||
+                (expectedServerName != null && ! expectedServerName.toLowerCase(Locale.ROOT).equals(parts[1].toLowerCase(Locale.ROOT)))
+               ) {
                 throw saslDigest.mechMismatchedWrongDigestUri(receivedClientUri).toSaslException();
             }
+
+            boundServerName = parts[1];
         } else {
             throw saslDigest.mechMissingDirective("digest-uri").toSaslException();
         }
@@ -300,6 +309,18 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
     @Override
     public String getAuthorizationID() {
         return authorizationId;
+    }
+
+    /* (non-Javadoc)
+     * @see javax.security.sasl.SaslServer#getNegotiatedProperty(String)
+     */
+    @Override
+    public Object getNegotiatedProperty(final String propName) {
+        assertComplete();
+        if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
+            return boundServerName;
+        }
+        return super.getNegotiatedProperty(propName);
     }
 
     /* (non-Javadoc)

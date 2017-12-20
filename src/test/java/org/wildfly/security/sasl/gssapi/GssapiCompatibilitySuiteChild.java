@@ -367,7 +367,7 @@ public class GssapiCompatibilitySuiteChild {
     @BeforeClass
     public static void init() throws Exception {
         clientSubject = JaasUtil.loginClient();
-        serverSubject = JaasUtil.loginServer(GssapiTestSuite.serverKeyTab);
+        serverSubject = JaasUtil.loginServer(GssapiTestSuite.serverKeyTab, false);
     }
 
     protected byte[] evaluateByServer(final byte[] exchange) throws PrivilegedActionException {

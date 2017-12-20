@@ -27,6 +27,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.ChannelBinding;
@@ -65,6 +66,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
     private final Oid mechanism;
     private GSSContext gssContext;
     private String authorizationID;
+    private String boundServerName;
 
     Gs2SaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler,
             final GSSManager gssManager, final boolean plus, final String bindingType, final byte[] bindingData) throws SaslException {
@@ -95,10 +97,18 @@ final class Gs2SaslServer extends AbstractSaslServer {
 
         try {
             if (credential == null) {
-                String localNameStr = protocol + "@" + serverName;
-                saslGs2.tracef("Our name '%s'", localNameStr);
-                GSSName localName = gssManager.createName(localNameStr, GSSName.NT_HOSTBASED_SERVICE, mechanism);
-                credential = gssManager.createCredential(localName, GSSContext.INDEFINITE_LIFETIME, mechanism, GSSCredential.ACCEPT_ONLY);
+                GSSName ourName;
+
+                if (serverName != null) {
+                    String localName = protocol + "@" + serverName;
+                    saslGs2.tracef("Our name is '%s'", localName);
+                    ourName = gssManager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, mechanism);
+                } else {
+                    saslGs2.tracef("Our name is unbound");
+                    ourName = null;
+                }
+
+                credential = gssManager.createCredential(ourName, GSSContext.INDEFINITE_LIFETIME, mechanism, GSSCredential.ACCEPT_ONLY);
             }
             gssContext = gssManager.createContext(credential);
         } catch (GSSException e) {
@@ -221,19 +231,9 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         if (! mechanism.equals(actualMechanism)) {
                             throw saslGs2.mechGssApiMechanismMismatch().toSaslException();
                         }
+                        storeBoundServerName();
                         checkAuthorizationID();
-                        try {
-                            GSSCredential gssCredential = gssContext.getDelegCred();
-                            if (gssCredential != null) {
-                                tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
-                            } else {
-                                saslGs2.trace("No GSSCredential delegated during authentication.");
-                            }
-                        } catch (UnsupportedCallbackException | GSSException e) {
-                            // ignored
-                        } catch (SaslException e) {
-                            throw e;
-                        }
+                        storeDelegatedGSSCredential();
                         negotiationComplete();
                     } else {
                         // Expecting subsequent exchanges
@@ -253,19 +253,9 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         if (! mechanism.equals(actualMechanism)) {
                             throw saslGs2.mechGssApiMechanismMismatch().toSaslException();
                         }
+                        storeBoundServerName();
                         checkAuthorizationID();
-                        try {
-                            GSSCredential gssCredential = gssContext.getDelegCred();
-                            if (gssCredential != null) {
-                                tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
-                            } else {
-                                saslGs2.trace("No GSSCredential delegated during authentication.");
-                            }
-                        } catch (UnsupportedCallbackException | GSSException e) {
-                            // ignored
-                        } catch (SaslException e) {
-                            throw e;
-                        }
+                        storeDelegatedGSSCredential();
                         negotiationComplete();
                     }
                     return response;
@@ -315,6 +305,16 @@ final class Gs2SaslServer extends AbstractSaslServer {
         return headerAndToken.toArray();
     }
 
+    private void storeBoundServerName() throws SaslException {
+        try {
+            String targetName = gssContext.getTargName().toString();
+            String[] targetNameParts = targetName.split("[/@]");
+            boundServerName = targetNameParts.length > 1 ? targetNameParts[1] : targetName;
+        } catch (GSSException e) {
+            throw saslGs2.mechUnableToDetermineBoundServerName(e).toSaslException();
+        }
+    }
+
     private void checkAuthorizationID() throws SaslException {
         final String authenticationID;
         try {
@@ -334,9 +334,31 @@ final class Gs2SaslServer extends AbstractSaslServer {
         saslGs2.trace("authorization id check successful");
     }
 
+    private void storeDelegatedGSSCredential() throws SaslException {
+        try {
+            GSSCredential gssCredential = gssContext.getDelegCred();
+            if (gssCredential != null) {
+                tryHandleCallbacks(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
+            } else {
+                saslGs2.trace("No GSSCredential delegated during authentication.");
+            }
+        } catch (UnsupportedCallbackException | GSSException e) {
+            // ignored
+        }
+    }
+
     private void skipDelimiter(ByteIterator bi) throws SaslException {
         if (bi.next() != ',') {
             throw saslGs2.mechInvalidMessageReceived().toSaslException();
         }
+    }
+
+    @Override
+    public Object getNegotiatedProperty(String propName) {
+        assertComplete();
+        if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
+            return boundServerName;
+        }
+        return super.getNegotiatedProperty(propName);
     }
 }

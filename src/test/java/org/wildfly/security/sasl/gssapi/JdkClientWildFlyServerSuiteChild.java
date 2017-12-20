@@ -43,11 +43,13 @@ public class JdkClientWildFlyServerSuiteChild extends BaseGssapiTests {
 
     private static Subject clientSubject;
     private static Subject serverSubject;
+    private static Subject unboundServerSubject;
 
     @BeforeClass
     public static void initialise() throws LoginException {
         clientSubject = loginClient();
-        serverSubject = loginServer(GssapiTestSuite.serverKeyTab);
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab, false);
+        unboundServerSubject = loginServer(GssapiTestSuite.serverKeyTab, true);
     }
 
     @AfterClass
@@ -66,12 +68,12 @@ public class JdkClientWildFlyServerSuiteChild extends BaseGssapiTests {
     }
 
     @Override
-    protected SaslServer getSaslServer(final VerificationMode mode) throws Exception {
+    protected SaslServer getSaslServer(final VerificationMode mode, final boolean unboundServer) throws Exception {
         Map<String, String> props = new HashMap<String, String>();
         props.put(WildFlySasl.RELAX_COMPLIANCE, Boolean.TRUE.toString());
-        SaslServer baseServer = createServer(serverSubject, true, mode, props);
+        SaslServer baseServer = createServer(serverSubject, true, unboundServer, mode, props);
 
-        return new SubjectWrappingSaslServer(baseServer, serverSubject);
+        return new SubjectWrappingSaslServer(baseServer, unboundServer ? unboundServerSubject : serverSubject);
     }
 
 }

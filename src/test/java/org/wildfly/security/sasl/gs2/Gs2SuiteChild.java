@@ -100,7 +100,7 @@ public class Gs2SuiteChild extends BaseTestCase {
     @BeforeClass
     public static void init() throws LoginException {
         clientSubject = loginClient();
-        serverSubject = loginServer(GssapiTestSuite.serverKeyTab);
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab, false);
     }
 
     @Test
@@ -266,6 +266,36 @@ public class Gs2SuiteChild extends BaseTestCase {
         assertNull(message);
 
         assertEquals("jduke@WILDFLY.ORG", saslServer.getAuthorizationID());
+    }
+
+    @Test
+    public void testKrb5AuthenticationUnboundedServerName() throws Exception {
+        saslServer = getSaslServer(GS2_KRB5, "sasl", null, Collections.emptyMap(), null, null);
+        assertNotNull(saslServer);
+        assertEquals(GS2_KRB5, saslServer.getMechanismName());
+        assertFalse(saslServer.isComplete());
+
+        saslClient = getSaslClient(new String[] { GS2_KRB5 }, null, "sasl", TEST_SERVER_1, Collections.emptyMap(), null, null);
+        assertNotNull(saslClient);
+        assertTrue(saslClient instanceof Gs2SaslClient);
+        assertTrue(saslClient.hasInitialResponse());
+        assertFalse(saslClient.isComplete());
+
+        byte[] message = evaluateChallenge(new byte[0]);
+        assertFalse(saslClient.isComplete());
+        assertFalse(saslServer.isComplete());
+
+        message = evaluateResponse(message);
+        assertTrue(saslServer.isComplete());
+        assertNotNull(message);
+        assertFalse(saslClient.isComplete());
+
+        message = evaluateChallenge(message);
+        assertTrue(saslClient.isComplete());
+        assertNull(message);
+
+        assertEquals("jduke@WILDFLY.ORG", saslServer.getAuthorizationID());
+        assertEquals("Bound server name", TEST_SERVER_1, saslServer.getNegotiatedProperty(Sasl.BOUND_SERVER_NAME));
     }
 
     // -- Unsuccessful authentication exchanges --
