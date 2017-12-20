@@ -25,8 +25,12 @@ import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
+import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
+import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
+import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.SHA256;
+import static org.wildfly.security.http.HttpConstants.SHA512_256;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 
 import java.security.Provider;
@@ -103,7 +107,11 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
             case DIGEST_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), providers);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), MD5, providers);
+            case DIGEST_SHA256_NAME:
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), SHA256, providers);
+            case DIGEST_SHA512_256_NAME:
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), SHA512_256, providers);
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:
