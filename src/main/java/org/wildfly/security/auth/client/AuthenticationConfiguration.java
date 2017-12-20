@@ -747,6 +747,55 @@ public final class AuthenticationConfiguration {
     }
 
     /**
+     * Create a new configuration which is the same as this configuration, but which uses the given supplier to make
+     * new callback handler to authenticate.
+     * <p>
+     * <em>Important notes:</em> It is important to ensure that each distinct client identity uses a distinct {@code CallbackHandler}
+     * instance in order to avoid mis-pooling of connections, identity crossovers, and other potentially serious problems.
+     * It is not recommended that a {@code CallbackHandler} implement {@code equals()} and {@code hashCode()}, however if it does,
+     * it is important to ensure that these methods consider equality based on an authenticating identity that does not
+     * change between instances.  In particular, a callback handler which requests user input on each usage is likely to cause
+     * a problem if the user name can change on each authentication request.
+     * <p>
+     * Because {@code CallbackHandler} instances are unique per identity, it is often useful for instances to cache
+     * identity information, credentials, and/or other authentication-related information in order to facilitate fast
+     * re-authentication.
+     *
+     * @param callbackHandlerSupplier the callback handler supplier to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useCallbackHandler(Supplier<CallbackHandler> callbackHandlerSupplier) {
+        if(callbackHandlerSupplier == null) return this;
+        CallbackHandler callbackHandler = callbackHandlerSupplier.get();
+        return callbackHandler == null ? this : new AuthenticationConfiguration(this, SET_USER_CBH, callbackHandler, SET_USER_CB_KINDS, EnumSet.allOf(CallbackKind.class));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given function to make
+     * new callback handler to authenticate.
+     * <p>
+     * <em>Important notes:</em> It is important to ensure that each distinct client identity uses a distinct {@code CallbackHandler}
+     * instance in order to avoid mis-pooling of connections, identity crossovers, and other potentially serious problems.
+     * It is not recommended that a {@code CallbackHandler} implement {@code equals()} and {@code hashCode()}, however if it does,
+     * it is important to ensure that these methods consider equality based on an authenticating identity that does not
+     * change between instances.  In particular, a callback handler which requests user input on each usage is likely to cause
+     * a problem if the user name can change on each authentication request.
+     * <p>
+     * Because {@code CallbackHandler} instances are unique per identity, it is often useful for instances to cache
+     * identity information, credentials, and/or other authentication-related information in order to facilitate fast
+     * re-authentication.
+     *
+     * @param callbackHandlerFunction the callback handler function to use
+     * @param args parameters for creating callback handler
+     * @return the new configuration
+     */
+    public <T> AuthenticationConfiguration useCallbackHandler(Function<T, CallbackHandler> callbackHandlerFunction, T args) {
+        if (callbackHandlerFunction == null) return this;
+        CallbackHandler callbackHandler = callbackHandlerFunction.apply(args);
+        return callbackHandler == null ? this : new AuthenticationConfiguration(this, SET_USER_CBH, callbackHandler, SET_USER_CB_KINDS, EnumSet.allOf(CallbackKind.class));
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which uses the given GSS-API credential to authenticate.
      *
      * @param credential the GSS-API credential to use
