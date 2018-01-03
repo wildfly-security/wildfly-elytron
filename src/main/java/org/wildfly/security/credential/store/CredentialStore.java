@@ -19,6 +19,7 @@ package org.wildfly.security.credential.store;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -58,7 +59,7 @@ public final class CredentialStore {
      * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
      */
     public static CredentialStore getInstance(String algorithm) throws NoSuchAlgorithmException {
-        return getInstance(algorithm, Security::getProviders);
+        return getInstance(algorithm, INSTALLED_PROVIDERS);
     }
 
     /**

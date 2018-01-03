@@ -18,11 +18,12 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,7 +65,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
      * Construct a new instance.  The currently installed system providers are used.
      */
     public SecurityProviderSaslClientFactory() {
-        this(Security::getProviders);
+        this(INSTALLED_PROVIDERS);
     }
 
     @Override

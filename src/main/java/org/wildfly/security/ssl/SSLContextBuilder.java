@@ -18,8 +18,9 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.Provider;
-import java.security.Security;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -70,7 +71,7 @@ public final class SSLContextBuilder {
     private int sessionTimeout;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
     private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = SSLUtils.getDefaultX509TrustManagerSecurityFactory();
-    private Supplier<Provider[]> providerSupplier = Security::getProviders;
+    private Supplier<Provider[]> providerSupplier = INSTALLED_PROVIDERS;
     private String providerName;
     private boolean wrap = true;
     private MechanismConfigurationSelector mechanismConfigurationSelector;

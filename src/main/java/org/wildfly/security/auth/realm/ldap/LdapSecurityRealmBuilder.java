@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
@@ -32,7 +33,6 @@ import javax.naming.directory.DirContext;
 import javax.naming.ldap.LdapName;
 
 import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +56,7 @@ public class LdapSecurityRealmBuilder {
     private static final int DEFAULT_SEARCH_TIME_LIMIT = 10000;
 
     private boolean built = false;
-    private Supplier<Provider[]> providers = Security::getProviders;
+    private Supplier<Provider[]> providers = INSTALLED_PROVIDERS;
     private ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
     private IdentityMapping identityMapping;

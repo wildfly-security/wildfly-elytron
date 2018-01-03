@@ -18,12 +18,13 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.Provider;
-import java.security.Security;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -62,7 +63,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
      * @param keyStore the keystore to use to back this realm
      */
     public KeyStoreBackedSecurityRealm(final KeyStore keyStore) {
-        this(keyStore, Security::getProviders);
+        this(keyStore, INSTALLED_PROVIDERS);
     }
 
     /**

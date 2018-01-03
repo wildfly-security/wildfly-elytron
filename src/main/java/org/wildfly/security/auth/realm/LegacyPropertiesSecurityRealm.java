@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.Provider;
-import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
@@ -363,7 +363,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
      */
     public static class Builder {
 
-        private Supplier<Provider[]> providers = Security::getProviders;
+        private Supplier<Provider[]> providers = INSTALLED_PROVIDERS;
         private InputStream usersStream;
         private InputStream groupsStream;
         private String defaultRealm = null;

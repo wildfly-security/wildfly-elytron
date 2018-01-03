@@ -18,8 +18,9 @@
 
 package org.wildfly.security.sasl.otp;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.Provider;
-import java.security.Security;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -43,7 +44,7 @@ public final class OTPSaslServerFactory implements SaslServerFactory {
     private final Supplier<Provider[]> providers;
 
     public OTPSaslServerFactory() {
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public OTPSaslServerFactory(final Provider provider) {

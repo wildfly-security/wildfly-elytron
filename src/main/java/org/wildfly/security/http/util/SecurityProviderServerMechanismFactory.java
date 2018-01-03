@@ -19,11 +19,11 @@ package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
-import java.security.Security;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -61,7 +61,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      * Construct a new instance which uses the globally registered {@link Provider} instances.
      */
     public SecurityProviderServerMechanismFactory() {
-        this(Security::getProviders);
+        this(INSTALLED_PROVIDERS);
     }
 
     /**

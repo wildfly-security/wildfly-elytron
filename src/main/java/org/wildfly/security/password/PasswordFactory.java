@@ -19,6 +19,7 @@
 package org.wildfly.security.password;
 
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -72,7 +73,7 @@ public final class PasswordFactory {
      * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
      */
     public static PasswordFactory getInstance(String algorithm) throws NoSuchAlgorithmException {
-        return getInstance(algorithm, Security::getProviders);
+        return getInstance(algorithm, INSTALLED_PROVIDERS);
     }
 
     /**

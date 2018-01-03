@@ -19,12 +19,12 @@
 package org.wildfly.security.sasl.digest;
 
 import static org.wildfly.security._private.ElytronMessages.saslDigest;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
@@ -57,7 +57,7 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
     private final Supplier<Provider[]> providers;
 
     public DigestServerFactory() {
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public DigestServerFactory(final Provider provider) {

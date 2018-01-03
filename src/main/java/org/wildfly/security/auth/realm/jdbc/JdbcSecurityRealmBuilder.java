@@ -17,8 +17,9 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -32,7 +33,7 @@ import org.wildfly.security.auth.server.RealmIdentity;
  */
 public class JdbcSecurityRealmBuilder {
 
-    private Supplier<Provider[]> providers = Security::getProviders;
+    private Supplier<Provider[]> providers = INSTALLED_PROVIDERS;
     private List<QueryBuilder> queries = new ArrayList<>();
 
     JdbcSecurityRealmBuilder() {
