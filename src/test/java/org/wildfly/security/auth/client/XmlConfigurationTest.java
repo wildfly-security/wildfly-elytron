@@ -600,6 +600,110 @@ public class XmlConfigurationTest {
     }
 
     @Test
+    public void testMultipleCertificatesInCredentials() throws Exception {
+        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<configuration>\n" +
+                "    <authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+                "        <authentication-rules>\n" +
+                "            <rule use-configuration=\"default\"/>\n" +
+                "        </authentication-rules>\n" +
+                "        <authentication-configurations>\n" +
+                "            <configuration name=\"default\">\n" +
+                "                <sasl-mechanism-selector selector=\"PLAIN\"/>\n" +
+                "                <credentials>\n" +
+                "                    <certificate>\n" +
+                "                        <private-key-pem>\n" +
+                "                        -----BEGIN PRIVATE KEY-----\n" +
+                "                        MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCbF8HLa+3JBDIi\n" +
+                "                        7bMl2hYkmgdNxec+X1c8oPPVjMaljIX0T4rQyBQRjfLd/3xDC7OSN4NXZUA8LVZf\n" +
+                "                        QJcBwy38MRXS2SLg6HUa+is3E622rw0kXMxjAhfp7T6OigQS9f1GS1Fuct99m4u0\n" +
+                "                        5HPOzWDfcyft99O3x68RpgsnhemrO7P/riidIGOCVY0v/V13nCvILZcnvwGwWciY\n" +
+                "                        aT4jO9WqEMvi3nGHUgf3EQUCCNFxrbLrILghRp0kgPNCe/Uyz0x2iRtLa2q5Lbzk\n" +
+                "                        b55jUM+OQLcYaa/bIb+MZGzVh0fqgIhTvTdcO7lRWTmVFhG/f20BBZUqNC7TD4C6\n" +
+                "                        Jihr4PP9AgMBAAECggEAXz1Oh5HGmruV4jcf3S24jU99DrhqEbZQhu277radQgoy\n" +
+                "                        NF4oO5+yGzmVG9iJQU7NPgwS/rcxpAKfWKz8TlvCQG0QHsOylHSLfT6FDTRrZ5TF\n" +
+                "                        uD+4T1B4yPEkijmc2NvwZZtY7T9jmOnM+A+WQjeCtpUrvwmCHQhlrKvPi7zDSp/M\n" +
+                "                        aBX4YMXTNe1H/ebDURFi2DcSGeGygqcvJ5itv0gM7FzmO7n0Zb5a7syp9dPEfbAG\n" +
+                "                        NFVCkZ2dpwgES+v2A60wtnb/Hl1J0ceZtHtSrc5pkebFBcD9LZM9o7nia0ppkj3A\n" +
+                "                        6lb4vSD5Y1q9bMjjS6Ld72i+4yJ1Eyr5mAl8ZBKcQQKBgQDzyZoWEjsc8Zjn0PCo\n" +
+                "                        7inw8+7MYCBvlALUPZuANn1E7vtl0I8xmrFcqsqx3KtxjD+DB8RK3mcOh7Ce1Sk3\n" +
+                "                        P8TNyVz95nV2nZ5Xrs6ayfsvFLkVPsJQe69BPuTnZZvdhCpzy8z+KcxwKfYKkFrS\n" +
+                "                        7QLPRVg92iizuA1nU3gl+qn/8QKBgQCi3LW0FtFt51ObTpUcJYXFfvNeBN8DDhlo\n" +
+                "                        BNQ1eXIMD/XGMhALrtttmEqrwImjmAapbr29FJBQ3+L9sdYZDFGGrKpQafoebV3l\n" +
+                "                        o2n4kW75I6WzixUJi850Gy9yk1oFsale4nToZ6JHZwkBLxGJ6tRWbJLBo2DtaM2q\n" +
+                "                        rKaQfK8AzQKBgGCcoIfmqa6KwEH+N6F64Pwwb45m+fO+AHEECUACWBqdatuqj1Tl\n" +
+                "                        LSzAMpvSC89v+SuARHY3NTg45fHMIA1ZJDE5f7TPQ/XB+SJekFofeX/rAn485Nzo\n" +
+                "                        Z0fAGQ7q4Z4j5n8FYTPIdNBukKcXFidI7jgeDx5T+pVed1Ffbtn+QKjBAoGAZSk7\n" +
+                "                        JHXX+LBr2lhhfm5APYCxooDcFYW4ekglmGGrWZrASy/lj5w5aEXke/LIi/luiefj\n" +
+                "                        q4MOcW3gDT1dg4mHSmQOFoz9c9DzNiTfOir8B30A/Bk0JA3XW39XZY/ppwfH8Mwx\n" +
+                "                        Wfqlbjyt9zJJbqWS52vhbK4TEuS6e31qqO0JtzECgYAabc7i95RB3kYNeJUYQqdp\n" +
+                "                        HqVYK6paLz2akEt1uYM9puVPUdZ9nyNHslQAvDm3XGMsxufw40KV+CHsJhLFrQZH\n" +
+                "                        u+KuHmVIk8GIV95LI2klV5FwGmqLFlOPbx59g0HEswDyY8BF/7DMgH7k8uzVqnYw\n" +
+                "                        7qdOZZJ4liEJYO1T3KNzOg==\n" +
+                "                        -----END PRIVATE KEY-----\n" +
+                "                        </private-key-pem>\n" +
+                "                        <pem>\n" +
+                "                        -----BEGIN CERTIFICATE-----\n" +
+                "                        MIIDWTCCAkGgAwIBAgIEQFuxgzANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJD\n" +
+                "                        WjEXMBUGA1UEBxMOQ3plY2ggUmVwdWJsaWMxDzANBgNVBAsTBkVBUCBRRTEQMA4G\n" +
+                "                        A1UEChMHUmVkIEhhdDERMA8GA1UEAxMIY2xpZW50RG4wIBcNMTcwNjIwMDYxMzU5\n" +
+                "                        WhgPMjIxNzA1MDMwNjEzNTlaMFwxCzAJBgNVBAYTAkNaMRcwFQYDVQQHEw5DemVj\n" +
+                "                        aCBSZXB1YmxpYzEPMA0GA1UECxMGRUFQIFFFMRAwDgYDVQQKEwdSZWQgSGF0MREw\n" +
+                "                        DwYDVQQDEwhjbGllbnREbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\n" +
+                "                        AJsXwctr7ckEMiLtsyXaFiSaB03F5z5fVzyg89WMxqWMhfRPitDIFBGN8t3/fEML\n" +
+                "                        s5I3g1dlQDwtVl9AlwHDLfwxFdLZIuDodRr6KzcTrbavDSRczGMCF+ntPo6KBBL1\n" +
+                "                        /UZLUW5y332bi7Tkc87NYN9zJ+3307fHrxGmCyeF6as7s/+uKJ0gY4JVjS/9XXec\n" +
+                "                        K8gtlye/AbBZyJhpPiM71aoQy+LecYdSB/cRBQII0XGtsusguCFGnSSA80J79TLP\n" +
+                "                        THaJG0trarktvORvnmNQz45Atxhpr9shv4xkbNWHR+qAiFO9N1w7uVFZOZUWEb9/\n" +
+                "                        bQEFlSo0LtMPgLomKGvg8/0CAwEAAaMhMB8wHQYDVR0OBBYEFO01U/yTywCdzOUl\n" +
+                "                        hZmElDjVVcZXMA0GCSqGSIb3DQEBCwUAA4IBAQAEy+IphU7QjlWgn2kkKI6RAX6p\n" +
+                "                        LAWGUlbNnfw7V131of9qz9lctRnFWazbuych/i5/oCvBj+0gyf6+PvpsfB7qlZwH\n" +
+                "                        3H+jMNNoCrMp5MutLe9SYcfmvYkYGym77K4e8BiuDlfw3whE4B274nD99Y+e9CcY\n" +
+                "                        FuUx3yepXY9FDo58mE05zLSXhn31uIulnUGbL1iDB1yeCFG/6J7z+AkCBPKzbgFX\n" +
+                "                        3UZid9MUn45RDf8BlP6zG+px/cE2XlaZa+0LGSH9vvvVykD18cthsLHe71Q+Y2hC\n" +
+                "                        vWvHG8wdujBxWg7A+H38x48i0PR6lNTsjEgTZbUgYM/SQtKvX2gNaR3z2YPU\n" +
+                "                        -----END CERTIFICATE-----\n" +
+                "                        -----BEGIN CERTIFICATE-----\n" +
+                "                        MIIDWTCCAkGgAwIBAgIEQFuxgzANBgkqhkiG9w0BAQsFADBcMQswCQYDVQQGEwJD\n" +
+                "                        WjEXMBUGA1UEBxMOQ3plY2ggUmVwdWJsaWMxDzANBgNVBAsTBkVBUCBRRTEQMA4G\n" +
+                "                        A1UEChMHUmVkIEhhdDERMA8GA1UEAxMIY2xpZW50RG4wIBcNMTcwNjIwMDYxMzU5\n" +
+                "                        WhgPMjIxNzA1MDMwNjEzNTlaMFwxCzAJBgNVBAYTAkNaMRcwFQYDVQQHEw5DemVj\n" +
+                "                        aCBSZXB1YmxpYzEPMA0GA1UECxMGRUFQIFFFMRAwDgYDVQQKEwdSZWQgSGF0MREw\n" +
+                "                        DwYDVQQDEwhjbGllbnREbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\n" +
+                "                        AJsXwctr7ckEMiLtsyXaFiSaB03F5z5fVzyg89WMxqWMhfRPitDIFBGN8t3/fEML\n" +
+                "                        s5I3g1dlQDwtVl9AlwHDLfwxFdLZIuDodRr6KzcTrbavDSRczGMCF+ntPo6KBBL1\n" +
+                "                        /UZLUW5y332bi7Tkc87NYN9zJ+3307fHrxGmCyeF6as7s/+uKJ0gY4JVjS/9XXec\n" +
+                "                        K8gtlye/AbBZyJhpPiM71aoQy+LecYdSB/cRBQII0XGtsusguCFGnSSA80J79TLP\n" +
+                "                        THaJG0trarktvORvnmNQz45Atxhpr9shv4xkbNWHR+qAiFO9N1w7uVFZOZUWEb9/\n" +
+                "                        bQEFlSo0LtMPgLomKGvg8/0CAwEAAaMhMB8wHQYDVR0OBBYEFO01U/yTywCdzOUl\n" +
+                "                        hZmElDjVVcZXMA0GCSqGSIb3DQEBCwUAA4IBAQAEy+IphU7QjlWgn2kkKI6RAX6p\n" +
+                "                        LAWGUlbNnfw7V131of9qz9lctRnFWazbuych/i5/oCvBj+0gyf6+PvpsfB7qlZwH\n" +
+                "                        3H+jMNNoCrMp5MutLe9SYcfmvYkYGym77K4e8BiuDlfw3whE4B274nD99Y+e9CcY\n" +
+                "                        FuUx3yepXY9FDo58mE05zLSXhn31uIulnUGbL1iDB1yeCFG/6J7z+AkCBPKzbgFX\n" +
+                "                        3UZid9MUn45RDf8BlP6zG+px/cE2XlaZa+0LGSH9vvvVykD18cthsLHe71Q+Y2hC\n" +
+                "                        vWvHG8wdujBxWg7A+H38x48i0PR6lNTsjEgTZbUgYM/SQtKvX2gNaR3z2YPU\n" +
+                "                        -----END CERTIFICATE-----\n" +
+                "                        </pem>\n" +
+                "                    </certificate>\n" +
+                "                </credentials>\n" +
+                "                <providers>\n" +
+                "                    <use-service-loader/>\n" +
+                "                </providers>\n" +
+                "            </configuration>\n" +
+                "        </authentication-configurations>\n" +
+                "    </authentication-client>\n" +
+                "</configuration>\n").getBytes(StandardCharsets.UTF_8);
+        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
+        RuleNode<AuthenticationConfiguration> ac = factory.create().authRuleMatching(new URI("http://any/"), null, null);
+        assertNotNull(ac);
+        X509CertificateChainPrivateCredential credential = ac.getConfiguration().getCredentialSource().getCredential(X509CertificateChainPrivateCredential.class);
+        assertNotNull(credential);
+        assertEquals(1216, credential.getPrivateKey().getEncoded().length);
+        assertEquals(2, credential.getCertificateChain().length);
+        assertEquals("CN=clientDn, O=Red Hat, OU=EAP QE, L=Czech Republic, C=CZ", credential.getCertificateChain()[0].getSubjectDN().toString());
+    }
+
+    @Test
     public void testWrongAliasInStoreSSLConfiguration() throws Exception {
         final String wrongAlias = "WrongAlias";
         final byte[] xmlBytes = ("<configuration>\n" +

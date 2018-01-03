@@ -73,14 +73,31 @@ public final class Pem {
         Assert.checkNotNullParam("pemContent", pemContent);
         Assert.checkNotNullParam("contentFunction", contentFunction);
 
-        while(true) {
-            if (! pemContent.hasNext()) return null;
+        int matchIdx = -1;
+
+        while (pemContent.hasNext()) {
             int cp = pemContent.next();
-            if (cp == '-') break;
-            if (! Character.isWhitespace(cp)) {
-                throw log.malformedPemContent(pemContent.offset());
+            if (cp == '-') {
+                int idx = pemContent.offset();
+
+                if (pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
+                    String type = pemContent.delimitedBy('-').drainToString();
+                    final Matcher matcher = VALID_LABEL.matcher(type);
+                    if (!matcher.find() && pemContent.limitedTo(5).contentEquals("-----")) {
+                        matchIdx = idx;
+                        break;
+                    } else {
+                        while (pemContent.offset() > idx) pemContent.prev();
+                    }
+                } else {
+                    while (pemContent.offset() > idx) pemContent.prev();
+                }
             }
         }
+
+        if (matchIdx == -1) return null;
+
+        while (pemContent.offset() > matchIdx) pemContent.prev();
 
         if (! pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
             throw log.malformedPemContent(pemContent.offset());
