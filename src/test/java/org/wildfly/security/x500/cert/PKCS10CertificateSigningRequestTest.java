@@ -175,24 +175,24 @@ public class PKCS10CertificateSigningRequestTest {
 
     @Test
     public void testCsrPem() throws Exception {
-        String expectedCsr = "-----BEGIN CERTIFICATE REQUEST-----\n" +
-                "MIIC5zCCAc8CAQAwcjELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9s\n" +
-                "aW5hMRAwDgYDVQQHEwdSYWxlaWdoMRAwDgYDVQQKEwdSZWQgSGF0MQ4wDAYDVQQL\n" +
-                "EwVKQm9zczEWMBQGA1UEAxMNVGVzdCBDbGllbnQgMTCCASIwDQYJKoZIhvcNAQEB\n" +
-                "BQADggEPADCCAQoCggEBAINleeVmU3ojW+thblXmLNcJKi8GSlHoD1jC9Ai1tv36\n" +
-                "kaNCULxHU3evzvK8kamrgpGTZv++zSSWow/jWJBlo5lttlHiHtGB6AVlgnQcXD8m\n" +
-                "E93Z6jhoPlDWvDRPLr0DKvU1YM4AVQcPG50gppBMav5TE4giEMC+Q2IGCu8oGzrV\n" +
-                "JCVs8j/MMRz0GnExWXFv6aIMPXtbe47aTWVm2GEW9C0ZAJAuVaMJ1bujBmybISn4\n" +
-                "sQWSp6IynXmMeJqHSzjRDE45YsadY43nZ5gHdNrorBuQo8oWCVQz0uXlEVIqXDKL\n" +
-                "CjzNg9t97kUr2mpKXrNifKnFpbeu0m2hiUKjW/h7BbECAwEAAaAwMC4GCSqGSIb3\n" +
-                "DQEJDjEhMB8wHQYDVR0OBBYEFLvOCZ2EA8nLRr/cy3/Y6I/QhhG6MA0GCSqGSIb3\n" +
-                "DQEBCwUAA4IBAQCBPsS0wHCSUqwM7VHMKYjEoxzTypp8eh6K4igOW6ezYbpRNmSS\n" +
-                "v6WWzboW4GdKBAK0Oh4O3NhLtTWLG+xhB2a9wIQrYRR/7rDEARWLf64yeBPaAqZ4\n" +
-                "oB1snVVkr+fHHvUmdSJoI+xcFakCo08tKzUsQPIELnrAXAgBnhb3y63dIiPPViQG\n" +
-                "3+AE5yQYBS9pGa9OyrcW1aAsqKkEsQNyZxjkG8gAGZRWpYaYbPO6QN+861fa7BPn\n" +
-                "sYCDfiE/UYxHEvEVs4Y1jXnJ71bG7MFYh/WCdRRWLvaZaslUqpAEMWXxHuyBrZmd\n" +
-                "HnxjeMuW0Z0kQQ9qcl27T5egSgP0vlGiY6cY\n" +
-                "-----END CERTIFICATE REQUEST-----\n";
+        String expectedCsr = "-----BEGIN CERTIFICATE REQUEST-----" + System.lineSeparator() +
+                "MIIC5zCCAc8CAQAwcjELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9s" + System.lineSeparator() +
+                "aW5hMRAwDgYDVQQHEwdSYWxlaWdoMRAwDgYDVQQKEwdSZWQgSGF0MQ4wDAYDVQQL" + System.lineSeparator() +
+                "EwVKQm9zczEWMBQGA1UEAxMNVGVzdCBDbGllbnQgMTCCASIwDQYJKoZIhvcNAQEB" + System.lineSeparator() +
+                "BQADggEPADCCAQoCggEBAINleeVmU3ojW+thblXmLNcJKi8GSlHoD1jC9Ai1tv36" + System.lineSeparator() +
+                "kaNCULxHU3evzvK8kamrgpGTZv++zSSWow/jWJBlo5lttlHiHtGB6AVlgnQcXD8m" + System.lineSeparator() +
+                "E93Z6jhoPlDWvDRPLr0DKvU1YM4AVQcPG50gppBMav5TE4giEMC+Q2IGCu8oGzrV" + System.lineSeparator() +
+                "JCVs8j/MMRz0GnExWXFv6aIMPXtbe47aTWVm2GEW9C0ZAJAuVaMJ1bujBmybISn4" + System.lineSeparator() +
+                "sQWSp6IynXmMeJqHSzjRDE45YsadY43nZ5gHdNrorBuQo8oWCVQz0uXlEVIqXDKL" + System.lineSeparator() +
+                "CjzNg9t97kUr2mpKXrNifKnFpbeu0m2hiUKjW/h7BbECAwEAAaAwMC4GCSqGSIb3" + System.lineSeparator() +
+                "DQEJDjEhMB8wHQYDVR0OBBYEFLvOCZ2EA8nLRr/cy3/Y6I/QhhG6MA0GCSqGSIb3" + System.lineSeparator() +
+                "DQEBCwUAA4IBAQCBPsS0wHCSUqwM7VHMKYjEoxzTypp8eh6K4igOW6ezYbpRNmSS" + System.lineSeparator() +
+                "v6WWzboW4GdKBAK0Oh4O3NhLtTWLG+xhB2a9wIQrYRR/7rDEARWLf64yeBPaAqZ4" + System.lineSeparator() +
+                "oB1snVVkr+fHHvUmdSJoI+xcFakCo08tKzUsQPIELnrAXAgBnhb3y63dIiPPViQG" + System.lineSeparator() +
+                "3+AE5yQYBS9pGa9OyrcW1aAsqKkEsQNyZxjkG8gAGZRWpYaYbPO6QN+861fa7BPn" + System.lineSeparator() +
+                "sYCDfiE/UYxHEvEVs4Y1jXnJ71bG7MFYh/WCdRRWLvaZaslUqpAEMWXxHuyBrZmd" + System.lineSeparator() +
+                "HnxjeMuW0Z0kQQ9qcl27T5egSgP0vlGiY6cY" + System.lineSeparator() +
+                "-----END CERTIFICATE REQUEST-----" + System.lineSeparator();
 
         PKCS10CertificateSigningRequest  csr = populateBasicBuilder().build();
         assertEquals(expectedCsr, new String(csr.getPem(), StandardCharsets.UTF_8));

@@ -199,9 +199,9 @@ public final class Pem {
         if (matcher.find()) {
             throw log.invalidPemType("<any valid PEM type>", type);
         }
-        target.append("-----BEGIN ").append(type).append("-----\n");
-        target.append(content.base64Encode().drainToString('\n', 64));
-        target.append("\n-----END ").append(type).append("-----\n");
+        target.append("-----BEGIN ").append(type).append("-----");
+        target.append(content.base64Encode().drainToString(System.lineSeparator(), 64)); // insert the line separator before every 64 code points
+        target.append(System.lineSeparator()).append("-----END ").append(type).append("-----").append(System.lineSeparator());
     }
 
     /**
