@@ -19,11 +19,11 @@
 package org.wildfly.security.sasl.otp;
 
 import static org.wildfly.security.sasl.otp.OTPUtil.*;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -50,7 +50,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
     private final Supplier<Provider[]> providers;
 
     public OTPSaslClientFactory() {
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public OTPSaslClientFactory(final Provider provider) {

@@ -24,6 +24,7 @@ import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 import static org.wildfly.security.util.ProviderUtil.findProvider;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -43,7 +44,6 @@ import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -130,7 +130,7 @@ public final class ElytronXmlParser {
             AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader())) :
             new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader());
 
-    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, Security::getProviders);
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
 
     static final Map<String, Version> KNOWN_NAMESPACES;
 
@@ -880,7 +880,7 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 1);
                         parseEmptyType(reader);
-                        providerSupplier = providerSupplier == null ? Security::getProviders : ProviderUtil.aggregate(providerSupplier, Security::getProviders);
+                        providerSupplier = providerSupplier == null ? INSTALLED_PROVIDERS : ProviderUtil.aggregate(providerSupplier, INSTALLED_PROVIDERS);
                         break;
                     }
                     case "use-service-loader": {

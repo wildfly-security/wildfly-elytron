@@ -18,9 +18,10 @@
 
 package org.wildfly.security.credential;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.KeyStore;
 import java.security.Provider;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
@@ -76,7 +77,7 @@ public interface Credential extends Cloneable {
      * @return {@code true} if the evidence is verified, {@code false} otherwise
      */
     default boolean verify(Evidence evidence) {
-        return verify(Security::getProviders, evidence);
+        return verify(INSTALLED_PROVIDERS, evidence);
     }
 
     /**

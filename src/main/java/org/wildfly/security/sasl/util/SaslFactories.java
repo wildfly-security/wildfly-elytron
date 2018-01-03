@@ -18,8 +18,9 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.security.Provider;
-import java.security.Security;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
@@ -42,8 +43,8 @@ public final class SaslFactories {
     private SaslFactories() {
     }
 
-    private static final SecurityProviderSaslClientFactory providerSaslClientFactory = new SecurityProviderSaslClientFactory(Security::getProviders);
-    private static final SecurityProviderSaslServerFactory providerSaslServerFactory = new SecurityProviderSaslServerFactory(Security::getProviders);
+    private static final SecurityProviderSaslClientFactory providerSaslClientFactory = new SecurityProviderSaslClientFactory(INSTALLED_PROVIDERS);
+    private static final SecurityProviderSaslServerFactory providerSaslServerFactory = new SecurityProviderSaslServerFactory(INSTALLED_PROVIDERS);
 
     static final String[] NO_STRINGS = new String[0];
     static final String PROVIDER_FILTER_KEY = "org.wildfly.internal.PFK";

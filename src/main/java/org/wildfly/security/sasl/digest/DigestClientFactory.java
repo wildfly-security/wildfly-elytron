@@ -18,10 +18,11 @@
 
 package org.wildfly.security.sasl.digest;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -48,7 +49,7 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
     private final Supplier<Provider[]> providers;
 
     public DigestClientFactory() {
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public DigestClientFactory(final Provider provider) {

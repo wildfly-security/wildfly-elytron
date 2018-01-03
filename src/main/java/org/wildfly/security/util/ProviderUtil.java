@@ -19,6 +19,7 @@
 package org.wildfly.security.util;
 
 import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -31,6 +32,11 @@ import org.wildfly.common.Assert;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ProviderUtil {
+
+    /**
+     * A {@link Supplier} to obtain the {@link Provider} array of providers available from {@link Security#getProviders()}.
+     */
+    public static final Supplier<Provider[]> INSTALLED_PROVIDERS = Security::getProviders;
 
     /**
      * Find the first provider from the supplier which provides the given service type and algorithm name.  The simple

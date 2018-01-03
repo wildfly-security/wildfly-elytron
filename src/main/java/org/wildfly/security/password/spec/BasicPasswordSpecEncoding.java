@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -27,7 +29,6 @@ import org.wildfly.security.util.CodePointIterator;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.function.Supplier;
 
@@ -77,7 +78,7 @@ public final class BasicPasswordSpecEncoding {
      * @return a byte array representing the encoded password or null if no encoder was capable to encode the given password
      */
     public static byte[] encode(Password password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return encode(password, Security::getProviders);
+        return encode(password, INSTALLED_PROVIDERS);
     }
 
     /**

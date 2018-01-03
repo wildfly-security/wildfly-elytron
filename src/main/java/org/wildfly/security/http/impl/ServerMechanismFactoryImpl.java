@@ -32,9 +32,9 @@ import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SHA512_256;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -58,7 +58,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     private final Supplier<Provider[]> providers;
 
     public ServerMechanismFactoryImpl() {
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public ServerMechanismFactoryImpl(final Provider provider) {

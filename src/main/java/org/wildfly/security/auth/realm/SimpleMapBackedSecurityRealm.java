@@ -19,10 +19,10 @@
 package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Principal;
 import java.security.Provider;
-import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param rewriter the name rewriter to use (cannot be {@code null})
      */
     public SimpleMapBackedSecurityRealm(final NameRewriter rewriter) {
-        this(rewriter, Security::getProviders);
+        this(rewriter, INSTALLED_PROVIDERS);
     }
 
     /**

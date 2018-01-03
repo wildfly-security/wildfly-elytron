@@ -19,10 +19,10 @@
 package org.wildfly.security.sasl.scram;
 
 import static org.wildfly.security._private.ElytronMessages.saslScram;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;
 import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -52,7 +52,7 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
 
     public ScramSaslClientFactory() {
         super();
-        providers = Security::getProviders;
+        providers = INSTALLED_PROVIDERS;
     }
 
     public ScramSaslClientFactory(final Provider provider) {

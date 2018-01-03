@@ -21,6 +21,7 @@ package org.wildfly.security.auth.client;
 import static java.security.AccessController.doPrivileged;
 import static java.security.AccessController.getContext;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,7 +33,6 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Provider;
-import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
@@ -168,7 +168,7 @@ public final class AuthenticationConfiguration {
             WildFlySecurityManager.isChecking() ?
                     AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader())) :
                     new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()),
-            Security::getProviders);
+            INSTALLED_PROVIDERS);
 
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
@@ -503,7 +503,7 @@ public final class AuthenticationConfiguration {
 
     Supplier<Provider[]> getProviderSupplier() {
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
-        return providerSupplier == null ? Security::getProviders : providerSupplier;
+        return providerSupplier == null ? INSTALLED_PROVIDERS : providerSupplier;
     }
 
     SaslClientFactory getSaslClientFactory(Supplier<Provider[]> providers) {
