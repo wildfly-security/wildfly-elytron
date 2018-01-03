@@ -333,9 +333,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         // users, which are in groups file only
-        groups.stringPropertyNames().stream().filter(username -> ! accounts.containsKey(username)).forEach(username -> {
-            accounts.put(username, new AccountEntry(username, null, groups.getProperty(username)));
-        });
+        for (String userName : groups.stringPropertyNames()) {
+            if (accounts.containsKey(userName) == false) {
+                accounts.put(userName, new AccountEntry(userName, null, groups.getProperty(userName)));
+            }
+        }
 
         loadedState.set(new LoadedState(accounts, realmName, System.currentTimeMillis()));
     }
