@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.gssapi;
 
+import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.KERBEROS_V5;
+import static org.wildfly.security.sasl.WildFlySasl.GSSAPI_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
 import static org.wildfly.security._private.ElytronMessages.saslGssapi;
 import java.io.IOException;
@@ -66,6 +68,16 @@ final class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
         // Initialise our GSSContext
         GSSManager manager = GSSManager.getInstance();
+
+        // JDK-8194073 workaround (for Oracle JDK + native Kerberos)
+        if (props.containsKey(GSSAPI_CREATE_NAME_GSS_INIT) && Boolean.parseBoolean((String) props.get(GSSAPI_CREATE_NAME_GSS_INIT))) {
+            try { // createName call ensure correct GSSManager initialization
+                manager.createName("dummy", GSSName.NT_USER_NAME, KERBEROS_V5);
+                saslGssapi.trace("createName workaround for native GSS initialization applied");
+            } catch (GSSException e1) {
+                saslGssapi.trace("Exception while applying createName workaround for native GSS initialization", e1);
+            }
+        }
 
         GSSContext gssContext = null;
 

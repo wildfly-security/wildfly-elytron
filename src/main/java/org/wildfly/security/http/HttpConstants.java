@@ -67,6 +67,13 @@ public class HttpConstants {
     public static final String CONFIG_GSS_MANAGER = CONFIG_BASE + ".gss-manager";
 
     /**
+     * This enables workaround for native GSS, where createName() needs to be called for correct GSSContext initialization.
+     * Set to "true" to call createName() as part of GSSContext initialization.
+     * This is workaround of JDK-8194073.
+     */
+    public static final String CONFIG_CREATE_NAME_GSS_INIT = CONFIG_BASE + ".create-name-gss-init";
+
+    /**
      * A comma separated list of scopes in preferred order the mechanism should attempt to use to persist state including the
      * caching of any previously authenticated identity.
      *

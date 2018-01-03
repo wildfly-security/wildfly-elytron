@@ -156,5 +156,13 @@ public final class WildFlySasl {
      */
     public static final String AUTHENTICATION_TIMEOUT = "wildfly.sasl.authentication-timeout";
 
+    /**
+     * A property used to enable workaround for native GSS, where createName() needs to be called for correct GSSContext initialization.
+     * Set to "true" to call createName() as part of GSSContext initialization.
+     * This is workaround of JDK-8194073.
+     *
+     * Note: This is a server only property and is not used client side.
+     */
+    public static final String GSSAPI_CREATE_NAME_GSS_INIT = "wildfly.sasl.gssapi.server.create-name-gss-init";
 
 }
