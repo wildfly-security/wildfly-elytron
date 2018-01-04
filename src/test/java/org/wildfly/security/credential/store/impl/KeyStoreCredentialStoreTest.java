@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,7 +77,13 @@ public class KeyStoreCredentialStoreTest {
 
     @Parameters(name = "format={0}")
     public static Iterable<Object[]> keystoreFormats() {
-        return Arrays.asList(new Object[] {"JCEKS"}, new Object[] {"PKCS12"});
+        final String vendor = System.getProperty("java.vendor");
+        if ("IBM Corporation".equals(vendor)) {
+            // IBM PKCS12 does not allow storing PasswordCredential
+            return Collections.singletonList(new Object[] { "JCEKS" });
+        } else {
+            return Arrays.asList(new Object[] { "JCEKS" }, new Object[] { "PKCS12" });
+        }
     }
 
     @Before
@@ -89,7 +96,7 @@ public class KeyStoreCredentialStoreTest {
 
         // a hack to make JCE believe that it has verified the signature of the JAR that contains the
         // WildFlyElytronProvider, as when running from Maven the classes are in target/classes, not in a JAR file
-        // This hack is not ncessary on OpenJDK
+        // This hack is not necessary on OpenJDK
         final String vendor = System.getProperty("java.vendor");
         if ("Oracle Corporation".equals(vendor)) {
             final Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
@@ -102,6 +109,7 @@ public class KeyStoreCredentialStoreTest {
             final Class<?> bClass = Class.forName("javax.crypto.b");
             final Field iMapField = bClass.getDeclaredField("i");
             iMapField.setAccessible(true);
+            @SuppressWarnings("unchecked")
             final Map<Provider, Object> iMap = (Map<Provider, Object>) iMapField.get(null);
             iMap.put(provider, Boolean.TRUE);
         }
