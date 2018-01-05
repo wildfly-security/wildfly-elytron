@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.gssapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.sasl.gssapi.BaseGssapiTests.VerificationMode.NONE;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
 
@@ -72,6 +73,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     private static final String QOP_AUTH_CONF = "auth-conf";
 
     static final String SERVER_KEY_TAB = "serverKeyTab";
+    static final String SERVER_UNBOUND_KEY_TAB = "serverUnboundKeyTab";
 
     /*
      * A pair of tests just to verify that a Subject can be obtained, in the event of a failure if these tests are failing focus
@@ -91,18 +93,18 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     }
 
     @Test
-    public void authenticateClientServer1() throws Exception {
+    public void authenticateClientOnly() throws Exception {
         /*
          * With the JDK supplied mechanism implementations this method can cause a NPE if logging for 'javax.security.sasl' is
          * lower than DEBUG
          */
 
-        testSasl(false, VerificationMode.NONE, false);
+        testSasl(false, NONE, false);
     }
 
     @Test
     public void authenticateClientAndServer() throws Exception {
-        testSasl(true, VerificationMode.NONE, false);
+        testSasl(true, NONE, false);
     }
 
     @Test
@@ -141,10 +143,19 @@ public abstract class BaseGssapiTests extends BaseTestCase {
             assertEquals("Client QOP", mode.getQop(), client.getNegotiatedProperty(Sasl.QOP));
 
             /*
-             * In the case of the non-auth only modes verify the mode is operating.
+             * In the case of the non-auth only modes verify the mode is operating:
+             *  * messages can be exchanged successfully
+             *  * buffer size is negotiated correctly
              */
+            if (mode != NONE) {
+                assertEquals("Server MAX_BUFFER", "64321", server.getNegotiatedProperty(Sasl.MAX_BUFFER));
+                assertEquals("Client MAX_BUFFER", "61234", client.getNegotiatedProperty(Sasl.MAX_BUFFER));
 
-            if (mode != VerificationMode.NONE) {
+                int serverRawSize = Integer.parseInt((String) server.getNegotiatedProperty(Sasl.RAW_SEND_SIZE));
+                int clientRawSize = Integer.parseInt((String) client.getNegotiatedProperty(Sasl.RAW_SEND_SIZE));
+                assertTrue("Server RAW_SEND_SIZE", 61000 < serverRawSize && serverRawSize < 61234);
+                assertTrue("Client RAW_SEND_SIZE", 64000 < clientRawSize && clientRawSize < 64321);
+
                 testDataExchange(client, server);
             }
 
@@ -198,13 +209,8 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     protected SaslClient createClient(final Subject subject, final boolean wildFlyProvider, final boolean authServer,
             final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
         try {
-            return Subject.doAs(subject, new PrivilegedExceptionAction<SaslClient>() {
-
-                @Override
-                public SaslClient run() throws SaslException {
-                    return createClient(wildFlyProvider, authServer, mode, baseProps);
-                }
-            });
+            return Subject.doAs(subject, (PrivilegedExceptionAction<SaslClient>)
+                    () -> createClient(wildFlyProvider, authServer, mode, baseProps));
         } catch (PrivilegedActionException e) {
             if (e.getCause() instanceof SaslException) {
                 throw (SaslException) e.getCause();
@@ -221,6 +227,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
         Map<String, String> props = new HashMap<String, String>(baseProps);
         props.put(Sasl.SERVER_AUTH, Boolean.toString(authServer));
         props.put(Sasl.QOP, mode.getQop());
+        props.put(Sasl.MAX_BUFFER, Integer.toString(61234));
 
         return factory.createSaslClient(new String[] { GSSAPI }, null, "sasl", TEST_SERVER_1, props, new NoCallbackHandler());
     }
@@ -231,16 +238,9 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
     SaslServer createServer(final Subject subject, final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps)
             throws SaslException {
-
         try {
-            return Subject.doAs(subject, new PrivilegedExceptionAction<SaslServer>() {
-
-                @Override
-                public SaslServer run() throws Exception {
-                    return createServer(wildFlyProvider, unboundServer, mode, baseProps);
-                }
-
-            });
+            return Subject.doAs(subject, (PrivilegedExceptionAction<SaslServer>)
+                    () -> createServer(wildFlyProvider, unboundServer, mode, baseProps));
         } catch (PrivilegedActionException e) {
             if (e.getCause() instanceof SaslException) {
                 throw (SaslException) e.getCause();
@@ -248,7 +248,6 @@ public abstract class BaseGssapiTests extends BaseTestCase {
                 throw new RuntimeException(e.getCause());
             }
         }
-
     }
 
     private SaslServer createServer(final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
@@ -256,6 +255,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
         Map<String, String> props = new HashMap<String, String>(baseProps);
         props.put(Sasl.QOP, mode.getQop());
+        props.put(Sasl.MAX_BUFFER, Integer.toString(64321));
 
         return factory.createSaslServer(GSSAPI, "sasl", unboundServer ? null : TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
     }

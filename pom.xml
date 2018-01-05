@@ -531,20 +531,6 @@
                 <version.org.jboss.logging.tools>2.1.0.Beta1</version.org.jboss.logging.tools>
             </properties>
         </profile>
-
-        <profile>
-            <id>ibmJdk</id>
-            <activation>
-                <property>
-                    <name>java.vendor</name>
-                    <value>IBM Corporation</value>
-                </property>
-            </activation>
-            <properties>
-                <!-- Surefire plugin's excluded test categories -->
-                <excludedGroups>org.wildfly.security.ExcludedOnIbmJdk</excludedGroups>
-            </properties>
-        </profile>
     </profiles>
 
     <repositories>

@@ -29,7 +29,7 @@ import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
 import org.wildfly.security.credential.GSSKerberosCredential;
 
 /**
- * Testing of obtaining a {@link GSSCredential} from the {@link GSSSecurityFactorySuiteChild}.
+ * Testing of obtaining a {@link GSSCredential} from the {@link GSSCredentialSecurityFactory}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

@@ -47,7 +47,7 @@ public class WildFlyClientWildFlyServerSuiteChild extends BaseGssapiTests {
     public static void initialise() throws LoginException {
         clientSubject = loginClient();
         serverSubject = loginServer(GssapiTestSuite.serverKeyTab, false);
-        unboundServerSubject = loginServer(GssapiTestSuite.serverKeyTab, true);
+        unboundServerSubject = loginServer(GssapiTestSuite.serverUnboundKeyTab, true);
     }
 
     @AfterClass
