@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2017 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,19 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.security.sasl.gssapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.sasl.gssapi.BaseGssapiTests.VerificationMode.NONE;
+import static org.wildfly.security.sasl.gssapi.CommunicationSuiteChild.VerificationMode.CONFIDENTIALITY;
+import static org.wildfly.security.sasl.gssapi.CommunicationSuiteChild.VerificationMode.NONE;
+import static org.wildfly.security.sasl.gssapi.CommunicationSuiteChild.VerificationMode.INTEGRITY;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.PrivilegedActionException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
 import java.security.Security;
@@ -39,6 +41,7 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -47,24 +50,21 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.jboss.logging.Logger;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.WildFlySasl;
 
-/**
- * Test case for testing GSSAPI authentication.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- */
-public abstract class BaseGssapiTests extends BaseTestCase {
+@RunWith(Parameterized.class)
+public class CommunicationSuiteChild {
 
     private static final String TEST_SERVER_1 = "test_server_1";
 
     private static final String SASL_CLIENT_FACTORY_GSSAPI = "SaslClientFactory.GSSAPI";
     private static final String SASL_SERVER_FACTORY_GSSAPI = "SaslServerFactory.GSSAPI";
-
-    private static Logger log = Logger.getLogger(BaseGssapiTests.class);
 
     private static final String GSSAPI = "GSSAPI";
 
@@ -75,56 +75,84 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     static final String SERVER_KEY_TAB = "serverKeyTab";
     static final String SERVER_UNBOUND_KEY_TAB = "serverUnboundKeyTab";
 
-    /*
-     * A pair of tests just to verify that a Subject can be obtained, in the event of a failure if these tests are failing focus
-     * here first.
-     */
+    private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
 
-    @Test
-    public void obtainServer1Subject() throws Exception {
-        Subject subject = loginServer(GssapiTestSuite.serverKeyTab, false);
-        assertNotNull(subject);
+    private static Subject clientSubject;
+    private static Subject serverSubject;
+    private static Subject unboundServerSubject;
+
+    @Parameterized.Parameter(0)
+    public boolean serverElytron;
+
+    @Parameterized.Parameter(1)
+    public boolean clientElytron;
+
+    @Parameterized.Parameter(2)
+    public boolean authServer;
+
+    @Parameterized.Parameter(3)
+    public boolean unbound;
+
+    @Parameterized.Parameter(4)
+    public VerificationMode mode;
+
+    @Parameterized.Parameters(name = "serverElytron={0} clientElytron={1} authServer={2} unbound={3} mode={4}")
+    public static Iterable<Object[]> serverElytron() {
+        System.out.println("Parameters init");
+        return Arrays.asList(
+                new Object[] {true,  true,  false, false, NONE},
+                new Object[] {true,  true,  true,  false, NONE},
+                new Object[] {true,  true,  false, false, INTEGRITY},
+                new Object[] {true,  true,  false, false, CONFIDENTIALITY},
+                new Object[] {true,  true,  false, true,  CONFIDENTIALITY},
+                new Object[] {true,  false, false, false, NONE},
+                new Object[] {true,  false, true,  false, NONE},
+                new Object[] {true,  false, false, false, INTEGRITY},
+                new Object[] {true,  false, false, false, CONFIDENTIALITY},
+                new Object[] {true,  false, false, true,  CONFIDENTIALITY},
+                new Object[] {false, true,  false, false, NONE},
+                new Object[] {false, true,  true,  false, NONE},
+                new Object[] {false, true,  false, false, INTEGRITY},
+                new Object[] {false, true,  false, false, CONFIDENTIALITY},
+                new Object[] {false, true,  false, true,  CONFIDENTIALITY},
+                new Object[] {false, false, false, false, NONE},
+                new Object[] {false, false, true,  false, NONE},
+                new Object[] {false, false, false, false, INTEGRITY},
+                new Object[] {false, false, false, false, CONFIDENTIALITY},
+                new Object[] {false, false, false, true,  CONFIDENTIALITY}
+        );
+    }
+
+    @BeforeClass
+    public static void initialize() throws LoginException {
+        clientSubject = loginClient();
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab, false);
+        unboundServerSubject = loginServer(GssapiTestSuite.serverUnboundKeyTab, true);
+        assertNotNull(clientSubject);
+        assertNotNull(serverSubject);
+        assertNotNull(unboundServerSubject);
+
+        AccessController.doPrivileged((PrivilegedAction<Integer>) () ->
+                Security.insertProviderAt(wildFlyElytronProvider, 1)
+        );
+    }
+
+    @AfterClass
+    public static void destroy() {
+        clientSubject = null;
+        serverSubject = null;
+        unboundServerSubject = null;
+
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            Security.removeProvider(wildFlyElytronProvider.getName());
+            return null;
+        });
     }
 
     @Test
-    public void obtainClientSubject() throws Exception {
-        Subject subject = loginClient();
-        assertNotNull(subject);
-    }
-
-    @Test
-    public void authenticateClientOnly() throws Exception {
-        /*
-         * With the JDK supplied mechanism implementations this method can cause a NPE if logging for 'javax.security.sasl' is
-         * lower than DEBUG
-         */
-
-        testSasl(false, NONE, false);
-    }
-
-    @Test
-    public void authenticateClientAndServer() throws Exception {
-        testSasl(true, NONE, false);
-    }
-
-    @Test
-    public void authenticateIntegrityQop() throws Exception {
-        testSasl(false, VerificationMode.INTEGRITY, false);
-    }
-
-    @Test
-    public void authenticateConfidentialityQop() throws Exception {
-        testSasl(false, VerificationMode.CONFIDENTIALITY, false);
-    }
-
-    @Test
-    public void authenticateUnboundServer() throws Exception {
-        testSasl(false, VerificationMode.CONFIDENTIALITY, true);
-    }
-
-    private void testSasl(final boolean authServer, final VerificationMode mode, final boolean unboundServer) throws Exception {
-        SaslClient client = getSaslClient(authServer, mode);
-        SaslServer server = getSaslServer(mode, unboundServer);
+    public void testSasl() throws Exception {
+        SaslClient client = getSaslClient();
+        SaslServer server = getSaslServer();
 
         try {
             byte[] exchange = new byte[0];
@@ -191,43 +219,32 @@ public abstract class BaseGssapiTests extends BaseTestCase {
         assertTrue("Unwrapped (By Client) matched original", Arrays.equals(unwrappedFromServer, original));
     }
 
-    /**
-     * @param authServer whether the server must authenticate to the client
-     * @param mode quality-of-protection to use
-     */
-    protected abstract SaslClient getSaslClient(final boolean authServer, final VerificationMode mode) throws Exception;
+    private SaslClient getSaslClient() throws Exception {
+        SaslClient baseClient = Subject.doAs(clientSubject, (PrivilegedExceptionAction<SaslClient>) this::createClient);
+        return new SubjectWrappingSaslClient(baseClient, clientSubject);
+    }
 
-    /**
-     * @param mode quality-of-protection to use
-     */
-    protected abstract SaslServer getSaslServer(final VerificationMode mode, final boolean unboundServer) throws Exception;
+    private SaslServer getSaslServer() throws Exception {
+        SaslServer baseServer = Subject.doAs(serverSubject, (PrivilegedExceptionAction<SaslServer>) this::createServer);
+        return new SubjectWrappingSaslServer(baseServer, unbound ? unboundServerSubject : serverSubject);
+    }
 
     /*
      * Client Creation Methods
      */
 
-    protected SaslClient createClient(final Subject subject, final boolean wildFlyProvider, final boolean authServer,
-            final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
-        try {
-            return Subject.doAs(subject, (PrivilegedExceptionAction<SaslClient>)
-                    () -> createClient(wildFlyProvider, authServer, mode, baseProps));
-        } catch (PrivilegedActionException e) {
-            if (e.getCause() instanceof SaslException) {
-                throw (SaslException) e.getCause();
-            } else {
-                throw new RuntimeException(e.getCause());
-            }
-        }
-    }
+    private SaslClient createClient() throws Exception {
+        Provider provider = findProvider(SASL_CLIENT_FACTORY_GSSAPI, clientElytron);
+        String factoryName = (String) provider.get(SASL_CLIENT_FACTORY_GSSAPI);
+        SaslClientFactory factory = (SaslClientFactory) CommunicationSuiteChild.class.getClassLoader().loadClass(factoryName).newInstance();
 
-    private SaslClient createClient(final boolean wildFlyProvider,  final boolean authServer, final VerificationMode mode, final Map<String, String> baseProps)
-            throws SaslException {
-        SaslClientFactory factory = findSaslClientFactory(wildFlyProvider);
-
-        Map<String, String> props = new HashMap<String, String>(baseProps);
+        Map<String, String> props = new HashMap<>();
         props.put(Sasl.SERVER_AUTH, Boolean.toString(authServer));
         props.put(Sasl.QOP, mode.getQop());
         props.put(Sasl.MAX_BUFFER, Integer.toString(61234));
+        if (clientElytron && !serverElytron) {
+            props.put(WildFlySasl.RELAX_COMPLIANCE, Boolean.TRUE.toString());
+        }
 
         return factory.createSaslClient(new String[] { GSSAPI }, null, "sasl", TEST_SERVER_1, props, new NoCallbackHandler());
     }
@@ -236,67 +253,36 @@ public abstract class BaseGssapiTests extends BaseTestCase {
      * Server Creation Methods
      */
 
-    SaslServer createServer(final Subject subject, final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps)
-            throws SaslException {
-        try {
-            return Subject.doAs(subject, (PrivilegedExceptionAction<SaslServer>)
-                    () -> createServer(wildFlyProvider, unboundServer, mode, baseProps));
-        } catch (PrivilegedActionException e) {
-            if (e.getCause() instanceof SaslException) {
-                throw (SaslException) e.getCause();
-            } else {
-                throw new RuntimeException(e.getCause());
-            }
-        }
-    }
+    private SaslServer createServer() throws Exception {
+        Provider provider = findProvider(SASL_SERVER_FACTORY_GSSAPI, serverElytron);
+        String factoryName = (String) provider.get(SASL_SERVER_FACTORY_GSSAPI);
+        SaslServerFactory factory = (SaslServerFactory) CommunicationSuiteChild.class.getClassLoader().loadClass(factoryName).newInstance();
 
-    private SaslServer createServer(final boolean wildFlyProvider, final boolean unboundServer, final VerificationMode mode, final Map<String, String> baseProps) throws SaslException {
-        SaslServerFactory factory = findSaslServerFactory(wildFlyProvider);
-
-        Map<String, String> props = new HashMap<String, String>(baseProps);
+        Map<String, String> props = new HashMap<>();
         props.put(Sasl.QOP, mode.getQop());
         props.put(Sasl.MAX_BUFFER, Integer.toString(64321));
+        if (!clientElytron && serverElytron) {
+            props.put(WildFlySasl.RELAX_COMPLIANCE, Boolean.TRUE.toString());
+        }
 
-        return factory.createSaslServer(GSSAPI, "sasl", unboundServer ? null : TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
+        return factory.createSaslServer(GSSAPI, "sasl", unbound ? null : TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
     }
 
     /*
      * Provider Methods
      */
 
-    private SaslClientFactory findSaslClientFactory(final boolean wildFlyProvider) {
-        Provider p = findProvider(SASL_CLIENT_FACTORY_GSSAPI, wildFlyProvider);
-
-        String factoryName = (String) p.get(SASL_CLIENT_FACTORY_GSSAPI);
-
-        try {
-            return (SaslClientFactory) BaseGssapiTests.class.getClassLoader().loadClass(factoryName).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private SaslServerFactory findSaslServerFactory(final boolean wildFlyProvider) {
-        Provider p = findProvider(SASL_SERVER_FACTORY_GSSAPI, wildFlyProvider);
-
-        String factoryName = (String) p.get(SASL_SERVER_FACTORY_GSSAPI);
-
-        try {
-            return (SaslServerFactory) BaseGssapiTests.class.getClassLoader().loadClass(factoryName).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Provider findProvider(final String filter, final boolean wildFlyProvider) {
+    private Provider findProvider(final String filter, final boolean elytronProvider) {
         Provider[] providers = Security.getProviders(filter);
         for (Provider current : providers) {
             if (current instanceof WildFlyElytronProvider) {
-                if (wildFlyProvider) {
+                if (elytronProvider) {
                     return current;
                 }
-            } else if (wildFlyProvider == false) {
-                return current;
+            } else {
+                if (! elytronProvider) {
+                    return current;
+                }
             }
         }
         return null;
@@ -338,9 +324,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
                     throw new UnsupportedCallbackException(current);
                 }
             }
-
         }
 
     }
-
 }
