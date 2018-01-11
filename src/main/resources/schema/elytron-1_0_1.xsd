@@ -239,13 +239,35 @@
     </xsd:complexType>
 
     <xsd:complexType name="oauth2-client-credentials-type">
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <xsd:choice minOccurs="0" maxOccurs="1">
+                <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+        </xsd:sequence>
         <xsd:attribute name="client-id" type="xsd:string" use="required" />
-        <xsd:attribute name="client-secret" type="xsd:string" use="required" />
+        <xsd:attribute name="client-secret" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    If not provided, a secret should be referenced using a credential-store-reference.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
     <xsd:complexType name="resource-owner-credentials-type">
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <xsd:choice minOccurs="0" maxOccurs="1">
+                <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+        </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required" />
-        <xsd:attribute name="password" type="xsd:string" use="required" />
+        <xsd:attribute name="password" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    If not provided, a password should be referenced using a credential-store-reference.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
     <!-- Credential Stores elements -->

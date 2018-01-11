@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2017 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:1.0.1">
+        <credential-stores>
+            <credential-store name="store1" type="KeyStoreCredentialStore">
+                <protection-parameter-credentials>
+                    <clear-password password="secret_store_ONE"/>
+                </protection-parameter-credentials>
+                <attributes>
+                    <attribute name="keyStoreType" value="JCEKS"/>
+                    <attribute name="location" value="target/ks-cred-stores/oauth2_tests_cs.jceks"/>
+                </attributes>
+            </credential-store>
+        </credential-stores>
+        <authentication-rules>
+            <rule use-configuration="test1.org">
+                <match-host name="test1.org"/>
+            </rule>
+            <rule use-configuration="test2.org">
+                <match-host name="test2.org"/>
+            </rule>
+            <rule use-configuration="test3.org">
+                <match-host name="test3.org"/>
+            </rule>
+            <rule use-configuration="test4.org">
+                <match-host name="test4.org"/>
+            </rule>
+            <rule use-configuration="test5.org">
+                <match-host name="test5.org"/>
+            </rule>
+            <rule use-configuration="test6">
+                <match-host name="test6.org"/>
+            </rule>
+            <rule use-configuration="test7">
+                <match-host name="test7.org"/>
+            </rule>
+            <rule use-configuration="test8.org">
+                <match-host name="test8.org"/>
+            </rule>
+        </authentication-rules>
+        <authentication-configurations>
+            <configuration name="test1.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <resource-owner-credentials name="jdoe" password="dont_tell_me"/>
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+            <configuration name="test2.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+            <configuration name="test3.org">
+                <credentials>
+                    <bearer-token value="invalid_token"/>
+                </credentials>
+            </configuration>
+            <configuration name="test4.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://127.0.0.1:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="bad_secret"/>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+            <configuration name="test5.org">
+                <credentials>
+                    <bearer-token value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"/>
+                </credentials>
+            </configuration>
+            <configuration name="test6">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <resource-owner-credentials name="alice" password="bad_password"/>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+            <configuration name="test7">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <client-credentials client-id="elytron-client" client-secret="dont_tell_me"/>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+            <configuration name="test8.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <resource-owner-credentials name="jdoe">
+                            <credential-store-reference store="store1" alias="jdoe"/>
+                        </resource-owner-credentials>
+                        <client-credentials client-id="elytron-client">
+                            <credential-store-reference store="store1" alias="elytron-client"/>
+                        </client-credentials>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+        </authentication-configurations>
+    </authentication-client>
+</configuration>
