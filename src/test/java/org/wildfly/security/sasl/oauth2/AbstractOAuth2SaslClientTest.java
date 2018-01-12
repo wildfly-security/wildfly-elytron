@@ -24,12 +24,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -43,16 +48,21 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.client.XmlConfigurationTest;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
+import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
@@ -68,19 +78,60 @@ import okhttp3.mockwebserver.RecordedRequest;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class OAuth2SaslClientTest extends BaseTestCase {
+public abstract class AbstractOAuth2SaslClientTest extends BaseTestCase {
+
+    private static final Provider provider = new WildFlyElytronProvider();
+
+    private static Map<String, String> stores = new HashMap<>();
+    private static String BASE_STORE_DIRECTORY = "target/ks-cred-stores";
+    static {
+        stores.put("ONE", BASE_STORE_DIRECTORY + "/oauth2_tests_cs.jceks");
+    }
+
+    /**
+     * Clean all Credential Stores registered in {@link XmlConfigurationTest#stores}.
+     */
+    public static void cleanCredentialStores() {
+        File dir = new File(BASE_STORE_DIRECTORY);
+        dir.mkdirs();
+
+        for (String f: stores.values()) {
+            File file = new File(f);
+            file.delete();
+        }
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+        Security.addProvider(provider);
+        cleanCredentialStores();
+        // setup vaults that need to be complete before a test starts
+        CredentialStoreBuilder.get().setKeyStoreFile(stores.get("ONE"))
+                .setKeyStoreType("JCEKS")
+                .setKeyStorePassword("secret_store_ONE")
+                .addPassword("jdoe", "dont_tell_me")
+                .addPassword("elytron-client", "dont_tell_me")
+                .build();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        Security.removeProvider(provider.getName());
+    }
 
     private MockWebServer server;
 
     @Before
     public void onBefore() throws Exception {
-        System.setProperty("wildfly.config.url", getClass().getResource("wildfly-oauth2-test-config.xml").toExternalForm());
+        System.setProperty("wildfly.config.url", getClass().getResource(getClientConfigurationFileName()).toExternalForm());
         server = new MockWebServer();
 
         server.setDispatcher(createTokenEndpoint());
 
         server.start(50831);
     }
+
+    protected abstract String getClientConfigurationFileName();
 
     @After
     public void onAfter() throws Exception {
@@ -444,7 +495,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
         });
     }
 
-    private SecurityRealm createSecurityRealmMock() throws MalformedURLException {
+    protected SecurityRealm createSecurityRealmMock() throws MalformedURLException {
         return TokenSecurityRealm.builder().validator(JwtValidator.builder().build()).principalClaimName("preferred_username").build();
     }
 
@@ -480,7 +531,7 @@ public class OAuth2SaslClientTest extends BaseTestCase {
         };
     }
 
-    private SaslClient createSaslClientFromConfiguration(URI serverUri) throws SaslException {
+    protected SaslClient createSaslClientFromConfiguration(URI serverUri) throws SaslException {
         AuthenticationContext context = AuthenticationContext.getContextManager().get();
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         AuthenticationConfiguration authenticationConfiguration = contextConfigurationClient.getAuthenticationConfiguration(serverUri, context);
