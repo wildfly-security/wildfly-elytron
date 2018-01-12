@@ -69,10 +69,6 @@ public class TestKDC {
     private boolean exposeLdapServer;
     private LdapServer ldapServer;
 
-    public TestKDC() {
-        this(false);
-    }
-
     public TestKDC(boolean exposeLdapServer) {
         this.exposeLdapServer = exposeLdapServer;
     }
@@ -233,16 +229,21 @@ public class TestKDC {
     }
 
 
-    public String generateKeyTab(String keyTabFileName, String principal, String password) {
+    public String generateKeyTab(String keyTabFileName, String... credentials) {
         log.debug("Generating keytab: " + keyTabFileName);
         List<KeytabEntry> entries = new ArrayList<>();
         KerberosTime ktm = new KerberosTime();
 
-        for (Map.Entry<EncryptionType, EncryptionKey> keyEntry : KerberosKeyFactory.getKerberosKeys(principal, password)
-                .entrySet()) {
-            EncryptionKey key = keyEntry.getValue();
-            log.debug("Adding key=" + key);
-            entries.add(new KeytabEntry(principal, KerberosPrincipal.KRB_NT_PRINCIPAL, ktm, (byte) key.getKeyVersion(), key));
+        for (int i = 0; i < credentials.length;) {
+            String principal = credentials[i++];
+            String password = credentials[i++];
+
+            for (Map.Entry<EncryptionType, EncryptionKey> keyEntry : KerberosKeyFactory.getKerberosKeys(principal, password)
+                    .entrySet()) {
+                EncryptionKey key = keyEntry.getValue();
+                log.debug("Adding key=" + key + " for principal=" + principal);
+                entries.add(new KeytabEntry(principal, KerberosPrincipal.KRB_NT_PRINCIPAL, ktm, (byte) key.getKeyVersion(), key));
+            }
         }
 
         Keytab keyTab = Keytab.getInstance();
@@ -252,7 +253,7 @@ public class TestKDC {
             keyTab.write(keyTabFile);
             return keyTabFile.getAbsolutePath();
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot create keytab: ", e);
+            throw new IllegalStateException("Cannot create keytab: " + keyTabFileName, e);
         }
     }
 

@@ -33,11 +33,7 @@ import org.wildfly.security.sasl.gs2.Gs2SuiteChild;
 @RunWith(Suite.class)
 @SuiteClasses({
     GSSSecurityFactorySuiteChild.class,
-    JdkClientJdkServerSuiteChild.class,
-    JdkClientWildFlyServerSuiteChild.class,
-    WildFlyClientJdkServerSuiteChild.class,
-    WildFlyClientWildFlyServerSuiteChild.class,
-    GssapiCompatibilitySuiteChild.class,
+    CommunicationSuiteChild.class,
     Gs2SuiteChild.class
 })
 public class GssapiTestSuite {
@@ -46,6 +42,7 @@ public class GssapiTestSuite {
 
     public static TestKDC testKdc;
     public static String serverKeyTab;
+    public static String serverUnboundKeyTab;
 
     @BeforeClass
     public static void startServers() {
@@ -53,8 +50,15 @@ public class GssapiTestSuite {
         testKdc = new TestKDC(true);
         testKdc.startDirectoryService();
         testKdc.startKDC();
-        serverKeyTab = testKdc.generateKeyTab(BaseGssapiTests.SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
-        log.debug("keytab written to:" + serverKeyTab);
+        serverKeyTab = testKdc.generateKeyTab(CommunicationSuiteChild.SERVER_KEY_TAB,
+                "sasl/test_server_1@WILDFLY.ORG", "servicepwd"
+        );
+        log.debug("serverKeyTab written to:" + serverKeyTab);
+        serverUnboundKeyTab = testKdc.generateKeyTab(CommunicationSuiteChild.SERVER_UNBOUND_KEY_TAB,
+                "sasl/test_server_1@WILDFLY.ORG", "servicepwd",
+                "*@WILDFLY.ORG", "dummy" // existence required by IBM
+        );
+        log.debug("serverUnboundKeyTab written to:" + serverUnboundKeyTab);
     }
 
     @AfterClass
