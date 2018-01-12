@@ -164,7 +164,7 @@ public class DigestUtil {
         }
 
         if (key.length() > 0) {
-            realmNumber = addToParsedChallenge(response, key, value, realmNumber);
+            addToParsedChallenge(response, key, value, realmNumber);
         }
 
         return response;
