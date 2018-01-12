@@ -85,6 +85,8 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         mechanismNames.add(BASIC_NAME);
         mechanismNames.add(CLIENT_CERT_NAME);
         mechanismNames.add(DIGEST_NAME);
+        mechanismNames.add(DIGEST_SHA256_NAME);
+        mechanismNames.add(DIGEST_SHA512_256_NAME);
         mechanismNames.add(FORM_NAME);
         mechanismNames.add(SPNEGO_NAME);
         mechanismNames.add(BEARER_TOKEN);
@@ -107,11 +109,11 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
             case DIGEST_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), MD5, providers);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_NAME, MD5, providers);
             case DIGEST_SHA256_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), SHA256, providers);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA256_NAME, SHA256, providers);
             case DIGEST_SHA512_256_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), SHA512_256, providers);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers);
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:

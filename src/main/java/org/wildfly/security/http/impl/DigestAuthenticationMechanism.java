@@ -23,7 +23,6 @@ import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
-import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.NC;
 import static org.wildfly.security.http.HttpConstants.QOP;
 import static org.wildfly.security.http.HttpConstants.URI;
@@ -84,20 +83,22 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     private final NonceManager nonceManager;
     private final String configuredRealm;
     private final String domain;
+    private final String mechanismName;
     private final String algorithm;
 
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, String algorithm, Supplier<Provider[]> providers) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, String mechanismName, String algorithm, Supplier<Provider[]> providers) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
+        this.mechanismName = mechanismName;
         this.algorithm = algorithm;
         this.providers = providers;
     }
 
     @Override
     public String getMechanismName() {
-        return DIGEST_NAME;
+        return mechanismName;
     }
 
     @Override
