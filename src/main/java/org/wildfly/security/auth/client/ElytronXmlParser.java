@@ -470,7 +470,7 @@ public final class ElytronXmlParser {
                     case "certificate-revocation-list": {
                         if (isSet(foundBits, 6)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 6);
-                        parseCertificateRevocationList(reader, trustManagerBuilder);
+                        parseCertificateRevocationList(reader, trustManagerBuilder, xmlVersion);
                         break;
                     }
                     case "trust-manager": {
@@ -591,16 +591,36 @@ public final class ElytronXmlParser {
         }
     }
 
-    private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
+    private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String path = null;
+        ExceptionSupplier<InputStream, IOException> resourceSource = null;
+        URI uriSource = null;
+        boolean gotSource = false;
         int maxCertPath = 0;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "path": {
-                    if (path != null) throw reader.unexpectedAttribute(i);
+                    if (gotSource) throw reader.unexpectedAttribute(i);
+                    gotSource = true;
                     path = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "resource": {
+                    if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                        throw reader.unexpectedAttribute(i);
+                    }
+                    gotSource = true;
+                    resourceSource = parseResourceType(reader, xmlVersion);
+                    break;
+                }
+                case "uri": {
+                    if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                        throw reader.unexpectedAttribute(i);
+                    }
+                    gotSource = true;
+                    uriSource = parseUriType(reader);
                     break;
                 }
                 case "maximum-cert-path": {
@@ -617,10 +637,12 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 builder.setCrl();
-                if (path != null) {
+                if (gotSource) {
                     try {
-                        builder.setCrlStream(new FileInputStream(path));
-                    } catch (FileNotFoundException e) {
+                        if (path != null) builder.setCrlStream(new FileInputStream(path));
+                        else if (resourceSource != null) builder.setCrlStream(resourceSource.get());
+                        else if (uriSource != null) builder.setCrlStream(uriSource.toURL().openStream());
+                    } catch (IOException e) {
                         throw new ConfigXMLParseException(e);
                     }
                 }
