@@ -135,7 +135,7 @@ public class HttpAuthenticator {
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-                    if (sessionScope != null && sessionScope.supportsAttachments()) {
+                    if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
                         sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, username);
                     }
                     setupProgramaticLogout(sessionScope);
