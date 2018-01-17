@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>24</version>
+        <version>25</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -62,7 +62,7 @@
         <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.0.6.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.4.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.0.1.Final</version.org.jboss.logging.tools>
+        <version.org.jboss.logging.tools>2.1.0.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.6.0.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.1.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
@@ -519,7 +519,7 @@
         <profile>
             <id>modularizedJdk</id>
             <activation>
-                <jdk>9</jdk>
+                <jdk>[9,)</jdk>
             </activation>
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
@@ -528,7 +528,8 @@
                 <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
                 <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
-                <version.org.jboss.logging.tools>2.1.0.Beta1</version.org.jboss.logging.tools>
+                <!-- 2.20.x doesn't start on JDK10-->
+                <version.surefire.plugin>2.19.1</version.surefire.plugin>
             </properties>
         </profile>
     </profiles>
