@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.NC;
@@ -168,6 +169,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } else {
             throw log.mechMissingDirective(getMechanismName(), URI);
         }
+
+        if (!digestUriMatchesRequestUri(request, digestUri)) {
+            fail();
+            request.authenticationFailed(log.mechResponseTokenMismatch(getMechanismName()), httpResponse -> httpResponse.setStatusCode(BAD_REQUEST));
+            return;
+        }
+
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
             response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
@@ -241,6 +249,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) {
         String nextNonce = nonceManager.generateNonce(salt);
         response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=\"" + nextNonce + "\"");
+    }
+
+    private boolean digestUriMatchesRequestUri(HttpServerRequest request, byte[] digestUri) {
+        String requestPath = request.getRequestURI().getPath();
+        String digestUriStr = new String(digestUri);
+
+        return digestUriStr.equals(requestPath) || request.getRequestURI().toString().equals(digestUriStr);
     }
 
     /**
