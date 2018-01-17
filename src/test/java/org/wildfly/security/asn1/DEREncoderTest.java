@@ -421,20 +421,20 @@ public class DEREncoderTest {
         PrivateKey privateKey = keyPair.getPrivate();
         byte[] toSign = "signed_content".getBytes();
 
-        Signature signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+        Signature signature = Signature.getInstance(ASN1.OID_SHA256_WITH_DSA);
 
         signature.initSign(privateKey);
         signature.update(toSign);
 
         byte[] contentSignature = signature.sign();
 
-        signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+        signature = Signature.getInstance(ASN1.OID_SHA256_WITH_DSA);
 
         signature.initVerify(keyFromSpec);
         signature.update(toSign);
         assertTrue(signature.verify(contentSignature));
 
-        signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+        signature = Signature.getInstance(ASN1.OID_SHA256_WITH_DSA);
 
         signature.initVerify(keyFromDer);
         signature.update(toSign);
