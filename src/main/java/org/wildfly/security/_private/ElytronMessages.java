@@ -49,6 +49,8 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.login.LoginException;
+import javax.security.auth.message.AuthException;
+import javax.security.auth.message.AuthStatus;
 import javax.security.jacc.PolicyContextException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
@@ -675,6 +677,36 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
     void xmlDeprecatedElement(String name, XMLLocation location);
+
+    @Message(id = 1167, value = "Unable to construct provider '%s'.")
+    SecurityException unableToConstructProvider(String className, @Cause Throwable cause);
+
+    @Message(id = 1168, value = "JASPIC Configuration for messageLayer=%s, and applicationContext=%s already registered.")
+    IllegalStateException configAlreadyRegistered(String messageLayer, String applicationContext);
+
+    @Message(id = 1169, value = "Message type '%s' is not supported by authentication module '%s'")
+    IllegalArgumentException unsupportedMessageType(String messageType, String authenticationModule);
+
+    @Message(id = 1170, value = "Unrecognised authContextId '%s'")
+    AuthException unrecognisedAuthContextId(String authContextId);
+
+    @Message(id = 1171, value = "Invalid message type '%s', expected '%s'.")
+    IllegalArgumentException invalidMessageType(String actualMessageType, String expectedMessageType);
+
+    @Message(id = 1172, value = "Message does not wrap existing message of type '%s'")
+    IllegalArgumentException messageDoesNotWrapExistingMessage(String messageType);
+
+    @Message(id = 1173, value = "Message does not un-wrap existing message of type '%s'")
+    IllegalArgumentException messageDoesNotUnWrapExistingMessage(String messageType);
+
+    @Message(id = 1174, value = "Setting message of type '%s' not allowed at this time.")
+    IllegalStateException messageSettingNotAllowed(String messageType);
+
+    @Message(id = 1175, value = "The wrapping or request / response messages is only allowed where AuthStatus==SUCCESS ServerAuthenticationModule=%s")
+    IllegalStateException messageWrappedWithoutSuccess(String module);
+
+    @Message(id = 1176, value = "Invalid AuthStatus %s returned from ServerAuthModule %s.")
+    IllegalStateException invalidAuthStatus(AuthStatus authStatus, String serverAuthModule);
 
     /* keystore package */
 

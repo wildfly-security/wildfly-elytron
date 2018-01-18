@@ -1102,6 +1102,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
+                    handleOne(callbacks, idx + 1);
                 }
             }
 
