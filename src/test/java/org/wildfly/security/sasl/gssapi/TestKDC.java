@@ -21,7 +21,6 @@ package org.wildfly.security.sasl.gssapi;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -153,8 +152,8 @@ public class TestKDC {
             throw new IllegalStateException("KDCServer already started");
         }
 
-        final URL configPath = TestKDC.class.getResource("/krb5.conf");
-        originalConfig = System.setProperty("java.security.krb5.conf", configPath.getFile());
+        File configPath = new File(TestKDC.class.getResource("/krb5.conf").getFile());
+        originalConfig = System.setProperty("java.security.krb5.conf", configPath.getAbsolutePath());
 
         KdcServer kdcServer = new KdcServer();
         kdcServer.setServiceName("TestKDCServer");
