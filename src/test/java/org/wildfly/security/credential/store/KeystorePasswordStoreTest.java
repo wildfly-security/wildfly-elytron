@@ -71,7 +71,7 @@ public class KeystorePasswordStoreTest {
     /**
      * Clean all vaults.
      */
-    public static void cleanCredentialStores() {
+    private static void cleanCredentialStores() {
         File dir = new File(BASE_STORE_DIRECTORY);
         dir.mkdirs();
 
@@ -81,7 +81,7 @@ public class KeystorePasswordStoreTest {
         }
     }
 
-    static CredentialStore newCredentialStoreInstance() throws NoSuchAlgorithmException {
+    private static CredentialStore newCredentialStoreInstance() throws NoSuchAlgorithmException {
         return CredentialStore.getInstance(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
     }
 
@@ -91,7 +91,7 @@ public class KeystorePasswordStoreTest {
      * @return new {@code PasswordCredential}
      * @throws UnsupportedCredentialTypeException should never happen as we have only supported types and algorithms
      */
-    PasswordCredential createCredentialFromPassword(char[] password) throws UnsupportedCredentialTypeException {
+    private PasswordCredential createCredentialFromPassword(char[] password) throws UnsupportedCredentialTypeException {
         try {
             PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
             return new PasswordCredential(passwordFactory.generatePassword(new ClearPasswordSpec(password)));
@@ -105,7 +105,7 @@ public class KeystorePasswordStoreTest {
      * @param passwordCredential to convert
      * @return plain text password as {@code char[]}
      */
-    char[] getPasswordFromCredential(PasswordCredential passwordCredential) {
+    private char[] getPasswordFromCredential(PasswordCredential passwordCredential) {
         Assert.assertNotNull("passwordCredential parameter", passwordCredential);
         return passwordCredential.getPassword().castAndApply(ClearPassword.class, ClearPassword::getPassword);
     }
@@ -233,7 +233,7 @@ public class KeystorePasswordStoreTest {
             cs.store(passwordAlias1, createCredentialFromPassword(password1));
             Assert.fail("This Credential Store should be read-only.");
         } catch (CredentialStoreException e) {
-
+            // expected
         }
 
         Assert.assertNull("'" + passwordAlias1 + "' must not be in this Credential Store because is read-only.",
@@ -436,10 +436,10 @@ public class KeystorePasswordStoreTest {
         try {
             // store
             Supplier<Callable<Object>> storeTask = () -> prepareParallelCsStoreTask(cs, executor, readWriteLock);
-            testAccessFromMultipleCredentialStores(cs, executor, storeTask);
+            testAccessFromMultipleCredentialStores(executor, storeTask);
             // remove
             Supplier<Callable<Object>> removeTask = () -> prepareParallelCsRemoveTask(cs, executor, readWriteLock);
-            testAccessFromMultipleCredentialStores(cs, executor, removeTask);
+            testAccessFromMultipleCredentialStores(executor, removeTask);
         } finally {
             executor.shutdown();
             if (readWriteLock.readLock().tryLock()) {
@@ -448,10 +448,9 @@ public class KeystorePasswordStoreTest {
         }
     }
 
-    private void testAccessFromMultipleCredentialStores(CredentialStore cs, final ExecutorService executor,
-        Supplier<Callable<Object>> csTask) {
+    private void testAccessFromMultipleCredentialStores(final ExecutorService executor, Supplier<Callable<Object>> csTask) {
         try {
-            Callable<Object> task = csTask.get();// prepareParallelCsStoreTask(cs, executor, readWriteLock);
+            Callable<Object> task = csTask.get();
 
             Future<Object> task1Future = executor.submit(task);
             task1Future.get(5, TimeUnit.SECONDS);
@@ -489,7 +488,7 @@ public class KeystorePasswordStoreTest {
                 }
 
                 readWriteLock.readLock().unlock();
-                task2Future.get(1, TimeUnit.SECONDS);
+                task2Future.get(5, TimeUnit.SECONDS);
 
                 if (!cs.exists(aliasName, PasswordCredential.class)) {
                     throw new IllegalStateException(String.format("Alias '%s' have to exist!", aliasName));
@@ -531,7 +530,7 @@ public class KeystorePasswordStoreTest {
                 }
 
                 readWriteLock.readLock().unlock();
-                task2Future.get(1, TimeUnit.SECONDS);
+                task2Future.get(5, TimeUnit.SECONDS);
 
                 if (cs.exists(aliasName, PasswordCredential.class)) {
                     throw new IllegalStateException(String.format("Alias '%s' should be deleted!", aliasName));
@@ -560,7 +559,7 @@ public class KeystorePasswordStoreTest {
         return readWriteLock;
     }
 
-    protected static String addRandomSuffix(String str) {
+    private static String addRandomSuffix(String str) {
         return str + "_" + getRandomString();
     }
 
