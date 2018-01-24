@@ -54,6 +54,7 @@ import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 import org.wildfly.security.manager.action.WritePropertyAction;
 import org.wildfly.security.permission.PermissionVerifier;
+import sun.misc.Unsafe;
 import sun.reflect.Reflection;
 
 import static java.lang.System.clearProperty;
@@ -100,13 +101,29 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         }
     };
 
-    private static final Field PD_STACK;
+    private static final Unsafe unsafe;
+    private static final long pdStackOffset;
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
     private static final int callerOffset;
 
     static {
-        PD_STACK = doPrivileged(new GetAccessibleDeclaredFieldAction(AccessControlContext.class, "context"));
+        final Field pdField;
+        try {
+            // does not need to be accessible
+            pdField = AccessControlContext.class.getDeclaredField("context");
+        } catch (NoSuchFieldException e) {
+            throw new NoSuchFieldError(e.getMessage());
+        }
+        if (pdField.getType() != ProtectionDomain[].class) {
+            throw new Error();
+        }
+        try {
+            unsafe = (Unsafe) doPrivileged(new GetAccessibleDeclaredFieldAction(Unsafe.class, "theUnsafe")).get(null);
+        } catch (IllegalAccessException e) {
+            throw new IllegalAccessError(e.getMessage());
+        }
+        pdStackOffset = unsafe.objectFieldOffset(pdField);
         // Cannot be lambda due to JDK race conditions
         //noinspection Convert2Lambda,Anonymous2MethodRef
         INSTANCE = doPrivileged(new PrivilegedAction<WildFlySecurityManager>() {
@@ -285,14 +302,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     }
 
     private static ProtectionDomain[] getProtectionDomainStack(final AccessControlContext context) {
-        final ProtectionDomain[] stack;
-        try {
-            stack = (ProtectionDomain[]) PD_STACK.get(context);
-        } catch (IllegalAccessException e) {
-            // should be impossible
-            throw new IllegalAccessError(e.getMessage());
-        }
-        return stack;
+        return (ProtectionDomain[]) unsafe.getObject(context, pdStackOffset);
     }
 
     private static boolean doCheck() {
