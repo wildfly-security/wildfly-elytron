@@ -142,7 +142,7 @@ import org.wildfly.security.x500.X500;
  *     <li>{@code keyStoreType}: specifies the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
  *     <li>{@code keyAlias}: specifies the secret key alias within the key store to use for encrypt/decrypt of data in external storage (defaults to {@code cs_key})</li>
  *     <li>{@code external}: specifies whether to store data to external storage and encrypted by {@code keyAlias} key (defaults to {@code false})</li>
- *     <li>{@code externalPath}: specifies path to the external storage. It has to be used in conjunction with {@code external=true} and it defaults to value of {@code location} when {@code keyStoreType} is PKCS11.</li>
+ *     <li>{@code externalPath}: specifies path to the external storage. It has to be used in conjunction with {@code external=true}</li>
  *     <li>{@code cryptoAlg}: cryptographic algorithm name to be used to encrypt decrypt entries at external storage ({@code external} has to be set to {@code true})</li>
  * </ul>
  */
@@ -200,8 +200,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             if (useExternalStorage) {
                 final String externalPathName = attributes.get(EXTERNALPATH);
                 if (externalPathName == null) {
-                    externalPath = location;
-                    location = null;
+                    throw log.externalPathMissing(keyStoreType);
                 } else {
                     externalPath = Paths.get(externalPathName);
                     if (externalPath.equals(location)) {
