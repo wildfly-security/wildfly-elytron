@@ -113,11 +113,11 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         }
     }
 
-    private IdentityCache createIdentityCache(HttpServerRequest request, boolean createSession) {
+    private IdentityCache createIdentityCache(HttpServerRequest request) {
         return new IdentityCache() {
             @Override
             public void put(SecurityIdentity  identity) {
-                HttpScope session = getSessionScope(request, createSession);
+                HttpScope session = getSessionScope(request, true);
 
                 if (session == null || !session.exists()) {
                     return;
@@ -128,7 +128,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
 
             @Override
             public CachedIdentity get() {
-                HttpScope session = getSessionScope(request, createSession);
+                HttpScope session = getSessionScope(request, false);
 
                 if (session == null || !session.exists()) {
                     return null;
@@ -139,7 +139,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
 
             @Override
             public CachedIdentity remove() {
-                HttpScope session = getSessionScope(request, createSession);
+                HttpScope session = getSessionScope(request, false);
 
                 if (session == null || !session.exists()) {
                     return null;
@@ -170,7 +170,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         char[] passwordChars = password.toCharArray();
         try {
             if (authenticate(null, username, passwordChars)) {
-                IdentityCache identityCache = createIdentityCache(request, true);
+                IdentityCache identityCache = createIdentityCache(request);
                 if (authorize(username, request, identityCache)) {
                     httpForm.debugf("User [%s] authenticated successfully", username);
                     succeed();
@@ -249,7 +249,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
             }
         }
 
-        IdentityCache identityCache = createIdentityCache(request, false);
+        IdentityCache identityCache = createIdentityCache(request);
         if (identityCache != null) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(identityCache);
             try {
@@ -272,7 +272,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
     }
 
     private void failAndRedirectToErrorPage(HttpServerRequest request, String username) throws IOException, UnsupportedCallbackException {
-        IdentityCache identityCache = createIdentityCache(request, false);
+        IdentityCache identityCache = createIdentityCache(request);
         if (identityCache != null) {
             identityCache.remove();
         }
