@@ -393,11 +393,11 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             if (IS_IBM) {
                 options.put("noAddress", "true");
                 options.put("credsType", (isServer && !obtainKerberosTicket) ? "acceptor" : "both");
-                options.put("useKeytab", keyTab.toURI().toURL().toString());
+                if (keyTab != null) options.put("useKeytab", keyTab.toURI().toURL().toString());
             } else {
                 options.put("storeKey", "true");
                 options.put("useKeyTab", "true");
-                options.put("keyTab", keyTab.getAbsolutePath());
+                if (keyTab != null) options.put("keyTab", keyTab.getAbsolutePath());
                 options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
             }
 

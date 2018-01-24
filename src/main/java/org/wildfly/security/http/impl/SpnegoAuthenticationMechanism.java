@@ -20,7 +20,9 @@ package org.wildfly.security.http.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.httpSpnego;
+import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.SPNEGO;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
@@ -92,6 +94,16 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
 
         this.callbackHandler = callbackHandler;
         this.gssManager = properties.containsKey(CONFIG_GSS_MANAGER) ? (GSSManager) properties.get(CONFIG_GSS_MANAGER) : GSSManager.getInstance();
+
+        // JDK-8194073 workaround (for Oracle JDK + native Kerberos)
+        if (properties.containsKey(CONFIG_CREATE_NAME_GSS_INIT) && Boolean.parseBoolean((String) properties.get(CONFIG_CREATE_NAME_GSS_INIT))) {
+            try { // createName call ensure correct GSSManager initialization
+                gssManager.createName("dummy", GSSName.NT_USER_NAME, SPNEGO);
+                httpSpnego.trace("createName workaround for native GSS initialization applied");
+            } catch (GSSException e) {
+                httpSpnego.trace("Exception while applying createName workaround for native GSS initialization", e);
+            }
+        }
 
         String scopesProperty = (String) properties.get(CONFIG_STATE_SCOPES);
         if (scopesProperty == null) {

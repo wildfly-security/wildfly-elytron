@@ -28,7 +28,6 @@ import javax.security.sasl.SaslException;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.MessageProp;
-import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
@@ -50,17 +49,6 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     private static final byte INTEGRITY_PROTECTION = (byte) 0x02;
     private static final byte CONFIDENTIALITY_PROTECTION = (byte) 0x04;
     protected static final int DEFAULT_MAX_BUFFER_SIZE = (int) 0xFFFFFF; // 3 bytes
-    protected static final Oid KERBEROS_V5;
-
-    // Kerberos V5 OID
-
-    static {
-        try {
-            KERBEROS_V5 = new Oid("1.2.840.113554.1.2.2");
-        } catch (GSSException e) {
-            throw saslGssapi.unableToInitialiseOid(e);
-        }
-    }
 
     protected GSSContext gssContext;
     protected final int configuredMaxReceiveBuffer;
