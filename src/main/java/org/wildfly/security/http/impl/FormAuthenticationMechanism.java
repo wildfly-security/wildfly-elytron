@@ -162,7 +162,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         String username = request.getFirstParameterValue(USERNAME);
         String password = request.getFirstParameterValue(PASSWORD);
 
-        if (username == null || password == null) {
+        if (username == null || username.length() == 0 || password == null) {
             error(httpForm.usernameOrPasswordMissing(), request);
             return;
         }
