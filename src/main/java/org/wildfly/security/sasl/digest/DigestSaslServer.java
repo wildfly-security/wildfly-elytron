@@ -320,7 +320,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
         if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
             return boundServerName;
         }
-        return super.getNegotiatedProperty(propName);
+        return null;
     }
 
     /* (non-Javadoc)

@@ -358,6 +358,6 @@ final class Gs2SaslServer extends AbstractSaslServer {
         if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
             return boundServerName;
         }
-        return super.getNegotiatedProperty(propName);
+        return null;
     }
 }
