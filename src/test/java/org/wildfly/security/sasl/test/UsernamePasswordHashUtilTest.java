@@ -30,6 +30,7 @@ import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
+@Deprecated
 public class UsernamePasswordHashUtilTest {
 
     @Test

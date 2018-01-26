@@ -33,7 +33,10 @@ import org.wildfly.security.util.ByteIterator;
  * however beyond that there is no synchronisation so this should not be considered thread safe.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ *
+ * @deprecated Use {@link org.wildfly.security.password.PasswordFactory} instead.
  */
+@Deprecated
 public class UsernamePasswordHashUtil {
 
     private static final String MD5 = "MD5";
