@@ -97,6 +97,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private final NonceManager nonceManager;
     private final String configuredRealm;
     private final String domain;
+    private final boolean validateUri;
 
     /**
      *
@@ -104,12 +105,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * @param nonceManager
      * @param configuredRealm
      */
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers, String validateUri) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
         this.providers = providers;
+        this.validateUri = validateUri == null ? true : Boolean.parseBoolean(validateUri);
     }
 
     @Override
@@ -252,10 +254,27 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     }
 
     private boolean digestUriMatchesRequestUri(HttpServerRequest request, byte[] digestUri) {
-        String requestPath = request.getRequestURI().getPath();
+        if (!validateUri) {
+            return true;
+        }
+
+        java.net.URI requestURI = request.getRequestURI();
         String digestUriStr = new String(digestUri);
 
-        return digestUriStr.equals(requestPath) || request.getRequestURI().toString().equals(digestUriStr);
+        if (requestURI.toString().equals(digestUriStr)) {
+            return true;
+        } else {
+            // digestUri is relative & request is absolute
+            String relativeRequestUri;
+            String query = requestURI.getQuery();
+            if (query == null || query.isEmpty()) {
+                relativeRequestUri = requestURI.getPath();
+            } else {
+                relativeRequestUri = requestURI.getPath() + "?" + requestURI.getQuery();
+            }
+
+            return relativeRequestUri.equals(digestUriStr);
+        }
     }
 
     /**
