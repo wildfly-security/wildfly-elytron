@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
@@ -45,6 +46,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -105,37 +107,34 @@ public class HttpAuthenticator {
      * @return A {@link SecurityIdentity} is authentication and authorization is successful.
      */
     public SecurityIdentity login(String username, String password) {
-        return login(username, password, programaticMechanismName);
+        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(checkNotNullParam("password", password).toCharArray());
+        try {
+            return login(username, evidence, programaticMechanismName);
+        } finally {
+            evidence.destroy();
+        }
     }
 
     /**
      * Perform a login for the supplied username and password using the specified mechanism name.
      *
      * @param username the username to use for authentication.
-     * @param password the password to use for authentication.
+     * @param evidence the evidence to use for authentication.
      * @return A {@link SecurityIdentity} is authentication and authorization is successful.
      */
-    private SecurityIdentity login(String username, String password, String mechanismName) {
+    private SecurityIdentity login(String username, Evidence evidence, String mechanismName) {
         if (securityDomain == null) {
             return null;
         }
 
-        ServerAuthenticationContext authenticationContext;
-        if(WildFlySecurityManager.isChecking()) {
-            authenticationContext = AccessController.doPrivileged((PrivilegedAction<ServerAuthenticationContext>) () -> securityDomain.createNewAuthenticationContext());
-        } else {
-            authenticationContext = securityDomain.createNewAuthenticationContext();
-        }
-
-        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password.toCharArray());
-
-        try {
+        try (ServerAuthenticationContext authenticationContext = createServerAuthenticationContext()) {
             authenticationContext.setAuthenticationName(username);
             if (authenticationContext.verifyEvidence(evidence)) {
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-                    if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
+                    if (sessionScope != null && sessionScope.supportsAttachments()
+                            && (sessionScope.exists() || sessionScope.create())) {
                         sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, username);
                     }
                     setupProgramaticLogout(sessionScope);
@@ -151,11 +150,17 @@ public class HttpAuthenticator {
             }
         } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
             httpExchangeSpi.authenticationFailed(e.getMessage(), mechanismName);
-        } finally {
-            evidence.destroy();
         }
 
         return null;
+    }
+
+    private ServerAuthenticationContext createServerAuthenticationContext() {
+        if (WildFlySecurityManager.isChecking()) {
+            return AccessController.doPrivileged((PrivilegedAction<ServerAuthenticationContext>) () -> securityDomain.createNewAuthenticationContext());
+        }
+
+        return securityDomain.createNewAuthenticationContext();
     }
 
     private boolean restoreIdentity() {
