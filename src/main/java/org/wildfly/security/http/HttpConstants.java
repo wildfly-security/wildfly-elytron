@@ -160,4 +160,11 @@ public class HttpConstants {
     public static final String SHA256 = "SHA-256";
     public static final String SHA512_256 = "SHA-512-256";
 
+    /*
+     * Schemes
+     */
+
+    public static final String HTTP = "http";
+    public static final String HTTPS = "https";
+
 }

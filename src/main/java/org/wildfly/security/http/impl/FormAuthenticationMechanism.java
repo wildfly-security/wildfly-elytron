@@ -26,6 +26,8 @@ import static org.wildfly.security.http.HttpConstants.CONFIG_LOGIN_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_POST_LOCATION;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.FOUND;
+import static org.wildfly.security.http.HttpConstants.HTTP;
+import static org.wildfly.security.http.HttpConstants.HTTPS;
 import static org.wildfly.security.http.HttpConstants.LOCATION;
 import static org.wildfly.security.http.HttpConstants.POST;
 
@@ -188,10 +190,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                             String currentPath = requestUri.getPath();
 
                             StringBuilder sb = new StringBuilder();
-                            sb.append(requestUri.getScheme());
+                            String scheme = requestUri.getScheme();
+                            sb.append(scheme);
                             sb.append("://");
                             sb.append(requestUri.getHost());
-                            sb.append(':').append(requestUri.getPort());
+                            int port = requestUri.getPort();
+                            if (appendPort(scheme, port)) {
+                                sb.append(':').append(port);
+                            }
                             sb.append(currentPath.substring(0, currentPath.indexOf(DEFAULT_POST_LOCATION)));
 
                             postAuthenticationPath = sb.toString();
@@ -286,10 +292,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         HttpScope session = getSessionScope(request, true);
         if (session != null && session.supportsAttachments()) {
             StringBuilder sb = new StringBuilder();
-            sb.append(requestURI.getScheme());
+            String scheme = requestURI.getScheme();
+            sb.append(scheme);
             sb.append("://");
             sb.append(requestURI.getHost());
-            sb.append(':').append(requestURI.getPort());
+            int port = requestURI.getPort();
+            if (appendPort(scheme, port)) {
+                sb.append(':').append(port);
+            }
             sb.append(requestURI.getPath());
             if(requestURI.getRawQuery() != null) {
                 sb.append("?");
@@ -335,10 +345,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
 
         URI requestURI = request.getRequestURI();
         StringBuilder sb = new StringBuilder();
-        sb.append(requestURI.getScheme());
+        String scheme = requestURI.getScheme();
+        sb.append(scheme);
         sb.append("://");
         sb.append(requestURI.getHost());
-        sb.append(':').append(requestURI.getPort());
+        int port = requestURI.getPort();
+        if (appendPort(scheme, port)) {
+            sb.append(':').append(port);
+        }
         sb.append(contextPath);
         sb.append(page);
         sendRedirect(response, sb.toString());
@@ -357,5 +371,9 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         }
 
         return scope;
+    }
+
+    private static boolean appendPort(final String scheme, final int port) {
+        return port > -1 && ((HTTP.equalsIgnoreCase(scheme) && port != 80) || (HTTPS.equalsIgnoreCase(scheme) && port != 443));
     }
 }
