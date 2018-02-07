@@ -25,9 +25,11 @@ import org.wildfly.security.util.StringMapping;
 /**
  * A general Elytron permission.  The permission {@code name} must be one of the following:
  * <ul>
+ *     <li>{@code authenticate}</li>
  *     <li>{@code createAuthenticator}</li>
  *     <li>{@code createAuthenticationContextConfigurationClient}</li>
  *     <li>{@code createSecurityDomain}</li>
+ *     <li>{@code createSecurityRealm}</li>
  *     <li>{@code registerSecurityDomain}</li>
  *     <li>{@code getSecurityDomain}</li>
  *     <li>{@code unregisterSecurityDomain}</li>
@@ -36,6 +38,7 @@ import org.wildfly.security.util.StringMapping;
  *     <li>{@code getPrivateCredentials}</li>
  *     <li>{@code getIdentity}</li>
  *     <li>{@code getIdentityForUpdate}</li>
+ *     <li>{@code createAdHocIdentity}</li>
  * </ul>
  * The {@code actions} are not used and should be empty or {@code null}.
  *

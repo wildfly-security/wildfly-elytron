@@ -21,6 +21,7 @@ package org.wildfly.security.ssl;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
+import java.security.Security;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;

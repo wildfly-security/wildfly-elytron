@@ -34,7 +34,7 @@ import org.wildfly.common.math.HashMath;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 
 /**
- * A delegating {@link SaslClientFactory} which will sort the mechanism names using either a supplied {@link Comparator<String>}
+ * A delegating {@link SaslClientFactory} which will sort the mechanism names using either a supplied {@link Comparator}&lt;{@link String}&gt;
  * or a supplied ordering of mechanism names.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
