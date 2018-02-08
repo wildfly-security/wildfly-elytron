@@ -27,7 +27,7 @@ import java.security.MessageDigestSpi;
 /**
  * SHA-512/256 hashing implementation as defined in FIPS PUB 180-4 Secure Hash Standard
  */
-public class Sha512_256MessageDigest extends MessageDigestSpi {
+public class SHA512_256MessageDigest extends MessageDigestSpi {
 
     private static final long[] K = {
             0x428a2f98d728ae22L, 0x7137449123ef65cdL, 0xb5c0fbcfec4d3b2fL, 0xe9b5dba58189dbbcL,
@@ -57,12 +57,12 @@ public class Sha512_256MessageDigest extends MessageDigestSpi {
     private final byte[] tempByte = new byte[1];
     private final long[] H = new long[8];
     private final long[] W = new long[80];
-    private final byte[] block = new byte[Sha512_256MessageDigest.BLOCK_SIZE];
+    private final byte[] block = new byte[SHA512_256MessageDigest.BLOCK_SIZE];
 
     private long messageLength; // total length of the message
     private int bytesLoaded; // amount of used bytes in current block
 
-    public Sha512_256MessageDigest() {
+    public SHA512_256MessageDigest() {
         engineReset();
     }
 

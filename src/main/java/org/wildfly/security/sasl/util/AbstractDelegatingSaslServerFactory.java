@@ -20,6 +20,8 @@ package org.wildfly.security.sasl.util;
 
 import java.util.Map;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -43,7 +45,7 @@ public abstract class AbstractDelegatingSaslServerFactory implements SaslServerF
      * @param delegate the delegate server factory
      */
     protected AbstractDelegatingSaslServerFactory(final SaslServerFactory delegate) {
-        this.delegate = delegate;
+        this.delegate = checkNotNullParam("delegate", delegate);
     }
 
     /**
