@@ -119,7 +119,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @MetaInfServices(Provider.class)
-public class WildFlyElytronProvider extends Provider {
+public class WildFlyElytronProvider extends VersionedProvider {
 
     private static final long serialVersionUID = 1267015094996624988L;
 
@@ -137,7 +137,7 @@ public class WildFlyElytronProvider extends Provider {
      * Default constructor for this security provider.
      */
     public WildFlyElytronProvider() {
-        super("WildFlyElytron", 1.0, "WildFly Elytron Provider");
+        super("WildFlyElytron", "1.0", "WildFly Elytron Provider");
 
         putHttpAuthenticationMechanismImplementations();
         putKeyStoreImplementations();
