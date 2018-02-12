@@ -27,7 +27,7 @@ import org.wildfly.security.util.StringMapping;
  * A permission specific to the WildFly security manager.  The permission name may be one of the following:
  * <ul>
  *     <li>{@code doUnchecked}</li>
- *     <li>{@code getStackInterceptor}</li>
+ *     <li>{@code getStackInspector}</li>
  * </ul>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

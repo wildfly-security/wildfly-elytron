@@ -26,7 +26,6 @@ import org.wildfly.security.util.StringMapping;
  * Credential Store API specific permission. It can have following target names:
  * <ul>
  *  <li>{@code loadCredentialStore}</li>
- *  <li>{@code loadExternalStorePassword}</li>
  *  <li>{@code retrieveCredential}</li>
  *  <li>{@code modifyCredentialStore}</li>
  * </ul>
