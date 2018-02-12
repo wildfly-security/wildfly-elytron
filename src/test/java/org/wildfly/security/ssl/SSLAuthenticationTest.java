@@ -18,7 +18,9 @@
 package org.wildfly.security.ssl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.Closeable;
@@ -31,8 +33,6 @@ import java.security.KeyStoreException;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.util.Locale;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,7 +49,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -68,41 +67,7 @@ import org.wildfly.security.x500.X500AttributePrincipalDecoder;
  */
 public class SSLAuthenticationTest {
 
-    private static SSLContext clientContext;
-    private static SSLContext serverContext;
-
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
-
-    @BeforeClass
-    public static void setupServer() throws Exception {
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
-
-        SecurityDomain securityDomain = SecurityDomain.builder()
-                .addRealm("KeystoreRealm", securityRealm)
-                    .build()
-                .setDefaultRealmName("KeystoreRealm")
-                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
-                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
-                .build();
-
-        serverContext = new SSLContextBuilder()
-                .setSecurityDomain(securityDomain)
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
-                .setTrustManager(getCATrustManager())
-                .setNeedClientAuth(true)
-                .build().create();
-    }
-
-    @BeforeClass
-    public static void setupClient() throws Exception {
-        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config.xml").toExternalForm());
-        AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(new WildFlyElytronProvider(), 1));
-
-        AuthenticationContext context = AuthenticationContext.getContextManager().get();
-        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
-        clientContext = contextConfigurationClient.getSSLContext(URI.create("protocol://test.org"), context);
-    }
 
     /**
      * Get the key manager backed by the specified key store.
@@ -151,19 +116,108 @@ public class SSLAuthenticationTest {
         return keyStore;
     }
 
-    /**
-     * @throws ExecutionException
-     * @throws InterruptedException
-     *
-     */
     @Test
-    public void performConnectionTest() throws Exception {
+    public void testOneWay() throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way.org", true);
+        assertNull(identity);
+    }
+
+    @Test
+    public void testCrlBlank() throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-crl.org", true);
+        assertNull(identity);
+    }
+
+    @Test
+    public void testServerRevoked() throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-firefly-revoked.org", false);
+    }
+
+    @Test
+    public void testServerIcaRevoked() throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false);
+    }
+
+    @Test
+    public void testTwoWay() throws Exception {
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
+
+        SecurityDomain securityDomain = SecurityDomain.builder()
+                .addRealm("KeystoreRealm", securityRealm)
+                .build()
+                .setDefaultRealmName("KeystoreRealm")
+                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
+                .build();
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way.org", true);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testTwoWayIca() throws Exception {
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ica/jks/shortwinged.keystore"));
+
+        SecurityDomain securityDomain = SecurityDomain.builder()
+                .addRealm("KeystoreRealm", securityRealm)
+                .build()
+                .setDefaultRealmName("KeystoreRealm")
+                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
+                .build();
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-ica.org", true);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "rove", identity.getPrincipal().getName());
+    }
+
+    private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid) throws Exception {
+        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config.xml").toExternalForm());
+        AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(new WildFlyElytronProvider(), 1));
+
+        AuthenticationContext context = AuthenticationContext.getContextManager().get();
+        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+        SSLContext clientContext = contextConfigurationClient.getSSLContext(URI.create(clientUri), context);
+
         SSLServerSocketFactory sslServerSocketFactory = serverContext.getServerSocketFactory();
 
         SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(1111, 10, InetAddress.getLoopbackAddress());
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
-        Future<SSLSocket> socketFuture = executorService.submit((Callable<SSLSocket>) () -> {
+        Future<SSLSocket> socketFuture = executorService.submit(() -> {
             try {
                 System.out.println("About to connect client");
                 SSLSocket sslSocket = (SSLSocket) clientContext.getSocketFactory().createSocket(InetAddress.getLoopbackAddress(), 1111);
@@ -179,18 +233,24 @@ public class SSLAuthenticationTest {
 
         SSLSocket serverSocket = (SSLSocket) sslServerSocket.accept();
         SSLSession serverSession = serverSocket.getSession();
-
-        assertTrue("Server SSL Session Valid", serverSession.isValid());
-        SecurityIdentity identity =  (SecurityIdentity) serverSession.getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
-        assertNotNull(identity);
-        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
-
         SSLSocket clientSocket = socketFuture.get();
         SSLSession clientSession = clientSocket.getSession();
-        assertTrue("Client SSL Session Valid", clientSession.isValid());
 
-        safeClose(serverSocket);
-        safeClose(clientSocket);
+        try {
+            if (expectValid) {
+                assertTrue("Client SSL Session should be Valid", clientSession.isValid());
+                assertTrue("Server SSL Session should be Valid", serverSession.isValid());
+                return (SecurityIdentity) serverSession.getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
+            } else {
+                assertFalse("Client SSL Session should be Invalid", clientSession.isValid());
+                assertFalse("Server SSL Session should be Invalid", serverSession.isValid());
+                return null;
+            }
+        } finally {
+            safeClose(serverSocket);
+            safeClose(clientSocket);
+            safeClose(sslServerSocket);
+        }
     }
 
     private void safeClose(Closeable closeable) {

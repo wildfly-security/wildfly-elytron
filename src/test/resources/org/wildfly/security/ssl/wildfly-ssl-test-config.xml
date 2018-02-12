@@ -18,8 +18,11 @@
   ~ limitations under the License.
   -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:1.0">
+    <authentication-client xmlns="urn:elytron:client:1.1">
         <key-stores>
+            <key-store name="ca" type="JKS">
+                <file name="target/test-classes/ca/jks/ca.truststore"/>
+            </key-store>
             <key-store name="scarab" type="JKS">
                 <file name="target/test-classes/ca/jks/scarab.keystore"/>
             </key-store>
@@ -27,18 +30,58 @@
                 <file name="target/test-classes/ca/jks/ladybird.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
+            <key-store name="rove" type="JKS">
+                <file name="target/test-classes/ica/jks/rove.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
         </key-stores>
         <ssl-contexts>
-            <ssl-context name="my-ssl">
+            <ssl-context name="one-way-ssl">
+                <trust-store key-store-name="scarab"/>
+            </ssl-context>
+            <ssl-context name="one-way-crl-ssl">
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-list path="target/test-classes/ica/crl/blank-blank.pem"/>
+            </ssl-context>
+            <ssl-context name="one-way-firefly-revoked-ssl">
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-list path="target/test-classes/ca/crl/firefly-revoked.pem"/>
+            </ssl-context>
+            <ssl-context name="one-way-ica-revoked-ssl">
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-list path="target/test-classes/ca/crl/ica-revoked.pem"/>
+            </ssl-context>
+            <ssl-context name="two-way-ssl">
                 <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="scarab"/>
             </ssl-context>
+            <ssl-context name="two-way-ica-ssl">
+                <key-store-ssl-certificate key-store-name="rove" alias="rove">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca"/>
+            </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
-            <rule use-ssl-context="my-ssl">
-                <match-host name="test.org"/>
+            <rule use-ssl-context="one-way-ssl">
+                <match-host name="test-one-way.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-crl-ssl">
+                <match-host name="test-one-way-crl.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-firefly-revoked-ssl">
+                <match-host name="test-one-way-firefly-revoked.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-ica-revoked-ssl">
+                <match-host name="test-one-way-ica-revoked.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ssl">
+                <match-host name="test-two-way.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ica-ssl">
+                <match-host name="test-two-way-ica.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

@@ -1,25 +1,23 @@
 dir                     = $ENV::CA_HOME
 
 [ ca ]
-default_ca              = elytron
+default_ca              = subelytron
 
-[ elytron ]
-certificate             = $dir/cacert.pem
+[ subelytron ]
+certificate             = $dir/icacert.pem
 database                = $dir/index.txt
 new_certs_dir           = $dir/certs
-private_key             = $dir/private/cakey.pem
+private_key             = $dir/private/icakey.pem
 serial                  = $dir/serial
 
 default_crl_days        = 365
 default_days            = 3650
-default_md              = sha1
+default_md              = sha256
 
-policy                  = elytron_policy
+policy                  = subelytron_policy
 x509_extensions         = certificate_extensions
 
-email_in_dn             = no
-
-[ elytron_policy ]
+[ subelytron_policy ]
 commonName              = supplied
 stateOrProvinceName     = supplied
 countryName             = supplied
@@ -33,21 +31,14 @@ basicConstraints        = CA:false
 [ req ]
 default_bits            = 2048
 default_keyfile         = $dir/private/new.pem
-default_md              = SHA1
+default_md              = sha256
 prompt                  = no
-distinguished_name      = root_ca_distinguished_name
-x509_extensions         = root_ca_extensions
+distinguished_name      = elytron_ica_dn
 
-[ root_ca_distinguished_name ]
-commonName              = Elytron CA
+[ elytron_ica_dn ]
+commonName              = Elytron ICA
 stateOrProvinceName     = Elytron
 countryName             = UK
-emailAddress            = elytron@wildfly.org
-organizationName        = Root Certificate Authority
-
-[ root_ca_extensions ]
-basicConstraints        = CA:true
-
-[ v3_intermediate_ca ]
-basicConstraints = critical, CA:true, pathlen:0
+emailAddress            = subelytron@wildfly.org
+organizationName        = Intermediate Certificate Authority
 
