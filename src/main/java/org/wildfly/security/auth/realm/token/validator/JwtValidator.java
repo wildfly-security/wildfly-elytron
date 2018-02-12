@@ -169,6 +169,8 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean hasValidAudience(JsonObject claims) throws RealmUnavailableException {
+        if (this.audiences.isEmpty()) return true;
+
         JsonValue audience = claims.get("aud");
 
         if (audience == null) {
@@ -186,7 +188,7 @@ public class JwtValidator implements TokenValidator {
 
         boolean valid = audClaimArray.stream()
                 .map(jsonValue -> (JsonString) jsonValue)
-                .anyMatch(audience1 -> audiences.contains(audience1.getString())) || audiences.isEmpty();
+                .anyMatch(audience1 -> audiences.contains(audience1.getString()));
 
         if (!valid) {
             log.debugf("Audience check failed. Provided [%s] but was expected [%s].", audClaimArray.toArray(), this.audiences);
@@ -196,13 +198,16 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean hasValidIssuer(JsonObject claims) throws RealmUnavailableException {
+        if (this.issuers.isEmpty()) return true;
+
         String issuer = claims.getString("iss", null);
 
         if (issuer == null) {
+            log.debug("Token does not contain an issuer claim");
             return false;
         }
 
-        boolean valid = this.issuers.contains(issuer) || this.issuers.isEmpty();
+        boolean valid = this.issuers.contains(issuer);
 
         if (!valid) {
             log.debugf("Issuer check failed. Provided [%s] but was expected [%s].", issuer, this.issuers);
