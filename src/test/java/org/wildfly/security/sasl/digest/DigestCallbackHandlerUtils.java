@@ -18,7 +18,7 @@
 package org.wildfly.security.sasl.digest;
 
 import java.net.URI;
-import java.security.spec.KeySpec;
+import java.security.spec.AlgorithmParameterSpec;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -31,15 +31,15 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
 
 /**
  * @author Kabir Khan
  */
-public class DigestCallbackHandlerUtils {
+class DigestCallbackHandlerUtils {
 
     static CallbackHandler createClearPwdClientCallbackHandler(final String username, final String password, final String sentRealm) throws Exception {
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
@@ -47,10 +47,10 @@ public class DigestCallbackHandlerUtils {
     }
 
     static CallbackHandler createDigestPwdClientCallbackHandler(final String username, final String password, final String realm, final String sentRealm, final String sentUsername) throws Exception {
-        byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
-        KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
         PasswordFactory passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5);
-        return createClientCallbackHandler(sentUsername, passwordFactory.generatePassword(keySpec), sentRealm);
+        AlgorithmParameterSpec parameterSpec = new DigestPasswordAlgorithmSpec(username, realm);
+        EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password.toCharArray(), parameterSpec);
+        return createClientCallbackHandler(sentUsername, passwordFactory.generatePassword(encryptableSpec), sentRealm);
     }
 
     private static CallbackHandler createClientCallbackHandler(final String username, final Password password, final String sentRealm) throws Exception {
