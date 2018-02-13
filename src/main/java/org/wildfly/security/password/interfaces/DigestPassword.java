@@ -33,6 +33,8 @@ import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
  */
 public interface DigestPassword extends OneWayPassword {
 
+    long serialVersionUID = -5424657660320310755L;
+
     /**
      * The algorithm name "digest-md5".
      */
