@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2016 Red Hat, Inc., and individual contributors
+ * Copyright 2017 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,13 +68,13 @@ import okhttp3.mockwebserver.RecordedRequest;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class OAuth2SaslClientTest extends BaseTestCase {
+public class OAuth2SaslClientV10Test extends BaseTestCase {
 
     private MockWebServer server;
 
     @Before
     public void onBefore() throws Exception {
-        System.setProperty("wildfly.config.url", getClass().getResource("wildfly-oauth2-test-config.xml").toExternalForm());
+        System.setProperty("wildfly.config.url", getClass().getResource("wildfly-oauth2-test-config-v1_0.xml").toExternalForm());
         server = new MockWebServer();
 
         server.setDispatcher(createTokenEndpoint());
