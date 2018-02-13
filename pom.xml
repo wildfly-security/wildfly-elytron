@@ -525,6 +525,82 @@
                 <version.surefire.plugin>2.19.1</version.surefire.plugin>
             </properties>
         </profile>
+        <profile>
+            <id>compatibilityCheck</id>
+            <activation>
+                <property>
+                    <name>!skipCompatibility</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>0.11.0</version>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron</artifactId>
+                                    <version>1.1.7.Final</version>
+                                    <type>jar</type>
+                                </dependency>
+                            </oldVersion>
+                            <newVersion>
+                                <file>
+                                    <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
+                                </file>
+                            </newVersion>
+                            <parameter>
+                                <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+                                <!-- Update based on ELY-1483 -->
+                                <includes>
+                                    <include>org.wildfly.security</include>
+                                    <include>org.wildfly.security.auth</include>
+                                    <include>org.wildfly.security.auth.callback</include>
+                                    <include>org.wildfly.security.auth.client</include>
+                                    <include>org.wildfly.security.auth.permission</include>
+                                    <include>org.wildfly.security.auth.principal</include>
+                                    <include>org.wildfly.security.auth.server</include>
+                                    <include>org.wildfly.security.auth.util</include>
+                                    <include>org.wildfly.security.authz</include>
+                                    <include>org.wildfly.security.credential</include>
+                                    <include>org.wildfly.security.credential.source</include>
+                                    <include>org.wildfly.security.credential.store</include>
+                                    <include>org.wildfly.security.evidence</include>
+                                    <include>org.wildfly.security.http</include>
+                                    <include>org.wildfly.security.key</include>
+                                    <include>org.wildfly.security.manager</include>
+                                    <include>org.wildfly.security.manager.action</include>
+                                    <include>org.wildfly.security.mechanism</include>
+                                    <include>org.wildfly.security.password</include>
+                                    <include>org.wildfly.security.password.interfaces</include>
+                                    <include>org.wildfly.security.password.spec</include>
+                                    <include>org.wildfly.security.permission</include>
+                                    <include>org.wildfly.security.sasl.util</include>
+                                    <include>org.wildfly.security.ssl</include>
+                                    <include>org.wildfly.security.auth.server.event</include>
+                                </includes>
+                                <excludes>
+                                    <!-- false positive ELY-1453 -->
+                                    <exclude>org.wildfly.security.auth.server.event.RealmDefiniteOutcomeAuthenticationEvent#RealmDefiniteOutcomeAuthenticationEvent(org.wildfly.security.auth.server.RealmIdentity,org.wildfly.security.credential.Credential,org.wildfly.security.evidence.Evidence)</exclude>
+                                </excludes>
+                                <includeExclusively>true</includeExclusively>
+                            </parameter>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
