@@ -20,6 +20,7 @@ package org.wildfly.security.http.impl;
 
 import static org.wildfly.security._private.ElytronMessages.httpBearer;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
+import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
@@ -81,41 +82,36 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
         List<String> authorizationValues = request.getRequestHeaderValues(HttpConstants.AUTHORIZATION);
 
-        if (authorizationValues == null || authorizationValues.isEmpty()) {
-            request.authenticationFailed("Bearer token required", this::unauthorizedResponse);
-            return;
-        } else if (authorizationValues.size() > 1) {
-            request.authenticationFailed("Multiple Authorization headers found", response -> response.setStatusCode(400));
-            return;
-        }
+        if (authorizationValues != null) {
+            Matcher matcher;
+            for (String current : authorizationValues) {
+                if ((matcher = BEARER_TOKEN_PATTERN.matcher(current)).matches()) {
+                    BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
+                    EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
 
-        String authorizationValue = authorizationValues.get(0);
-        Matcher matcher = BEARER_TOKEN_PATTERN.matcher(authorizationValue);
+                    handleCallback(verifyCallback);
 
-        if (!matcher.matches()) {
-            request.authenticationFailed("Authorization is not Bearer", response -> response.setStatusCode(400));
-            return;
-        }
+                    if (verifyCallback.isVerified()) {
+                        AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
 
-        BearerTokenEvidence tokenEvidence = new BearerTokenEvidence(matcher.group(1));
-        EvidenceVerifyCallback verifyCallback = new EvidenceVerifyCallback(tokenEvidence);
+                        handleCallback(authorizeCallback);
 
-        handleCallback(verifyCallback);
-
-        if (verifyCallback.isVerified()) {
-            AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
-
-            handleCallback(authorizeCallback);
-
-            if (authorizeCallback.isAuthorized()) {
-                handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
-                handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
-                request.authenticationComplete();
-                return;
+                        if (authorizeCallback.isAuthorized()) {
+                            httpBearer.debugf("Token authentication successful.");
+                            handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
+                            handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
+                            request.authenticationComplete();
+                            return;
+                        }
+                    }
+                    httpBearer.debugf("Token authentication failed.");
+                    request.authenticationFailed("Invalid bearer token", response -> response.setStatusCode(FORBIDDEN));
+                    return;
+                }
             }
         }
 
-        request.authenticationFailed("Invalid bearer token", response -> response.setStatusCode(403));
+        request.noAuthenticationInProgress(this::unauthorizedResponse);
     }
 
     private void handleCallback(Callback callback) throws HttpAuthenticationException {
