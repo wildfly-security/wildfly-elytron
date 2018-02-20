@@ -24,11 +24,11 @@ import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.SPNEGO
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
+import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
-import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,7 +37,6 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import javax.security.auth.Subject;
@@ -67,8 +66,8 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
-import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util._private.Arrays2;
 
@@ -198,16 +197,22 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
 
         // authentication exchange
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
-        Optional<String> challenge = authorizationValues != null ? authorizationValues.stream()
-                .filter(s -> s.startsWith(CHALLENGE_PREFIX)).limit(1).map(s -> s.substring(CHALLENGE_PREFIX.length()))
-                .findFirst() : Optional.empty();
+        String challenge = null;
+        if (authorizationValues != null && authorizationValues.isEmpty() == false) {
+            for (String current : authorizationValues) {
+                if (current.startsWith(CHALLENGE_PREFIX)) {
+                    challenge = current.substring(CHALLENGE_PREFIX.length());
+                    break;
+                }
+            }
+        }
 
         if (httpSpnego.isTraceEnabled()) {
             httpSpnego.tracef("Sent HTTP authorizations: [%s]", Arrays2.objectToString(authorizationValues));
         }
 
         // Do we have an incoming response to a challenge? If so, process it.
-        if (challenge.isPresent()) {
+        if (challenge != null) {
             httpSpnego.trace("Processing incoming response to a challenge...");
 
             // We only need to store the scope if we have a challenge otherwise the next round
@@ -220,7 +225,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                 httpSpnego.trace("No usable HttpScope for storage, continuation will not be possible");
             }
 
-            byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
+            byte[] decodedValue = ByteIterator.ofBytes(challenge.getBytes(UTF_8)).base64Decode().drain();
 
             Subject subject = new Subject(true, Collections.emptySet(), Collections.emptySet(), kerberosTicket != null ? Collections.singleton(kerberosTicket) : Collections.emptySet());
 
