@@ -1465,8 +1465,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5168, value = "Unsupported algorithm selected \"%s\"")
     AuthenticationMechanismException mechUnsupportedAlgorithm(String algorithm);
 
-    @Message(id = 5169, value = "Clients response token does not match expected token")
-    String mechResponseTokenMismatch();
+    @Message(id = 5169, value = "[%s] Clients response token does not match expected token")
+    String mechResponseTokenMismatch(String mechName);
 
     @Message(id = 5170, value = "Problem during crypt: The encrypted result is null. The input data has a length of zero or too short to result in a new block.")
     AuthenticationMechanismException mechProblemDuringCryptResultIsNull();

@@ -54,6 +54,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
         Map<String, Object> digestProps = new HashMap<>();
         digestProps.put(CONFIG_REALM, "http-auth@example.org");
+        digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
 
         CallbackHandler callbackHandler = getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
 
