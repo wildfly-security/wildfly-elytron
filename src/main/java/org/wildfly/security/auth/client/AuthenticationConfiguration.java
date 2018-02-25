@@ -26,7 +26,6 @@ import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -75,6 +74,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -101,7 +101,6 @@ import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -165,9 +164,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
-            WildFlySecurityManager.isChecking() ?
-                    AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader())) :
-                    new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()),
+            () -> new Provider[] { new WildFlyElytronProvider() },
             INSTALLED_PROVIDERS);
 
     /**
