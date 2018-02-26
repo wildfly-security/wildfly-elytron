@@ -26,6 +26,7 @@ import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -101,6 +102,7 @@ import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -120,8 +122,8 @@ import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.util.ProviderUtil;
-import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
 
@@ -165,6 +167,9 @@ public final class AuthenticationConfiguration {
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] { new WildFlyElytronProvider() },
+            WildFlySecurityManager.isChecking() ?
+                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader())) :
+                    new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader()),
             INSTALLED_PROVIDERS);
 
     /**
@@ -1079,7 +1084,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
-        return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
+        return useProviders(new ProviderServiceLoaderSupplier(classLoader));
     }
 
     // SASL Mechanisms

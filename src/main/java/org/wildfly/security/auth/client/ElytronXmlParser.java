@@ -81,6 +81,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.asn1.util.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -115,8 +116,8 @@ import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509CRLExtendedTrustManager;
 import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.util.ProviderUtil;
-import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -126,9 +127,11 @@ import org.wildfly.security.x500.X500;
  */
 public final class ElytronXmlParser {
 
-    private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = WildFlySecurityManager.isChecking() ?
-            AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader())) :
-            new ServiceLoaderSupplier<>(Provider.class, ElytronXmlParser.class.getClassLoader());
+    private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
+            () -> new Provider[] { new WildFlyElytronProvider() },
+            WildFlySecurityManager.isChecking() ?
+                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader())) :
+                    new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader()));
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
 
@@ -911,7 +914,7 @@ public final class ElytronXmlParser {
                         final String moduleName = parseModuleRefType(reader);
                         Supplier<Provider[]> serviceLoaderSupplier = (moduleName == null) ?
                                 ELYTRON_PROVIDER_SUPPLIER :
-                                new ServiceLoaderSupplier<>(Provider.class, ModuleLoader.getClassLoaderFromModule(reader, moduleName));
+                                new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(reader, moduleName));
                         providerSupplier = providerSupplier == null ? serviceLoaderSupplier : ProviderUtil.aggregate(providerSupplier, serviceLoaderSupplier);
                         break;
                     }
