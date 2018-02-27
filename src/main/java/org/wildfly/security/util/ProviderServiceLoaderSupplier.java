@@ -39,14 +39,23 @@ import java.util.Set;
  */
 public class ProviderServiceLoaderSupplier extends ServiceLoaderSupplier<Provider> {
 
+    final boolean elytronProviderStaticallyAdded;
+
     public ProviderServiceLoaderSupplier(final ClassLoader classLoader) {
+        this(classLoader, false);
+    }
+
+    public ProviderServiceLoaderSupplier(final ClassLoader classLoader, final boolean elytronProviderStaticallyAdded) {
         super(Provider.class, classLoader);
+        this.elytronProviderStaticallyAdded = elytronProviderStaticallyAdded;
     }
 
     Provider[] loadServices(final Class<Provider> service, final ClassLoader classLoader) {
         Provider[] providers = INSTALLED_PROVIDERS.get();
-        Set<Class<?>> installedProvidersSet = new HashSet<>((providers != null ? providers.length : 0) + 1);
-        installedProvidersSet.add(WildFlyElytronProvider.class);
+        Set<Class<?>> installedProvidersSet = new HashSet<>((providers != null ? providers.length : 0) + (elytronProviderStaticallyAdded ? 1 : 0));
+        if (elytronProviderStaticallyAdded) {
+            installedProvidersSet.add(WildFlyElytronProvider.class);
+        }
         if (providers != null) {
             for (int i = 0; i < providers.length; i++) {
                 installedProvidersSet.add(providers[i].getClass());

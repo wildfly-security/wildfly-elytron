@@ -168,8 +168,8 @@ public final class AuthenticationConfiguration {
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] { new WildFlyElytronProvider() },
             WildFlySecurityManager.isChecking() ?
-                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader())) :
-                    new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader()),
+                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true)) :
+                    new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true),
             INSTALLED_PROVIDERS);
 
     /**

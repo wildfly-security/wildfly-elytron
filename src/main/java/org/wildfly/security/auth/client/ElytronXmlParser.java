@@ -130,8 +130,8 @@ public final class ElytronXmlParser {
     private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] { new WildFlyElytronProvider() },
             WildFlySecurityManager.isChecking() ?
-                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader())) :
-                    new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader()));
+                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true)) :
+                    new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true));
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
 
