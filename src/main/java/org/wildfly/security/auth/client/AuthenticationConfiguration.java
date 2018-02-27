@@ -75,6 +75,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -121,8 +122,8 @@ import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.util.ProviderUtil;
-import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
 
@@ -165,9 +166,10 @@ public final class AuthenticationConfiguration {
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
+            () -> new Provider[] { new WildFlyElytronProvider() },
             WildFlySecurityManager.isChecking() ?
-                    AccessController.doPrivileged((PrivilegedAction<ServiceLoaderSupplier<Provider>>) () -> new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader())) :
-                    new ServiceLoaderSupplier<>(Provider.class, AuthenticationConfiguration.class.getClassLoader()),
+                    AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true)) :
+                    new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true),
             INSTALLED_PROVIDERS);
 
     /**
@@ -1082,7 +1084,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
-        return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
+        return useProviders(new ProviderServiceLoaderSupplier(classLoader));
     }
 
     // SASL Mechanisms

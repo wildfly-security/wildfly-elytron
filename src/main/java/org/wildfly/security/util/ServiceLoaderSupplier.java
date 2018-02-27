@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
 
     private final Class<E> service;
-    private final ClassLoader classLoader;
+    final ClassLoader classLoader;
     private int hashCode;
     private volatile E[] result;
     private final AccessControlContext acc;
@@ -65,7 +65,7 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
         return result.clone();
     }
 
-    private E[] loadServices(final Class<E> service, final ClassLoader classLoader) {
+    E[] loadServices(final Class<E> service, final ClassLoader classLoader) {
         ArrayList<E> list = new ArrayList<>();
         ServiceLoader<E> loader = ServiceLoader.load(service, classLoader);
         Iterator<E> iterator = loader.iterator();
