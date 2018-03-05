@@ -938,6 +938,36 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test "stale" directive
+     * Server MAY send a new "digest-challenge" with a new value for nonce.
+     * Stale directive say whether should be old credential reused.
+     */
+    @Test
+    public void testStaleNonce() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
+
+        Map<String, Object> clientProps = new HashMap<>();
+        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, null, "imap", "elwood.innosoft.com", clientProps, clientCallback);
+        assertNotNull(client);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"tooOldNonce\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "stale=true,realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
+        byte[] message4 = client.evaluateChallenge(message3);
+        assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=d388dad90d4bbd760a152321f2143af7,qop=auth", new String(message4, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message5 = "rspauth=ea40f60335c427b5527b84dbabcdfffd".getBytes(StandardCharsets.UTF_8);
+        byte[] message6 = client.evaluateChallenge(message5);
+        assertEquals(null, message6);
+        assertTrue(client.isComplete());
+    }
+
     private CallbackHandler createClientCallbackHandler(String username, char[] password, String realm) throws Exception {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(

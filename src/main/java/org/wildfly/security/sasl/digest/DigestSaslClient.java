@@ -63,6 +63,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     private boolean stale = false;
     private int maxbuf = DEFAULT_MAXBUF;
     private String cipher_opts;
+    private byte[] digest_urp;
 
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
@@ -77,6 +78,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
     }
 
     private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) throws SaslException {
+        stale = false;
 
         LinkedList<String> realmList = new LinkedList<String>();
         for (String keyWord: parsedChallenge.keySet()) {
@@ -202,13 +204,17 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
             digestResponse.append(DELIMITER);
         }
 
-        username = authorizationId; // default username is authzid
+        if (! stale || username == null) {
+            username = authorizationId; // default username
 
-        if (realms != null && realms.length >= 1) {
-            realm = realms[0]; // default realm is first realm from selection
+            if (realms != null && realms.length >= 1) {
+                realm = realms[0]; // default realm is first realm from selection
+            }
+
+            digest_urp = handleUserRealmPasswordCallbacks(realms, false, false);
+        } else {
+            saslDigest.trace("Stale nonce - re-authenticating using same credential");
         }
-
-        byte[] digest_urp = handleUserRealmPasswordCallbacks(realms, false, false);
 
         // username
         digestResponse.append("username=\"");
@@ -325,16 +331,23 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
         } catch (AuthenticationMechanismException e) {
             throw e.toSaslException();
         }
-        switch (state) {
-            case STEP_TWO:
-                noteChallengeData(parsedChallenge);
-                setNegotiationState(STEP_FOUR);
-                return createResponse(parsedChallenge);
-            case STEP_FOUR:
-                checkResponseAuth(parsedChallenge);
-                negotiationComplete();
-                return null;
+        while(true) {
+            switch (state) {
+                case STEP_TWO:
+                    noteChallengeData(parsedChallenge);
+                    setNegotiationState(STEP_FOUR);
+                    return createResponse(parsedChallenge);
+                case STEP_FOUR:
+                    if (parsedChallenge.containsKey("nonce")) {
+                        saslDigest.trace("Server requested re-authentication");
+                        state = STEP_TWO;
+                        continue;
+                    }
+                    checkResponseAuth(parsedChallenge);
+                    negotiationComplete();
+                    return null;
+            }
+            throw Assert.impossibleSwitchCase(state);
         }
-        throw Assert.impossibleSwitchCase(state);
     }
 }
