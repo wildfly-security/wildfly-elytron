@@ -390,10 +390,12 @@ public final class AuthenticationConfiguration {
         return authenticationNameForwardSecurityDomain != null ? authenticationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal() : principal;
     }
 
+    @Deprecated
     String getHost() {
         return setHost;
     }
 
+    @Deprecated
     String getProtocol() {
         return setProtocol;
     }
@@ -402,6 +404,7 @@ public final class AuthenticationConfiguration {
         return saslProtocol;
     }
 
+    @Deprecated
     int getPort() {
         return setPort;
     }
@@ -933,7 +936,9 @@ public final class AuthenticationConfiguration {
      *
      * @param hostName the host name to connect to
      * @return the new configuration
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public AuthenticationConfiguration useHost(String hostName) {
         if (hostName == null || hostName.isEmpty()) {
             hostName = null;
@@ -950,7 +955,9 @@ public final class AuthenticationConfiguration {
      *
      * @param protocol the protocol to be used for outgoing connection.
      * @return the new configuration
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public AuthenticationConfiguration useProtocol(String protocol) {
         if (protocol == null || protocol.isEmpty()) {
             protocol = null;
@@ -984,7 +991,9 @@ public final class AuthenticationConfiguration {
      *
      * @param port the port to connect to, or -1 to not override the port
      * @return the new configuration
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public AuthenticationConfiguration usePort(int port) {
         if (port < -1 || port > 65535) throw log.invalidPortNumber(port);
         if (port == setPort) return this;
@@ -1325,7 +1334,7 @@ public final class AuthenticationConfiguration {
                 saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, mechanismProperties);
             }
         }
-        String host = getHost();
+        String host = uri.getHost();
         if (host != null) {
             saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
         }

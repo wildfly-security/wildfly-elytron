@@ -21,6 +21,7 @@ package org.wildfly.security.auth.client;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
@@ -148,6 +149,7 @@ public final class AuthenticationContextConfigurationClient {
         return configuration;
     }
 
+    @SuppressWarnings("deprecation")
     private static AuthenticationConfiguration establishOverrides(final URI uri, final int protocolDefaultPort, AuthenticationConfiguration configuration) {
         final String uriHost = uri.getHost();
         if (uriHost != null && configuration.setHost == null) {
@@ -254,7 +256,9 @@ public final class AuthenticationContextConfigurationClient {
      * @param uri the URI (must not be {@code null})
      * @param configuration the configuration (must not be {@code null})
      * @return the real host to use
+     * @deprecated Use {@link URI#getHost()} instead.
      */
+    @Deprecated
     public String getRealHost(URI uri, AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("configuration", configuration);
@@ -267,7 +271,9 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param configuration the configuration (must not be {@code null})
      * @return the real host to use
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public String getRealHost(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return configuration.getHost();
@@ -279,7 +285,9 @@ public final class AuthenticationContextConfigurationClient {
      * @param uri the URI (must not be {@code null})
      * @param configuration the configuration (must not be {@code null})
      * @return the real port to use
+     * @deprecated Use {@link URI#getPort()} instead.
      */
+    @Deprecated
     public int getRealPort(URI uri, AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("configuration", configuration);
@@ -292,7 +300,9 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param configuration the configuration (must not be {@code null})
      * @return the real port to use
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public int getRealPort(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return configuration.getPort();
@@ -304,7 +314,9 @@ public final class AuthenticationContextConfigurationClient {
      * @param uri the URI (must not be {@code null})
      * @param configuration the configuration (must not be {@code null})
      * @return the actual protocol to use, or {@code null} if none is configured and none is present on the URI
+     * @deprecated Use {@link URI#getScheme()} instead.
      */
+    @Deprecated
     public String getRealProtocol(URI uri, AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("configuration", configuration);
@@ -317,7 +329,9 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param configuration the configuration (must not be {@code null})
      * @return the actual protocol to use, or {@code null} if none is configured
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public String getRealProtocol(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return configuration.getProtocol();
@@ -402,7 +416,9 @@ public final class AuthenticationContextConfigurationClient {
      * @param configuration the authentication configuration to use (must not be {@code null})
      * @param protocolDefaultPort the default port for the protocol
      * @return the address of the destination
+     * @deprecated Use {@link org.wildfly.common.net.Inet#getResolved(java.net.URI, int)} instead.
      */
+    @Deprecated
     public InetSocketAddress getDestinationInetSocketAddress(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("configuration", configuration);
@@ -419,7 +435,9 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param configuration the authentication configuration to use (must not be {@code null})
      * @return the address of the destination
+     * @deprecated This configuration is not supported by most providers and will be removed in a future release.
      */
+    @Deprecated
     public InetSocketAddress getDestinationInetSocketAddress(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return new InetSocketAddress(configuration.getHost(), configuration.getPort());
@@ -433,7 +451,9 @@ public final class AuthenticationContextConfigurationClient {
      * @param protocolDefaultPort the default port for the protocol used in the URI
      * @return the connected socket
      * @throws IOException if socket creation or connection fails for some reason
+     * @deprecated Use {@link org.wildfly.common.net.Inet#getResolved(java.net.URI, int)} with {@link Socket#Socket(InetAddress, int)} instead.
      */
+    @Deprecated
     public Socket connect(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) throws IOException {
         final InetSocketAddress address = getDestinationInetSocketAddress(uri, configuration, protocolDefaultPort);
         return new Socket(address.getAddress(), address.getPort());
