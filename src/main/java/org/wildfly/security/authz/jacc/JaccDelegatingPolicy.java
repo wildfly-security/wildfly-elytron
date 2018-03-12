@@ -119,7 +119,6 @@ public class JaccDelegatingPolicy extends Policy {
 
     @Override
     public PermissionCollection getPermissions(ProtectionDomain domain) {
-        log.getPermissionsNotSupported();
         return new PermissionCollection() {
             @Override
             public void add(Permission permission) {
