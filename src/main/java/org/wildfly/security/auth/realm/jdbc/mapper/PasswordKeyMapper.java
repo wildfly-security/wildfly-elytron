@@ -36,6 +36,7 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -242,9 +243,13 @@ public class PasswordKeyMapper implements KeyMapper {
                     final String identified = ModularCrypt.identifyAlgorithm(chars);
                     if (identified != null) {
                         try {
-                            return new PasswordCredential(ModularCrypt.decode(chars));
+                            Password modularCryptPassword = ModularCrypt.decode(chars);
+                            if (log.isTraceEnabled()) {
+                                log.tracef("Key Mapper: Password credential created using Modular Crypt algorithm [%s]", identified);
+                            }
+                            return new PasswordCredential(modularCryptPassword);
                         } catch (InvalidKeySpecException e) {
-                            // fall out (unlikely but possible)
+                            log.tracef(e, "Key Mapper: Unable to identify Modular Crypt algorithm [%s]", identified);
                         }
                     }
                 }
@@ -292,7 +297,11 @@ public class PasswordKeyMapper implements KeyMapper {
         }
 
         try {
-            return new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
+            Password password = passwordFactory.generatePassword(passwordSpec);
+            if (log.isTraceEnabled()) {
+                log.tracef("Key Mapper: Password credential created using algorithm column value [%s]", algorithmName);
+            }
+            return new PasswordCredential(password);
         } catch (InvalidKeySpecException e) {
             throw log.invalidPasswordKeySpecificationForAlgorithm(this.defaultAlgorithm, e);
         }
