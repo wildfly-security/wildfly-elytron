@@ -26,6 +26,7 @@ import org.ietf.jgss.GSSManager;
  */
 public class HttpConstants {
 
+
     private HttpConstants() {
     }
 
@@ -45,6 +46,7 @@ public class HttpConstants {
     private static final String CONFIG_BASE = HttpConstants.class.getPackage().getName();
     public static final String CONFIG_CONTEXT_PATH = CONFIG_BASE + ".context-path";
     public static final String CONFIG_REALM = CONFIG_BASE + ".realm";
+    public static final String CONFIG_VALIDATE_DIGEST_URI = CONFIG_BASE + ".validate-digest-uri";
 
     /**
      * The context relative path of the login page.
@@ -143,6 +145,7 @@ public class HttpConstants {
     public static final int FOUND = 302;
     public static final int SEE_OTHER = 303;
     public static final int TEMPORARY_REDIRECT = 307;
+    public static final int BAD_REQUEST = 400;
     public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
 

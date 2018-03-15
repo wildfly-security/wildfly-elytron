@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.httpDigest;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
 import static org.wildfly.security.http.HttpConstants.NC;
 import static org.wildfly.security.http.HttpConstants.QOP;
@@ -85,8 +86,15 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     private final String domain;
     private final String mechanismName;
     private final String algorithm;
+    private final boolean validateUri;
 
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, String mechanismName, String algorithm, Supplier<Provider[]> providers) {
+    /**
+     *
+     * @param callbackHandler
+     * @param nonceManager
+     * @param configuredRealm
+     */
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, String mechanismName, String algorithm, Supplier<Provider[]> providers, String validateUri) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
@@ -94,6 +102,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         this.mechanismName = mechanismName;
         this.algorithm = algorithm;
         this.providers = providers;
+        this.validateUri = validateUri == null ? true : Boolean.parseBoolean(validateUri);
     }
 
     @Override
@@ -153,6 +162,13 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         } else {
             throw httpDigest.mechMissingDirective(URI);
         }
+
+        if (!digestUriMatchesRequestUri(request, digestUri)) {
+            fail();
+            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> httpResponse.setStatusCode(BAD_REQUEST));
+            return;
+        }
+
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
             response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
@@ -196,7 +212,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         if (Arrays.equals(response, calculatedResponse) == false) {
             fail();
-            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
 
@@ -227,6 +243,30 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) {
         String nextNonce = nonceManager.generateNonce(salt);
         response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=\"" + nextNonce + "\"");
+    }
+
+    private boolean digestUriMatchesRequestUri(HttpServerRequest request, byte[] digestUri) {
+        if (!validateUri) {
+            return true;
+        }
+
+        java.net.URI requestURI = request.getRequestURI();
+        String digestUriStr = new String(digestUri);
+
+        if (requestURI.toString().equals(digestUriStr)) {
+            return true;
+        } else {
+            // digestUri is relative & request is absolute
+            String relativeRequestUri;
+            String query = requestURI.getQuery();
+            if (query == null || query.isEmpty()) {
+                relativeRequestUri = requestURI.getPath();
+            } else {
+                relativeRequestUri = requestURI.getPath() + "?" + requestURI.getQuery();
+            }
+
+            return relativeRequestUri.equals(digestUriStr);
+        }
     }
 
     /**

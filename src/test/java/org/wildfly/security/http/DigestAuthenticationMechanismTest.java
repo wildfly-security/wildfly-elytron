@@ -46,6 +46,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         mockDigestNonce("AAAAAQABsxiWa25/kpFxsPCrpDCFsjkTzs/Xr7RPsi/VVN6faYp21Hia3h4=");
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "testrealm@host.com");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
         HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
@@ -76,6 +77,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "http-auth@example.org");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
         HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, props, getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life"));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
@@ -106,6 +108,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         mockDigestNonce("5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK");
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "api@example.org");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
         HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA512_256, props, getCallbackHandler("J\u00E4s\u00F8n Doe", "api@example.org", "Secret, or not?"));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
