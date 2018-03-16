@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.NC;
@@ -96,6 +97,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private final NonceManager nonceManager;
     private final String configuredRealm;
     private final String domain;
+    private final boolean validateUri;
 
     /**
      *
@@ -103,12 +105,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * @param nonceManager
      * @param configuredRealm
      */
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers, String validateUri) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
         this.providers = providers;
+        this.validateUri = validateUri == null ? true : Boolean.parseBoolean(validateUri);
     }
 
     @Override
@@ -168,6 +171,13 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
         } else {
             throw log.mechMissingDirective(getMechanismName(), URI);
         }
+
+        if (!digestUriMatchesRequestUri(request, digestUri)) {
+            fail();
+            request.authenticationFailed(log.mechResponseTokenMismatch(getMechanismName()), httpResponse -> httpResponse.setStatusCode(BAD_REQUEST));
+            return;
+        }
+
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
             response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
@@ -241,6 +251,30 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private void sendAuthenticationInfoHeader(final HttpServerResponse response, byte[] salt) {
         String nextNonce = nonceManager.generateNonce(salt);
         response.addResponseHeader(HttpConstants.AUTHENTICATION_INFO, HttpConstants.NEXT_NONCE + "=\"" + nextNonce + "\"");
+    }
+
+    private boolean digestUriMatchesRequestUri(HttpServerRequest request, byte[] digestUri) {
+        if (!validateUri) {
+            return true;
+        }
+
+        java.net.URI requestURI = request.getRequestURI();
+        String digestUriStr = new String(digestUri);
+
+        if (requestURI.toString().equals(digestUriStr)) {
+            return true;
+        } else {
+            // digestUri is relative & request is absolute
+            String relativeRequestUri;
+            String query = requestURI.getQuery();
+            if (query == null || query.isEmpty()) {
+                relativeRequestUri = requestURI.getPath();
+            } else {
+                relativeRequestUri = requestURI.getPath() + "?" + requestURI.getQuery();
+            }
+
+            return relativeRequestUri.equals(digestUriStr);
+        }
     }
 
     /**
