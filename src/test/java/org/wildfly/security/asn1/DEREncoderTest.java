@@ -371,7 +371,9 @@ public class DEREncoderTest {
 
     @Test
     public void testEncodeDSAKey() throws Exception {
-        KeyPair keyPair = KeyPairGenerator.getInstance("DSA").generateKeyPair();
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DSA");
+        keyPairGenerator.initialize(1024);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
         PublicKey publicKey = keyPair.getPublic();
         KeyFactory keyFactory = KeyFactory.getInstance("DSA");
         DSAPublicKeySpec keySpec = keyFactory.getKeySpec(publicKey, DSAPublicKeySpec.class);
