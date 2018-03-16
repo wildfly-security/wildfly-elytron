@@ -29,6 +29,7 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -78,8 +79,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     private static final String CHALLENGE_PREFIX = NEGOTIATE + " ";
 
-    private static final String GSS_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".GSSContext";
-    private static final String KERBEROS_TICKET = SpnegoAuthenticationMechanism.class.getName() + ".KerberosTicket";
+    private static final String SPNEGO_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".spnego-context";
     private static final String CACHED_IDENTITY_KEY = SpnegoAuthenticationMechanism.class.getName() + ".elytron-identity";
 
     private final CallbackHandler callbackHandler;
@@ -130,9 +130,9 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         }
 
         // If the scope does not already exist it can't have previously been used to store state.
-        boolean scopeIsUsable = storageScope != null && storageScope.exists();
-        GSSContext gssContext = scopeIsUsable ? storageScope.getAttachment(GSS_CONTEXT_KEY, GSSContext.class) : null;
-        KerberosTicket kerberosTicket = scopeIsUsable ? storageScope.getAttachment(KERBEROS_TICKET, KerberosTicket.class) : null;
+        SpnegoContext spnegoContext = storageScope != null && storageScope.exists() ? storageScope.getAttachment(SPNEGO_CONTEXT_KEY, SpnegoContext.class) : null;
+        GSSContext gssContext = spnegoContext != null ? spnegoContext.gssContext : null;
+        KerberosTicket kerberosTicket = spnegoContext != null ? spnegoContext.kerberosTicket : null;
         log.tracef("Evaluating SPNEGO request: cached GSSContext = %s", gssContext);
 
         // Do we already have a cached identity? If so use it.
@@ -151,6 +151,9 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         }
 
         if (gssContext == null) { // init GSSContext
+            if (spnegoContext == null) {
+                spnegoContext = new SpnegoContext();
+            }
             ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSKerberosCredential.class);
             final GSSCredential serviceGssCredential;
 
@@ -177,6 +180,8 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             } catch (GSSException e) {
                 throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
             }
+            spnegoContext.gssContext = gssContext;
+            spnegoContext.kerberosTicket = kerberosTicket;
         }
 
         // authentication exchange
@@ -196,10 +201,8 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             // We only need to store the scope if we have a challenge otherwise the next round
             // trip will be a new response anyway.
             if (storageScope != null && (storageScope.exists() || storageScope.create())) {
-                storageScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
-                log.tracef("Caching GSSContext %s", gssContext);
-                storageScope.setAttachment(KERBEROS_TICKET, kerberosTicket);
-                log.tracef("Caching KerberosTicket %s", kerberosTicket);
+                log.tracef("Caching SPNEGO Context with GSSContext %s and KerberosTicket %s", gssContext, kerberosTicket);
+                storageScope.setAttachment(SPNEGO_CONTEXT_KEY, spnegoContext);
             } else {
                 storageScope = null;
                 log.trace("No usable HttpScope for storage, continuation will not be possible");
@@ -329,8 +332,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     private static void clearAttachments(HttpScope scope) {
         if (scope != null) {
-            scope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
-            scope.setAttachment(KERBEROS_TICKET, null); // clear cache
+            scope.setAttachment(SPNEGO_CONTEXT_KEY, null); // clear cache
         }
     }
 
@@ -442,6 +444,11 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
         }
+    }
+
+    private static class SpnegoContext implements Serializable {
+        transient GSSContext gssContext;
+        transient KerberosTicket kerberosTicket;
     }
 
 }
