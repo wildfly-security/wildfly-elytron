@@ -25,6 +25,7 @@ import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
 import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
+import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -266,14 +267,15 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                 identityCache = createIdentityCache(identityCache, storageScope, true);
                 if (authorizeSrcName(gssContext, identityCache)) {
                     httpSpnego.trace("GSSContext established and authorized - authentication complete");
-                    request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
-
+                    request.authenticationComplete(
+                            responseToken == null ? null : response -> sendChallenge(responseToken, response, 0));
                     return;
                 } else {
                     httpSpnego.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
-                    request.authenticationFailed(httpSpnego.authenticationFailed());
+                    request.authenticationFailed(httpSpnego.authenticationFailed(),
+                            responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
                     return;
                 }
             } else if (responseToken != null && storageScope != null) {
