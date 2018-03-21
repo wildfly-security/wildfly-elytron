@@ -272,36 +272,31 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                     httpSpnego.trace("GSSContext established and authorized - authentication complete");
                     request.authenticationComplete(
                             responseToken == null ? null : response -> sendChallenge(responseToken, response, 0));
-                    return;
                 } else {
                     httpSpnego.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
                     request.authenticationFailed(httpSpnego.authenticationFailed(),
                             responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
-                    return;
                 }
             } else if (Arrays.equals(responseToken, NEG_STATE_REJECT)) {
                 // for IBM java - prevent sending UNAUTHORIZED for [negState = reject] token
                 httpSpnego.trace("GSSContext failed - sending negotiation rejected to the peer");
                 request.authenticationFailed(httpSpnego.authenticationFailed(),
                         response -> sendChallenge(responseToken, response, FORBIDDEN));
-                return;
             } else if (responseToken != null && storageScope != null) {
                 httpSpnego.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
-                return;
             } else {
                 httpSpnego.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
                 handleCallback(AuthenticationCompleteCallback.FAILED);
                 request.authenticationFailed(httpSpnego.authenticationFailed());
-                return;
             }
+        } else {
+            httpSpnego.trace("Request lacks valid authentication credentials");
+            clearAttachments(storageScope);
+            request.noAuthenticationInProgress(this::sendBareChallenge);
         }
-
-        httpSpnego.trace("Request lacks valid authentication credentials");
-        clearAttachments(storageScope);
-        request.noAuthenticationInProgress(this::sendBareChallenge);
     }
 
     private HttpScope getStorageScope(HttpServerRequest request) throws HttpAuthenticationException {
