@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,8 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
     private static final String SPNEGO_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".spnego-context";
     private static final String CACHED_IDENTITY_KEY = SpnegoAuthenticationMechanism.class.getName() + ".elytron-identity";
+
+    private static final byte[] NEG_STATE_REJECT = new byte[] { (byte) 0xA1, 0x07, 0x30, 0x05, (byte) 0xA0, 0x03, 0x0A, 0x01, 0x02 };
 
     private final CallbackHandler callbackHandler;
     private final GSSManager gssManager;
@@ -259,6 +262,12 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME),
                             responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
                 }
+            } else if (Arrays.equals(responseToken, NEG_STATE_REJECT)) {
+                // for IBM java - prevent sending UNAUTHORIZED for [negState = reject] token
+                log.trace("GSSContext failed - sending negotiation rejected to the peer");
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME),
+                        response -> sendChallenge(responseToken, response, FORBIDDEN));
+                return;
             } else if (responseToken != null && storageScope != null) {
                 log.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
