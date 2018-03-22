@@ -711,6 +711,18 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1177, value = "Authorization failed.")
     IOException authorizationFailed();
 
+    @LogMessage(level = WARN)
+    @Message(id = 1178, value = "Unable to update jwk set from \"%1$s\".")
+    void unableToFetchJwks(String url);
+
+    @LogMessage(level = WARN)
+    @Message(id = 1179, value = "SSL not configured. jku claim will not be supported.")
+    void tokenRealmJwtNoSSLIgnoringJku();
+
+    @LogMessage
+    @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
+    void tokenRealmJwkMissingClaim(String claim);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

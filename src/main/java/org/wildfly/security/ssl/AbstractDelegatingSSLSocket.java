@@ -42,6 +42,10 @@ abstract class AbstractDelegatingSSLSocket extends SSLSocket {
         this.delegate = delegate;
     }
 
+    public String getApplicationProtocol​() { //Java 9 hack for webmockserver ssl
+        return null;
+    }
+
     public String[] getSupportedCipherSuites() {
         return delegate.getSupportedCipherSuites();
     }
