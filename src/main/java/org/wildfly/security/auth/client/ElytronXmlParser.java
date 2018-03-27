@@ -128,7 +128,11 @@ import org.wildfly.security.x500.X500;
 public final class ElytronXmlParser {
 
     private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
-            () -> new Provider[] { new WildFlyElytronProvider() },
+            () -> new Provider[] {
+                    WildFlySecurityManager.isChecking() ?
+                            AccessController.doPrivileged((PrivilegedAction<WildFlyElytronProvider>) () -> new WildFlyElytronProvider()) :
+                            new WildFlyElytronProvider()
+            },
             WildFlySecurityManager.isChecking() ?
                     AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true)) :
                     new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true));
