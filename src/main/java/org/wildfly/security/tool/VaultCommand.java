@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,6 +95,9 @@ public class VaultCommand extends Command {
         String secretKeyAlias;
         Map<String, String> implProps;
         String outputFile;
+        String csType;
+        String csProvider;
+        String csOtherProviders;
     }
 
     public VaultCommand() {
@@ -125,6 +129,17 @@ public class VaultCommand extends Command {
         o.setValueSeparator(';');
         o.setOptionalArg(true);
         options.addOption(o);
+        o = new Option("t", CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSTypeDesc());
+        o.setArgName("type");
+        options.addOption(o);
+        o = new Option("o", CredentialStoreCommand.OTHER_PROVIDERS_PARAM, true, ElytronToolMessages.msg.cmdLineOtherProvidersDesc());
+        o.setArgName("providers");
+        o.setOptionalArg(true);
+        options.addOption(o);
+        o = new Option("q", CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM, true, ElytronToolMessages.msg.cmdLineCustomCredentialStoreProviderDesc());
+        o.setArgName("cs-provider");
+        o.setOptionalArg(true);
+        options.addOption(o);
         options.addOption("f", PRINT_SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLineVaultPrintSummary());
 
         Option b = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cliCommandBulkVaultCredentialStoreConversion());
@@ -147,6 +162,7 @@ public class VaultCommand extends Command {
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
         }
+
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
 
         printDuplicatesWarning(cmdLine);
@@ -164,7 +180,8 @@ public class VaultCommand extends Command {
 
             for(Descriptor d: descriptors) {
                 try {
-                    final HashMap<String, String> convertedOptions = convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps);
+                    final HashMap<String, String> convertedOptions = convert(d.keyStoreURL, d.vaultPassword, d.encryptionDirectory, d.salt, d.iterationCount, d.secretKeyAlias, d.outputFile, d.implProps,
+                            d.csType, d.csProvider, d.csOtherProviders);
                     System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(d.encryptionDirectory, d.keyStoreURL, d.outputFile));
                     if (printSummary) {
                         printSummary(d.vaultPassword, d.salt, d.iterationCount, convertedOptions);
@@ -187,6 +204,10 @@ public class VaultCommand extends Command {
             String vaultSecretKeyAlias = cmdLine.getOptionValue(ALIAS_PARAM, "vault");
             String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
             Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM));
+            String csType = cmdLine.getOptionValue(CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
+            String csProvider = cmdLine.getOptionValue(CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM);
+            String csOtherProviders = cmdLine.getOptionValue(CredentialStoreCommand.OTHER_PROVIDERS_PARAM);
+
             if (location == null || location.isEmpty()) {
                 location = convertedStoreName(encryptionDirectory, implProps);
             }
@@ -195,8 +216,8 @@ public class VaultCommand extends Command {
                 keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), true, ElytronToolMessages.msg.vaultPasswordPromptConfirm());
             }
 
-            final HashMap<String, String> convertedOptions = convert(keystoreURL, keystorePassword, encryptionDirectory, salt, iterationCount, vaultSecretKeyAlias,
-                    location, implProps);
+            final HashMap<String, String> convertedOptions = convert(keystoreURL, keystorePassword, encryptionDirectory, salt,
+                    iterationCount, vaultSecretKeyAlias, location, implProps, csType, csProvider, csOtherProviders);
             System.out.println(ElytronToolMessages.msg.vaultConvertedToCS(encryptionDirectory, keystoreURL, location));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             if (printSummary) {
@@ -235,7 +256,7 @@ public class VaultCommand extends Command {
 
     private HashMap<String, String> convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
                          String salt, int iterationCount, String secretKeyAlias,
-                         String outputFile, Map<String, String> csAttributes)
+                         String outputFile, Map<String, String> csAttributes, String csType, String csProvider, String csOtherProviders)
             throws Exception {
 
         final HashMap<String, String> vaultInitialOptions = new HashMap<>();
@@ -281,9 +302,26 @@ public class VaultCommand extends Command {
             convertedOptions.putAll(csAttributes);
         }
         convertedOptions.put("create", Boolean.TRUE.toString());
-        convertedOptions.put("keyStoreType", defaultKeyStoreType);
-        CredentialStore convertedCredentialStore = getInstance(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
-        convertedCredentialStore.initialize(convertedOptions, getCredentialStoreProtectionParameter(vaultPassword, salt, iterationCount));
+        if (csType == null || "".equals(csType)) {
+            csType = KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE;
+        }
+        if (csType.equals(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE)) {
+            convertedOptions.put("keyStoreType", defaultKeyStoreType);
+        }
+        CredentialStore convertedCredentialStore;
+        if (csProvider != null) {
+            convertedCredentialStore = CredentialStore.getInstance(csType, csProvider, getProvidersSupplier(csProvider));
+        } else {
+            try {
+                convertedCredentialStore = CredentialStore.getInstance(csType);
+            } catch (NoSuchAlgorithmException e) {
+                // fallback to load all possible providers
+                convertedCredentialStore = CredentialStore.getInstance(csType, getProvidersSupplier(null));
+            }
+        }
+        convertedCredentialStore.initialize(convertedOptions,
+                getCredentialStoreProtectionParameter(vaultPassword, salt, iterationCount),
+                getProvidersSupplier(csOtherProviders).get());
         for (String alias : vaultCredentialStore.getAliases()) {
             PasswordCredential credential = vaultCredentialStore.retrieve(alias, PasswordCredential.class);
             convertedCredentialStore.store(alias, credential);
@@ -331,6 +369,12 @@ public class VaultCommand extends Command {
                     descriptor.outputFile = value;
                 } else if (attribute.equals(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM)) {
                     descriptor.implProps =  CredentialStoreCommand.parseCredentialStoreProperties(value);
+                } else if (attribute.equals(CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM)) {
+                    descriptor.csType = value;
+                } else if (attribute.equals(CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM)) {
+                    descriptor.csProvider = value;
+                } else if (attribute.equals(CredentialStoreCommand.OTHER_PROVIDERS_PARAM)) {
+                    descriptor.csOtherProviders = value;
                 } else {
                     throw ElytronToolMessages.msg.unrecognizedDescriptorAttribute(Integer.toString(lineNumber));
                 }

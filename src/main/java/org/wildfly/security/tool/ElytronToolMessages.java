@@ -182,7 +182,8 @@ public interface ElytronToolMessages extends BasicLogger {
     IllegalArgumentException invalidParameterMustBeIntBetween(String parameter, int min, int max);
 
     // vault command
-    @Message(id = NONE, value = "\"vault\" command is used convert PicketBox Security Vault to credential store using default implementation (KeyStoreCredentialStore).")
+    @Message(id = NONE, value = "\"vault\" command is used convert PicketBox Security Vault to credential store using default implementation (KeyStoreCredentialStore)" +
+                                " or custom implementation set with the \"type\" option.")
     String cmdVaultHelpHeader();
 
     @Message(id = NONE, value = "Vault keystore URL (defaults to \"vault.keystore\")")
@@ -224,16 +225,20 @@ public interface ElytronToolMessages extends BasicLogger {
     String cliCommandToNewCredentialStore();
 
     @Message(id = NONE, value = "Bulk conversion with options listed in description file. All options have no default value and should be set in the file.%n" +
-                                "All options are required with two exceptions:%n" +
-                                " - \"properties\" option%n" +
+                                "All options are required with the exceptions:%n" +
+                                " - \"properties\" option%n - \"type\" option (defaults to \"KeyStoreCredentialStore\")%n - \"credential-store-provider\" option%n - \"other-providers\" option%n" +
                                 " - \"salt\" and \"iteration\" options can be omitted when plain-text password is used%n" +
                                 "Each set of options must start with the \"keystore\" option in the following format:%n " +
                                 "keystore:<value>%nkeystore-password:<value>%nenc-dir:<value>%nsalt:<value>%niteration:<value>%nlocation:<value>%n" +
-                                "alias:<value>%nproperties:<parameter1>=<value1>; ... ;<parameterN>=<valueN>")
+                                "alias:<value>%nproperties:<parameter1>=<value1>; ... ;<parameterN>=<valueN>%ntype:<value>%n" +
+                                "credential-store-provider:<value>%nother-providers:<value>")
     String cliCommandBulkVaultCredentialStoreConversion();
 
     @Message(id = NONE, value = "Print summary of conversion")
     String cmdLineVaultPrintSummary();
+
+    @Message(id = NONE, value = "Converted credential store type (defaults to \"KeyStoreCredentialStore\")")
+    String cmdLineVaultCSTypeDesc();
 
     @Message(id = NONE, value = "Location of credential store storage file (defaults to \"converted-vault.cr-store\" in vault encryption directory)")
     String cmdLineVaultCSLocationDesc();
