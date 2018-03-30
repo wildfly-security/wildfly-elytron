@@ -327,4 +327,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 27, value = "Wrong masked password format. Expected format is \"MASK-<encoded payload>;<salt>;<iteration>\"")
     IllegalArgumentException wrongMaskedPasswordFormat();
+
+    @Message(id = NONE, value = "In the message below, option '%s' refers to long option '%s'.")
+    String longOptionDescription(String option, String longOption);
 }
