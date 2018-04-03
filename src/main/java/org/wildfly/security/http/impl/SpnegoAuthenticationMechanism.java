@@ -464,6 +464,9 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
     }
 
     private static class SpnegoContext implements Serializable {
+
+        private static final long serialVersionUID = 1168213910107551573L;
+
         transient GSSContext gssContext;
         transient KerberosTicket kerberosTicket;
     }
