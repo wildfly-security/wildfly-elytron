@@ -98,25 +98,6 @@ public class ModifiabilitySuiteChild {
     }
 
     @Test
-    public void testCreateDeleteEscaped() throws RealmUnavailableException, InterruptedException {
-        String horribleIdentityName = " escape testing identity name , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! ' ";
-
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(horribleIdentityName));
-        Assert.assertFalse(identity.exists());
-        identity.create();
-        identity.dispose();
-
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(horribleIdentityName));
-        Assert.assertTrue(identity.exists());
-        identity.delete();
-        identity.dispose();
-
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(horribleIdentityName));
-        Assert.assertFalse(identity.exists());
-        identity.dispose();
-    }
-
-    @Test
     public void testAttributeSetting() throws Exception {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal("myNewAttributesIdentity"));
         Assert.assertFalse(identity.exists());
@@ -138,37 +119,7 @@ public class ModifiabilitySuiteChild {
         Assert.assertTrue(identity.exists());
 
         org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();
-        Assert.assertEquals("JohnSmithsNewIdentity", attributes.get("userName").get(0));
-        Assert.assertEquals("John", attributes.get("firstName").get(0));
-        Assert.assertEquals("Smith", attributes.get("lastName").get(0));
-        Assert.assertEquals(0, attributes.get("description").size());
-        Assert.assertEquals(2, attributes.get("phones").size());
-        identity.dispose();
-    }
-
-    @Test
-    public void testAttributeSettingEscaped() throws Exception {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '"));
-        Assert.assertFalse(identity.exists());
-        identity.create();
-
-        MapAttributes newAttributes = new MapAttributes();
-        newAttributes.addFirst("userName", " JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '");
-        newAttributes.addFirst("firstName", "John");
-        newAttributes.addFirst("lastName", "Smith");
-        newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
-        identity.setAttributes(newAttributes);
-        identity.dispose();
-
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '"));
-        Assert.assertFalse(identity.exists());
-        identity.dispose();
-
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new NamePrincipal(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '"));
-        Assert.assertTrue(identity.exists());
-
-        org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();
-        Assert.assertEquals(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", attributes.get("userName").get(0));
+        Assert.assertEquals("johnsmithsnewidentity", attributes.get("userName").get(0).toLowerCase());
         Assert.assertEquals("John", attributes.get("firstName").get(0));
         Assert.assertEquals("Smith", attributes.get("lastName").get(0));
         Assert.assertEquals(0, attributes.get("description").size());
