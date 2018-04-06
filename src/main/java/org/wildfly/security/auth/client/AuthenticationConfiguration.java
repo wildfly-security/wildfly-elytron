@@ -166,7 +166,11 @@ public final class AuthenticationConfiguration {
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
-            () -> new Provider[] { new WildFlyElytronProvider() },
+            () -> new Provider[] {
+                    WildFlySecurityManager.isChecking() ?
+                            AccessController.doPrivileged((PrivilegedAction<WildFlyElytronProvider>) () -> new WildFlyElytronProvider()) :
+                            new WildFlyElytronProvider()
+            },
             WildFlySecurityManager.isChecking() ?
                     AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true)) :
                     new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true),
