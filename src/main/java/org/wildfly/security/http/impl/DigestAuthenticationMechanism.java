@@ -251,7 +251,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         }
 
         java.net.URI requestURI = request.getRequestURI();
-        String digestUriStr = new String(digestUri);
+        String digestUriStr = new String(digestUri, UTF_8);
 
         if (requestURI.toString().equals(digestUriStr)) {
             return true;
