@@ -2432,7 +2432,7 @@ public final class ElytronXmlParser {
                 if (!xmlVersion.isAtLeast(Version.VERSION_1_1)) {
                    throw reader.unexpectedElement();
                 }
-                if (reader.getLocalName() == "credential-store-reference") {
+                if ("credential-store-reference".equals(reader.getLocalName())) {
                     if (password != null) {
                         throw reader.unexpectedElement();
                     }
@@ -2510,7 +2510,7 @@ public final class ElytronXmlParser {
                 if (!xmlVersion.isAtLeast(Version.VERSION_1_1)) {
                     throw reader.unexpectedElement();
                 }
-                if (reader.getLocalName() == "credential-store-reference") {
+                if ("credential-store-reference".equals(reader.getLocalName())) {
                     if (secret != null) {
                         throw reader.unexpectedElement();
                     }
