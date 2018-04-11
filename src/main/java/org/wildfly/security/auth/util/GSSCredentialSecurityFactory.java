@@ -52,6 +52,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
  * A {@link SecurityFactory} implementation for obtaining a {@link GSSCredential}.
@@ -322,9 +323,16 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             final Subject subject = new Subject();
 
             try {
-                final LoginContext lc = new LoginContext("KDC", subject, (c) -> {
-                    throw new FastUnsupportedCallbackException(c[0]);
-                }, configuration);
+                final ClassLoader oldCl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(Builder.class.getClassLoader());
+                final LoginContext lc;
+                try {
+                    lc = new LoginContext("KDC", subject, (c) -> {
+                        throw new FastUnsupportedCallbackException(c[0]);
+                    }, configuration);
+                } finally {
+                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldCl);
+                }
                 log.tracef("Logging in using LoginContext and subject [%s]", subject);
                 lc.login();
                 log.tracef("Logging in using LoginContext and subject [%s] succeed", subject);
