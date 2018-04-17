@@ -928,6 +928,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             parseCredential(streamReader, (algorithm, format, text) -> {
                 try {
                     if (BASE64_FORMAT.equals(format)) {
+                        if (algorithm == null) {
+                            throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                        }
                         byte[] passwordBytes = CodePointIterator.ofChars(text.toCharArray()).base64Decode().drain();
                         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                         PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(passwordBytes);
@@ -982,6 +985,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
 
             try {
+                if (algorithm == null) {
+                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                }
                 PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                 Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
                 credentials.add(new PasswordCredential(password));
