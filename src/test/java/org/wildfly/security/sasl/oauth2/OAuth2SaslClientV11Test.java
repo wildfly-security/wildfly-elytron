@@ -33,6 +33,7 @@ import java.security.AccessController;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,11 +48,13 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.junit.Test;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.After;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -68,10 +71,6 @@ import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 
 
 /**
@@ -79,8 +78,7 @@ import okhttp3.mockwebserver.RecordedRequest;
  */
 public class OAuth2SaslClientV11Test extends BaseTestCase {
 
-    private MockWebServer server;
-
+    private static final MockWebServer server = new MockWebServer();
     private static final Provider provider = new WildFlyElytronProvider();
 
     private static Map<String, String> stores = new HashMap<>();
@@ -89,7 +87,7 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
         stores.put("ONE", BASE_STORE_DIRECTORY + "/oauth_test_ks.jceks");
     }
 
-    public static void cleanCredentialStores() {
+    private static void cleanCredentialStores() {
         File dir = new File(BASE_STORE_DIRECTORY);
         dir.mkdirs();
 
@@ -110,28 +108,16 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
                 .addPassword("goodPassAlias", "dont_tell_me")
                 .addPassword("badPassAlias", "bad_password")
                 .build();
-    }
 
-    @AfterClass
-    public static void tearDown() {
-        Security.removeProvider(provider.getName());
-    }
-
-    @Before
-    public void onBefore() throws Exception {
-        System.setProperty("wildfly.config.url", getClass().getResource("wildfly-oauth2-test-config-v1_1.xml").toExternalForm());
-        server = new MockWebServer();
-
+        System.setProperty("wildfly.config.url", OAuth2SaslClientV11Test.class.getResource("wildfly-oauth2-test-config-v1_1.xml").toExternalForm());
         server.setDispatcher(createTokenEndpoint());
-
         server.start(50831);
     }
 
-    @After
-    public void onAfter() throws Exception {
-        if (server != null) {
-            server.shutdown();
-        }
+    @AfterClass
+    public static void tearDown() throws Exception {
+        server.shutdown();
+        Security.removeProvider(provider.getName());
     }
 
     @Test
@@ -588,7 +574,7 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
         return TokenSecurityRealm.builder().validator(JwtValidator.builder().build()).principalClaimName("preferred_username").build();
     }
 
-    private Dispatcher createTokenEndpoint() {
+    private static Dispatcher createTokenEndpoint() {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {
@@ -624,6 +610,6 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
         AuthenticationContext context = AuthenticationContext.getContextManager().get();
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         AuthenticationConfiguration authenticationConfiguration = contextConfigurationClient.getAuthenticationConfiguration(serverUri, context);
-        return contextConfigurationClient.createSaslClient(serverUri, authenticationConfiguration, Arrays.asList(SaslMechanismInformation.Names.OAUTHBEARER));
+        return contextConfigurationClient.createSaslClient(serverUri, authenticationConfiguration, Collections.singletonList(SaslMechanismInformation.Names.OAUTHBEARER));
     }
 }
