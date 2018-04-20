@@ -848,7 +848,9 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      *
      * @since 1.2.0
+     * @deprecated can be ommited - kerberos based authentication mechanism obtains credential himself
      */
+    @Deprecated
     public AuthenticationConfiguration useLocalKerberosCredential(Oid[] mechanismOids) {
         return useCredentials(getCredentialSource().with(LocalKerberosCredentialSource.builder().setMechanismOids(mechanismOids).build()));
     }

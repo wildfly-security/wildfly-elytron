@@ -1103,6 +1103,7 @@ public final class ElytronXmlParser {
                         }
                         CredentialSource kerberosCredentialSource = parseLocalKerberos(reader);
                         function = andThenOp(function, credentialSource -> credentialSource.with(kerberosCredentialSource));
+                        xmlLog.xmlDeprecatedElement(reader.getLocalName(), reader.getLocation());
                         break;
                     }
                     default: {
