@@ -50,6 +50,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
 
     private final Supplier<DateTimeFormatter> dateTimeFormatterSupplier;
     private final boolean syncOnAccept;
+    private final boolean flushOnAccept;
 
     private File file;
     private FileDescriptor fileDescriptor;
@@ -60,6 +61,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
     FileAuditEndpoint(Builder builder) throws IOException {
         this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
         this.syncOnAccept = builder.syncOnAccept;
+        this.flushOnAccept = builder.flushOnAccept;
         this.clock = builder.clock;
         setFile(builder.location.toFile());
     }
@@ -151,10 +153,8 @@ public class FileAuditEndpoint implements AuditEndpoint {
             preWrite(instant);
             write(toWrite);
 
-            if (syncOnAccept) {
-                outputStream.flush();
-                fileDescriptor.sync();
-            }
+            if (flushOnAccept) outputStream.flush();
+            if (syncOnAccept) fileDescriptor.sync();
         }
     }
 
@@ -195,6 +195,8 @@ public class FileAuditEndpoint implements AuditEndpoint {
         private Supplier<DateTimeFormatter> dateTimeFormatterSupplier = () -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
         private Path location = new File("audit.log").toPath();
         private boolean syncOnAccept = true;
+        private boolean flushOnAccept = true;
+        private boolean flushSet = false;
 
         Builder() {
         }
@@ -225,13 +227,30 @@ public class FileAuditEndpoint implements AuditEndpoint {
         }
 
         /**
-         * Sets if the output should be flushed and system buffers forces to synchronize on each event accepted.
+         * Sets if the output should be flushed on each event accepted.
+         * If not set, flushing is done when output buffers synchronization is set.
          *
-         * @param syncOnAccept should the output be flushed and system buffers forces to synchronize on each event accepted.
+         * @param flushOnAccept should the output be flushed on each event accepted.
+         * @return this builder.
+         * @since 1.3.0
+         */
+        public Builder setFlushOnAccept(boolean flushOnAccept) {
+            this.flushOnAccept = flushOnAccept;
+            this.flushSet = true;
+
+            return this;
+        }
+
+        /**
+         * Sets if the system output buffers should be forced to be synchronized on each event accepted. Enabled by default.
+         * Output flushing can be set independently using {@link #setFlushOnAccept(boolean)} but defaults to this value.
+         *
+         * @param syncOnAccept should the system output buffers be forced to be synchronized on each event accepted.
          * @return this builder.
          */
         public Builder setSyncOnAccept(boolean syncOnAccept) {
             this.syncOnAccept = syncOnAccept;
+            if (! flushSet) this.flushOnAccept = syncOnAccept;
 
             return this;
         }
