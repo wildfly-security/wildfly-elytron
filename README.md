@@ -31,5 +31,9 @@ Issue Tracking
 
 Bugs and features are tracked within the Elytron Jira project at https://issues.jboss.org/browse/ELY
 
+Contributions
+-------------
 
+When submitting bug fixes please start from the 1.3.x branch and submit the pull request against this branch.
 
+All new features and enhancements should be submitted to master only.
