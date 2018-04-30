@@ -676,6 +676,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
     void xmlDeprecatedElement(String name, XMLLocation location);
 
+    @Message(id = 1167, value = "Unsupported algorithm \"%s\" for %s type")
+    ConfigXMLParseException xmlUnsupportedAlgorithmForType(@Param Location location, String algorithm, String type);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

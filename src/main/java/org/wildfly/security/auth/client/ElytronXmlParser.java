@@ -114,7 +114,9 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
 import org.wildfly.security.sasl.SaslMechanismSelector;
@@ -797,6 +799,12 @@ public final class ElytronXmlParser {
                         keyStoreCredential = () -> new PasswordEntry(credential.get());
                         break;
                     }
+                    case "key-store-masked-password": {
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_3)) throw reader.unexpectedElement();
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseMaskedPassword(reader, providers);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
+                        break;
+                    }
                     case "credential-store-reference": {
                         if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
                             throw reader.unexpectedElement();
@@ -1289,6 +1297,14 @@ public final class ElytronXmlParser {
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
                         break;
                     }
+                    case "masked-password": {
+                        if ( ! xmlVersion.isAtLeast(Version.VERSION_1_3)) {
+                            throw reader.unexpectedElement();
+                        }
+                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseMaskedPassword(reader, providers);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
+                        break;
+                    }
                     case "key-pair": {
                         KeyPair keyPair = parseKeyPair(reader, xmlVersion);
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(keyPair))));
@@ -1549,6 +1565,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "credential-store-reference": {
+                        // group 2
                         if (gotCredential || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
                             throw reader.unexpectedElement();
                         }
@@ -1573,6 +1590,26 @@ public final class ElytronXmlParser {
                         gotCredential = true;
                         final ExceptionSupplier<Password, ConfigXMLParseException> clearPassword = parseClearPassword(reader, providersSupplier);
                         passwordFactory = () -> ((ClearPassword)clearPassword.get()).getPassword();
+                        break;
+                    }
+                    case "key-store-masked-password": {
+                        // group 2
+                        if (gotCredential || !xmlVersion.isAtLeast(Version.VERSION_1_3)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotCredential = true;
+                        final XMLLocation nestedLocation = reader.getLocation();
+                        final ExceptionSupplier<Password, ConfigXMLParseException> maskedPassword = parseMaskedPassword(reader, providersSupplier);
+                        passwordFactory = () -> {
+                            try {
+                                Password password = maskedPassword.get();
+                                PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm());
+                                ClearPasswordSpec spec = factory.getKeySpec(password, ClearPasswordSpec.class);
+                                return spec.getEncodedPassword();
+                            } catch (GeneralSecurityException e) {
+                                throw xmlLog.xmlFailedToCreateCredential(nestedLocation, e);
+                            }
+                        };
                         break;
                     }
                     case "file": {
@@ -1689,6 +1726,12 @@ public final class ElytronXmlParser {
                     case "key-store-clear-password": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
                         ExceptionSupplier<Password, ConfigXMLParseException> credential = parseClearPassword(reader, providers);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
+                        break;
+                    }
+                    case "key-store-masked-password": {
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_3)) throw reader.unexpectedElement();
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseMaskedPassword(reader, providers);
                         keyStoreCredential = () -> new PasswordEntry(credential.get());
                         break;
                     }
@@ -2452,7 +2495,7 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code clear-password-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @return the clear password characters
+     * @return a {@link ClearPassword} supplier
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
     static ExceptionSupplier<Password, ConfigXMLParseException> parseClearPassword(ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
@@ -2480,6 +2523,75 @@ public final class ElytronXmlParser {
                     try {
                         PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, providers);
                         return Assert.assertNotNull(factory.generatePassword(new ClearPasswordSpec(finalPassword)).castAs(ClearPassword.class));
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                        throw xmlLog.xmlFailedToCreateCredential(location, cause);
+                    }
+                };
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code masked-password-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     *  @return a {@link MaskedPassword} supplier
+     * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
+     */
+    static ExceptionSupplier<Password, ConfigXMLParseException> parseMaskedPassword(ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String algorithm = MaskedPassword.ALGORITHM_MASKED_MD5_DES;
+        char[] initialKeyMaterial = "somearbitrarycrazystringthatdoesnotmatter".toCharArray();
+        int iterationCount = 0;
+        byte[] salt = null;
+        byte[] maskedPasswordBytes = null;
+        byte[] initializationVector = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "algorithm":
+                    algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                case "key-material":
+                    initialKeyMaterial = reader.getAttributeValueResolved(i).toCharArray();
+                    break;
+                case "iteration-count":
+                    iterationCount = reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE);
+                    break;
+                case "salt":
+                    salt = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).asUtf8().drain();
+                    break;
+                case "masked-password":
+                    maskedPasswordBytes = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).base64Decode().drain();
+                    break;
+                case "initialization-vector":
+                    initializationVector = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).base64Decode().drain();
+                    break;
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (iterationCount == 0) throw missingAttribute(reader, "iteration-count");
+        if (salt == null) throw missingAttribute(reader, "salt");
+        if (maskedPasswordBytes == null) throw missingAttribute(reader, "masked-password");
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                final XMLLocation location = reader.getLocation();
+                if (!MaskedPassword.isMaskedAlgorithm(algorithm)) {
+                    throw xmlLog.xmlUnsupportedAlgorithmForType(location, algorithm, MaskedPassword.class.getSimpleName());
+                }
+                final String finalAlgorithm = algorithm;
+                final MaskedPasswordSpec spec = new MaskedPasswordSpec(initialKeyMaterial, iterationCount, salt, maskedPasswordBytes, initializationVector);
+                return () -> {
+                    try {
+                        PasswordFactory factory = PasswordFactory.getInstance(finalAlgorithm, providers);
+                        return Assert.assertNotNull(factory.generatePassword(spec).castAs(MaskedPassword.class));
                     } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
                         throw xmlLog.xmlFailedToCreateCredential(location, cause);
                     }
