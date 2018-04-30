@@ -18,23 +18,22 @@
 
 package org.wildfly.security.password.impl;
 
+
 import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
-import java.security.InvalidAlgorithmParameterException;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
@@ -160,39 +159,70 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
     }
 
     private static byte[] mask(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final char[] chars) throws InvalidKeySpecException {
-        final Cipher cipher = getCipher(algorithm, initialKeyMaterial, iterationCount, salt, Cipher.ENCRYPT_MODE);
-        try {
-            return cipher.doFinal(CodePointIterator.ofChars(chars).asUtf8().drain());
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new InvalidKeySpecException(e);
-        }
-    }
+        final String pbeName = MaskedPassword.getPBEName(algorithm);
+        Assert.assertNotNull(pbeName);
 
-    private static char[] unmask(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] bytes) throws InvalidKeySpecException {
-        final Cipher cipher = getCipher(algorithm, initialKeyMaterial, iterationCount, salt, Cipher.DECRYPT_MODE);
         try {
-            return ByteIterator.ofBytes(cipher.doFinal(bytes)).asUtf8String().drainToString().toCharArray();
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new InvalidKeySpecException(e);
-        }
-    }
-
-    private static Cipher getCipher(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final int mode) throws InvalidKeySpecException  {
-        try {
-            // Create the factories first to fail fast
-            final String pbeName = MaskedPassword.getPBEName(algorithm);
-            Assert.assertNotNull(pbeName);
-            final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
             final Cipher cipher = Cipher.getInstance(pbeName);
+            final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
 
             // Create the PBE secret key
             final PBEParameterSpec cipherSpec = new PBEParameterSpec(salt, iterationCount);
             final PBEKeySpec keySpec = new PBEKeySpec(initialKeyMaterial);
             final SecretKey cipherKey = factory.generateSecret(keySpec);
 
-            cipher.init(mode, cipherKey, cipherSpec);
-            return cipher;
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
+            cipher.init(Cipher.ENCRYPT_MODE, cipherKey, cipherSpec);
+
+            final byte[] encrypted = cipher.doFinal(CodePointIterator.ofChars(chars).asUtf8().drain());
+
+            // To keep this implementation compatible with PicketBox, do not prepend the IV to the masked bytes, make
+            // the result the same as in PicketBox implementation
+            final byte[] iv = MaskedPassword.ALGORITHM_MASKED_MD5_DES.equals(algorithm) ? null : cipher.getIV();
+
+            if (iv == null) {
+                return encrypted;
+            }
+
+            final byte[] ivWithEncrypted = new byte[iv.length + encrypted.length];
+            System.arraycopy(iv, 0, ivWithEncrypted, 0, iv.length);
+            System.arraycopy(encrypted, 0, ivWithEncrypted, iv.length, encrypted.length);
+
+            return ivWithEncrypted;
+        } catch (GeneralSecurityException e) {
+            throw new InvalidKeySpecException(e);
+        }
+    }
+
+    private static char[] unmask(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] bytes) throws InvalidKeySpecException {
+        final String pbeName = MaskedPassword.getPBEName(algorithm);
+        Assert.assertNotNull(pbeName);
+
+        try {
+            final Cipher cipher = Cipher.getInstance(pbeName);
+            final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
+
+            // PicketBox used MD5 with DES algorithm and did not use this way of preserving the IV, but as it uses this
+            // algorithms in PBES1 mode (RFC2898) the IV is derived from the secret key anyhow so it is not necessary to
+            // prepend it to the masked bytes
+            final int blockSize = MaskedPassword.ALGORITHM_MASKED_MD5_DES.equals(algorithm) ? 0 : cipher.getBlockSize();
+            final AlgorithmParameterSpec parameterSpec;
+            if (blockSize == 0) {
+                parameterSpec = null;
+            } else {
+                parameterSpec = new IvParameterSpec(bytes, 0, blockSize);
+            }
+
+            // Create the PBE secret key
+            final PBEParameterSpec cipherSpec = new PBEParameterSpec(salt, iterationCount, parameterSpec);
+            final PBEKeySpec keySpec = new PBEKeySpec(initialKeyMaterial);
+            final SecretKey cipherKey = factory.generateSecret(keySpec);
+
+            cipher.init(Cipher.DECRYPT_MODE, cipherKey, cipherSpec);
+
+            final byte[] clearText = cipher.doFinal(bytes, blockSize, bytes.length - blockSize);
+
+            return ByteIterator.ofBytes(clearText).asUtf8String().drainToString().toCharArray();
+        } catch (GeneralSecurityException e) {
             throw new InvalidKeySpecException(e);
         }
     }
