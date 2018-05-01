@@ -303,7 +303,7 @@ public class PasswordKeyMapper implements KeyMapper {
             }
             return new PasswordCredential(password);
         } catch (InvalidKeySpecException e) {
-            throw log.invalidPasswordKeySpecificationForAlgorithm(this.defaultAlgorithm, e);
+            throw log.invalidPasswordKeySpecificationForAlgorithm(algorithmName, e);
         }
     }
 

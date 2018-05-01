@@ -101,9 +101,27 @@
 
     <xsd:complexType name="authentication-configuration-type">
         <xsd:all>
-            <xsd:element name="set-host" type="name-type" minOccurs="0"/>
-            <xsd:element name="set-port" type="port-number-type" minOccurs="0"/>
-            <xsd:element name="set-protocol" type="name-type" minOccurs="0"/>
+            <xsd:element name="set-host" type="name-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        DEPRECATED.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="set-port" type="port-number-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        DEPRECATED.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="set-protocol" type="name-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        DEPRECATED.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
             <xsd:element ref="abstract-user-spec"/>
             <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
             <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="0"/>

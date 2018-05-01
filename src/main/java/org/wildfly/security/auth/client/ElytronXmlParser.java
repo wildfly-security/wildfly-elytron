@@ -781,6 +781,7 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 0);
                         final String hostName = parseNameType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useHost(hostName));
+                        xmlLog.xmlDeprecatedElement(reader.getLocalName(), reader.getLocation());
                         break;
                     }
                     case "set-port": {
@@ -788,6 +789,7 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 1);
                         final int port = parsePortType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.usePort(port));
+                        xmlLog.xmlDeprecatedElement(reader.getLocalName(), reader.getLocation());
                         break;
                     }
                     // these two are a <choice> which is why they share a bit #; you can have only one of them
@@ -877,6 +879,7 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 13);
                         final String protocol = parseNameType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProtocol(protocol));
+                        xmlLog.xmlDeprecatedElement(reader.getLocalName(), reader.getLocation());
                         break;
                     }
                     default: {
