@@ -62,6 +62,7 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
+import org.wildfly.client.config.XMLLocation;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.audit.EventPriority;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
@@ -667,6 +668,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
     GeneralSecurityException initialLoginSkipped(long seconds);
+
+    @LogMessage(level = WARN)
+    @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
+    void xmlDeprecatedElement(String name, XMLLocation location);
 
     /* keystore package */
 
@@ -1987,5 +1992,4 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = Logger.Level.FATAL)
     @Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")
     void unableToAcceptEvent(@Cause Throwable cause);
-
 }

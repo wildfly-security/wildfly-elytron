@@ -225,21 +225,21 @@
             <xsd:element name="set-host" type="name-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
-                        Override the destination host name for the authenticated call.
+                        DEPRECATED. Override the destination host name for the authenticated call.
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
             <xsd:element name="set-port" type="port-number-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
-                        Override the destination port number for the authenticated call.
+                        DEPRECATED. Override the destination port number for the authenticated call.
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
             <xsd:element name="set-protocol" type="name-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
-                        Override the protocol for the authenticated call.
+                        DEPRECATED. Override the protocol for the authenticated call.
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
