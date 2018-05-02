@@ -33,12 +33,14 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.MaskedPasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * @author Jan Kalina <jkalina@redhat.com>
@@ -101,7 +103,12 @@ public class MaskedPasswordTest {
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         MaskedPassword maskedPassword = (MaskedPassword) factory.generatePassword(spec);
 
-        ClearPasswordSpec unmasked = factory.getKeySpec(maskedPassword, ClearPasswordSpec.class);
+        char[] encoded = ModularCrypt.encode(maskedPassword);
+        System.out.println(encoded);
+        Password decoded = ModularCrypt.decode(encoded);
+
+        Password translated = factory.translate(decoded);
+        ClearPasswordSpec unmasked = factory.getKeySpec(translated, ClearPasswordSpec.class);
         Assert.assertEquals("myMaskedPassword", new String(unmasked.getEncodedPassword()));
     }
 }

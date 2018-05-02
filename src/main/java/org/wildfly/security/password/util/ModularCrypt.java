@@ -34,6 +34,7 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
+import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
@@ -60,6 +61,7 @@ public final class ModularCrypt {
     private static final int A_BSD_CRYPT_DES            = 8;
     private static final int A_CRYPT_DES                = 9;
     private static final int A_SUN_CRYPT_MD5_BARE_SALT  = 10;
+    private static final int A_MASKED                   = 11;
 
     private static int doIdentifyAlgorithm(char[] chars) {
         if (chars.length < 5) {
@@ -89,7 +91,7 @@ public final class ModularCrypt {
                     return 0;
                 }
             } else if (chars[4] == '$' || chars[4] == ',') {
-                if (chars[1] == 'm' && chars[2] == 'd' && chars[3] == '5') {
+                if (chars[1] == 'm' && chars[2] == 'd' && chars[3] == '5') { // $md5$
                     int idx = lastIndexOf(chars, '$');
                     if (idx > 0) {
                         if (chars[idx - 1] == '$') {
@@ -104,11 +106,13 @@ public final class ModularCrypt {
                     return 0;
                 }
             } else if (chars[5] == '$') {
-                if (chars[1] == 'a' && chars[2] == 'p' && chars[3] == 'r' && chars[4] == '1') {
+                if (chars[1] == 'a' && chars[2] == 'p' && chars[3] == 'r' && chars[4] == '1') { // $apr1$
                     return A_APACHE_HTDIGEST;
                 } else {
                     return 0;
                 }
+            } else if (chars[1] == 'm' && chars[2] == 'a' && chars[3] == 's' && chars[4] == 'k' && chars[5] == 'e' && chars[6] == 'd' && chars[7] == '-') { // $masked-
+                return A_MASKED;
             } else {
                 return 0;
             }
@@ -132,7 +136,7 @@ public final class ModularCrypt {
         return getAlgorithmNameString(doIdentifyAlgorithm(chars));
     }
 
-    static String getAlgorithmNameString(final int id) {
+    private static String getAlgorithmNameString(final int id) {
         switch (id) {
             case A_CRYPT_MD5:               return "crypt-md5";
             case A_BCRYPT:                  return "bcrypt";
@@ -268,6 +272,19 @@ public final class ModularCrypt {
             }
             b.append('$');
             ByteIterator.ofBytes(spec.getHash(), interleave).base64Encode(MOD_CRYPT_LE, false).drainTo(b);
+        } else if (password instanceof MaskedPassword) {
+            final MaskedPassword spec = (MaskedPassword) password;
+            b.append('$').append(spec.getAlgorithm()).append('$');
+
+            b.append(spec.getInitialKeyMaterial()).append('$');
+            b.append(spec.getIterationCount()).append('$');
+            ByteIterator.ofBytes(spec.getSalt()).base64Encode().drainTo(b).append('$');
+            ByteIterator.ofBytes(spec.getMaskedPasswordBytes()).base64Encode().drainTo(b);
+
+            if (spec.getInitializationVector() != null) {
+                b.append('$');
+                ByteIterator.ofBytes(spec.getInitializationVector()).base64Encode().drainTo(b);
+            }
         } else {
             throw log.invalidKeySpecPasswordSpecCannotBeRenderedAsString();
         }
@@ -326,6 +343,9 @@ public final class ModularCrypt {
             }
             case A_CRYPT_DES: {
                 return parseUnixDESCryptPasswordString(cryptString);
+            }
+            case A_MASKED: {
+                return parseMaskedPasswordString(cryptString);
             }
             default: throw log.invalidKeySpecUnknownCryptStringAlgorithm();
         }
@@ -609,6 +629,40 @@ public final class ModularCrypt {
         // The final 11 characters correspond to the encoded password - this is decoded to a 64-bit hash
         byte[] hash = r.base64Decode(MOD_CRYPT, false).limitedTo(11).drain();
         return BSDUnixDESCryptPassword.createRaw(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
+    }
+
+    private static Password parseMaskedPasswordString(char[] chars) throws InvalidKeySpecException {
+        assert chars[0] == '$' && chars[7] == '-';
+        CodePointIterator r = CodePointIterator.ofChars(chars, 1);
+
+        String algorithm = r.delimitedBy('$').drainToString();
+        if (! MaskedPassword.isMaskedAlgorithm(algorithm)) {
+            throw log.invalidKeySpecInvalidMinorVersion();
+        }
+        if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
+        r.next(); // skip $ delimiter
+
+        char[] keyMaterial = r.delimitedBy('$').drainToString().toCharArray();
+        if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
+        r.next(); // skip $ delimiter
+
+        int iterationCount = Integer.valueOf(r.delimitedBy('$').drainToString());
+        if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
+        r.next(); // skip $ delimiter
+
+        byte[] salt = r.delimitedBy('$').base64Decode().drain();
+        if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
+        r.next(); // skip $ delimiter
+
+        byte[] maskedPasswordBytes = r.delimitedBy('$').base64Decode().drain();
+
+        byte[] initializationVector = null;
+        if (r.hasNext()) { // has IV
+            r.next(); // skip $ delimiter
+            initializationVector = r.base64Decode().drain();
+        }
+
+        return MaskedPassword.createRaw(algorithm, keyMaterial, iterationCount, salt, maskedPasswordBytes, initializationVector);
     }
 
     private static int lastIndexOf(final char[] chars, final char c) {

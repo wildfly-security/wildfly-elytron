@@ -498,7 +498,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 break;
             }
         }
-        throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
+        throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec(algorithm, keySpec == null ? null : keySpec.getClass().getSimpleName());
     }
 
     @Override

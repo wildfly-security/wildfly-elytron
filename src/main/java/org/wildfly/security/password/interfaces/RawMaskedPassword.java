@@ -60,7 +60,7 @@ final class RawMaskedPassword extends RawPassword implements MaskedPassword {
     }
 
     public byte[] getInitializationVector() {
-        return initializationVector.clone();
+        return initializationVector == null ? null : initializationVector.clone();
     }
 
     public RawMaskedPassword clone() {
