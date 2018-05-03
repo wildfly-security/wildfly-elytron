@@ -313,7 +313,13 @@
             </xsd:element>
             <xsd:element name="bearer-token" type="bearer-token-type"/>
             <xsd:element name="oauth2-bearer-token" type="oauth2-bearer-token-type"/>
-            <xsd:element name="local-kerberos" type="local-kerberos-type"/>
+            <xsd:element name="local-kerberos" type="local-kerberos-type">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        DEPRECATED. Credential obtained from local kerberos ticket cache.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
         </xsd:choice>
     </xsd:complexType>
 
