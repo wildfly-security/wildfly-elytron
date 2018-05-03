@@ -255,14 +255,20 @@ public class HttpAuthenticator {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
                         boolean atLeastOneChallenge = false;
+
+                        int defaultStatusCode = OK;
                         boolean statusSet = false;
                         for (HttpServerMechanismsResponder responder : responders) {
                             try {
                                 responder.sendResponse(this);
                                 atLeastOneChallenge = true;
-                                if (statusSet == false && statusCode > 0 && statusCode != OK) {
-                                    httpExchangeSpi.setStatusCode(statusCode);
-                                    statusSet = true;
+                                if ( ! statusSet && statusCode > 0) {
+                                    if (statusCode == FORBIDDEN) { // minor status code change default
+                                        defaultStatusCode = statusCode;
+                                    } else if (statusCode != OK) {
+                                        statusSet = true; // other status codes (like UNAUTHORIZED) set status immediately
+                                        httpExchangeSpi.setStatusCode(statusCode);
+                                    }
                                 }
                             } catch (HttpAuthenticationException e) {
                                 log.trace("HTTP Authentication mechanism unable to send challenge.", e);
@@ -271,10 +277,10 @@ public class HttpAuthenticator {
                         if (atLeastOneChallenge == false) {
                             throw log.httpAuthenticationNoSuccessfulResponder();
                         }
-                        if (statusSet == false) {
-                            httpExchangeSpi.setStatusCode(OK);
+                        if ( ! statusSet) {
+                            httpExchangeSpi.setStatusCode(defaultStatusCode);
                         }
-                    } else {
+                    } else { // no responders set
                         if (evaluationFailed) {
                             throw log.httpAuthenticationFailedEvaluatingRequest();
                         }

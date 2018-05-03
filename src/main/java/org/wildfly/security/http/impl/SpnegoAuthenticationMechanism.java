@@ -25,6 +25,7 @@ import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
 import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
+import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +84,8 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
 
     private static final String SPNEGO_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".spnego-context";
     private static final String CACHED_IDENTITY_KEY = SpnegoAuthenticationMechanism.class.getName() + ".elytron-identity";
+
+    private static final byte[] NEG_STATE_REJECT = new byte[] { (byte) 0xA1, 0x07, 0x30, 0x05, (byte) 0xA0, 0x03, 0x0A, 0x01, 0x02 };
 
     private final CallbackHandler callbackHandler;
     private final GSSManager gssManager;
@@ -266,31 +270,33 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                 identityCache = createIdentityCache(identityCache, storageScope, true);
                 if (authorizeSrcName(gssContext, identityCache)) {
                     httpSpnego.trace("GSSContext established and authorized - authentication complete");
-                    request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
-
-                    return;
+                    request.authenticationComplete(
+                            responseToken == null ? null : response -> sendChallenge(responseToken, response, 0));
                 } else {
                     httpSpnego.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
-                    request.authenticationFailed(httpSpnego.authenticationFailed());
-                    return;
+                    request.authenticationFailed(httpSpnego.authenticationFailed(),
+                            responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
                 }
+            } else if (Arrays.equals(responseToken, NEG_STATE_REJECT)) {
+                // for IBM java - prevent sending UNAUTHORIZED for [negState = reject] token
+                httpSpnego.trace("GSSContext failed - sending negotiation rejected to the peer");
+                request.authenticationFailed(httpSpnego.authenticationFailed(),
+                        response -> sendChallenge(responseToken, response, FORBIDDEN));
             } else if (responseToken != null && storageScope != null) {
                 httpSpnego.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
-                return;
             } else {
                 httpSpnego.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
                 handleCallback(AuthenticationCompleteCallback.FAILED);
                 request.authenticationFailed(httpSpnego.authenticationFailed());
-                return;
             }
+        } else {
+            httpSpnego.trace("Request lacks valid authentication credentials");
+            clearAttachments(storageScope);
+            request.noAuthenticationInProgress(this::sendBareChallenge);
         }
-
-        httpSpnego.trace("Request lacks valid authentication credentials");
-        clearAttachments(storageScope);
-        request.noAuthenticationInProgress(this::sendBareChallenge);
     }
 
     private HttpScope getStorageScope(HttpServerRequest request) throws HttpAuthenticationException {

@@ -195,6 +195,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         String selectedRealm = selectRealm();
 
         if (username.length() == 0) {
+            httpDigest.trace("Failed: no username");
             fail();
             request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
@@ -203,6 +204,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         byte[] hA1 = getH_A1(messageDigest, username, messageRealm);
 
         if (hA1 == null) {
+            httpDigest.trace("Failed: unable to get expected proof");
             fail();
             request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
@@ -211,17 +213,20 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         byte[] calculatedResponse = calculateResponseDigest(messageDigest, hA1, nonce, request.getRequestMethod(), digestUri, responseTokens.get(QOP), responseTokens.get(CNONCE), responseTokens.get(NC));
 
         if (Arrays.equals(response, calculatedResponse) == false) {
+            httpDigest.trace("Failed: invalid proof");
             fail();
             request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
             return;
         }
 
         if (nonceValid == false) {
+            httpDigest.trace("Failed: invalid nonce");
             request.authenticationInProgress(httpResponse -> prepareResponse(selectedRealm, httpResponse, true));
             return;
         }
 
         if (authorize(username)) {
+            httpDigest.trace("Succeed");
             succeed();
             if (nonceCount < 0) {
                 request.authenticationComplete(new HttpServerMechanismsResponder() {
@@ -235,6 +240,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
                 request.authenticationComplete();
             }
         } else {
+            httpDigest.trace("Failed: not authorized");
             fail();
             request.authenticationFailed(httpDigest.authorizationFailed(username), httpResponse -> httpResponse.setStatusCode(HttpConstants.FORBIDDEN));
         }
