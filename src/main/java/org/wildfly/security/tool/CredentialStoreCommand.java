@@ -23,9 +23,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -78,6 +81,7 @@ class CredentialStoreCommand extends Command {
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
     public static final String DEBUG_PARAM = "debug";
     public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+    private static final List<String> filebasedKeystoreTypes = Collections.unmodifiableList(Arrays.asList("JKS", "JCEKS", "PKCS12"));
 
 
     private final Options options;
@@ -152,11 +156,7 @@ class CredentialStoreCommand extends Command {
         printDuplicatesWarning(cmdLine);
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
-        if (location == null) {
-            setStatus(GENERAL_CONFIGURATION_ERROR);
-            throw ElytronToolMessages.msg.optionNotSpecified(STORE_LOCATION_PARAM);
-        }
-        if ((cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM)) && !Files.exists(Paths.get(location))) {
+        if ((cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM)) && location != null && !Files.exists(Paths.get(location))) {
             setStatus(GENERAL_CONFIGURATION_ERROR);
             throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
         }
@@ -193,6 +193,10 @@ class CredentialStoreCommand extends Command {
         implProps.putIfAbsent("create", Boolean.valueOf(createStorage).toString());
         if (csType.equals(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE)) {
             implProps.putIfAbsent("keyStoreType", "JCEKS");
+        }
+        String implPropsKeyStoreType = implProps.get("keyStoreType");
+        if (location == null && implPropsKeyStoreType != null && filebasedKeystoreTypes.contains(implPropsKeyStoreType.toUpperCase(Locale.ENGLISH))) {
+            throw ElytronToolMessages.msg.filebasedKeystoreLocationMissing(implPropsKeyStoreType);
         }
 
         CredentialStore.CredentialSourceProtectionParameter credentialSourceProtectionParameter = null;
