@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.sasl.SaslServerFactory;
 
@@ -38,7 +39,7 @@ import org.wildfly.security.sasl.SaslMechanismSelector;
 public class SortedMechanismSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
     private final Comparator<String> mechanismNameComparator;
-    private final SaslMechanismSelector saslMechanismSelector;
+    private final Supplier<SaslMechanismSelector> saslMechanismSelector;
 
     public SortedMechanismSaslServerFactory(final SaslServerFactory delegate, final Comparator<String> mechanismNameComparator) {
         super(delegate);
@@ -49,7 +50,14 @@ public class SortedMechanismSaslServerFactory extends AbstractDelegatingSaslServ
     public SortedMechanismSaslServerFactory(final SaslServerFactory delegate, final String... mechanismNames) {
         super(delegate);
         checkNotNullParam("mechanismNames", mechanismNames);
-        this.saslMechanismSelector = SaslMechanismSelector.NONE.addMechanisms(mechanismNames);
+        this.saslMechanismSelector = () -> SaslMechanismSelector.NONE.addMechanisms(mechanismNames);
+        this.mechanismNameComparator = null;
+    }
+
+    public SortedMechanismSaslServerFactory(final SaslServerFactory delegate, final Supplier<String[]> mechanismNamesSupplier) {
+        super(delegate);
+        checkNotNullParam("mechanismNamesSupplier", mechanismNamesSupplier);
+        this.saslMechanismSelector = () -> SaslMechanismSelector.NONE.addMechanisms(mechanismNamesSupplier.get());
         this.mechanismNameComparator = null;
     }
 
@@ -60,7 +68,7 @@ public class SortedMechanismSaslServerFactory extends AbstractDelegatingSaslServ
             Arrays.sort(mechanismNames, mechanismNameComparator);
         } else if (saslMechanismSelector != null) {
             List<String> mechanismNamesList = new ArrayList<>(Arrays.asList(mechanismNames));
-            mechanismNamesList = saslMechanismSelector.apply(mechanismNamesList, null);
+            mechanismNamesList = saslMechanismSelector.get().apply(mechanismNamesList, null);
             mechanismNames = mechanismNamesList.toArray(new String[mechanismNamesList.size()]);
         }
         return mechanismNames;
