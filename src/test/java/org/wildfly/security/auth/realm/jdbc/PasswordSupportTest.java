@@ -50,6 +50,7 @@ import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.util.PasswordUtil;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -103,7 +104,7 @@ public class PasswordSupportTest {
         String userName = "john";
         String userPassword = "bcrypt_abcd1234";
 
-        String cryptString = createBcryptPasswordTable(userName, userPassword);
+        String cryptString = createBcryptModularCryptPasswordTable(userName, userPassword);
 
         PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
             .setDefaultAlgorithm(BCryptPassword.ALGORITHM_BCRYPT)
@@ -111,7 +112,7 @@ public class PasswordSupportTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .principalQuery("SELECT password FROM user_bcrypt_password where name = ?")
+                .principalQuery("SELECT password FROM user_bcrypt_modular_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
@@ -150,6 +151,41 @@ public class PasswordSupportTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_password where name = ?")
+                .withMapper(passwordKeyMapper)
+                .from(dataSourceRule.getDataSource())
+                .build();
+
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new NamePrincipal(userName));
+
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("invalid".toCharArray())));
+
+        BCryptPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword(BCryptPassword.class);
+
+        assertNotNull(storedPassword);
+    }
+
+    @Test
+    public void testVerifyAndObtainBCryptEncodedPasswordCredential() throws Exception {
+        String userName = "john";
+        String userPassword = "bcrypt_abcd1234";
+        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        int iterationCount = 10;
+
+        createBcryptEncodedTable(userName, userPassword, salt, iterationCount);
+
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+                .setDefaultAlgorithm(BCryptPassword.ALGORITHM_BCRYPT)
+                .setHashColumn(1).setHashEncoding(PasswordKeyMapper.Encoding.HEX)
+                .setSaltColumn(2).setSaltEncoding(PasswordKeyMapper.Encoding.BASE64)
+                .setIterationCountColumn(3)
+                .build();
+
+        JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_encoded_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
@@ -211,12 +247,12 @@ public class PasswordSupportTest {
 
     @Test
     public void testVerifySimpleDigestPasswordCredential() throws Exception {
-        assertVerifyAndObtainSimpleDigestPasswordSHA512Credential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512);
-        assertVerifyAndObtainSimpleDigestPasswordSHA512Credential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5);
-        assertVerifyAndObtainSimpleDigestPasswordSHA512Credential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD2);
+        assertVerifyAndObtainSimpleDigestPasswordCredential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512);
+        assertVerifyAndObtainSimpleDigestPasswordCredential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5);
+        assertVerifyAndObtainSimpleDigestPasswordCredential(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD2);
     }
 
-    public void assertVerifyAndObtainSimpleDigestPasswordSHA512Credential(String algorithm) throws Exception {
+    public void assertVerifyAndObtainSimpleDigestPasswordCredential(String algorithm) throws Exception {
         String userName = "john";
         String userPassword = "simple_digest_abcd1234";
 
@@ -364,18 +400,18 @@ public class PasswordSupportTest {
         }
     }
 
-    private String createBcryptPasswordTable(String userName, String userPassword) throws Exception {
+    private String createBcryptModularCryptPasswordTable(String userName, String userPassword) throws Exception {
         try (
             Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
-            statement.executeUpdate("DROP TABLE IF EXISTS user_bcrypt_password");
-            statement.executeUpdate("CREATE TABLE user_bcrypt_password ( id INTEGER IDENTITY, name VARCHAR(100), password VARCHAR(100))");
+            statement.executeUpdate("DROP TABLE IF EXISTS user_bcrypt_modular_password");
+            statement.executeUpdate("CREATE TABLE user_bcrypt_modular_password ( id INTEGER IDENTITY, name VARCHAR(100), password VARCHAR(100))");
         }
 
         try (
             Connection connection = dataSourceRule.getDataSource().getConnection();
-            PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_password (name, password) VALUES (?, ?)");
+            PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_modular_password (name, password) VALUES (?, ?)");
         ) {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
             PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
@@ -414,6 +450,32 @@ public class PasswordSupportTest {
             preparedStatement.setBytes(2, bCryptPassword.getHash());
             preparedStatement.setBytes(3, bCryptPassword.getSalt());
             preparedStatement.setInt(4, bCryptPassword.getIterationCount());
+            preparedStatement.execute();
+        }
+    }
+
+    private void createBcryptEncodedTable(String userName, String userPassword, byte[] salt, int iterationCount) throws Exception {
+        try (
+                Connection connection = dataSourceRule.getDataSource().getConnection();
+                Statement statement = connection.createStatement();
+        ) {
+            statement.executeUpdate("DROP TABLE IF EXISTS user_bcrypt_encoded_password");
+            statement.executeUpdate("CREATE TABLE user_bcrypt_encoded_password ( id INTEGER IDENTITY, name VARCHAR(100), password VARCHAR(100), salt VARCHAR(100), iterationCount VARCHAR(100))");
+        }
+
+        try (
+                Connection connection = dataSourceRule.getDataSource().getConnection();
+                PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_encoded_password (name, password, salt, iterationCount) VALUES (?, ?, ?, ?)");
+        ) {
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+            BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                    new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt))
+            );
+
+            preparedStatement.setString(1, userName);
+            preparedStatement.setString(2, ByteIterator.ofBytes(bCryptPassword.getHash()).hexEncode().drainToString());
+            preparedStatement.setString(3, ByteIterator.ofBytes(bCryptPassword.getSalt()).base64Encode().drainToString());
+            preparedStatement.setString(4, Integer.toString(bCryptPassword.getIterationCount()));
             preparedStatement.execute();
         }
     }
