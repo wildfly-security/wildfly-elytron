@@ -1828,6 +1828,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9527, value = "Invalid credential store reference")
     ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
 
+    @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
+    CredentialStoreException externalPathMissing(String keyStoreType);
+
 
     /* X.500 exceptions */
 
