@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.tool;
 
+import org.apache.commons.cli.AlreadySelectedException;
+import org.apache.commons.cli.Option;
 import org.wildfly.security.WildFlyElytronProvider;
 
 import java.security.Security;
@@ -81,6 +83,10 @@ public class ElytronTool {
                     command.execute(newArgs);
                     System.exit(command.getStatus());
                 } catch (Exception e) {
+                    if (e instanceof AlreadySelectedException) {
+                        Option option = ((AlreadySelectedException) e).getOption();
+                        System.err.println(ElytronToolMessages.msg.longOptionDescription(option.getOpt(), option.getLongOpt()));
+                    }
                     if (command.isEnableDebug()) {
                         System.err.println(ElytronToolMessages.msg.commandExecuteException());
                         e.printStackTrace(System.err);

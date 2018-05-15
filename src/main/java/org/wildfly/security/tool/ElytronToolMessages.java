@@ -329,4 +329,8 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 28, value = "Location parameter is not specified for filebased keystore type '%s'")
     MissingArgumentException filebasedKeystoreLocationMissing(String type);
+
+    @Message(id = NONE, value = "In the message below, option '%s' refers to long option '%s'.")
+    String longOptionDescription(String option, String longOption);
+
 }

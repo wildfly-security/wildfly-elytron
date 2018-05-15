@@ -155,6 +155,7 @@ class CredentialStoreCommand extends Command {
             throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
         }
         String csPassword = cmdLine.getOptionValue(CREDENTIAL_STORE_PASSWORD_PARAM);
+        String password = csPassword == null ? "" : csPassword;
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
         int iterationCount = getArgumentAsInt(cmdLine.getOptionValue(ITERATION_PARAM));
@@ -230,6 +231,12 @@ class CredentialStoreCommand extends Command {
                     throw ElytronToolMessages.msg.optionNotSpecified(PASSWORD_CREDENTIAL_VALUE_PARAM);
                 }
             }
+
+            // ELY-1294 compute password to validate salt parameter without --summary.
+            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+                password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
+            }
+
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
             if (entryType != null) {
@@ -291,12 +298,6 @@ class CredentialStoreCommand extends Command {
         } else {
             setStatus(ACTION_NOT_DEFINED);
             throw ElytronToolMessages.msg.actionToPerformNotDefined();
-        }
-
-        // ELY-1294 allow to validate parameters without --summary.
-        String password = csPassword == null ? "" : csPassword;
-        if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-            password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
         }
 
         if (printSummary) {
