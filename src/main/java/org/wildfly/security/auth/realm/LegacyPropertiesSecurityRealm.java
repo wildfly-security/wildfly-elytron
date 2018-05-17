@@ -98,11 +98,17 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         if (! (principal instanceof NamePrincipal)) {
+            log.tracef("PropertiesRealm: unsupported principal type: [%s]", principal);
             return RealmIdentity.NON_EXISTENT;
         }
         final LoadedState loadedState = this.loadedState.get();
 
         final AccountEntry accountEntry = loadedState.getAccounts().get(principal.getName());
+
+        if (accountEntry == null) {
+            log.tracef("PropertiesRealm: identity [%s] does not exist", principal);
+            return RealmIdentity.NON_EXISTENT;
+        }
 
         return new RealmIdentity() {
 
@@ -112,12 +118,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) : SupportLevel.UNSUPPORTED;
+                return LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
             }
 
             @Override
             public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getEvidenceVerifySupport(evidenceType, algorithmName) : SupportLevel.UNSUPPORTED;
+                return LegacyPropertiesSecurityRealm.this.getEvidenceVerifySupport(evidenceType, algorithmName);
             }
 
             @Override
@@ -132,8 +138,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
-                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
-                    log.tracef("Unable to obtain credential for identity [%s]: exists = %b", principal, accountEntry != null);
+                if (accountEntry.getPasswordRepresentation() == null || LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec) == SupportLevel.UNSUPPORTED) {
+                    log.tracef("PropertiesRealm: Unable to obtain credential for identity [%s]", principal);
                     return null;
                 }
 
@@ -145,7 +151,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 } else if (ALGORITHM_DIGEST_MD5.equals(algorithmName)) {
                     clear = false;
                 } else {
-                    log.tracef("Unable to obtain credential for identity [%s]: unsupported algorithm [%s]", principal, algorithmName);
+                    log.tracef("PropertiesRealm: Unable to obtain credential for identity [%s]: unsupported algorithm [%s]", principal, algorithmName);
                     return null;
                 }
 
@@ -162,9 +168,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         passwordSpec = new EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), spec);
                     } else { // already digested file - need to check realm name
                         if (parameterSpec != null) { // when not null, type already checked in acquire support check
-                            if (! loadedState.getRealmName().equals(((DigestPasswordAlgorithmSpec) parameterSpec).getRealm()) ||
-                                ! accountEntry.getName().equals(((DigestPasswordAlgorithmSpec) parameterSpec).getUsername())) {
-                                log.tracef("Unable to obtain credential for identity [%s]: mismatched username/password between request and user file", algorithmName);
+                            DigestPasswordAlgorithmSpec spec = (DigestPasswordAlgorithmSpec) parameterSpec;
+                            if (! loadedState.getRealmName().equals(spec.getRealm()) || ! accountEntry.getName().equals(spec.getUsername())) {
+                                if (log.isTraceEnabled()) {
+                                    log.tracef("PropertiesRealm: Unable to obtain credential for username [%s] (available [%s]) and realm [%s] (available [%s])",
+                                            spec.getUsername(), accountEntry.getName(), spec.getRealm(), loadedState.getRealmName());
+                                }
                                 return null; // no digest for given username+realm
                             }
                         }
@@ -182,7 +191,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || !(evidence instanceof PasswordGuessEvidence)) {
+                if (accountEntry.getPasswordRepresentation() == null || !(evidence instanceof PasswordGuessEvidence)) {
+                    log.tracef("Unable to verify evidence for identity [%s]", principal);
                     return false;
                 }
                 final char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
@@ -216,15 +226,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             public boolean exists() throws RealmUnavailableException {
-                return accountEntry != null;
+                return true;
             }
 
             @Override
             public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-                if (accountEntry == null) {
-                    return AuthorizationIdentity.EMPTY;
-                }
-
                 return AuthorizationIdentity.basicIdentity(new MapAttributes(Collections.singletonMap(groupsAttribute, accountEntry.getGroups())));
             }
         };
