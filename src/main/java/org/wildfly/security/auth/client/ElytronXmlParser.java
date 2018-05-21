@@ -1633,6 +1633,8 @@ public final class ElytronXmlParser {
         final String finalStoreName = storeName;
         final String finalClearText = clearText;
         final String finalAlias = alias;
+        if (finalStoreName == null && finalClearText == null) throw xmlLog.xmlInvalidCredentialStoreRef(reader.getLocation());
+        if (finalStoreName != null && finalAlias == null) throw missingAttribute(reader, "alias");
         return () -> {
             if (finalStoreName != null) {
                 final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(finalStoreName);
@@ -1641,11 +1643,9 @@ public final class ElytronXmlParser {
                 }
                 final CredentialStore credentialStore = supplier.get();
                 return new CredentialStoreCredentialSource(credentialStore, finalAlias);
-            } else if (finalClearText != null) {
+            } else {
                 final PasswordCredential passwordCredential = new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, finalClearText.toCharArray()));
                 return IdentityCredentials.NONE.withCredential(passwordCredential);
-            } else {
-                throw xmlLog.xmlInvalidCredentialStoreRef(finalLocation);
             }
         };
     }
