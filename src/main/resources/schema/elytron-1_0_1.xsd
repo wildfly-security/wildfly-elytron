@@ -122,7 +122,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element ref="abstract-user-spec"/>
+            <xsd:element ref="abstract-user-spec" minOccurs="0"/>
             <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
             <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="0"/>
             <xsd:element name="sasl-mechanism-selector" type="selector-type" minOccurs="0"/>
@@ -182,8 +182,8 @@
 
     <xsd:complexType name="providers-type">
         <xsd:all minOccurs="0">
-            <xsd:element name="global" type="empty-type" />
-            <xsd:element name="use-service-loader" type="module-ref-type" />
+            <xsd:element name="global" type="empty-type" minOccurs="0" />
+            <xsd:element name="use-service-loader" type="module-ref-type" minOccurs="0" />
         </xsd:all>
     </xsd:complexType>
 
@@ -249,7 +249,7 @@
     </xsd:complexType>
 
     <xsd:complexType name="oauth2-bearer-token-type">
-        <xsd:choice minOccurs="1">
+        <xsd:choice maxOccurs="unbounded">
             <xsd:element name="client-credentials" type="oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="resource-owner-credentials" type="resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
         </xsd:choice>

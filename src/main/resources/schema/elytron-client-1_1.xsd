@@ -243,7 +243,7 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element ref="abstract-user-spec"/>
+            <xsd:element ref="abstract-user-spec" minOccurs="0"/>
             <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
@@ -424,14 +424,14 @@
             </xsd:documentation>
         </xsd:annotation>
         <xsd:all minOccurs="0">
-            <xsd:element name="global" type="empty-type">
+            <xsd:element name="global" type="empty-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         The providers from java.security.Security.getProviders()
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element name="use-service-loader" type="module-ref-type">
+            <xsd:element name="use-service-loader" type="module-ref-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         Providers loaded using service loader discovery from the module specified, 
@@ -464,24 +464,26 @@
                 The presence of this element enabled checking the peer's certificate against a certificate revocation list.
             </xsd:documentation>
         </xsd:annotation>
+        <xsd:all>
+            <xsd:element name="uri" type="uri-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        URI of certificate revocation list file. Alternative to "path" and "resource".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="resource" type="resource-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The module resource to use as certificate revocation list. Alternative to "path" and "uri".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:all>
         <xsd:attribute name="path" type="xsd:string" use="optional">
             <xsd:annotation>
                 <xsd:documentation>
                     Path to the certificate revocation list. Alternative to "resource" and "uri".
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-        <xsd:attribute name="resource" type="resource-type" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    The module resource to use as certificate revocation list. Alternative to "path" and "uri".
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-        <xsd:attribute name="uri" type="uri-type" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    URI of certificate revocation list file. Alternative to "path" and "resource".
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -690,7 +692,7 @@
                 An OAuth 2 bearer token.
             </xsd:documentation>
         </xsd:annotation>
-        <xsd:choice minOccurs="1">
+        <xsd:choice maxOccurs="unbounded">
             <xsd:element name="client-credentials" type="oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="resource-owner-credentials" type="resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
         </xsd:choice>
@@ -703,6 +705,9 @@
                 An OAuth 2 bearer token client credentials.
             </xsd:documentation>
         </xsd:annotation>
+        <xsd:choice>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="0"/>
+        </xsd:choice>
         <xsd:attribute name="client-id" type="xsd:string" use="required">
             <xsd:annotation>
                 <xsd:documentation>
@@ -725,6 +730,9 @@
                 An OAuth 2 bearer token resource owner credentials.
             </xsd:documentation>
         </xsd:annotation>
+        <xsd:choice>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="0"/>
+        </xsd:choice>
         <xsd:attribute name="name" type="xsd:string" use="required">
             <xsd:annotation>
                 <xsd:documentation>

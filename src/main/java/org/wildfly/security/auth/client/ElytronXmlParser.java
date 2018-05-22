@@ -614,22 +614,6 @@ public final class ElytronXmlParser {
                     path = reader.getAttributeValueResolved(i);
                     break;
                 }
-                case "resource": {
-                    if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
-                        throw reader.unexpectedAttribute(i);
-                    }
-                    gotSource = true;
-                    resourceSource = parseResourceType(reader, xmlVersion);
-                    break;
-                }
-                case "uri": {
-                    if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
-                        throw reader.unexpectedAttribute(i);
-                    }
-                    gotSource = true;
-                    uriSource = parseUriType(reader);
-                    break;
-                }
                 case "maximum-cert-path": {
                     if (maxCertPath != 0) throw reader.unexpectedAttribute(i);
                     maxCertPath = reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE);
@@ -641,7 +625,26 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw reader.unexpectedElement();
+                checkElementNamespace(reader, xmlVersion);
+                switch (reader.getLocalName()) {
+                    case "resource": {
+                        if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotSource = true;
+                        resourceSource = parseResourceType(reader, xmlVersion);
+                        break;
+                    }
+                    case "uri": {
+                        if (gotSource || !xmlVersion.isAtLeast(Version.VERSION_1_1)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotSource = true;
+                        uriSource = parseUriType(reader);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
             } else if (tag == END_ELEMENT) {
                 builder.setCrl();
                 if (gotSource) {
@@ -2440,6 +2443,9 @@ public final class ElytronXmlParser {
                     if (password != null) {
                         throw reader.unexpectedElement();
                     }
+                    if (credentialSourceSupplier != null) { // must not throw because compatibility
+                        xmlLog.trace("Multiple credential-store-references in resource-owner-credentials - only the last one used!");
+                    }
                     nestedLocation = reader.getLocation();
                     credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
                 } else {
@@ -2517,6 +2523,9 @@ public final class ElytronXmlParser {
                 if ("credential-store-reference".equals(reader.getLocalName())) {
                     if (secret != null) {
                         throw reader.unexpectedElement();
+                    }
+                    if (credentialSourceSupplier != null) { // must not throw because compatibility
+                        xmlLog.trace("Multiple credential-store-references in client-credentials - only the last one used!");
                     }
                     nestedLocation = reader.getLocation();
                     credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
