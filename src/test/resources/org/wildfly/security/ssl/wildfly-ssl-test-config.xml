@@ -51,6 +51,12 @@
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ca/crl/ica-revoked.pem"/>
             </ssl-context>
+            <ssl-context name="one-way-resource-revocation-list">
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-list maximum-cert-path="2">
+                    <resource name="ca/crl/ica-revoked.pem"/>
+                </certificate-revocation-list>
+            </ssl-context>
             <ssl-context name="two-way-ssl">
                 <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
                     <key-store-clear-password password="Elytron"/>
