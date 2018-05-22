@@ -424,14 +424,14 @@
             </xsd:documentation>
         </xsd:annotation>
         <xsd:all minOccurs="0">
-            <xsd:element name="global" type="empty-type">
+            <xsd:element name="global" type="empty-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         The providers from java.security.Security.getProviders()
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
-            <xsd:element name="use-service-loader" type="module-ref-type">
+            <xsd:element name="use-service-loader" type="module-ref-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         Providers loaded using service loader discovery from the module specified, 
@@ -464,24 +464,26 @@
                 The presence of this element enabled checking the peer's certificate against a certificate revocation list.
             </xsd:documentation>
         </xsd:annotation>
+        <xsd:all minOccurs="0">
+            <xsd:element name="uri" type="uri-type">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        URI of certificate revocation list file. Alternative to "path" and "resource".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="resource" type="resource-type">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The module resource to use as certificate revocation list. Alternative to "path" and "uri".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:all>
         <xsd:attribute name="path" type="xsd:string" use="optional">
             <xsd:annotation>
                 <xsd:documentation>
                     Path to the certificate revocation list. Alternative to "resource" and "uri".
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-        <xsd:attribute name="resource" type="resource-type" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    The module resource to use as certificate revocation list. Alternative to "path" and "uri".
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-        <xsd:attribute name="uri" type="uri-type" use="optional">
-            <xsd:annotation>
-                <xsd:documentation>
-                    URI of certificate revocation list file. Alternative to "path" and "resource".
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>

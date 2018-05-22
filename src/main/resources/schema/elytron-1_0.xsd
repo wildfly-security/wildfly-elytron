@@ -182,8 +182,8 @@
 
     <xsd:complexType name="providers-type">
         <xsd:all minOccurs="0">
-            <xsd:element name="global" type="empty-type" />
-            <xsd:element name="use-service-loader" type="module-ref-type" />
+            <xsd:element name="global" type="empty-type" minOccurs="0" />
+            <xsd:element name="use-service-loader" type="module-ref-type" minOccurs="0" />
         </xsd:all>
     </xsd:complexType>
 
