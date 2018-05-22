@@ -32,16 +32,16 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
-import org.wildfly.security.util.Alphabet.Base64Alphabet;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
@@ -158,13 +158,13 @@ class UserPasswordPasswordUtil {
             throw log.insufficientDataToFormDigestAndSalt();
         }
 
-        final int lo = Base64Alphabet.MOD_CRYPT.decode(userPassword[7] & 0xff);
-        final int hi = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
+        final int lo = ModularCrypt.MOD_CRYPT.decode(userPassword[7] & 0xff);
+        final int hi = ModularCrypt.MOD_CRYPT.decode(userPassword[8] & 0xff);
         if (lo == -1 || hi == -1) {
             throw log.invalidSalt((char) lo, (char) hi);
         }
         short salt = (short) (lo | hi << 6);
-        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
 
         return UnixDESCryptPassword.createRaw(ALGORITHM_CRYPT_DES, salt, hash);
     }
@@ -174,25 +174,25 @@ class UserPasswordPasswordUtil {
             throw log.insufficientDataToFormDigestAndSalt();
         }
 
-        int b0 = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
-        int b1 = Base64Alphabet.MOD_CRYPT.decode(userPassword[9] & 0xff);
-        int b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[10] & 0xff);
-        int b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[11] & 0xff);
+        int b0 = ModularCrypt.MOD_CRYPT.decode(userPassword[8] & 0xff);
+        int b1 = ModularCrypt.MOD_CRYPT.decode(userPassword[9] & 0xff);
+        int b2 = ModularCrypt.MOD_CRYPT.decode(userPassword[10] & 0xff);
+        int b3 = ModularCrypt.MOD_CRYPT.decode(userPassword[11] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
             throw log.invalidRounds((char) b0, (char) b1, (char) b2, (char) b3);
         }
         int iterationCount = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
-        b0 = Base64Alphabet.MOD_CRYPT.decode(userPassword[12] & 0xff);
-        b1 = Base64Alphabet.MOD_CRYPT.decode(userPassword[13] & 0xff);
-        b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[14] & 0xff);
-        b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[15] & 0xff);
+        b0 = ModularCrypt.MOD_CRYPT.decode(userPassword[12] & 0xff);
+        b1 = ModularCrypt.MOD_CRYPT.decode(userPassword[13] & 0xff);
+        b2 = ModularCrypt.MOD_CRYPT.decode(userPassword[14] & 0xff);
+        b3 = ModularCrypt.MOD_CRYPT.decode(userPassword[15] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
             throw log.invalidSalt((char) b0, (char) b1, (char) b2, (char) b3);
         }
         int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
-        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
         return BSDUnixDESCryptPassword.createRaw(ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
     }
 
@@ -269,24 +269,24 @@ class UserPasswordPasswordUtil {
     }
 
     private static void composeCryptBasedPassword(ByteArrayOutputStream out, UnixDESCryptPassword password) throws IOException {
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
-        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).asUtf8().drain());
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
+        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(ModularCrypt.MOD_CRYPT, false).asUtf8().drain());
     }
 
     private static void composeBsdCryptBasedPassword(ByteArrayOutputStream out, BSDUnixDESCryptPassword password) throws IOException {
 
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getIterationCount() & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getIterationCount() >> 6 & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getIterationCount() >> 12 & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getIterationCount() >> 18 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getIterationCount() & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getIterationCount() >> 6 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getIterationCount() >> 12 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getIterationCount() >> 18 & 0x3f));
 
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() >> 12 & 0x3f));
-        out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() >> 18 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() >> 12 & 0x3f));
+        out.write(ModularCrypt.MOD_CRYPT.encode(password.getSalt() >> 18 & 0x3f));
 
-        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).asUtf8().drain());
+        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(ModularCrypt.MOD_CRYPT, false).asUtf8().drain());
     }
 
     public static boolean isAlgorithmSupported(String algorithm) {

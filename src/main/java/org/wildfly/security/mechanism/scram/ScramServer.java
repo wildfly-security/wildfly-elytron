@@ -43,14 +43,14 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -151,7 +151,7 @@ public final class ScramServer {
                 throw saslScram.mechInvalidClientMessage();
             }
 
-            final int initialPartIndex = bi.offset();
+            final int initialPartIndex = (int) bi.getIndex();
 
             // user name
             final String authenticationName;
@@ -252,7 +252,7 @@ public final class ScramServer {
             if (bi.next() != 'c' || bi.next() != '=') {
                 throw saslScram.mechInvalidMessageReceived();
             }
-            ByteIterator ibi = bi.delimitedBy(',').base64Decode();
+            ByteIterator ibi = bi.delimitedBy(',').asUtf8String().base64Decode();
             char cbindFlag = (char) ibi.next();
             final String bindingType = initialResponse.getBindingType();
             final byte[] bindingData = initialResponse.getRawBindingData();
@@ -329,7 +329,7 @@ public final class ScramServer {
                 throw saslScram.mechNoncesDoNotMatch();
             }
 
-            final int proofOffset = bi.offset();
+            final int proofOffset = (int) bi.getIndex();
 
             bi.next(); // skip delimiter
 
@@ -338,7 +338,7 @@ public final class ScramServer {
                 throw saslScram.mechInvalidClientMessage();
             }
             final byte[] proof;
-            proof = bi.delimitedBy(',').base64Decode().drain();
+            proof = bi.delimitedBy(',').asUtf8String().base64Decode().drain();
 
             if (bi.hasNext()) {
                 throw saslScram.mechInvalidClientMessage();

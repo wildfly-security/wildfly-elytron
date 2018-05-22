@@ -19,8 +19,8 @@
 package org.wildfly.security.digest;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
 
 import java.security.MessageDigestSpi;
 

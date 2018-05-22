@@ -22,8 +22,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.util.ByteIterator;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

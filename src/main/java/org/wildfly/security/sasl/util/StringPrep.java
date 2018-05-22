@@ -192,10 +192,128 @@ public final class StringPrep {
 
     // Encoding
 
+    public static void encode(char[] string, org.wildfly.common.bytes.ByteStringBuilder target, long profile) {
+        encode(new String(string), target, profile);
+    }
+
+    public static void encode(String string, org.wildfly.common.bytes.ByteStringBuilder target, long profile) {
+        // technically we're supposed to normalize after mapping, but it should be equivalent if we don't
+        if (isSet(profile, NORMALIZE_KC)) string = Normalizer.normalize(string, Normalizer.Form.NFKC);
+        final int len = string.length();
+        boolean isRALString = false;
+        boolean first = true;
+        int i = 0;
+        while (i < len) {
+            char ch = string.charAt(i++);
+            int cp;
+            if (Character.isHighSurrogate(ch)) {
+                if (i == len) {
+                    throw log.invalidSurrogatePairHightAtEnd(ch);
+                }
+                char low = string.charAt(i++);
+                if (!Character.isLowSurrogate(low)) {
+                    throw log.invalidSurrogatePairSecondIsNotLow(ch, low);
+                }
+                cp = Character.toCodePoint(ch, low);
+            } else if (Character.isLowSurrogate(ch)) {
+                throw log.invalidSurrogatePairLowWithoutHigh(ch);
+            } else {
+                cp = ch;
+            }
+
+            if (!Character.isValidCodePoint(cp)) {
+                throw log.invalidCodePoint(cp);
+            }
+
+            assert Character.MIN_CODE_POINT <= cp && cp <= Character.MAX_CODE_POINT;
+
+            // StringPrep 6 - Bidirectional Characters
+            switch (Character.getDirectionality(cp)) {
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT: // R/AL character
+                    if (first) {
+                        isRALString = true;
+                    } else if (!isRALString) {
+                        throw log.disallowedRalDirectionalityInL();
+                    }
+                    break;
+                case Character.DIRECTIONALITY_LEFT_TO_RIGHT: // L character
+                    if (isRALString) {
+                        throw log.disallowedLDirectionalityInRal();
+                    }
+                    break;
+                default: // neutral character
+                    if (i == len && isRALString) {
+                        throw log.missingTrailingRal();
+                    }
+            }
+            if (first) {
+                first = false;
+            }
+
+            // StringPrep 3 - Mapping
+            if (isSet(profile, MAP_TO_NOTHING) && mapCodePointToNothing(cp)) continue;
+            if (isSet(profile, MAP_TO_SPACE) && mapCodePointToSpace(cp)) {
+                target.append(' ');
+                continue;
+            }
+
+            // Escaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
+            if (isSet(profile, MAP_SCRAM_LOGIN_CHARS) || isSet(profile, MAP_GS2_LOGIN_CHARS)) {
+                if (cp == '=') {
+                    target.append('=').append('3').append('D');
+                    continue;
+                } else if (cp == ',') {
+                    target.append('=').append('2').append('C');
+                    continue;
+                }
+            }
+
+            // Unescaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
+            else if (isSet(profile, UNMAP_SCRAM_LOGIN_CHARS) || isSet(profile, UNMAP_GS2_LOGIN_CHARS)) {
+                if (cp == '=') {
+                    if (i + 1 >= len) {
+                        throw log.invalidEscapeSequence();
+                    }
+                    char ch1 = string.charAt(i++);
+                    char ch2 = string.charAt(i++);
+
+                    if (ch1 == '3' && ch2 == 'D') {
+                        target.append('=');
+                        continue;
+                    } else if (ch1 == '2' && ch2 == 'C') {
+                        target.append(',');
+                        continue;
+                    } else {
+                        throw log.invalidEscapeSequence();
+                    }
+                }
+            }
+
+            // StringPrep 5 - Prohibition
+            if (isSet(profile, FORBID_NON_ASCII_SPACES)) forbidNonAsciiSpaces(cp);
+            if (isSet(profile, FORBID_ASCII_CONTROL)) forbidAsciiControl(cp);
+            if (isSet(profile, FORBID_NON_ASCII_CONTROL)) forbidNonAsciiControl(cp);
+            if (isSet(profile, FORBID_PRIVATE_USE)) forbidPrivateUse(cp);
+            if (isSet(profile, FORBID_NON_CHARACTER)) forbidNonCharacter(cp);
+            if (isSet(profile, FORBID_SURROGATE)) forbidSurrogate(cp);
+            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT)) forbidInappropriateForPlainText(cp);
+            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_CANON_REP)) forbidInappropriateForCanonicalRepresentation(cp);
+            if (isSet(profile, FORBID_CHANGE_DISPLAY_AND_DEPRECATED)) forbidChangeDisplayPropertiesOrDeprecated(cp);
+            if (isSet(profile, FORBID_TAGGING)) forbidTagging(cp);
+            if (isSet(profile, FORBID_UNASSIGNED)) forbidUnassigned(cp);
+
+            // Now, encode that one
+            target.appendUtf8Raw(cp);
+        }
+    }
+
+    @Deprecated
     public static void encode(char[] string, ByteStringBuilder target, long profile) {
         encode(new String(string), target, profile);
     }
 
+    @Deprecated
     public static void encode(String string, ByteStringBuilder target, long profile) {
         // technically we're supposed to normalize after mapping, but it should be equivalent if we don't
         if (isSet(profile, NORMALIZE_KC)) string = Normalizer.normalize(string, Normalizer.Form.NFKC);

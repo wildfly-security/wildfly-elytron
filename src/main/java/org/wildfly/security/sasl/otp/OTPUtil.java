@@ -31,8 +31,8 @@ import java.util.Random;
 
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

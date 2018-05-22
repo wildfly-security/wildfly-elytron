@@ -54,6 +54,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -66,7 +67,6 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.util.ByteIterator;
 
 /**
  * Implementation of the HTTP DIGEST authentication mechanism as defined in RFC 7616.
@@ -171,7 +171,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         byte[] response;
         if (responseTokens.containsKey(RESPONSE)) {
-            response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).hexDecode().drain();
+            response = ByteIterator.ofBytes(responseTokens.get(RESPONSE)).asUtf8String().hexDecode().drain();
         } else {
             throw httpDigest.mechMissingDirective(RESPONSE);
         }

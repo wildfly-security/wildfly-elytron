@@ -37,9 +37,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util._private.Arrays2;
 
 import static org.wildfly.security._private.ElytronMessages.saslLocal;

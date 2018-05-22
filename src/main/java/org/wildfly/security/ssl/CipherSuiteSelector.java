@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * An immutable filter for SSL/TLS cipher suites.
@@ -391,7 +391,7 @@ public abstract class CipherSuiteSelector {
                     break;
                 }
                 case '=': {
-                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.offset(), string);
+                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.getIndex(), string);
                 }
                 case ',':
                 case ':': {
@@ -404,7 +404,7 @@ public abstract class CipherSuiteSelector {
                         break;
                     }
                     if (Character.isLetterOrDigit(cp)) {
-                        i.prev();
+                        i.previous();
                         name = i.delimitedBy('+', ':', ',', ' ').drainToString();
                         predicate = parsePredicate(i, name);
                         if (predicate != null) {
@@ -428,7 +428,7 @@ public abstract class CipherSuiteSelector {
                         }
                         break;
                     }
-                    throw ElytronMessages.log.mechSelectorUnexpectedChar(cp, i.offset(), string);
+                    throw ElytronMessages.log.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                 }
             }
             // current character should be : or EOS after parse* methods
@@ -453,7 +453,7 @@ public abstract class CipherSuiteSelector {
         switch (word) {
             case "STRENGTH": {
                 if (i.hasNext() && i.next() == '=') {
-                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.offset(), i.drainToString());
+                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.getIndex(), i.drainToString());
                 }
                 return current.sortByAlgorithmKeyLength();
             }
@@ -471,7 +471,7 @@ public abstract class CipherSuiteSelector {
         CipherSuitePredicate item = getSimplePredicateByName(word);
         if (i.hasNext() && i.next() == '+') {
             if (item == null) {
-                throw ElytronMessages.log.mechSelectorTokenNotAllowed("+", i.offset(), i.drainToString());
+                throw ElytronMessages.log.mechSelectorTokenNotAllowed("+", i.getIndex(), i.drainToString());
             }
             return parseAndPredicate(item, i);
         } else {

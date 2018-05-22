@@ -36,13 +36,13 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * SaslClient for the GS2 mechanism family as defined by

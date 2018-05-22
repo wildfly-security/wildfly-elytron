@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.NoSuchElementException;
 
-import org.wildfly.security.util.ByteIterator;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * A class used to decode ASN.1 values that have been encoded using the Distinguished Encoding Rules (DER).
@@ -75,7 +75,7 @@ public class DERDecoder implements ASN1Decoder {
     public void startSequence() throws ASN1Exception {
         readTag(SEQUENCE_TYPE);
         int length = readLength();
-        states.add(new DecoderState(SEQUENCE_TYPE, bi.offset() + length));
+        states.add(new DecoderState(SEQUENCE_TYPE, bi.getIndex() + length));
     }
 
     @Override
@@ -92,7 +92,7 @@ public class DERDecoder implements ASN1Decoder {
     public void startSet() throws ASN1Exception {
         readTag(SET_TYPE);
         int length = readLength();
-        states.add(new DecoderState(SET_TYPE, bi.offset() + length));
+        states.add(new DecoderState(SET_TYPE, bi.getIndex() + length));
     }
 
     @Override
@@ -125,7 +125,7 @@ public class DERDecoder implements ASN1Decoder {
         int explicitTag = clazz | CONSTRUCTED_MASK | number;
         readTag(explicitTag);
         int length = readLength();
-        states.add(new DecoderState(explicitTag, bi.offset() + length));
+        states.add(new DecoderState(explicitTag, bi.getIndex() + length));
     }
 
     @Override
@@ -139,8 +139,8 @@ public class DERDecoder implements ASN1Decoder {
         states.removeLast();
     }
 
-    private void endConstructedElement(int nextElementIndex) throws ASN1Exception {
-        int pos = bi.offset();
+    private void endConstructedElement(long nextElementIndex) throws ASN1Exception {
+        long pos = bi.getIndex();
         if (pos < nextElementIndex) {
             // Any elements in this constructed element that have not yet been read will be discarded
             int i;
@@ -404,10 +404,10 @@ public class DERDecoder implements ASN1Decoder {
 
     @Override
     public int peekType() throws ASN1Exception {
-        int currOffset = bi.offset();
+        long currOffset = bi.getIndex();
         int tag = readTag();
-        while ((bi.offset() != currOffset) && bi.hasPrev()) {
-            bi.prev();
+        while ((bi.getIndex() != currOffset) && bi.hasPrevious()) {
+            bi.previous();
         }
         return tag;
     }
@@ -430,7 +430,7 @@ public class DERDecoder implements ASN1Decoder {
         DecoderState lastState = states.peekLast();
         boolean hasNext;
         if (lastState != null) {
-            hasNext = ((bi.offset() < lastState.getNextElementIndex()) && hasCompleteElement());
+            hasNext = ((bi.getIndex() < lastState.getNextElementIndex()) && hasCompleteElement());
         } else {
             hasNext = hasCompleteElement();
         }
@@ -439,7 +439,7 @@ public class DERDecoder implements ASN1Decoder {
 
     private  boolean hasCompleteElement() {
         boolean hasNext;
-        int currOffset = bi.offset();
+        long currOffset = bi.getIndex();
         try {
             readTag();
             int length = readLength();
@@ -451,8 +451,8 @@ public class DERDecoder implements ASN1Decoder {
         } catch (ASN1Exception e) {
             hasNext = false;
         }
-        while ((bi.offset() != currOffset) && bi.hasPrev()) {
-            bi.prev();
+        while ((bi.getIndex() != currOffset) && bi.hasPrevious()) {
+            bi.previous();
         }
         return hasNext;
     }
@@ -476,12 +476,12 @@ public class DERDecoder implements ASN1Decoder {
         if (implicitTag != -1) {
             implicitTag = -1;
         }
-        int currOffset = bi.offset();
+        long currOffset = bi.getIndex();
         readTag();
         int valueLength = readLength();
-        int length = (bi.offset() - currOffset) + valueLength;
-        while ((bi.offset() != currOffset) && bi.hasPrev()) {
-            bi.prev();
+        int length = (int) ((bi.getIndex() - currOffset) + valueLength);
+        while ((bi.getIndex() != currOffset) && bi.hasPrevious()) {
+            bi.previous();
         }
         byte[] element = new byte[length];
         if ((length != 0) && (bi.drain(element) != length)) {
@@ -527,11 +527,11 @@ public class DERDecoder implements ASN1Decoder {
             expectedTag = implicitTag | (expectedTag & CONSTRUCTED_MASK);
             implicitTag = -1;
         }
-        int currOffset = bi.offset();
+        long currOffset = bi.getIndex();
         int actualTag = readTag();
         if (actualTag != expectedTag) {
-            while ((bi.offset() != currOffset) && bi.hasPrev()) {
-                bi.prev();
+            while ((bi.getIndex() != currOffset) && bi.hasPrevious()) {
+                bi.previous();
             }
             throw log.asnUnexpectedTag();
         }
@@ -571,15 +571,15 @@ public class DERDecoder implements ASN1Decoder {
     /**
      * A class used to maintain state information during DER decoding.
      */
-    private class DecoderState {
+    class DecoderState {
         // Tag number for a constructed element
         private final int tag;
 
         // The position of the first character in the encoded buffer that occurs after
         // the encoding of the constructed element
-        private final int nextElementIndex;
+        private final long nextElementIndex;
 
-        public DecoderState(int tag, int nextElementIndex) {
+        DecoderState(int tag, long nextElementIndex) {
             this.tag = tag;
             this.nextElementIndex = nextElementIndex;
         }
@@ -588,7 +588,7 @@ public class DERDecoder implements ASN1Decoder {
             return tag;
         }
 
-        public int getNextElementIndex() {
+        public long getNextElementIndex() {
             return nextElementIndex;
         }
     }

@@ -36,11 +36,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.x500.cert.PKCS10CertificateSigningRequest;
 
 /**
@@ -73,12 +73,12 @@ public final class Pem {
         Assert.checkNotNullParam("pemContent", pemContent);
         Assert.checkNotNullParam("contentFunction", contentFunction);
 
-        int matchIdx = -1;
+        long matchIdx = -1;
 
         while (pemContent.hasNext()) {
             int cp = pemContent.next();
             if (cp == '-') {
-                int idx = pemContent.offset();
+                long idx = pemContent.getIndex();
 
                 if (pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
                     String type = pemContent.delimitedBy('-').drainToString();
@@ -87,20 +87,20 @@ public final class Pem {
                         matchIdx = idx;
                         break;
                     } else {
-                        while (pemContent.offset() > idx) pemContent.prev();
+                        while (pemContent.getIndex() > idx) pemContent.previous();
                     }
                 } else {
-                    while (pemContent.offset() > idx) pemContent.prev();
+                    while (pemContent.getIndex() > idx) pemContent.previous();
                 }
             }
         }
 
         if (matchIdx == -1) return null;
 
-        while (pemContent.offset() > matchIdx) pemContent.prev();
+        while (pemContent.getIndex() > matchIdx) pemContent.previous();
 
         if (! pemContent.limitedTo(10).contentEquals("----BEGIN ")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         String type = pemContent.delimitedBy('-').drainToString();
         final Matcher matcher = VALID_LABEL.matcher(type);
@@ -109,7 +109,7 @@ public final class Pem {
             throw log.malformedPemContent(matcher.start() + 11);
         }
         if (! pemContent.limitedTo(5).contentEquals("-----")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         CodePointIterator delimitedIterator = pemContent.delimitedBy('-').skip(Character::isWhitespace).skipCrLf();
         final ByteIterator byteIterator = delimitedIterator.base64Decode();
@@ -117,13 +117,13 @@ public final class Pem {
         delimitedIterator.skipAll(); // skip until '-'
 
         if (! pemContent.limitedTo(9).contentEquals("-----END ")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         if (! pemContent.limitedTo(type.length()).contentEquals(type)) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         if (! pemContent.limitedTo(5).contentEquals("-----")) {
-            throw log.malformedPemContent(pemContent.offset());
+            throw log.malformedPemContent(pemContent.getIndex());
         }
         return result;
     }
@@ -158,7 +158,7 @@ public final class Pem {
                                 return new PemEntry<>(privateKey);
                             }
                             default: {
-                                throw log.malformedPemContent(pemContent.offset());
+                                throw log.malformedPemContent(pemContent.getIndex());
                             }
                         }
                     });

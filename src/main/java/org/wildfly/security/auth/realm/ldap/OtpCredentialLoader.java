@@ -1,6 +1,9 @@
 package org.wildfly.security.auth.realm.ldap;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.codec.Base64Alphabet;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
@@ -9,9 +12,6 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
-import org.wildfly.security.util.Alphabet;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -139,7 +139,7 @@ class OtpCredentialLoader implements CredentialPersister {
                 PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithm, providers);
                 Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(
                                 CodePointIterator.ofString((String) hash)
-                                        .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
+                                        .base64Decode(Base64Alphabet.STANDARD, false).drain(),
                                 (String) seed,
                                 Integer.parseInt((String) sequence)));
                 if (credentialType.isAssignableFrom(PasswordCredential.class)) {

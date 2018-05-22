@@ -37,8 +37,10 @@ import javax.crypto.Mac;
 /**
  * A byte iterator.
  *
+ * @deprecated Use {@link org.wildfly.common.iteration.ByteIterator} instead.
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public abstract class ByteIterator extends NumericIterator {
 
     private static final int OP_BUFFER_SIZE = 8192;

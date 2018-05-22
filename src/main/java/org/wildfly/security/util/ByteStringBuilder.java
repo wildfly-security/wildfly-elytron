@@ -28,8 +28,10 @@ import java.util.NoSuchElementException;
 import javax.crypto.Mac;
 
 /**
+ * @deprecated Use {@link org.wildfly.common.bytes.ByteStringBuilder} instead.
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class ByteStringBuilder {
     private byte[] content;
     private int length;

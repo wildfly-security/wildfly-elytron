@@ -53,6 +53,7 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
@@ -70,7 +71,6 @@ import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism._private.MechanismUtil;
-import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
@@ -229,7 +229,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                 httpSpnego.trace("No usable HttpScope for storage, continuation will not be possible");
             }
 
-            byte[] decodedValue = ByteIterator.ofBytes(challenge.getBytes(UTF_8)).base64Decode().drain();
+            byte[] decodedValue = ByteIterator.ofBytes(challenge.getBytes(UTF_8)).asUtf8String().base64Decode().drain();
 
             Subject subject = new Subject(true, Collections.emptySet(), Collections.emptySet(), kerberosTicket != null ? Collections.singleton(kerberosTicket) : Collections.emptySet());
 

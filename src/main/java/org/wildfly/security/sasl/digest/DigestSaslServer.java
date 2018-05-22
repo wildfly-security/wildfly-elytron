@@ -43,9 +43,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
-import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A server implementation of RFC 2831 {@code DIGEST} SASL mechanism.

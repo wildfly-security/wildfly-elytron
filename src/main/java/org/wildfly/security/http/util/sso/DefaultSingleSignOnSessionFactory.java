@@ -18,8 +18,8 @@
 
 package org.wildfly.security.http.util.sso;
 
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.http.HttpServerRequest;
-import org.wildfly.security.util.ByteIterator;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
@@ -91,7 +91,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
             Base64.Encoder urlEncoder = Base64.getUrlEncoder();
 
             return sessionId + "." + ByteIterator.ofBytes(urlEncoder.encode(ByteIterator.ofBytes(sessionId.getBytes(StandardCharsets.UTF_8)).sign(signature).drain())).asUtf8String().drainToString();
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             throw new IllegalStateException(e);
         }
     }
