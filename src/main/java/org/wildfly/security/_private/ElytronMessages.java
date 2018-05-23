@@ -1491,6 +1491,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5175, value = "Unable to determine bound server name")
     AuthenticationMechanismException mechUnableToDetermineBoundServerName(@Cause Exception e);
 
+    @Message(id = 5176, value = "Unsupported callback")
+    AuthenticationMechanismException mechCallbackHandlerUnsupportedCallback(@Cause Throwable cause);
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")
