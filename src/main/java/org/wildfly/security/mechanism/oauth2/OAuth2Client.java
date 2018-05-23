@@ -55,7 +55,7 @@ public class OAuth2Client {
         try {
             MechanismUtil.handleCallbacks(log, this.callbackHandler, credentialCallback);
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerDoesNotSupportUserName(e);
+            throw log.mechCallbackHandlerUnsupportedCallback(e);
         }
 
         assertTrue(credentialCallback.isCredentialTypeSupported(BearerTokenCredential.class));
