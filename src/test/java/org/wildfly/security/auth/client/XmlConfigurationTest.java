@@ -25,16 +25,26 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.security.auth.x500.X500Principal;
 import javax.xml.stream.XMLStreamException;
 
 import org.junit.AfterClass;
@@ -49,6 +59,9 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.x500.cert.BasicConstraintsExtension;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -59,6 +72,13 @@ public class XmlConfigurationTest {
     static final String NS_ELYTRON_1_0_1 = "urn:elytron:1.0.1";
 
     private static final Provider provider = new WildFlyElytronProvider();
+
+    private static final char[] PASSWORD = "Elytron".toCharArray();
+    private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
+    private static final String LADYBIRD_LOCATION = "ladybird.keystore";
+
+    private static File ladybirdFile = null;
+    private static File workingDirCA = null;
 
     private static Map<String, String> stores = new HashMap<>();
     private static String BASE_STORE_DIRECTORY = "target/ks-cred-stores";
@@ -82,8 +102,52 @@ public class XmlConfigurationTest {
         }
     }
 
+    private static void createLadybirdKeyStore(File ladybirdFile) throws Exception{
+        X500Principal issuerDN = new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA");
+        X500Principal ladybirdDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird");
+
+        KeyStore ladybirdKeyStore = KeyStore.getInstance("JKS");
+        ladybirdKeyStore.load(null, null);
+
+        SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(issuerDN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
+                .build();
+        X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        ladybirdKeyStore.setCertificateEntry("ca", issuerCertificate);
+
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        KeyPair ladybirdKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey ladybirdSigningKey = ladybirdKeys.getPrivate();
+        PublicKey ladybirdPublicKey = ladybirdKeys.getPublic();
+
+        X509Certificate ladybirdCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(ladybirdDN)
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(ladybirdPublicKey)
+                .setSerialNumber(new BigInteger("4"))
+                .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .build();
+        ladybirdKeyStore.setKeyEntry("ladybird", ladybirdSigningKey, PASSWORD, new X509Certificate[]{ladybirdCertificate, issuerCertificate});
+
+        try (OutputStream ladybirdStream = new FileOutputStream(ladybirdFile)) {
+            ladybirdKeyStore.store(ladybirdStream, PASSWORD);
+        }
+    }
+
     @BeforeClass
     public static void setUp() throws Exception {
+        workingDirCA = new File(CA_JKS_LOCATION);
+        if (workingDirCA.exists() == false) {
+            workingDirCA.mkdirs();
+        }
+        ladybirdFile = new File(workingDirCA, LADYBIRD_LOCATION);
+        createLadybirdKeyStore(ladybirdFile);
+
         Security.addProvider(provider);
         cleanCredentialStores();
         // setup vaults that need to be complete before a test starts
@@ -98,6 +162,10 @@ public class XmlConfigurationTest {
     @AfterClass
     public static void tearDown() {
         Security.removeProvider(provider.getName());
+        ladybirdFile.delete();
+        ladybirdFile = null;
+        workingDirCA.delete();
+        workingDirCA = null;
     }
 
     private static ConfigurationXMLStreamReader openFile(byte[] xmlBytes, String fileName) throws ConfigXMLParseException {

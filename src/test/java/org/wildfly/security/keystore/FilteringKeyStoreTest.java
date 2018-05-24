@@ -19,16 +19,19 @@ package org.wildfly.security.keystore;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.security.auth.x500.X500Principal;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
 /**
  * Testing of the filtering KeyStore implementation.
@@ -36,16 +39,31 @@ import org.junit.Test;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class FilteringKeyStoreTest {
-
     private static KeyStore baseKeyStore;
+    private static final char[] PASSWORD = "Elytron".toCharArray();
+
+    private static void createFilteredKeyStore(KeyStore filteredKeyStore) throws Exception{
+        X500Principal DN = new X500Principal("CN=Elytron, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=GB");
+
+        SelfSignedX509CertificateAndSigningKey selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(DN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .build();
+        X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+
+        filteredKeyStore.setKeyEntry("alias1", selfSignedX509CertificateAndSigningKey.getSigningKey(), PASSWORD, new X509Certificate[]{certificate});
+        filteredKeyStore.setKeyEntry("alias2", selfSignedX509CertificateAndSigningKey.getSigningKey(), PASSWORD, new X509Certificate[]{certificate});
+        filteredKeyStore.setKeyEntry("alias3", selfSignedX509CertificateAndSigningKey.getSigningKey(), PASSWORD, new X509Certificate[]{certificate});
+        filteredKeyStore.setKeyEntry("alias4", selfSignedX509CertificateAndSigningKey.getSigningKey(), PASSWORD, new X509Certificate[]{certificate});
+    }
 
     @BeforeClass
-    public static void loadKeyStore() throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("jks");
-        try (InputStream is = FilteringKeyStoreTest.class.getResourceAsStream("filtered.keystore")) {
-            keyStore.load(is, "Elytron".toCharArray());
-        }
-        baseKeyStore = keyStore;
+    public static void setUp() throws Exception{
+        baseKeyStore = KeyStore.getInstance("JKS");
+        baseKeyStore.load(null, null);
+
+        createFilteredKeyStore(baseKeyStore);
     }
 
     public void performTest(Predicate<String> aliasPredicate, String... expectedAlias) throws Exception {
