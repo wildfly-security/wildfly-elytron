@@ -41,6 +41,7 @@ import org.ietf.jgss.MessageProp;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -223,7 +224,7 @@ final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 }
 
                 try {
-                    byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
+                    byte[] response = initSecContext(gssContext, NO_BYTES, 0, 0);
                     if (gssContext.isEstablished()) {
                         saslGssapi.trace("GSSContext established, transitioning to negotiate security layer.");
                         setNegotiationState(SECURITY_LAYER_NEGOTIATION_STATE);
@@ -242,7 +243,7 @@ final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 assert gssContext.isEstablished() == false;
 
                 try {
-                    byte[] response = gssContext.initSecContext(message, 0, message.length);
+                    byte[] response = initSecContext(gssContext, message, 0, message.length);
 
                     if (gssContext.isEstablished()) {
                         saslGssapi.trace("GSSContext established, transitioning to negotiate security layer.");
@@ -309,6 +310,16 @@ final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 }
         }
         throw Assert.impossibleSwitchCase(state);
+    }
+
+    private static byte[] initSecContext(final GSSContext gssContext, final byte[] inputBuf, final int offset, final int len) throws GSSException {
+        final ClassLoader old = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(GssapiClient.class);
+        try {
+            return gssContext.initSecContext(inputBuf, offset, len);
+        } finally {
+            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
+        }
+
     }
 
 }
