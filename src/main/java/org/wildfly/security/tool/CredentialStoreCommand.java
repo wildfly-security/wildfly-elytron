@@ -217,6 +217,12 @@ class CredentialStoreCommand extends Command {
         credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
                 getProvidersSupplier(otherProviders).get());
+
+        // ELY-1294 compute password to validate salt parameter without --summary.
+        if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
+            password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
+        }
+
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
             if (alias.length() == 0) {
@@ -232,10 +238,6 @@ class CredentialStoreCommand extends Command {
                 }
             }
 
-            // ELY-1294 compute password to validate salt parameter without --summary.
-            if (csPassword != null && !csPassword.startsWith("MASK-") && salt != null && iterationCount > -1) {
-                password = MaskCommand.computeMasked(csPassword, salt, iterationCount);
-            }
 
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
