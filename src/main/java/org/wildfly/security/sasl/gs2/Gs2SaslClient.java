@@ -39,6 +39,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -144,7 +145,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
                     throw saslGs2.mechInitialChallengeMustBeEmpty().toSaslException();
                 }
                 try {
-                    byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
+                    byte[] response = initSecContext(gssContext, NO_BYTES, 0, 0);
                     // Expect at least one subsequent exchange
                     assert gssContext.isEstablished() == false;
                     setNegotiationState(ST_CHALLENGE_RESPONSE);
@@ -156,7 +157,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
             case ST_CHALLENGE_RESPONSE: {
                 assert gssContext.isEstablished() == false;
                 try {
-                    byte[] response = gssContext.initSecContext(challenge, 0, challenge.length);
+                    byte[] response = initSecContext(gssContext, challenge, 0, challenge.length);
                     if (gssContext.isEstablished()) {
                         if (!gssContext.getMutualAuthState()) {
                             throw saslGs2.mechMutualAuthenticationNotEnabled().toSaslException();
@@ -255,5 +256,15 @@ final class Gs2SaslClient extends AbstractSaslClient {
         modifiedToken.append(gs2HeaderExcludingNonStdFlag);
         modifiedToken.append(token);
         return modifiedToken.toArray();
+    }
+
+    private static byte[] initSecContext(final GSSContext gssContext, final byte[] inputBuf, final int offset, final int len) throws GSSException {
+        final ClassLoader old = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(Gs2SaslClient.class);
+        try {
+            return gssContext.initSecContext(inputBuf, offset, len);
+        } finally {
+            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
+        }
+
     }
 }
