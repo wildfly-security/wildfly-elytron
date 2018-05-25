@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron</artifactId>
-    <version>1.3.3.Final</version>
+    <version>1.3.4.CR1-SNAPSHOT</version>
 
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
@@ -587,7 +587,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.3.2.Final</version>
+                                    <version>1.3.3.Final</version>
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
