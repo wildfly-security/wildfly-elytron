@@ -16,7 +16,7 @@
     limitations under the License.
 -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:1.0">
+    <authentication-client xmlns="urn:elytron:client:1.1">
         <key-stores>
             <key-store name="client-keystore" type="JKS">
                 <file name="./target/keystore/client.keystore"/>
