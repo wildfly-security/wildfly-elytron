@@ -172,20 +172,86 @@ public interface ASN1Decoder {
     String decodeBitStringAsString() throws ASN1Exception;
 
     /**
-     * Decode the next ASN.1 element as a printable string.
+     * Decode the next ASN.1 element as a PrintableString.
      *
-     * @return the decoded printable string as a string
-     * @throws ASN1Exception if the next element is not a printable string
+     * @return the decoded PrintableString as a string
+     * @throws ASN1Exception if the next element is not a PrintableString
      */
     String decodePrintableString() throws ASN1Exception;
 
     /**
-     * Decode the next ASN.1 element as a printable string.
+     * Decode the next ASN.1 element as a PrintableString.
      *
-     * @return the decoded printable string as a byte array
-     * @throws ASN1Exception if the next element is not a printable string
+     * @return the decoded PrintableString as a byte array
+     * @throws ASN1Exception if the next element is not a PrintableString
      */
     byte[] decodePrintableStringAsBytes() throws ASN1Exception;
+
+    /**
+     * Decode the next ASN.1 element as an UniversalString.
+     *
+     * @return the decoded UniversalString as a string
+     * @throws ASN1Exception if the next element is not a UniversalString
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default String decodeUniversalString() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Decode the next ASN.1 element as an UniversalString.
+     *
+     * @return the decoded UniversalString as a byte array
+     * @throws ASN1Exception if the next element is not a UniversalString
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default byte[] decodeUniversalStringAsBytes() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Decode the next ASN.1 element as an UTF8String.
+     *
+     * @return the decoded UTF8String as a string
+     * @throws ASN1Exception if the next element is not a UTF8String
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default String decodeUtf8String() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Decode the next ASN.1 element as an UTF8String.
+     *
+     * @return the decoded UTF8String as a byte array
+     * @throws ASN1Exception if the next element is not a UTF8String
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default byte[] decodeUtf8StringAsBytes() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Decode the next ASN.1 element as an BMPString.
+     *
+     * @return the decoded BMPString as a string
+     * @throws ASN1Exception if the next element is not a BMPString
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default String decodeBMPString() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Decode the next ASN.1 element as an BMPString.
+     *
+     * @return the decoded BMPString as a byte array
+     * @throws ASN1Exception if the next element is not a BMPString
+     * @throws UnsupportedOperationException if this implementation does not provide this method
+     */
+    default byte[] decodeBMPStringAsBytes() throws ASN1Exception {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Decode the next ASN.1 element as an object identifier.

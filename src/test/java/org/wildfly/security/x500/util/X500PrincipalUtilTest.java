@@ -23,9 +23,12 @@ import static org.junit.Assert.*;
 import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
+import org.wildfly.security.asn1.ASN1Encodable;
 import org.wildfly.security.asn1.util.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.x500.X500;
+import org.wildfly.security.x500.X500AttributeTypeAndValue;
+import org.wildfly.security.x500.X500PrincipalBuilder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -33,7 +36,7 @@ import org.wildfly.security.x500.X500;
 public class X500PrincipalUtilTest {
 
     @Test
-    public void testGetAttributeValues1() {
+    public void testGetAttributeValues() {
         X500Principal principal;
         principal = new X500Principal("cn=david.lloyd,dc=redhat,dc=com");
         System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
@@ -60,5 +63,24 @@ public class X500PrincipalUtilTest {
         principal = new X500Principal("cn=Bob Smith+uid=bsmith,ou=people,dc=redhat,dc=com");
         assertTrue(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_AT_COMMON_NAME, X500.OID_UID, X500.OID_DC));
         assertFalse(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_UID, X500.OID_AT_LOCALITY_NAME, X500.OID_DC));
+    }
+
+    @Test
+    public void testGetAttributeValuesFromBuiltPrincipal() {
+        X500PrincipalBuilder builder = new X500PrincipalBuilder();
+        builder.addItem(X500AttributeTypeAndValue.create(X500.OID_DC, ASN1Encodable.ofPrintableString("printableString")));
+        builder.addItem(X500AttributeTypeAndValue.create(X500.OID_DC, ASN1Encodable.ofUniversalString("universalString")));
+        builder.addItem(X500AttributeTypeAndValue.create(X500.OID_DC, ASN1Encodable.ofUtf8String("utf8String")));
+        builder.addItem(X500AttributeTypeAndValue.create(X500.OID_DC, ASN1Encodable.ofBMPString("bmpString")));
+        builder.addItem(X500AttributeTypeAndValue.create(X500.OID_DC, ASN1Encodable.ofIA5String("ia5String")));
+        X500Principal principal = builder.build();
+        System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
+        assertArrayEquals(new String[] {
+                "printableString",
+                "universalString",
+                "utf8String",
+                "bmpString",
+                "ia5String"
+        }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC, true));
     }
 }

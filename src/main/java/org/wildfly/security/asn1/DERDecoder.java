@@ -23,6 +23,7 @@ import static org.wildfly.security.asn1.util.ASN1.*;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.NoSuchElementException;
@@ -37,6 +38,8 @@ import org.wildfly.common.iteration.ByteIterator;
 public class DERDecoder implements ASN1Decoder {
 
     private static final int BOOLEAN_FALSE = 0;
+
+    private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
 
     private final ByteIterator bi;
     private final ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
@@ -196,12 +199,7 @@ public class DERDecoder implements ASN1Decoder {
     @Override
     public byte[] decodeIA5StringAsBytes() throws ASN1Exception {
         readTag(IA5_STRING_TYPE);
-        int length = readLength();
-        byte[] result = new byte[length];
-        if ((length != 0) && (bi.drain(result, 0, length) != length)) {
-            throw log.asnUnexpectedEndOfInput();
-        }
-        return result;
+        return decodeUncheckedStringAsBytes();
     }
 
     @Override
@@ -291,6 +289,42 @@ public class DERDecoder implements ASN1Decoder {
             result[c++] = (byte) b;
         }
         if (c < length) {
+            throw log.asnUnexpectedEndOfInput();
+        }
+        return result;
+    }
+
+    public String decodeUniversalString() throws ASN1Exception {
+        return new String(decodeUniversalStringAsBytes(), UTF_32BE);
+    }
+
+    public byte[] decodeUniversalStringAsBytes() throws ASN1Exception {
+        readTag(UNIVERSAL_STRING_TYPE);
+        return decodeUncheckedStringAsBytes();
+    }
+
+    public String decodeUtf8String() throws ASN1Exception {
+        return new String(decodeUtf8StringAsBytes(), StandardCharsets.UTF_8);
+    }
+
+    public byte[] decodeUtf8StringAsBytes() throws ASN1Exception {
+        readTag(UTF8_STRING_TYPE);
+        return decodeUncheckedStringAsBytes();
+    }
+
+    public String decodeBMPString() throws ASN1Exception {
+        return new String(decodeBMPStringAsBytes(), StandardCharsets.UTF_16BE);
+    }
+
+    public byte[] decodeBMPStringAsBytes() throws ASN1Exception {
+        readTag(BMP_STRING_TYPE);
+        return decodeUncheckedStringAsBytes();
+    }
+
+    private byte[] decodeUncheckedStringAsBytes() throws ASN1Exception {
+        int length = readLength();
+        byte[] result = new byte[length];
+        if ((length != 0) && (bi.drain(result, 0, length) != length)) {
             throw log.asnUnexpectedEndOfInput();
         }
         return result;

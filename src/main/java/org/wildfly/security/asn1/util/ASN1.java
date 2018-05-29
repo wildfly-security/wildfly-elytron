@@ -258,7 +258,7 @@ public class ASN1 {
     }
 
     /**
-     * Format an AS.1 string from the given decoder as a string.
+     * Format an ASN.1 string from the given decoder as a string.
      *
      * @param decoder the ASN.1 decoder
      * @param builder the target string builder
@@ -310,6 +310,18 @@ public class ASN1 {
                 }
                 case PRINTABLE_STRING_TYPE: {
                     builder.append("[printable:").append(decoder.decodePrintableString()).append(']');
+                    break;
+                }
+                case UNIVERSAL_STRING_TYPE: {
+                    builder.append("[universal:").append(decoder.decodeUniversalString()).append(']');
+                    break;
+                }
+                case UTF8_STRING_TYPE: {
+                    builder.append("[utf8:").append(decoder.decodeUtf8String()).append(']');
+                    break;
+                }
+                case BMP_STRING_TYPE: {
+                    builder.append("[bmp:").append(decoder.decodeBMPString()).append(']');
                     break;
                 }
                 default: {
