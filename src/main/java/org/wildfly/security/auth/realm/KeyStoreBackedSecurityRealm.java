@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.KeyStore;
@@ -35,7 +36,6 @@ import java.util.function.Supplier;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -80,12 +80,16 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         if (principal instanceof NamePrincipal) {
-            return new KeyStoreRealmIdentity(principal.getName());
+            String name = principal.getName();
+            log.tracef("KeyStoreRealm: obtaining certificate by alias [%s]", name);
+            return new KeyStoreRealmIdentity(name);
         } else {
             final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
             if (x500Principal == null) {
+                log.tracef("KeyStoreRealm: conversion of principal [%s] to X500Principal failed", principal);
                 return RealmIdentity.NON_EXISTENT;
             } else {
+                log.tracef("KeyStoreRealm: obtaining certificate by X500Principal [%s]", x500Principal);
                 final KeyStore keyStore = this.keyStore;
                 try {
                     final Enumeration<String> aliases = keyStore.aliases();
@@ -94,13 +98,15 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                         if (keyStore.isCertificateEntry(alias)) {
                             final Certificate certificate = keyStore.getCertificate(alias);
                             if (certificate instanceof X509Certificate && x500Principal.equals(X500PrincipalUtil.asX500Principal(((X509Certificate) certificate).getSubjectX500Principal()))) {
+                                log.tracef("KeyStoreRealm: certificate found by X500Principal in alias [%s]", alias);
                                 return new KeyStoreRealmIdentity(alias);
                             }
                         }
                     }
                 } catch (KeyStoreException e) {
-                    throw ElytronMessages.log.failedToReadKeyStore(e);
+                    throw log.failedToReadKeyStore(e);
                 }
+                log.tracef("KeyStoreRealm: certificate not found by X500Principal");
                 return RealmIdentity.NON_EXISTENT;
             }
         }
@@ -120,9 +126,13 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     private KeyStore.Entry getEntry(String name) {
         try {
-            return keyStore.getEntry(name, null);
+            KeyStore.Entry entry = keyStore.getEntry(name, null);
+            if (entry == null) {
+                log.tracef("KeyStoreRealm: alias [%s] does not exist in KeyStore", name);
+            }
+            return entry;
         } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
-            ElytronMessages.log.tracef(e, "Obtaining entry [%s] from KeyStore failed", name);
+            log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
             return null;
         }
     }
@@ -142,9 +152,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         @Override
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);
-            if (entry == null) {
-                return SupportLevel.UNSUPPORTED;
-            }
+            if (entry == null) return SupportLevel.UNSUPPORTED;
             final Credential credential = Credential.fromKeyStoreEntry(entry);
             return credential != null && credential.matches(credentialType, algorithmName, parameterSpec) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         }
@@ -176,29 +184,26 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         @Override
         public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);
-            if (entry == null) {
-                return SupportLevel.UNSUPPORTED;
-            }
+            if (entry == null) return SupportLevel.UNSUPPORTED;
             final Credential credential = Credential.fromKeyStoreEntry(entry);
             if (credential != null && credential.canVerify(evidenceType, algorithmName)) {
+                log.tracef("KeyStoreRealm: verification supported using alias [%s]", name);
                 return SupportLevel.SUPPORTED;
             }
+            log.tracef("KeyStoreRealm: verification unsupported - unsupported entry type of alias [%s]", name);
             return SupportLevel.UNSUPPORTED;
         }
 
         @Override
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);
-            if (entry == null) {
-                ElytronMessages.log.tracef("Evidence verification failed - alias [%s] does not exist in KeyStore", name);
-                return false;
-            }
+            if (entry == null) return false;
             final Credential credential = Credential.fromKeyStoreEntry(entry);
             if (credential != null && credential.canVerify(evidence) && credential.verify(providers, evidence)) {
-                ElytronMessages.log.tracef("Evidence verification succeed for alias [%s]", name);
+                log.tracef("KeyStoreRealm: verification succeed for alias [%s]", name);
                 return true;
             }
-            ElytronMessages.log.tracef("Evidence verification failed - credential of alias [%s] rejected it", name);
+            log.tracef("KeyStoreRealm: verification failed - rejected by credential from alias [%s]", name);
             return false;
         }
 
