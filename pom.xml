@@ -587,7 +587,7 @@
                     <plugin>
                         <groupId>com.github.siom79.japicmp</groupId>
                         <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>0.11.1</version>
+                        <version>0.12.0</version>
                         <configuration>
                             <oldVersion>
                                 <dependency>
@@ -604,7 +604,14 @@
                             </newVersion>
                             <parameter>
                                 <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-                                <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <overrideCompatibilityChangeParameters>
+                                    <overrideCompatibilityChangeParameter><!-- allowing new method in interface if default impl provided -->
+                                        <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
+                                        <binaryCompatible>true</binaryCompatible>
+                                        <sourceCompatible>true</sourceCompatible>
+                                    </overrideCompatibilityChangeParameter>
+                                </overrideCompatibilityChangeParameters>
                                 <includes>
                                     <include>org.wildfly.security</include>
                                     <include>org.wildfly.security.asn1</include>
