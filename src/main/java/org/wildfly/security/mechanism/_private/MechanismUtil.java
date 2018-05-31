@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
@@ -35,6 +36,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -157,6 +159,35 @@ public final class MechanismUtil {
             throw e;
         } catch (Throwable e) {
             throw log.mechCallbackHandlerFailedForUnknownReason(e);
+        }
+    }
+
+    /**
+     * Get or compute the value for the given key in HttpScope, storing the computed value (if one is generated).
+     * The function must not generate a {@code null} value or an unspecified exception will result.
+     *
+     * @param scope the HTTP scope to store computed value (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param mappingFunction the function to apply to acquire the value (must not be {@code null})
+     * @return the stored or new value (not {@code null})
+     */
+    public static <R> R computeIfAbsent(HttpScope scope, String key, Function<String, R> mappingFunction) {
+        Assert.checkNotNullParam("scope", scope);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("mappingFunction", mappingFunction);
+        synchronized (scope) {
+            if (! scope.exists()) {
+                scope.create();
+            }
+            final R existing = (R) scope.getAttachment(key);
+            if (existing == null) {
+                R newValue = mappingFunction.apply(key);
+                Assert.assertNotNull(newValue);
+                scope.setAttachment(key, newValue);
+                return newValue;
+            } else {
+                return existing;
+            }
         }
     }
 }

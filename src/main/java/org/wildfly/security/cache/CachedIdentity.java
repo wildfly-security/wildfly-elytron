@@ -93,4 +93,9 @@ public final class CachedIdentity implements Serializable {
     public SecurityIdentity getSecurityIdentity() {
         return this.securityIdentity;
     }
+
+    @Override
+    public String toString() {
+        return "CachedIdentity{" + mechanismName + ", '" + name + "', " + securityIdentity + "}";
+    }
 }
