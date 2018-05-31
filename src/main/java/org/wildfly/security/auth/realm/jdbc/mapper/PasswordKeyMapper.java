@@ -31,6 +31,7 @@ import java.sql.Types;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.codec.Base64Alphabet;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.realm.jdbc.KeyMapper;
 import org.wildfly.security.auth.SupportLevel;
@@ -62,6 +63,13 @@ public class PasswordKeyMapper implements KeyMapper {
     private final int defaultIterationCount;
     private final int algorithmColumn;
     private final String defaultAlgorithm;
+    private final Encoding hashEncoding;
+    private final Encoding saltEncoding;
+
+    public enum Encoding {
+        BASE64,
+        HEX
+    }
 
     PasswordKeyMapper(Builder builder) {
         final int hashColumn = builder.hashColumn;
@@ -80,6 +88,8 @@ public class PasswordKeyMapper implements KeyMapper {
         if (algorithmColumn != -1) Assert.checkMinimumParameter("algorithmColumn", 1, algorithmColumn);
         this.algorithmColumn = algorithmColumn;
         defaultAlgorithm = builder.defaultAlgorithm;
+        this.hashEncoding = Assert.checkNotNullParam("hashEncoding", builder.hashEncoding);
+        this.saltEncoding = Assert.checkNotNullParam("saltEncoding", builder.saltEncoding);
     }
 
     @Override
@@ -147,7 +157,7 @@ public class PasswordKeyMapper implements KeyMapper {
         return algorithmColumn;
     }
 
-    private static byte[] getBinaryColumn(ResultSetMetaData metaData, ResultSet resultSet, int column) throws SQLException {
+    private static byte[] getBinaryColumn(ResultSetMetaData metaData, ResultSet resultSet, int column, Encoding encoding) throws SQLException {
         if (column == -1) return null;
         final int columnType = metaData.getColumnType(column);
         switch (columnType) {
@@ -161,18 +171,26 @@ public class PasswordKeyMapper implements KeyMapper {
             case Types.LONGNVARCHAR:
             case Types.VARCHAR:
             case Types.NVARCHAR: {
-                return CodePointIterator.ofString(resultSet.getString(column)).base64Decode().drain();
+                return decodeColumn(resultSet.getString(column), encoding);
             }
             default: {
                 final Object object = resultSet.getObject(column);
                 if (object instanceof byte[]) {
                     return (byte[]) object;
                 } else if (object instanceof String) {
-                    return CodePointIterator.ofString(resultSet.getString(column)).base64Decode().drain();
+                    return decodeColumn((String) object, encoding);
                 }
                 return null;
             }
         }
+    }
+
+    private static byte[] decodeColumn(String string, Encoding encoding) {
+        switch (encoding) {
+            case BASE64: return CodePointIterator.ofString(string).base64Decode(Base64Alphabet.STANDARD, false).drain();
+            case HEX: return CodePointIterator.ofString(string).hexDecode().drain();
+        }
+        throw new IllegalStateException();
     }
 
     private static String getStringColumn(ResultSetMetaData metaData, ResultSet resultSet, int column) throws SQLException {
@@ -209,14 +227,8 @@ public class PasswordKeyMapper implements KeyMapper {
         byte[] hash = null;
         char[] clear = null;
         byte[] salt = null;
-        int iterationCount = -1;
+        int iterationCount;
         String algorithmName = getDefaultAlgorithm();
-
-        final int hashColumn = getHashColumn();
-        final int saltColumn = getSaltColumn();
-        final int iterationCountColumn = getIterationCountColumn();
-        final int algorithmColumn = getAlgorithmColumn();
-        final int defaultIterationCount = getDefaultIterationCount();
 
         final ResultSetMetaData metaData = resultSet.getMetaData();
 
@@ -232,7 +244,7 @@ public class PasswordKeyMapper implements KeyMapper {
             if (s != null) {
                 clear = s.toCharArray();
             } else {
-                hash = getBinaryColumn(metaData, resultSet, hashColumn);
+                hash = getBinaryColumn(metaData, resultSet, hashColumn, hashEncoding);
             }
         } else {
             if (saltColumn == -1 && iterationCountColumn == -1) {
@@ -254,11 +266,11 @@ public class PasswordKeyMapper implements KeyMapper {
                     }
                 }
             }
-            hash = getBinaryColumn(metaData, resultSet, hashColumn);
+            hash = getBinaryColumn(metaData, resultSet, hashColumn, hashEncoding);
         }
 
         if (saltColumn > 0) {
-            salt = getBinaryColumn(metaData, resultSet, saltColumn);
+            salt = getBinaryColumn(metaData, resultSet, saltColumn, saltEncoding);
         }
 
         if (iterationCountColumn > 0) {
@@ -327,6 +339,8 @@ public class PasswordKeyMapper implements KeyMapper {
         int defaultIterationCount = -1;
         int algorithmColumn = -1;
         String defaultAlgorithm;
+        Encoding hashEncoding = Encoding.BASE64;
+        Encoding saltEncoding = Encoding.BASE64;
 
         Builder() {
         }
@@ -382,6 +396,24 @@ public class PasswordKeyMapper implements KeyMapper {
 
         public Builder setDefaultAlgorithm(final String defaultAlgorithm) {
             this.defaultAlgorithm = defaultAlgorithm;
+            return this;
+        }
+
+        public Encoding getHashEncoding() {
+            return hashEncoding;
+        }
+
+        public Builder setHashEncoding(Encoding hashEncoding) {
+            this.hashEncoding = hashEncoding;
+            return this;
+        }
+
+        public Encoding getSaltEncoding() {
+            return saltEncoding;
+        }
+
+        public Builder setSaltEncoding(Encoding saltEncoding) {
+            this.saltEncoding = saltEncoding;
             return this;
         }
 
