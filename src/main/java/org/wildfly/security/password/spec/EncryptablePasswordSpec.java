@@ -18,7 +18,11 @@
 
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+import java.util.Objects;
 
 import org.wildfly.common.Assert;
 
@@ -59,5 +63,17 @@ public final class EncryptablePasswordSpec implements PasswordSpec {
      */
     public AlgorithmParameterSpec getAlgorithmParameterSpec() {
         return algorithmParameterSpec;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof EncryptablePasswordSpec)) return false;
+        EncryptablePasswordSpec o = (EncryptablePasswordSpec) other;
+        return Arrays.equals(password, o.password) && Objects.equals(algorithmParameterSpec, o.algorithmParameterSpec);
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(password), Objects.hashCode(algorithmParameterSpec));
     }
 }

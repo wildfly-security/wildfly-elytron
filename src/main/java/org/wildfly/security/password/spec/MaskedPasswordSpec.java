@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -83,5 +87,17 @@ public final class MaskedPasswordSpec implements PasswordSpec {
      */
     public byte[] getMaskedPasswordBytes() {
         return maskedPasswordBytes;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof MaskedPasswordSpec)) return false;
+        MaskedPasswordSpec o = (MaskedPasswordSpec) other;
+        return Arrays.equals(initialKeyMaterial, o.initialKeyMaterial) && iterationCount == o.iterationCount && salt == o.salt && maskedPasswordBytes == o.maskedPasswordBytes;
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), iterationCount), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes));
     }
 }

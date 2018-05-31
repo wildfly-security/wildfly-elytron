@@ -17,6 +17,11 @@
  */
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -70,5 +75,17 @@ public final class OneTimePasswordSpec implements PasswordSpec {
      */
     public int getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof OneTimePasswordSpec)) return false;
+        OneTimePasswordSpec o = (OneTimePasswordSpec) other;
+        return Arrays.equals(hash, o.hash) && Objects.equals(seed, o.seed) && sequenceNumber == o.sequenceNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Objects.hashCode(seed)), sequenceNumber);
     }
 }

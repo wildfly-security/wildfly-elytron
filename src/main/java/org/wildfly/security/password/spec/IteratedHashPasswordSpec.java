@@ -17,6 +17,10 @@
  */
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -59,4 +63,15 @@ public class IteratedHashPasswordSpec implements PasswordSpec {
         return this.iterationCount;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof IteratedHashPasswordSpec)) return false;
+        IteratedHashPasswordSpec o = (IteratedHashPasswordSpec) other;
+        return Arrays.equals(hash, o.hash) && iterationCount == o.iterationCount;
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(hash), iterationCount);
+    }
 }
