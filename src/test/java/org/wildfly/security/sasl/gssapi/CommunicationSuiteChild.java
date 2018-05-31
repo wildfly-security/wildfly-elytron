@@ -236,7 +236,7 @@ public class CommunicationSuiteChild {
     private SaslClient createClient() throws Exception {
         Provider provider = findProvider(SASL_CLIENT_FACTORY_GSSAPI, clientElytron);
         String factoryName = (String) provider.get(SASL_CLIENT_FACTORY_GSSAPI);
-        SaslClientFactory factory = (SaslClientFactory) CommunicationSuiteChild.class.getClassLoader().loadClass(factoryName).newInstance();
+        SaslClientFactory factory = Class.forName(factoryName).asSubclass(SaslClientFactory.class).newInstance();
 
         Map<String, String> props = new HashMap<>();
         props.put(Sasl.SERVER_AUTH, Boolean.toString(authServer));
@@ -256,7 +256,7 @@ public class CommunicationSuiteChild {
     private SaslServer createServer() throws Exception {
         Provider provider = findProvider(SASL_SERVER_FACTORY_GSSAPI, serverElytron);
         String factoryName = (String) provider.get(SASL_SERVER_FACTORY_GSSAPI);
-        SaslServerFactory factory = (SaslServerFactory) CommunicationSuiteChild.class.getClassLoader().loadClass(factoryName).newInstance();
+        SaslServerFactory factory = Class.forName(factoryName).asSubclass(SaslServerFactory.class).newInstance();
 
         Map<String, String> props = new HashMap<>();
         props.put(Sasl.QOP, mode.getQop());
