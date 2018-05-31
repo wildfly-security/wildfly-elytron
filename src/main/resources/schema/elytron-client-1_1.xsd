@@ -615,6 +615,7 @@
             <xsd:annotation>
                 <xsd:documentation>
                     Credential store name.
+                    When used, attribute "alias" need to be specified.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -622,6 +623,7 @@
             <xsd:annotation>
                 <xsd:documentation>
                     Alias in the credential store.
+                    Ignored if "store" is not specified.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -629,6 +631,7 @@
             <xsd:annotation>
                 <xsd:documentation>
                     Credential store password in clear text.
+                    Supersedes "store" and "alias" attributes.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
