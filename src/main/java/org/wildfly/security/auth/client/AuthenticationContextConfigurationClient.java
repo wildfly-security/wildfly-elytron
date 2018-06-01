@@ -64,7 +64,7 @@ public final class AuthenticationContextConfigurationClient {
     public static final PrivilegedAction<AuthenticationContextConfigurationClient> ACTION = AuthenticationContextConfigurationClient::new;
 
     /**
-     * Construct a new instance.
+     * Construct a new instance.  Requires the {@code createAuthenticationContextConfigurationClient} {@link ElytronPermission}.
      *
      * @throws SecurityException if the caller does not have permission to instantiate this class
      */

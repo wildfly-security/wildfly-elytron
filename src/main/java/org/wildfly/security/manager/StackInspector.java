@@ -39,6 +39,7 @@ public final class StackInspector {
     /**
      * Get the singleton {@code StackInspector} instance.  The caller must have the {@code getStackInspector}
      * {@link RuntimePermission}.
+     * If the security manager is enabled, requires {@code getStackInspector} {@link WildFlySecurityManagerPermission}.
      *
      * @return the singleton {@code StackInspector} instance
      */

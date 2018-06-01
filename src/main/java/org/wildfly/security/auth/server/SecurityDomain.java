@@ -131,6 +131,8 @@ public final class SecurityDomain {
     /**
      * Register this {@link SecurityDomain} with the specified {@link ClassLoader}.
      *
+     * Registration with enabled security manager requires {@code registerSecurityDomain} {@link ElytronPermission}.
+     *
      * @throws IllegalStateException If a {@link SecurityDomain} is already associated with the specified {@link ClassLoader}.
      * @param classLoader the non {@code null} {@link ClassLoader} to associate this {@link SecurityDomain} with.
      */
@@ -150,6 +152,8 @@ public final class SecurityDomain {
     /**
      * Get the {@link SecurityDomain} associated with the context class loader of the calling Thread or {@code null} if one is
      * not associated.
+     *
+     * Obtaining security domain with enabled security manager requires {@code getSecurityDomain} {@link ElytronPermission}.
      *
      * @return the {@link SecurityDomain} associated with the context class loader of the calling Thread or {@code null} if one
      *         is not associated.
@@ -174,6 +178,8 @@ public final class SecurityDomain {
     /**
      * Get the security domain associated with the given identity.
      *
+     * Obtaining security domain with enabled security manager requires {@code getSecurityDomain} {@link ElytronPermission}.
+     *
      * @param identity the security identity (must not be {@code null})
      * @return the identity's security domain (not {@code null})
      */
@@ -188,6 +194,8 @@ public final class SecurityDomain {
 
     /**
      * Unregister any {@link SecurityDomain} associated with the specified {@link ClassLoader}.
+     *
+     * Unregistration with enabled security manager requires {@code unregisterSecurityDomain} {@link ElytronPermission}.
      *
      * @param classLoader the non {@code null} {@link ClassLoader} to clear any {@link SecurityDomain} association.
      */
@@ -214,6 +222,8 @@ public final class SecurityDomain {
      * Create a new authentication context for this security domain which can be used to carry out a single authentication
      * operation.
      *
+     * Calling with enabled security manager requires {@code createServerAuthenticationContext} {@link ElytronPermission}.
+     *
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext() {
@@ -227,6 +237,8 @@ public final class SecurityDomain {
     /**
      * Create a new authentication context for this security domain which can be used to carry out a single authentication
      * operation.
+     *
+     * Calling with enabled security manager requires {@code createServerAuthenticationContext} {@link ElytronPermission}.
      *
      * @param mechanismConfigurationSelector the selector to use to obtain the mechanism configuration
      * @return the new authentication context
@@ -277,6 +289,8 @@ public final class SecurityDomain {
      * Perform an authentication based on {@link Evidence} for the specified identity {@link Principal}.
      *
      * Note:  It is the caller's responsibility to destroy any evidence passed into this method.
+     *
+     * Calling with enabled security manager requires {@code authenticate} {@link ElytronPermission}.
      *
      * @param principal the principal of the identity to authenticate or {@code null} if the identity is to be derived from the evidence.
      * @param evidence the {@link Evidence} to use for authentication.
@@ -334,6 +348,8 @@ public final class SecurityDomain {
      * Look up a {@link RealmIdentity} by principal.
      * The returned identity must be {@linkplain RealmIdentity#dispose() disposed}.
      *
+     * Calling with enabled security manager requires {@code getIdentity} {@link ElytronPermission}.
+     *
      * @param principal the principal to map (must not be {@code null})
      * @return the identity for the name (not {@code null}, may be non-existent)
      * @throws IllegalArgumentException if the principal could not be successfully decoded to a name
@@ -351,6 +367,8 @@ public final class SecurityDomain {
     /**
      * Look up a {@link ModifiableRealmIdentity} by principal.
      * The returned identity must be {@linkplain RealmIdentity#dispose() disposed}.
+     *
+     * Calling with enabled security manager requires {@code getIdentityForUpdate} {@link ElytronPermission}.
      *
      * @param principal the principal to map (must not be {@code null})
      * @return the identity for the name (not {@code null}, may be non-existent)
@@ -370,6 +388,8 @@ public final class SecurityDomain {
      * Get a function which can be used to look up principals without a security manager permission check.
      * All returned identities must be {@linkplain RealmIdentity#dispose() disposed}.
      *
+     * Calling with enabled security manager requires {@code getIdentity} {@link ElytronPermission}.
+     *
      * @return the lookup function (not {@code null})
      * @throws SecurityException if the caller is not authorized to perform the operation
      */
@@ -384,6 +404,7 @@ public final class SecurityDomain {
     /**
      * Get a function which can be used to look up principals for update without a security manager permission check.
      * All returned identities must be {@linkplain RealmIdentity#dispose() disposed}.
+     * Calling with enabled security manager requires {@code getIdentityForUpdate} {@link ElytronPermission}.
      *
      * @return the lookup function (not {@code null})
      * @throws SecurityException if the caller is not authorized to perform the operation
@@ -632,6 +653,8 @@ public final class SecurityDomain {
     /**
      * Create an empty ad-hoc identity.  The identity will have no authorization information and no credentials associated
      * with it.
+     *
+     * Calling with enabled security manager requires {@code createAdHocIdentity} {@link ElytronPermission}.
      *
      * @param principal the identity principal (must not be {@code null})
      * @return the ad-hoc identity
@@ -986,6 +1009,8 @@ public final class SecurityDomain {
 
         /**
          * Construct this security domain.
+         *
+         * Construction requires {@code createSecurityDomain} {@link ElytronPermission}.
          *
          * @return the new security domain
          */

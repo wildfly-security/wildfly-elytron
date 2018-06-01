@@ -123,6 +123,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     /**
      * Construct a new instance.
      *
+     * Construction with enabled security manager requires {@code createSecurityRealm} {@link ElytronPermission}.
+     *
      * @param root the root path of the identity store
      * @param nameRewriter the name rewriter to apply to looked up names
      * @param levels the number of levels of directory hashing to apply

@@ -29,6 +29,7 @@ import org.wildfly.security.util.Alphabet.Base32Alphabet;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+@Deprecated
 public class Base32Test {
 
     @Test

@@ -35,6 +35,7 @@ import org.wildfly.security.util.Alphabet.Base64Alphabet;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
+@Deprecated
 public class Base64Test {
 
     /*
