@@ -426,11 +426,11 @@ public class WildFlyElytronProvider extends VersionedProvider {
             if (implementationClass == null) {
                 ClassLoader classLoader = WildFlyElytronProvider.class.getClassLoader();
                 try {
-                    implementationClass = classLoader.loadClass(getClassName());
+                    implementationClass = Class.forName(getClassName(), false, classLoader);
                 } catch (ClassNotFoundException e) {
                     throw log.noSuchAlgorithmCreateService(getType(), getAlgorithm(), e);
                 }
-                this.implementationClassRef = new WeakReference<Class<?>>(implementationClass);
+                this.implementationClassRef = new WeakReference<>(implementationClass);
             }
 
             return implementationClass;
