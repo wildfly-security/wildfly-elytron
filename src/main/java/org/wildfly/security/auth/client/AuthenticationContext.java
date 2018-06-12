@@ -24,12 +24,15 @@ import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
 import org.wildfly.common.context.ContextManager;
 import org.wildfly.common.context.Contextual;
+import org.wildfly.common.function.ExceptionObjIntConsumer;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.SecurityFactory;
@@ -299,6 +302,56 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         }
+    }
+
+    /**
+     * Run a privileged action with this authentication context associated for the duration of the task.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     */
+    public <T> void runAsObjIntConsumer(ObjIntConsumer<T> action, T parameter1, int parameter2) {
+        runBiConsumer(action::accept, parameter1, parameter2);
+    }
+
+    /**
+     * Run a privileged action with this authentication context associated for the duration of the task.
+     *
+     * @param action the action to run
+     * @param <T> the action return type
+     * @return the action result (may be {@code null})
+     */
+    public <T> T runAsSupplier(Supplier<T> action) {
+        return runFunction(Supplier::get, action);
+    }
+
+    /**
+     * Run a privileged action with this authentication context associated for the duration of the task.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <E> the action exception type
+     * @throws E if the action throws this exception
+     */
+    public <T, E extends Exception> void runAsObjIntConsumerEx(ExceptionObjIntConsumer<T, E> action, T parameter1, int parameter2) throws E {
+        runExBiConsumer(action::accept, parameter1, parameter2);
+    }
+
+    /**
+     * Run a privileged action with this authentication context associated for the duration of the task.
+     *
+     * @param action the action to run
+     * @param <T> the action return type
+     * @param <E> the action exception type
+     * @return the action result (may be {@code null})
+     * @throws E if the action throws this exception
+     */
+    public <T, E extends Exception> T runAsSupplierEx(ExceptionSupplier<T, E> action) throws E {
+        return runExFunction(ExceptionSupplier::get, action);
     }
 
     public ContextManager<AuthenticationContext> getInstanceContextManager() {

@@ -18,19 +18,30 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.LongFunction;
 import java.util.function.ObjIntConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
+import org.wildfly.common.function.ExceptionBiPredicate;
 import org.wildfly.common.function.ExceptionConsumer;
 import org.wildfly.common.function.ExceptionFunction;
+import org.wildfly.common.function.ExceptionIntFunction;
+import org.wildfly.common.function.ExceptionLongFunction;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
+import org.wildfly.common.function.ExceptionPredicate;
 import org.wildfly.common.function.ExceptionSupplier;
 
 /**
@@ -216,5 +227,150 @@ public interface Scoped {
     default <T, E extends Exception> T runAsSupplierEx(ExceptionSupplier<T, E> action) throws E {
         if (action == null) return null;
         return runAsFunctionEx(ExceptionSupplier::get, action);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param <R> the return value type
+     * @return the action return value
+     */
+    default <R> R runAsAction(PrivilegedAction<R> action) {
+        if (action == null) return null;
+        return runAsFunction(PrivilegedAction::run, action);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param <R> the return value type
+     * @return the action return value
+     * @throws PrivilegedActionException if the action fails with an exception
+     */
+    default <R> R runAsExceptionAction(PrivilegedExceptionAction<R> action) throws PrivilegedActionException {
+        if (action == null) return null;
+        try {
+            return runAsFunctionEx(PrivilegedExceptionAction::run, action);
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param predicate the task to run (must not be {@code null})
+     * @param param1 the first parameter to pass to the task
+     * @param param2 the second parameter to pass to the task
+     * @param <T> the first parameter type
+     * @param <U> the second parameter type
+     * @return the action return value
+     * @throws UnsupportedOperationException if this operation is not implemented
+     */
+    default <T, U> boolean runAsBiPredicate(BiPredicate<T, U> predicate, T param1, U param2) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param predicate the task to run (must not be {@code null})
+     * @param param1 the first parameter to pass to the task
+     * @param param2 the second parameter to pass to the task
+     * @param <T> the first parameter type
+     * @param <U> the second parameter type
+     * @param <E> the exception type
+     * @return the action return value
+     * @throws E if an exception occurs in the task
+     * @throws UnsupportedOperationException if this operation is not implemented
+     */
+    default <T, U, E extends Exception> boolean runAsExBiPredicate(ExceptionBiPredicate<T, U, E> predicate, T param1, U param2) throws E {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param predicate the task to run (must not be {@code null})
+     * @param param the parameter to pass to the task
+     * @param <T> the first parameter type
+     * @return the action return value
+     */
+    default <T> boolean runAsPredicate(Predicate<T> predicate, T param) {
+        if (predicate == null) return false;
+        return runAsBiPredicate(Predicate::test, predicate, param);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param predicate the task to run (must not be {@code null})
+     * @param param the parameter to pass to the task
+     * @param <T> the first parameter type
+     * @param <E> the exception type
+     * @return the action return value
+     * @throws E if an exception occurs in the task
+     */
+    default <T, E extends Exception> boolean runAsExPredicate(ExceptionPredicate<T, E> predicate, T param) throws E {
+        if (predicate == null) return false;
+        return runAsExBiPredicate(ExceptionPredicate::test, predicate, param);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param value the parameter to pass to the task
+     * @param <T> the return value type
+     * @return the action return value
+     */
+    default <T> T runAsIntFunction(IntFunction<T> action, int value) {
+        if (action == null) return null;
+        return runAsFunction(IntFunction::apply, action, value);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param value the parameter to pass to the task
+     * @param <T> the return value type
+     * @param <E> the exception type
+     * @return the action return value
+     * @throws E if an exception occurs in the task
+     */
+    default <T, E extends Exception> T runAsExIntFunction(ExceptionIntFunction<T, E> action, int value) throws E {
+        if (action == null) return null;
+        return runAsFunctionEx(ExceptionIntFunction::apply, action, value);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param value the parameter to pass to the task
+     * @param <T> the return value type
+     * @return the action return value
+     */
+    default <T> T runAsLongFunction(LongFunction<T> action, long value) {
+        if (action == null) return null;
+        return runAsFunction(LongFunction::apply, action, value);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the task to run (must not be {@code null})
+     * @param value the parameter to pass to the task
+     * @param <T> the return value type
+     * @param <E> the exception type
+     * @return the action return value
+     * @throws E if an exception occurs in the task
+     */
+    default <T, E extends Exception> T runAsExLongFunction(ExceptionLongFunction<T, E> action, long value) throws E {
+        if (action == null) return null;
+        return runAsFunctionEx(ExceptionLongFunction::apply, action, value);
     }
 }
