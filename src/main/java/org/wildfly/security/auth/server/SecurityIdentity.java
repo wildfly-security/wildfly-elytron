@@ -523,19 +523,22 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             throw log.cantWithSameSecurityDomainDomain();
         }
 
-        List<SecurityIdentity> withIdentities = new ArrayList<>(this.withIdentities.length + 1);
-        for (SecurityIdentity currentIdentity : this.withIdentities) {
-            if (currentIdentity == securityIdentity) {
-                return this;
-            }
+        int oldCapacity = this.withIdentities == null ? 0 : this.withIdentities.length;
+        List<SecurityIdentity> withIdentities = new ArrayList<>(oldCapacity + 1);
+        if (oldCapacity != 0) {
+            for (SecurityIdentity currentIdentity : this.withIdentities) {
+                if (currentIdentity == securityIdentity) {
+                    return this; // already added
+                }
 
-            if (currentIdentity.securityDomain != securityIdentity.securityDomain) {
-                withIdentities.add(currentIdentity);
+                if (currentIdentity.securityDomain != securityIdentity.securityDomain) {
+                    withIdentities.add(currentIdentity); // re-add identities from other domains
+                }
             }
-            withIdentities.add(securityIdentity);
         }
+        withIdentities.add(securityIdentity);
 
-        return new SecurityIdentity(this, withIdentities.toArray(new SecurityIdentity[withIdentities.size()]));
+        return new SecurityIdentity(this, withIdentities.toArray(new SecurityIdentity[0]));
     }
 
     /**
