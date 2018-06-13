@@ -36,10 +36,13 @@ import static org.wildfly.security.http.HttpConstants.RESPONSE;
 import static org.wildfly.security.http.HttpConstants.STALE;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.USERNAME;
+import static org.wildfly.security.http.HttpConstants.USERNAME_STAR;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -155,7 +158,19 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         byte[] salt = messageRealm.getBytes(UTF_8);
         boolean nonceValid = nonceManager.useNonce(nonce, salt, nonceCount);
 
-        String username = convertToken(USERNAME, responseTokens.get(USERNAME));
+        String username;
+        if (responseTokens.containsKey(USERNAME) && !responseTokens.containsKey(USERNAME_STAR)) {
+            username = convertToken(USERNAME, responseTokens.get(USERNAME));
+        } else if (responseTokens.containsKey(USERNAME_STAR) && !responseTokens.containsKey(USERNAME)) {
+            try {
+                username = decodeRfc2231(convertToken(USERNAME_STAR, responseTokens.get(USERNAME_STAR)));
+            } catch (UnsupportedEncodingException e) {
+                throw httpDigest.mechInvalidClientMessageWithCause(e);
+            }
+        } else {
+            throw httpDigest.mechOneOfDirectivesHasToBeDefined(USERNAME, USERNAME_STAR);
+        }
+
         byte[] digestUri;
         if (responseTokens.containsKey(URI)) {
             digestUri = responseTokens.get(URI);
@@ -412,5 +427,12 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         } catch (Throwable t) {
             throw httpDigest.mechCallbackHandlerFailedForUnknownReason(t);
         }
+    }
+
+    private static String decodeRfc2231(String encoded) throws UnsupportedEncodingException {
+        int charsetEnd = encoded.indexOf('\'');
+        int languageEnd = encoded.indexOf('\'', charsetEnd + 1);
+        String charset = encoded.substring(0, charsetEnd);
+        return URLDecoder.decode(encoded.substring(languageEnd + 1), charset);
     }
 }

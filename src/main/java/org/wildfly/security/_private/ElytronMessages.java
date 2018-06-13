@@ -1494,6 +1494,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5176, value = "Unsupported callback")
     AuthenticationMechanismException mechCallbackHandlerUnsupportedCallback(@Cause Throwable cause);
 
+    @Message(id = 5177, value = "One of \"%s\" and \"%s\" directives has to be defined")
+    AuthenticationMechanismException mechOneOfDirectivesHasToBeDefined(String directive1, String directive2);
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")

@@ -119,7 +119,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Assert.assertEquals("Digest realm=\"api@example.org\", nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\", opaque=\"00000000000000000000000000000000\", algorithm=SHA-512-256, qop=auth", response.getAuthenticateHeader());
 
         TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
-                "Digest username=\"J\u00E4s\u00F8n Doe\",\n" + // TODO: username*=UTF-8''J%C3%A4s%C3%B8n%20Doe,
+                "Digest username*=UTF-8''J%C3%A4s%C3%B8n%20Doe,\n" +
                 "       realm=\"api@example.org\",\n" +
                 "       uri=\"/doe.json\",\n" +
                 "       algorithm=SHA-512-256,\n" +
