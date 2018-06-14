@@ -205,6 +205,30 @@ public final class Pem {
     }
 
     /**
+     * Generate PEM content to the given byte string builder.  The appropriate header and footer surrounds the base-64
+     * encoded value.
+     *
+     * @param target the target byte string builder (must not be {@code null})
+     * @param type the content type (must not be {@code null})
+     * @param content the content iterator (must not be {@code null})
+     * @throws IllegalArgumentException if there is a problem with the data or the type
+     * @deprecated Use {@link #generatePemContent(ByteStringBuilder, String, ByteIterator)} instead
+     */
+    @Deprecated
+    public static void generatePemContent(org.wildfly.security.util.ByteStringBuilder target, String type, ByteIterator content) throws IllegalArgumentException {
+        Assert.checkNotNullParam("target", target);
+        Assert.checkNotNullParam("type", type);
+        Assert.checkNotNullParam("content", content);
+        final Matcher matcher = VALID_LABEL.matcher(type);
+        if (matcher.find()) {
+            throw log.invalidPemType("<any valid PEM type>", type);
+        }
+        target.append("-----BEGIN ").append(type).append("-----");
+        target.append(content.base64Encode().drainToString(System.lineSeparator(), 64)); // insert the line separator before every 64 code points
+        target.append(System.lineSeparator()).append("-----END ").append(type).append("-----").append(System.lineSeparator());
+    }
+
+    /**
      * Extracts the DER content from the given <code>pemContent</code>.
      *
      * @param pemContent a {@link CodePointIterator} with the PEM content
@@ -310,6 +334,24 @@ public final class Pem {
      * @param certificate the X.509 certificate (must not be {@code null})
      */
     public static void generatePemX509Certificate(ByteStringBuilder target, X509Certificate certificate) {
+        Assert.checkNotNullParam("target", target);
+        Assert.checkNotNullParam("certificate", certificate);
+        try {
+            generatePemContent(target, CERTIFICATE_FORMAT, ByteIterator.ofBytes(certificate.getEncoded()));
+        } catch (CertificateEncodingException e) {
+            throw log.certificateParseError(e);
+        }
+    }
+
+    /**
+     * Generate PEM content containing an X.509 certificate.
+     *
+     * @param target the target byte string builder (must not be {@code null})
+     * @param certificate the X.509 certificate (must not be {@code null})
+     * @deprecated Use {@link #generatePemX509Certificate(ByteStringBuilder, X509Certificate)} instead
+     */
+    @Deprecated
+    public static void generatePemX509Certificate(org.wildfly.security.util.ByteStringBuilder target, X509Certificate certificate) {
         Assert.checkNotNullParam("target", target);
         Assert.checkNotNullParam("certificate", certificate);
         try {
