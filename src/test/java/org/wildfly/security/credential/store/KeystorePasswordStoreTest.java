@@ -431,7 +431,7 @@ public class KeystorePasswordStoreTest {
 
         cs.flush();
 
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final ExecutorService executor = Executors.newFixedThreadPool(4);
         ReadWriteLock readWriteLock = getCsLock(cs);
         try {
             // store
@@ -453,7 +453,7 @@ public class KeystorePasswordStoreTest {
             Callable<Object> task = csTask.get();
 
             Future<Object> task1Future = executor.submit(task);
-            task1Future.get(5, TimeUnit.SECONDS);
+            task1Future.get(15, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -488,7 +488,7 @@ public class KeystorePasswordStoreTest {
                 }
 
                 readWriteLock.readLock().unlock();
-                task2Future.get(5, TimeUnit.SECONDS);
+                task2Future.get(10, TimeUnit.SECONDS);
 
                 if (!cs.exists(aliasName, PasswordCredential.class)) {
                     throw new IllegalStateException(String.format("Alias '%s' have to exist!", aliasName));
@@ -530,7 +530,7 @@ public class KeystorePasswordStoreTest {
                 }
 
                 readWriteLock.readLock().unlock();
-                task2Future.get(5, TimeUnit.SECONDS);
+                task2Future.get(10, TimeUnit.SECONDS);
 
                 if (cs.exists(aliasName, PasswordCredential.class)) {
                     throw new IllegalStateException(String.format("Alias '%s' should be deleted!", aliasName));
