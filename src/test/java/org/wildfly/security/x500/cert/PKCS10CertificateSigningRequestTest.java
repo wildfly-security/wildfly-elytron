@@ -41,6 +41,8 @@ import org.wildfly.security.x500.X500;
 /**
  * Tests for generating PKCS #10 certificate signing requests. The expected values for these tests
  * were generated using the {@code keytool} command.
+ * Tests use pre-generated CSRs still due to expiration date not affecting these tests
+ * while also avoiding the need to dynamically generated expected PKCS #10 certificate signing requests
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */

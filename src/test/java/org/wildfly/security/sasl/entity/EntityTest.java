@@ -23,14 +23,16 @@ import static org.junit.Assert.*;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.security.GeneralSecurityException;
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -55,7 +58,6 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +73,8 @@ import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * Client and server side tests for the ISO/IEC 9798-3 authentication SASL mechanism.
@@ -80,47 +84,127 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 @RunWith(JMockit.class)
 public class EntityTest extends BaseTestCase {
 
-    private static final String SERVER_KEYSTORE_FILENAME = "/server.keystore";
-    private static final String CLIENT_KEYSTORE_FILENAME = "/client.keystore";
-    private static final String WRONG_KEYSTORE_FILENAME = "/wrong.keystore";
-    private static final String SERVER_TRUSTSTORE_FILENAME = "/server.truststore";
-    private static final String CLIENT_TRUSTSTORE_FILENAME = "/client.truststore";
-    private static final String SERVER_KEYSTORE_ALIAS = "testserver1";
     private static final String CLIENT_KEYSTORE_ALIAS = "testclient1";
-    private static final String WRONG_KEYSTORE_ALIAS = "wrongone";
     private static final String KEYSTORE_TYPE = "JKS";
     private static final char[] KEYSTORE_PASSWORD = "password".toCharArray();
-    private File serverKeyStore = null;
-    private File clientKeyStore = null;
-    private File wrongKeyStore = null;
-    private File serverTrustStore = null;
-    private File clientTrustStore = null;
-    private File workingDir = null;
+    private KeyStore serverKeyStore = null;
+    private KeyStore clientKeyStore = null;
+    private KeyStore serverTrustStore = null;
+    private KeyStore clientTrustStore = null;
+
+    private void createClientKeyStoreServerTrustStore(KeyStore clientKeyStore, KeyStore serverTrustStore) throws Exception {
+        // Generate testclient2.example.com self signed certificate
+        X500Principal DN = new X500Principal("CN=testclient2.example.com, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        SelfSignedX509CertificateAndSigningKey selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setKeyAlgorithmName("DSA")
+                .setSignatureAlgorithmName("SHA1withDSA")
+                .setDn(DN)
+                .setKeySize(1024)
+                .build();
+        X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        clientKeyStore.setKeyEntry("dnsincnclient", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        serverTrustStore.setCertificateEntry("cn=testclient2.example.com,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", certificate);
+
+
+        // Generate Test Authority self signed certificate
+        DN = new X500Principal("CN=Test Authority, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(DN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .build();
+        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        clientKeyStore.setKeyEntry("testauthority", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        serverTrustStore.setCertificateEntry("cn=test authority,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", certificate);
+
+
+        // Generate Test Client 1 self signed certificate
+        DN = new X500Principal("CN=Test Client 1, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(DN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(false, "SubjectAlternativeName", "DNS:testclient1.example.com")
+                .build();
+        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        clientKeyStore.setKeyEntry("testclient1", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        serverTrustStore.setCertificateEntry("cn=test client 1,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", certificate);
+
+
+        // Generate Signed Test Client certificate signed by Test Authority
+        X500Principal subjectDN = new X500Principal("CN=Signed Test Client, OU=JBoss, O=Red Hat, ST=North Carolina, C=US");
+        X500Principal issuerDN = new X500Principal("CN=Test Authority, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        KeyPair generatedKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey signingKey = generatedKeys.getPrivate();
+        PublicKey publicKey = generatedKeys.getPublic();
+
+        selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(issuerDN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .build();
+        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        serverTrustStore.setCertificateEntry("cn=signed test client,ou=jboss,o=red hat,st=north carolina,c=us", certificate);
+
+        certificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(subjectDN)
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(selfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(publicKey)
+                .build();
+        clientKeyStore.setKeyEntry("testclientsignedbyca", signingKey, KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+    }
+
+    private void createServerKeyStoreClientTrustStore(KeyStore serverKeyStore,KeyStore clientTrustStore) throws Exception {
+        // Generate testserver2.example.com self signed certificate
+        X500Principal DN = new X500Principal("CN=testserver2.example.com, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        SelfSignedX509CertificateAndSigningKey selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setKeyAlgorithmName("DSA")
+                .setSignatureAlgorithmName("SHA1withDSA")
+                .setDn(DN)
+                .setKeySize(1024)
+                .build();
+        X509Certificate certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        serverKeyStore.setKeyEntry("dnsincnserver", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        clientTrustStore.setCertificateEntry("dnsincnserver", certificate);
+
+
+        // Generate Test Server 1 self signed certificate
+        DN = new X500Principal("CN=Test Server 1, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(DN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(false, "SubjectAlternativeName", "DNS:testserver1.example.com")
+                .build();
+        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        serverKeyStore.setKeyEntry("testserver1", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        clientTrustStore.setCertificateEntry("testserver1", certificate);
+    }
 
     @Before
-    public void beforeTest() throws IOException {
-        workingDir = getWorkingDir();
-        serverKeyStore = copyKeyStore(SERVER_KEYSTORE_FILENAME);
-        clientKeyStore = copyKeyStore(CLIENT_KEYSTORE_FILENAME);
-        wrongKeyStore = copyKeyStore(WRONG_KEYSTORE_FILENAME);
-        serverTrustStore = copyKeyStore(SERVER_TRUSTSTORE_FILENAME);
-        clientTrustStore = copyKeyStore(CLIENT_TRUSTSTORE_FILENAME);
+    public void beforeTest() throws Exception {
+        clientKeyStore = KeyStore.getInstance("JKS");
+        clientKeyStore.load(null, null);
+        serverTrustStore = KeyStore.getInstance("JKS");
+        serverTrustStore.load(null, null);
+        serverKeyStore = KeyStore.getInstance("JKS");
+        serverKeyStore.load(null, null);
+        clientTrustStore = KeyStore.getInstance("JKS");
+        clientTrustStore.load(null, null);
+        createClientKeyStoreServerTrustStore(clientKeyStore, serverTrustStore);
+        createServerKeyStoreClientTrustStore(serverKeyStore, clientTrustStore);
     }
 
     @After
     public void afterTest() {
-        serverKeyStore.delete();
         serverKeyStore = null;
-        clientKeyStore.delete();
         clientKeyStore = null;
-        wrongKeyStore.delete();
-        wrongKeyStore = null;
-        serverTrustStore.delete();
         serverTrustStore = null;
-        clientTrustStore.delete();
         clientTrustStore = null;
-        workingDir.delete();
-        workingDir = null;
     }
 
     @Test
@@ -348,7 +432,7 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final KeyStore keyStore = loadKeyStore(serverKeyStore);
+        final KeyStore keyStore = serverKeyStore;
         final Certificate[] certificateChain = keyStore.getCertificateChain("dnsInCNServer");
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, "testserver2.example.com",
                 serverTrustStore, (PrivateKey) keyStore.getKey("dnsInCNServer", KEYSTORE_PASSWORD),
@@ -477,26 +561,6 @@ public class EntityTest extends BaseTestCase {
         assertFalse(saslServer.isComplete());
     }
 
-    private static File getWorkingDir() {
-        File workingDir = new File("./target/keystore");
-        if (workingDir.exists() == false) {
-            workingDir.mkdirs();
-        }
-        return workingDir;
-    }
-
-    private File copyKeyStore(String keyStoreFileName) throws IOException {
-        File keyStore = new File(workingDir, keyStoreFileName);
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(keyStore);
-            IOUtils.copy(getClass().getResourceAsStream(keyStoreFileName), fos);
-        } finally {
-            safeClose(fos);
-        }
-        return keyStore;
-    }
-
     private void safeClose(Closeable c) {
         if (c != null) {
             try {
@@ -545,10 +609,10 @@ public class EntityTest extends BaseTestCase {
                 .build();
     }
 
-    private SaslServer createSaslServer(final String mechanism, final String serverName, final File trustStore, final PrivateKey privateKey,
+    private SaslServer createSaslServer(final String mechanism, final String serverName, final KeyStore trustStore, final PrivateKey privateKey,
                                         final X509Certificate... certificateChain) throws Exception {
         final String realmName = "keyStoreRealm";
-        final KeyStore ts = loadKeyStore(trustStore);
+        final KeyStore ts = trustStore;
         return new SaslServerBuilder(EntitySaslServerFactory.class, mechanism)
                 .setProtocol("test")
                 .setServerName(serverName)
@@ -559,13 +623,13 @@ public class EntityTest extends BaseTestCase {
                 .build();
     }
 
-    private CallbackHandler createClientCallbackHandler(final String[] mechanisms, final File keyStore, final String keyStoreAlias,
+    private CallbackHandler createClientCallbackHandler(final String[] mechanisms, final KeyStore keyStore, final String keyStoreAlias,
                                                         final char[] keyStorePassword, final X509TrustManager trustManager) throws Exception {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
                         AuthenticationConfiguration.empty()
-                                .useKeyStoreCredential(loadKeyStore(keyStore), keyStoreAlias, new KeyStore.PasswordProtection(keyStorePassword))
+                                .useKeyStoreCredential(keyStore, keyStoreAlias, new KeyStore.PasswordProtection(keyStorePassword))
                                 .useTrustManager(trustManager)
                                 .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanisms(mechanisms)));
 
@@ -601,9 +665,9 @@ public class EntityTest extends BaseTestCase {
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }
 
-    private X509KeyManager getX509KeyManager(final File keyStore, final char[] keyStorePassword) throws GeneralSecurityException, IOException {
+    private X509KeyManager getX509KeyManager(final KeyStore keyStore, final char[] keyStorePassword) throws GeneralSecurityException, IOException {
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(loadKeyStore(keyStore), keyStorePassword);
+        keyManagerFactory.init(keyStore, keyStorePassword);
         for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
             if (keyManager instanceof X509KeyManager) {
                 return (X509KeyManager) keyManager;

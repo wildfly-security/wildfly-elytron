@@ -22,11 +22,13 @@ import org.junit.Test;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.pem.Pem;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
-import java.net.URL;
+import javax.security.auth.x500.X500Principal;
+
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -39,6 +41,44 @@ import static org.junit.Assert.assertNotNull;
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class PemTest {
+
+    private SelfSignedX509CertificateAndSigningKey createIssuerCertificate() {
+        X500Principal DN = new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA");
+
+        SelfSignedX509CertificateAndSigningKey certificate = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(DN)
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
+                .build();
+
+        return certificate;
+    }
+
+    private X509Certificate createSubjectCertificate(SelfSignedX509CertificateAndSigningKey issuerCertificate) throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        KeyPair generatedKeys = keyPairGenerator.generateKeyPair();
+        PublicKey publicKey = generatedKeys.getPublic();
+
+        X500Principal issuerDN = new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA");
+        X500Principal subjectDN = new X500Principal("O=Elytron, OU=Elytron, C=UK, ST=Elytron, CN=Firefly");
+
+        X509Certificate subjectCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(subjectDN)
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerCertificate.getSigningKey())
+                .setPublicKey(publicKey)
+                .build();
+
+        return subjectCertificate;
+    }
+
+    private byte[] createPemAsBytes(X509Certificate certificate) {
+        ByteStringBuilder target = new ByteStringBuilder();
+        Pem.generatePemX509Certificate(target, certificate);
+        return target.toArray();
+    }
 
     @Test
     public void testEncodeDecodeRSAPublicKey() throws Exception {
@@ -60,13 +100,13 @@ public class PemTest {
      */
     @Test
     public void testParsePemX509Certificate01() throws Exception {
+        SelfSignedX509CertificateAndSigningKey issuerCertificate = createIssuerCertificate();
 
-        URL url = PemTest.class.getResource("/ca/certs/01.pem");
+        X509Certificate subjectCertificate = createSubjectCertificate(issuerCertificate);
 
-        byte[] bytes = Files.readAllBytes(Paths.get(url.toURI()));
+        byte[] pemBytes = createPemAsBytes(subjectCertificate);
 
-        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(bytes)));
-
+        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(pemBytes)));
     }
 
     /**
@@ -74,9 +114,11 @@ public class PemTest {
      */
     @Test
     public void testParsePemX509CertificateCacert() throws Exception {
-        URL url = PemTest.class.getResource("/ca/cacert.pem");
-        byte[] bytes = Files.readAllBytes(Paths.get(url.toURI()));
-        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(bytes)));
+        SelfSignedX509CertificateAndSigningKey certificate = createIssuerCertificate();
+
+        byte[] pemBytes = createPemAsBytes(certificate.getSelfSignedCertificate());
+
+        assertNotNull(Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(pemBytes)));
     }
 
     private void assertParsing(PublicKey publicKey) {
@@ -115,11 +157,10 @@ public class PemTest {
                 "Mg==" + System.lineSeparator() +
                 "-----END CERTIFICATE-----" + System.lineSeparator();
 
-        URL url = PemTest.class.getResource("/ca/cacert.pem");
-        byte[] bytes = Files.readAllBytes(Paths.get(url.toURI()));
-        X509Certificate certificate = Pem.parsePemX509Certificate(CodePointIterator.ofUtf8Bytes(bytes));
+        X509Certificate certificate = Pem.parsePemX509Certificate(CodePointIterator.ofString(expectedPemCertificate));
         ByteStringBuilder target = new ByteStringBuilder();
         Pem.generatePemX509Certificate(target, certificate);
+
         assertEquals(expectedPemCertificate, new String(target.toArray(), StandardCharsets.UTF_8));
     }
 }
