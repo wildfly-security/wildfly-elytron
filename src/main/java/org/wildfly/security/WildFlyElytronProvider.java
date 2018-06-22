@@ -23,6 +23,8 @@ import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
+import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
+import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
@@ -232,6 +234,8 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, BASIC_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, CLIENT_CERT_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_SHA256_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_SHA512_256_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, FORM_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, SPNEGO_NAME, "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
 
