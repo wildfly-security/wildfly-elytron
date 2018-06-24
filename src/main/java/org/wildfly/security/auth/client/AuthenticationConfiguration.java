@@ -192,7 +192,7 @@ public final class AuthenticationConfiguration {
         return EMPTY;
     }
 
-    private SaslClientFactory saslClientFactory = null;
+    private volatile SaslClientFactory saslClientFactory = null;
     private int hashCode;
     private String toString;
 
