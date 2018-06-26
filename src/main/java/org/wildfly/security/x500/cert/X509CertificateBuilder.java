@@ -409,9 +409,12 @@ public final class X509CertificateBuilder {
         if (signingKey == null) {
             throw log.noSigningKeyGiven();
         }
-        final String signingKeyAlgorithm = signingKey.getAlgorithm();
+        String signingKeyAlgorithm = signingKey.getAlgorithm();
+        if (signingKeyAlgorithm.equals("EC")) {
+            signingKeyAlgorithm = "ECDSA";
+        }
         if (! signatureAlgorithmName.endsWith("with" + signingKeyAlgorithm) || signatureAlgorithmName.contains("with" + signingKeyAlgorithm + "and")) {
-            throw log.signingKeyNotCompatWithSig(signingKeyAlgorithm, signatureAlgorithmName);
+            throw log.signingKeyNotCompatWithSig(signingKey.getAlgorithm(), signatureAlgorithmName);
         }
         final ZonedDateTime notValidBefore = this.notValidBefore;
         final ZonedDateTime notValidAfter = this.notValidAfter;
