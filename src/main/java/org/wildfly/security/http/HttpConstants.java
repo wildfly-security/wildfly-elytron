@@ -46,7 +46,9 @@ public class HttpConstants {
     private static final String CONFIG_BASE = HttpConstants.class.getPackage().getName();
     public static final String CONFIG_CONTEXT_PATH = CONFIG_BASE + ".context-path";
     public static final String CONFIG_REALM = CONFIG_BASE + ".realm";
+
     public static final String CONFIG_VALIDATE_DIGEST_URI = CONFIG_BASE + ".validate-digest-uri";
+    public static final String CONFIG_SKIP_CERTIFICATE_VERIFICATION = CONFIG_BASE + ".skip-certificate-verification";
 
     /**
      * The context relative path of the login page.
