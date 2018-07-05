@@ -1779,6 +1779,12 @@ public interface ElytronMessages extends BasicLogger {
     //     + "the Policy.implies() method for authorization checking.")
     // void getPermissionsNotSupported();
 
+    @Message(id = 8510, value = "Role mapper has already been initialized.")
+    IllegalStateException roleMappedAlreadyInitialized();
+
+    @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
+    IllegalStateException roleMappedNotInitialized();
+
     /* credential package */
 
     @Message(id = 9000, value = "Public and private key parameters are mismatched")
