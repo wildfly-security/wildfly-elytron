@@ -22,6 +22,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.InvalidObjectException;
+import java.math.BigInteger;
+import java.net.URL;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -116,6 +118,7 @@ public interface ElytronMessages extends BasicLogger {
     ElytronMessages httpBearer = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.bearer");
     ElytronMessages httpBasic = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.basic");
     ElytronMessages acme = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.x500.cert.acme");
+    ElytronMessages ocsp = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.x500.cert.ocsp");
 
     @LogMessage
     @Message(id = 1, value = "WildFly Elytron version %s")
@@ -2063,6 +2066,24 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 10056, value = "Unable to determine curve parameter from alg header \"%s\"")
     IllegalArgumentException unableToDetermineCurveParameterFromAlgHeader(String algHeader);
+
+    @Message(id = 10057, value = "Certificate \"%s\" is revoked using OCSP responder \"%s\"")
+    CertificateException certificateIsRevoked(BigInteger serialNumber, URL responder);
+
+    @Message(id = 10058, value = "Certificate validation using OCSP has failed: \"%s\"")
+    CertificateException ocspValidationHasFailed(String certificate, @Cause Exception cause);
+
+    @Message(id = 10059, value = "Invalid signature of OCSP response from responder \"%s\"")
+    CertificateException invalidSignatureOfOcspResponse(URL responder);
+
+    @Message(id = 10060, value = "OCSP response status is \"%s\"")
+    CertificateException ocspResponseStatus(int responseStatus);
+
+    @Message(id = 10061, value = "Unsupported OCSP response type \"%s\"")
+    CertificateException unsupportedOcspResponseType(String type);
+
+    @Message(id = 10062, value = "No OCSP responder URL for certificate \"%s\"")
+    CertificateException noOcspResponder(String certificate);
 
     /* Audit Exceptions */
 

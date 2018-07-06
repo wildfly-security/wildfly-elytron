@@ -126,6 +126,8 @@ public final class X500 {
     public static final String OID_AD_TIME_STAMPING                 = OID_AD + ".3";
     public static final String OID_AD_CA_REPOSITORY                 = OID_AD + ".5";
 
+    public static final String OID_BASIC_OCSP_RESPONSE              = OID_AD_OCSP + ".1";
+
     public static final String OID_HOLD_INSTRUCTION                 = "2.2.840.10040.2";
     @Deprecated // deprecated by RFC 5280
     public static final String OID_HOLD_INSTRUCTION_NONE            = OID_HOLD_INSTRUCTION + ".1";
