@@ -17,6 +17,11 @@
  */
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * A {@link PasswordSpec} for a password represented by a Digest Response as seen in Digest-MD5 SASL/HTTP mechanism.
  *
@@ -61,4 +66,15 @@ public final class DigestPasswordSpec implements PasswordSpec {
         return digest;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof DigestPasswordSpec)) return false;
+        DigestPasswordSpec o = (DigestPasswordSpec) other;
+        return Objects.equals(username, o.username) && Objects.equals(realm, o.realm) && Arrays.equals(digest, o.digest);
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Objects.hashCode(username), Objects.hashCode(realm)), Arrays.hashCode(digest));
+    }
 }

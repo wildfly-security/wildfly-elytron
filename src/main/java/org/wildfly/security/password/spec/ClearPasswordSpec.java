@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.spec;
 
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -46,5 +48,15 @@ public final class ClearPasswordSpec implements PasswordSpec {
      */
     public char[] getEncodedPassword() {
         return encodedPassword;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof ClearPasswordSpec && Arrays.equals(encodedPassword, ((ClearPasswordSpec)other).encodedPassword);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(encodedPassword);
     }
 }

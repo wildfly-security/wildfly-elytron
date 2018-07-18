@@ -17,6 +17,10 @@
  */
 package org.wildfly.security.password.spec;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -58,5 +62,17 @@ public class SaltedHashPasswordSpec implements PasswordSpec {
      */
     public byte[] getSalt() {
         return this.salt;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (! (other instanceof SaltedHashPasswordSpec)) return false;
+        SaltedHashPasswordSpec o = (SaltedHashPasswordSpec) other;
+        return Arrays.equals(hash, o.hash) && Arrays.equals(salt, o.salt);
+    }
+
+    @Override
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt));
     }
 }
