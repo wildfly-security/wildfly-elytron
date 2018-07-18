@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -43,11 +42,12 @@ import org.wildfly.security.cache.CachedIdentity;
 import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
-import org.wildfly.security.mechanism._private.MechanismUtil;
+import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -86,7 +86,7 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
         Function<SecurityDomain, IdentityCache> cacheFunction = createIdentityCacheFunction(request);
 
-        if (cacheFunction!= null && attemptReAuthentication(request, cacheFunction)) {
+        if (cacheFunction != null && attemptReAuthentication(request, cacheFunction)) {
             httpClientCert.trace("Re-authentication succeed");
             return;
         }
@@ -199,23 +199,29 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
     }
 
     private Function<SecurityDomain, IdentityCache> createIdentityCacheFunction(HttpServerRequest request) {
-        SSLSession sslSession = request.getSSLSession();
-        return sslSession == null ? null : securityDomain -> new IdentityCache() {
+        HttpScope scope = request.getScope(Scope.SSL_SESSION);
+        return scope == null ? null : securityDomain -> new IdentityCache() {
 
-            final Map<SecurityDomain, CachedIdentity> identities = SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap<>());
+            final Map<SecurityDomain, CachedIdentity> identities = MechanismUtil.computeIfAbsent(scope,
+                    "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap<>());
 
             @Override
             public void put(SecurityIdentity identity) {
-                identities.putIfAbsent(securityDomain, new CachedIdentity(getMechanismName(), identity));
+                CachedIdentity cachedIdentity = new CachedIdentity(CLIENT_CERT_NAME, identity);
+                httpClientCert.tracef("storing into cache: %s", cachedIdentity);
+                identities.putIfAbsent(securityDomain, cachedIdentity);
             }
 
             @Override
             public CachedIdentity get() {
-                return identities.get(securityDomain);
+                CachedIdentity cachedIdentity = identities.get(securityDomain);
+                httpClientCert.tracef("loading from cache: %s", cachedIdentity);
+                return cachedIdentity;
             }
 
             @Override
             public CachedIdentity remove() {
+                httpClientCert.tracef("clearing identity cache");
                 return identities.remove(securityDomain);
             }
         };
