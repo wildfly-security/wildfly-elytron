@@ -88,6 +88,26 @@ public enum Encryption {
      * RC2 encryption.
      */
     RC2,
+    /**
+     * ChaCha20-Poly1305 Encryption.
+     */
+    CHACHA20POLY1305,
+    /**
+     * ARIA encryption with 256-bit keys in Galois counter mode (GCM).
+     */
+    ARIA256GCM,
+    /**
+     * ARIA encryption with 256-bit keys.
+     */
+    ARIA256,
+    /**
+     * ARIA encryption with 128-bit keys in Galois counter mode (GCM).
+     */
+    ARIA128GCM,
+    /**
+     * ARIA encryption with 128-bit.
+     */
+    ARIA128
     ;
     static final int fullSize = values().length;
 
@@ -100,6 +120,7 @@ public enum Encryption {
             case "AES128": return AES128;
             case "CAMELLIA256": return CAMELLIA256;
             case "CAMELLIA128": return CAMELLIA128;
+            case "CHACHA20POLY1305": return CHACHA20POLY1305;
             case "3DES": return _3DES;
             case "DES": return DES;
             case "IDEA": return IDEA;
@@ -108,6 +129,10 @@ public enum Encryption {
             case "FZA": return FZA;
             case "RC4": return RC4;
             case "RC2": return RC2;
+            case "ARIA256GCM": return ARIA256GCM;
+            case "ARIA256": return ARIA256;
+            case "ARIA128GCM": return ARIA128GCM;
+            case "ARIA128": return ARIA128;
             default: return null;
         }
     }
