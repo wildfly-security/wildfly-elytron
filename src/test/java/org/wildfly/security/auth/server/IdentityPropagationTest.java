@@ -19,33 +19,22 @@ package org.wildfly.security.auth.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-
-import javax.security.auth.callback.CallbackHandler;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.Roles;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.permission.PermissionVerifier;
 
 /**
@@ -55,15 +44,12 @@ import org.wildfly.security.permission.PermissionVerifier;
  */
 public class IdentityPropagationTest {
 
-    private static final Provider provider = new WildFlyElytronProvider();
-    private static volatile SecurityDomain domain1;
-    private static volatile SecurityDomain domain2;
-    private static volatile SecurityDomain domain3;
+    private static SecurityDomain domain1;
+    private static SecurityDomain domain2;
+    private static SecurityDomain domain3;
 
     @BeforeClass
-    public static void setupSecurityDomains() throws Exception {
-        Security.addProvider(provider);
-
+    public static void setupSecurityDomains() {
         // Create some realms
         SimpleMapBackedSecurityRealm realm1 = new SimpleMapBackedSecurityRealm();
         Map<String, SimpleRealmEntry> users = new HashMap<>();
@@ -167,26 +153,12 @@ public class IdentityPropagationTest {
     }
 
     private static void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {
-        List<Credential> credentials;
-        try {
-            credentials = Collections.singletonList(
-                    new PasswordCredential(
-                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
-                                    new ClearPasswordSpec("password".toCharArray()))));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         MapAttributes attributes = new MapAttributes();
         attributes.addAll(RoleDecoder.KEY_ROLES, Collections.singletonList(roles));
-        securityRealm.put(userName, new SimpleRealmEntry(credentials, attributes));
+        securityRealm.put(userName, new SimpleRealmEntry(Collections.emptyList(), attributes));
     }
 
-    private SecurityIdentity getIdentityFromDomain(final SecurityDomain securityDomain, final String userName) throws Exception {
+    private SecurityIdentity getIdentityFromDomain(final SecurityDomain securityDomain, final String userName) {
         return securityDomain.getAnonymousSecurityIdentity().createRunAsIdentity(userName, false);
     }
-
-    private CallbackHandler createCallbackHandler(final SecurityDomain securityDomain) throws Exception {
-        return securityDomain.createNewAuthenticationContext().createCallbackHandler();
-    }
 }
-
