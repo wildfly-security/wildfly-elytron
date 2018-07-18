@@ -48,6 +48,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckFailedEvent;
@@ -194,7 +195,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return authorizationIdentity;
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private Supplier<SecurityIdentity>[] establishIdentities() {
         SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : NO_IDENTITIES;
         if (withIdentities.length == 0) {
@@ -210,8 +211,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return oldIdentities;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void restoreIdentities(Supplier[] securityIdentities) {
+    private void restoreIdentities(Supplier<SecurityIdentity>[] securityIdentities) {
         for (Supplier<SecurityIdentity> currentIdentity : securityIdentities) {
             currentIdentity.get().securityDomain.setCurrentSecurityIdentity(currentIdentity);
         }
@@ -486,6 +486,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @return the action result (may be {@code null})
      * @throws PrivilegedActionException if the action fails
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T runAsAll(PrivilegedExceptionAction<T> action, SecurityIdentity... identities) throws PrivilegedActionException {
         if (action == null) return null;
         int length = identities.length;
@@ -641,6 +642,9 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * Attempt to create a new identity that can be used to run as a user with the given name. If the
      * current identity is not authorized to run as a user with the given name, an exception is thrown.
      *
+     * Calling with enabled security manager requires {@code setRunAsPrincipal} {@link ElytronPermission}.
+     * Regardless security manager is enabled, {@link RunAsPrincipalPermission} for given name is required.
+     *
      * @param name the name to attempt to run as
      * @return the new security identity
      * @throws SecurityException if the operation authorization failed for any reason
@@ -652,10 +656,11 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Attempt to create a new identity that can be used to run as a user with the given name.
      *
+     * Calling with enabled security manager requires {@code setRunAsPrincipal} {@link ElytronPermission}.
+     *
      * @param name the name to attempt to run as
-     * @param authorize {@code true} to check the current identity is authorized to run as a user
-     *        with the given name, {@code false} to just check if the caller has the
-     *        {@code setRunAsPermission} {@link RuntimePermission}
+     * @param authorize whether to check the current identity is authorized to run as a user
+     *        with the given principal (has {@link RunAsPrincipalPermission})
      * @return the new security identity
      * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
      *         {@link ElytronPermission} or if the operation authorization failed for any other reason
@@ -668,37 +673,39 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Attempt to create a new identity that can be used to run as a user with the given principal.
      *
+     * Calling with enabled security manager requires {@code setRunAsPrincipal} {@link ElytronPermission}.
+     *
      * @param principal the principal to attempt to run as
-     * @param authorize {@code true} to check the current identity is authorized to run as a user
-     *        with the given principal, {@code false} to just check if the caller has the
-     *        {@code setRunAsPermission} {@link RuntimePermission}
+     * @param authorize whether to check the current identity is authorized to run as a user
+     *        with the given principal (has {@link RunAsPrincipalPermission})
      * @return the new security identity
      * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
      *         {@link ElytronPermission} or if the operation authorization failed for any other reason
      */
     public SecurityIdentity createRunAsIdentity(Principal principal, boolean authorize) throws SecurityException {
         Assert.checkNotNullParam("principal", principal);
-        // rewrite principal
+
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SET_RUN_AS_PERMISSION);
         }
 
-        SecurityIdentity identity = null;
         try (final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY))) {
             if (! (context.importIdentity(this) && context.authorize(principal, authorize))) {
                 throw log.runAsAuthorizationFailed(this.principal, principal, null);
             }
-            identity = context.getAuthorizedIdentity();
+            return context.getAuthorizedIdentity();
         } catch (RealmUnavailableException e) {
             throw log.runAsAuthorizationFailed(this.principal, principal, e);
         }
-        return identity;
     }
 
     /**
      * Attempt to create a new identity that can be used to run as an anonymous user. If the
      * current identity is not authorized to run as an anonymous user, an exception is thrown.
+     *
+     * Calling with enabled security manager requires {@code setRunAsPrincipal} {@link ElytronPermission}.
+     * {@link org.wildfly.security.auth.permission.LoginPermission} granted to the anonymous identity will be required.
      *
      * @return the new security identity
      * @throws SecurityException if the operation authorization failed for any reason
@@ -710,9 +717,10 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     /**
      * Attempt to create a new identity that can be used to run as an anonymous user
      *
-     * @param authorize {@code true} to check the current identity is authorized to run as a user
-     *        with the given name, {@code false} to just check if the caller has the
-     *        {@code setRunAsPermission} {@link RuntimePermission}
+     * Calling with enabled security manager requires {@code setRunAsPrincipal} {@link ElytronPermission}.
+     *
+     * @param authorize whether to check the anonymous identity is authorized to log in
+     *                  (has {@link org.wildfly.security.auth.permission.LoginPermission})
      * @return the new security identity
      * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
      *         {@link ElytronPermission} or if the operation authorization failed for any other reason
@@ -723,14 +731,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(SET_RUN_AS_PERMISSION);
         }
 
-        SecurityIdentity identity = null;
         try (final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY))) {
             if (! context.authorizeAnonymous(authorize)) {
                 throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
             }
-            identity = context.getAuthorizedIdentity();
+            return context.getAuthorizedIdentity();
         }
-        return identity;
     }
 
     /**
