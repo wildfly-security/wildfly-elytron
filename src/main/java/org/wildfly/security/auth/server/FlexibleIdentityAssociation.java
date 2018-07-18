@@ -20,12 +20,14 @@ package org.wildfly.security.auth.server;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
+import org.wildfly.common.function.ExceptionBiPredicate;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
 import org.wildfly.security._private.ElytronMessages;
 
@@ -117,6 +119,24 @@ public final class FlexibleIdentityAssociation implements Scoped, Supplier<Secur
         final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    public <T, U> boolean runAsBiPredicate(BiPredicate<T, U> action, T param1, U param2) {
+        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return action.test(param1, param2);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    public <T, U, E extends Exception> boolean runAsExBiPredicate(ExceptionBiPredicate<T, U, E> action, T param1, U param2) throws E {
+        final Supplier<SecurityIdentity> old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return action.test(param1, param2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }

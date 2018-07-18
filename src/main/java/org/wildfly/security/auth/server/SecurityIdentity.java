@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
@@ -40,6 +41,7 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
+import org.wildfly.common.function.ExceptionBiPredicate;
 import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
 import org.wildfly.common.function.ExceptionSupplier;
@@ -423,6 +425,52 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             action.accept(parameter1, parameter2);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @return the action result (may be {@code null})
+     */
+    public <T, U> boolean runAsBiPredicate(BiPredicate<T, U> action, T parameter1, U parameter2) {
+        if (action == null) return false;
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return action.test(parameter1, parameter2);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            restoreIdentities(oldWithIdentities);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @param <E> the action exception type
+     * @return the action result (may be {@code null})
+     * @throws E if the action throws this exception
+     */
+    public <T, U, E extends Exception> boolean runAsExBiPredicate(ExceptionBiPredicate<T, U, E> action, T parameter1, U parameter2) throws E {
+        if (action == null) return false;
+        final Supplier<SecurityIdentity>[] oldWithIdentities = establishIdentities();
+        final Supplier<SecurityIdentity> oldIdentity = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return action.test(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(oldIdentity);
             restoreIdentities(oldWithIdentities);
