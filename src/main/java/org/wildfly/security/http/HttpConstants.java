@@ -114,7 +114,7 @@ public class HttpConstants {
     public static final String STALE = "stale";
     public static final String URI = "uri";
     public static final String USERNAME = "username";
-
+    public static final String USERNAME_STAR = "username*";
 
     /*
      * Header Names
