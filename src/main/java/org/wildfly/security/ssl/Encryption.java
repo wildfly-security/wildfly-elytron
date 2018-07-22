@@ -37,6 +37,14 @@ public enum Encryption {
      */
     AES256GCM,
     /**
+     * AES encryption with 256-bit keys in CBC-MAC Mode (CCM).
+     */
+    AES256CCM,
+    /**
+     * AES encryption with 256-bit keys in CBC-MAC Mode (CCM) with an 8-Octet Integrity Check Value.
+     */
+    AES256CCM8,
+    /**
      * AES encryption with 256-bit keys.
      */
     AES256,
@@ -44,6 +52,14 @@ public enum Encryption {
      * AES encryption with 128-bit keys in Galois counter mode (GCM).
      */
     AES128GCM,
+    /**
+     * AES encryption with 128-bit keys in CBC-MAC Mode (CCM).
+     */
+    AES128CCM,
+    /**
+     * AES encryption with 128-bit keys in CBC-MAC Mode (CCM) with an 8-Octet Integrity Check Value.
+     */
+    AES128CCM8,
     /**
      * AES encryption with 128-bit keys.
      */
@@ -115,8 +131,12 @@ public enum Encryption {
         switch (name) {
             case "NULL": return NULL;
             case "AES256GCM": return AES256GCM;
+            case "AES256CCM": return AES256CCM;
+            case "AES256CCM8": return AES256CCM8;
             case "AES256": return AES256;
             case "AES128GCM": return AES128GCM;
+            case "AES128CCM": return AES128CCM;
+            case "AES128CCM8": return AES128CCM8;
             case "AES128": return AES128;
             case "CAMELLIA256": return CAMELLIA256;
             case "CAMELLIA128": return CAMELLIA128;
