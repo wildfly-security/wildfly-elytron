@@ -19,8 +19,8 @@
 package org.wildfly.security.x500.cert;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.x500.cert.CertUtil.getDefaultCompatibleSignatureAlgorithmName;
-import static org.wildfly.security.x500.cert.CertUtil.getKeyIdentifier;
+import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
+import static org.wildfly.security.x500.cert.util.KeyUtil.getKeyIdentifier;
 import static org.wildfly.security.x500.cert.CertUtil.getX509CertificateExtension;
 
 import java.security.InvalidKeyException;
@@ -338,9 +338,12 @@ public final class PKCS10CertificateSigningRequest {
             if (signatureAlgorithmOid == null) {
                 throw log.asnUnrecognisedAlgorithm(signatureAlgorithmName);
             }
-            final String signingKeyAlgorithm = signingKey.getAlgorithm();
+            String signingKeyAlgorithm = signingKey.getAlgorithm();
+            if (signingKeyAlgorithm.equals("EC")) {
+                signingKeyAlgorithm = "ECDSA";
+            }
             if (! signatureAlgorithmName.endsWith("with" + signingKeyAlgorithm) || signatureAlgorithmName.contains("with" + signingKeyAlgorithm + "and")) {
-                throw log.signingKeyNotCompatWithSig(signingKeyAlgorithm, signatureAlgorithmName);
+                throw log.signingKeyNotCompatWithSig(signingKey.getAlgorithm(), signatureAlgorithmName);
             }
             if (subjectDn == null) {
                 subjectDn = ((X509Certificate) certificate).getSubjectX500Principal();
