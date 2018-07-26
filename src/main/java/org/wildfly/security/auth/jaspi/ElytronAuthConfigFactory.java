@@ -100,6 +100,33 @@ public class ElytronAuthConfigFactory extends AuthConfigFactory {
         return null;
     }
 
+    boolean matchesRegistration(final String layer, final String appContext) {
+        synchronized (layerContextRegistration) {
+            // Step 1 - Exact Match
+            Registration registration = layerContextRegistration.get(new LayerContextKey(layer, appContext));
+            if (registration != null && registration.activeRegistration()) {
+                return true;
+            }
+            // Step 2 - appContext only
+            registration = layerContextRegistration.get(new LayerContextKey(null, appContext));
+            if (registration != null && registration.activeRegistration()) {
+                return true;
+            }
+            // Step 3 - layer only
+            registration = layerContextRegistration.get(new LayerContextKey(layer, null));
+            if (registration != null && registration.activeRegistration()) {
+                return true;
+            }
+            // Step 4 - No appContext or layer
+            registration = layerContextRegistration.get(new LayerContextKey(null, null));
+            if (registration != null && registration.activeRegistration()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @see javax.security.auth.message.config.AuthConfigFactory#registerConfigProvider(javax.security.auth.message.config.AuthConfigProvider, java.lang.String, java.lang.String, java.lang.String)
      */
