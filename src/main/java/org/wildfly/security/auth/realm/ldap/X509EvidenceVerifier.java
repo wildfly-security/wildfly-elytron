@@ -24,6 +24,7 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.LdapUtil;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -195,7 +196,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
 
         @Override
         public boolean verifyCertificate(X509Certificate certificate, Attributes attributes) throws NamingException, RealmUnavailableException {
-            Attribute attribute = attributes.get(ldapAttribute);
+            Attribute attribute = LdapUtil.getBinaryAttribute(attributes, ldapAttribute);
 
             if (attribute == null) return false;
 

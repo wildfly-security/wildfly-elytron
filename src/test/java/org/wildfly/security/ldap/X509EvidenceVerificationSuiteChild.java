@@ -42,7 +42,15 @@ public class X509EvidenceVerificationSuiteChild {
 
     @Test
     public void testX509Auth() throws Exception {
+        testX509AuthInternal("scarab");
+    }
 
+    @Test
+    public void testX509AuthBinary() throws Exception {
+        testX509AuthInternal("scarab_binary");
+    }
+
+    private void testX509AuthInternal(String name) throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
@@ -57,7 +65,7 @@ public class X509EvidenceVerificationSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new NamePrincipal("scarab"));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new NamePrincipal(name));
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.POSSIBLY_SUPPORTED, credentialSupport);
