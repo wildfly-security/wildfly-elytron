@@ -20,6 +20,7 @@ package org.wildfly.security.ssl;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,27 +32,27 @@ public enum Protocol {
     /**
      * The SSL version 2 protocol.
      */
-    SSLv2 ("SSLv2"),
+    SSLv2 ("SSLV2"),
     /**
      * The SSL version 3 protocol.
      */
-    SSLv3 ("SSLv3"),
+    SSLv3 ("SSLV3"),
     /**
      * The TLS version 1.0 protocol.
      */
-    TLSv1 ("TLSv1"),
+    TLSv1 ("TLSV1"),
     /**
      * The TLS version 1.1 protocol.  Note that there are no cipher suites which are specifically defined in this protocol.
      */
-    TLSv1_1 ("TLSv1.1"),
+    TLSv1_1 ("TLSV1.1"),
     /**
      * The TLS version 1.2 protocol.
      */
-    TLSv1_2 ("TLSv1.2"),
+    TLSv1_2 ("TLSV1.2"),
     /**
      * The TLS version 1.3 protocol.
      */
-    TLSv1_3 ("TLSv1.3"),
+    TLSv1_3 ("TLSV1.3"),
     ;
 
     static final int fullSize = values().length;
@@ -79,7 +80,7 @@ public enum Protocol {
      * @return an enum item
      */
     public static Protocol forName(final String name) {
-        return map.get(name);
+        return map.get(name.toUpperCase(Locale.ENGLISH));
     }
 
     /**
