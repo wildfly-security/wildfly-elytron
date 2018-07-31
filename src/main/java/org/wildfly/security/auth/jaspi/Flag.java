@@ -17,6 +17,7 @@
 package org.wildfly.security.auth.jaspi;
 
 /**
+ * Control flag to indicate how the auth modules should be interpreted.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +27,7 @@ import javax.security.auth.message.MessageInfo;
  * @see javax.security.auth.message.MessageInfo
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ElytronMessageInfo implements MessageInfo {
+class ElytronMessageInfo implements MessageInfo {
 
     /*
      * The API description MessageInfo is so descriptive and the methods on the API describe the complete API the specification

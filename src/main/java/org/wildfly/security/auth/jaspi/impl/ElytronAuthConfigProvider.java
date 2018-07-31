@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 
@@ -62,7 +62,7 @@ public class ElytronAuthConfigProvider implements AuthConfigProvider {
     private final SecurityDomain securityDomain;
     private final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions;
 
-    ElytronAuthConfigProvider(final String messageLayer, final String applicationContext, final SecurityDomain securityDomain, final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions) {
+    public ElytronAuthConfigProvider(final String messageLayer, final String applicationContext, final SecurityDomain securityDomain, final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions) {
         this.messageLayer = messageLayer;
         this.applicationContext = applicationContext;
         this.securityDomain = securityDomain;

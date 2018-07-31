@@ -228,6 +228,7 @@
                             <include>org/wildfly/security/auth/*.java</include>
                             <include>org/wildfly/security/auth/callback/*.java</include>
                             <include>org/wildfly/security/auth/client/*.java</include>
+                            <include>org/wildfly/security/auth/jaspi/*.java</include>
                             <include>org/wildfly/security/auth/permission/*.java</include>
                             <include>org/wildfly/security/auth/principal/*.java</include>
                             <include>org/wildfly/security/auth/server/*.java</include>
@@ -652,6 +653,7 @@
                                     <include>org.wildfly.security.auth</include>
                                     <include>org.wildfly.security.auth.callback</include>
                                     <include>org.wildfly.security.auth.client</include>
+                                    <include>org.wildfly.security.auth.jaspi</include>
                                     <include>org.wildfly.security.auth.permission</include>
                                     <include>org.wildfly.security.auth.principal</include>
                                     <include>org.wildfly.security.auth.server</include>

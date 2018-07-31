@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi.servlet;
+package org.wildfly.security.auth.jaspi.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -27,8 +27,6 @@ import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.wildfly.security.auth.jaspi.ElytronMessageInfo;
-
 /**
  * A servlet profile specific {@link MessageInfo} that ensures the request and response types remain valid and allows wrapping
  * an existing message info during validateRequest and unwrapping during secureResponse.
@@ -36,6 +34,10 @@ import org.wildfly.security.auth.jaspi.ElytronMessageInfo;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class ServletMessageInfo extends ElytronMessageInfo {
+
+    /*
+     * Referenced in the Elytron Web Integration.
+     */
 
     /**
      * Set the request message ensuring that it is an instance of {@link HttpServletRequest}, also ensure wrapping only occurs

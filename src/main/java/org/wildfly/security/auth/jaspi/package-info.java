@@ -17,7 +17,7 @@
  */
 
 /**
- * JSR-196 Java Authentication SPI for Containers (JASPI) implementation.
+ * JSR-196 Java Authentication SPI for Containers (JASPI) - Public API.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

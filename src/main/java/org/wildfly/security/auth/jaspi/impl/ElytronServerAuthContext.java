@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -33,14 +33,13 @@ import javax.security.auth.message.MessageInfo;
 import javax.security.auth.message.config.ServerAuthContext;
 import javax.security.auth.message.module.ServerAuthModule;
 
-import org.wildfly.security.auth.jaspi.ElytronMessageInfo.State;
-
+import org.wildfly.security.auth.jaspi.impl.ElytronMessageInfo.State;
 /**
  * The WildFly Elytron implementation of {@link ServerAuthContext}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ElytronServerAuthContext implements ServerAuthContext {
+class ElytronServerAuthContext implements ServerAuthContext {
 
     // Don't bother with an intermediate ServerAuth - even though the API is reused
     // the implementations are different.

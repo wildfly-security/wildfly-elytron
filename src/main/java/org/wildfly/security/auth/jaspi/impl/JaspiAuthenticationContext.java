@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
@@ -52,6 +52,10 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class JaspiAuthenticationContext {
+
+    /*
+     * Referenced in the Elytron Web Integration.
+     */
 
     private final ServerAuthenticationContext serverAuthenticationContext;
     private final String roleCategory = "servlet"; // TODO Make configurable and a list.

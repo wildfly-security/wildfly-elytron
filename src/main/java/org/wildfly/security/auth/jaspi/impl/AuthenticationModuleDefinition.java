@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.security.auth.message.module.ServerAuthModule;
 
+import org.wildfly.security.auth.jaspi.Flag;
+
 /**
  * A definition for a single {@link ServerAuthModule}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class AuthenticationModuleDefinition {
+public class AuthenticationModuleDefinition {
 
     private final Supplier<ServerAuthModule> serverAuthModuleFactory;
     private final Flag flag;
@@ -39,7 +41,7 @@ class AuthenticationModuleDefinition {
      * @param flag the flag to indicate how this module will be handled.
      * @param options configuration options to pass into the module during initialisation.
      */
-    AuthenticationModuleDefinition(final Supplier<ServerAuthModule> serverAuthModuleFactory, final Flag flag, final Map options) {
+    public AuthenticationModuleDefinition(final Supplier<ServerAuthModule> serverAuthModuleFactory, final Flag flag, final Map options) {
         this.serverAuthModuleFactory = serverAuthModuleFactory;
         this.flag = flag;
         this.options = options;

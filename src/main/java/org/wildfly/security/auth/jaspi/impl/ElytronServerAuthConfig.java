@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.jaspi;
+package org.wildfly.security.auth.jaspi.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -36,7 +36,7 @@ import javax.security.auth.message.config.ServerAuthContext;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ElytronServerAuthConfig implements ServerAuthConfig {
+class ElytronServerAuthConfig implements ServerAuthConfig {
 
     /*
      * The instance of ServerAuthConfig can be obtained once per deployment, for this reason it is important not to cache

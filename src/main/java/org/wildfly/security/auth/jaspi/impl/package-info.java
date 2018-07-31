@@ -17,9 +17,9 @@
  */
 
 /**
- * JSR-196 Java Authentication SPI for Containers (JASPI) Servlet Container Profile.
+ * JSR-196 Java Authentication SPI for Containers (JASPI) - Internal Implementation.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-package org.wildfly.security.auth.jaspi.servlet;
+package org.wildfly.security.auth.jaspi.impl;
 

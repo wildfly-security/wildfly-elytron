@@ -29,6 +29,8 @@ import java.util.function.Supplier;
 import javax.security.auth.message.config.AuthConfigFactory;
 import javax.security.auth.message.module.ServerAuthModule;
 
+import org.wildfly.security.auth.jaspi.impl.AuthenticationModuleDefinition;
+import org.wildfly.security.auth.jaspi.impl.ElytronAuthConfigProvider;
 import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
