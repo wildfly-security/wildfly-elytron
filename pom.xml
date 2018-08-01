@@ -81,6 +81,7 @@
         <version.org.wildfly.common>1.4.0.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.3.0</version.org.mock-server.mockserver-netty>
+        <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -576,6 +577,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>org.xipki.pki</groupId>
+            <artifactId>ocsp-server</artifactId>
+            <version>${version.org.xipki.pki.ocsp-server}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -586,7 +594,7 @@
             </activation>
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.corba,java.sql --illegal-access=permit</modular.jdk.args>
+                <modular.jdk.args>--add-modules java.corba,java.sql,java.xml.bind --illegal-access=permit</modular.jdk.args>
                 <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
                 <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->

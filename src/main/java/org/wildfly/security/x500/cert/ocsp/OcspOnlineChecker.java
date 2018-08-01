@@ -49,9 +49,6 @@ public class OcspOnlineChecker implements OcspChecker {
     @Override
     public OcspStatus obtainStatus(CertId certId, X509Certificate issuer, URL responder, OcspSignatureVerifier signatureVerifier)
             throws CertificateException, IOException {
-        if (responder == null) {
-            throw ElytronMessages.ocsp.noOcspResponder(certId.toString());
-        }
         OcspRequest request = new OcspRequest(Collections.singletonList(certId));
         OcspResponse response = processRequest(responder, request);
         boolean verified = signatureVerifier.check(response, issuer);

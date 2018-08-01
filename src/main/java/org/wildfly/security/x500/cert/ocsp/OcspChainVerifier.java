@@ -69,6 +69,7 @@ public class OcspChainVerifier {
      * @throws CertificateException if the validation fails (some certificate in the chain is revoked for example)
      */
     public void checkChain(X509Certificate[] chain) throws CertificateException {
+        ElytronMessages.ocsp.tracef("OCSP validation of chain of %d certificates", chain.length);
         for (int i = 0; i < chain.length - 1; i++) {
             X509Certificate certificate = chain[i];
             X509Certificate issuer = chain[i + 1];
@@ -86,7 +87,7 @@ public class OcspChainVerifier {
                     throw ElytronMessages.ocsp.certificateIsRevoked(certificate.getSerialNumber(), responder);
                 }
             } catch (IOException e) {
-                ElytronMessages.ocsp.trace("OCSP validation has failed", e);
+                ElytronMessages.ocsp.tracef(e, "OCSP validation of %s has failed", certificate);
                 if (! acceptWhenStatusUnavailable) {
                     throw ElytronMessages.ocsp.ocspValidationHasFailed(certificate.toString(), e);
                 }
@@ -101,7 +102,10 @@ public class OcspChainVerifier {
         } else {
             // decode OCSP responder URL from the certificate
             byte[] extensionBytes = certificate.getExtensionValue(X500.OID_PE_AUTHORITY_INFO_ACCESS);
-            if (extensionBytes == null) return null;
+            if (extensionBytes == null) {
+                ElytronMessages.ocsp.tracef("Certificate %s does not define AuthorityInfoAccess extension", certificate);
+                return null;
+            }
             DERDecoder decoder = new DERDecoder(extensionBytes);
             decoder = new DERDecoder(decoder.decodeOctetString());
             decoder.startSequence();
@@ -111,12 +115,15 @@ public class OcspChainVerifier {
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, URI_NAME, false)) {
                         decoder.decodeImplicit(URI_NAME);
                         GeneralName.URIName uri = new GeneralName.URIName(decoder.decodeIA5String());
-                        return new URL(uri.getName());
+                        URL responder = new URL(uri.getName());
+                        ElytronMessages.ocsp.tracef("Decoded OCSP responder \"%s\" for certificate %s", responder, certificate);
+                        return responder;
                     }
                 }
                 decoder.endSequence();
             }
             decoder.endSequence();
+            ElytronMessages.ocsp.tracef("Certificate %s does not define OCSP responder", certificate);
             return null;
         }
     }

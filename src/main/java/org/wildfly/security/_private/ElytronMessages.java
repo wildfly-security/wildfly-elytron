@@ -2082,9 +2082,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10061, value = "Unsupported OCSP response type \"%s\"")
     CertificateException unsupportedOcspResponseType(String type);
 
-    @Message(id = 10062, value = "No OCSP responder URL for certificate \"%s\"")
-    CertificateException noOcspResponder(String certificate);
-
     /* Audit Exceptions */
 
     // 11000 - Unused in any Final release

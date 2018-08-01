@@ -30,6 +30,18 @@
                 <file name="target/test-classes/ca/jks/ladybird.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
+            <key-store name="ocsp-checked-good" type="JKS">
+                <file name="target/test-classes/ca/jks/ocsp-checked-good.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-checked-revoked" type="JKS">
+                <file name="target/test-classes/ca/jks/ocsp-checked-revoked.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ocsp-checked-unknown" type="JKS">
+                <file name="target/test-classes/ca/jks/ocsp-checked-unknown.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
             <key-store name="rove" type="JKS">
                 <file name="target/test-classes/ica/jks/rove.keystore"/>
                 <key-store-clear-password password="Elytron"/>
@@ -63,6 +75,24 @@
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="scarab"/>
             </ssl-context>
+            <ssl-context name="two-way-ocsp-good-ssl">
+                <key-store-ssl-certificate key-store-name="ocsp-checked-good" alias="checked">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-revoked-ssl">
+                <key-store-ssl-certificate key-store-name="ocsp-checked-revoked" alias="checked">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca"/>
+            </ssl-context>
+            <ssl-context name="two-way-ocsp-unknown-ssl">
+                <key-store-ssl-certificate key-store-name="ocsp-checked-unknown" alias="checked">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca"/>
+            </ssl-context>
             <ssl-context name="two-way-ica-ssl">
                 <key-store-ssl-certificate key-store-name="rove" alias="rove">
                     <key-store-clear-password password="Elytron"/>
@@ -85,6 +115,15 @@
             </rule>
             <rule use-ssl-context="two-way-ssl">
                 <match-host name="test-two-way.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-good-ssl">
+                <match-host name="test-two-way-ocsp-good.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-revoked-ssl">
+                <match-host name="test-two-way-ocsp-revoked.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-ocsp-unknown-ssl">
+                <match-host name="test-two-way-ocsp-unknown.org"/>
             </rule>
             <rule use-ssl-context="two-way-ica-ssl">
                 <match-host name="test-two-way-ica.org"/>
