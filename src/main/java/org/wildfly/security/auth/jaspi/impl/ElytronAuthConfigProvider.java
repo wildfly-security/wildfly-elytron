@@ -32,8 +32,6 @@ import javax.security.auth.message.config.ClientAuthContext;
 import javax.security.auth.message.config.ServerAuthConfig;
 import javax.security.auth.message.config.ServerAuthContext;
 
-import org.wildfly.security.auth.server.SecurityDomain;
-
 /**
  * The WildFly Elytron implementation of {@link AuthConfigProvider}.
  *
@@ -59,13 +57,11 @@ public class ElytronAuthConfigProvider implements AuthConfigProvider {
      */
     private final String applicationContext;
 
-    private final SecurityDomain securityDomain;
     private final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions;
 
-    public ElytronAuthConfigProvider(final String messageLayer, final String applicationContext, final SecurityDomain securityDomain, final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions) {
+    public ElytronAuthConfigProvider(final String messageLayer, final String applicationContext, final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions) {
         this.messageLayer = messageLayer;
         this.applicationContext = applicationContext;
-        this.securityDomain = securityDomain;
         this.serverAuthModuleDefinitions = checkNotNullParam("serverAuthModuleDefinitions", serverAuthModuleDefinitions); // Can however be empty.
     }
 

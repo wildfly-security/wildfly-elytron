@@ -31,7 +31,6 @@ import javax.security.auth.message.module.ServerAuthModule;
 
 import org.wildfly.security.auth.jaspi.impl.AuthenticationModuleDefinition;
 import org.wildfly.security.auth.jaspi.impl.ElytronAuthConfigProvider;
-import org.wildfly.security.auth.server.SecurityDomain;
 
 /**
  * A builder API to assemble JASPIC configuration.
@@ -44,7 +43,6 @@ public final class JaspicConfigurationBuilder {
     private final String applicationContext;
 
     private String description;
-    private SecurityDomain securityDomain;
     private List<AuthenticationModuleDefinition> serverAuthModules = new ArrayList<>();
 
     private boolean registered = false;
@@ -64,21 +62,6 @@ public final class JaspicConfigurationBuilder {
     public JaspicConfigurationBuilder setDescription(final String description) {
         assertNotRegistered();
         this.description = description;
-
-        return this;
-    }
-
-    /**
-     * Set a {@link SecurityDomain} to be used during authentication for evidence verification or to obtain the resulting
-     * identity.
-     *
-     * @param securityDomain the {@link SecurityDomain} to be used during authentication.
-     * @return this {@link JaspicConfigurationBuilder} to allow chaining of commands.
-     * @throws IllegalStateException if the configuration has already been registered.
-     */
-    public JaspicConfigurationBuilder setSecurityDomain(final SecurityDomain securityDomain) {
-        assertNotRegistered();
-        this.securityDomain = securityDomain;
 
         return this;
     }
@@ -135,7 +118,7 @@ public final class JaspicConfigurationBuilder {
         registered = true;
 
         return authConfigFactory.registerConfigProvider(
-                new ElytronAuthConfigProvider(messageLayer, applicationContext, securityDomain, serverAuthModules),
+                new ElytronAuthConfigProvider(messageLayer, applicationContext, serverAuthModules),
                 messageLayer, applicationContext, description);
     }
 
