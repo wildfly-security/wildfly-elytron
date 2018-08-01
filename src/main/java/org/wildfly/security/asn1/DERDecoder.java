@@ -403,6 +403,14 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public BigInteger decodeEnumerated() throws ASN1Exception {
+        if (ENUMERATED_TYPE != peekType()) {
+            throw log.asnUnexpectedTag();
+        }
+        return new BigInteger(drainElementValue());
+    }
+
+    @Override
     public void decodeImplicit(int number) {
         decodeImplicit(CONTEXT_SPECIFIC_MASK, number);
     }

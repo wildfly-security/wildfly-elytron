@@ -277,6 +277,17 @@ public interface ASN1Decoder {
     void decodeNull() throws ASN1Exception;
 
     /**
+     * Decode the next ASN.1 element as an enumerated.
+     *
+     * @return an integer decoded from the next element
+     * @throws ASN1Exception if the next element is not an enumerated
+     * @throws UnsupportedOperationException if not implemented
+     */
+    default BigInteger decodeEnumerated() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Indicate that the next ASN.1 element has the given implicit, context-specific tag.
      *
      * @param number the tag number for the implicit tag

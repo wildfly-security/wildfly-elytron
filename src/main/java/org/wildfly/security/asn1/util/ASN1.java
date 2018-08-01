@@ -62,6 +62,11 @@ public class ASN1 {
     public static final int OBJECT_IDENTIFIER_TYPE = 6;
 
     /**
+     * The universal enumerated type tag.
+     */
+    public static final int ENUMERATED_TYPE = 10;
+
+    /**
      * The universal UTF-8 string type tag.
      */
     public static final int UTF8_STRING_TYPE = 12;
@@ -268,7 +273,11 @@ public class ASN1 {
             final int type = decoder.peekType();
             switch (type) {
                 case INTEGER_TYPE: {
-                    builder.append("[int:").append(decoder.decodeInteger()).append("]");
+                    builder.append("[int:").append(decoder.decodeInteger()).append(']');
+                    break;
+                }
+                case ENUMERATED_TYPE: {
+                    builder.append("[enum:").append(decoder.decodeEnumerated()).append(']');
                     break;
                 }
                 case BIT_STRING_TYPE: {
