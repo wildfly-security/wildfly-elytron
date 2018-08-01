@@ -80,7 +80,7 @@ public enum Protocol {
      * @return an enum item
      */
     public static Protocol forName(final String name) {
-        return map.get(name.toUpperCase(Locale.ENGLISH));
+        return name == null ? null : map.get(name.toUpperCase(Locale.ENGLISH));
     }
 
     /**
