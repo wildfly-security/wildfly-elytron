@@ -508,13 +508,13 @@ public final class ElytronXmlParser {
                     if (finalProtocolSelector != null) {
                         sslContextBuilder.setProtocolSelector(finalProtocolSelector);
                     }
+                    final ConfigurationKeyManager.Builder builder = new ConfigurationKeyManager.Builder();
                     if (finalCredentialFactory != null) {
-                        final ConfigurationKeyManager.Builder builder = new ConfigurationKeyManager.Builder();
                         final X509CertificateChainPrivateCredential privateCredential;
                         privateCredential = finalCredentialFactory.get();
                         builder.addCredential(privateCredential);
-                        sslContextBuilder.setKeyManager(builder.build());
                     }
+                    sslContextBuilder.setKeyManager(builder.build());
                     if (initTrustManager) {
                         if (finalTrustStoreSupplier != null) {
                             trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
