@@ -27,16 +27,17 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.asn1.util.ASN1;
 
 public class OcspParsingTest {
 
-    private CertId cert1 = new CertId("1.3.14.3.2.26",
+    private CertId cert1 = new CertId(ASN1.OID_SHA1,
             CodePointIterator.ofString("056acea8ab97ad48f2a1016653b14f837a9e6773").hexDecode().drain(),
             CodePointIterator.ofString("def06922b82bc769e70683f4766787521a49b0dd").hexDecode().drain(),
             BigInteger.valueOf(2553437807527164539L)
     );
 
-    private CertId cert2 = new CertId("1.3.14.3.2.26",
+    private CertId cert2 = new CertId(ASN1.OID_SHA1,
             CodePointIterator.ofString("056acea8ab97ad48f2a1016653b14f837a9e6773").hexDecode().drain(),
             CodePointIterator.ofString("def06922b82bc769e70683f4766787521a49b0dd").hexDecode().drain(),
             BigInteger.valueOf(7010134036373951907L)
