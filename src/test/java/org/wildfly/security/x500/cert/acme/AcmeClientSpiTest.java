@@ -50,6 +50,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.CRLReason;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -63,7 +64,6 @@ import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import sun.security.ec.ECPublicKeyImpl;
 
 
 /**
@@ -295,7 +295,7 @@ public class AcmeClientSpiTest {
             assertEquals(keyAlgorithmName, privateKey.getAlgorithm());
             assertEquals(keyAlgorithmName, signedCert.getPublicKey().getAlgorithm());
             if (keyAlgorithmName.equals("EC")) {
-                assertEquals(keySize, ((ECPublicKeyImpl) signedCert.getPublicKey()).getParams().getCurve().getField().getFieldSize());
+                assertEquals(keySize, ((ECPublicKey) signedCert.getPublicKey()).getParams().getCurve().getField().getFieldSize());
             } else if (keyAlgorithmName.equals("RSA")) {
                 assertEquals(keySize, ((RSAPublicKey) signedCert.getPublicKey()).getModulus().bitLength());
             }
