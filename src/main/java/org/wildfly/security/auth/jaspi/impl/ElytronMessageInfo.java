@@ -27,7 +27,7 @@ import javax.security.auth.message.MessageInfo;
  * @see javax.security.auth.message.MessageInfo
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class ElytronMessageInfo implements MessageInfo {
+public class ElytronMessageInfo implements MessageInfo {
 
     /*
      * The API description MessageInfo is so descriptive and the methods on the API describe the complete API the specification
