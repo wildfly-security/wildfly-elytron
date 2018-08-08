@@ -53,20 +53,27 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class JaspiAuthenticationContext {
 
+    private static final String DEFAULT_ROLES_CATEGORY = "servlet";
+
     /*
      * Referenced in the Elytron Web Integration.
      */
 
     private final ServerAuthenticationContext serverAuthenticationContext;
-    private final String roleCategory = "servlet"; // TODO Make configurable and a list.
+    private final String roleCategory;
     private final Set<String> roles = new HashSet<>();
 
-    JaspiAuthenticationContext(ServerAuthenticationContext serverAuthenticationContext) {
+    JaspiAuthenticationContext(ServerAuthenticationContext serverAuthenticationContext, final String roleCategory) {
         this.serverAuthenticationContext = serverAuthenticationContext;
+        this.roleCategory = roleCategory;
     }
 
     public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain) {
-        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain).createNewAuthenticationContext());
+        return newInstance(securityDomain, DEFAULT_ROLES_CATEGORY);
+    }
+
+    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final String roleCategory) {
+        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain).createNewAuthenticationContext(), roleCategory);
     }
 
     public CallbackHandler createCallbackHandler() {
