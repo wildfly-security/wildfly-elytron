@@ -37,7 +37,7 @@ import org.wildfly.security.auth.jaspi.impl.ElytronAuthConfigProvider;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class JaspicConfigurationBuilder {
+public final class JaspiConfigurationBuilder {
 
     private final String messageLayer;
     private final String applicationContext;
@@ -47,7 +47,7 @@ public final class JaspicConfigurationBuilder {
 
     private boolean registered = false;
 
-    private JaspicConfigurationBuilder(final String messageLayer, final String applicationContext) {
+    private JaspiConfigurationBuilder(final String messageLayer, final String applicationContext) {
         this.messageLayer = messageLayer;
         this.applicationContext = applicationContext;
     }
@@ -56,10 +56,10 @@ public final class JaspicConfigurationBuilder {
      * Set the description to be used for the provider once registered.
      *
      * @param description the description to be used for the provider once registered.
-     * @return this {@link JaspicConfigurationBuilder} to allow chaining of commands.
+     * @return this {@link JaspiConfigurationBuilder} to allow chaining of commands.
      * @throws IllegalStateException if the configuration has already been registered.
      */
-    public JaspicConfigurationBuilder setDescription(final String description) {
+    public JaspiConfigurationBuilder setDescription(final String description) {
         assertNotRegistered();
         this.description = description;
 
@@ -71,10 +71,10 @@ public final class JaspicConfigurationBuilder {
      * and application context combination.
      *
      * @param serverAuthModuleFactory the {@link Supplier<ServerAuthModule>} to be added to the list of module factories.
-     * @return this {@link JaspicConfigurationBuilder} to allow chaining of commands.
+     * @return this {@link JaspiConfigurationBuilder} to allow chaining of commands.
      * @throws IllegalStateException if the configuration has already been registered.
      */
-    public JaspicConfigurationBuilder addAuthModuleFactory(final Supplier<ServerAuthModule> serverAuthModuleFactory) {
+    public JaspiConfigurationBuilder addAuthModuleFactory(final Supplier<ServerAuthModule> serverAuthModuleFactory) {
         return addAuthModuleFactory(serverAuthModuleFactory, Flag.REQUIRED, Collections.EMPTY_MAP);
     }
 
@@ -85,10 +85,10 @@ public final class JaspicConfigurationBuilder {
      * @param serverAuthModuleFactory the {@link Supplier<ServerAuthModule>} to be added to the list of module factories.
      * @param flag the flag to control the handling of the auth module.
      * @param options the configuration options to pass to the module during initialisation.
-     * @return this {@link JaspicConfigurationBuilder} to allow chaining of commands.
+     * @return this {@link JaspiConfigurationBuilder} to allow chaining of commands.
      * @throws IllegalStateException if the configuration has already been registered.
      */
-    public JaspicConfigurationBuilder addAuthModuleFactory(final Supplier<ServerAuthModule> serverAuthModuleFactory, final Flag flag, final Map options) {
+    public JaspiConfigurationBuilder addAuthModuleFactory(final Supplier<ServerAuthModule> serverAuthModuleFactory, final Flag flag, final Map options) {
         assertNotRegistered();
 
         serverAuthModules.add(new AuthenticationModuleDefinition(serverAuthModuleFactory, flag, options));
@@ -128,8 +128,8 @@ public final class JaspicConfigurationBuilder {
         }
     }
 
-    public static JaspicConfigurationBuilder builder(final String messageLayer, final String applicationContext) {
-        return new JaspicConfigurationBuilder(messageLayer, applicationContext);
+    public static JaspiConfigurationBuilder builder(final String messageLayer, final String applicationContext) {
+        return new JaspiConfigurationBuilder(messageLayer, applicationContext);
     }
 
 }
