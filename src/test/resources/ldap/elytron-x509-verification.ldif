@@ -53,3 +53,19 @@ sn: scarabSn
 uid: scarab
 x509serialNumber: 4
 x509subject: OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab
+x509digest:
+usercertificate::
+
+dn: uid=scarab_binary,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+objectClass: x509PKC
+cn: scarab_binaryCn
+sn: scarab_binarySn
+uid: scarab
+x509serialNumber: 4
+x509subject: OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab
+x509digest:
+usercertificate;binary::

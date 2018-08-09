@@ -127,6 +127,11 @@ public class PasswordSupportSuiteChild {
     }
 
     @Test
+    public void testBsdCryptUserBinary() throws Exception {
+        performSimpleNameTest("bsdCryptUser_binary", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
+    }
+
+    @Test
     public void testOneTimePasswordUser0() throws Exception {
         SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null, null);
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
