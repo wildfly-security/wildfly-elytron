@@ -43,6 +43,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.util.LdapUtil;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
@@ -141,7 +142,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 return null;
             }
             try {
-                Attribute attribute = attributes.get(userPasswordAttributeName);
+                Attribute attribute = LdapUtil.getBinaryAttribute(attributes, userPasswordAttributeName);
                 if (attribute != null) {
                     final int size = attribute.size();
                     for (int i = 0; i < size; i++) {

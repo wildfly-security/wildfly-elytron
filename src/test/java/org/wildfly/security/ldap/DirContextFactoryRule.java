@@ -41,9 +41,13 @@ import javax.security.auth.x500.X500Principal;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -53,6 +57,7 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -151,10 +156,24 @@ public class DirContextFactoryRule implements TestRule {
             certificateString = certificateString + certificateBaseString.charAt(i);
         }
 
-        FileWriter ldif = new FileWriter(workingDirLDIF.toString() + LDIF_LOCATION, true);
-        ldif.write("x509digest: " + digest + System.getProperty("line.separator"));
-        ldif.write(certificateString);
-        ldif.close();
+        String certificateBaseStringBinary = "usercertificate;binary:: " + certificateBytes.drainToString();
+        String certificateStringBinary = "";
+        counter = 0;
+        for (int i = 0; i < certificateBaseStringBinary.length(); i++){
+            if(i == 78 || i == (78+77*counter)){
+                certificateStringBinary = certificateStringBinary + System.getProperty("line.separator");
+                certificateStringBinary = certificateStringBinary + " ";
+                counter += 1;
+            }
+            certificateStringBinary = certificateStringBinary + certificateBaseStringBinary.charAt(i);
+        }
+
+        Path filePath = Paths.get(workingDirLDIF.toString() + LDIF_LOCATION);
+        String ldapDataLdifString = new String(Files.readAllBytes(filePath),StandardCharsets.UTF_8);
+        ldapDataLdifString = ldapDataLdifString.replaceAll(Pattern.quote("x509digest:"), "x509digest: " + digest);
+        ldapDataLdifString = ldapDataLdifString.replaceAll(Pattern.quote("usercertificate::"), certificateString);
+        ldapDataLdifString = ldapDataLdifString.replaceAll(Pattern.quote("usercertificate;binary::"), certificateString);
+        Files.write(filePath, ldapDataLdifString.getBytes(StandardCharsets.UTF_8));
     }
 
     private static void setUp() throws Exception{
@@ -162,6 +181,13 @@ public class DirContextFactoryRule implements TestRule {
         if (workingDirCA.exists() == false) {
             workingDirCA.mkdirs();
         }
+
+        File workingDirLDIF = new File(LDAP_DIRECTORY_LOCATION);
+        if (workingDirLDIF.exists() == false) {
+            workingDirLDIF.mkdirs();
+        }
+
+        Files.copy(Paths.get(workingDirLDIF + LDIF_LOCATION), Paths.get(workingDirLDIF + LDIF_LOCATION + ".bak"), StandardCopyOption.REPLACE_EXISTING);
 
         KeyStore localhostKeyStore = KeyStore.getInstance("JKS");
         localhostKeyStore.load(null, null);
