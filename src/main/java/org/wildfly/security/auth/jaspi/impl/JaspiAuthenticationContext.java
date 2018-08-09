@@ -37,6 +37,7 @@ import javax.security.auth.message.callback.GroupPrincipalCallback;
 import javax.security.auth.message.callback.PasswordValidationCallback;
 
 import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
@@ -60,6 +61,7 @@ public class JaspiAuthenticationContext {
 
     private final String roleCategory;
 
+    private boolean anonymous = false;
     private Principal principal;
     private final Set<String> roles = new HashSet<>();
 
@@ -114,12 +116,20 @@ public class JaspiAuthenticationContext {
                     log.trace("Handling CallerPrincipalCallback");
                     final CallerPrincipalCallback cpc = (CallerPrincipalCallback) callback;
                     Principal callerPrincipal = cpc.getPrincipal();
+                    final String callerName = cpc.getName();
+                    if (callerPrincipal == null && callerName != null) {
+                        callerPrincipal = new NamePrincipal(callerName);
+                    }
 
                     JaspiAuthenticationContext.this.principal = callerPrincipal;
 
-                    final Subject subject = cpc.getSubject();
-                    if (subject != null && !subject.isReadOnly()) {
-                        subject.getPrincipals().add(callerPrincipal);
+                    if (callerPrincipal != null) {
+                        final Subject subject = cpc.getSubject();
+                        if (subject != null && !subject.isReadOnly()) {
+                            subject.getPrincipals().add(callerPrincipal);
+                        }
+                    } else {
+                        anonymous = true;
                     }
                 } else if (callback instanceof GroupPrincipalCallback) {
                     log.trace("Handling GroupPrincipalCallback");
@@ -158,6 +168,7 @@ public class JaspiAuthenticationContext {
 
                 final Callback callback = callbacks[index];
                 if (callback instanceof PasswordValidationCallback) {
+                    log.trace("Handling PasswordValidationCallback");
                     PasswordValidationCallback pvc = (PasswordValidationCallback) callback;
                     // TODO Do we need null check or let SAC handle?
                     serverAuthenticationContext.setAuthenticationName(pvc.getUsername());
@@ -177,16 +188,19 @@ public class JaspiAuthenticationContext {
                         }
                     }
                 } else if (callback instanceof CallerPrincipalCallback) {
+                    log.trace("Handling CallerPrincipalCallback");
                     final CallerPrincipalCallback cpc = (CallerPrincipalCallback) callback;
                     Principal callerPrincipal = cpc.getPrincipal();
                     final String callerName = cpc.getName();
+                    if (callerPrincipal == null && callerName != null) {
+                        callerPrincipal = new NamePrincipal(callerName);
+                    }
+                    log.tracef("Caller Principal = %s", callerPrincipal);
 
                     final boolean authorized;
                     if (nameAssigned) {
                         if (callerPrincipal != null) {
                             authorized =serverAuthenticationContext.authorize(callerPrincipal);
-                        } else if (callerName != null) {
-                            authorized =serverAuthenticationContext.authorize(callerName);
                         } else {
                             // There is an authenticated identity (apparently) - just authorize as that identity.
                             authorized =serverAuthenticationContext.authorize();
@@ -195,12 +209,10 @@ public class JaspiAuthenticationContext {
                         // Step 1 - Set the identity.
                         if (callerPrincipal != null) {
                             serverAuthenticationContext.setAuthenticationPrincipal(callerPrincipal);
-                        } else if (callerName != null) {
-                            serverAuthenticationContext.setAuthenticationName(callerName);
                         }
 
                         // Step 2 - Authorize as same identity.
-                        if (callerPrincipal != null || callerName != null) {
+                        if (callerPrincipal != null) {
                             authorized = serverAuthenticationContext.authorize();
                         } else {
                             authorized = serverAuthenticationContext.authorizeAnonymous();
@@ -215,8 +227,11 @@ public class JaspiAuthenticationContext {
                         if (subject != null && !subject.isReadOnly()) {
                             subject.getPrincipals().add(callerPrincipal);
                         }
+                    } else {
+                        throw log.authorizationFailed();
                     }
                 } else if (callback instanceof GroupPrincipalCallback) {
+                    log.trace("Handling GroupPrincipalCallback");
                     GroupPrincipalCallback gpc = (GroupPrincipalCallback) callback;
                     String[] groups = gpc.getGroups();
                     if (groups != null && groups.length > 0) {
@@ -249,7 +264,7 @@ public class JaspiAuthenticationContext {
             securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
         } else {
             log.tracef("Creating AdHoc Identity from SecurityName for Principal=%s", principal);
-            securityIdentity = securityDomain.createAdHocIdentity(principal);
+            securityIdentity = anonymous ? securityDomain.getAnonymousSecurityIdentity() : securityDomain.createAdHocIdentity(principal);
         }
         if (roles.size() > 0) {
             log.trace("Assigning roles to resulting SecurityIdentity");

@@ -708,6 +708,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1176, value = "Invalid AuthStatus %s returned from ServerAuthModule %s.")
     IllegalStateException invalidAuthStatus(AuthStatus authStatus, String serverAuthModule);
 
+    @Message(id = 1177, value = "Authorization failed.")
+    IOException authorizationFailed();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
