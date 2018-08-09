@@ -16,6 +16,8 @@
 
 package org.wildfly.security.auth.jaspi.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
@@ -53,35 +55,93 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class JaspiAuthenticationContext {
 
-    private static final String DEFAULT_ROLES_CATEGORY = "servlet";
-
-    /*
-     * Referenced in the Elytron Web Integration.
-     */
-
+    private final SecurityDomain securityDomain;
     private final ServerAuthenticationContext serverAuthenticationContext;
+
     private final String roleCategory;
+
+    private Principal principal;
     private final Set<String> roles = new HashSet<>();
 
     JaspiAuthenticationContext(ServerAuthenticationContext serverAuthenticationContext, final String roleCategory) {
         this.serverAuthenticationContext = serverAuthenticationContext;
+        this.securityDomain = null;
         this.roleCategory = roleCategory;
     }
 
-    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain) {
-        return newInstance(securityDomain, DEFAULT_ROLES_CATEGORY);
+    JaspiAuthenticationContext(SecurityDomain securityDomain, final String roleCategory) {
+        this.serverAuthenticationContext = null;
+        this.securityDomain = securityDomain;
+        this.roleCategory = roleCategory;
     }
 
-    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final String roleCategory) {
-        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain).createNewAuthenticationContext(), roleCategory);
+    // TODO AdHoc Identity Permissions
+
+    /*
+     * Having a few options makes it feel like we should use a Builder, however that would lead to one more object per request.
+     *
+     * For these per-request classes we probably could make them self building with an activation step at the end that allows
+     * their use whilst at the same time prohibits further config changes.
+     */
+
+    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final String roleCategory, final boolean integrated) {
+        if (integrated) {
+            return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain).createNewAuthenticationContext(), roleCategory);
+        } else {
+            return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), roleCategory);
+        }
     }
 
     public CallbackHandler createCallbackHandler() {
-        /*
-         * This AuthenticationContext could implement the CallbackHandler interface directly but if we instead place it on a
-         * factory method we could still look in the future at a tighter relationship with the ServerAuthenticationContext.
-         */
+        return serverAuthenticationContext != null ? createIntegratedCallbackHandler() : createIndependentCallbackHandler();
+    }
 
+    private CallbackHandler createIndependentCallbackHandler() {
+        return new CallbackHandler() {
+
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                handleOne(callbacks, 0);
+            }
+
+            private void handleOne(Callback[] callbacks, int index) throws IOException, UnsupportedCallbackException {
+                if (callbacks.length == index) {
+                    return;
+                }
+
+                final Callback callback = callbacks[index];
+                if (callback instanceof CallerPrincipalCallback) {
+                    log.trace("Handling CallerPrincipalCallback");
+                    final CallerPrincipalCallback cpc = (CallerPrincipalCallback) callback;
+                    Principal callerPrincipal = cpc.getPrincipal();
+
+                    JaspiAuthenticationContext.this.principal = callerPrincipal;
+
+                    final Subject subject = cpc.getSubject();
+                    if (subject != null && !subject.isReadOnly()) {
+                        subject.getPrincipals().add(callerPrincipal);
+                    }
+                } else if (callback instanceof GroupPrincipalCallback) {
+                    log.trace("Handling GroupPrincipalCallback");
+                    GroupPrincipalCallback gpc = (GroupPrincipalCallback) callback;
+                    String[] groups = gpc.getGroups();
+                    if (groups != null && groups.length > 0) {
+                        roles.addAll(Arrays.asList(groups));
+                    }
+
+                    // TODO - Need to check if we do want to add these to the Subject somehow.
+                } else {
+                    CallbackUtil.unsupported(callback);
+                    handleOne(callbacks, index + 1);
+                }
+
+                handleOne(callbacks, index + 1);
+            }
+
+        };
+    }
+
+    private CallbackHandler createIntegratedCallbackHandler() {
         return new CallbackHandler() {
 
             private boolean nameAssigned = false; // This may be a red flag we even need a small set of states here.
@@ -183,11 +243,21 @@ public class JaspiAuthenticationContext {
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
         // Could be another sign we need states here, but having two state machines transitioning could make it easy for this to
         // be dropped to adding at the end may be a good idea.
-        SecurityIdentity securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
+        SecurityIdentity securityIdentity;
+        if (serverAuthenticationContext != null) {
+            log.trace("Obtaining AuthorizedIdentity from ServerAuthenticationContext.");
+            securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
+        } else {
+            log.tracef("Creating AdHoc Identity from SecurityName for Principal=%s", principal);
+            securityIdentity = securityDomain.createAdHocIdentity(principal);
+        }
         if (roles.size() > 0) {
+            log.trace("Assigning roles to resulting SecurityIdentity");
             Roles roles = Roles.fromSet(this.roles);
             RoleMapper roleMapper = RoleMapper.constant(roles);
             securityIdentity = securityIdentity.withRoleMapper(roleCategory, roleMapper);
+        } else {
+            log.trace("No roles request of CallbackHandler.");
         }
         return securityIdentity;
     }
@@ -198,6 +268,5 @@ public class JaspiAuthenticationContext {
                 : subject.getPrivateCredentials();
         privateCredentials.add(credential);
     }
-
 
 }
