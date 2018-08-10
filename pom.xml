@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron</artifactId>
-    <version>1.5.3.CR1-SNAPSHOT</version>
+    <version>1.5.3.Final</version>
 
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
