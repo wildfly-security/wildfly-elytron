@@ -81,8 +81,11 @@ import static org.wildfly.security.x500.cert.acme.Acme.getJwk;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.IDN;
@@ -980,7 +983,7 @@ public abstract class AcmeClientSpi {
         try {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             Collection<? extends Certificate> reply;
-            try (InputStream inputStream = new BufferedInputStream(connection.getInputStream())) {
+            try (InputStream inputStream = new BufferedInputStream(getConvertedInputStream(connection.getInputStream()))) {
                 reply = certificateFactory.generateCertificates(inputStream);
             }
             return X500.asX509CertificateArray(reply.toArray(new Certificate[reply.size()]));
@@ -1138,5 +1141,19 @@ public abstract class AcmeClientSpi {
             }
         }
         return false;
+    }
+
+    private static InputStream getConvertedInputStream(InputStream inputStream) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String currentLine;
+            while ((currentLine = reader.readLine()) != null) {
+                // ignore any blank lines to avoid parsing issues on IBM JDK
+                if (! currentLine.trim().isEmpty()) {
+                    sb.append(currentLine + System.lineSeparator());
+                }
+            }
+        }
+        return new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
