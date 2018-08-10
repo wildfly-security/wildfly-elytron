@@ -195,7 +195,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return authorizationIdentity;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings("unchecked")
     private Supplier<SecurityIdentity>[] establishIdentities() {
         SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : NO_IDENTITIES;
         if (withIdentities.length == 0) {

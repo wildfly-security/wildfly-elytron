@@ -76,12 +76,12 @@ public class BaseTestCase {
      * @param requiredServerFactory - The server factory we are looking for.
      * @return the located server factory.
      */
-    protected static SaslServerFactory obtainSaslServerFactory(final Class requiredServerFactory) {
+    protected static <T extends SaslServerFactory> T obtainSaslServerFactory(final Class<T> requiredServerFactory) {
         Enumeration<SaslServerFactory> serverFactories = Sasl.getSaslServerFactories();
         while (serverFactories.hasMoreElements()) {
             SaslServerFactory current = serverFactories.nextElement();
             if (current.getClass().equals(requiredServerFactory)) {
-                return current;
+                return requiredServerFactory.cast(current);
             }
         }
 
@@ -97,12 +97,12 @@ public class BaseTestCase {
      * @param requiredClientFactory - The client factory we are looking for.
      * @return the located client factory.
      */
-    protected SaslClientFactory obtainSaslClientFactory(final Class requiredClientFactory) {
+    protected <T extends SaslClientFactory> T obtainSaslClientFactory(final Class<T> requiredClientFactory) {
         Enumeration<SaslClientFactory> clientFactories = Sasl.getSaslClientFactories();
         while (clientFactories.hasMoreElements()) {
             SaslClientFactory current = clientFactories.nextElement();
             if (current.getClass().equals(requiredClientFactory)) {
-                return current;
+                return requiredClientFactory.cast(current);
             }
         }
 

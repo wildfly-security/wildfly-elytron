@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
@@ -77,7 +78,7 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
         checkMinimumParameter("maxAge", -1, maxAge);
         identityCache = new LinkedHashMap<Principal, CacheEntry>(16, DEFAULT_LOAD_FACTOR, true) {
             @Override
-            protected boolean removeEldestEntry(Map.Entry eldest) {
+            protected boolean removeEldestEntry(Entry<Principal, CacheEntry> eldest) {
                 return identityCache.size()  > maxEntries;
             }
         };
