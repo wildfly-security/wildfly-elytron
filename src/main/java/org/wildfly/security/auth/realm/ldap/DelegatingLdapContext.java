@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm.ldap;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.manager.WildFlySecurityManager;
 
 import javax.naming.Binding;
 import javax.naming.Context;
@@ -76,11 +77,11 @@ class DelegatingLdapContext implements LdapContext {
     }
 
     public LdapContext newInitialLdapContext(Hashtable<?,?> environment, Control[] connCtls) throws NamingException {
-        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        ClassLoader previous = setSocketFactory();
         try {
             return new InitialLdapContext(environment, null);
         } finally {
-            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+            unsetSocketFactory(previous);
         }
     }
 
@@ -99,41 +100,41 @@ class DelegatingLdapContext implements LdapContext {
 
             @Override
             public boolean hasMoreElements() {
-                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                ClassLoader previous = setSocketFactory();
                 try {
                     return delegating.hasMoreElements();
                 } finally {
-                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                    unsetSocketFactory(previous);
                 }
             }
 
             @Override
             public SearchResult nextElement() {
-                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                ClassLoader previous = setSocketFactory();
                 try {
                     return delegating.nextElement();
                 } finally {
-                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                    unsetSocketFactory(previous);
                 }
             }
 
             @Override
             public SearchResult next() throws NamingException {
-                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                ClassLoader previous = setSocketFactory();
                 try {
                     return delegating.next();
                 } finally {
-                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                    unsetSocketFactory(previous);
                 }
             }
 
             @Override
             public boolean hasMore() throws NamingException {
-                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                ClassLoader previous = setSocketFactory();
                 try {
                     return delegating.hasMore();
                 } finally {
-                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                    unsetSocketFactory(previous);
                 }
             }
 
@@ -145,11 +146,11 @@ class DelegatingLdapContext implements LdapContext {
     }
 
     public DelegatingLdapContext wrapReferralContextObtaining(ReferralException e) throws NamingException {
-        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        ClassLoader previous = setSocketFactory();
         try {
             return new DelegatingLdapContext((DirContext) e.getReferralContext(), socketFactory);
         } finally {
-            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+            unsetSocketFactory(previous);
         }
     }
 
@@ -176,11 +177,11 @@ class DelegatingLdapContext implements LdapContext {
     @Override
     public void reconnect(Control[] controls) throws NamingException {
         if ( ! (delegating instanceof LdapContext)) throw Assert.unsupported();
-        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        ClassLoader previous = setSocketFactory();
         try {
             ((LdapContext) delegating).reconnect(controls);
         } finally {
-            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+            unsetSocketFactory(previous);
         }
     }
 
@@ -478,5 +479,36 @@ class DelegatingLdapContext implements LdapContext {
     @Override
     public String getNameInNamespace() throws NamingException {
         return delegating.getNameInNamespace();
+    }
+
+    private ClassLoader setSocketFactory() {
+        if (socketFactory != null) {
+            ThreadLocalSSLSocketFactory.set(socketFactory);
+            return setClassLoaderTo(getSocketFactoryClassLoader());
+        }
+        return null;
+    }
+
+    private void unsetSocketFactory(ClassLoader previous) {
+        if (socketFactory != null) {
+            ThreadLocalSSLSocketFactory.unset();
+            setClassLoaderTo(previous);
+        }
+    }
+
+    private ClassLoader getSocketFactoryClassLoader() {
+        return ThreadLocalSSLSocketFactory.class.getClassLoader();
+    }
+
+    private ClassLoader setClassLoaderTo(final ClassLoader targetClassLoader){
+        ClassLoader current = null;
+        if(WildFlySecurityManager.isChecking()){
+            current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
+        } else {
+            current = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(targetClassLoader);
+        }
+        return current;
     }
 }
