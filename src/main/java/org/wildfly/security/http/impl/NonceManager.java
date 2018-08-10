@@ -272,7 +272,7 @@ class NonceManager {
     }
 
     private static class NonceState {
-        private ScheduledFuture futureCleanup;
+        private ScheduledFuture<?> futureCleanup;
         private int highestNonceCount = -1;
     }
 }
