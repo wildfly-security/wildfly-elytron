@@ -56,10 +56,10 @@
     </scm>
 
     <properties>
-        <version.elytron>1.3.3.Final</version.elytron>
+        <version.elytron>1.5.3.Final</version.elytron>
         <version.commons-cli>1.3.1</version.commons-cli>
-        <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.1.2.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logging>3.3.2.Final</version.org.jboss.logging>
+        <version.org.jboss.logmanager>2.1.4.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.4.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.1.0.Final</version.org.jboss.logging.tools>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
