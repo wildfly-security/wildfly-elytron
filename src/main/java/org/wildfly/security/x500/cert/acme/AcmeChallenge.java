@@ -134,13 +134,18 @@ public final class AcmeChallenge {
     }
 
     /**
-     * The various Automatic Certificate Management Environment (ACME) challenge types.
+     * An Automatic Certificate Management Environment (ACME) challenge type.
      */
-    public enum Type {
-        HTTP_01("http-01"),
-        DNS_01("dns-01"),
-        TLS_SNI_01("tls-sni-01"),
-        TLS_SNI_02("tls-sni-02");
+    public static class Type {
+
+        /**
+         * The various Automatic Certificate Management Environment (ACME) challenge types.
+         */
+        public static final Type HTTP_01 = new Type("http-01");
+        public static final Type DNS_01 = new Type("dns-01");
+        public static final Type TLS_SNI_01 = new Type("tls-sni-01");
+        public static final Type TLS_SNI_02 = new Type("tls-sni-02");
+        public static final Type TLS_ALPN_01 = new Type("tls-alpn-01");
 
         private final String value;
 
@@ -163,8 +168,19 @@ public final class AcmeChallenge {
                 case "dns-01": return DNS_01;
                 case "tls-sni-01": return TLS_SNI_01;
                 case "tls-sni-02": return TLS_SNI_02;
-                default: return null;
+                case "tls-alpn-01": return TLS_ALPN_01;
+                default: return new UnknownType(name);
             }
+        }
+    }
+
+    /**
+     * An unknown challenge type.
+     */
+    public static class UnknownType extends Type {
+
+        UnknownType(String value) {
+            super(value);
         }
     }
 
