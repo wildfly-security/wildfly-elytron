@@ -21,7 +21,7 @@ package org.wildfly.security.x500.cert.acme;
 import java.io.IOException;
 
 /**
- * Exception to indicate a general failure related to the <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate
+ * Exception to indicate a general failure related to the <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate
  * Management Environment (ACME)</a> protocol.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

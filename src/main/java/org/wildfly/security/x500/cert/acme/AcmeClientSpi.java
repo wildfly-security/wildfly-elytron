@@ -50,6 +50,7 @@ import static org.wildfly.security.x500.cert.acme.Acme.LOCATION;
 import static org.wildfly.security.x500.cert.acme.Acme.META;
 import static org.wildfly.security.x500.cert.acme.Acme.NEW_KEY;
 import static org.wildfly.security.x500.cert.acme.Acme.NONCE;
+import static org.wildfly.security.x500.cert.acme.Acme.OLD_KEY;
 import static org.wildfly.security.x500.cert.acme.Acme.ONLY_RETURN_EXISTING;
 import static org.wildfly.security.x500.cert.acme.Acme.PAYLOAD;
 import static org.wildfly.security.x500.cert.acme.Acme.PEM_CERTIFICATE_CHAIN_CONTENT_TYPE;
@@ -136,7 +137,7 @@ import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
 import org.wildfly.security.x500.cert.X509CertificateChainAndSigningKey;
 
 /**
- * SPI for an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate Management Environment (ACME)</a>
+ * SPI for an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate Management Environment (ACME)</a>
  * client provider to implement.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -374,8 +375,12 @@ public abstract class AcmeClientSpi {
         final String signatureAlgorithm = getDefaultCompatibleSignatureAlgorithmName(privateKey);
         final String algHeader = getAlgHeaderFromSignatureAlgorithm(signatureAlgorithm);
         final String innerEncodedProtectedHeader = getEncodedProtectedHeader(algHeader, certificate.getPublicKey(), keyChangeUrl);
+        // Temporarily send both oldKey and newKey in the inner payload. For now, Let's Encrypt's staging server will
+        // expect oldKey and ignore newKey and its production server will expect newKey and ignore oldKey. Once Let's
+        // Encrypt's production server has been updated to require oldKey only, update this to no longer send newKey (ELY-1640).
         JsonObjectBuilder innerPayloadBuilder = Json.createObjectBuilder()
                 .add(ACCOUNT, getAccountUrl(account, staging))
+                .add(OLD_KEY, getJwk(account.getPublicKey(), account.getAlgHeader()))
                 .add(NEW_KEY, getJwk(certificate.getPublicKey(), algHeader));
         final String innerEncodedPayload = getEncodedJson(innerPayloadBuilder.build());
         final String innerEncodedSignature = getEncodedSignature(privateKey, signatureAlgorithm, innerEncodedProtectedHeader, innerEncodedPayload);

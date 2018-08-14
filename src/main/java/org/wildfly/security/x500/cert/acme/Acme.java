@@ -32,7 +32,7 @@ import org.wildfly.common.codec.Base64Alphabet;
 import org.wildfly.common.iteration.ByteIterator;
 
 /**
- * Useful constants and utilities related to the <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate
+ * Useful constants and utilities related to the <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate
  * Management Environment (ACME)</a> protocol.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -66,6 +66,7 @@ public final class Acme {
     public static final String MODULUS = "n";
     public static final String NEW_KEY = "newKey";
     public static final String NONCE = "nonce";
+    public static final String OLD_KEY = "oldKey";
     public static final String ONLY_RETURN_EXISTING = "onlyReturnExisting";
     public static final String PAYLOAD = "payload";
     public static final String PENDING = "pending";
