@@ -221,8 +221,10 @@ public class ElytronAuthConfigFactory extends AuthConfigFactory {
         }
 
         // Handle notify outside the synchronized block in case they want to re-register.
-        for (RegistrationListener current : existingListeners) {
-            current.notify(layer, appContext);
+        if (existingListeners != null && !existingListeners.isEmpty()) {
+            for (RegistrationListener current : existingListeners) {
+                current.notify(layer, appContext);
+            }
         }
 
         return removed;
