@@ -16,10 +16,9 @@
 
 package org.wildfly.security.auth.jaspi.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -44,11 +43,9 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
-import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  *
@@ -57,23 +54,17 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 public class JaspiAuthenticationContext {
 
     private final SecurityDomain securityDomain;
-    private final ServerAuthenticationContext serverAuthenticationContext;
+    private final boolean integrated;
 
     private final String roleCategory;
 
-    private boolean anonymous = false;
-    private Principal principal;
+    private volatile SecurityIdentity securityIdentity = null;
     private final Set<String> roles = new HashSet<>();
 
-    JaspiAuthenticationContext(ServerAuthenticationContext serverAuthenticationContext, final String roleCategory) {
-        this.serverAuthenticationContext = serverAuthenticationContext;
-        this.securityDomain = null;
-        this.roleCategory = roleCategory;
-    }
 
-    JaspiAuthenticationContext(SecurityDomain securityDomain, final String roleCategory) {
-        this.serverAuthenticationContext = null;
+    JaspiAuthenticationContext(SecurityDomain securityDomain, boolean integrated, final String roleCategory) {
         this.securityDomain = securityDomain;
+        this.integrated = integrated;
         this.roleCategory = roleCategory;
     }
 
@@ -87,74 +78,15 @@ public class JaspiAuthenticationContext {
      */
 
     public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final String roleCategory, final boolean integrated) {
-        if (integrated) {
-            return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain).createNewAuthenticationContext(), roleCategory);
-        } else {
-            return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), roleCategory);
-        }
+        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated, roleCategory);
     }
 
     public CallbackHandler createCallbackHandler() {
-        return serverAuthenticationContext != null ? createIntegratedCallbackHandler() : createIndependentCallbackHandler();
+        return createCommonCallbackHandler(integrated);
     }
 
-    private CallbackHandler createIndependentCallbackHandler() {
+    private CallbackHandler createCommonCallbackHandler(final boolean integrated) {
         return new CallbackHandler() {
-
-            @Override
-            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                handleOne(callbacks, 0);
-            }
-
-            private void handleOne(Callback[] callbacks, int index) throws IOException, UnsupportedCallbackException {
-                if (callbacks.length == index) {
-                    return;
-                }
-
-                final Callback callback = callbacks[index];
-                if (callback instanceof CallerPrincipalCallback) {
-                    log.trace("Handling CallerPrincipalCallback");
-                    final CallerPrincipalCallback cpc = (CallerPrincipalCallback) callback;
-                    Principal callerPrincipal = cpc.getPrincipal();
-                    final String callerName = cpc.getName();
-                    if (callerPrincipal == null && callerName != null) {
-                        callerPrincipal = new NamePrincipal(callerName);
-                    }
-
-                    JaspiAuthenticationContext.this.principal = callerPrincipal;
-
-                    if (callerPrincipal != null) {
-                        final Subject subject = cpc.getSubject();
-                        if (subject != null && !subject.isReadOnly()) {
-                            subject.getPrincipals().add(callerPrincipal);
-                        }
-                    } else {
-                        anonymous = true;
-                    }
-                } else if (callback instanceof GroupPrincipalCallback) {
-                    log.trace("Handling GroupPrincipalCallback");
-                    GroupPrincipalCallback gpc = (GroupPrincipalCallback) callback;
-                    String[] groups = gpc.getGroups();
-                    if (groups != null && groups.length > 0) {
-                        roles.addAll(Arrays.asList(groups));
-                    }
-
-                    // TODO - Need to check if we do want to add these to the Subject somehow.
-                } else {
-                    CallbackUtil.unsupported(callback);
-                    handleOne(callbacks, index + 1);
-                }
-
-                handleOne(callbacks, index + 1);
-            }
-
-        };
-    }
-
-    private CallbackHandler createIntegratedCallbackHandler() {
-        return new CallbackHandler() {
-
-            private boolean nameAssigned = false; // This may be a red flag we even need a small set of states here.
 
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -170,22 +102,17 @@ public class JaspiAuthenticationContext {
                 if (callback instanceof PasswordValidationCallback) {
                     log.trace("Handling PasswordValidationCallback");
                     PasswordValidationCallback pvc = (PasswordValidationCallback) callback;
-                    // TODO Do we need null check or let SAC handle?
-                    serverAuthenticationContext.setAuthenticationName(pvc.getUsername());
+
+                    final String username = pvc.getUsername();
                     final Evidence evidence = new PasswordGuessEvidence(pvc.getPassword());
-                    boolean verified = serverAuthenticationContext.verifyEvidence(evidence);
-                    pvc.setResult(verified);
-                    // Don't destroy the Evidence as the array is 'owned' by the PasswordValidationCallback.
 
-                    if (verified) {
-                        nameAssigned = true;
-                        Credential credential = new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, pvc.getPassword()));
-                        serverAuthenticationContext.addPrivateCredential(credential);
-
-                        final Subject subject = pvc.getSubject();
-                        if (subject != null && !subject.isReadOnly()) {
-                            addPrivateCredential(subject, credential);
-                        }
+                    try {
+                        SecurityIdentity authenticated = securityDomain.authenticate(username, evidence);
+                        pvc.setResult(true);
+                        securityIdentity = authenticated;  // Take a PasswordValidationCallback as always starting authentication again.
+                    } catch (SecurityException e) {
+                        log.trace("Authentication failed", e);
+                        pvc.setResult(false);
                     }
                 } else if (callback instanceof CallerPrincipalCallback) {
                     log.trace("Handling CallerPrincipalCallback");
@@ -197,48 +124,51 @@ public class JaspiAuthenticationContext {
                     }
                     log.tracef("Caller Principal = %s", callerPrincipal);
 
-                    final boolean authorized;
-                    if (nameAssigned) {
-                        if (callerPrincipal != null) {
-                            authorized =serverAuthenticationContext.authorize(callerPrincipal);
+                    SecurityIdentity authorizedIdentity = null;
+                    if (callerPrincipal == null) {
+                        // Special case for null caller Prinicpal
+                        if (integrated && securityIdentity != null) {
+                            authorizedIdentity = securityIdentity.createRunAsAnonymous();
+                        } else if (integrated) {
+                            ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+                            sac.authorizeAnonymous();
+                            authorizedIdentity = sac.getAuthorizedIdentity();
                         } else {
-                            // There is an authenticated identity (apparently) - just authorize as that identity.
-                            authorized =serverAuthenticationContext.authorize();
+                            authorizedIdentity = securityDomain.getAnonymousSecurityIdentity();
                         }
+                    } else if (securityIdentity != null) {
+                        boolean authorizationRequired = (integrated && !securityIdentity.getPrincipal().equals(callerPrincipal));
+                        authorizedIdentity = securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired); // If we are integrated we want an authorization check.
                     } else {
-                        // Step 1 - Set the identity.
-                        if (callerPrincipal != null) {
-                            serverAuthenticationContext.setAuthenticationPrincipal(callerPrincipal);
-                        }
-
-                        // Step 2 - Authorize as same identity.
-                        if (callerPrincipal != null) {
-                            authorized = serverAuthenticationContext.authorize();
+                        if (integrated) {
+                            ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+                            sac.setAuthenticationPrincipal(callerPrincipal);
+                            if (sac.authorize()) {
+                                authorizedIdentity = sac.getAuthorizedIdentity();
+                            }
                         } else {
-                            authorized = serverAuthenticationContext.authorizeAnonymous();
+                            authorizedIdentity = securityDomain.createAdHocIdentity(callerPrincipal);
                         }
                     }
 
-                    if (authorized) {
-                        if (callerPrincipal == null) {
-                            callerPrincipal = serverAuthenticationContext.getAuthorizedIdentity().getPrincipal();
-                        }
+                    if (authorizedIdentity != null) {
+                        securityIdentity = authorizedIdentity;
                         final Subject subject = cpc.getSubject();
                         if (subject != null && !subject.isReadOnly()) {
-                            subject.getPrincipals().add(callerPrincipal);
+                            subject.getPrincipals().add(authorizedIdentity.getPrincipal());
                         }
                     } else {
                         throw log.authorizationFailed();
                     }
                 } else if (callback instanceof GroupPrincipalCallback) {
                     log.trace("Handling GroupPrincipalCallback");
+                    log.trace("Handling GroupPrincipalCallback");
                     GroupPrincipalCallback gpc = (GroupPrincipalCallback) callback;
                     String[] groups = gpc.getGroups();
                     if (groups != null && groups.length > 0) {
                         roles.addAll(Arrays.asList(groups));
                     }
-
-                    // TODO - Need to check if we do want to add these to the Subject somehow.
+                    // TODO - Add anything to subject?
                 } else {
                     CallbackUtil.unsupported(callback);
                     handleOne(callbacks, index + 1);
@@ -256,16 +186,7 @@ public class JaspiAuthenticationContext {
      * @throws IllegalStateException if the authentication is incomplete
      */
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
-        // Could be another sign we need states here, but having two state machines transitioning could make it easy for this to
-        // be dropped to adding at the end may be a good idea.
-        SecurityIdentity securityIdentity;
-        if (serverAuthenticationContext != null) {
-            log.trace("Obtaining AuthorizedIdentity from ServerAuthenticationContext.");
-            securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
-        } else {
-            log.tracef("Creating AdHoc Identity from SecurityName for Principal=%s", principal);
-            securityIdentity = anonymous ? securityDomain.getAnonymousSecurityIdentity() : securityDomain.createAdHocIdentity(principal);
-        }
+        SecurityIdentity securityIdentity = this.securityIdentity;
         if (roles.size() > 0) {
             log.trace("Assigning roles to resulting SecurityIdentity");
             Roles roles = Roles.fromSet(this.roles);
