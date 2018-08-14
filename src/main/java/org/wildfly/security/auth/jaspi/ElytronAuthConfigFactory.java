@@ -56,10 +56,6 @@ public class ElytronAuthConfigFactory extends AuthConfigFactory {
         // We may want to look at replacing the entire Map on updates so this method can query the
         // current version without locking.
 
-        // JSR-196 2.1.1.1 The runtime must specify appropriate (non-null) layer and application-context identifiers.
-        checkNotNullParam("layer", layer);
-        checkNotNullParam("appContext", appContext);
-
         synchronized(layerContextRegistration) {
             LayerContextKey fullKey = new LayerContextKey(layer, appContext);
             Registration registration = layerContextRegistration.get(fullKey);
@@ -79,21 +75,27 @@ public class ElytronAuthConfigFactory extends AuthConfigFactory {
             }
 
             // Step 2 - appContext only
-            registration = layerContextRegistration.get(new LayerContextKey(null, appContext));
-            if (registration != null && registration.activeRegistration()) {
-                return registration.authConfigProvider;
+            if (layer != null) {
+                registration = layerContextRegistration.get(new LayerContextKey(null, appContext));
+                if (registration != null && registration.activeRegistration()) {
+                    return registration.authConfigProvider;
+                }
             }
 
             // Step 3 - layer only
-            registration = layerContextRegistration.get(new LayerContextKey(layer, null));
-            if (registration != null && registration.activeRegistration()) {
-                return registration.authConfigProvider;
+            if (appContext != null) {
+                registration = layerContextRegistration.get(new LayerContextKey(layer, null));
+                if (registration != null && registration.activeRegistration()) {
+                    return registration.authConfigProvider;
+                }
             }
 
             // Step 4 - No appContext or layer
-            registration = layerContextRegistration.get(new LayerContextKey(null, null));
-            if (registration != null && registration.activeRegistration()) {
-                return registration.authConfigProvider;
+            if (layer != null && appContext != null) {
+                registration = layerContextRegistration.get(new LayerContextKey(null, null));
+                if (registration != null && registration.activeRegistration()) {
+                    return registration.authConfigProvider;
+                }
             }
         }
 
