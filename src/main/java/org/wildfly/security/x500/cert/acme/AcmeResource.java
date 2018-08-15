@@ -19,7 +19,7 @@
 package org.wildfly.security.x500.cert.acme;
 
 /**
- * The various <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate Management
+ * The various <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate Management
  * Environment (ACME)</a> protocol resource types.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

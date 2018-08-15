@@ -31,7 +31,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.CodePointIterator;
 
 /**
- * A class that represents an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate
+ * A class that represents an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate
  * Management Environment (ACME)</a> challenge.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>

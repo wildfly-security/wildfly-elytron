@@ -44,7 +44,7 @@ import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.util.KeyUtil;
 
 /**
- * A class that represents an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-12.txt">Automatic Certificate
+ * A class that represents an <a href="https://www.ietf.org/id/draft-ietf-acme-acme-14.txt">Automatic Certificate
  * Management Environment (ACME)</a> account.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
