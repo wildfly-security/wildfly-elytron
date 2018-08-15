@@ -100,13 +100,14 @@ public class JaspiAuthenticationContext {
 
                 final Callback callback = callbacks[index];
                 if (callback instanceof PasswordValidationCallback) {
-                    log.trace("Handling PasswordValidationCallback");
                     PasswordValidationCallback pvc = (PasswordValidationCallback) callback;
 
                     final String username = pvc.getUsername();
+                    log.tracef("Handling PasswordValidationCallback for '%s'", username);
                     final Evidence evidence = new PasswordGuessEvidence(pvc.getPassword());
 
                     try {
+                        // Not adding TRACE logging here as the transitions from SecurityDomain are logged.
                         SecurityIdentity authenticated = securityDomain.authenticate(username, evidence);
                         pvc.setResult(true);
                         securityIdentity = authenticated;  // Take a PasswordValidationCallback as always starting authentication again.
@@ -117,37 +118,45 @@ public class JaspiAuthenticationContext {
                 } else if (callback instanceof CallerPrincipalCallback) {
                     log.trace("Handling CallerPrincipalCallback");
                     final CallerPrincipalCallback cpc = (CallerPrincipalCallback) callback;
-                    Principal callerPrincipal = cpc.getPrincipal();
+                    Principal originalPrincipal = cpc.getPrincipal();
                     final String callerName = cpc.getName();
-                    if (callerPrincipal == null && callerName != null) {
-                        callerPrincipal = new NamePrincipal(callerName);
-                    }
-                    log.tracef("Caller Principal = %s", callerPrincipal);
+                    final Principal callerPrincipal = originalPrincipal != null ? originalPrincipal : callerName != null ? new NamePrincipal(callerName) : null;
+
+                    log.tracef("Original Principal = '%s', Caller Name = '%s', Resulting Principal = '%s'", originalPrincipal, callerName, callerPrincipal);
 
                     SecurityIdentity authorizedIdentity = null;
-                    if (callerPrincipal == null) {
-                        // Special case for null caller Prinicpal
-                        if (integrated && securityIdentity != null) {
-                            authorizedIdentity = securityIdentity.createRunAsAnonymous();
+                    if (securityIdentity != null) {
+                        if (callerPrincipal != null) {
+                            boolean authorizationRequired = (integrated && !securityIdentity.getPrincipal().equals(callerPrincipal));
+                         // If we are integrated we want an authorization check.
+                            authorizedIdentity = securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired);
                         } else if (integrated) {
+                            // Authorize as the authenticated identity.
                             ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
-                            sac.authorizeAnonymous();
+                            sac.importIdentity(securityIdentity);
+                            sac.authorize();
                             authorizedIdentity = sac.getAuthorizedIdentity();
-                        } else {
-                            authorizedIdentity = securityDomain.getAnonymousSecurityIdentity();
                         }
-                    } else if (securityIdentity != null) {
-                        boolean authorizationRequired = (integrated && !securityIdentity.getPrincipal().equals(callerPrincipal));
-                        authorizedIdentity = securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired); // If we are integrated we want an authorization check.
                     } else {
-                        if (integrated) {
-                            ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
-                            sac.setAuthenticationPrincipal(callerPrincipal);
-                            if (sac.authorize()) {
+                        if (callerPrincipal == null) {
+                            // Only drop into anonymous territory if we have no prior identity.
+                            if (integrated) {
+                                ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+                                sac.authorizeAnonymous();
                                 authorizedIdentity = sac.getAuthorizedIdentity();
+                            } else {
+                                authorizedIdentity = securityDomain.getAnonymousSecurityIdentity();
                             }
                         } else {
-                            authorizedIdentity = securityDomain.createAdHocIdentity(callerPrincipal);
+                            if (integrated) {
+                                ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+                                sac.setAuthenticationPrincipal(callerPrincipal);
+                                if (sac.authorize()) {
+                                    authorizedIdentity = sac.getAuthorizedIdentity();
+                                }
+                            } else {
+                                authorizedIdentity = securityDomain.createAdHocIdentity(callerPrincipal);
+                            }
                         }
                     }
 
