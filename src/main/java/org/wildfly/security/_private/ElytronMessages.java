@@ -969,6 +969,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4027, value = "SecurityDomain of SSLContext does not support X509PeerCertificateChainEvidence verification")
     IllegalArgumentException securityDomainOfSSLContextDoesNotSupportX509();
 
+    @Message(id = 4028, value = "No default key manager available")
+    NoSuchAlgorithmException noDefaultKeyManager();
+
     /* mechanism package */
 
     @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
