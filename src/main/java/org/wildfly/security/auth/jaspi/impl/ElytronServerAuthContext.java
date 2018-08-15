@@ -19,11 +19,10 @@ package org.wildfly.security.auth.jaspi.impl;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
@@ -33,6 +32,7 @@ import javax.security.auth.message.MessageInfo;
 import javax.security.auth.message.config.ServerAuthContext;
 import javax.security.auth.message.module.ServerAuthModule;
 
+import org.wildfly.security.auth.jaspi.Flag;
 import org.wildfly.security.auth.jaspi.impl.ElytronMessageInfo.State;
 /**
  * The WildFly Elytron implementation of {@link ServerAuthContext}.
@@ -44,21 +44,22 @@ class ElytronServerAuthContext implements ServerAuthContext {
     // Don't bother with an intermediate ServerAuth - even though the API is reused
     // the implementations are different.
 
-    private final Map<AuthenticationModuleDefinition, ServerAuthModule> configuredModules;
+    private final List<AuthModuleWrapper> authModules;
 
     private boolean initialised = false;
     private Subject serviceSubject;
 
     /*
      * TODO - Message Policies need to be defined / calculated.
-     * TODO - Need a way to assemble multiple AuthStatus values together.
      */
 
     ElytronServerAuthContext(final List<AuthenticationModuleDefinition> serverAuthModuleDefinitions) {
-        configuredModules = new LinkedHashMap<>();
+        List<AuthModuleWrapper> authModules = new ArrayList<>(serverAuthModuleDefinitions.size());
         for (AuthenticationModuleDefinition authenticationModuleDefinition : serverAuthModuleDefinitions) {
-            configuredModules.put(authenticationModuleDefinition, authenticationModuleDefinition.getServerAuthModuleFactory().get());
+            authModules.add(new AuthModuleWrapper(authenticationModuleDefinition.getFlag(),
+                    authenticationModuleDefinition.getOptions(), authenticationModuleDefinition.getServerAuthModuleFactory().get()));
         }
+        this.authModules = authModules;
     }
 
     /**
@@ -74,9 +75,8 @@ class ElytronServerAuthContext implements ServerAuthContext {
         AuthStatus requiredResult = null;
         AuthStatus optionalResult = null;
 
-        for (Entry<AuthenticationModuleDefinition, ServerAuthModule> entry : configuredModules.entrySet()) {
-            final AuthenticationModuleDefinition definition = entry.getKey();
-            final ServerAuthModule sam = entry.getValue();
+        for (AuthModuleWrapper wrapper : authModules) {
+            final ServerAuthModule sam = wrapper.getModule();
 
             final Object originalRequest = messageInfo.getRequestMessage();
             final Object originalResponse = messageInfo.getResponseMessage();
@@ -91,7 +91,7 @@ class ElytronServerAuthContext implements ServerAuthContext {
                 throw log.messageWrappedWithoutSuccess(sam.getClass().getName());
             }
 
-            switch (definition.getFlag()) {
+            switch (wrapper.getFlag()) {
                 case REQUIRED:
                     if (requiredResult == null || (toIndex(currentResult) > toIndex(requiredResult))) {
                         requiredResult = currentResult;
@@ -141,7 +141,7 @@ class ElytronServerAuthContext implements ServerAuthContext {
         }
     }
 
-    /* (non-Javadoc)
+    /**
      * @see javax.security.auth.message.ServerAuth#secureResponse(javax.security.auth.message.MessageInfo, javax.security.auth.Subject)
      */
     @Override
@@ -149,7 +149,24 @@ class ElytronServerAuthContext implements ServerAuthContext {
         assert initialised : "Not initialised";
         if (messageInfo instanceof ElytronMessageInfo) ((ElytronMessageInfo) messageInfo).setState(State.VALIDATE);
 
-        return null;
+        AuthStatus result = null;
+        for (int i = authModules.size() - 1; i > 0; i--) {
+            ServerAuthModule sam = authModules.get(i).getModule();
+            AuthStatus currentResult = sam.secureResponse(messageInfo, serviceSubject);
+            if (currentResult == null || currentResult == AuthStatus.SUCCESS || currentResult == AuthStatus.FAILURE) {
+                throw log.invalidAuthStatus(currentResult, sam.getClass().getName());
+            }
+
+            if (result == null || toIndex(currentResult) > toIndex(result)) {
+                result = currentResult;
+            }
+
+            if (currentResult == AuthStatus.SEND_FAILURE) {
+                break;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -159,8 +176,8 @@ class ElytronServerAuthContext implements ServerAuthContext {
     public void cleanSubject(MessageInfo messageInfo, Subject subject) throws AuthException {
         assert initialised : "Not initialised";
         if (messageInfo instanceof ElytronMessageInfo) ((ElytronMessageInfo) messageInfo).setState(State.CLEAN);
-        for (ServerAuthModule sam : configuredModules.values()) {
-            sam.cleanSubject(messageInfo, subject);
+        for (AuthModuleWrapper wrapper : authModules) {
+            wrapper.getModule().cleanSubject(messageInfo, subject);
         }
     }
 
@@ -171,11 +188,10 @@ class ElytronServerAuthContext implements ServerAuthContext {
     void initialise(final Subject serviceSubject, final CallbackHandler callbackHandler, final Map properties) throws AuthException {
         assert initialised == false : "Already initialised";
         this.serviceSubject = serviceSubject;
-        for (Entry<AuthenticationModuleDefinition, ServerAuthModule> entry : configuredModules.entrySet()) {
-            AuthenticationModuleDefinition moduleDefinition = entry.getKey();
-            ServerAuthModule sam = entry.getValue();
+        for (AuthModuleWrapper wrapper : authModules) {
+            ServerAuthModule sam = wrapper.getModule();
             Map combined = new HashMap(properties);
-            combined.putAll(moduleDefinition.getOptions());
+            combined.putAll(wrapper.getOptions());
 
             // TODO Pass in appropriate MessagePolicy instances.
             // TODO MessagePolicy is actually defined in 3.7.4
@@ -196,7 +212,8 @@ class ElytronServerAuthContext implements ServerAuthContext {
         Object requestMessage = messageInfo.getRequestMessage();
         Object responseMessage = messageInfo.getResponseMessage();
 
-        for (ServerAuthModule sam : configuredModules.values()) {
+        for (AuthModuleWrapper wrapper : authModules) {
+            ServerAuthModule sam = wrapper.getModule();
             boolean requestAccepted = false;
             boolean responseAccepted = false;
             for (Class acceptedType : sam.getSupportedMessageTypes()) {
@@ -210,6 +227,32 @@ class ElytronServerAuthContext implements ServerAuthContext {
             if (requestAccepted == false) throw log.unsupportedMessageType(requestMessage.getClass().getName(), sam.getClass().getName());
             if (responseAccepted == false) throw log.unsupportedMessageType(responseMessage.getClass().getName(), sam.getClass().getName());
         }
+    }
+
+    class AuthModuleWrapper {
+        private final Flag flag;
+        private final Map options;
+        private final ServerAuthModule module;
+
+        AuthModuleWrapper(Flag flag, Map options, ServerAuthModule module) {
+            super();
+            this.flag = flag;
+            this.options = options;
+            this.module = module;
+        }
+
+        Flag getFlag() {
+            return flag;
+        }
+
+        Map getOptions() {
+            return options;
+        }
+
+        ServerAuthModule getModule() {
+            return module;
+        }
+
     }
 
 }
