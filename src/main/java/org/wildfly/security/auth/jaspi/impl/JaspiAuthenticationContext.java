@@ -141,14 +141,9 @@ public class JaspiAuthenticationContext {
                         }
                     } else {
                         if (callerPrincipal == null) {
-                            // Only drop into anonymous territory if we have no prior identity.
-                            if (integrated) {
-                                ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
-                                sac.authorizeAnonymous();
-                                authorizedIdentity = sac.getAuthorizedIdentity();
-                            } else {
-                                authorizedIdentity = securityDomain.getAnonymousSecurityIdentity();
-                            }
+                            // Do nothing and don't fail.
+                            handleOne(callbacks, index + 1);
+                            return;
                         } else {
                             if (integrated) {
                                 ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
@@ -198,7 +193,7 @@ public class JaspiAuthenticationContext {
      */
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
         SecurityIdentity securityIdentity = this.securityIdentity;
-        if (roles.size() > 0) {
+        if (securityIdentity != null && roles.size() > 0) {
             log.trace("Assigning roles to resulting SecurityIdentity");
             Roles roles = Roles.fromSet(this.roles);
             RoleMapper roleMapper = RoleMapper.constant(roles);
