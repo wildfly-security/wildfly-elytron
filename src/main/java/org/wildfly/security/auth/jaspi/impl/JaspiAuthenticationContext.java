@@ -136,6 +136,8 @@ public class JaspiAuthenticationContext {
                             sac.importIdentity(securityIdentity);
                             sac.authorize();
                             authorizedIdentity = sac.getAuthorizedIdentity();
+                        } else {
+                            authorizedIdentity = securityIdentity;
                         }
                     } else {
                         if (callerPrincipal == null) {
