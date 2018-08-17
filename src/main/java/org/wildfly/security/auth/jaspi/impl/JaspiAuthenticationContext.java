@@ -25,6 +25,7 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -194,7 +195,14 @@ public class JaspiAuthenticationContext {
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
         SecurityIdentity securityIdentity = this.securityIdentity;
         if (securityIdentity != null && roles.size() > 0) {
-            log.trace("Assigning roles to resulting SecurityIdentity");
+            if (log.isTraceEnabled()) {
+                Iterator<String> rolesIterator = roles.iterator();
+                StringBuilder sb = new StringBuilder(rolesIterator.next());
+                while (rolesIterator.hasNext()) {
+                    sb.append(",").append(rolesIterator.next());
+                }
+                log.tracef("Assigning roles '%s' to resulting SecurityIdentity", sb.toString());
+            }
             Roles roles = Roles.fromSet(this.roles);
             RoleMapper roleMapper = RoleMapper.constant(roles);
             securityIdentity = securityIdentity.withRoleMapper(roleCategory, roleMapper);
