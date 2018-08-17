@@ -57,16 +57,13 @@ public class JaspiAuthenticationContext {
     private final SecurityDomain securityDomain;
     private final boolean integrated;
 
-    private final String roleCategory;
-
     private volatile SecurityIdentity securityIdentity = null;
     private final Set<String> roles = new HashSet<>();
 
 
-    JaspiAuthenticationContext(SecurityDomain securityDomain, boolean integrated, final String roleCategory) {
+    JaspiAuthenticationContext(SecurityDomain securityDomain, boolean integrated) {
         this.securityDomain = securityDomain;
         this.integrated = integrated;
-        this.roleCategory = roleCategory;
     }
 
     // TODO AdHoc Identity Permissions
@@ -78,8 +75,8 @@ public class JaspiAuthenticationContext {
      * their use whilst at the same time prohibits further config changes.
      */
 
-    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final String roleCategory, final boolean integrated) {
-        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated, roleCategory);
+    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final boolean integrated) {
+        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated);
     }
 
     public CallbackHandler createCallbackHandler() {
@@ -205,7 +202,7 @@ public class JaspiAuthenticationContext {
             }
             Roles roles = Roles.fromSet(this.roles);
             RoleMapper roleMapper = RoleMapper.constant(roles);
-            securityIdentity = securityIdentity.withRoleMapper(roleCategory, roleMapper);
+            securityIdentity = securityIdentity.withDefaultRoleMapper(roleMapper);
         } else {
             log.trace("No roles request of CallbackHandler.");
         }
