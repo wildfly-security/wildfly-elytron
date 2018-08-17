@@ -189,9 +189,15 @@ public final class ElytronXmlParser {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(KNOWN_NAMESPACES.keySet())) {
             if (streamReader != null) {
+                xmlLog.tracef("Parsing configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
                 return parseAuthenticationClientConfiguration(streamReader);
+            } else {
+                if (xmlLog.isTraceEnabled()) {
+                    xmlLog.tracef("No configuration found for known namespaces '%s'", namespacesToString());
+                }
             }
         }
+        xmlLog.trace("Fallback to parse legacy configuration.");
         // Try legacy configuration next
         return parseLegacyConfiguration();
     }
@@ -207,11 +213,27 @@ public final class ElytronXmlParser {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance(uri);
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(KNOWN_NAMESPACES.keySet())) {
             if (streamReader != null) {
+                xmlLog.tracef("Parsig configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
                 return parseAuthenticationClientConfiguration(streamReader);
+            } else {
+                if (xmlLog.isTraceEnabled()) {
+                    xmlLog.tracef("No configuration found for known namespaces '%s'", namespacesToString());
+                }
             }
         }
+        xmlLog.trace("Fallback to parse legacy configuration.");
         // Try legacy configuration next
         return parseLegacyConfiguration();
+    }
+
+    private static String namespacesToString() {
+        Iterator<String> namespaceIterator = KNOWN_NAMESPACES.keySet().iterator();
+        StringBuilder namespaces = new StringBuilder(namespaceIterator.next());
+        while (namespaceIterator.hasNext()) {
+            namespaces.append(",").append(namespaceIterator.next());
+        }
+
+        return namespaces.toString();
     }
 
     /**
@@ -240,6 +262,7 @@ public final class ElytronXmlParser {
                 }
             }
         }
+        xmlLog.trace("No authentication-client element found, falling back to empty AuthenticationContext");
         return AuthenticationContext::empty;
     }
 
@@ -254,8 +277,12 @@ public final class ElytronXmlParser {
         return () -> {
             for (LegacyConfiguration config : configs) {
                 final AuthenticationContext context = config.getConfiguredAuthenticationContext();
-                if (context != null) return context;
+                if (context != null) {
+                    xmlLog.trace("Found AuthenticationContext in legacy configuration");
+                    return context;
+                }
             }
+            xmlLog.trace("No legacy configuration available, using AuthenticationContext.empty()");
             return AuthenticationContext.empty();
         };
     }
