@@ -16,13 +16,15 @@
 
 package org.wildfly.security.auth.jaspi.impl;
 
-import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.jaspi.impl.SecurityActions.doPrivileged;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,13 +48,15 @@ import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.permission.ElytronPermission;
 
 /**
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class JaspiAuthenticationContext {
+
+    static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
 
     private final SecurityDomain securityDomain;
     private final boolean integrated;
@@ -75,7 +79,13 @@ public class JaspiAuthenticationContext {
      * their use whilst at the same time prohibits further config changes.
      */
 
+    // TODO Can we find a way to create this from the SecurityDomain similar to ServerAuthContext?
+
     public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final boolean integrated) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
         return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated);
     }
 
@@ -88,7 +98,21 @@ public class JaspiAuthenticationContext {
 
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                handleOne(callbacks, 0);
+                try {
+                    doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+                        handleOne(callbacks, 0);
+                        return null;
+                    });
+                } catch (Exception e) {
+                    if (e instanceof PrivilegedActionException) {
+                        if (e.getCause() instanceof UnsupportedCallbackException) {
+                            throw (UnsupportedCallbackException) e.getCause();
+                        } else if (e.getCause() instanceof IOException) {
+                            throw (IOException) e.getCause();
+                        }
+                    }
+                    throw new IOException(e);
+                }
             }
 
             private void handleOne(Callback[] callbacks, int index) throws IOException, UnsupportedCallbackException {
@@ -109,7 +133,7 @@ public class JaspiAuthenticationContext {
                         SecurityIdentity authenticated = securityDomain.authenticate(username, evidence);
                         pvc.setResult(true);
                         securityIdentity = authenticated;  // Take a PasswordValidationCallback as always starting authentication again.
-                    } catch (SecurityException e) {
+                    } catch (Exception e) {
                         log.trace("Authentication failed", e);
                         pvc.setResult(false);
                     }
@@ -127,7 +151,7 @@ public class JaspiAuthenticationContext {
                         if (callerPrincipal != null) {
                             boolean authorizationRequired = (integrated && !securityIdentity.getPrincipal().equals(callerPrincipal));
                          // If we are integrated we want an authorization check.
-                            authorizedIdentity = securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired);
+                            authorizedIdentity =  securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired);
                         } else if (integrated) {
                             // Authorize as the authenticated identity.
                             ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
@@ -202,7 +226,8 @@ public class JaspiAuthenticationContext {
             }
             Roles roles = Roles.fromSet(this.roles);
             RoleMapper roleMapper = RoleMapper.constant(roles);
-            securityIdentity = securityIdentity.withDefaultRoleMapper(roleMapper);
+            SecurityIdentity temp = securityIdentity;
+            securityIdentity = doPrivileged((PrivilegedAction<SecurityIdentity>) (() -> temp.withDefaultRoleMapper(roleMapper)));
         } else {
             log.trace("No roles request of CallbackHandler.");
         }
@@ -210,9 +235,7 @@ public class JaspiAuthenticationContext {
     }
 
     private void addPrivateCredential(final Subject subject, final Credential credential) {
-        Set<Object> privateCredentials = WildFlySecurityManager.isChecking()
-                ? doPrivileged((PrivilegedAction<Set<Object>>) subject::getPrivateCredentials)
-                : subject.getPrivateCredentials();
+        Set<Object> privateCredentials = doPrivileged((PrivilegedAction<Set<Object>>) subject::getPrivateCredentials);
         privateCredentials.add(credential);
     }
 
