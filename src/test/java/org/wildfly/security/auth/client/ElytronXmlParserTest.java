@@ -90,7 +90,7 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testKeyStoreClearPassword() throws ConfigXMLParseException, URISyntaxException {
-        URL config = getClass().getResource("test-wildfly-config-v1_1.xml");
+        URL config = getClass().getResource("test-wildfly-config-v1_2.xml");
         SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
         Assert.assertNotNull(authContext);
     }

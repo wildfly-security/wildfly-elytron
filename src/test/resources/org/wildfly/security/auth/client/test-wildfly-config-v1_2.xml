@@ -16,7 +16,7 @@
     limitations under the License.
 -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:client:1.1">
+    <authentication-client xmlns="urn:elytron:client:1.2">
         <key-stores>
             <key-store name="client-keystore" type="JKS">
                 <file name="./target/keystore/client.keystore"/>
@@ -28,6 +28,9 @@
                 <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
                     <key-store-clear-password password="password"/>
                 </key-store-ssl-certificate>
+            </ssl-context>
+            <ssl-context name="client-ssl-context-key-manager">
+                <key-store-ssl-certificate algorithm="SunX509" key-store-name="client-keystore"/>
             </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>

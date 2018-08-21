@@ -23,8 +23,8 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
-import static org.wildfly.security.util.ProviderUtil.findProvider;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.util.ProviderUtil.findProvider;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -44,10 +44,12 @@ import java.security.PrivateKey;
 import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -63,9 +65,12 @@ import java.util.regex.Pattern;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.stream.Location;
 
@@ -101,6 +106,8 @@ import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.keystore.AliasFilter;
+import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -145,7 +152,8 @@ public final class ElytronXmlParser {
 
         VERSION_1_0("urn:elytron:1.0", null),
         VERSION_1_0_1("urn:elytron:1.0.1", VERSION_1_0),
-        VERSION_1_1("urn:elytron:client:1.1", VERSION_1_0_1);
+        VERSION_1_1("urn:elytron:client:1.1", VERSION_1_0_1),
+        VERSION_1_2("urn:elytron:client:1.2", VERSION_1_1);
 
         final String namespace;
 
@@ -452,7 +460,7 @@ public final class ElytronXmlParser {
         String providerName = null;
         CipherSuiteSelector cipherSuiteSelector = null;
         ProtocolSelector protocolSelector = null;
-        PrivateKeyKeyStoreEntryCredentialFactory credentialFactory = null;
+        ExceptionSupplier<X509ExtendedKeyManager, ConfigXMLParseException> keyManagerSupplier = null;
         ExceptionSupplier<KeyStore, ConfigXMLParseException> trustStoreSupplier = null;
         DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
         TrustManagerBuilder trustManagerBuilder = new TrustManagerBuilder(providersSupplier, location);
@@ -465,7 +473,7 @@ public final class ElytronXmlParser {
                     case "key-store-ssl-certificate": {
                         if (isSet(foundBits, 0)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 0);
-                        credentialFactory = new PrivateKeyKeyStoreEntryCredentialFactory(parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providersSupplier), location);
+                        keyManagerSupplier = parseKeyStoreSslCertificate(reader, xmlVersion, keyStoresMap, credentialStoresMap, providers);
                         break;
                     }
                     case "cipher-suite": {
@@ -523,7 +531,7 @@ public final class ElytronXmlParser {
                 final ProtocolSelector finalProtocolSelector = protocolSelector;
                 final CipherSuiteSelector finalCipherSuiteSelector = cipherSuiteSelector;
                 final String finalProviderName = providerName;
-                final PrivateKeyKeyStoreEntryCredentialFactory finalCredentialFactory = credentialFactory;
+                final ExceptionSupplier<X509ExtendedKeyManager, ConfigXMLParseException> finalKeyManagerSupplier = keyManagerSupplier;
                 final ExceptionSupplier<KeyStore, ConfigXMLParseException> finalTrustStoreSupplier = trustStoreSupplier;
                 final boolean initTrustManager = finalTrustStoreSupplier != null || isSet(foundBits, 7);
                 sslContextsMap.putIfAbsent(name, () -> {
@@ -535,13 +543,9 @@ public final class ElytronXmlParser {
                     if (finalProtocolSelector != null) {
                         sslContextBuilder.setProtocolSelector(finalProtocolSelector);
                     }
-                    final ConfigurationKeyManager.Builder builder = new ConfigurationKeyManager.Builder();
-                    if (finalCredentialFactory != null) {
-                        final X509CertificateChainPrivateCredential privateCredential;
-                        privateCredential = finalCredentialFactory.get();
-                        builder.addCredential(privateCredential);
+                    if (finalKeyManagerSupplier != null) {
+                        sslContextBuilder.setKeyManager(finalKeyManagerSupplier.get());
                     }
-                    sslContextBuilder.setKeyManager(builder.build());
                     if (initTrustManager) {
                         if (finalTrustStoreSupplier != null) {
                             trustManagerBuilder.setTrustStore(finalTrustStoreSupplier.get());
@@ -625,6 +629,49 @@ public final class ElytronXmlParser {
         }
     }
 
+    private static class KeyManagerBuilder {
+        final Supplier<Provider[]> providers;
+        final Location xmlLocation;
+        String providerName = null;
+        String algorithm = null;
+        ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier;
+
+        KeyManagerBuilder(Supplier<Provider[]> providers, Location xmlLocation) {
+            this.providers = providers;
+            this.xmlLocation = xmlLocation;
+        }
+
+        void setProviderName(String providerName) {
+            this.providerName = providerName;
+        }
+
+        void setAlgorithm(String algorithm) {
+            this.algorithm = algorithm;
+        }
+
+        void setKeyStoreSupplier(ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier) {
+            this.keyStoreSupplier = keyStoreSupplier;
+        }
+
+        X509ExtendedKeyManager build() throws NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException, ConfigXMLParseException {
+            final String algorithm = this.algorithm != null ? this.algorithm : KeyManagerFactory.getDefaultAlgorithm();
+            Provider provider = findProvider(providers, providerName, KeyManagerFactory.class, algorithm);
+            if (provider == null) {
+                throw xmlLog.xmlUnableToIdentifyProvider(xmlLocation, providerName, "KeyManagerFactory", algorithm);
+            }
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm, provider);
+            keyManagerFactory.init(keyStoreSupplier != null ? keyStoreSupplier.get() : null, null);
+
+            for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
+                if (keyManager instanceof X509ExtendedKeyManager) {
+                    return (X509ExtendedKeyManager) keyManager;
+                }
+            }
+            throw ElytronMessages.log.noDefaultKeyManager();
+        }
+    }
+
     private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String path = null;
@@ -690,6 +737,145 @@ public final class ElytronXmlParser {
             }
         }
         throw reader.unexpectedDocumentEnd();
+    }
+
+    private static ExceptionSupplier<X509ExtendedKeyManager, ConfigXMLParseException> parseKeyStoreSslCertificate(ConfigurationXMLStreamReader reader,
+            final Version xmlVersion, Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap,
+            final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers)
+            throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        final XMLLocation location = reader.getLocation();
+        String providerName = null;
+        String algorithm = null;
+        String keyStoreName = null;
+        String alias = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "provider-name": {
+                    if (providerName != null || !xmlVersion.isAtLeast(Version.VERSION_1_2)) throw reader.unexpectedAttribute(i);
+                    providerName = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "algorithm": {
+                    if (providerName != null || !xmlVersion.isAtLeast(Version.VERSION_1_2)) throw reader.unexpectedAttribute(i);
+                    if (algorithm != null) throw reader.unexpectedAttribute(i);
+                    algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "key-store-name": {
+                    if (keyStoreName != null) throw reader.unexpectedAttribute(i);
+                    keyStoreName = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "alias": {
+                    if (alias != null) throw reader.unexpectedAttribute(i);
+                    alias = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (keyStoreName == null) {
+            throw missingAttribute(reader, "key-store-name");
+        }
+        ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> keyStoreCredential = null;
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader, xmlVersion);
+                switch (reader.getLocalName()) {
+                    case "key-store-credential": {
+                        if (keyStoreCredential != null) throw reader.unexpectedElement();
+                        keyStoreCredential = parseKeyStoreRefType(reader, xmlVersion, keyStoresMap, credentialStoresMap, providers);
+                        break;
+                    }
+                    case "key-store-clear-password": {
+                        if (keyStoreCredential != null) throw reader.unexpectedElement();
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseClearPassword(reader, providers);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
+                        break;
+                    }
+                    case "credential-store-reference": {
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
+                            throw reader.unexpectedElement();
+                        }
+                        final XMLLocation nestedLocation = reader.getLocation();
+                        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = parseCredentialStoreRefType(reader, credentialStoresMap);
+                        keyStoreCredential = () -> {
+                            try {
+                                PasswordCredential passwordCredential = credentialSourceSupplier.get().getCredential(PasswordCredential.class);
+                                if (passwordCredential == null) {
+                                    throw new ConfigXMLParseException(xmlLog.couldNotObtainCredential(), reader);
+                                }
+                                return new PasswordEntry(passwordCredential.getPassword());
+                            } catch (IOException e) {
+                                throw xmlLog.xmlFailedToCreateCredential(nestedLocation, e);
+                            }
+                        };
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> finalKeyStoreCredential = keyStoreCredential;
+                final String finalAlgorithm = algorithm;
+                final String finalProviderName = providerName;
+                final String finalKeyStoreName = keyStoreName;
+                final String finalAlias = alias;
+                return () -> {
+                    try {
+                        final ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier = keyStoresMap.get(finalKeyStoreName);
+                        if (keyStoreSupplier == null) {
+                            throw xmlLog.xmlUnknownKeyStoreSpecified(location);
+                        }
+                        KeyStore keyStore = keyStoreSupplier.get();
+
+                        if (xmlLog.isTraceEnabled()) {
+                            xmlLog.tracef("Using KeyStore [%s] containing aliases %s", finalKeyStoreName, aliasesToString(keyStore.aliases()));
+                        }
+
+                        if (finalAlias != null) {
+                            keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(finalAlias));
+                            if (xmlLog.isTraceEnabled()) xmlLog.tracef("Filtered aliases %s", aliasesToString(keyStore.aliases()));
+                            if (keyStore.size() < 1) throw xmlLog.keyStoreEntryMissing(location, finalAlias);
+                        }
+
+                        String algorithmResolved = finalAlgorithm != null ? finalAlgorithm : KeyManagerFactory.getDefaultAlgorithm();
+                        Provider provider = findProvider(providers, finalProviderName, KeyManagerFactory.class, algorithmResolved);
+                        if (provider == null) {
+                            throw xmlLog.xmlUnableToIdentifyProvider(location, finalProviderName, "KeyManagerFactory", algorithmResolved);
+                        }
+
+                        char[] password = keyStoreCredentialToPassword(finalKeyStoreCredential, providers);
+
+                        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithmResolved, provider);
+                        keyManagerFactory.init(keyStoreSupplier.get(), password);
+
+                        for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
+                            if (keyManager instanceof X509ExtendedKeyManager) {
+                                return (X509ExtendedKeyManager) keyManager;
+                            }
+                        }
+                        throw ElytronMessages.log.noDefaultKeyManager();
+                    } catch (GeneralSecurityException | IOException e) {
+                        throw xmlLog.xmlFailedToLoadKeyStoreData(location, e);
+                    }
+                };
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static String aliasesToString(Enumeration<String> aliases) {
+        StringBuilder builder = new StringBuilder("[");
+        while (aliases.hasMoreElements()) {
+            builder.append(aliases.nextElement());
+            if (aliases.hasMoreElements()) builder.append(", ");
+        }
+        return builder.append(']').toString();
     }
 
     private static void parseTrustManager(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
@@ -1536,23 +1722,8 @@ public final class ElytronXmlParser {
                         if (keyStoreSupplier == null) {
                             throw xmlLog.xmlUnknownKeyStoreSpecified(location);
                         }
-                        final KeyStore.ProtectionParameter protectionParameter;
-                        final KeyStore.Entry entry = finalKeyStoreCredential == null ? null : finalKeyStoreCredential.get();
-                        if (entry instanceof PasswordEntry) {
-                            Password password = ((PasswordEntry) entry).getPassword();
-                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm(), providers);
-                            password = passwordFactory.translate(password);
-                            final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
-                            protectionParameter = new KeyStore.PasswordProtection(spec.getEncodedPassword());
-                        } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                            final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
-                            final SecretKeyFactory instance = SecretKeyFactory.getInstance(secretKey.getAlgorithm());
-                            final SecretKeySpec keySpec = (SecretKeySpec) instance.getKeySpec(secretKey, SecretKeySpec.class);
-                            final byte[] encoded = keySpec.getEncoded();
-                            protectionParameter = encoded == null ? null : new KeyStore.PasswordProtection(new String(encoded, StandardCharsets.UTF_8).toCharArray());
-                        } else {
-                            protectionParameter = null;
-                        }
+                        char[] password = keyStoreCredentialToPassword(finalKeyStoreCredential, providers);
+                        final KeyStore.ProtectionParameter protectionParameter = password != null ? new KeyStore.PasswordProtection(password) : null;
                         if (finalAlias != null) {
                             KeyStore.Entry finalEntry = keyStoreSupplier.get().getEntry(finalAlias, protectionParameter == null ? null : protectionParameter);
                             if (finalEntry == null) {
@@ -1583,6 +1754,26 @@ public final class ElytronXmlParser {
             }
         }
         throw reader.unexpectedDocumentEnd();
+    }
+
+    private static char[] keyStoreCredentialToPassword(ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> keyStoreCredential,
+            Supplier<Provider[]> providers) throws GeneralSecurityException, ConfigXMLParseException {
+        final KeyStore.Entry entry = keyStoreCredential == null ? null : keyStoreCredential.get();
+        if (entry instanceof PasswordEntry) {
+            Password password = ((PasswordEntry) entry).getPassword();
+            final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm(), providers);
+            password = passwordFactory.translate(password);
+            final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+            return spec.getEncodedPassword();
+        } else if (entry instanceof KeyStore.SecretKeyEntry) {
+            final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+            final SecretKeyFactory instance = SecretKeyFactory.getInstance(secretKey.getAlgorithm());
+            final SecretKeySpec keySpec = (SecretKeySpec) instance.getKeySpec(secretKey, SecretKeySpec.class);
+            final byte[] encoded = keySpec.getEncoded();
+            return encoded == null ? null : new String(encoded, StandardCharsets.UTF_8).toCharArray();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -1617,8 +1808,7 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                final String finalKeyStoreName = keyStoreName;
-                final ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier = keyStoresMap.get(finalKeyStoreName);
+                final ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier = keyStoresMap.get(keyStoreName);
                 if (keyStoreSupplier == null) {
                     throw xmlLog.xmlUnknownKeyStoreSpecified(location);
                 }
