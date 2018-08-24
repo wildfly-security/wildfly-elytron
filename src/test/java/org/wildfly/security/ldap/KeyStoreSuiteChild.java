@@ -82,8 +82,10 @@ public class KeyStoreSuiteChild {
     @Test
     public void testIs() throws Exception {
         Assert.assertTrue(keyStore.isCertificateEntry("firefly"));
+        Assert.assertTrue(keyStore.isCertificateEntry("firefly_binary"));
         Assert.assertFalse(keyStore.isCertificateEntry("nonexisting"));
         Assert.assertTrue(keyStore.isKeyEntry("firefly"));
+        Assert.assertTrue(keyStore.isKeyEntry("firefly_binary"));
         Assert.assertFalse(keyStore.isKeyEntry("nonexisting"));
     }
 
@@ -95,11 +97,26 @@ public class KeyStoreSuiteChild {
     }
 
     @Test
+    public void testGetCertificateBinary() throws Exception {
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate("firefly_binary");
+        Assert.assertNotNull(cert);
+        Assert.assertEquals("CN=firefly_binary, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", cert.getSubjectDN().toString());
+    }
+
+    @Test
     public void testGetAlias() throws Exception {
         X509Certificate cert = (X509Certificate) keyStore.getCertificate("firefly");
         Assert.assertNotNull(cert);
         String alias = keyStore.getCertificateAlias(cert);
         Assert.assertEquals("firefly", alias);
+    }
+
+    @Test
+    public void testGetAliasBinary() throws Exception {
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate("firefly_binary");
+        Assert.assertNotNull(cert);
+        String alias = keyStore.getCertificateAlias(cert);
+        Assert.assertEquals("firefly_binary", alias);
     }
 
     @Test
@@ -112,8 +129,24 @@ public class KeyStoreSuiteChild {
     }
 
     @Test
+    public void testGetCertificateChainBinary() throws Exception {
+        Certificate[] chain = keyStore.getCertificateChain("firefly_binary");
+        Assert.assertNotNull(chain);
+        Assert.assertEquals(2, chain.length);
+        Assert.assertEquals("CN=firefly_binary, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", ((X509Certificate)chain[0]).getSubjectDN().toString());
+        Assert.assertEquals("CN=localhost, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", ((X509Certificate)chain[1]).getSubjectDN().toString());
+    }
+
+    @Test
     public void testGetKey() throws Exception {
         RSAPrivateCrtKey key = (RSAPrivateCrtKey) keyStore.getKey("firefly", "Elytron".toCharArray());
+        Assert.assertNotNull(key);
+        Assert.assertEquals(BigInteger.valueOf(65537), key.getPublicExponent());
+    }
+
+    @Test
+    public void testGetKeyBinary() throws Exception {
+        RSAPrivateCrtKey key = (RSAPrivateCrtKey) keyStore.getKey("firefly_binary", "secret".toCharArray());
         Assert.assertNotNull(key);
         Assert.assertEquals(BigInteger.valueOf(65537), key.getPublicExponent());
     }

@@ -21,6 +21,7 @@ package org.wildfly.security.keystore;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.security.util.LdapUtil;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -68,6 +69,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     private final String ENV_BINARY_ATTRIBUTES = "java.naming.ldap.attributes.binary";
     private final String CREATE_TIMESTAMP_ATTRIBUTE = "createTimestamp"; // RFC4512
     private final String MODIFY_TIMESTAMP_ATTRIBUTE = "modifyTimestamp"; // RFC4512
+
 
     private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private final String searchPath;
@@ -186,7 +188,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
             return null;
         }
         try {
-            Attribute attribute = attributes.get(certificateAttribute);
+            Attribute attribute = LdapUtil.getBinaryAttribute(attributes, certificateAttribute);
             if (attribute == null) return null;
             byte[] bytes = (byte[]) attribute.get();
             if (bytes == null) return null;
@@ -206,7 +208,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
             return null;
         }
         try {
-            Attribute attribute = attributes.get(certificateChainAttribute);
+            Attribute attribute = LdapUtil.getBinaryAttribute(attributes, certificateChainAttribute);
             if (attribute == null) return null;
             byte[] bytes = (byte[]) attribute.get();
             if (bytes == null) return null;
@@ -227,7 +229,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
             return null;
         }
         try {
-            Attribute attribute = attributes.get(keyAttribute);
+            Attribute attribute = LdapUtil.getBinaryAttribute(attributes, keyAttribute);
             if (attribute == null) return null; // alias does not identify a key-related entry
             byte[] bytes = (byte[]) attribute.get();
             if (bytes == null) return null; // alias does not identify a key-related entry
@@ -426,7 +428,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public boolean engineIsKeyEntry(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{keyAttribute});
-        Attribute attribute = attributes == null ? null : attributes.get(keyAttribute);
+        Attribute attribute = attributes == null ? null : LdapUtil.getBinaryAttribute(attributes, keyAttribute);
         if (attribute == null) {
             log.tracef("Alias [%s] is not key entry", alias);
             return false;
@@ -443,7 +445,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     public boolean engineIsCertificateEntry(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{certificateAttribute});
         if (attributes == null) return false;
-        Attribute attribute = attributes.get(certificateAttribute);
+        Attribute attribute = LdapUtil.getBinaryAttribute(attributes, certificateAttribute);
         if (attribute == null) return false;
         try {
             byte[] bytes = (byte[]) attribute.get();
