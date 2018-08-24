@@ -55,7 +55,6 @@ import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 import org.wildfly.security.manager.action.WritePropertyAction;
 import org.wildfly.security.permission.PermissionVerifier;
 import sun.misc.Unsafe;
-import sun.reflect.Reflection;
 
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperties;
@@ -135,9 +134,9 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         int offset = 0;
         try {
             //noinspection deprecation
-            result = Reflection.getCallerClass(1) == WildFlySecurityManager.class || Reflection.getCallerClass(2) == WildFlySecurityManager.class;
+            result = JDKSpecific.getCallerClass(1) == WildFlySecurityManager.class || JDKSpecific.getCallerClass(2) == WildFlySecurityManager.class;
             //noinspection deprecation
-            offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
+            offset = JDKSpecific.getCallerClass(1) == JDKSpecific.lookUpClass() ? 2 : 1;
 
         } catch (Throwable ignored) {}
         hasGetCallerClass = result;
@@ -162,7 +161,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     @SuppressWarnings("deprecation")
     static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
-            return Reflection.getCallerClass(n + callerOffset);
+            return JDKSpecific.getCallerClass(n + callerOffset);
         } else {
             return getCallStack()[n + callerOffset];
         }
