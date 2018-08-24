@@ -54,6 +54,7 @@
     </scm>
 
     <properties>
+        <jdk.min.version>9</jdk.min.version>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
         <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
@@ -113,10 +114,6 @@
         </resources>
 
         <plugins>
-           <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -170,6 +167,92 @@
                         <goals>
                             <goal>properties</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>fetch-misc</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>get</goal>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifact>org.jboss:jdk-misc:2.Final</artifact>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0-jboss-1</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>8</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>compile-java9</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>9</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.basedir}/src/main/java9</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/classes/META-INF/versions/9</outputDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.jar.plugin}</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                            <Jar-Version>${project.version}</Jar-Version>
+                            <Jar-Name>${project.artifactId}</Jar-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <trimStackTrace>false</trimStackTrace>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <configuration>
+                            <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/classes</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -593,7 +676,7 @@
             </activation>
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.corba,java.sql --illegal-access=permit</modular.jdk.args>
+                <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
                 <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
                 <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
@@ -702,6 +785,80 @@
                                 <version>1.2.0</version>
                             </dependency>
                         </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java8-test-profile</id>
+            <activation>
+                <property>
+                    <name>java8.home</name>
+                </property>
+            </activation>
+            <properties>
+                <modular.jdk.args/>
+                <modular.jdk.props/>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <reportsDirectory>${project.build.directory}/surefire-reports/java8</reportsDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>java8-test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <jvm>${java8.home}/bin/java</jvm>
+                                    <additionalClasspathElements>
+                                        <additionalClasspathElement>${java8.home}/lib/tools.jar</additionalClasspathElement>
+                                    </additionalClasspathElements>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java9-test-profile</id>
+            <activation>
+                <property>
+                    <name>java9.home</name>
+                </property>
+            </activation>
+            <properties>
+                <modular.jdk.args/>
+                <modular.jdk.props/>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <reportsDirectory>${project.build.directory}/surefire-reports/java9</reportsDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>java9-test</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <jvm>${java9.home}/bin/java</jvm>
+                                    <additionalClasspathElements>
+                                        <additionalClasspathElement>${java9.home}/lib/tools.jar</additionalClasspathElement>
+                                    </additionalClasspathElements>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
