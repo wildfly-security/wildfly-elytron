@@ -34,8 +34,6 @@ public class ElytronMessageInfo implements MessageInfo {
      * may as well have included the implementation.
      */
 
-    // TODO SPEC 3.8.3.5 We actually should have a servlet specific child that can enforce checking the wrapping / unwrapping of these messages.
-
     private final Map<Object, Object> map = new HashMap<>();
     private Object requestMessage;
     private Object responseMessage;

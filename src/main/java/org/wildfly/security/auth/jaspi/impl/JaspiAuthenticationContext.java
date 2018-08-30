@@ -45,7 +45,6 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.permission.ElytronPermission;
@@ -69,8 +68,6 @@ public class JaspiAuthenticationContext {
         this.securityDomain = securityDomain;
         this.integrated = integrated;
     }
-
-    // TODO AdHoc Identity Permissions
 
     /*
      * Having a few options makes it feel like we should use a Builder, however that would lead to one more object per request.
@@ -232,11 +229,6 @@ public class JaspiAuthenticationContext {
             log.trace("No roles request of CallbackHandler.");
         }
         return securityIdentity;
-    }
-
-    private void addPrivateCredential(final Subject subject, final Credential credential) {
-        Set<Object> privateCredentials = doPrivileged((PrivilegedAction<Set<Object>>) subject::getPrivateCredentials);
-        privateCredentials.add(credential);
     }
 
 }
