@@ -147,10 +147,10 @@ class ElytronServerAuthContext implements ServerAuthContext {
     @Override
     public AuthStatus secureResponse(MessageInfo messageInfo, Subject serviceSubject) throws AuthException {
         assert initialised : "Not initialised";
-        if (messageInfo instanceof ElytronMessageInfo) ((ElytronMessageInfo) messageInfo).setState(State.VALIDATE);
+        if (messageInfo instanceof ElytronMessageInfo) ((ElytronMessageInfo) messageInfo).setState(State.SECURE);
 
         AuthStatus result = null;
-        for (int i = authModules.size() - 1; i > 0; i--) {
+        for (int i = authModules.size() - 1; i >= 0; i--) {
             ServerAuthModule sam = authModules.get(i).getModule();
             AuthStatus currentResult = sam.secureResponse(messageInfo, serviceSubject);
             if (currentResult == null || currentResult == AuthStatus.SUCCESS || currentResult == AuthStatus.FAILURE) {

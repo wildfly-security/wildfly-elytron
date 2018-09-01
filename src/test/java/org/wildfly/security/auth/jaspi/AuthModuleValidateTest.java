@@ -17,63 +17,17 @@
 package org.wildfly.security.auth.jaspi;
 
 import static java.util.Collections.EMPTY_MAP;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.message.AuthException;
 import javax.security.auth.message.AuthStatus;
-import javax.security.auth.message.MessageInfo;
-import javax.security.auth.message.config.AuthConfigFactory;
-import javax.security.auth.message.config.AuthConfigProvider;
-import javax.security.auth.message.config.ServerAuthConfig;
-import javax.security.auth.message.config.ServerAuthContext;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.auth.jaspi.impl.ElytronMessageInfo;
 
 /**
  * Testing interaction between ServerAuthModules with different results and different flags.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class AuthModuleValidateTest {
-
-    private static final String APP_CONTEXT = "application-context";
-    private static final String LAYER = "layer";
-    private static final String DESCRIPTION = "test description";
-    private final AuthConfigFactory authConfigFactory = new ElytronAuthConfigFactory();
-
-    static final CallbackHandler HANDLER = new CallbackHandler() {
-
-        @Override
-        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            throw new UnsupportedCallbackException(callbacks[0]);
-        }
-    };
-
-    private static final MessageInfo MESSAGE_INFO;
-    private static Subject SUBJECT = new Subject();
-
-    static {
-        MESSAGE_INFO = new ElytronMessageInfo();
-        MESSAGE_INFO.setRequestMessage(new Object());
-        MESSAGE_INFO.setResponseMessage(new Object());
-    }
-
-    private final AtomicInteger callCounter = new AtomicInteger();
-
-    @Before
-    public void before() {
-        callCounter.set(0);
-    }
+public class AuthModuleValidateTest extends AuthModuleBase {
 
     /**
      * Test two ServerAuthModules each with a Flag of Required and each returning SUCCESS.
@@ -305,26 +259,6 @@ public class AuthModuleValidateTest {
     }
 
     private void test(final AuthStatus expectedStatus, final int expectedCallCount, final String registrationId) throws Exception {
-        AuthConfigProvider authConfigProvider = authConfigFactory.getConfigProvider(LAYER, APP_CONTEXT, null);
-        ServerAuthConfig serverAuthConfig = authConfigProvider.getServerAuthConfig(LAYER, APP_CONTEXT, HANDLER);
-        String authContextId = serverAuthConfig.getAuthContextID(MESSAGE_INFO);
-        ServerAuthContext serverAuthContext = serverAuthConfig.getAuthContext(authContextId, SUBJECT, EMPTY_MAP);
-
-        try {
-            AuthStatus validateResult = serverAuthContext.validateRequest(MESSAGE_INFO, SUBJECT, SUBJECT);
-
-            if (expectedStatus == null) {
-                fail("Expected Exception Not Thrown.");
-            } else {
-                assertEquals("Unexpected result", expectedStatus, validateResult);
-            }
-        } catch (AuthException e) {
-            if (expectedStatus != null) {
-                throw e;
-            }
-        }
-        assertEquals("Unexpected Call Count", expectedCallCount, callCounter.get());
-
-        authConfigFactory.removeRegistration(registrationId);
+        test(true, expectedStatus, expectedCallCount, registrationId);
     }
 }
