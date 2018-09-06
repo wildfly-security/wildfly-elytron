@@ -214,6 +214,7 @@
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <configuration>
+                        <notimestamp>true</notimestamp>
                         <doclet>net.gleamynode.apiviz.APIviz</doclet>
                         <docletArtifact>
                             <groupId>org.jboss.apiviz</groupId>
