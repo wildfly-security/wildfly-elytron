@@ -146,6 +146,13 @@
                             </includes>
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_2.xsd</systemId>
                         </validationSet>
+                        <validationSet>
+                            <dir>src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_3.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_3.xsd</systemId>
+                        </validationSet>
                     </validationSets>
                 </configuration>
                 <executions>
