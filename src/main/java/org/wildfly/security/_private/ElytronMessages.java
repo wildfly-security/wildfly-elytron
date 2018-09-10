@@ -972,6 +972,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4028, value = "No default key manager available")
     NoSuchAlgorithmException noDefaultKeyManager();
 
+    @Message(id = 4029, value = "Default context cannot be null")
+    IllegalStateException defaultContextCannotBeNull();
+
+    @Message(id = 4030, value = "No context for SSL connection")
+    SSLException noSNIContextForSslConnection(); // TODO Compare with noContextForSslConnection.
+
     /* mechanism package */
 
     @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
