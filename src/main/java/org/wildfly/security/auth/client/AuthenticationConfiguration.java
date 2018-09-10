@@ -1740,12 +1740,15 @@ public final class AuthenticationConfiguration {
                         continue;
                     }
                     final TrustedAuthoritiesCallback trustedAuthoritiesCallback = (TrustedAuthoritiesCallback) callback;
-                    if (trustedAuthorities == null) {
-                        trustedAuthorities = new ArrayList<>(trustedAuthoritiesCallback.getTrustedAuthorities());
-                    } else {
-                        final List<TrustedAuthority> authorities = new ArrayList<>(trustedAuthoritiesCallback.getTrustedAuthorities());
-                        authorities.removeIf(trustedAuthorities::contains);
-                        trustedAuthorities.addAll(authorities);
+                    final List<TrustedAuthority> trustedAuthoritiesHolder = trustedAuthoritiesCallback.getTrustedAuthorities();
+                    if (trustedAuthoritiesHolder != null) {
+                        if (trustedAuthorities == null) {
+                            trustedAuthorities = new ArrayList<>(trustedAuthoritiesHolder);
+                        } else {
+                            final List<TrustedAuthority> authorities = new ArrayList<>(trustedAuthoritiesHolder);
+                            authorities.removeIf(trustedAuthorities::contains);
+                            trustedAuthorities.addAll(authorities);
+                        }
                     }
                     continue;
                 } else if (callback instanceof EvidenceVerifyCallback) {
