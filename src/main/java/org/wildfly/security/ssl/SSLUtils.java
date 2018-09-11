@@ -110,6 +110,10 @@ public final class SSLUtils {
                         String protocolName = service.getAlgorithm();
                         List<Provider> providerList = preferredProviderByAlgorithm.computeIfAbsent(protocolName, s -> new ArrayList<>());
                         providerList.add(provider);
+
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Provider %s was added for algorithm %s", provider, protocolName);
+                        }
                     }
                 }
             }
@@ -117,16 +121,33 @@ public final class SSLUtils {
 
         // now return a factory that will return the best match is can create.
         final String[] supportedProtocols = protocolSelector.evaluate(preferredProviderByAlgorithm.keySet().toArray(NO_STRINGS));
+        if (log.isTraceEnabled()) {
+            log.tracef("Supported protocols are: %s", Arrays.toString(supportedProtocols));
+        }
         if (supportedProtocols.length > 0) {
             return () -> {
                 for (String protocol : supportedProtocols) {
                     List<Provider> providerList = preferredProviderByAlgorithm.getOrDefault(protocol, Collections.emptyList());
-                        for (Provider provider : providerList) {
-                            try {
-                                return SSLContext.getInstance(protocol, provider);
-                            } catch (NoSuchAlgorithmException ignored) {}
+                    if (log.isTraceEnabled()) {
+                        if (providerList.isEmpty()) {
+                            log.tracef("No providers are available for protocol %s", protocol);
                         }
+                    }
+                    for (Provider provider : providerList) {
+                        try {
+                            return SSLContext.getInstance(protocol, provider);
+                        } catch (NoSuchAlgorithmException ignored) {
+                            if (log.isTraceEnabled()) {
+                                log.tracef("Provider %s has no such protocol %s", provider, protocol);
+                            }
+                        }
+                    }
                 }
+
+                if (log.isTraceEnabled()) {
+                    log.tracef("No %s provided by providers in %s: %s", SERVICE_TYPE, SSLUtils.class.getSimpleName(), Arrays.toString(providerSupplier.get()));
+                }
+
                 throw ElytronMessages.log.noAlgorithmForSslProtocol();
             };
         }
