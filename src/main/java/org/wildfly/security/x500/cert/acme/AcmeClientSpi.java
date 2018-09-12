@@ -48,7 +48,6 @@ import static org.wildfly.security.x500.cert.acme.Acme.JWK;
 import static org.wildfly.security.x500.cert.acme.Acme.KID;
 import static org.wildfly.security.x500.cert.acme.Acme.LOCATION;
 import static org.wildfly.security.x500.cert.acme.Acme.META;
-import static org.wildfly.security.x500.cert.acme.Acme.NEW_KEY;
 import static org.wildfly.security.x500.cert.acme.Acme.NONCE;
 import static org.wildfly.security.x500.cert.acme.Acme.OLD_KEY;
 import static org.wildfly.security.x500.cert.acme.Acme.ONLY_RETURN_EXISTING;
@@ -375,13 +374,9 @@ public abstract class AcmeClientSpi {
         final String signatureAlgorithm = getDefaultCompatibleSignatureAlgorithmName(privateKey);
         final String algHeader = getAlgHeaderFromSignatureAlgorithm(signatureAlgorithm);
         final String innerEncodedProtectedHeader = getEncodedProtectedHeader(algHeader, certificate.getPublicKey(), keyChangeUrl);
-        // Temporarily send both oldKey and newKey in the inner payload. For now, Let's Encrypt's staging server will
-        // expect oldKey and ignore newKey and its production server will expect newKey and ignore oldKey. Once Let's
-        // Encrypt's production server has been updated to require oldKey only, update this to no longer send newKey (ELY-1640).
         JsonObjectBuilder innerPayloadBuilder = Json.createObjectBuilder()
                 .add(ACCOUNT, getAccountUrl(account, staging))
-                .add(OLD_KEY, getJwk(account.getPublicKey(), account.getAlgHeader()))
-                .add(NEW_KEY, getJwk(certificate.getPublicKey(), algHeader));
+                .add(OLD_KEY, getJwk(account.getPublicKey(), account.getAlgHeader()));
         final String innerEncodedPayload = getEncodedJson(innerPayloadBuilder.build());
         final String innerEncodedSignature = getEncodedSignature(privateKey, signatureAlgorithm, innerEncodedProtectedHeader, innerEncodedPayload);
         final String outerEncodedPayload = getEncodedJson(getJws(innerEncodedProtectedHeader, innerEncodedPayload, innerEncodedSignature));
