@@ -356,7 +356,7 @@ public abstract class CipherSuiteSelector {
      *             <li>The special {@code COMPLEMENTOFDEFAULT} keyword, which presently includes any anonymous cipher
      *                  suites (but excludes those without encryption, which must always be enabled manually).</li>
      *             <li>The special {@code @STRENGTH} keyword, which causes all the mechanisms enabled thus far to be
-     *                  automatically sorted by encryption algorithm key length.</li>
+     *                  automatically sorted by encryption algorithm key length in descending order.</li>
      *         </ul>
      *     </li>
      * </ul>
@@ -735,7 +735,7 @@ public abstract class CipherSuiteSelector {
                     final MechanismDatabase database = MechanismDatabase.getInstance();
                     final MechanismDatabase.Entry e1 = database.getCipherSuite(o1);
                     final MechanismDatabase.Entry e2 = database.getCipherSuite(o2);
-                    return Integer.signum(e1.getAlgorithmBits() - e2.getAlgorithmBits());
+                    return Integer.signum(e2.getAlgorithmBits() - e1.getAlgorithmBits());
                 });
                 enabled.clear();
                 enabled.addAll(list);

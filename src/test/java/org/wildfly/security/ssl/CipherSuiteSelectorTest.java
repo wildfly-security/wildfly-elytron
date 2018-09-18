@@ -25,7 +25,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -227,7 +226,6 @@ public class CipherSuiteSelectorTest {
     }
 
     @Test
-    @Ignore("ELY-793")
     public void testStrengthForAllAndComplementofall() {
         CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL COMPLEMENTOFALL @STRENGTH");
         List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
@@ -240,7 +238,6 @@ public class CipherSuiteSelectorTest {
     }
 
     @Test
-    @Ignore("ELY-793")
     public void testStrengthForComplementofallAndAll() {
         CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFALL ALL @STRENGTH");
         List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
