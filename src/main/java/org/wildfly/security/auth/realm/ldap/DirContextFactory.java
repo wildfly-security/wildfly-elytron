@@ -120,6 +120,11 @@ public interface DirContextFactory {
             return value;
         }
 
+        @Override
+        public String toString() {
+            return value;
+        }
+
         private static final int fullSize = values().length;
 
         /**
