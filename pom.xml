@@ -698,7 +698,7 @@
                     <plugin>
                         <groupId>com.github.siom79.japicmp</groupId>
                         <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>0.12.0</version>
+                        <version>0.13.0</version>
                         <configuration>
                             <oldVersion>
                                 <dependency>
@@ -715,7 +715,7 @@
                             </newVersion>
                             <parameter>
                                 <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
                                 <overrideCompatibilityChangeParameters>
                                     <overrideCompatibilityChangeParameter><!-- allowing new method in interface if default impl provided -->
                                         <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
