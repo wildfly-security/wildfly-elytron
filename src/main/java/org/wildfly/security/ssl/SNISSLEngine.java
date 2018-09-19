@@ -209,6 +209,9 @@ class SNISSLEngine extends SSLEngine implements SelectingContext {
         private final AtomicInteger flags = new AtomicInteger(FL_SESSION_CRE);
         private final Function<SSLContext, SSLEngine> engineFunction;
         private int packetBufferSize = SNISSLExplorer.RECORD_HEADER_SIZE;
+        private String[] enabledSuites;
+        private String[] enabledProtocols;
+
         private final SSLSession handshakeSession = new SSLSession() {
             public byte[] getId() {
                 throw new UnsupportedOperationException();
@@ -327,6 +330,12 @@ class SNISSLEngine extends SSLEngine implements SelectingContext {
                     throw log.noSNIContextForSslConnection();
                 }
                 next = engineFunction.apply(sslContext);
+                if (enabledSuites != null) {
+                    next.setEnabledCipherSuites(enabledSuites);
+                }
+                if (enabledProtocols != null) {
+                    next.setEnabledProtocols(enabledProtocols);
+                }
                 next.setUseClientMode(false);
                 final int flagsVal = flags.get();
                 if ((flagsVal & FL_WANT_C_AUTH) != 0) {
@@ -366,27 +375,34 @@ class SNISSLEngine extends SSLEngine implements SelectingContext {
         }
 
         public String[] getSupportedCipherSuites() {
-            throw new UnsupportedOperationException();
+            if(enabledSuites == null) {
+                return new String[0];
+            }
+            return enabledSuites;
         }
 
         public String[] getEnabledCipherSuites() {
-            throw new UnsupportedOperationException();
+            return enabledSuites;
         }
 
         public void setEnabledCipherSuites(final String[] suites) {
-            throw new UnsupportedOperationException();
+            this.enabledSuites = suites;
         }
 
         public String[] getSupportedProtocols() {
-            throw new UnsupportedOperationException();
+            if(enabledProtocols == null) {
+                return new String[0];
+            }
+            //this kinda sucks, but there is not much else we can do
+            return enabledProtocols;
         }
 
         public String[] getEnabledProtocols() {
-            throw new UnsupportedOperationException();
+            return enabledProtocols;
         }
 
         public void setEnabledProtocols(final String[] protocols) {
-            throw new UnsupportedOperationException();
+            this.enabledProtocols = protocols;
         }
 
         public SSLSession getSession() {
