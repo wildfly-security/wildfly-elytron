@@ -252,30 +252,26 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.trace("GSSContext established and authorized - authentication complete");
                     request.authenticationComplete(
                             responseToken == null ? null : response -> sendChallenge(responseToken, response, 0));
-                    return;
                 } else {
                     log.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
                     request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME),
                             responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
-                    return;
                 }
             } else if (responseToken != null && storageScope != null) {
                 log.trace("GSSContext establishing - sending negotiation token to the peer");
                 request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
-                return;
             } else {
                 log.trace("GSSContext establishing - unable to hold GSSContext so continuation will not be possible");
                 handleCallback(AuthenticationCompleteCallback.FAILED);
                 request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
-                return;
             }
+        } else {
+           log.trace("Request lacks valid authentication credentials");
+           clearAttachments(storageScope);
+           request.noAuthenticationInProgress(this::sendBareChallenge);
         }
-
-        log.trace("Request lacks valid authentication credentials");
-        clearAttachments(storageScope);
-        request.noAuthenticationInProgress(this::sendBareChallenge);
     }
 
     private HttpScope getStorageScope(HttpServerRequest request) throws HttpAuthenticationException {
