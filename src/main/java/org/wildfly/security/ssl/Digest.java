@@ -52,7 +52,10 @@ public enum Digest {
     SHA384,
     /**
      * AEAD (Authenticated Encryption with Associated Data) based authenticated message mode.
+     *
+     * @deprecated no longer used; refer to the actual digest algorithm instead.
      */
+    @Deprecated
     AEAD,
     ;
     static final int fullSize = values().length;
