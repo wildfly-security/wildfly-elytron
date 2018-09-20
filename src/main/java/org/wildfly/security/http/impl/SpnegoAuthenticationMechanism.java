@@ -228,7 +228,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 return;
             }
 
-            if (gssContext.isEstablished()) {
+            if (gssContext.isEstablished()) { // no more tokens are needed from the peer
                 final GSSCredential gssCredential;
 
                 try {
@@ -259,8 +259,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     log.trace("Authorization of established GSSContext failed");
                     handleCallback(AuthenticationCompleteCallback.FAILED);
                     clearAttachments(storageScope);
-                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME),
-                            responseToken == null ? null : response -> sendChallenge(responseToken, response, FORBIDDEN));
+                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME));
                 }
             } else if (Arrays.equals(responseToken, NEG_STATE_REJECT)) {
                 // for IBM java - prevent sending UNAUTHORIZED for [negState = reject] token
