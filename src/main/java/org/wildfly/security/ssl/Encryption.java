@@ -105,9 +105,9 @@ public enum Encryption {
      */
     RC2,
     /**
-     * ChaCha20-Poly1305 Encryption.
+     * ChaCha20 encryption.
      */
-    CHACHA20POLY1305,
+    CHACHA20,
     /**
      * ARIA encryption with 256-bit keys in Galois counter mode (GCM).
      */
@@ -125,6 +125,15 @@ public enum Encryption {
      */
     ARIA128
     ;
+
+    /**
+     * Legacy name for {@link #CHACHA20}.
+     *
+     * @deprecated Use {@link #CHACHA20} instead.
+     */
+    @Deprecated
+    public static final Encryption CHACHA20POLY1305 = CHACHA20;
+
     static final int fullSize = values().length;
 
     static Encryption forName(final String name) {
@@ -140,7 +149,8 @@ public enum Encryption {
             case "AES128": return AES128;
             case "CAMELLIA256": return CAMELLIA256;
             case "CAMELLIA128": return CAMELLIA128;
-            case "CHACHA20POLY1305": return CHACHA20POLY1305;
+            case "CHACHA20POLY1305": // fall through
+            case "CHACHA20": return CHACHA20;
             case "3DES": return _3DES;
             case "DES": return DES;
             case "IDEA": return IDEA;
