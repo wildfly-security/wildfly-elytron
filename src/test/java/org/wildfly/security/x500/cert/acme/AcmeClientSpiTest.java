@@ -452,8 +452,7 @@ public class AcmeClientSpiTest {
         ClientAndServer server;
 
         AcmeMockServerBuilder(ClientAndServer server) {
-            server.reset();
-            this.server = server;
+            this.server = (ClientAndServer) server.reset();
         }
 
         public AcmeMockServerBuilder addDirectoryResponseBody(String directoryResponseBody) {
