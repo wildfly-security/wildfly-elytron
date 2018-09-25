@@ -540,6 +540,10 @@ public abstract class CipherSuiteSelector {
             case "AES256":      return CipherSuitePredicate.matchEncryption(Encryption.AES256, Encryption.AES256GCM);
             case "AES":         return CipherSuitePredicate.matchEncryption(Encryption.AES128, Encryption.AES128GCM, Encryption.AES256, Encryption.AES256GCM);
             case "AESGCM":      return CipherSuitePredicate.matchEncryption(Encryption.AES128GCM, Encryption.AES256GCM);
+            case "ARIA":        return CipherSuitePredicate.matchEncryption(Encryption.ARIA128, Encryption.ARIA128GCM, Encryption.ARIA256, Encryption.ARIA256GCM);
+            case "ARIA128":     return CipherSuitePredicate.matchEncryption(Encryption.ARIA128, Encryption.ARIA128GCM);
+            case "ARIA256":     return CipherSuitePredicate.matchEncryption(Encryption.ARIA256, Encryption.ARIA256GCM);
+            case "ARIAGCM":     return CipherSuitePredicate.matchEncryption(Encryption.ARIA128GCM, Encryption.ARIA256GCM);
             case "CAMELLIA128": return CipherSuitePredicate.matchEncryption(Encryption.CAMELLIA128);
             case "CAMELLIA256": return CipherSuitePredicate.matchEncryption(Encryption.CAMELLIA256);
             case "CAMELLIA":    return CipherSuitePredicate.matchEncryption(Encryption.CAMELLIA128, Encryption.CAMELLIA256);
