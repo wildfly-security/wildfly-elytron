@@ -6,6 +6,8 @@ org.wildfly.security.audit
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
+org.wildfly.security.auth.jaspi
+org.wildfly.security.auth.jaspi.impl
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
 org.wildfly.security.auth.realm
