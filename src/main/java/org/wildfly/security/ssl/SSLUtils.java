@@ -135,6 +135,9 @@ public final class SSLUtils {
                     }
                     for (Provider provider : providerList) {
                         try {
+                            if (log.isTraceEnabled()) {
+                                log.tracef("Attempting to get an SSLContext instance using protocol %s and provider %s", protocol, provider);
+                            }
                             return SSLContext.getInstance(protocol, provider);
                         } catch (NoSuchAlgorithmException ignored) {
                             if (log.isTraceEnabled()) {
