@@ -70,6 +70,7 @@ import org.wildfly.security.permission.PermissionVerifier;
 public final class SecurityIdentity implements PermissionVerifier, PermissionMappable, Supplier<SecurityIdentity>, Scoped {
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
+    private static final Permission WITH_DEFAULT_ROLE_MAPPER_PERMISSION = ElytronPermission.forName("withDefaultRoleMapper");
 
     private static final SecurityIdentity[] NO_IDENTITIES = new SecurityIdentity[0];
 
@@ -77,6 +78,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private final Principal principal;
     private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
+    private final Function<SecurityIdentity, Roles> defaultRoles;
     private final Map<String, RoleMapper> roleMappers;
     private final Instant creationTime;
     private final PermissionVerifier verifier;
@@ -90,6 +92,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = principal;
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
+        this.defaultRoles = securityDomain::mapRoles;
         this.roleMappers = roleMappers;
         this.creationTime = Instant.now();
         this.verifier = securityDomain.mapPermissions(this);
@@ -104,6 +107,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
@@ -118,6 +122,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = old.roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = verifier;
@@ -132,6 +137,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = old.roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
@@ -146,6 +152,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = old.roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
@@ -160,6 +167,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = old.roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
@@ -174,6 +182,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.principal = old.principal;
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = old.defaultRoles;
         this.roleMappers = old.roleMappers;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
@@ -181,6 +190,21 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.privateCredentials = old.privateCredentials;
         this.withSuppliedIdentities = null;
         this.withIdentities = withIdentities;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final Function<SecurityIdentity, Roles>defaultRoles) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.defaultRoles = defaultRoles;
+        this.roleMappers = old.roleMappers;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = null;
+        this.withIdentities = old.withIdentities;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -517,7 +541,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      * @return the roles associated with this identity
      */
     public Roles getRoles() {
-        return this.securityDomain.mapRoles(this);
+        return defaultRoles.apply(this);
     }
 
     /**
@@ -600,7 +624,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public Roles getRoles(String category, boolean fallbackToDefault) {
         final RoleMapper roleMapper = roleMappers.get(category);
-        return roleMapper == null ? (fallbackToDefault ? getRoles() : Roles.NONE) : roleMapper.mapRoles(securityDomain.mapRoles(this));
+        return roleMapper == null ? (fallbackToDefault ? getRoles() : Roles.NONE) : roleMapper.mapRoles(getRoles());
     }
 
     /**
@@ -636,6 +660,22 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             newMap.put(category, roleMapper);
         }
         return new SecurityIdentity(this, newMap);
+    }
+
+    /**
+     * Attempt to create a new identity which wraps the default roles with a default role mapper.
+     *
+     * @param roleMapper the roleMapper to map the roles.
+     * @return the new identity
+     * @throws SecurityException if the calling class is not granted the withDefaultRoleMapper permission.
+     */
+    public SecurityIdentity withDefaultRoleMapper(final RoleMapper roleMapper) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(WITH_DEFAULT_ROLE_MAPPER_PERMISSION);
+        }
+
+        return new SecurityIdentity(this, (SecurityIdentity si) -> roleMapper.mapRoles(this.getRoles()));
     }
 
     /**
