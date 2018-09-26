@@ -138,7 +138,7 @@ public final class SSLUtils {
                             return SSLContext.getInstance(protocol, provider);
                         } catch (NoSuchAlgorithmException ignored) {
                             if (log.isTraceEnabled()) {
-                                log.tracef("Provider %s has no such protocol %s", provider, protocol);
+                                log.tracef(ignored, "Provider %s has no such protocol %s", provider, protocol);
                             }
                         }
                     }
