@@ -73,6 +73,14 @@ public abstract class AbstractCommandTest extends BaseToolTest {
     }
 
     protected void executeCommandAndCheckStatus(String commandType, String[] args) {
+        executeCommandAndCheckStatus(commandType, args, ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    protected void executeCommandAndCheckStatus(String[] args, int expectedReturnCode) {
+        executeCommandAndCheckStatus(null, args, expectedReturnCode);
+    }
+
+    protected void executeCommandAndCheckStatus(String commandType, String[] args, int expectedReturnCode) {
         ElytronTool tool = new ElytronTool();
         Command command = tool.findCommand(commandType == null ? getCommandType() : commandType);
         try {
@@ -80,7 +88,7 @@ public abstract class AbstractCommandTest extends BaseToolTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        assertEquals("returned command status has to be 0", command.getStatus(), ElytronTool.ElytronToolExitStatus_OK);
+        assertEquals("returned command status has to be " + expectedReturnCode, expectedReturnCode, command.getStatus());
     }
 
     protected void executeCommandAndCheckStatus(String[] args) {
@@ -105,7 +113,28 @@ public abstract class AbstractCommandTest extends BaseToolTest {
     }
 
     protected String executeCommandAndCheckStatusAndGetOutput(String[] args) {
-        return executeCommandAndCheckStatusAndGetOutput(null, args);
+        return executeCommandAndCheckStatusAndGetOutput(null, args, ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    protected String executeCommandAndCheckStatusAndGetOutput(String[] args, int expectedReturnCode) {
+        return executeCommandAndCheckStatusAndGetOutput(null, args, expectedReturnCode);
+    }
+
+    protected String executeCommandAndCheckStatusAndGetOutput(String commandType, String[] args, int expectedReturnCode) {
+        ElytronTool tool = new ElytronTool();
+        Command command = tool.findCommand(commandType == null ? getCommandType() : commandType);
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        PrintStream original = System.out;
+        System.setOut(new PrintStream(result));
+        try {
+            command.execute(args);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        System.setOut(original);
+        System.out.println("result" + result.toString());
+        assertEquals("returned command status has to be " + expectedReturnCode, expectedReturnCode, command.getStatus());
+        return result.toString();
     }
 
     protected void checkAliasSecretValue(CredentialStore cs, String aliasName, String secretValue) {

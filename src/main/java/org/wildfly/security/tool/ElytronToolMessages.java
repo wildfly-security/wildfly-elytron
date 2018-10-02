@@ -20,12 +20,14 @@ package org.wildfly.security.tool;
 import static org.jboss.logging.annotations.Message.NONE;
 
 import org.apache.commons.cli.MissingArgumentException;
+import org.apache.commons.cli.MissingOptionException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -333,4 +335,61 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "In the message below, option '%s' refers to long option '%s'.")
     String longOptionDescription(String option, String longOption);
 
+    // filesystem-realm command
+    @Message(id = NONE, value = "'FileSystemRealm' command is used to convert legacy properties files and scripts to an Elytron FileSystemRealm.")
+    String cmdFileSystemRealmHelpHeader();
+
+    @Message(id = NONE, value = "The relative or absolute path to the users file.")
+    String cmdFileSystemRealmUsersFileDesc();
+
+    @Message(id = NONE, value = "The relative or absolute path to the roles file.")
+    String cmdFileSystemRealmRolesFileDesc();
+
+    @Message(id = NONE, value = "The relative or absolute path to the output directory.")
+    String cmdFileSystemRealmOutputLocationDesc();
+
+    @Message(id = NONE, value = "Name of the filesystem-realm to be configured.")
+    String cmdFileSystemRealmFileSystemRealmNameDesc();
+
+    @Message(id = NONE, value = "Name of the security-domain to be configured.")
+    String cmdFileSystemRealmSecurityDomainNameDesc();
+
+    @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. %n" +
+            "The options fileSystemRealmName and securityDomainName are optional. %n" +
+            "These optional options have default values of: converted-properties-filesystem-realm and converted-properties-security-domain. %n" +
+            "Values are required for the following options: users-file, roles-file, and output-location. %n" +
+            "If one or more these required values are not set, the corresponding block is skipped. %n" +
+            "Each option must be specified in the following format: <option>:<value>. The order of options does not matter. %n" +
+            "Blocks of options must be separated by a blank line.")
+    String cmdFileSystemRealmBulkConvertDesc();
+
+    @Message(id = NONE, value = "Suppresses all output except errors and prompts.")
+    String cmdFileSystemRealmSilentDesc();
+
+    @Message(id = NONE, value = "Provides a detailed summary of all operations performed, once the command finishes.")
+    String cmdFileSystemRealmSummaryDesc();
+
+    @Message(id = NONE, value = "No users file specified. Please use either --bulk-convert <file> or specify a users file using --users-file <file>")
+    MissingOptionException missingUsersFile();
+
+    @Message(id = NONE, value = "No roles file specified. Please use either --bulk-convert <file> or specify a roles file using --roles-file <file>")
+    MissingOptionException missingRolesFile();
+
+    @Message(id = NONE, value = "No output location specified. Please use either --bulk-convert <file> or specify an output location using --output-location <directory>")
+    MissingOptionException missingOutputLocation();
+
+    @Message(id = NONE, value = "Both --bulk-convert and one or more of --users-file, --roles-file, and/or --output-location were specified. Please only use --bulk-convert or all of --users-file, --roles-file, and --output-location.")
+    MissingOptionException mutuallyExclusiveOptionsSpecified();
+
+    @Message(id = NONE, value = "No value found for %s.")
+    String noValueFound(String param);
+
+    @Message(id = NONE, value = "Could not find the specified file %s.")
+    FileNotFoundException fileNotFound(String file);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to %s.")
+    String skippingDescriptorBlock(Integer blockNumber, String reason);
+
+    @Message(id = NONE, value = "Should file %s be overwritten? (y/n) ")
+    String shouldFileBeOverwritten(String file);
 }
