@@ -18,6 +18,8 @@
 
 package org.wildfly.security.ssl;
 
+import javax.net.ssl.SSLServerSocketFactory;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,4 +45,21 @@ public class MechanismDatabaseTest {
         System.out.println(entry);
     }
 
+    @Test
+    public void testAllJdkCipherSuitesMapping() {
+        final MechanismDatabase mechanismDatabase = MechanismDatabase.getInstance();
+
+        SSLServerSocketFactory ssf = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+        String[] supportedCipherSuites = ssf.getSupportedCipherSuites();
+
+        StringBuffer unknownCipherSuites = new StringBuffer("");
+        for (int i = 0; i < supportedCipherSuites.length; i++) {
+            System.out.println("Trying " + supportedCipherSuites[i]);
+            MechanismDatabase.Entry entry = mechanismDatabase.getCipherSuite(supportedCipherSuites[i]);
+            if (entry == null) {
+                unknownCipherSuites.append(" ").append(supportedCipherSuites[i]);
+            }
+        }
+        Assert.assertTrue("There are JDK cipher suites which are unknown to Elytron MechanismDatabase; " + unknownCipherSuites,unknownCipherSuites.length()==0);
+    }
 }
