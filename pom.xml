@@ -245,6 +245,7 @@
                     <trimStackTrace>false</trimStackTrace>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -823,9 +824,6 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <reportsDirectory>${project.build.directory}/surefire-reports/java8</reportsDirectory>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>java8-test</id>
@@ -834,6 +832,7 @@
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
+                                    <reportsDirectory>${project.build.directory}/surefire-reports/java8</reportsDirectory>
                                     <jvm>${java8.home}/bin/java</jvm>
                                     <additionalClasspathElements>
                                         <additionalClasspathElement>${java8.home}/lib/tools.jar</additionalClasspathElement>
@@ -860,9 +859,6 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <reportsDirectory>${project.build.directory}/surefire-reports/java9</reportsDirectory>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>java9-test</id>
@@ -871,8 +867,11 @@
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
+                                    <reportsDirectory>${project.build.directory}/surefire-reports/java9</reportsDirectory>
                                     <jvm>${java9.home}/bin/java</jvm>
+                                    <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
                                     <additionalClasspathElements>
+                                        <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
                                         <additionalClasspathElement>${java9.home}/lib/tools.jar</additionalClasspathElement>
                                     </additionalClasspathElements>
                                 </configuration>
