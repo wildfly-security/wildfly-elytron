@@ -21,6 +21,7 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.After;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
@@ -30,8 +31,12 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +48,17 @@ import java.security.cert.X509Certificate;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 public class X509EvidenceVerificationSuiteChild {
+
+    private static final String LDAP_DIRECTORY_LOCATION = "./target/test-classes/ldap";
+    private static final String LDIF_LOCATION = "/elytron-x509-verification.ldif";
+
+    @After
+    public void cleanUpLdapFiles() throws Exception {
+        File workingDirLDIF = new File(LDAP_DIRECTORY_LOCATION);
+        if (workingDirLDIF.exists()) {
+            Files.copy(Paths.get(workingDirLDIF + LDIF_LOCATION + ".bak"), Paths.get(workingDirLDIF + LDIF_LOCATION), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
 
     @Test
     public void testX509Auth() throws Exception {
