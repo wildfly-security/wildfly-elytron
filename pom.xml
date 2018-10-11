@@ -300,13 +300,9 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <configuration>
                         <notimestamp>true</notimestamp>
-                        <doclet>net.gleamynode.apiviz.APIviz</doclet>
-                        <docletArtifact>
-                            <groupId>org.jboss.apiviz</groupId>
-                            <artifactId>apiviz</artifactId>
-                            <version>1.3.2.GA</version>
-                        </docletArtifact>
+                        <doclint>none</doclint>
                         <show>protected</show>
+                        <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
                         <sourceFileIncludes>
                             <include>org/wildfly/security/*.java</include>
                             <include>org/wildfly/security/asn1/*.java</include>
@@ -338,6 +334,9 @@
                             <include>org/wildfly/security/x500/*.java</include>
                             <include>org/wildfly/security/x500/cert/*.java</include>
                         </sourceFileIncludes>
+                        <sourceFileExcludes>
+                            <exclude>org/wildfly/security/manager/JDKSpecific.java</exclude>
+                        </sourceFileExcludes>
                         <destDir>api-javadoc</destDir>
                     </configuration>
                     <executions>
