@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -35,6 +36,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +98,14 @@ public class CompatibilityClientTest extends BaseTestCase {
                 .setKeyStorePassword("secret_store_1")
                 .addPassword("chris_pwd_alias", "secret")
                 .build();
+    }
+
+    @AfterClass
+    public static void cleanUpCredentialStore() {
+        File csFile = new File(CS_FILE_NAME);
+        if (csFile.exists()) {
+            csFile.delete();
+        }
     }
 
     /**
