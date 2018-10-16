@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.realm.token;
 
-import static org.junit.Assert.*;
-
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -29,26 +27,393 @@ import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jose.PlainObject;
 import com.nimbusds.jose.crypto.RSASSASigner;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
+
 import mockit.integration.junit4.JMockit;
+
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 @RunWith(JMockit.class)
 public class JwtSecurityRealmTest extends BaseTestCase {
+
+    private static final MockWebServer server = new MockWebServer();
+    private static final MockWebServer nonTlsServer = new MockWebServer();
+
+    private static final String CA_JKS_LOCATION = "./target/test-classes/jwt/ca/jks/";
+    private static char[] PASSWORD = "password".toCharArray();
+
+    private static KeyPair keyPair1;
+    private static KeyPair keyPair2;
+    private static KeyPair keyPair3;
+
+
+    private static RsaJwk jwk1 = new RsaJwk();
+    private static RsaJwk jwk2 = new RsaJwk();
+    private static RsaJwk jwk3 = new RsaJwk();
+
+    private static File trustStoreFile;
+
+    private static String jwksResponse;
+
+    @BeforeClass
+    public static void setup() throws GeneralSecurityException, IOException {
+        System.setProperty("wildfly.config.url", JwtSecurityRealmTest.class.getResource("wildfly-jwt-test-config.xml").toExternalForm());
+
+        keyPair1 = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        keyPair2 = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        keyPair3 = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+
+        RSAPublicKey pk1 = (RSAPublicKey) keyPair1.getPublic();
+        RSAPublicKey pk2 = (RSAPublicKey) keyPair2.getPublic();
+        RSAPublicKey pk3 = (RSAPublicKey) keyPair3.getPublic();
+
+        jwk1.setAlg("RS256");
+        jwk1.setKid("1");
+        jwk1.setKty("RSA");
+        jwk1.setE(Base64.getEncoder().encodeToString(pk1.getPublicExponent().toByteArray()));
+        jwk1.setN(Base64.getEncoder().encodeToString(pk1.getModulus().toByteArray()));
+
+        jwk2.setAlg("RS256");
+        jwk2.setKid("2");
+        jwk2.setKty("RSA");
+        jwk2.setE(Base64.getEncoder().encodeToString(pk2.getPublicExponent().toByteArray()));
+        jwk2.setN(Base64.getEncoder().encodeToString(pk2.getModulus().toByteArray()));
+
+        jwk3.setAlg("RS256");
+        jwk3.setKid("3");
+        jwk3.setKty("RSA");
+        jwk3.setE(Base64.getEncoder().encodeToString(pk3.getPublicExponent().toByteArray()));
+        jwk3.setN(Base64.getEncoder().encodeToString(pk3.getModulus().toByteArray()));
+
+        JsonObject jwks = jwksToJson(jwk1, jwk2);
+
+        File dir = new File(CA_JKS_LOCATION);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        trustStoreFile = new File(CA_JKS_LOCATION + "ca.truststore");
+        if (trustStoreFile.exists()) trustStoreFile.delete();
+
+        KeyStore mockKeyStore = KeyStore.getInstance("JKS");
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        mockKeyStore.load(null, null);
+        trustStore.load(null, null);
+
+        String alg = KeyManagerFactory.getDefaultAlgorithm();
+
+        SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(new X500Principal("CN=localhost, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority"))
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
+                .build();
+
+        X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+
+        mockKeyStore.setKeyEntry("ca", issuerSelfSignedX509CertificateAndSigningKey.getSigningKey(), PASSWORD, new X509Certificate[]{issuerCertificate});
+
+        trustStore.setCertificateEntry("ca", issuerCertificate);
+        trustStore.store(new FileOutputStream(trustStoreFile), PASSWORD);
+
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(alg);
+        keyManagerFactory.init(mockKeyStore, PASSWORD);
+
+        X509ExtendedKeyManager keyManager = null;
+        for (KeyManager km : keyManagerFactory.getKeyManagers()) {
+            if (km instanceof X509ExtendedKeyManager) {
+                keyManager = X509ExtendedKeyManager.class.cast(km);
+                break;
+            }
+        }
+
+        SSLContext sslContext = new SSLContextBuilder().setKeyManager(keyManager).build().create();
+
+        jwksResponse = jwks.toString();
+
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+        nonTlsServer.setDispatcher(createTokenDispatcher(jwksResponse));
+        server.start(50831);
+        nonTlsServer.start(50832);
+    }
+
+    @AfterClass
+    public static void cleanup() throws IOException {
+        server.shutdown();
+        nonTlsServer.shutdown();
+    }
+
+    @Test
+    public void testChangedKeys() throws Exception {
+        QueueDispatcher dispatcher = new QueueDispatcher();
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk1).toString()));
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk1).toString()));
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk2).toString()));
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk2).toString()));
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk3.setKid("1")).toString()));
+        dispatcher.enqueueResponse(new MockResponse().setBody(jwksToJson(jwk3).toString()));
+        jwk3.setKid("3");
+        server.setDispatcher(dispatcher);
+
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setJkuTimeout(0) //refresh jwks every time
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityNotExist(securityRealm, evidence2);
+        assertIdentityExist(securityRealm, evidence2);
+        assertIdentityNotExist(securityRealm, evidence3);
+        assertIdentityExist(securityRealm, evidence3);
+        assertIdentityNotExist(securityRealm, evidence1);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testMultipleTokenTypes() throws Exception {
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "1", null));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", null));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", null));
+
+        BearerTokenEvidence evidence4 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence5 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1, "2", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence6 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "1", new URI("https://localhost:50831")));
+
+        BearerTokenEvidence evidence7 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "3", null));
+        BearerTokenEvidence evidence8 = new BearerTokenEvidence(createJwt(keyPair3, 60, -1));
+        BearerTokenEvidence evidence9 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair3.getPublic());
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .publicKeys(namedKeys)
+                        .publicKey(keyPair3.getPublic())
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true)
+                        .build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityNotExist(securityRealm, evidence2);
+        assertIdentityNotExist(securityRealm, evidence3);
+        assertIdentityExist(securityRealm, evidence4);
+        assertIdentityNotExist(securityRealm, evidence5);
+        assertIdentityNotExist(securityRealm, evidence6);
+        assertIdentityNotExist(securityRealm, evidence7);
+        assertIdentityExist(securityRealm, evidence8);
+        assertIdentityNotExist(securityRealm, evidence9);
+    }
+
+    @Test
+    public void testUnsecuredJkuEndpoint() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50832")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+    }
+
+    @Test
+    public void testKid() throws Exception {
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", null));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", null));
+        BearerTokenEvidence evidence3 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "3", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair1.getPublic());
+        namedKeys.put("2", keyPair2.getPublic());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .publicKeys(namedKeys)
+                        .build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
+        assertIdentityNotExist(securityRealm, evidence3);
+
+    }
+
+    @Test
+    public void testStoppedJkuEndpoint() throws Exception {
+        server.setDispatcher(createOneTimeDispatcher(jwksResponse)); //Server will provide the keys only once
+
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setJkuTimeout(0) //Keys will be downloaded on every request
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence);
+
+        //Now the keys need to be re-cached
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testJkuMultipleKeys() throws Exception {
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
+    }
+
+    @Test
+    public void testInvalidJku() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:80")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext).useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+    }
+
+    @Test
+    public void testInvalidKid() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
+
+    }
 
     @Test
     public void testUsingGeneratedPublicKey() throws Exception {
@@ -124,10 +489,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(anotherKeyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        assertIdentityNotExist(securityRealm, evidence);
     }
 
     @Test
@@ -143,10 +505,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        assertIdentityNotExist(securityRealm, evidence);
     }
 
     @Test
@@ -162,10 +521,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        assertIdentityNotExist(securityRealm, evidence);
     }
 
     @Test
@@ -181,10 +537,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        assertIdentityNotExist(securityRealm, evidence);
     }
 
     @Test
@@ -200,10 +553,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
-
-        assertNotNull(realmIdentity);
-        assertFalse(realmIdentity.exists());
+        assertIdentityNotExist(securityRealm, evidence);
     }
 
     @Test
@@ -225,18 +575,42 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
     }
 
+    private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {
+        RealmIdentity identity = realm.getRealmIdentity(evidence);
+        assertNotNull(identity);
+        assertFalse(identity.exists());
+    }
+
+    private void assertIdentityExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {
+        RealmIdentity identity = realm.getRealmIdentity(evidence);
+        assertNotNull(identity);
+        assertTrue(identity.exists());
+    }
+
+    private String createJwt(KeyPair keyPair, int expirationOffset, int notBeforeOffset) throws Exception {
+        return createJwt(keyPair, expirationOffset, notBeforeOffset, null, null);
+    }
+
     private String createJwt(KeyPair keyPair, int expirationOffset) throws Exception {
         return createJwt(keyPair, expirationOffset, -1);
     }
 
-    private String createJwt(KeyPair keyPair, int expirationOffset, int notBeforeOffset) throws Exception {
+    private String createJwt(KeyPair keyPair, int expirationOffset, int notBeforeOffset, String kid, URI jku) throws Exception {
         PrivateKey privateKey = keyPair.getPrivate();
         JWSSigner signer = new RSASSASigner(privateKey);
         JsonObjectBuilder claimsBuilder = createClaims(expirationOffset, notBeforeOffset);
 
-        JWSObject jwsObject = new JWSObject(new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .type(new JOSEObjectType("jwt")).build(),
-                new Payload(claimsBuilder.build().toString()));
+        JWSHeader.Builder headerBuilder = new JWSHeader.Builder(JWSAlgorithm.RS256)
+                .type(new JOSEObjectType("jwt"));
+
+        if (jku != null) {
+            headerBuilder.jwkURL(jku);
+        }
+        if (kid != null) {
+            headerBuilder.keyID(kid);
+        }
+
+        JWSObject jwsObject = new JWSObject(headerBuilder.build(), new Payload(claimsBuilder.build().toString()));
 
         jwsObject.sign(signer);
 
@@ -260,5 +634,59 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         }
 
         return claimsBuilder;
+    }
+
+    private X509TrustManager getTrustManager() throws Exception {
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        trustStore.load(new FileInputStream(trustStoreFile), PASSWORD);
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+        X509TrustManager tm = null;
+        for (TrustManager tm1 : tmf.getTrustManagers()) {
+            if (tm1 instanceof X509TrustManager) {
+                tm = X509TrustManager.class.cast(tm1);
+                break;
+            }
+        }
+        assertNotNull(tm);
+        return tm;
+    }
+
+    private static JsonObject jwksToJson(RsaJwk... jwks) {
+        JsonArrayBuilder jab = Json.createArrayBuilder();
+        for (int i = 0; i < jwks.length; i++){
+            JsonObjectBuilder jwk = Json.createObjectBuilder()
+                    .add("kty", jwks[i].getKty())
+                    .add("alg", jwks[i].getAlg())
+                    .add("kid", jwks[i].getKid())
+                    .add("n", jwks[i].getN())
+                    .add("e", jwks[i].getE());
+            jab.add(jwk);
+        }
+        return Json.createObjectBuilder().add("keys", jab).build();
+    }
+
+    private static Dispatcher createOneTimeDispatcher(String response) {
+        return new Dispatcher() {
+            boolean used = false;
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                if (!used) {
+                    used = true;
+                    return new MockResponse().setBody(response);
+                } else {
+                    return new MockResponse().setResponseCode(HttpsURLConnection.HTTP_NOT_FOUND);
+                }
+            }
+        };
+    }
+
+    private static Dispatcher createTokenDispatcher(String response) {
+        return new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest recordedRequest) {
+                return new MockResponse().setBody(response);
+            }
+        };
     }
 }

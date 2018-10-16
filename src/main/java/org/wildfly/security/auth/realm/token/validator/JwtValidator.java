@@ -32,6 +32,11 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -39,7 +44,9 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
@@ -69,25 +76,36 @@ public class JwtValidator implements TokenValidator {
 
     private final Set<String> issuers;
     private final Set<String> audiences;
+    private final JwkManager jwkManager;
+    private final Map<String, PublicKey> namedKeys;
 
-    private final PublicKey publicKey;
+    private final PublicKey defaultPublicKey;
 
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
         this.audiences = checkNotNullParam("audience", configuration.audience);
-        this.publicKey = configuration.publicKey;
+        this.defaultPublicKey = configuration.publicKey;
+        this.namedKeys = configuration.namedKeys;
+        if (configuration.sslContext != null) {
+            this.jwkManager = new JwkManager(configuration.sslContext,
+                                            configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
+                                            configuration.updateTimeout);
+        }
+        else {
+            log.tokenRealmJwtNoSSLIgnoringJku();
+            this.jwkManager = null;
+        }
+        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
+            log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
+        }
 
         if (issuers.isEmpty()) {
             log.tokenRealmJwtWarnNoIssuerIgnoringIssuerCheck();
         }
-
         if (audiences.isEmpty()) {
             log.tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
         }
 
-        if (publicKey == null) {
-            log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
-        }
     }
 
     @Override
@@ -149,14 +167,16 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
-        if (publicKey == null) {
+        if (defaultPublicKey == null && jwkManager == null && namedKeys.isEmpty()) {
             return true;
         }
+
         try {
             Base64.Decoder urlDecoder = Base64.getUrlDecoder();
             byte[] decodedSignature = urlDecoder.decode(encodedSignature);
 
-            boolean verify = ByteIterator.ofBytes(decodedSignature).verify(createSignature(encodedHeader, encodedClaims));
+            Signature signature = createSignature(encodedHeader, encodedClaims);
+            boolean verify = signature != null ? ByteIterator.ofBytes(decodedSignature).verify(signature) : false;
 
             if (!verify) {
                 log.debug("Signature verification failed");
@@ -216,18 +236,31 @@ public class JwtValidator implements TokenValidator {
         return valid;
     }
 
-    private Signature createSignature(String encodedHeader, String encodedClaims) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, RealmUnavailableException {
-        Signature signature = Signature.getInstance(resolveAlgorithm(encodedHeader));
+    private Signature createSignature(String encodedHeader, String encodedClaims) throws NoSuchAlgorithmException, SignatureException, RealmUnavailableException {
 
-        signature.initVerify(this.publicKey);
+        byte[] headerDecoded = Base64.getUrlDecoder().decode(encodedHeader);
+        JsonObject headers = Json.createReader(ByteIterator.ofBytes(headerDecoded).asInputStream()).readObject();
+
+        String headerAlg = resolveAlgorithm(headers);
+        Signature signature = Signature.getInstance(headerAlg);
+        try {
+            PublicKey publicKey = resolvePublicKey(headers);
+            if (publicKey == null) {
+                log.debug("Public key could not be resolved.");
+                return null;
+            }
+            signature.initVerify(publicKey);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
+
         signature.update((encodedHeader + "." + encodedClaims).getBytes());
 
         return signature;
     }
 
-    private String resolveAlgorithm(String part) throws RealmUnavailableException {
-        byte[] headerDecoded = Base64.getUrlDecoder().decode(part);
-        JsonObject headers = Json.createReader(ByteIterator.ofBytes(headerDecoded).asInputStream()).readObject();
+    private String resolveAlgorithm(JsonObject headers) {
         JsonString algClaim = (JsonString) headers.get("alg");
 
         if (algClaim == null) {
@@ -250,7 +283,38 @@ public class JwtValidator implements TokenValidator {
         }
     }
 
-    private int currentTimeInSeconds() {
+    private PublicKey resolvePublicKey(JsonObject headers) {
+        JsonString kid = headers.getJsonString("kid");
+        JsonString jku = headers.getJsonString("jku");
+
+        if (kid == null) {
+            if (defaultPublicKey == null) {
+                log.debug("Default public key not configured. Cannot validate token without kid claim.");
+                return null;
+            }
+            return defaultPublicKey;
+        }
+        if (jku != null) {
+            try {
+                return jwkManager.getPublicKey(kid.getString(), new URL(jku.getString()));
+            } catch (MalformedURLException e) {
+                log.debug("Invalid jku URL.");
+                return null;
+            }
+        } else {
+            if (namedKeys.isEmpty()) {
+                log.debug("Cannot validate token with kid claim.");
+                return null;
+            }
+            PublicKey res = namedKeys.get(kid.getString());
+            if (res == null) {
+                log.debug("Unknown kid.");
+            }
+            return res;
+        }
+    }
+
+    private static int currentTimeInSeconds() {
         return ((int) (System.currentTimeMillis() / 1000));
     }
 
@@ -259,6 +323,10 @@ public class JwtValidator implements TokenValidator {
         private Set<String> issuers = new LinkedHashSet<>();
         private Set<String> audience = new LinkedHashSet<>();
         private PublicKey publicKey;
+        private Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        private HostnameVerifier hostnameVerifier;
+        private SSLContext sslContext;
+        private long updateTimeout = 120000;
 
         private Builder() {
         }
@@ -292,7 +360,7 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * <p>A public key in its PEM format used to validate the signature.
+         * <p>A default public key in its PEM format used to validate the signature of tokens without <code>kid</code> header parameter.
          *
          * <p>If not provided, the validator will not validate signatures.
          *
@@ -313,7 +381,7 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * <p>A {@link PublicKey} format used to validate the signature.
+         * <p>A default {@link PublicKey} format used to validate the signature of tokens without <code>kid</code> header parameter.
          *
          * <p>If not provided, the validator will not validate signatures.
          *
@@ -322,6 +390,53 @@ public class JwtValidator implements TokenValidator {
          */
         public Builder publicKey(PublicKey publicKey) {
             this.publicKey = publicKey;
+            return this;
+        }
+
+        /**
+         * <p>A {@link PublicKey} map, which is used for validating tokens with <code>kid</code> and without <code>jku</code> header parameter.
+         *
+         * @param namedKeys map of public keys for toen verification, where the maps key stand for kid
+         * @return this instance
+         */
+        public Builder publicKeys(Map<String, PublicKey> namedKeys) {
+            this.namedKeys.putAll(namedKeys);
+            return this;
+        }
+
+        /**
+         * <p>A predefined {@link SSLContext} that will be used to connect to the jku endpoint when retrieving remote keys. This configuration is mandatory
+         * if using jku claims.
+         *
+         * @param sslContext the SSL context
+         * @return this instance
+         */
+        public Builder useSslContext(SSLContext sslContext) {
+            this.sslContext = sslContext;
+            return this;
+        }
+
+        /**
+         * <p>A {@link HostnameVerifier} that will be used to validate the hostname when using SSL/TLS. This configuration is mandatory
+         * if using jku claims.
+         *
+         * @param hostnameVerifier the hostname verifier
+         * @return this instance
+         */
+        public Builder useSslHostnameVerifier(HostnameVerifier hostnameVerifier) {
+            this.hostnameVerifier = hostnameVerifier;
+            return this;
+        }
+
+        /**
+         * <p>A timeout for cached jwks when using jku claim. After this timeout, the keys of need to be re-cached before use.
+         * Default value is 2 minutes.
+         *
+         * @param timeout timeout in ms before keys needs to be re-cached
+         * @return this instance
+         */
+        public Builder setJkuTimeout(long timeout) {
+            this.updateTimeout = timeout;
             return this;
         }
 
