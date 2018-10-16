@@ -64,6 +64,7 @@ org.wildfly.security.sasl.plain
 org.wildfly.security.sasl.scram
 org.wildfly.security.sasl.util
 org.wildfly.security.ssl
+org.wildfly.security.ssl._private
 org.wildfly.security.util
 org.wildfly.security.util._private
 org.wildfly.security.x500
