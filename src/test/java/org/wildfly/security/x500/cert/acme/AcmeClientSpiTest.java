@@ -31,6 +31,7 @@ import static org.wildfly.security.x500.cert.acme.Acme.BASE64_URL;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.integration.ClientAndServer;
@@ -151,6 +152,11 @@ public class AcmeClientSpiTest {
         if (server != null) {
             server.stop();
         }
+    }
+
+    @Before
+    public void resetServerExpectations() {
+        server = (ClientAndServer) server.reset();
     }
 
     @Test
@@ -452,7 +458,7 @@ public class AcmeClientSpiTest {
         ClientAndServer server;
 
         AcmeMockServerBuilder(ClientAndServer server) {
-            this.server = (ClientAndServer) server.reset();
+            this.server = server;
         }
 
         public AcmeMockServerBuilder addDirectoryResponseBody(String directoryResponseBody) {
