@@ -38,6 +38,7 @@ import java.util.Enumeration;
 
 /**
  * Test of LDAP based Keystore
+ * All certificates and ldiffs entries were generated/taken from src/test/resources/ca. See Readme.txt and comments at the top of elytron-keystore-tests.ldif.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
@@ -82,10 +83,10 @@ public class KeyStoreSuiteChild {
     @Test
     public void testIs() throws Exception {
         Assert.assertTrue(keyStore.isCertificateEntry("firefly"));
-        Assert.assertTrue(keyStore.isCertificateEntry("firefly_binary"));
+        Assert.assertTrue(keyStore.isCertificateEntry("binary"));
         Assert.assertFalse(keyStore.isCertificateEntry("nonexisting"));
         Assert.assertTrue(keyStore.isKeyEntry("firefly"));
-        Assert.assertTrue(keyStore.isKeyEntry("firefly_binary"));
+        Assert.assertTrue(keyStore.isKeyEntry("binary"));
         Assert.assertFalse(keyStore.isKeyEntry("nonexisting"));
     }
 
@@ -98,9 +99,9 @@ public class KeyStoreSuiteChild {
 
     @Test
     public void testGetCertificateBinary() throws Exception {
-        X509Certificate cert = (X509Certificate) keyStore.getCertificate("firefly_binary");
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate("binary");
         Assert.assertNotNull(cert);
-        Assert.assertEquals("CN=firefly_binary, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", cert.getSubjectDN().toString());
+        Assert.assertEquals("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Binary", cert.getSubjectDN().toString());
     }
 
     @Test
@@ -113,10 +114,10 @@ public class KeyStoreSuiteChild {
 
     @Test
     public void testGetAliasBinary() throws Exception {
-        X509Certificate cert = (X509Certificate) keyStore.getCertificate("firefly_binary");
+        X509Certificate cert = (X509Certificate) keyStore.getCertificate("binary");
         Assert.assertNotNull(cert);
         String alias = keyStore.getCertificateAlias(cert);
-        Assert.assertEquals("firefly_binary", alias);
+        Assert.assertEquals("binary", alias);
     }
 
     @Test
@@ -130,11 +131,11 @@ public class KeyStoreSuiteChild {
 
     @Test
     public void testGetCertificateChainBinary() throws Exception {
-        Certificate[] chain = keyStore.getCertificateChain("firefly_binary");
+        Certificate[] chain = keyStore.getCertificateChain("binary");
         Assert.assertNotNull(chain);
         Assert.assertEquals(2, chain.length);
-        Assert.assertEquals("CN=firefly_binary, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", ((X509Certificate)chain[0]).getSubjectDN().toString());
-        Assert.assertEquals("CN=localhost, OU=Elytron, O=Elytron, L=Elytron, ST=Elytron, C=UK", ((X509Certificate)chain[1]).getSubjectDN().toString());
+        Assert.assertEquals("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Binary", ((X509Certificate)chain[0]).getSubjectDN().toString());
+        Assert.assertEquals("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA", ((X509Certificate)chain[1]).getSubjectDN().toString());
     }
 
     @Test
@@ -146,7 +147,7 @@ public class KeyStoreSuiteChild {
 
     @Test
     public void testGetKeyBinary() throws Exception {
-        RSAPrivateCrtKey key = (RSAPrivateCrtKey) keyStore.getKey("firefly_binary", "secret".toCharArray());
+        RSAPrivateCrtKey key = (RSAPrivateCrtKey) keyStore.getKey("binary", "Elytron".toCharArray());
         Assert.assertNotNull(key);
         Assert.assertEquals(BigInteger.valueOf(65537), key.getPublicExponent());
     }
