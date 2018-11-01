@@ -298,7 +298,7 @@ public abstract class CipherSuiteSelector {
      *                     <li>{@code aDSS} or {@code DSS}, which matches supported cipher suites using DSS authentication (see {@link Authentication#DSS}).</li>
      *                     <li>{@code aDH}, which matches supported cipher suites using DH authentication (see {@link Authentication#DH}).</li>
      *                     <li>{@code aECDH}, which matches supported cipher suites using ECDH authentication (see {@link Authentication#ECDH}).</li>
-     *                     <li>{@code aECDSA}, which matches supported cipher suites using ECDSA authentication (see {@link Authentication#ECDSA}).</li>
+     *                     <li>{@code aECDSA} or {@code ECDSA}, which matches supported cipher suites using ECDSA authentication (see {@link Authentication#ECDSA}).</li>
      *                     <li>{@code kFZA}, which matches supported cipher suites using Fortezza key agreement (see {@link KeyAgreement#FZA}).</li>
      *                     <li>{@code aFZA}, which matches supported cipher suites using Fortezza authentication (see {@link Authentication#FZA}).</li>
      *                     <li>{@code eFZA}, which matches supported cipher suites using Fortezza encryption (see {@link Encryption#FZA}).</li>
@@ -330,10 +330,12 @@ public abstract class CipherSuiteSelector {
      *                     <li>{@code kGOST}, which matches supported cipher suites using VKO 34.10 key exchange (see {@link KeyAgreement#GOST}).</li>
      *                     <li>{@code GOST94}, which matches supported cipher suites using GOST R 34.11-94 based HMAC (see {@link Digest#GOST94}).</li>
      *                     <li>{@code GOST89MAC}, which matches supported cipher suites using GOST 28147-89 based MAC (not HMAC) (see {@link Digest#GOST89MAC}).</li>
+     *                     <li>{@code kPSK}, which matches supported cipher suites using pre-shared keys key agreement (see {@link KeyAgreement#PSK}).</li>
+     *                     <li>{@code aPSK}, which matches supported cipher suites using pre-shared keys authentication (see {@link Authentication#PSK}).</li>
      *                     <li>{@code PSK}, which matches supported cipher suites using pre-shared keys (see {@link Authentication#PSK} and {@link KeyAgreement#PSK}).</li>
-     *                     <li>{@code RSAPSK}, which matches supported cipher suites using RSA-based pre-shared keys (see {@link KeyAgreement#RSAPSK}).</li>
-     *                     <li>{@code EDHPSK} or {@code DHEPSK}, which matches supported cipher suites using ephemeral DH-based pre-shared keys (see {@link KeyAgreement#DHEPSK}).</li>
-     *                     <li>{@code EECDHPSK}, which matches supported cipher suites using ephemeral elliptic-curve DH-based pre-shared keys (see {@link KeyAgreement#ECDHEPSK}).</li>
+     *                     <li>{@code RSAPSK} or {@code kRSAPSK}, which matches supported cipher suites using RSA-based pre-shared keys (see {@link KeyAgreement#RSAPSK}).</li>
+     *                     <li>{@code kEDHPSK}, {@code kDHEPSK}, {@code EDHPSK} or {@code DHEPSK}, which matches supported cipher suites using ephemeral DH-based pre-shared keys (see {@link KeyAgreement#DHEPSK}).</li>
+     *                     <li>{@code kEECDHPSK}, {@code EECDHPSK}, {@code kECDHEPSK} or {@code ECDHEPSK}, which matches supported cipher suites using ephemeral elliptic-curve DH-based pre-shared keys (see {@link KeyAgreement#ECDHEPSK}).</li>
      *                 </ul>
      *             </li>
      *             <li>More than one of any of the above keywords or cipher suite names joined by {@code +} symbols, which
@@ -494,6 +496,8 @@ public abstract class CipherSuiteSelector {
             case "LOW":         return CipherSuitePredicate.matchLevel(SecurityLevel.LOW);
             case "EXP":         // synonym
             case "EXPORT":      return CipherSuitePredicate.matchLevel(SecurityLevel.EXP40, SecurityLevel.EXP56);
+            case "EXPORT40":    return CipherSuitePredicate.matchLevel(SecurityLevel.EXP40);
+            case "EXPORT56":    return CipherSuitePredicate.matchLevel(SecurityLevel.EXP56);
             case "NULL":        // synonym
             case "eNULL":       return CipherSuitePredicate.matchEncryption(Encryption.NULL);
             case "aNULL":       return CipherSuitePredicate.matchAuthentication(Authentication.NULL);
@@ -566,7 +570,7 @@ public abstract class CipherSuiteSelector {
             case "kDHEPSK":     // synonym
             case "kEDHPSK":     return CipherSuitePredicate.matchKeyAgreement(KeyAgreement.DHEPSK);
             case "EECDHPSK":    // synonym
-            case "kEECDHPSK":   return CipherSuitePredicate.matchKeyAgreement(KeyAgreement.ECDHEPSK);
+            case "kEECDHPSK":   // synonym
             case "ECDHEPSK":    // synonym
             case "kECDEHPSK":   return CipherSuitePredicate.matchKeyAgreement(KeyAgreement.ECDHEPSK);
 
