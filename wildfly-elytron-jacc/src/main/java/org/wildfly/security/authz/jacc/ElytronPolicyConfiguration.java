@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.authz.jacc._private.ElytronMessages.log;
 
 /**
  * {@link javax.security.jacc.PolicyConfiguration} implementation.

@@ -51,7 +51,6 @@ import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.message.AuthException;
 import javax.security.auth.message.AuthStatus;
-import javax.security.jacc.PolicyContextException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
@@ -1803,35 +1802,35 @@ public interface ElytronMessages extends BasicLogger {
 
     /* authz package */
 
-    @LogMessage(level = ERROR)
-    @Message(id = 8500, value = "Failed to check permissions for protection domain [%s] and permission [%s].")
-    void authzFailedToCheckPermission(ProtectionDomain domain, Permission permission, @Cause Throwable cause);
+    //@LogMessage(level = ERROR)
+    //@Message(id = 8500, value = "Failed to check permissions for protection domain [%s] and permission [%s].")
+    //void authzFailedToCheckPermission(ProtectionDomain domain, Permission permission, @Cause Throwable cause);
 
-    @Message(id = 8501, value = "Invalid state [%s] for operation.")
-    UnsupportedOperationException authzInvalidStateForOperation(String actualState);
+    //@Message(id = 8501, value = "Invalid state [%s] for operation.")
+    //UnsupportedOperationException authzInvalidStateForOperation(String actualState);
 
-    @Message(id = 8502, value = "Can't link policy configuration [%s] to itself.")
-    IllegalArgumentException authzLinkSamePolicyConfiguration(String contextID);
+    //@Message(id = 8502, value = "Can't link policy configuration [%s] to itself.")
+    //IllegalArgumentException authzLinkSamePolicyConfiguration(String contextID);
 
-    @Message(id = 8503, value = "ContextID not set. Check if the context id was set using PolicyContext.setContextID.")
-    IllegalStateException authzContextIdentifierNotSet();
+    //@Message(id = 8503, value = "ContextID not set. Check if the context id was set using PolicyContext.setContextID.")
+    //IllegalStateException authzContextIdentifierNotSet();
 
-    @Message(id = 8504, value = "Invalid policy context identifier [%s].")
-    IllegalArgumentException authzInvalidPolicyContextIdentifier(String contextID);
+    //@Message(id = 8504, value = "Invalid policy context identifier [%s].")
+    //IllegalArgumentException authzInvalidPolicyContextIdentifier(String contextID);
 
-    @Message(id = 8505, value = "Could not obtain PolicyConfiguration for contextID [%s].")
-    PolicyContextException authzUnableToObtainPolicyConfiguration(String contextId, @Cause Throwable cause);
+    //@Message(id = 8505, value = "Could not obtain PolicyConfiguration for contextID [%s].")
+    //PolicyContextException authzUnableToObtainPolicyConfiguration(String contextId, @Cause Throwable cause);
 
-    @Message(id = 8506, value = "Policy configuration with contextID [%s] is not in service state.")
-    IllegalStateException authzPolicyConfigurationNotInService(String contextID);
+    //@Message(id = 8506, value = "Policy configuration with contextID [%s] is not in service state.")
+    //IllegalStateException authzPolicyConfigurationNotInService(String contextID);
 
     // @LogMessage(level = ERROR)
     // @Message(id = 8507, value = "Could not obtain dynamic permissions.")
     // void authzFailedGetDynamicPermissions(@Cause Throwable cause);
 
-    @LogMessage(level = DEBUG)
-    @Message(id = 8508, value = "Could not obtain authorized identity.")
-    void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
+    //@LogMessage(level = DEBUG)
+    //@Message(id = 8508, value = "Could not obtain authorized identity.")
+    //void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
 
     // @Once
     // @LogMessage(level = WARN)

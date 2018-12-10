@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.authz.jacc._private.ElytronMessages.log;
 
 /**
  * <p>A {@link Policy} implementation that knows how to process JACC permissions.

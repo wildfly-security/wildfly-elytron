@@ -41,6 +41,17 @@
         </dependency>
         
         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
             <groupId>org.jboss.spec.javax.security.jacc</groupId>
             <artifactId>jboss-jacc-api_1.5_spec</artifactId>
             <scope>provided</scope>
