@@ -29,9 +29,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron</artifactId>
-    <version>1.8.0.Alpha1-SNAPSHOT</version>
 
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
