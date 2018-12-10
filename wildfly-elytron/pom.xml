@@ -200,7 +200,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.1</version>           
+                <version>3.2.1</version>                           
                 <executions>
                   <execution>
                       <phase>package</phase>
@@ -208,6 +208,7 @@
                         <goal>shade</goal>
                       </goals>
                       <configuration>
+                          <createDependencyReducedPom>false</createDependencyReducedPom>
                           <artifactSet>
                                 <excludes>
                                     <exclude>org.wildfly.common:wildfly-common</exclude>
