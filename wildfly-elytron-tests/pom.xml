@@ -22,20 +22,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>org.jboss</groupId>
-        <artifactId>jboss-parent</artifactId>
-        <version>25</version>
+        <groupId>org.wildfly.security</groupId>
+        <artifactId>wildfly-elytron-parent</artifactId>
+        <version>1.8.0.Alpha1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.wildfly.security</groupId>
-    <artifactId>wildfly-elytron-parent</artifactId>
-    <version>1.8.0.Alpha1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <artifactId>wildfly-elytron-tests</artifactId>
 
-    <name>WildFly Elytron Parent</name>
-    <description>WildFly Security</description>
+    <name>WildFly Elytron</name>
+    <description>WildFly Security SPIs</description>
 
     <issueManagement>
         <system>Jira</system>
@@ -53,49 +50,6 @@
         <connection>scm:git:git@github.com:wildfly-security/wildfly-elytron.git</connection>
         <url>https://github.com/wildfly-security/wildfly-elytron</url>
     </scm>
-
-    <properties>
-        <jdk.min.version>9</jdk.min.version>
-        <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
-        <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
-        <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
-        <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
-
-        <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.0.6.Final</version.org.jboss.logmanager>
-        <version.org.jboss.logmanager.log4j-jboss>1.1.4.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.1.0.Final</version.org.jboss.logging.tools>
-        <version.org.jboss.modules>1.6.0.Final</version.org.jboss.modules>
-        <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
-        <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.1.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>        
-        <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>1.0.2.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
-        <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
-        <version.org.jboss.threads>2.2.1.Final</version.org.jboss.threads>
-        <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
-        <version.junit.junit>4.12</version.junit.junit>
-        <version.jmockit>1.33</version.jmockit>
-        <version.hsqldb>2.4.0</version.hsqldb>
-        <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
-        <version.net.minidev.json-smart>2.3</version.net.minidev.json-smart>
-        <version.com.nimbusds.nimbus-jose-jwt>4.39.2</version.com.nimbusds.nimbus-jose-jwt>
-        <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
-        <version.org.wildfly.checkstyle-config>1.0.6.Final</version.org.wildfly.checkstyle-config>
-        <version.org.wildfly.client.config>1.0.0.Final</version.org.wildfly.client.config>
-        <version.org.wildfly.common>1.4.0.Final</version.org.wildfly.common>
-        <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
-        <version.org.mock-server.mockserver-netty>5.3.0</version.org.mock-server.mockserver-netty>
-
-        <test.level>INFO</test.level>
-        <!-- Checkstyle configuration -->
-        <linkXRef>false</linkXRef>
-
-        <!-- version from jboss-parent is 6.15 but then some checks fail -->
-        <version.checkstyle>6.8</version.checkstyle>
-        <!-- Modularized JDK support (various workarounds) - activated via profile -->
-        <modular.jdk.args/>
-        <modular.jdk.props/>
-    </properties>
 
     <build>
         <resources>
@@ -121,6 +75,47 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
+
+            <!-- TODO - Restore XML Validation 
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>xml-maven-plugin</artifactId>
+                <configuration>
+                    <validationSets>
+                        <validationSet>
+                            <dir>src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_0.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-1_0.xsd</systemId>
+                        </validationSet>
+                        <validationSet>
+                            <dir>src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_1.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_1.xsd</systemId>
+                        </validationSet>
+                        <validationSet>
+                            <dir>src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_2.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_2.xsd</systemId>
+                        </validationSet>
+                    </validationSets>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>validate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            -->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -358,317 +353,269 @@
         </pluginManagement>
     </build>
 
-    <dependencyManagement>
-        <dependencies>
-             <!--
-                 Local Modules
-            -->
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-titan</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-jacc</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-titan</artifactId>
+        </dependency>
 
-            <!--
-                 External Modules
-            -->
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging</artifactId>
-                <version>${version.org.jboss.logging}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-annotations</artifactId>
-                <version>${version.org.jboss.logging.tools}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-processor</artifactId>
-                <version>${version.org.jboss.logging.tools}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.logmanager</groupId>
-                <artifactId>jboss-logmanager</artifactId>
-                <version>${version.org.jboss.logmanager}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.modules</groupId>
-                <artifactId>jboss-modules</artifactId>
-                <version>${version.org.jboss.modules}</version>
-                <scope>provided</scope>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>org.kohsuke.metainf-services</groupId>
-                <artifactId>metainf-services</artifactId>
-                <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
-                <optional>true</optional>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-jacc</artifactId>
+        </dependency>
 
-            <dependency>
-                <groupId>org.wildfly.client</groupId>
-                <artifactId>wildfly-client-config</artifactId>
-                <version>${version.org.wildfly.client.config}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.common</groupId>
-                <artifactId>wildfly-common</artifactId>
-                <version>${version.org.wildfly.common}</version>
-                <!-- scope is compile ELY-1153 -->
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.modules</groupId>
+            <artifactId>jboss-modules</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.spec.javax.security.jacc</groupId>
-                <artifactId>jboss-jacc-api_1.5_spec</artifactId>
-                <version>${version.org.jboss.spec.org.jboss.spec.javax.security.jacc}</version>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.spec.javax.security.auth.message</groupId>
-                <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
-                <version>${version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec}</version>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.security.jacc</groupId>
+            <artifactId>jboss-jacc-api_1.5_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.spec.javax.servlet</groupId>
-                <artifactId>jboss-servlet-api_3.1_spec</artifactId>
-                <version>${version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec}</version>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.security.auth.message</groupId>
+            <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.spec.javax.json</groupId>
-                <artifactId>jboss-json-api_1.0_spec</artifactId>
-                <version>${version.org.jboss.spec.jboss-json-api_1.0_spec}</version>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.servlet</groupId>
+            <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.threads</groupId>
-                <artifactId>jboss-threads</artifactId>
-                <version>${version.org.jboss.threads}</version>
-                <scope>provided</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.json</groupId>
+            <artifactId>jboss-json-api_1.0_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-            <!--
-                  Test Scope Only
-             -->
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-asn1-api</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-asn1-ber</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-ldap-codec-core</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-ldap-codec-standalone</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-ldap-extras-codec-api</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.api</groupId>
-                <artifactId>api-ldap-model</artifactId>
-                <version>${version.org.apache.directory.api}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.jdbm</groupId>
-                <artifactId>apacheds-jdbm1</artifactId>
-                <version>${version.org.apache.directory.jdbm}</version>
-                <type>jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-core-api</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-core-annotations</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.directory.jdbm</groupId>
-                        <artifactId>apacheds-jdbm1</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-interceptor-kerberos</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-kerberos-codec</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-protocol-kerberos</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-protocol-ldap</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.directory.jdbm</groupId>
-                        <artifactId>apacheds-jdbm1</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.mavibot</groupId>
-                <artifactId>mavibot</artifactId>
-                <version>${version.org.apache.directory.mavibot}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${version.commons-io.commons-io}</version>
-                <scope>test</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.threads</groupId>
+            <artifactId>jboss-threads</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.jboss.logmanager</groupId>
-                <artifactId>log4j-jboss-logmanager</artifactId>
-                <version>${version.org.jboss.logmanager.log4j-jboss}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.slf4j</groupId>
-                <artifactId>slf4j-jboss-logmanager</artifactId>
-                <version>${version.org.jboss.slf4j}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>${version.junit.junit}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jmockit</groupId>
-                <artifactId>jmockit</artifactId>
-                <version>${version.jmockit}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcmail-jdk15on</artifactId>
-                <version>1.56</version>
-                <scope>test</scope>
-            </dependency>
+        <!--
+              Test Scope Only
+         -->
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-asn1-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-asn1-ber</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-codec-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-codec-standalone</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-extras-codec-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-model</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.jdbm</groupId>
+            <artifactId>apacheds-jdbm1</artifactId>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-core-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-core-annotations</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.directory.jdbm</groupId>
+                    <artifactId>apacheds-jdbm1</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-interceptor-kerberos</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-kerberos-codec</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-protocol-kerberos</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-protocol-ldap</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.directory.jdbm</groupId>
+                    <artifactId>apacheds-jdbm1</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.mavibot</groupId>
+            <artifactId>mavibot</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-            <!-- HSQL Database-->
-            <dependency>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-                <version>${version.hsqldb}</version>
-                <scope>test</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>log4j-jboss-logmanager</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logmanager</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmockit</groupId>
+            <artifactId>jmockit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcmail-jdk15on</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>org.glassfish</groupId>
-                <artifactId>javax.json</artifactId>
-                <version>${version.org.glassfish.javax.json}</version>
-                <scope>test</scope>
-            </dependency>
+        <!-- HSQL Database-->
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>net.minidev</groupId>
-                <artifactId>json-smart</artifactId>
-                <version>${version.net.minidev.json-smart}</version>
-                <scope>test</scope>
-            </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>${version.com.nimbusds.nimbus-jose-jwt}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.minidev</groupId>
-                        <artifactId>json-smart</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+        <dependency>
+            <groupId>net.minidev</groupId>
+            <artifactId>json-smart</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-            <!-- Mock Web Server -->
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>mockwebserver</artifactId>
-                <version>${version.com.squareup.okhttp3.mockwebserver}</version>
-                <scope>test</scope>
-            </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.minidev</groupId>
+                    <artifactId>json-smart</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-            <dependency>
-                <groupId>org.mock-server</groupId>
-                <artifactId>mockserver-netty</artifactId>
-                <version>${version.org.mock-server.mockserver-netty}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ch.qos.logback</groupId>
-                        <artifactId>logback-classic</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+        <!-- Mock Web Server -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
     <profiles>
         <profile>
@@ -687,8 +634,6 @@
                 <version.surefire.plugin>2.19.1</version.surefire.plugin>
             </properties>
         </profile>
-
-        <!-- TODO Restore JAPICMP Comparison.
         <profile>
             <id>compatibilityCheck</id>
             <activation>
@@ -698,6 +643,9 @@
             </activation>
             <build>
                 <plugins>
+
+                    <!-- TODO Restore JAPICMP Comparison.
+
                     <plugin>
                         <groupId>com.github.siom79.japicmp</groupId>
                         <artifactId>japicmp-maven-plugin</artifactId>
@@ -791,9 +739,10 @@
                             </dependency>
                         </dependencies>
                     </plugin>
+                    -->
                 </plugins>
             </build>
-        </profile>-->
+        </profile>
         <profile>
             <id>skip-default-tests</id>
             <build>
@@ -898,12 +847,4 @@
             <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <modules>
-        <module>wildfly-elytron-titan</module>
-        
-        <module>wildfly-elytron-jacc</module>
-        <module>wildfly-elytron-tests</module>        
-        <module>wildfly-elytron</module>
-    </modules>
 </project>
