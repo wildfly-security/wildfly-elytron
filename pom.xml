@@ -368,6 +368,12 @@
                 <artifactId>wildfly-elytron-titan</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jacc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!--
                  External Modules
@@ -895,6 +901,9 @@
 
     <modules>
         <module>wildfly-elytron-titan</module>
+        
+        <module>wildfly-elytron-jacc</module>
+        
         <module>wildfly-elytron</module>
     </modules>
 </project>
