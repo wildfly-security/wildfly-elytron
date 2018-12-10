@@ -209,6 +209,13 @@
                       <goals>
                         <goal>shade</goal>
                       </goals>
+                      <configuration>
+                          <artifactSet>
+                                <excludes>
+                                    <exclude>org.wildfly.common:wildfly-common</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>                  
                     </execution>
                 </executions>
             </plugin>
@@ -415,7 +422,7 @@
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
-            <scope>provided</scope>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
 
         <dependency>
