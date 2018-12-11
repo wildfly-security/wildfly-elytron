@@ -38,7 +38,6 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
-import org.wildfly.security.http.util.SecurityIdentityServerMechanismFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 

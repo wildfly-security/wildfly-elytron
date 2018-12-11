@@ -59,9 +59,9 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         CallbackHandler callbackHandler = getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
 
         final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler));
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(BASIC_NAME, Collections.emptyMap(), callbackHandler));
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, digestProps, callbackHandler));
+        mechanisms.add(digestFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler));
+        mechanisms.add(basicFactory.createAuthenticationMechanism(BASIC_NAME, Collections.emptyMap(), callbackHandler));
+        mechanisms.add(digestFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, digestProps, callbackHandler));
 
         authenticator = HttpAuthenticator.builder()
                 .setMechanismSupplier(() -> mechanisms)

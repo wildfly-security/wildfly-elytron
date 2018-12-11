@@ -368,7 +368,53 @@
                 <artifactId>wildfly-elytron-titan</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-bearer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-cert</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-form</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-spnego</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-sso</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jacc</artifactId>
@@ -919,7 +965,16 @@
 
     <modules>
         <module>wildfly-elytron-titan</module>
-        
+
+        <module>wildfly-elytron-http</module>
+        <module>wildfly-elytron-http-basic</module>
+        <module>wildfly-elytron-http-bearer</module>
+        <module>wildfly-elytron-http-cert</module>
+        <module>wildfly-elytron-http-digest</module>
+        <module>wildfly-elytron-http-form</module>
+        <module>wildfly-elytron-http-spnego</module>
+        <module>wildfly-elytron-http-sso</module>
+        <module>wildfly-elytron-http-util</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-sasl-digest</module>

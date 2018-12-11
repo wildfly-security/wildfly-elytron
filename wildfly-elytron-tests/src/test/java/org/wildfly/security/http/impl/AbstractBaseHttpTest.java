@@ -43,6 +43,9 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.http.basic.BasicMechanismFactory;
+import org.wildfly.security.http.digest.DigestMechanismFactory;
+import org.wildfly.security.http.digest.NonceManager;
 
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
@@ -72,7 +75,8 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
 public class AbstractBaseHttpTest extends BaseTestCase {
 
-    protected HttpServerAuthenticationMechanismFactory mechanismFactory = new ServerMechanismFactoryImpl();
+	protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
+    protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();
 
     protected void mockDigestNonce(final String nonce){
         new MockUp<NonceManager>(){
