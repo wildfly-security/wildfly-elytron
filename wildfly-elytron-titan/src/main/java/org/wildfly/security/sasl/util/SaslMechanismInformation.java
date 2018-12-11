@@ -46,7 +46,6 @@ import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.gs2.Gs2;
-import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 
 /**
  * A collection of predicates and other information which can be used to filter SASL mechanisms.
@@ -83,6 +82,7 @@ public final class SaslMechanismInformation {
         public static final String EAP_AES128 = "EAP-AES128";
         public static final String EAP_AES128_PLUS = "EAP-AES128-PLUS";
         public static final String EXTERNAL = "EXTERNAL";
+        public static final String JBOSS_LOCAL_USER = "JBOSS-LOCAL-USER";
         public static final String OAUTH_10_A = "OAUTH10A";
         public static final String OAUTHBEARER = "OAUTHBEARER";
         public static final String OPENID20 = "OPENID20";
@@ -695,7 +695,7 @@ public final class SaslMechanismInformation {
         switch (mechName) {
             case Names.ANONYMOUS:
             case Names.EXTERNAL:
-            case LocalUserSaslFactory.JBOSS_LOCAL_USER:
+            case Names.JBOSS_LOCAL_USER:
             case Names.GSSAPI:
             case Gs2.GS2_KRB5:
             case Gs2.GS2_KRB5_PLUS: {
@@ -735,7 +735,7 @@ public final class SaslMechanismInformation {
      */
     public static boolean doesNotRequireClientCredentials(final String mechName) {
         switch (mechName) {
-            case LocalUserSaslFactory.JBOSS_LOCAL_USER:
+            case Names.JBOSS_LOCAL_USER:
             case Names.ANONYMOUS:
             case Names.GSSAPI:
             case Names.EXTERNAL: {

@@ -453,6 +453,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-localuser</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-otp</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1005,6 +1011,7 @@
         <module>wildfly-elytron-sasl-entity</module>
         <module>wildfly-elytron-sasl-external</module>
         <module>wildfly-elytron-sasl-gssapi</module>
+        <module>wildfly-elytron-sasl-localuser</module>
         <module>wildfly-elytron-sasl-otp</module>
         <module>wildfly-elytron-sasl-scram</module>
         <module>wildfly-elytron-tests</module>
