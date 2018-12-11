@@ -150,12 +150,12 @@ public class WildFlyElytronProvider extends VersionedProvider {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
 
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "CLIENT_CERT", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-256", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));
 
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BEARER_TOKEN", "org.wildfly.security.http.impl.ServerMechanismFactoryImpl", emptyList, emptyMap));

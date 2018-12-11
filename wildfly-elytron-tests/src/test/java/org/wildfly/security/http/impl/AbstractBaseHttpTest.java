@@ -43,6 +43,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.http.basic.BasicMechanismFactory;
 
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
@@ -72,6 +73,7 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
 public class AbstractBaseHttpTest extends BaseTestCase {
 
+	protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
     protected HttpServerAuthenticationMechanismFactory mechanismFactory = new ServerMechanismFactoryImpl();
 
     protected void mockDigestNonce(final String nonce){

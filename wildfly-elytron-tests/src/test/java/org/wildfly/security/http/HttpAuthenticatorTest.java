@@ -60,7 +60,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
         final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
         mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler));
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(BASIC_NAME, Collections.emptyMap(), callbackHandler));
+        mechanisms.add(basicFactory.createAuthenticationMechanism(BASIC_NAME, Collections.emptyMap(), callbackHandler));
         mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, digestProps, callbackHandler));
 
         authenticator = HttpAuthenticator.builder()

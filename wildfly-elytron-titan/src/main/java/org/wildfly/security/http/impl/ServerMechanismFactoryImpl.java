@@ -84,7 +84,6 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     public String[] getMechanismNames(Map<String, ?> properties) {
         // TODO We may cache this later but for now leave the option open for properties to influence selection.
         ArrayList<String> mechanismNames = new ArrayList<>();
-        mechanismNames.add(BASIC_NAME);
         mechanismNames.add(CLIENT_CERT_NAME);
         mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(DIGEST_SHA256_NAME);
@@ -105,9 +104,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
-        switch (mechanismName) {
-            case BASIC_NAME:
-                return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);
+        switch (mechanismName) {                
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
             case DIGEST_NAME:
@@ -115,9 +112,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case DIGEST_SHA256_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA256_NAME, SHA256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
             case DIGEST_SHA512_256_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
-            case FORM_NAME:
-                return new FormAuthenticationMechanism(callbackHandler, properties);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));                
             case SPNEGO_NAME:
                 return new SpnegoAuthenticationMechanism(callbackHandler, properties);
             case BEARER_TOKEN:

@@ -43,7 +43,7 @@ import static org.wildfly.security._private.ElytronMessages.httpUserPass;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+public abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
     protected final CallbackHandler callbackHandler;
 

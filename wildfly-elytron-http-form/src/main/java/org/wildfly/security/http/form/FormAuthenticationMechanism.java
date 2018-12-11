@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.form;
 
 import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
@@ -51,6 +51,7 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
+import org.wildfly.security.http.impl.UsernamePasswordAuthenticationMechanism;
 
 /**
  * A generic FORM authentication mechanism which is usable in a number of different scenarios.

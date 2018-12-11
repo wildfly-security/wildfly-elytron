@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.basic;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.fill;
@@ -44,6 +44,7 @@ import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.impl.UsernamePasswordAuthenticationMechanism;
 
 /**
  * Implementation of the HTTP BASIC authentication mechanism

@@ -368,7 +368,23 @@
                 <artifactId>wildfly-elytron-titan</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-form</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jacc</artifactId>
@@ -913,7 +929,10 @@
 
     <modules>
         <module>wildfly-elytron-titan</module>
-        
+
+        <module>wildfly-elytron-http</module>
+        <module>wildfly-elytron-http-basic</module>
+        <module>wildfly-elytron-http-form</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-sasl-digest</module>
