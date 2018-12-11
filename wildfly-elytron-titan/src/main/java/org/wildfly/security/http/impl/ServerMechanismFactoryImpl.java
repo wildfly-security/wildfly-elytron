@@ -80,7 +80,6 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     public String[] getMechanismNames(Map<String, ?> properties) {
         // TODO We may cache this later but for now leave the option open for properties to influence selection.
         ArrayList<String> mechanismNames = new ArrayList<>();
-        mechanismNames.add(CLIENT_CERT_NAME);
         mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(DIGEST_SHA256_NAME);
         mechanismNames.add(DIGEST_SHA512_256_NAME);
@@ -97,9 +96,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
-        switch (mechanismName) {                
-            case CLIENT_CERT_NAME:
-                return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
+        switch (mechanismName) {                                
             case DIGEST_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_NAME, MD5, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
             case DIGEST_SHA256_NAME:

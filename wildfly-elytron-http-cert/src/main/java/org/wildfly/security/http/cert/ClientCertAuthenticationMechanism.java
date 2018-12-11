@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.cert;
 
 import static org.wildfly.security._private.ElytronMessages.httpClientCert;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
