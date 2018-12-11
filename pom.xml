@@ -439,6 +439,12 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-otp</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!--
                  External Modules
             -->
@@ -979,6 +985,7 @@
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-sasl-digest</module>
         <module>wildfly-elytron-sasl-entity</module>
+        <module>wildfly-elytron-sasl-otp</module>
         <module>wildfly-elytron-tests</module>
         <module>wildfly-elytron</module>
     </modules>
