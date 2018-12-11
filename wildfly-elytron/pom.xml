@@ -341,6 +341,10 @@
             <artifactId>wildfly-elytron-jacc</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-sasl-digest</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.wildfly.common</groupId>
