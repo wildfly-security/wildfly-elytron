@@ -340,6 +340,11 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-jacc</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-jaspi</artifactId>
+        </dependency>        
 
         <dependency>
             <groupId>org.wildfly.security</groupId>

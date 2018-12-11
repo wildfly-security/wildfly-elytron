@@ -17,7 +17,7 @@
 package org.wildfly.security.auth.jaspi.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.jaspi._private.ElytronMessages.log;
 
 import java.util.ArrayList;
 import java.util.HashMap;

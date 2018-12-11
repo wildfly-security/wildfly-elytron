@@ -359,18 +359,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.spec.javax.security.auth.message</groupId>
-            <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.1_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.jboss.spec.javax.json</groupId>
             <artifactId>jboss-json-api_1.0_spec</artifactId>
             <scope>provided</scope>
@@ -400,6 +388,7 @@
                 <version.surefire.plugin>2.19.1</version.surefire.plugin>
             </properties>
         </profile>
+        <!-- TODO Reenable JAPICMP
         <profile>
             <id>compatibilityCheck</id>
             <activation>
@@ -431,7 +420,7 @@
                                 <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
                                 <overrideCompatibilityChangeParameters>
-                                    <overrideCompatibilityChangeParameter><!-- allowing new method in interface if default impl provided -->
+                                    <overrideCompatibilityChangeParameter> allowing new method in interface if default impl provided 
                                         <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
                                         <binaryCompatible>true</binaryCompatible>
                                         <sourceCompatible>true</sourceCompatible>
@@ -505,6 +494,7 @@
                 </plugins>
             </build>
         </profile>
+        -->
         <profile>
             <id>skip-default-tests</id>
             <build>
