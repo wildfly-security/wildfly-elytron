@@ -344,6 +344,14 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http-basic</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-http-form</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-http-spnego</artifactId>
+        </dependency>                
 
         <dependency>
             <groupId>org.wildfly.security</groupId>

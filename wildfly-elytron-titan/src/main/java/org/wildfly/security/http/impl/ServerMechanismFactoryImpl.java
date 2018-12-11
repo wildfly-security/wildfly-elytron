@@ -19,7 +19,6 @@
 package org.wildfly.security.http.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
@@ -28,11 +27,9 @@ import static org.wildfly.security.http.HttpConstants.CONFIG_SKIP_CERTIFICATE_VE
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
-import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SHA512_256;
-import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
@@ -88,8 +85,6 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(DIGEST_SHA256_NAME);
         mechanismNames.add(DIGEST_SHA512_256_NAME);
-        mechanismNames.add(FORM_NAME);
-        mechanismNames.add(SPNEGO_NAME);
         mechanismNames.add(BEARER_TOKEN);
 
         return mechanismNames.toArray(new String[mechanismNames.size()]);
@@ -113,8 +108,6 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA256_NAME, SHA256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
             case DIGEST_SHA512_256_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));                
-            case SPNEGO_NAME:
-                return new SpnegoAuthenticationMechanism(callbackHandler, properties);
             case BEARER_TOKEN:
                 return new BearerTokenAuthenticationMechanism(callbackHandler);
         }
