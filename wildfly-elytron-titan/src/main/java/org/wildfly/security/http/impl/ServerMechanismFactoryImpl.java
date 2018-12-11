@@ -19,7 +19,6 @@
 package org.wildfly.security.http.impl;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
@@ -85,7 +84,6 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(DIGEST_SHA256_NAME);
         mechanismNames.add(DIGEST_SHA512_256_NAME);
-        mechanismNames.add(BEARER_TOKEN);
 
         return mechanismNames.toArray(new String[mechanismNames.size()]);
     }
@@ -107,9 +105,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case DIGEST_SHA256_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA256_NAME, SHA256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
             case DIGEST_SHA512_256_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));                
-            case BEARER_TOKEN:
-                return new BearerTokenAuthenticationMechanism(callbackHandler);
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));                                
         }
         return null;
     }

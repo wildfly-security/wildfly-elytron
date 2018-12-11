@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-http-spnego</artifactId>
+    <artifactId>wildfly-elytron-http-bearer</artifactId>
 
-    <name>WildFly Elytron - HTTP SPNEGO</name>
-    <description>WildFly Security HTTP SPNEGO Mechanism Implementation</description>
+    <name>WildFly Elytron - HTTP Bearer</name>
+    <description>WildFly Security HTTP Bearer Mechanism Implementation</description>
 
     <dependencies>
         <dependency>

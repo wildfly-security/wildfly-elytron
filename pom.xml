@@ -381,6 +381,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-bearer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-form</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -937,6 +942,7 @@
 
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>
+        <module>wildfly-elytron-http-bearer</module>
         <module>wildfly-elytron-http-form</module>
         <module>wildfly-elytron-http-spnego</module>
         <module>wildfly-elytron-jacc</module>

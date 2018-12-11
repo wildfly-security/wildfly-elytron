@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.bearer;
 
 import static org.wildfly.security._private.ElytronMessages.httpBearer;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
