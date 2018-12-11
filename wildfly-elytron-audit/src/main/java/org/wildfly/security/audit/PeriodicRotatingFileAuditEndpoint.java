@@ -33,7 +33,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.audit;
+import static org.wildfly.security.audit._private.ElytronMessages.audit;
 
 /**
  * An audit endpoint which rotates the log at a preset time interval.

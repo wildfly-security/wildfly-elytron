@@ -63,7 +63,6 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
 import org.wildfly.security.asn1.ASN1Exception;
-import org.wildfly.security.audit.EventPriority;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -2120,19 +2119,19 @@ public interface ElytronMessages extends BasicLogger {
 
     // 11000 - Unused in any Final release
 
-    @LogMessage(level = Logger.Level.FATAL)
-    @Message(id = 11001, value = "Endpoint unable to handle SecurityEvent priority=%s, message=%s")
-    void endpointUnavaiable(String priority, String message, @Cause Throwable cause);
+    //@LogMessage(level = Logger.Level.FATAL)
+    //@Message(id = 11001, value = "Endpoint unable to handle SecurityEvent priority=%s, message=%s")
+    //void endpointUnavaiable(String priority, String message, @Cause Throwable cause);
 
-    @Message(id = 11002, value = "Invalid EventPriority '%s' passed to AuditEndpoint.")
-    IllegalArgumentException invalidEventPriority(EventPriority eventPriority);
+    //@Message(id = 11002, value = "Invalid EventPriority '%s' passed to AuditEndpoint.")
+    //IllegalArgumentException invalidEventPriority(EventPriority eventPriority);
 
-    @LogMessage(level = Logger.Level.ERROR)
-    @Message(id = 11003, value = "Unable to rotate log file")
-    void unableToRotateLogFile( @Cause Throwable cause);
+    //@LogMessage(level = Logger.Level.ERROR)
+    //@Message(id = 11003, value = "Unable to rotate log file")
+    //void unableToRotateLogFile( @Cause Throwable cause);
 
-    @Message(id = 11004, value = "Invalid suffix \"%s\" - rotating by second or millisecond is not supported")
-    IllegalArgumentException rotatingBySecondUnsupported(String suffix);
+    //@Message(id = 11004, value = "Invalid suffix \"%s\" - rotating by second or millisecond is not supported")
+    //IllegalArgumentException rotatingBySecondUnsupported(String suffix);
 
     @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
     IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
@@ -2140,7 +2139,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
 
-    @LogMessage(level = Logger.Level.FATAL)
-    @Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")
-    void unableToAcceptEvent(@Cause Throwable cause);
+    //@LogMessage(level = Logger.Level.FATAL)
+    //@Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")
+    //void unableToAcceptEvent(@Cause Throwable cause);
 }
