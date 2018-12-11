@@ -363,7 +363,15 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http-spnego</artifactId>
-        </dependency>                
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-http-sso</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-http-util</artifactId>
+        </dependency>                                
 
         <dependency>
             <groupId>org.wildfly.security</groupId>

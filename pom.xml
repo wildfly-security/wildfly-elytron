@@ -404,6 +404,16 @@
                 <artifactId>wildfly-elytron-http-spnego</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-sso</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
@@ -957,6 +967,8 @@
         <module>wildfly-elytron-http-digest</module>
         <module>wildfly-elytron-http-form</module>
         <module>wildfly-elytron-http-spnego</module>
+        <module>wildfly-elytron-http-sso</module>
+        <module>wildfly-elytron-http-util</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-sasl-digest</module>
