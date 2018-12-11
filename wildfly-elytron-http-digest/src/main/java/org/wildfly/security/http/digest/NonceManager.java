@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.digest;
 
 import java.nio.ByteBuffer;
 import java.security.DigestException;
@@ -42,7 +42,7 @@ import org.wildfly.security.util._private.Arrays2;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class NonceManager {
+public class NonceManager {
 
     private static final int PREFIX_LENGTH = Integer.BYTES + Long.BYTES;
 

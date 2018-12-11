@@ -29,20 +29,16 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-http-basic</artifactId>
+    <artifactId>wildfly-elytron-http-digest</artifactId>
 
-    <name>WildFly Elytron - HTTP Basic</name>
-    <description>WildFly Security HTTP Basic Mechanism Implementation</description>
+    <name>WildFly Elytron - HTTP DIGEST</name>
+    <description>WildFly Security HTTP DIGEST Mechanism Implementation</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-titan</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-http</artifactId>
-        </dependency>        
         
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -59,17 +55,6 @@
             <artifactId>metainf-services</artifactId>
             <scope>provided</scope>
         </dependency>
-        
-        <dependency>
-            <groupId>org.jmockit</groupId>
-            <artifactId>jmockit</artifactId>
-            <scope>test</scope>
-        </dependency>  
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>        
     </dependencies>
 
 </project>

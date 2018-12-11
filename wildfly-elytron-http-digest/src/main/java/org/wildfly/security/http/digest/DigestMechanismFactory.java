@@ -16,13 +16,11 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http.impl;
+package org.wildfly.security.http.digest;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
-import static org.wildfly.security.http.HttpConstants.CONFIG_SKIP_CERTIFICATE_VERIFICATION;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
@@ -46,20 +44,20 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
 /**
- * The {@link HttpServerAuthenticationMechanismFactory} implementation for the mechanisms implemented within Elytron.
+ * The {@link HttpServerAuthenticationMechanismFactory} implementation for the HTTP Digest authentication mechanism.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
-public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMechanismFactory {
+public class DigestMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final Supplier<Provider[]> providers;
 
-    public ServerMechanismFactoryImpl() {
+    public DigestMechanismFactory() {
         providers = INSTALLED_PROVIDERS;
     }
 
-    public ServerMechanismFactoryImpl(final Provider provider) {
+    public DigestMechanismFactory(final Provider provider) {
         providers = () -> new Provider[] { provider };
     }
 

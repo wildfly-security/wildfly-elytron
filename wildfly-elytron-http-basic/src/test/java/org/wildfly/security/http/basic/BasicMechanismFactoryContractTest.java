@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http;
+package org.wildfly.security.http.basic;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,8 +28,9 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
-import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
 /**
  * Tests that ServerMechanismFactoryImpl fulfills specified contract by
@@ -37,9 +38,9 @@ import org.wildfly.security.sasl.test.BaseTestCase;
  *
  * @author Martin Choma
  */
-public class ServerMechanismFactoryImplContractTest extends BaseTestCase {
+public class BasicMechanismFactoryContractTest {
 
-    private HttpServerAuthenticationMechanismFactory httpServerAuthenticationMechanismFactory = new ServerMechanismFactoryImpl();
+    private HttpServerAuthenticationMechanismFactory httpServerAuthenticationMechanismFactory = new BasicMechanismFactory();
 
     CallbackHandler dummyCallbackHandler = new CallbackHandler() {
         @Override
