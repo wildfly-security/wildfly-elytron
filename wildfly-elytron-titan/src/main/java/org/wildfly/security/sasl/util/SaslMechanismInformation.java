@@ -45,7 +45,6 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
-import org.wildfly.security.sasl.gs2.Gs2;
 
 /**
  * A collection of predicates and other information which can be used to filter SASL mechanisms.
@@ -90,6 +89,8 @@ public final class SaslMechanismInformation {
         public static final String SAML20 = "SAML20";
         public static final String SECURID = "SECURID";
         public static final String PLAIN = "PLAIN";
+        public static final String GS2_KRB5 = "GS2-KRB5";
+        public static final String GS2_KRB5_PLUS = "GS2-KRB5-PLUS";
         public static final String GSSAPI = "GSSAPI";
 
         private Names() {}
@@ -697,8 +698,8 @@ public final class SaslMechanismInformation {
             case Names.EXTERNAL:
             case Names.JBOSS_LOCAL_USER:
             case Names.GSSAPI:
-            case Gs2.GS2_KRB5:
-            case Gs2.GS2_KRB5_PLUS: {
+            case Names.GS2_KRB5:
+            case Names.GS2_KRB5_PLUS: {
                 return false;
             }
             default: {
