@@ -18,7 +18,7 @@
 package org.wildfly.security.audit;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.audit;
+import static org.wildfly.security.audit._private.ElytronMessages.audit;
 
 import java.io.IOException;
 import java.util.function.Consumer;
