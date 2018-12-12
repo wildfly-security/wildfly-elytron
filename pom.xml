@@ -354,6 +354,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1076,6 +1081,7 @@
         <module>wildfly-elytron-auth</module>
         <module>wildfly-elytron-auth-server</module>
         <module>wildfly-elytron-base</module>
+        <module>wildfly-elytron-client</module>
         <module>wildfly-elytron-credential</module>
         <module>wildfly-elytron-credential-store</module>
         <module>wildfly-elytron-credential-source-deprecated</module>
