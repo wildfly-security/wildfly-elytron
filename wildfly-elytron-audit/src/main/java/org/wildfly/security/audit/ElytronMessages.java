@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.audit._private;
+package org.wildfly.security.audit;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -23,7 +23,6 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-import org.wildfly.security.audit.EventPriority;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -32,7 +31,7 @@ import org.wildfly.security.audit.EventPriority;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-public interface ElytronMessages extends BasicLogger {
+interface ElytronMessages extends BasicLogger {
     ElytronMessages audit = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.audit");
 
     /* Audit Exceptions */

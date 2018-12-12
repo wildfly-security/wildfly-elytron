@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.authz.jacc._private.ElytronMessages.log;
+import static org.wildfly.security.authz.jacc.ElytronMessages.log;
 import static org.wildfly.security.authz.jacc.ElytronPolicyConfiguration.State.OPEN;
 
 /**

@@ -29,7 +29,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.audit._private.ElytronMessages.audit;
+import static org.wildfly.security.audit.ElytronMessages.audit;
 
 /**
  * An audit endpoint which rotates the log when log file size reach given value.
