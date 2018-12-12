@@ -386,6 +386,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-store</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1058,6 +1063,7 @@
         <module>wildfly-elytron-asn1</module>
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-credential</module>
+        <module>wildfly-elytron-credential-store</module>
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>
         <module>wildfly-elytron-http-bearer</module>
