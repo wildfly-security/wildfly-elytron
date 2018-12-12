@@ -53,6 +53,7 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
@@ -71,7 +72,6 @@ import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism._private.MechanismUtil;
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  * A {@link HttpServerAuthenticationMechanism} implementation to support SPNEGO.

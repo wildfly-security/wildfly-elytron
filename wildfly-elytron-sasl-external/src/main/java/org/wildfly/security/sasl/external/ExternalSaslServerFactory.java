@@ -27,9 +27,9 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  * Implementation of the SASL {@code EXTERNAL} server mechanism.  See <a href="https://tools.ietf.org/html/rfc4422#appendix-A">RFC 4422

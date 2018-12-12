@@ -46,6 +46,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
@@ -57,7 +58,6 @@ import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  *

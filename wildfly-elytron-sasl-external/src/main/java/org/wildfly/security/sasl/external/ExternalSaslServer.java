@@ -30,8 +30,8 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

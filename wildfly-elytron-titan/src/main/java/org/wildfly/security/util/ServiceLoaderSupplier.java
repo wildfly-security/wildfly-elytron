@@ -18,8 +18,8 @@
 
 package org.wildfly.security.util;
 
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.manager.WildFlySecurityManager;
-import org.wildfly.security.util._private.Arrays2;
 
 import java.security.AccessControlContext;
 import java.security.AccessController;

@@ -24,7 +24,7 @@ import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.util._private.Arrays2;
+import org.wildfly.common.array.Arrays2;
 
 /**
  * A selector which chooses an SSL context based on connection information.
