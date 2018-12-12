@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-external</artifactId>
 
-    <name>WildFly Elytron - External SASL</name>
+    <name>WildFly Elytron - SASL External</name>
     <description>WildFly Security External SASL Implementation</description>
 
     <dependencies>

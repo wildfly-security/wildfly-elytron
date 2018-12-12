@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-otp</artifactId>
 
-    <name>WildFly Elytron - OTP SASL</name>
+    <name>WildFly Elytron - SASL OTP</name>
     <description>WildFly Security OTP SASL Implementation</description>
 
     <dependencies>

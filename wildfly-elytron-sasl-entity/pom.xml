@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-entity</artifactId>
 
-    <name>WildFly Elytron - Entity SASL</name>
+    <name>WildFly Elytron - SASL Entity</name>
     <description>WildFly Security Entity SASL Implementation</description>
 
     <dependencies>

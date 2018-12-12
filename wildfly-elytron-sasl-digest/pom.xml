@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-digest</artifactId>
 
-    <name>WildFly Elytron - Digest SASL</name>
+    <name>WildFly Elytron - SASL Digest</name>
     <description>WildFly Security Digest SASL Implementation</description>
 
     <dependencies>

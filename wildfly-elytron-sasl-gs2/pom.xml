@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-gs2</artifactId>
 
-    <name>WildFly Elytron - GS2 SASL</name>
+    <name>WildFly Elytron - SASL GS2</name>
     <description>WildFly Security GS2 SASL Implementation</description>
 
     <dependencies>
