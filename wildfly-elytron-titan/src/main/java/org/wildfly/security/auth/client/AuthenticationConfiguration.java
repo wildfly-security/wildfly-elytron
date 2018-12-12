@@ -109,8 +109,6 @@ import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.SaslMechanismSelector;
-import org.wildfly.security.sasl.localuser.LocalUserClient;
-import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.LocalPrincipalSaslClientFactory;
 import org.wildfly.security.sasl.util.PrivilegedSaslClientFactory;
@@ -164,6 +162,9 @@ public final class AuthenticationConfiguration {
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_SASL_PROTOCOL = 20;
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
+
+    private static final String JBOSS_LOCAL_USER_QUIET_AUTH = "wildfly.sasl.local-user.quiet-auth";
+    private static final String JBOSS_LOCAL_USER_LEGACY_QUIET_AUTH = "jboss.sasl.local-user.quiet-auth";
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] {
@@ -246,7 +247,7 @@ public final class AuthenticationConfiguration {
         this.saslClientFactorySupplier = null;
         this.parameterSpecs = Collections.emptyList();
         this.trustManagerFactory = null;
-        this.saslMechanismProperties = Collections.singletonMap(LocalUserClient.QUIET_AUTH, "true");
+        this.saslMechanismProperties = Collections.singletonMap(JBOSS_LOCAL_USER_QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.saslProtocol = null;
     }
@@ -432,7 +433,7 @@ public final class AuthenticationConfiguration {
         // anonymous is only supported if the principal is anonymous.  If the principal is anonymous, only anonymous or principal-less mechanisms are supported.
         if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && principal != AnonymousPrincipal.getInstance()) {
             // no callback which can handle a principal.
-            if (! (mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER) || SaslMechanismInformation.doesNotUsePrincipal(mechanismName))) {
+            if (! (mechanismName.equals(SaslMechanismInformation.Names.JBOSS_LOCAL_USER) || SaslMechanismInformation.doesNotUsePrincipal(mechanismName))) {
                 // the mechanism requires a principal.
                 if (getPrincipal() instanceof AnonymousPrincipal != mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
                     // either we have no principal & the mech requires one, or we have a principal but the mech is anonymous.
@@ -1338,8 +1339,8 @@ public final class AuthenticationConfiguration {
             mechanismProperties = new HashMap<>(mechanismProperties);
             // special handling for JBOSS-LOCAL-USER quiet auth... only pass it through if we have a user callback
             if (! userCallbackKinds.contains(CallbackKind.PRINCIPAL) && principal != AnonymousPrincipal.getInstance()) {
-                mechanismProperties.remove(LocalUserClient.QUIET_AUTH);
-                mechanismProperties.remove(LocalUserClient.LEGACY_QUIET_AUTH);
+                mechanismProperties.remove(JBOSS_LOCAL_USER_QUIET_AUTH);
+                mechanismProperties.remove(JBOSS_LOCAL_USER_LEGACY_QUIET_AUTH);
             }
             if (! mechanismProperties.isEmpty()) {
                 saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, mechanismProperties);
