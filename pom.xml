@@ -475,6 +475,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-oauth2</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-otp</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1031,6 +1037,7 @@
         <module>wildfly-elytron-sasl-gs2</module>
         <module>wildfly-elytron-sasl-gssapi</module>
         <module>wildfly-elytron-sasl-localuser</module>
+        <module>wildfly-elytron-sasl-oauth2</module>
         <module>wildfly-elytron-sasl-otp</module>
         <module>wildfly-elytron-sasl-scram</module>
         <module>wildfly-elytron-tests</module>
