@@ -371,6 +371,11 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-asn1</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-audit</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1024,6 +1029,7 @@
     <modules>
         <module>wildfly-elytron-titan</module>
 
+        <module>wildfly-elytron-asn1</module>
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>

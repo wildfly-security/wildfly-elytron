@@ -149,8 +149,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11, value = "Unable to create service for '%s.%s' ")
     NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
 
-    @Message(id = 12, value = "Unable to load OIDs database from properties file")
-    IllegalStateException unableToLoadOidsFromPropertiesFile(@Cause Throwable cause);
+//    @Message(id = 12, value = "Unable to load OIDs database from properties file")
+//    IllegalStateException unableToLoadOidsFromPropertiesFile(@Cause Throwable cause);
 
     /* auth package */
 
@@ -1626,11 +1626,12 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 7003, value = "Invalid trusted authority type")
     // ASN1Exception asnInvalidTrustedAuthorityType();
 
+    // Duplicated in ASN.1
     @Message(id = 7004, value = "Unexpected ASN.1 tag encountered")
     ASN1Exception asnUnexpectedTag();
-
-    @Message(id = 7005, value = "Unable to read X.509 certificate data")
-    ASN1Exception asnUnableToReadCertificateData(@Cause Throwable cause);
+//
+//    @Message(id = 7005, value = "Unable to read X.509 certificate data")
+//    ASN1Exception asnUnableToReadCertificateData(@Cause Throwable cause);
 
     @Message(id = 7006, value = "Invalid general name for URI type")
     ASN1Exception asnInvalidGeneralNameForUriType(@Cause Throwable cause);
@@ -1641,53 +1642,53 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7008, value = "IP address general name cannot be resolved")
     ASN1Exception asnIpAddressGeneralNameCannotBeResolved(@Cause Throwable cause);
 
-    @Message(id = 7009, value = "No sequence to end")
-    IllegalStateException noSequenceToEnd();
+//    @Message(id = 7009, value = "No sequence to end")
+//    IllegalStateException noSequenceToEnd();
 
-    @Message(id = 7010, value = "No set to end")
-    IllegalStateException noSetToEnd();
+//    @Message(id = 7010, value = "No set to end")
+//    IllegalStateException noSetToEnd();
 
-    @Message(id = 7011, value = "No explicitly tagged element to end")
-    IllegalStateException noExplicitlyTaggedElementToEnd();
+//    @Message(id = 7011, value = "No explicitly tagged element to end")
+//    IllegalStateException noExplicitlyTaggedElementToEnd();
 
-    @Message(id = 7012, value = "Unexpected end of input")
-    ASN1Exception asnUnexpectedEndOfInput();
+//    @Message(id = 7012, value = "Unexpected end of input")
+//    ASN1Exception asnUnexpectedEndOfInput();
+//
+//    @Message(id = 7013, value = "Invalid number of unused bits")
+//    ASN1Exception asnInvalidNumberOfUnusedBits();
+//
+//    @Message(id = 7014, value = "Non-zero length encountered for null type tag")
+//    ASN1Exception asnNonZeroLengthForNullTypeTag();
+//
+//    @Message(id = 7015, value = "Invalid high-tag-number form")
+//    ASN1Exception asnInvalidHighTagNumberForm();
 
-    @Message(id = 7013, value = "Invalid number of unused bits")
-    ASN1Exception asnInvalidNumberOfUnusedBits();
+//    @Message(id = 7016, value = "Length encoding exceeds 4 bytes")
+//    ASN1Exception asnLengthEncodingExceeds4bytes();
 
-    @Message(id = 7014, value = "Non-zero length encountered for null type tag")
-    ASN1Exception asnNonZeroLengthForNullTypeTag();
+//    @Message(id = 7017, value = "Invalid OID character")
+//    ASN1Exception asnInvalidOidCharacter();
 
-    @Message(id = 7015, value = "Invalid high-tag-number form")
-    ASN1Exception asnInvalidHighTagNumberForm();
+//    @Message(id = 7018, value = "OID must have at least 2 components")
+//    ASN1Exception asnOidMustHaveAtLeast2Components();
+//
+//    @Message(id = 7019, value = "Invalid value for first OID component; expected 0, 1, or 2")
+//    ASN1Exception asnInvalidValueForFirstOidComponent();
 
-    @Message(id = 7016, value = "Length encoding exceeds 4 bytes")
-    ASN1Exception asnLengthEncodingExceeds4bytes();
+//    @Message(id = 7020, value = "Invalid value for second OID component; expected a value between 0 and 39 (inclusive)")
+//    ASN1Exception asnInvalidValueForSecondOidComponent();
 
-    @Message(id = 7017, value = "Invalid OID character")
-    ASN1Exception asnInvalidOidCharacter();
+//    @Message(id = 7021, value = "Invalid length")
+//    ASN1Exception asnInvalidLength();
 
-    @Message(id = 7018, value = "OID must have at least 2 components")
-    ASN1Exception asnOidMustHaveAtLeast2Components();
+//    @Message(id = 7022, value = "Unknown tag type: %d")
+//    ASN1Exception asnUnknownTagType(int type);
 
-    @Message(id = 7019, value = "Invalid value for first OID component; expected 0, 1, or 2")
-    ASN1Exception asnInvalidValueForFirstOidComponent();
+//    @Message(id = 7023, value = "Unexpected character byte for printable string")
+//    ASN1Exception asnUnexpectedCharacterByteForPrintableString();
 
-    @Message(id = 7020, value = "Invalid value for second OID component; expected a value between 0 and 39 (inclusive)")
-    ASN1Exception asnInvalidValueForSecondOidComponent();
-
-    @Message(id = 7021, value = "Invalid length")
-    ASN1Exception asnInvalidLength();
-
-    @Message(id = 7022, value = "Unknown tag type: %d")
-    ASN1Exception asnUnknownTagType(int type);
-
-    @Message(id = 7023, value = "Unexpected character byte for printable string")
-    ASN1Exception asnUnexpectedCharacterByteForPrintableString();
-
-    @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
-    ASN1Exception asnInvalidLengthForBooleanTypeTag();
+//    @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
+//    ASN1Exception asnInvalidLengthForBooleanTypeTag();
 
     @Message(id = 7025, value = "Invalid general name for URI type: missing scheme")
     ASN1Exception asnInvalidGeneralNameForUriTypeMissingScheme();
