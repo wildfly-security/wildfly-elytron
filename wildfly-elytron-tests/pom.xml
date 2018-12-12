@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-tests</artifactId>
 
-    <name>WildFly Elytron</name>
+    <name>WildFly Elytron - Tests</name>
     <description>WildFly Security SPIs</description>
 
     <issueManagement>

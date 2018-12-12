@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-localuser</artifactId>
 
-    <name>WildFly Elytron - JBOSS-LOCAL-USER SASL</name>
+    <name>WildFly Elytron - SASL JBOSS-LOCAL-USER</name>
     <description>WildFly Security JBOSS-LOCAL-USER SASL Implementation</description>
 
     <dependencies>

@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-scram</artifactId>
 
-    <name>WildFly Elytron - SCRAM SASL</name>
+    <name>WildFly Elytron - SASL SCRAM</name>
     <description>WildFly Security SCRAM SASL Implementation</description>
 
     <dependencies>

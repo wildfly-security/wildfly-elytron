@@ -31,7 +31,7 @@
 
     <artifactId>wildfly-elytron-sasl-gssapi</artifactId>
 
-    <name>WildFly Elytron - GSSAPI SASL</name>
+    <name>WildFly Elytron - SASL GSSAPI</name>
     <description>WildFly Security GSSAPI SASL Implementation</description>
 
     <dependencies>
