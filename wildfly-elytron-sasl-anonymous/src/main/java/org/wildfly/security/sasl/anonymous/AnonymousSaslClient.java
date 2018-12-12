@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.anonymous;
 
-import static org.wildfly.security._private.ElytronMessages.saslAnonymous;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslAnonymous;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;

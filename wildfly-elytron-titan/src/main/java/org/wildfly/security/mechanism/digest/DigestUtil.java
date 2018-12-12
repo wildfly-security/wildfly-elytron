@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.mechanism.digest;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.mechanism._private.ElytronMessages.log;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.bytes.ByteStringBuilder;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;

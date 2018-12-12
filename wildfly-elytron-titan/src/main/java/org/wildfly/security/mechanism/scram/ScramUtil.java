@@ -18,7 +18,7 @@
 
 package org.wildfly.security.mechanism.scram;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.mechanism._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;

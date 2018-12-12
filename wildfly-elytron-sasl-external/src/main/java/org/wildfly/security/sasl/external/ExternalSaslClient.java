@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.external;
 
-import static org.wildfly.security._private.ElytronMessages.saslExternal;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslExternal;
 
 import java.nio.charset.StandardCharsets;
 

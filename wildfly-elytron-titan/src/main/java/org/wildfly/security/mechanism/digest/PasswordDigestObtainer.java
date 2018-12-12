@@ -19,9 +19,9 @@
 package org.wildfly.security.mechanism.digest;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;

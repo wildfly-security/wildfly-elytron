@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.plain;
 
-import static org.wildfly.security._private.ElytronMessages.saslPlain;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslPlain;
 
 import java.io.IOException;
 

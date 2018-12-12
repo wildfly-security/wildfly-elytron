@@ -18,7 +18,7 @@
 
 package org.wildfly.security.mechanism;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.mechanism._private.ElytronMessages.log;
 
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -28,7 +28,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 

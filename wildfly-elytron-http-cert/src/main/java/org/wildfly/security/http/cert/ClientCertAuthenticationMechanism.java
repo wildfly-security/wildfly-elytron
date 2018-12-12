@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.http.cert;
 
-import static org.wildfly.security._private.ElytronMessages.httpClientCert;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpClientCert;
 
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;

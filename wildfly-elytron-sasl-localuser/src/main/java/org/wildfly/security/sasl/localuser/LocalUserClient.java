@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.localuser;
 
-import static org.wildfly.security._private.ElytronMessages.saslLocal;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslLocal;
 
 import java.io.Closeable;
 import java.io.File;
