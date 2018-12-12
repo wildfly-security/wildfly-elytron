@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.authz.jacc._private;
+package org.wildfly.security.authz.jacc;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
@@ -40,7 +40,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-public interface ElytronMessages extends BasicLogger {
+interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
