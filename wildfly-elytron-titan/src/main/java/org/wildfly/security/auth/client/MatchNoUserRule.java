@@ -22,7 +22,7 @@ import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.net.URI;
 
-import org.wildfly.security.util.URIUtil;
+import org.wildfly.common.net.URIs;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -35,7 +35,7 @@ class MatchNoUserRule extends MatchRule {
 
     @Override
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
-        String userInfo = URIUtil.getUserFromURI(uri);
+        String userInfo = URIs.getUserFromURI(uri);
         return userInfo == null && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
