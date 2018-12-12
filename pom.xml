@@ -487,6 +487,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-plain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-scram</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1039,6 +1045,7 @@
         <module>wildfly-elytron-sasl-localuser</module>
         <module>wildfly-elytron-sasl-oauth2</module>
         <module>wildfly-elytron-sasl-otp</module>
+        <module>wildfly-elytron-sasl-plain</module>
         <module>wildfly-elytron-sasl-scram</module>
         <module>wildfly-elytron-tests</module>
         <module>wildfly-elytron</module>
