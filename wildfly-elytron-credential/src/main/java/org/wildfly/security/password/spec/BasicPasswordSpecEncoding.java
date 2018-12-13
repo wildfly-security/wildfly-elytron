@@ -22,7 +22,7 @@ import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential._private.ElytronMessages;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 

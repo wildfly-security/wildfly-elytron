@@ -25,7 +25,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Objects;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential._private.ElytronMessages;
 import org.wildfly.security.key.KeyUtil;
 
 /**

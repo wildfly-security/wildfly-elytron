@@ -18,7 +18,7 @@
 
 package org.wildfly.security.password.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;

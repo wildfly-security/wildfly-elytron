@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential._private.ElytronMessages;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.key.KeyUtil;

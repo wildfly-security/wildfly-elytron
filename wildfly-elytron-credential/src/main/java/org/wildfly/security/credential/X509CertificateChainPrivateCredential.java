@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.math.HashMath;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential._private.ElytronMessages;
 import org.wildfly.security.key.KeyUtil;
 
 /**

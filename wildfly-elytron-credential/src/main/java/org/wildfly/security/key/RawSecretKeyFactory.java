@@ -28,12 +28,11 @@ import javax.crypto.SecretKeyFactorySpi;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.jboss.logging.Logger;
-import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential._private.ElytronMessages;
 
 /**
  * {@link SecretKeyFactorySpi} that returns the given {@link KeySpec} or {@link SecretKey} verbatim. Needed for the
- * PKCS#12 {@link KeyStore} support in {@link CredentialStore}.
+ * PKCS#12 {@link KeyStore} support in CredentialStore.
  */
 public final class RawSecretKeyFactory extends SecretKeyFactorySpi {
 

@@ -117,14 +117,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1, value = "WildFly Elytron version %s")
     void logVersion(String versionString);
 
-    @Message(id = 2, value = "Parameter %s is empty")
-    IllegalArgumentException emptyParameter(String parameter);
+//    @Message(id = 2, value = "Parameter %s is empty")
+//    IllegalArgumentException emptyParameter(String parameter);
 
     @Message(id = 3, value = "This builder has already been built")
     IllegalStateException builderAlreadyBuilt();
 
-    @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
-    IllegalArgumentException unrecognizedAlgorithm(String algorithm);
+//    @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
+//    IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
     @Message(id = 5, value = "Cannot instantiate self-referential factory")
     IllegalStateException cannotInstantiateSelfReferentialFactory();
@@ -265,8 +265,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1036, value = "Unable to create trust manager")
     IOException unableToCreateTrustManager(@Cause Exception e);
 
-    @Message(id = 1037, value = "Certificate chain is empty")
-    IllegalArgumentException certificateChainIsEmpty();
+//    @Message(id = 1037, value = "Certificate chain is empty")
+//    IllegalArgumentException certificateChainIsEmpty();
 
     // @Message(id = 1038, value = "Could get not RSA key from query")
     // RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
@@ -331,20 +331,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
 
-    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
-    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
+//    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
+//    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
 
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
-    @Message(id = 1061, value = "Public key is null")
-    IllegalArgumentException publicKeyIsNull();
+//    @Message(id = 1061, value = "Public key is null")
+//    IllegalArgumentException publicKeyIsNull();
 
     @Message(id = 1062, value = "No provider URL has been set")
     IllegalStateException noProviderUrlSet();
 
-    @Message(id = 1063, value = "Private key is null")
-    IllegalArgumentException privateKeyIsNull();
+//    @Message(id = 1063, value = "Private key is null")
+//    IllegalArgumentException privateKeyIsNull();
 
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
@@ -1469,6 +1469,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5150, value = "Authentication mechanism authorization ID is too long")
     AuthenticationMechanismException mechAuthorizationIdTooLong();
 
+    // Also used in wildfly-elytron-credential
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
     AuthenticationMechanismException mechInvalidOTPAlgorithm(String algorithm);
 
@@ -1694,11 +1695,11 @@ public interface ElytronMessages extends BasicLogger {
 
     /* password package */
 
-    @Message(id = 8001, value = "Unrecognized key spec algorithm")
-    InvalidKeySpecException invalidKeySpecUnrecognizedKeySpecAlgorithm();
+//    @Message(id = 8001, value = "Unrecognized key spec algorithm")
+//    InvalidKeySpecException invalidKeySpecUnrecognizedKeySpecAlgorithm();
 
-    @Message(id = 8002, value = "Password spec cannot be rendered as a string")
-    InvalidKeySpecException invalidKeySpecPasswordSpecCannotBeRenderedAsString();
+//    @Message(id = 8002, value = "Password spec cannot be rendered as a string")
+//    InvalidKeySpecException invalidKeySpecPasswordSpecCannotBeRenderedAsString();
 
     @Message(id = 8003, value = "Unknown crypt string algorithm")
     InvalidKeySpecException invalidKeySpecUnknownCryptStringAlgorithm();
@@ -1730,35 +1731,35 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8012, value = "Invalid cost: must be a two digit integer")
     InvalidKeySpecException invalidKeySpecCostMustBeTwoDigitInteger();
 
-    @Message(id = 8013, value = "No such MessageDigest algorithm for \"%s\"")
-    InvalidKeySpecException invalidKeySpecNoSuchMessageDigestAlgorithm(String algorithm);
+//    @Message(id = 8013, value = "No such MessageDigest algorithm for \"%s\"")
+//    InvalidKeySpecException invalidKeySpecNoSuchMessageDigestAlgorithm(String algorithm);
 
-    @Message(id = 8014, value = "No such MessageDigest algorithm for \"%s\"")
-    InvalidKeyException invalidKeyNoSuchMessageDigestAlgorithm(String algorithm);
+//    @Message(id = 8014, value = "No such MessageDigest algorithm for \"%s\"")
+//    InvalidKeyException invalidKeyNoSuchMessageDigestAlgorithm(String algorithm);
 
-    @Message(id = 8015, value = "Cannot verify password")
-    InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
+//    @Message(id = 8015, value = "Cannot verify password")
+//    InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
 
     // @Message(id = 8016, value = "DES crypt password hash must be %d bytes")
     // InvalidKeySpecException invalidKeySpecDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
-    InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
+//    @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
+//    InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
-    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
+//    @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
+//    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
 
     // @Message(id = 8019, value = "Unsupported parameter spec")
     // InvalidParameterSpecException invalidParameterSpecUnsupportedParameterSpec();
 
-    @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
-    IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
+//    @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
+//    IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
 
     @Message(id = 8021, value = "Invalid salt: must be %d bytes long")
     IllegalArgumentException invalidSaltMustBeBytesLong(int length);
 
-    @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
-    InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);
+//    @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
+//    InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);
 
     @Message(id = 8023, value = "Salt must be %d bytes")
     InvalidParameterSpecException invalidParameterSpecSaltMustBeBytes(int bytes);
@@ -1766,20 +1767,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8024, value = "BSD DES crypt password hash must be %d bytes")
     InvalidKeyException invalidKeyBsdDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
-    InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
+//    @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
+//    InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
 
-    @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
-    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
+//    @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
+//    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
 
-    @Message(id = 8027, value = "Unknown password type or algorithm")
-    InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
+//    @Message(id = 8027, value = "Unknown password type or algorithm")
+//    InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
 
-    @Message(id = 8028, value = "Invalid algorithm \"%s\"")
-    NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
+//    @Message(id = 8028, value = "Invalid algorithm \"%s\"")
+//    NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
 
-    @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
-    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
+//    @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
+//    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
 
     @Message(id = 8030, value = "Failed to encode parameter specification")
     InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
@@ -1844,8 +1845,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* credential package */
 
-    @Message(id = 9000, value = "Public and private key parameters are mismatched")
-    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
+//    @Message(id = 9000, value = "Public and private key parameters are mismatched")
+//    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
 
     @Message(id = 9001, value = "Client credentials not provided")
     IllegalStateException oauth2ClientCredentialsNotProvided();

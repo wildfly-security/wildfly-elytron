@@ -18,7 +18,7 @@
 
 package org.wildfly.security.password;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential._private.ElytronMessages.log;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.InvalidAlgorithmParameterException;
