@@ -117,20 +117,22 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1, value = "WildFly Elytron version %s")
     void logVersion(String versionString);
 
+    // Used both for LDAP Realm and wildfly-elyton-credential
     @Message(id = 2, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
 
     @Message(id = 3, value = "This builder has already been built")
     IllegalStateException builderAlreadyBuilt();
 
+    // Used both for LDAP Realm and wildfly-elyton-credential
     @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
     IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
     @Message(id = 5, value = "Cannot instantiate self-referential factory")
     IllegalStateException cannotInstantiateSelfReferentialFactory();
 
-    @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
-    IllegalArgumentException unexpectedTrailingGarbageInX500principal();
+//    @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
+//    IllegalArgumentException unexpectedTrailingGarbageInX500principal();
 
     @LogMessage(level = WARN)
     @Message(id = 7, value = "Credential destroying failed")
@@ -265,8 +267,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1036, value = "Unable to create trust manager")
     IOException unableToCreateTrustManager(@Cause Exception e);
 
-    @Message(id = 1037, value = "Certificate chain is empty")
-    IllegalArgumentException certificateChainIsEmpty();
+//    @Message(id = 1037, value = "Certificate chain is empty")
+//    IllegalArgumentException certificateChainIsEmpty();
 
     // @Message(id = 1038, value = "Could get not RSA key from query")
     // RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
@@ -331,20 +333,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
 
-    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
-    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
+//    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
+//    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
 
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
-    @Message(id = 1061, value = "Public key is null")
-    IllegalArgumentException publicKeyIsNull();
+//    @Message(id = 1061, value = "Public key is null")
+//    IllegalArgumentException publicKeyIsNull();
 
     @Message(id = 1062, value = "No provider URL has been set")
     IllegalStateException noProviderUrlSet();
 
-    @Message(id = 1063, value = "Private key is null")
-    IllegalArgumentException privateKeyIsNull();
+//    @Message(id = 1063, value = "Private key is null")
+//    IllegalArgumentException privateKeyIsNull();
 
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
@@ -719,30 +721,31 @@ public interface ElytronMessages extends BasicLogger {
 
     /* keystore package */
 
-    @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
-    UnrecoverableKeyException invalidKeyStoreEntryPassword(String alias);
+//    @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
+//    UnrecoverableKeyException invalidKeyStoreEntryPassword(String alias);
 
-    @Message(id = 2002, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
-    KeyStoreException invalidKeyStoreEntryType(String alias, Class<?> expectedClass, Class<?> actualClass);
+//    @Message(id = 2002, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
+//    KeyStoreException invalidKeyStoreEntryType(String alias, Class<?> expectedClass, Class<?> actualClass);
 
-    @Message(id = 2003, value = "Key store key for alias \"%s\" cannot be protected")
-    KeyStoreException keyCannotBeProtected(String alias);
+//    @Message(id = 2003, value = "Key store key for alias \"%s\" cannot be protected")
+//    KeyStoreException keyCannotBeProtected(String alias);
 
-    @Message(id = 2004, value = "Key store failed to translate password for alias \"%s\"")
-    IOException keyStoreFailedToTranslate(String alias, @Cause Throwable cause);
+//    @Message(id = 2004, value = "Key store failed to translate password for alias \"%s\"")
+//    IOException keyStoreFailedToTranslate(String alias, @Cause Throwable cause);
 
-    @Message(id = 2005, value = "Key store failed to identify a suitable algorithm for alias \"%s\"")
-    NoSuchAlgorithmException noAlgorithmForPassword(String alias);
+//    @Message(id = 2005, value = "Key store failed to identify a suitable algorithm for alias \"%s\"")
+//    NoSuchAlgorithmException noAlgorithmForPassword(String alias);
 
-    @Message(id = 2006, value = "Unexpected whitespace in password file")
-    IOException unexpectedWhitespaceInPasswordFile();
+//    @Message(id = 2006, value = "Unexpected whitespace in password file")
+//    IOException unexpectedWhitespaceInPasswordFile();
 
-    @Message(id = 2007, value = "Unexpected end of file")
-    EOFException unexpectedEof();
+//    @Message(id = 2007, value = "Unexpected end of file")
+//    EOFException unexpectedEof();
 
-    @Message(id = 2008, value = "A reversible load is not possible until the KeyStore has first been initialized")
-    IllegalStateException reversibleLoadNotPossible();
+//    @Message(id = 2008, value = "A reversible load is not possible until the KeyStore has first been initialized")
+//    IllegalStateException reversibleLoadNotPossible();
 
+    // Duplicated in wildfly-elytron-credential
     @Message(id = 2009, value = "Unable to create a new KeyStore instance")
     IOException unableToCreateKeyStore(@Cause Exception cause);
 
@@ -757,71 +760,71 @@ public interface ElytronMessages extends BasicLogger {
 
     // id = 2014 KeyStoreException "Only password storage is supported"
 
-    @Message(id = 2012, value = "An empty alias filter was supplied")
-    IllegalArgumentException emptyFilter();
+//    @Message(id = 2012, value = "An empty alias filter was supplied")
+//    IllegalArgumentException emptyFilter();
 
-    @Message(id = 2013, value = "Filter is missing '+' or '-' at offset %d")
-    IllegalArgumentException missingPlusMinusAt(long position);
+//    @Message(id = 2013, value = "Filter is missing '+' or '-' at offset %d")
+//    IllegalArgumentException missingPlusMinusAt(long position);
 
-    @Message(id = 2014, value = "Invalid first word '%s', must be one of ALL/NONE")
-    IllegalArgumentException invalidFirstWord(String firstWord);
+//    @Message(id = 2014, value = "Invalid first word '%s', must be one of ALL/NONE")
+//    IllegalArgumentException invalidFirstWord(String firstWord);
 
-    @Message(id = 2015, value = "Failed to obtain DirContext")
-    IllegalStateException failedToObtainDirContext(@Cause Throwable cause);
+//    @Message(id = 2015, value = "Failed to obtain DirContext")
+//    IllegalStateException failedToObtainDirContext(@Cause Throwable cause);
 
-    @Message(id = 2016, value = "Failed to return DirContext")
-    IllegalStateException failedToReturnDirContext(@Cause Throwable cause);
+//    @Message(id = 2016, value = "Failed to return DirContext")
+//    IllegalStateException failedToReturnDirContext(@Cause Throwable cause);
 
     @Message(id = 2017, value = "LdapKeyStore failed to obtain alias [%s]")
     IllegalStateException ldapKeyStoreFailedToObtainAlias(String alias, @Cause Throwable cause);
 
-    @Message(id = 2018, value = "LdapKeyStore failed to obtain certificate [%s]")
-    IllegalStateException ldapKeyStoreFailedToObtainCertificate(String alias, @Cause Throwable cause);
+//    @Message(id = 2018, value = "LdapKeyStore failed to obtain certificate [%s]")
+//    IllegalStateException ldapKeyStoreFailedToObtainCertificate(String alias, @Cause Throwable cause);
 
-    @Message(id = 2019, value = "LdapKeyStore failed to obtain certificate chain [%s]")
-    IllegalStateException ldapKeyStoreFailedToObtainCertificateChain(String alias, @Cause Throwable cause);
+//    @Message(id = 2019, value = "LdapKeyStore failed to obtain certificate chain [%s]")
+//    IllegalStateException ldapKeyStoreFailedToObtainCertificateChain(String alias, @Cause Throwable cause);
 
-    @Message(id = 2020, value = "LdapKeyStore failed to recover key of alias [%s]")
-    IllegalStateException ldapKeyStoreFailedToObtainKey(String alias, @Cause Throwable cause);
+//    @Message(id = 2020, value = "LdapKeyStore failed to recover key of alias [%s]")
+//    IllegalStateException ldapKeyStoreFailedToObtainKey(String alias, @Cause Throwable cause);
 
-    @Message(id = 2021, value = "LdapKeyStore failed to obtain alias by certificate")
-    IllegalStateException ldapKeyStoreFailedToObtainAliasByCertificate(@Cause Throwable cause);
+//    @Message(id = 2021, value = "LdapKeyStore failed to obtain alias by certificate")
+//    IllegalStateException ldapKeyStoreFailedToObtainAliasByCertificate(@Cause Throwable cause);
 
-    @Message(id = 2022, value = "LdapKeyStore failed to recover key of alias [%s]")
-    UnrecoverableKeyException ldapKeyStoreFailedToRecoverKey(String alias, @Cause Throwable cause);
+//    @Message(id = 2022, value = "LdapKeyStore failed to recover key of alias [%s]")
+//    UnrecoverableKeyException ldapKeyStoreFailedToRecoverKey(String alias, @Cause Throwable cause);
 
-    @Message(id = 2023, value = "LdapKeyStore failed to obtain creation date of alias [%s]")
-    IllegalStateException ldapKeyStoreFailedToObtainCreationDate(String alias, @Cause Throwable cause);
+//    @Message(id = 2023, value = "LdapKeyStore failed to obtain creation date of alias [%s]")
+//    IllegalStateException ldapKeyStoreFailedToObtainCreationDate(String alias, @Cause Throwable cause);
 
-    @Message(id = 2024, value = "Alias [%s] does not exist in LdapKeyStore and not configured for creation")
-    KeyStoreException creationNotConfigured(String alias);
+//    @Message(id = 2024, value = "Alias [%s] does not exist in LdapKeyStore and not configured for creation")
+//    KeyStoreException creationNotConfigured(String alias);
 
-    @Message(id = 2025, value = "LdapKeyStore failed store alias [%s]")
-    KeyStoreException ldapKeyStoreFailedToStore(String alias, @Cause Throwable cause);
+//    @Message(id = 2025, value = "LdapKeyStore failed store alias [%s]")
+//    KeyStoreException ldapKeyStoreFailedToStore(String alias, @Cause Throwable cause);
 
-    @Message(id = 2026, value = "LdapKeyStore failed to serialize certificate of alias [%s]")
-    KeyStoreException ldapKeyStoreFailedToSerializeCertificate(String alias, @Cause Throwable cause);
+//    @Message(id = 2026, value = "LdapKeyStore failed to serialize certificate of alias [%s]")
+//    KeyStoreException ldapKeyStoreFailedToSerializeCertificate(String alias, @Cause Throwable cause);
 
-    @Message(id = 2027, value = "LdapKeyStore failed to protect (pack into keystore) key of alias [%s]")
-    KeyStoreException ldapKeyStoreFailedToSerializeKey(String alias, @Cause Throwable cause);
+//    @Message(id = 2027, value = "LdapKeyStore failed to protect (pack into keystore) key of alias [%s]")
+//    KeyStoreException ldapKeyStoreFailedToSerializeKey(String alias, @Cause Throwable cause);
 
-    @Message(id = 2028, value = "LdapKeyStore failed to delete alias [%s]")
-    KeyStoreException ldapKeyStoreFailedToDelete(String alias, @Cause Throwable cause);
+//    @Message(id = 2028, value = "LdapKeyStore failed to delete alias [%s]")
+//    KeyStoreException ldapKeyStoreFailedToDelete(String alias, @Cause Throwable cause);
 
-    @Message(id = 2029, value = "LdapKeyStore failed to delete alias [%s] - alias not found")
-    KeyStoreException ldapKeyStoreFailedToDeleteNonExisting(String alias);
+//    @Message(id = 2029, value = "LdapKeyStore failed to delete alias [%s] - alias not found")
+//    KeyStoreException ldapKeyStoreFailedToDeleteNonExisting(String alias);
 
-    @Message(id = 2030, value = "LdapKeyStore failed to test alias [%s] existence")
-    IllegalStateException ldapKeyStoreFailedToTestAliasExistence(String alias, @Cause Throwable cause);
+//    @Message(id = 2030, value = "LdapKeyStore failed to test alias [%s] existence")
+//    IllegalStateException ldapKeyStoreFailedToTestAliasExistence(String alias, @Cause Throwable cause);
 
-    @Message(id = 2031, value = "LdapKeyStore failed to iterate aliases")
-    IllegalStateException ldapKeyStoreFailedToIterateAliases(@Cause Throwable cause);
+//    @Message(id = 2031, value = "LdapKeyStore failed to iterate aliases")
+//    IllegalStateException ldapKeyStoreFailedToIterateAliases(@Cause Throwable cause);
 
-    @Message(id = 2032, value = "keySpec must be SecretKeySpect, given: [%s]")
-    InvalidKeySpecException keySpecMustBeSecretKeySpec(String type);
+//    @Message(id = 2032, value = "keySpec must be SecretKeySpect, given: [%s]")
+//    InvalidKeySpecException keySpecMustBeSecretKeySpec(String type);
 
-    @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
-    InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
+//    @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
+//    InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
 
     @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
     ConfigXMLParseException missingAlias(@Param Location location);
@@ -1346,11 +1349,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5109, value = "Unable to create response token")
     AuthenticationMechanismException mechUnableToCreateResponseTokenWithCause(@Cause Throwable cause);
 
-    @Message(id = 5110, value = "Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)")
-    IllegalArgumentException invalidValueForTrustedAuthorityType();
+//    @Message(id = 5110, value = "Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)")
+//    IllegalArgumentException invalidValueForTrustedAuthorityType();
 
-    @Message(id = 5111, value = "Invalid value for a general name type; expected a value between 0 and 8 (inclusive)")
-    IllegalArgumentException invalidValueForGeneralNameType();
+//    @Message(id = 5111, value = "Invalid value for a general name type; expected a value between 0 and 8 (inclusive)")
+//    IllegalArgumentException invalidValueForGeneralNameType();
 
     @Message(id = 5112, value = "Getting authentication mechanisms supported by GSS-API failed")
     AuthenticationMechanismException mechGettingSupportedMechanismsFailed(@Cause Throwable cause);
@@ -1469,6 +1472,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5150, value = "Authentication mechanism authorization ID is too long")
     AuthenticationMechanismException mechAuthorizationIdTooLong();
 
+    // Also used in wildfly-elytron-credential
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
     AuthenticationMechanismException mechInvalidOTPAlgorithm(String algorithm);
 
@@ -1632,14 +1636,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 7005, value = "Unable to read X.509 certificate data")
 //    ASN1Exception asnUnableToReadCertificateData(@Cause Throwable cause);
 
-    @Message(id = 7006, value = "Invalid general name for URI type")
-    ASN1Exception asnInvalidGeneralNameForUriType(@Cause Throwable cause);
+//    @Message(id = 7006, value = "Invalid general name for URI type")
+//    ASN1Exception asnInvalidGeneralNameForUriType(@Cause Throwable cause);
 
-    @Message(id = 7007, value = "Invalid general name for IP address type")
-    ASN1Exception asnInvalidGeneralNameForIpAddressType();
+//    @Message(id = 7007, value = "Invalid general name for IP address type")
+//    ASN1Exception asnInvalidGeneralNameForIpAddressType();
 
-    @Message(id = 7008, value = "IP address general name cannot be resolved")
-    ASN1Exception asnIpAddressGeneralNameCannotBeResolved(@Cause Throwable cause);
+//    @Message(id = 7008, value = "IP address general name cannot be resolved")
+//    ASN1Exception asnIpAddressGeneralNameCannotBeResolved(@Cause Throwable cause);
 
 //    @Message(id = 7009, value = "No sequence to end")
 //    IllegalStateException noSequenceToEnd();
@@ -1689,112 +1693,114 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 7024, value = "Invalid length encountered for boolean type tag")
 //    ASN1Exception asnInvalidLengthForBooleanTypeTag();
 
-    @Message(id = 7025, value = "Invalid general name for URI type: missing scheme")
-    ASN1Exception asnInvalidGeneralNameForUriTypeMissingScheme();
+      
+//    @Message(id = 7025, value = "Invalid general name for URI type: missing scheme")
+//    ASN1Exception asnInvalidGeneralNameForUriTypeMissingScheme();
 
     /* password package */
 
-    @Message(id = 8001, value = "Unrecognized key spec algorithm")
-    InvalidKeySpecException invalidKeySpecUnrecognizedKeySpecAlgorithm();
+//    @Message(id = 8001, value = "Unrecognized key spec algorithm")
+//    InvalidKeySpecException invalidKeySpecUnrecognizedKeySpecAlgorithm();
 
-    @Message(id = 8002, value = "Password spec cannot be rendered as a string")
-    InvalidKeySpecException invalidKeySpecPasswordSpecCannotBeRenderedAsString();
+//    @Message(id = 8002, value = "Password spec cannot be rendered as a string")
+//    InvalidKeySpecException invalidKeySpecPasswordSpecCannotBeRenderedAsString();
 
-    @Message(id = 8003, value = "Unknown crypt string algorithm")
-    InvalidKeySpecException invalidKeySpecUnknownCryptStringAlgorithm();
+//    @Message(id = 8003, value = "Unknown crypt string algorithm")
+//    InvalidKeySpecException invalidKeySpecUnknownCryptStringAlgorithm();
 
-    @Message(id = 8004, value = "Invalid character encountered")
-    InvalidKeySpecException invalidKeySpecInvalidCharacterEncountered();
+//    @Message(id = 8004, value = "Invalid character encountered")
+//    InvalidKeySpecException invalidKeySpecInvalidCharacterEncountered();
 
-    @Message(id = 8005, value = "No iteration count terminator given")
-    InvalidKeySpecException invalidKeySpecNoIterationCountTerminatorGiven();
+//    @Message(id = 8005, value = "No iteration count terminator given")
+//    InvalidKeySpecException invalidKeySpecNoIterationCountTerminatorGiven();
 
-    @Message(id = 8006, value = "Unexpected end of input string")
-    InvalidKeySpecException invalidKeySpecUnexpectedEndOfInputString();
+//    @Message(id = 8006, value = "Unexpected end of input string")
+//    InvalidKeySpecException invalidKeySpecUnexpectedEndOfInputString();
 
-    @Message(id = 8007, value = "No salt terminator given")
-    InvalidKeySpecException invalidKeySpecNoSaltTerminatorGiven();
+//    @Message(id = 8007, value = "No salt terminator given")
+//    InvalidKeySpecException invalidKeySpecNoSaltTerminatorGiven();
 
-    @Message(id = 8008, value = "Invalid hash length")
-    IllegalArgumentException invalidHashLength();
+//    @Message(id = 8008, value = "Invalid hash length")
+//    IllegalArgumentException invalidHashLength();
 
-    @Message(id = 8009, value = "Unexpected end of password string")
-    InvalidKeySpecException invalidKeySpecUnexpectedEndOfPasswordString();
+//    @Message(id = 8009, value = "Unexpected end of password string")
+//    InvalidKeySpecException invalidKeySpecUnexpectedEndOfPasswordString();
 
-    @Message(id = 8010, value = "Unexpected end of password string")
-    InvalidKeySpecException invalidKeySpecUnexpectedEndOfPasswordStringWithCause(@Cause Throwable cause);
+//    @Message(id = 8010, value = "Unexpected end of password string")
+//    InvalidKeySpecException invalidKeySpecUnexpectedEndOfPasswordStringWithCause(@Cause Throwable cause);
 
-    @Message(id = 8011, value = "Invalid minor version")
-    InvalidKeySpecException invalidKeySpecInvalidMinorVersion();
+//    @Message(id = 8011, value = "Invalid minor version")
+//    InvalidKeySpecException invalidKeySpecInvalidMinorVersion();
 
-    @Message(id = 8012, value = "Invalid cost: must be a two digit integer")
-    InvalidKeySpecException invalidKeySpecCostMustBeTwoDigitInteger();
+//    @Message(id = 8012, value = "Invalid cost: must be a two digit integer")
+//    InvalidKeySpecException invalidKeySpecCostMustBeTwoDigitInteger();
 
-    @Message(id = 8013, value = "No such MessageDigest algorithm for \"%s\"")
-    InvalidKeySpecException invalidKeySpecNoSuchMessageDigestAlgorithm(String algorithm);
+//    @Message(id = 8013, value = "No such MessageDigest algorithm for \"%s\"")
+//    InvalidKeySpecException invalidKeySpecNoSuchMessageDigestAlgorithm(String algorithm);
 
-    @Message(id = 8014, value = "No such MessageDigest algorithm for \"%s\"")
-    InvalidKeyException invalidKeyNoSuchMessageDigestAlgorithm(String algorithm);
+//    @Message(id = 8014, value = "No such MessageDigest algorithm for \"%s\"")
+//    InvalidKeyException invalidKeyNoSuchMessageDigestAlgorithm(String algorithm);
 
-    @Message(id = 8015, value = "Cannot verify password")
-    InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
+//    @Message(id = 8015, value = "Cannot verify password")
+//    InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
 
     // @Message(id = 8016, value = "DES crypt password hash must be %d bytes")
     // InvalidKeySpecException invalidKeySpecDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
-    InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
+//    @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
+//    InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
-    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
+//    @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
+//    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
 
     // @Message(id = 8019, value = "Unsupported parameter spec")
     // InvalidParameterSpecException invalidParameterSpecUnsupportedParameterSpec();
 
-    @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
-    IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
+//    @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
+//    IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
 
-    @Message(id = 8021, value = "Invalid salt: must be %d bytes long")
-    IllegalArgumentException invalidSaltMustBeBytesLong(int length);
+//    @Message(id = 8021, value = "Invalid salt: must be %d bytes long")
+//    IllegalArgumentException invalidSaltMustBeBytesLong(int length);
 
-    @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
-    InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);
+//    @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
+//    InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8023, value = "Salt must be %d bytes")
-    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytes(int bytes);
+//    @Message(id = 8023, value = "Salt must be %d bytes")
+//    InvalidParameterSpecException invalidParameterSpecSaltMustBeBytes(int bytes);
 
-    @Message(id = 8024, value = "BSD DES crypt password hash must be %d bytes")
-    InvalidKeyException invalidKeyBsdDesCryptPasswordHashMustBeBytes(int bytes);
+//    @Message(id = 8024, value = "BSD DES crypt password hash must be %d bytes")
+//    InvalidKeyException invalidKeyBsdDesCryptPasswordHashMustBeBytes(int bytes);
 
-    @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
-    InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
+//    @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
+//    InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
 
-    @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
-    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
+//    @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
+//    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
 
-    @Message(id = 8027, value = "Unknown password type or algorithm")
-    InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
+//    @Message(id = 8027, value = "Unknown password type or algorithm")
+//    InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
 
-    @Message(id = 8028, value = "Invalid algorithm \"%s\"")
-    NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
+//    @Message(id = 8028, value = "Invalid algorithm \"%s\"")
+//    NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
 
-    @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
-    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
+//    @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
+//    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
 
-    @Message(id = 8030, value = "Failed to encode parameter specification")
-    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
+      
+//    @Message(id = 8030, value = "Failed to encode parameter specification")
+//    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
 
-    @Message(id = 8031, value = "Failed to decode parameter specification")
-    IOException failedToDecode(@Cause Throwable cause);
+//    @Message(id = 8031, value = "Failed to decode parameter specification")
+//    IOException failedToDecode(@Cause Throwable cause);
 
-    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
-    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
+//    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
+//    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
 
-    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
-    IOException invalidFormat(String expected, String actual);
+//    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
+//    IOException invalidFormat(String expected, String actual);
 
-    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
-    IllegalStateException algorithmParametersNotInitialized();
+//    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
+//    IllegalStateException algorithmParametersNotInitialized();
 
     /* authz package */
 
@@ -1844,8 +1850,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* credential package */
 
-    @Message(id = 9000, value = "Public and private key parameters are mismatched")
-    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
+//    @Message(id = 9000, value = "Public and private key parameters are mismatched")
+//    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
 
     @Message(id = 9001, value = "Client credentials not provided")
     IllegalStateException oauth2ClientCredentialsNotProvided();
@@ -2019,17 +2025,17 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
     IllegalArgumentException invalidCertificateExtensionStringValue();
 
-    @Message(id = 10025, value = "Non-X.509 certificate found in certificate array")
-    IllegalArgumentException nonX509CertificateInCertificateArray();
+//    @Message(id = 10025, value = "Non-X.509 certificate found in certificate array")
+//    IllegalArgumentException nonX509CertificateInCertificateArray();
 
-    @Message(id = 10026, value = "Starting public key not found in certificate array")
-    IllegalArgumentException startingPublicKeyNotFoundInCertificateArray();
+//    @Message(id = 10026, value = "Starting public key not found in certificate array")
+//    IllegalArgumentException startingPublicKeyNotFoundInCertificateArray();
 
-    @Message(id = 10027, value = "Incomplete certificate array")
-    IllegalArgumentException incompleteCertificateArray();
+//    @Message(id = 10027, value = "Incomplete certificate array")
+//    IllegalArgumentException incompleteCertificateArray();
 
-    @Message(id = 10028, value = "Unable to create X.509 certificate chain from map of certificates")
-    IllegalArgumentException unableToCreateCertificateChainFromCertificateMap();
+//    @Message(id = 10028, value = "Unable to create X.509 certificate chain from map of certificates")
+//    IllegalArgumentException unableToCreateCertificateChainFromCertificateMap();
 
     @Message(id = 10029, value = "Failed to generate ACME account key pair")
     IllegalArgumentException acmeAccountKeyPairGenerationFailed(@Cause Exception cause);

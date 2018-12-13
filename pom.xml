@@ -381,6 +381,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -505,6 +510,21 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-scram</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-x500</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-x500-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1037,6 +1057,7 @@
 
         <module>wildfly-elytron-asn1</module>
         <module>wildfly-elytron-audit</module>
+        <module>wildfly-elytron-credential</module>
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>
         <module>wildfly-elytron-http-bearer</module>
@@ -1060,6 +1081,9 @@
         <module>wildfly-elytron-sasl-otp</module>
         <module>wildfly-elytron-sasl-plain</module>
         <module>wildfly-elytron-sasl-scram</module>
+        <module>wildfly-elytron-util</module>
+        <module>wildfly-elytron-x500</module>
+        <module>wildfly-elytron-x500-deprecated</module>
         <module>wildfly-elytron-tests</module>
         <module>wildfly-elytron</module>
     </modules>
