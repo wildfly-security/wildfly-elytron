@@ -40,7 +40,11 @@
             <artifactId>wildfly-common</artifactId>
             <!-- scope is compile ELY-1153 -->
         </dependency>
-        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-util</artifactId>
+        </dependency>
+                
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
