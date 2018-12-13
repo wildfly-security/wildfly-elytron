@@ -19,9 +19,9 @@
 package org.wildfly.security.sasl.gssapi;
 
 import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.KERBEROS_V5;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslGssapi;
 import static org.wildfly.security.sasl.WildFlySasl.GSSAPI_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
-import static org.wildfly.security._private.ElytronMessages.saslGssapi;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

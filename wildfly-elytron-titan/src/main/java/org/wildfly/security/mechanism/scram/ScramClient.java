@@ -18,7 +18,7 @@
 
 package org.wildfly.security.mechanism.scram;
 
-import static org.wildfly.security._private.ElytronMessages.saslScram;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslScram;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;

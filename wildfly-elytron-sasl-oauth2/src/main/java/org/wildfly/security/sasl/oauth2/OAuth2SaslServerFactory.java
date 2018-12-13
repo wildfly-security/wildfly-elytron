@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.oauth2;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;

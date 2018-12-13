@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.wildfly.security._private.ElytronMessages.saslScram;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslScram;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.wildfly.security._private.ElytronMessages.saslDigest;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslDigest;
 import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH;

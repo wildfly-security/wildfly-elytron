@@ -18,12 +18,12 @@
 
 package org.wildfly.security.http.bearer;
 
-import static org.wildfly.security._private.ElytronMessages.httpBearer;
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpBearer;
 
 import java.io.IOException;
 import java.util.List;

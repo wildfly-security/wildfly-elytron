@@ -18,11 +18,11 @@
 
 package org.wildfly.security.sasl.util;
 
-import org.wildfly.security._private.ElytronMessages;
-
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
+import org.wildfly.security.mechanism._private.ElytronMessages;
 
 /**
  * A base class for SASL client implementations.
@@ -41,6 +41,20 @@ public abstract class AbstractSaslServer extends AbstractSaslParticipant impleme
      * @param log mechanism specific logger
      */
     protected AbstractSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, ElytronMessages log) {
+        super(mechanismName, protocol, serverName, callbackHandler, log);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param mechanismName the name of the defined mechanism
+     * @param protocol the protocol
+     * @param serverName the server name
+     * @param callbackHandler the callback handler
+     * @param log mechanism specific logger
+     */
+    @Deprecated
+    protected AbstractSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, org.wildfly.security._private.ElytronMessages log) {
         super(mechanismName, protocol, serverName, callbackHandler, log);
     }
 

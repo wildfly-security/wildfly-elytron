@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 
 import java.util.Map;
 
@@ -55,6 +55,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
     private final String protocol;
     private final String serverName;
     private ElytronMessages log;
+    private org.wildfly.security._private.ElytronMessages legacyLog;
 
     private int state = -1;
     private SaslWrapper wrapper;
@@ -76,6 +77,25 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         this.log = log;
     }
 
+
+    /**
+     * Construct a new instance.
+     *
+     * @param mechanismName the name of the defined mechanism
+     * @param protocol the protocol
+     * @param serverName the server name
+     * @param callbackHandler the callback handler
+     * @param log mechanism specific logger
+     */
+    @Deprecated
+    protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, org.wildfly.security._private.ElytronMessages log) {
+        this.callbackHandler = callbackHandler;
+        this.mechanismName = mechanismName;
+        this.protocol = protocol;
+        this.serverName = serverName;
+        this.legacyLog = log;
+    }
+
     /**
      * Construct a new instance.
      *
@@ -90,7 +110,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         this.mechanismName = mechanismName;
         this.protocol = protocol;
         this.serverName = serverName;
-        this.log = ElytronMessages.sasl;
+        this.legacyLog = org.wildfly.security._private.ElytronMessages.sasl;
     }
 
     /**
@@ -103,7 +123,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         try {
             tryHandleCallbacks(callbacks);
         } catch (UnsupportedCallbackException e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
+            throw log != null ? log.mechCallbackHandlerFailedForUnknownReason(e).toSaslException() : legacyLog.mechCallbackHandlerFailedForUnknownReason(e).toSaslException();
         }
     }
 
@@ -121,7 +141,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         } catch (SaslException | UnsupportedCallbackException e) {
             throw e;
         } catch (Throwable t) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(t).toSaslException();
+            throw log != null ? log.mechCallbackHandlerFailedForUnknownReason(t).toSaslException() : legacyLog.mechCallbackHandlerFailedForUnknownReason(t).toSaslException();
         }
     }
 
@@ -192,9 +212,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         boolean ok = false;
         try {
             if (state == COMPLETE_STATE) {
-                throw log.mechMessageAfterComplete().toSaslException();
+                throw log != null ? log.mechMessageAfterComplete().toSaslException() : legacyLog.mechMessageAfterComplete().toSaslException();
             } else if (state == FAILED_STATE) {
-                throw log.mechAuthenticationFailed().toSaslException();
+                throw log != null ? log.mechAuthenticationFailed().toSaslException() : legacyLog.mechAuthenticationFailed().toSaslException();
             }
             byte[] result = evaluateMessage(state, message);
             ok = true;
@@ -228,10 +248,10 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @exception IllegalStateException if wrapping is not configured
      */
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-        if (isComplete() == false) throw log.mechAuthenticationNotComplete();
+        if (isComplete() == false) throw log != null ? log.mechAuthenticationNotComplete() : legacyLog.mechAuthenticationNotComplete();
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
-            throw log.wrappingNotConfigured();
+            throw log != null ? log.wrappingNotConfigured() : legacyLog.wrappingNotConfigured();
         }
         if(len == 0) {
             return NO_BYTES;

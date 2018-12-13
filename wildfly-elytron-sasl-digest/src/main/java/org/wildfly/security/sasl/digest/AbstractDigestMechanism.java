@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.wildfly.security._private.ElytronMessages.saslDigest;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslDigest;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.HASH_algorithm;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.HMAC_algorithm;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.computeHMAC;

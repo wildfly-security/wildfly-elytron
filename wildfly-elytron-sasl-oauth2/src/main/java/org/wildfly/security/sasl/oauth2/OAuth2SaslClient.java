@@ -27,7 +27,7 @@ import org.wildfly.security.sasl.util.AbstractSaslClient;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import static org.wildfly.security._private.ElytronMessages.saslOAuth2;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslOAuth2;
 
 /**
  * An OAuth2 Sasl Client based on RFC-7628.

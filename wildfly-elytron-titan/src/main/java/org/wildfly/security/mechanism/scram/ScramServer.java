@@ -21,7 +21,7 @@ package org.wildfly.security.mechanism.scram;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.copyOfRange;
-import static org.wildfly.security._private.ElytronMessages.saslScram;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslScram;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
