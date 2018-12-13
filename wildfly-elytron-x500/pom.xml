@@ -29,23 +29,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-credential</artifactId>
+    <artifactId>wildfly-elytron-x500</artifactId>
 
-    <name>WildFly Elytron - Credential</name>
-    <description>WildFly Security Credential API</description>
+    <name>WildFly Elytron - X.500</name>
+    <description>WildFly Security X.500</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-asn1</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500</artifactId>
         </dependency>
 
         <dependency>

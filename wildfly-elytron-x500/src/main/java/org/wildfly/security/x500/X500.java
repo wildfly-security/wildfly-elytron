@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.x500._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.PublicKey;
