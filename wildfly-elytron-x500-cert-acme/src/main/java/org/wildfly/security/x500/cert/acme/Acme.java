@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500.cert.acme;
 
-import static org.wildfly.security._private.ElytronMessages.acme;
+import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
 
 import java.math.BigInteger;
 import java.security.PublicKey;

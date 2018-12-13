@@ -18,9 +18,9 @@
 
 package org.wildfly.security.x500.cert.acme;
 
-import static org.wildfly.security._private.ElytronMessages.acme;
 import static org.wildfly.security.x500.cert.acme.Acme.base64UrlEncode;
 import static org.wildfly.security.x500.cert.acme.Acme.getJwk;
+import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

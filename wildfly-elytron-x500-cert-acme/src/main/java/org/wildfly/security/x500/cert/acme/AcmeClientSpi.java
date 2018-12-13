@@ -18,7 +18,6 @@
 
 package org.wildfly.security.x500.cert.acme;
 
-import static org.wildfly.security._private.ElytronMessages.acme;
 import static org.wildfly.security.x500.cert.acme.Acme.ACCEPT_LANGUAGE;
 import static org.wildfly.security.x500.cert.acme.Acme.ACCOUNT;
 import static org.wildfly.security.x500.cert.acme.Acme.ALG;
@@ -78,6 +77,7 @@ import static org.wildfly.security.x500.cert.acme.Acme.WEBSITE;
 import static org.wildfly.security.x500.cert.acme.Acme.base64UrlEncode;
 import static org.wildfly.security.x500.cert.acme.Acme.getAlgHeaderFromSignatureAlgorithm;
 import static org.wildfly.security.x500.cert.acme.Acme.getJwk;
+import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
 
 import java.io.BufferedInputStream;

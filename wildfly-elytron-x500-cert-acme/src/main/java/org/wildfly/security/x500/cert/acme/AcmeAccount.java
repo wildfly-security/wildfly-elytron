@@ -18,10 +18,10 @@
 
 package org.wildfly.security.x500.cert.acme;
 
-import static org.wildfly.security._private.ElytronMessages.acme;
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
 import static org.wildfly.security.x500.cert.acme.Acme.getAlgHeaderFromSignatureAlgorithm;
+import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
+import static org.wildfly.security.x500.cert.acme.ElytronMessages.log;
 
 import java.net.URL;
 import java.security.InvalidKeyException;
