@@ -16,17 +16,20 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.credential.source;
 
 import java.io.IOException;
-import java.security.spec.InvalidParameterSpecException;
+import java.io.InterruptedIOException;
+
+import javax.security.sasl.SaslException;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.store.CredentialStoreException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -38,26 +41,21 @@ import org.jboss.logging.annotations.MessageLogger;
 interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
+    ElytronMessages saslOAuth2 = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.oauth2");
 
-    @Message(id = 9, value = "Invalid name \"%s\"")
-    IllegalArgumentException generalInvalidName(String str);
+    @Message(id = 1030, value = "Unable to read credential")
+    IOException unableToReadCredential(@Cause Exception e);
     
-    @Message(id = 3030, value = "I/O operation failed: closed")
-    IOException closed();
+    @Message(id = 5053, value = "Callback handler failed for unknown reason")
+    SaslException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
     
-    @Message(id = 8030, value = "Failed to encode parameter specification")
-    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
+    @Message(id = 5125, value = "Unable to handle response from server")
+    SaslException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
     
-    @Message(id = 8031, value = "Failed to decode parameter specification")
-    IOException failedToDecode(@Cause Throwable cause);
+    @Message(id = 9506, value = "Credential store command interrupted")
+    InterruptedIOException credentialCommandInterrupted();
     
-    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
-    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
-    
-    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
-    IOException invalidFormat(String expected, String actual);
-    
-    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
-    IllegalStateException algorithmParametersNotInitialized();
-    
+    @Message(id = 9511, value = "Unable to read credential %s from store")
+    CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
+
 }

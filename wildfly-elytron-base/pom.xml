@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-auth</artifactId>
+    <artifactId>wildfly-elytron-base</artifactId>
 
-    <name>WildFly Elytron - Auth</name>
-    <description>WildFly Security Auth</description>
+    <name>WildFly Elytron - Base</name>
+    <description>WildFly Security Base</description>
 
     <dependencies>
         <dependency>
@@ -40,23 +40,7 @@
             <artifactId>wildfly-common</artifactId>
             <!-- scope is compile ELY-1153 -->
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-permission</artifactId>
-        </dependency>
-                
+        
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>

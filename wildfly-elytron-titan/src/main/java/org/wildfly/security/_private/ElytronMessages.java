@@ -121,6 +121,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
 
+    // Multi Use
     @Message(id = 3, value = "This builder has already been built")
     IllegalStateException builderAlreadyBuilt();
 
@@ -128,8 +129,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
     IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
-    @Message(id = 5, value = "Cannot instantiate self-referential factory")
-    IllegalStateException cannotInstantiateSelfReferentialFactory();
+//    @Message(id = 5, value = "Cannot instantiate self-referential factory")
+//    IllegalStateException cannotInstantiateSelfReferentialFactory();
 
 //    @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
 //    IllegalArgumentException unexpectedTrailingGarbageInX500principal();
@@ -139,8 +140,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7, value = "Credential destroying failed")
     void credentialDestroyingFailed(@Cause Throwable cause);
 
-    @Message(id = 8, value = "The given credential is not supported here")
-    IllegalArgumentException credentialNotSupported();
+//    @Message(id = 8, value = "The given credential is not supported here")
+//    IllegalArgumentException credentialNotSupported();
 
 //    @Message(id = 9, value = "Invalid name \"%s\"")
 //    IllegalArgumentException generalInvalidName(String str);
@@ -156,8 +157,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* auth package */
 
-    @Message(id = 1000, value = "Authentication name was already set on this context")
-    IllegalStateException nameAlreadySet();
+//    @Message(id = 1000, value = "Authentication name was already set on this context")
+//    IllegalStateException nameAlreadySet();
 
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
@@ -165,14 +166,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
-    @Message(id = 1003, value = "No authentication is in progress")
-    IllegalStateException noAuthenticationInProgress();
+//    @Message(id = 1003, value = "No authentication is in progress")
+//    IllegalStateException noAuthenticationInProgress();
 
     // @Message(id = 1004, value = "Authentication already complete on this context")
     // IllegalStateException authenticationAlreadyComplete();
 
-    @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
-    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
+//    @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
+//    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
     @Message(id = 1006, value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line")
     RealmUnavailableException noRealmFoundInProperties();
@@ -214,8 +215,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1018, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
 
-    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
-    RealmUnavailableException unableToObtainExclusiveAccess();
+//    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
+//    RealmUnavailableException unableToObtainExclusiveAccess();
 
     @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
     RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
@@ -247,8 +248,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1029, value = "Invalid host specification \"%s\"")
     IllegalArgumentException invalidHostSpec(String hostSpec);
 
-    @Message(id = 1030, value = "Unable to read credential")
-    IOException unableToReadCredential(@Cause Exception e);
+//    @Message(id = 1030, value = "Unable to read credential")
+//    IOException unableToReadCredential(@Cause Exception e);
 
     // @Message(id = 1031, value = "Missing reference in extends")
     // IllegalArgumentException missingReferenceInExtends();
@@ -256,11 +257,11 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1032, value = "Invalid combination of obtainable and verifiable")
     // IllegalArgumentException invalidCombinationOfObtainableAndVerifiable();
 
-    @Message(id = 1033, value = "User does not exist")
-    IllegalStateException userDoesNotExist();
+//    @Message(id = 1033, value = "User does not exist")
+//    IllegalStateException userDoesNotExist();
 
-    @Message(id = 1034, value = "Invalid credential type specified")
-    IllegalStateException invalidCredentialTypeSpecified();
+//    @Message(id = 1034, value = "Invalid credential type specified")
+//    IllegalStateException invalidCredentialTypeSpecified();
 
     @Message(id = 1035, value = "Unable to create key manager")
     IOException unableToCreateKeyManager(@Cause Exception e);
@@ -349,6 +350,7 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1063, value = "Private key is null")
 //    IllegalArgumentException privateKeyIsNull();
 
+    // Multi Use
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
 
@@ -433,8 +435,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
 
-    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
-    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
+//    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
+//    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
 
     // @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     // AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
@@ -446,19 +448,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1091, value = "Post-association peer context action failed")
     void postAssociationFailed(@Cause Throwable cause);
 
-    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
-    IllegalArgumentException invalidMechRealmSelection(String realmName);
+//    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
+//    IllegalArgumentException invalidMechRealmSelection(String realmName);
 
-    @Message(id = 1093, value = "Mechanism realm was already selected")
-    IllegalStateException mechRealmAlreadySelected();
+//    @Message(id = 1093, value = "Mechanism realm was already selected")
+//    IllegalStateException mechRealmAlreadySelected();
 
-    @LogMessage(level = ERROR)
-    @Message(id = 1094, value = "An event handler threw an exception")
-    void eventHandlerFailed(@Cause Throwable cause);
+//    @LogMessage(level = ERROR)
+//    @Message(id = 1094, value = "An event handler threw an exception")
+//    void eventHandlerFailed(@Cause Throwable cause);
 
-    @Message(id = 1095, value = "Unable to create identity")
-    RealmUnavailableException unableToCreateIdentity();
+//    @Message(id = 1095, value = "Unable to create identity")
+//    RealmUnavailableException unableToCreateIdentity();
 
+    // Multi Use
     @Message(id = 1096, value = "No such identity")
     RealmUnavailableException noSuchIdentity();
 
@@ -505,8 +508,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
     // NamingException ldapRealmPagedControlNotProvidedByLdapContext();
 
-    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
-    IllegalStateException cannotSucceedNotAuthorized();
+//    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
+//    IllegalStateException cannotSucceedNotAuthorized();
 
     @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
     IllegalStateException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
@@ -526,11 +529,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
     IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
 
-    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
-    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
+//    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
+//    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
 
-    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
-    IllegalStateException tooLateToSetMechanismInformation();
+//    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
+//    IllegalStateException tooLateToSetMechanismInformation();
 
     @Message(id = 1121, value = "Unable to perform initial JAAS login.")
     GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
@@ -541,8 +544,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1123, value = "Too many Kerberos principals found.")
     GeneralSecurityException tooManyKerberosPrincipalsFound();
 
-    @Message(id = 1124, value = "The security realm does not support updating a credential")
-    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
+//    @Message(id = 1124, value = "The security realm does not support updating a credential")
+//    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
 
     @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
     RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
@@ -616,20 +619,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1147, value = "Invalid LDAP name [%s]")
     RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
 
-    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
-    IllegalStateException classLoaderSecurityDomainExists();
+//    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
+//    IllegalStateException classLoaderSecurityDomainExists();
 
-    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
-    IllegalArgumentException cantWithSameSecurityDomainDomain();
+//    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
+//    IllegalArgumentException cantWithSameSecurityDomainDomain();
 
     @Message(id = 1150, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
     NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
 
-    @Message(id = 1151, value = "Evidence Verification Failed.")
-    SecurityException authenticationFailedEvidenceVerification();
+//    @Message(id = 1151, value = "Evidence Verification Failed.")
+//    SecurityException authenticationFailedEvidenceVerification();
 
-    @Message(id = 1152, value = "Authorization Check Failed.")
-    SecurityException authenticationFailedAuthorization();
+//    @Message(id = 1152, value = "Authorization Check Failed.")
+//    SecurityException authenticationFailedAuthorization();
 
     @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
     RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
@@ -637,11 +640,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1154, value = "Failed to read key store")
     RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
 
-    @Message(id = 1155, value = "Security domain mismatch")
-    IllegalArgumentException securityDomainMismatch();
+//    @Message(id = 1155, value = "Security domain mismatch")
+//    IllegalArgumentException securityDomainMismatch();
 
-    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
-    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
+//    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
+//    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
 
     @LogMessage(level = WARN)
     @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
@@ -747,8 +750,8 @@ public interface ElytronMessages extends BasicLogger {
 //    IllegalStateException reversibleLoadNotPossible();
 
     // Duplicated in wildfly-elytron-credential
-    @Message(id = 2009, value = "Unable to create a new KeyStore instance")
-    IOException unableToCreateKeyStore(@Cause Exception cause);
+//    @Message(id = 2009, value = "Unable to create a new KeyStore instance")
+//    IOException unableToCreateKeyStore(@Cause Exception cause);
 
     @Message(id = 2010, value = "Unknown key store specified")
     ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
@@ -920,8 +923,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3029, value = "No such key algorithm \"%s\"")
     IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
 
-    @Message(id = 3030, value = "I/O operation failed: closed")
-    IOException closed();
+//    @Message(id = 3030, value = "I/O operation failed: closed")
+//    IOException closed();
 
     @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
     GeneralSecurityException tooManyKerberosTicketsFound();
@@ -1180,6 +1183,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5052, value = "Callback handler does not support authorization")
     AuthenticationMechanismException mechAuthorizationUnsupported(@Cause Throwable cause);
 
+    // Multi Use
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
     AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
 
@@ -1396,6 +1400,7 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5124, value = "Unable to get maximum size of message before wrap")
 //    AuthenticationMechanismException mechUnableToGetMaximumSizeOfMessage(@Cause Throwable cause);
 
+    // Multi Use
     @Message(id = 5125, value = "Unable to handle response from server")
     AuthenticationMechanismException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
 
@@ -1844,11 +1849,11 @@ public interface ElytronMessages extends BasicLogger {
     //     + "the Policy.implies() method for authorization checking.")
     // void getPermissionsNotSupported();
 
-    @Message(id = 8510, value = "Role mapper has already been initialized.")
-    IllegalStateException roleMappedAlreadyInitialized();
+//    @Message(id = 8510, value = "Role mapper has already been initialized.")
+//    IllegalStateException roleMappedAlreadyInitialized();
 
-    @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
-    IllegalStateException roleMappedNotInitialized();
+//    @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
+//    IllegalStateException roleMappedNotInitialized();
 
     /* credential package */
 
@@ -1860,8 +1865,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* credential.store. package */
 
-    @Message(id = 9500, value = "External storage key under alias \"%s\" has to be a SecretKey")
-    CredentialStoreException wrongTypeOfExternalStorageKey(String keyAlias);
+//    @Message(id = 9500, value = "External storage key under alias \"%s\" has to be a SecretKey")
+//    CredentialStoreException wrongTypeOfExternalStorageKey(String keyAlias);
 
     @Message(id = 9501, value = "Duplicate attribute (\"%s\") found in configuration.")
     ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
@@ -1872,82 +1877,83 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9503, value = "Credential store name \"%s\" not defined")
     ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
 
-    @Message(id = 9504, value = "Cannot acquire a credential from the credential store")
-    CredentialStoreException cannotAcquireCredentialFromStore(@Cause Throwable cause);
+//    @Message(id = 9504, value = "Cannot acquire a credential from the credential store")
+//    CredentialStoreException cannotAcquireCredentialFromStore(@Cause Throwable cause);
 
-    @Message(id = 9505, value = "Cannot perform operation '%s': Credential store is set non modifiable")
-    CredentialStoreException nonModifiableCredentialStore(String operation);
+//    @Message(id = 9505, value = "Cannot perform operation '%s': Credential store is set non modifiable")
+//    CredentialStoreException nonModifiableCredentialStore(String operation);
 
-    @Message(id = 9506, value = "Credential store command interrupted")
-    InterruptedIOException credentialCommandInterrupted();
+//    @Message(id = 9506, value = "Credential store command interrupted")
+//    InterruptedIOException credentialCommandInterrupted();
 
-    @Message(id = 9507, value = "Invalid protection parameter given: %s")
-    CredentialStoreException invalidProtectionParameter(CredentialStore.ProtectionParameter protectionParameter);
+//    @Message(id = 9507, value = "Invalid protection parameter given: %s")
+//    CredentialStoreException invalidProtectionParameter(CredentialStore.ProtectionParameter protectionParameter);
 
-    @Message(id = 9508, value = "Cannot write credential to store")
-    CredentialStoreException cannotWriteCredentialToStore(@Cause Throwable cause);
+//    @Message(id = 9508, value = "Cannot write credential to store")
+//    CredentialStoreException cannotWriteCredentialToStore(@Cause Throwable cause);
 
-    @Message(id = 9509, value = "Unsupported credential type %s")
-    UnsupportedCredentialTypeException unsupportedCredentialType(Class<?> type);
+//    @Message(id = 9509, value = "Unsupported credential type %s")
+//    UnsupportedCredentialTypeException unsupportedCredentialType(Class<?> type);
 
-    @Message(id = 9510, value = "Invalid credential store keystore entry %s: expected %s")
-    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType, Class<? extends KeyStore.Entry> expectedType);
+//    @Message(id = 9510, value = "Invalid credential store keystore entry %s: expected %s")
+//    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType, Class<? extends KeyStore.Entry> expectedType);
 
-    @Message(id = 9511, value = "Unable to read credential %s from store")
-    CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
+      // Used in Credential Store and Source
+//    @Message(id = 9511, value = "Unable to read credential %s from store")
+//    CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
 
-    @Message(id = 9512, value = "Unable to remove credential from store")
-    CredentialStoreException cannotRemoveCredentialFromStore(@Cause Throwable cause);
+//    @Message(id = 9512, value = "Unable to remove credential from store")
+//    CredentialStoreException cannotRemoveCredentialFromStore(@Cause Throwable cause);
 
-    @Message(id = 9513, value = "Unable to flush credential store to storage")
-    CredentialStoreException cannotFlushCredentialStore(@Cause Throwable cause);
+//    @Message(id = 9513, value = "Unable to flush credential store to storage")
+//    CredentialStoreException cannotFlushCredentialStore(@Cause Throwable cause);
 
-    @Message(id = 9514, value = "Unable to initialize credential store")
-    CredentialStoreException cannotInitializeCredentialStore(@Cause Throwable cause);
+//    @Message(id = 9514, value = "Unable to initialize credential store")
+//    CredentialStoreException cannotInitializeCredentialStore(@Cause Throwable cause);
 
-    @Message(id = 9515, value = "Ignored unrecognized key store entry \"%s\"")
-    @LogMessage(level = DEBUG)
-    void logIgnoredUnrecognizedKeyStoreEntry(String alias);
+//    @Message(id = 9515, value = "Ignored unrecognized key store entry \"%s\"")
+//    @LogMessage(level = DEBUG)
+//    void logIgnoredUnrecognizedKeyStoreEntry(String alias);
 
-    @Message(id = 9516, value = "Failed to read a credential entry from the key store")
-    @LogMessage(level = WARN)
-    void logFailedToReadKeyFromKeyStore(@Cause Throwable cause);
+//    @Message(id = 9516, value = "Failed to read a credential entry from the key store")
+//    @LogMessage(level = WARN)
+//    void logFailedToReadKeyFromKeyStore(@Cause Throwable cause);
 
-    @Message(id = 9517, value = "This credential store type requires a store-wide protection parameter")
-    CredentialStoreException protectionParameterRequired();
+//    @Message(id = 9517, value = "This credential store type requires a store-wide protection parameter")
+//    CredentialStoreException protectionParameterRequired();
 
-    @Message(id = 9518, value = "Automatic storage creation for the Credential Store is disabled \"%s\"")
-    CredentialStoreException automaticStorageCreationDisabled(String location);
+//    @Message(id = 9518, value = "Automatic storage creation for the Credential Store is disabled \"%s\"")
+//    CredentialStoreException automaticStorageCreationDisabled(String location);
 
-    @Message(id = 9519, value = "Unexpected credential store external storage file version \"%s\"")
-    IOException unexpectedFileVersion(String version);
+//    @Message(id = 9519, value = "Unexpected credential store external storage file version \"%s\"")
+//    IOException unexpectedFileVersion(String version);
 
-    @Message(id = 9520, value = "Unrecognized entry type \"%s\"")
-    IOException unrecognizedEntryType(String entryType);
+//    @Message(id = 9520, value = "Unrecognized entry type \"%s\"")
+//    IOException unrecognizedEntryType(String entryType);
 
-    @Message(id = 9521, value = "Internal encryption problem while reading \"%s\"")
-    IOException internalEncryptionProblem(@Cause Exception e, String location);
+//    @Message(id = 9521, value = "Internal encryption problem while reading \"%s\"")
+//    IOException internalEncryptionProblem(@Cause Exception e, String location);
 
-    @Message(id = 9522, value = "\"%s\" is not a block based algorithm")
-    CredentialStoreException algorithmNotBlockBased(String algorithm);
+//    @Message(id = 9522, value = "\"%s\" is not a block based algorithm")
+//    CredentialStoreException algorithmNotBlockBased(String algorithm);
 
-    @Message(id = 9523, value = "Algorithm \"%s\" does not use an initialization vector (IV)")
-    CredentialStoreException algorithmNotIV(String algorithm);
+//    @Message(id = 9523, value = "Algorithm \"%s\" does not use an initialization vector (IV)")
+//    CredentialStoreException algorithmNotIV(String algorithm);
 
-    @Message(id = 9524, value = "The actual number of bytes read %d is different from the expected number of bytes %d to be read")
-    IOException readBytesMismatch(int actual, int expected);
+//    @Message(id = 9524, value = "The actual number of bytes read %d is different from the expected number of bytes %d to be read")
+//    IOException readBytesMismatch(int actual, int expected);
 
-    @Message(id = 9525, value = "location and externalPath initial attributes are the same. [location=%s, externalPath=%s]")
-    CredentialStoreException locationAndExternalPathAreIdentical(String location, String externalPath);
+//    @Message(id = 9525, value = "location and externalPath initial attributes are the same. [location=%s, externalPath=%s]")
+//    CredentialStoreException locationAndExternalPathAreIdentical(String location, String externalPath);
 
-    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
-    CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
+//    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
+//    CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
 
     @Message(id = 9527, value = "Invalid credential store reference")
     ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
 
-    @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
-    CredentialStoreException externalPathMissing(String keyStoreType);
+//    @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
+//    CredentialStoreException externalPathMissing(String keyStoreType);
 
 
     /* X.500 exceptions */
@@ -2144,8 +2150,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
     IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
 
-    @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
-    CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
+//    @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
+//    CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
 
     //@LogMessage(level = Logger.Level.FATAL)
     //@Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")

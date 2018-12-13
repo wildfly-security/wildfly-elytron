@@ -386,7 +386,27 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-auth-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-base</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-credential</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-store</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1080,7 +1100,11 @@
         <module>wildfly-elytron-asn1</module>
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-auth</module>
+        <module>wildfly-elytron-auth-server</module>
+        <module>wildfly-elytron-base</module>
         <module>wildfly-elytron-credential</module>
+        <module>wildfly-elytron-credential-store</module>
+        <module>wildfly-elytron-credential-source-deprecated</module>
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>
         <module>wildfly-elytron-http-bearer</module>

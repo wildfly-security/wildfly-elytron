@@ -16,14 +16,10 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
-
-import java.io.IOException;
-import java.security.spec.InvalidParameterSpecException;
+package org.wildfly.security;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -35,29 +31,11 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-interface ElytronMessages extends BasicLogger {
+public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
-    @Message(id = 9, value = "Invalid name \"%s\"")
-    IllegalArgumentException generalInvalidName(String str);
-    
-    @Message(id = 3030, value = "I/O operation failed: closed")
-    IOException closed();
-    
-    @Message(id = 8030, value = "Failed to encode parameter specification")
-    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
-    
-    @Message(id = 8031, value = "Failed to decode parameter specification")
-    IOException failedToDecode(@Cause Throwable cause);
-    
-    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
-    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
-    
-    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
-    IOException invalidFormat(String expected, String actual);
-    
-    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
-    IllegalStateException algorithmParametersNotInitialized();
-    
+    @Message(id = 5, value = "Cannot instantiate self-referential factory")
+    IllegalStateException cannotInstantiateSelfReferentialFactory();
+
 }
