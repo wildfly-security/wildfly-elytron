@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.sasl.digest._private;
 
-import static org.wildfly.security._private.ElytronMessages.saslDigest;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslDigest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

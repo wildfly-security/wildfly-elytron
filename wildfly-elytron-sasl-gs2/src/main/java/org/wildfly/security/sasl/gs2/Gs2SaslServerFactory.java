@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.gs2;
 
-import static org.wildfly.security._private.ElytronMessages.saslGs2;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslGs2;
 import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;

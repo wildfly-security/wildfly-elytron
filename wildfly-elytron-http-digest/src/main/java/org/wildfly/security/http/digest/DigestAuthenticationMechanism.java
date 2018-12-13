@@ -18,7 +18,6 @@
 package org.wildfly.security.http.digest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.wildfly.security._private.ElytronMessages.httpDigest;
 import static org.wildfly.security.http.HttpConstants.ALGORITHM;
 import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
@@ -38,6 +37,7 @@ import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.USERNAME;
 import static org.wildfly.security.http.HttpConstants.USERNAME_STAR;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpDigest;
 import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
 
 import java.io.IOException;

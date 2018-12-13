@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.wildfly.security._private.ElytronMessages.saslDigest;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslDigest;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;

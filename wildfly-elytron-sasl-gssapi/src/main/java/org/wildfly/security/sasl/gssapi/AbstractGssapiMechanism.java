@@ -33,7 +33,7 @@ import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslWrapper;
 
-import static org.wildfly.security._private.ElytronMessages.saslGssapi;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslGssapi;
 
 /**
  * Base class for the SaslServer and SaslClient implementations implementing the GSSAPI mechanism as defined by RFC 4752

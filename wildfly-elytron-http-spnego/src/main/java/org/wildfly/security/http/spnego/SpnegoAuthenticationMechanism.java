@@ -19,7 +19,6 @@ package org.wildfly.security.http.spnego;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.httpSpnego;
 import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.SPNEGO;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
@@ -30,6 +29,7 @@ import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpSpnego;
 
 import java.io.IOException;
 import java.io.Serializable;

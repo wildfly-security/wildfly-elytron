@@ -21,7 +21,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.common.array.Arrays2.indexOf;
-import static org.wildfly.security._private.ElytronMessages.httpBasic;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CHARSET;
@@ -29,6 +28,7 @@ import static org.wildfly.security.http.HttpConstants.HOST;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpBasic;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

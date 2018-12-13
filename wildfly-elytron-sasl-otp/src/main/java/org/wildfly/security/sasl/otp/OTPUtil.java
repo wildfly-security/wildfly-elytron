@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static org.wildfly.security._private.ElytronMessages.saslOTP;
+import static org.wildfly.security.mechanism._private.ElytronMessages.saslOTP;
 import static org.wildfly.security.password.interfaces.OneTimePassword.*;
 import static org.wildfly.security.sasl.otp.OTP.*;
 
