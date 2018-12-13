@@ -18,7 +18,7 @@
 
 package org.wildfly.security.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.AlgorithmParametersSpi;

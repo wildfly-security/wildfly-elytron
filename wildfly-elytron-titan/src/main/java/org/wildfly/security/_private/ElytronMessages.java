@@ -1782,20 +1782,21 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
 //    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
 
-    @Message(id = 8030, value = "Failed to encode parameter specification")
-    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
+      
+//    @Message(id = 8030, value = "Failed to encode parameter specification")
+//    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
 
-    @Message(id = 8031, value = "Failed to decode parameter specification")
-    IOException failedToDecode(@Cause Throwable cause);
+//    @Message(id = 8031, value = "Failed to decode parameter specification")
+//    IOException failedToDecode(@Cause Throwable cause);
 
-    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
-    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
+//    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
+//    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
 
-    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
-    IOException invalidFormat(String expected, String actual);
+//    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
+//    IOException invalidFormat(String expected, String actual);
 
-    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
-    IllegalStateException algorithmParametersNotInitialized();
+//    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
+//    IllegalStateException algorithmParametersNotInitialized();
 
     /* authz package */
 
