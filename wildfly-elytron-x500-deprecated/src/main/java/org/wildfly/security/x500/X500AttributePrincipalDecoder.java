@@ -33,6 +33,7 @@ import org.wildfly.security.x500.util.X500PrincipalUtil;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
     private static final String[] NO_REQUIRED_OIDS = new String[0];
 
