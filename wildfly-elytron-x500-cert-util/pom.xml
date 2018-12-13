@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-x500-cert</artifactId>
+    <artifactId>wildfly-elytron-x500-cert-util</artifactId>
 
-    <name>WildFly Elytron - X.500 Certificates</name>
-    <description>WildFly Security X.500 Certificates</description>
+    <name>WildFly Elytron - X.500 Certificate Utility Classes</name>
+    <description>WildFly Security X.500 Certificate Utility Classes</description>
 
     <dependencies>
         <dependency>
@@ -40,21 +40,6 @@
             <artifactId>wildfly-elytron-asn1</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500-cert-util</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <!-- scope is compile ELY-1153 -->
-        </dependency>    
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>

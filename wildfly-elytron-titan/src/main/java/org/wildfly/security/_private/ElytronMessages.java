@@ -2006,8 +2006,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 10015, value = "No certificate given")
 //    IllegalArgumentException noCertificateGiven();
 
-    @Message(id = 10016, value = "Unable to determine key size")
-    IllegalArgumentException unableToDetermineKeySize();
+//    @Message(id = 10016, value = "Unable to determine key size")
+//    IllegalArgumentException unableToDetermineKeySize();
 
 //    @Message(id = 10017, value = "No DN given")
 //    IllegalArgumentException noDnGiven();
