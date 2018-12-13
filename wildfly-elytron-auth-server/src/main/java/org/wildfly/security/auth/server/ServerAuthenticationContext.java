@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -43,7 +43,6 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
@@ -87,6 +86,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.x500.X500;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 
 /**
  * Server-side authentication context.  Instances of this class are used to perform all authentication and re-authorization

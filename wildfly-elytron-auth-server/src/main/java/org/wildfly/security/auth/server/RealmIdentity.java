@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;

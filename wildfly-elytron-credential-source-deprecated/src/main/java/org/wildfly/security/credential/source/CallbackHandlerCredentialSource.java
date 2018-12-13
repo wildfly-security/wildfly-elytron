@@ -38,6 +38,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class CallbackHandlerCredentialSource implements CredentialSource {
     private final CallbackHandler callbackHandler;
 

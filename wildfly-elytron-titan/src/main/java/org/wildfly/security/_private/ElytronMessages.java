@@ -121,15 +121,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
 
-    @Message(id = 3, value = "This builder has already been built")
-    IllegalStateException builderAlreadyBuilt();
+//    @Message(id = 3, value = "This builder has already been built")
+//    IllegalStateException builderAlreadyBuilt();
 
     // Used both for LDAP Realm and wildfly-elyton-credential
     @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
     IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
-    @Message(id = 5, value = "Cannot instantiate self-referential factory")
-    IllegalStateException cannotInstantiateSelfReferentialFactory();
+//    @Message(id = 5, value = "Cannot instantiate self-referential factory")
+//    IllegalStateException cannotInstantiateSelfReferentialFactory();
 
 //    @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
 //    IllegalArgumentException unexpectedTrailingGarbageInX500principal();
@@ -138,8 +138,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7, value = "Credential destroying failed")
     void credentialDestroyingFailed(@Cause Throwable cause);
 
-    @Message(id = 8, value = "The given credential is not supported here")
-    IllegalArgumentException credentialNotSupported();
+//    @Message(id = 8, value = "The given credential is not supported here")
+//    IllegalArgumentException credentialNotSupported();
 
 //    @Message(id = 9, value = "Invalid name \"%s\"")
 //    IllegalArgumentException generalInvalidName(String str);
@@ -155,8 +155,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* auth package */
 
-    @Message(id = 1000, value = "Authentication name was already set on this context")
-    IllegalStateException nameAlreadySet();
+//    @Message(id = 1000, value = "Authentication name was already set on this context")
+//    IllegalStateException nameAlreadySet();
 
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
@@ -164,14 +164,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
-    @Message(id = 1003, value = "No authentication is in progress")
-    IllegalStateException noAuthenticationInProgress();
+//    @Message(id = 1003, value = "No authentication is in progress")
+//    IllegalStateException noAuthenticationInProgress();
 
     // @Message(id = 1004, value = "Authentication already complete on this context")
     // IllegalStateException authenticationAlreadyComplete();
 
-    @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
-    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
+//    @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
+//    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
     @Message(id = 1006, value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line")
     RealmUnavailableException noRealmFoundInProperties();
@@ -213,8 +213,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1018, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
 
-    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
-    RealmUnavailableException unableToObtainExclusiveAccess();
+//    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
+//    RealmUnavailableException unableToObtainExclusiveAccess();
 
     @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
     RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
@@ -255,11 +255,11 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1032, value = "Invalid combination of obtainable and verifiable")
     // IllegalArgumentException invalidCombinationOfObtainableAndVerifiable();
 
-    @Message(id = 1033, value = "User does not exist")
-    IllegalStateException userDoesNotExist();
+//    @Message(id = 1033, value = "User does not exist")
+//    IllegalStateException userDoesNotExist();
 
-    @Message(id = 1034, value = "Invalid credential type specified")
-    IllegalStateException invalidCredentialTypeSpecified();
+//    @Message(id = 1034, value = "Invalid credential type specified")
+//    IllegalStateException invalidCredentialTypeSpecified();
 
     @Message(id = 1035, value = "Unable to create key manager")
     IOException unableToCreateKeyManager(@Cause Exception e);
@@ -348,8 +348,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1063, value = "Private key is null")
 //    IllegalArgumentException privateKeyIsNull();
 
-    @Message(id = 1064, value = "Invalid identity name")
-    IllegalArgumentException invalidName();
+//    @Message(id = 1064, value = "Invalid identity name")
+//    IllegalArgumentException invalidName();
 
     @Message(id = 1065, value = "Pattern requires a capture group")
     IllegalArgumentException patternRequiresCaptureGroup();
@@ -432,8 +432,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
 
-    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
-    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
+//    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
+//    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
 
     // @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     // AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
@@ -445,21 +445,21 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1091, value = "Post-association peer context action failed")
     void postAssociationFailed(@Cause Throwable cause);
 
-    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
-    IllegalArgumentException invalidMechRealmSelection(String realmName);
+//    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
+//    IllegalArgumentException invalidMechRealmSelection(String realmName);
 
-    @Message(id = 1093, value = "Mechanism realm was already selected")
-    IllegalStateException mechRealmAlreadySelected();
+//    @Message(id = 1093, value = "Mechanism realm was already selected")
+//    IllegalStateException mechRealmAlreadySelected();
 
-    @LogMessage(level = ERROR)
-    @Message(id = 1094, value = "An event handler threw an exception")
-    void eventHandlerFailed(@Cause Throwable cause);
+//    @LogMessage(level = ERROR)
+//    @Message(id = 1094, value = "An event handler threw an exception")
+//    void eventHandlerFailed(@Cause Throwable cause);
 
-    @Message(id = 1095, value = "Unable to create identity")
-    RealmUnavailableException unableToCreateIdentity();
+//    @Message(id = 1095, value = "Unable to create identity")
+//    RealmUnavailableException unableToCreateIdentity();
 
-    @Message(id = 1096, value = "No such identity")
-    RealmUnavailableException noSuchIdentity();
+//    @Message(id = 1096, value = "No such identity")
+//    RealmUnavailableException noSuchIdentity();
 
     @Message(id = 1097, value = "Ldap-backed realm failed to delete identity from server")
     RealmUnavailableException ldapRealmFailedDeleteIdentityFromServer(@Cause Throwable cause);
@@ -504,8 +504,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
     // NamingException ldapRealmPagedControlNotProvidedByLdapContext();
 
-    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
-    IllegalStateException cannotSucceedNotAuthorized();
+//    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
+//    IllegalStateException cannotSucceedNotAuthorized();
 
     @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
     IllegalStateException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
@@ -525,11 +525,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
     IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
 
-    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
-    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
+//    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
+//    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
 
-    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
-    IllegalStateException tooLateToSetMechanismInformation();
+//    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
+//    IllegalStateException tooLateToSetMechanismInformation();
 
     @Message(id = 1121, value = "Unable to perform initial JAAS login.")
     GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
@@ -540,8 +540,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1123, value = "Too many Kerberos principals found.")
     GeneralSecurityException tooManyKerberosPrincipalsFound();
 
-    @Message(id = 1124, value = "The security realm does not support updating a credential")
-    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
+//    @Message(id = 1124, value = "The security realm does not support updating a credential")
+//    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
 
     @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
     RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
@@ -615,20 +615,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1147, value = "Invalid LDAP name [%s]")
     RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
 
-    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
-    IllegalStateException classLoaderSecurityDomainExists();
+//    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
+//    IllegalStateException classLoaderSecurityDomainExists();
 
-    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
-    IllegalArgumentException cantWithSameSecurityDomainDomain();
+//    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
+//    IllegalArgumentException cantWithSameSecurityDomainDomain();
 
     @Message(id = 1150, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
     NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
 
-    @Message(id = 1151, value = "Evidence Verification Failed.")
-    SecurityException authenticationFailedEvidenceVerification();
+//    @Message(id = 1151, value = "Evidence Verification Failed.")
+//    SecurityException authenticationFailedEvidenceVerification();
 
-    @Message(id = 1152, value = "Authorization Check Failed.")
-    SecurityException authenticationFailedAuthorization();
+//    @Message(id = 1152, value = "Authorization Check Failed.")
+//    SecurityException authenticationFailedAuthorization();
 
     @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
     RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
@@ -636,11 +636,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1154, value = "Failed to read key store")
     RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
 
-    @Message(id = 1155, value = "Security domain mismatch")
-    IllegalArgumentException securityDomainMismatch();
+//    @Message(id = 1155, value = "Security domain mismatch")
+//    IllegalArgumentException securityDomainMismatch();
 
-    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
-    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
+//    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
+//    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
 
     @LogMessage(level = WARN)
     @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
@@ -1843,11 +1843,11 @@ public interface ElytronMessages extends BasicLogger {
     //     + "the Policy.implies() method for authorization checking.")
     // void getPermissionsNotSupported();
 
-    @Message(id = 8510, value = "Role mapper has already been initialized.")
-    IllegalStateException roleMappedAlreadyInitialized();
+//    @Message(id = 8510, value = "Role mapper has already been initialized.")
+//    IllegalStateException roleMappedAlreadyInitialized();
 
-    @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
-    IllegalStateException roleMappedNotInitialized();
+//    @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
+//    IllegalStateException roleMappedNotInitialized();
 
     /* credential package */
 

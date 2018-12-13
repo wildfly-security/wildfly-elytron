@@ -38,6 +38,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
+@Deprecated
 public final class CredentialStoreCredentialSource implements CredentialSource {
     private final SecurityFactory<CredentialStore> credentialStoreFactory;
     private final String alias;

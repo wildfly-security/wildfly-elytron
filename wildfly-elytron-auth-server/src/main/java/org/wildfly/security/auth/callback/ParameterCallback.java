@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server._private.ElytronMessages.log;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;

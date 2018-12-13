@@ -21,7 +21,7 @@ package org.wildfly.security.auth.server;
 import static java.security.AccessController.doPrivileged;
 import static java.util.Collections.emptyMap;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.PrivilegedAction;

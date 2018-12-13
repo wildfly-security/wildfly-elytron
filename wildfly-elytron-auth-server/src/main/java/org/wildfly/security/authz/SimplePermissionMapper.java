@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.authz;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server._private.ElytronMessages.log;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Principal;

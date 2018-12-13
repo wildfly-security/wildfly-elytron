@@ -26,7 +26,7 @@ import java.util.function.Function;
 import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;

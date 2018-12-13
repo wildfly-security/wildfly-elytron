@@ -45,6 +45,7 @@ import org.wildfly.security.x500.X500;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class KeyStoreCredentialSource implements CredentialSource {
     private final SecurityFactory<KeyStore.Entry> entryFactory;
 

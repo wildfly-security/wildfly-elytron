@@ -56,6 +56,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class CommandCredentialSource implements CredentialSource {
 
     private static final File NULL_FILE = new File(

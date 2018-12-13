@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.credential.Credential;

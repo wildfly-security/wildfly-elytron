@@ -22,7 +22,7 @@ import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.event.RealmEvent;
 import org.wildfly.security.credential.Credential;

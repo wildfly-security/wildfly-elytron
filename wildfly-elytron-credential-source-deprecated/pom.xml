@@ -29,38 +29,17 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-auth-server</artifactId>
+    <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
 
-    <name>WildFly Elytron - Auth Server</name>
-    <description>WildFly Security Auth Server</description>
+    <name>WildFly Elytron - Credential Source Deprecated</name>
+    <description>WildFly Security X.500 Deprecated</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <!-- scope is compile ELY-1153 -->
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-titan</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-asn1</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
-        </dependency>         
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential</artifactId>
-        </dependency>        
         
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-        </dependency>        
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -70,13 +49,13 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
-        </dependency>              
-               
+        </dependency>  
+        
         <dependency>
-            <groupId>org.jboss.threads</groupId>
-            <artifactId>jboss-threads</artifactId>
+            <groupId>org.jboss.spec.javax.json</groupId>
+            <artifactId>jboss-json-api_1.0_spec</artifactId>
             <scope>provided</scope>
-        </dependency>               
+        </dependency>
     </dependencies>
 
 </project>

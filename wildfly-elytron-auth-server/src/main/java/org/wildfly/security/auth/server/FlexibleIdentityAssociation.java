@@ -29,7 +29,7 @@ import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionBiFunction;
 import org.wildfly.common.function.ExceptionBiPredicate;
 import org.wildfly.common.function.ExceptionObjIntConsumer;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server._private.ElytronMessages;
 
 /**
  * A flexible identity association which can have its current identity modified.  Modifying the identity association

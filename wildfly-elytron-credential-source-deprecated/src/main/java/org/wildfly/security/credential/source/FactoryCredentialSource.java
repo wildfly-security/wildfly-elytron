@@ -33,6 +33,7 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
  */
+@Deprecated
 public class FactoryCredentialSource implements CredentialSource {
     private SecurityFactory<? extends Credential> credentialFactory;
 
