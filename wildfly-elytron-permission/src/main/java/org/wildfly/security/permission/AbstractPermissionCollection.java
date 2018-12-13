@@ -24,7 +24,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.permission.ElytronMessages;
 
 /**
  * Base class for useful permission collections.

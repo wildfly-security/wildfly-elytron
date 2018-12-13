@@ -18,9 +18,9 @@
 
 package org.wildfly.security.permission;
 
-import org.wildfly.common.Assert;
+import static org.wildfly.security.permission.SecurityMessages.permission;
 
-import static org.wildfly.security.manager._private.SecurityMessages.permission;
+import org.wildfly.common.Assert;
 
 import java.util.Arrays;
 import java.util.EnumSet;

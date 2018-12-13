@@ -54,11 +54,11 @@ public interface SecurityMessages {
     @Message(id = 3, value = "Unknown security context type")
     SecurityException unknownContext();
 
-    @Message(id = 4, value = "Unexpected character '%s' at offset %d of '%s'")
-    IllegalArgumentException unexpectedActionCharacter(char ch, int offset, String actionString);
+//    @Message(id = 4, value = "Unexpected character '%s' at offset %d of '%s'")
+//    IllegalArgumentException unexpectedActionCharacter(char ch, int offset, String actionString);
 
-    @Message(id = 5, value = "Invalid action '%s' at offset %d of '%s'")
-    IllegalArgumentException invalidAction(String action, int offset, String actionString);
+//    @Message(id = 5, value = "Invalid action '%s' at offset %d of '%s'")
+//    IllegalArgumentException invalidAction(String action, int offset, String actionString);
 
     @Message(id = 6, value = "Invalid permission name '%s'")
     IllegalArgumentException invalidName(String name);

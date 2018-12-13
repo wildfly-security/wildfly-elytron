@@ -24,7 +24,7 @@ import java.security.Policy;
 import java.security.ProtectionDomain;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.permission.ElytronMessages;
 
 /**
  * An interface for objects that can verify permissions.

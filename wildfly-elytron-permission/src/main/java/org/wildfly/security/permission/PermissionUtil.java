@@ -39,7 +39,6 @@ import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 
 /**
  * General permission utility methods and constants.

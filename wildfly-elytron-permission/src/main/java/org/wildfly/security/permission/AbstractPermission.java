@@ -20,7 +20,7 @@ package org.wildfly.security.permission;
 
 import java.security.Permission;
 
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.permission.ElytronMessages;
 
 /**
  * An abstract base class for any permission.
