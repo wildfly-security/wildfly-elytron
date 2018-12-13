@@ -445,6 +445,11 @@
                 <artifactId>wildfly-elytron-jaspi</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-permission</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
@@ -1075,6 +1080,7 @@
         <module>wildfly-elytron-http-util</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
+        <module>wildfly-elytron-permission</module>
         <module>wildfly-elytron-realm-ldap</module>
         <module>wildfly-elytron-sasl-anonymous</module>
         <module>wildfly-elytron-sasl-digest</module>

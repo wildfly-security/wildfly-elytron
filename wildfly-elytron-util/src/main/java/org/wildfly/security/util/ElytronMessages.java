@@ -39,6 +39,9 @@ interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
+    @Message(id = 9, value = "Invalid name \"%s\"")
+    IllegalArgumentException generalInvalidName(String str);
+    
     @Message(id = 8030, value = "Failed to encode parameter specification")
     InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
     

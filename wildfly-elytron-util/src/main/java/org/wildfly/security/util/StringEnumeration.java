@@ -21,7 +21,7 @@ package org.wildfly.security.util;
 import java.util.HashMap;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.util.ElytronMessages;
 
 /**
  * An indexed enumeration of strings.  The enumeration can look up string indexes by number, numeric indexes by string,
