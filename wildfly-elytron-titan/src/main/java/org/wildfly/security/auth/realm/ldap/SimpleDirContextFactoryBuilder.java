@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.realm.ldap;
 
 import org.jboss.modules.Module;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -29,7 +30,6 @@ import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.util._private.Arrays2;
 
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;

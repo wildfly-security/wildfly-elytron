@@ -73,6 +73,7 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
@@ -122,7 +123,6 @@ import org.wildfly.security.ssl.SSLConnection;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.util.ProviderUtil;
-import org.wildfly.security.util._private.Arrays2;
 import org.wildfly.security.x500.TrustedAuthority;
 
 /**

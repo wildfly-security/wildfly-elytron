@@ -32,6 +32,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
@@ -42,7 +43,6 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.util._private.Arrays2;
 
 /**
  * A password utility for LDAP formatted passwords.

@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
 import java.util.NoSuchElementException;
 
 import org.junit.Test;
-import org.wildfly.security.util._private.Arrays2;
+import org.wildfly.common.array.Arrays2;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
