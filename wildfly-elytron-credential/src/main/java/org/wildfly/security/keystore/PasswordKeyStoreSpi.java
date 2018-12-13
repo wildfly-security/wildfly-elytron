@@ -18,7 +18,7 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential._private.ElytronMessages.log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

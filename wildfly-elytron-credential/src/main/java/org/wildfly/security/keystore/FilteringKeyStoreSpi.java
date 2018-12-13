@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.keystore;
 
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential._private.ElytronMessages;
 
 import java.io.IOException;
 import java.io.InputStream;
