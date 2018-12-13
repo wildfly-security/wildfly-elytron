@@ -32,7 +32,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.spec.AlgorithmParameterSpec;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential.source.ElytronMessages.log;
 
 /**
  * A credential source which acquires a credential from local kerberos ticket cache.

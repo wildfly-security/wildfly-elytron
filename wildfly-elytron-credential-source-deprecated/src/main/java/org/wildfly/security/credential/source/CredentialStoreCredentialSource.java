@@ -30,7 +30,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential.source.ElytronMessages.log;
 
 /**
  * A credential source which is backed by an entry in a credential store.

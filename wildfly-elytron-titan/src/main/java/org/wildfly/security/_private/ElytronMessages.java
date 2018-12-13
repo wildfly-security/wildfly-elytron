@@ -121,8 +121,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
 
-//    @Message(id = 3, value = "This builder has already been built")
-//    IllegalStateException builderAlreadyBuilt();
+    // Multi Use
+    @Message(id = 3, value = "This builder has already been built")
+    IllegalStateException builderAlreadyBuilt();
 
     // Used both for LDAP Realm and wildfly-elyton-credential
     @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
@@ -246,8 +247,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1029, value = "Invalid host specification \"%s\"")
     IllegalArgumentException invalidHostSpec(String hostSpec);
 
-    @Message(id = 1030, value = "Unable to read credential")
-    IOException unableToReadCredential(@Cause Exception e);
+//    @Message(id = 1030, value = "Unable to read credential")
+//    IOException unableToReadCredential(@Cause Exception e);
 
     // @Message(id = 1031, value = "Missing reference in extends")
     // IllegalArgumentException missingReferenceInExtends();
@@ -348,8 +349,9 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1063, value = "Private key is null")
 //    IllegalArgumentException privateKeyIsNull();
 
-//    @Message(id = 1064, value = "Invalid identity name")
-//    IllegalArgumentException invalidName();
+    // Multi Use
+    @Message(id = 1064, value = "Invalid identity name")
+    IllegalArgumentException invalidName();
 
     @Message(id = 1065, value = "Pattern requires a capture group")
     IllegalArgumentException patternRequiresCaptureGroup();
@@ -458,8 +460,9 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1095, value = "Unable to create identity")
 //    RealmUnavailableException unableToCreateIdentity();
 
-//    @Message(id = 1096, value = "No such identity")
-//    RealmUnavailableException noSuchIdentity();
+    // Multi Use
+    @Message(id = 1096, value = "No such identity")
+    RealmUnavailableException noSuchIdentity();
 
     @Message(id = 1097, value = "Ldap-backed realm failed to delete identity from server")
     RealmUnavailableException ldapRealmFailedDeleteIdentityFromServer(@Cause Throwable cause);
@@ -1179,6 +1182,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5052, value = "Callback handler does not support authorization")
     AuthenticationMechanismException mechAuthorizationUnsupported(@Cause Throwable cause);
 
+    // Multi Use
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
     AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
 
@@ -1395,6 +1399,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5124, value = "Unable to get maximum size of message before wrap")
     AuthenticationMechanismException mechUnableToGetMaximumSizeOfMessage(@Cause Throwable cause);
 
+    // Multi Use
     @Message(id = 5125, value = "Unable to handle response from server")
     AuthenticationMechanismException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
 
@@ -1877,8 +1882,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 9505, value = "Cannot perform operation '%s': Credential store is set non modifiable")
 //    CredentialStoreException nonModifiableCredentialStore(String operation);
 
-    @Message(id = 9506, value = "Credential store command interrupted")
-    InterruptedIOException credentialCommandInterrupted();
+//    @Message(id = 9506, value = "Credential store command interrupted")
+//    InterruptedIOException credentialCommandInterrupted();
 
 //    @Message(id = 9507, value = "Invalid protection parameter given: %s")
 //    CredentialStoreException invalidProtectionParameter(CredentialStore.ProtectionParameter protectionParameter);
@@ -1892,6 +1897,7 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 9510, value = "Invalid credential store keystore entry %s: expected %s")
 //    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType, Class<? extends KeyStore.Entry> expectedType);
 
+      // Used in Credential Store and Source
 //    @Message(id = 9511, value = "Unable to read credential %s from store")
 //    CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
 
