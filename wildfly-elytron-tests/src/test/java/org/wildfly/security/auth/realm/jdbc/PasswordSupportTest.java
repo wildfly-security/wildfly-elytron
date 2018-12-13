@@ -31,6 +31,7 @@ import java.sql.Statement;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -50,7 +51,6 @@ import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.util.PasswordUtil;
-import org.wildfly.security.util.ByteIterator;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

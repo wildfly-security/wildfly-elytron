@@ -77,7 +77,6 @@ import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.permission.InvalidPermissionClassException;
 import org.wildfly.security.permission.PermissionVerifier;
-import org.wildfly.security.util.DecodeException;
 import org.wildfly.security.x500.cert.acme.AcmeException;
 
 /**
@@ -829,32 +828,32 @@ public interface ElytronMessages extends BasicLogger {
 
     /* util package */
 
-    @Message(id = 3001, value = "Unexpected padding")
-    DecodeException unexpectedPadding();
+//    @Message(id = 3001, value = "Unexpected padding")
+//    DecodeException unexpectedPadding();
 
-    @Message(id = 3002, value = "Expected padding")
-    DecodeException expectedPadding();
+//    @Message(id = 3002, value = "Expected padding")
+//    DecodeException expectedPadding();
 
-    @Message(id = 3003, value = "Incomplete decode")
-    DecodeException incompleteDecode();
+//    @Message(id = 3003, value = "Incomplete decode")
+//    DecodeException incompleteDecode();
 
-    @Message(id = 3004, value = "Expected %d padding characters")
-    DecodeException expectedPaddingCharacters(int numExpected);
+//    @Message(id = 3004, value = "Expected %d padding characters")
+//    DecodeException expectedPaddingCharacters(int numExpected);
 
-    @Message(id = 3005, value = "Invalid base 32 character")
-    DecodeException invalidBase32Character();
+//    @Message(id = 3005, value = "Invalid base 32 character")
+//    DecodeException invalidBase32Character();
 
-    @Message(id = 3006, value = "Expected an even number of hex characters")
-    DecodeException expectedEvenNumberOfHexCharacters();
+//    @Message(id = 3006, value = "Expected an even number of hex characters")
+//    DecodeException expectedEvenNumberOfHexCharacters();
 
-    @Message(id = 3007, value = "Invalid hex character")
-    DecodeException invalidHexCharacter();
+//    @Message(id = 3007, value = "Invalid hex character")
+//    DecodeException invalidHexCharacter();
 
-    @Message(id = 3008, value = "Expected two padding characters")
-    DecodeException expectedTwoPaddingCharacters();
+//    @Message(id = 3008, value = "Expected two padding characters")
+//    DecodeException expectedTwoPaddingCharacters();
 
-    @Message(id = 3009, value = "Invalid base 64 character")
-    DecodeException invalidBase64Character();
+//    @Message(id = 3009, value = "Invalid base 64 character")
+//    DecodeException invalidBase64Character();
 
     @Message(id = 3010, value = "Malformed PEM content at offset %d")
     IllegalArgumentException malformedPemContent(long offset);

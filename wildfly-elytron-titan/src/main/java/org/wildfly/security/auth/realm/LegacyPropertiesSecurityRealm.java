@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.codec.DecodeException;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -66,7 +67,6 @@ import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.util.DecodeException;
 
 /**
  * A {@link SecurityRealm} implementation that makes use of the legacy properties files.
