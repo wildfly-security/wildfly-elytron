@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.credential.store;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential.store._private.ElytronMessages.log;
 
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;

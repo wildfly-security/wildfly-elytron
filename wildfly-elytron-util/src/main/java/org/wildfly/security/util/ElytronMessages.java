@@ -42,6 +42,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 9, value = "Invalid name \"%s\"")
     IllegalArgumentException generalInvalidName(String str);
     
+    @Message(id = 3030, value = "I/O operation failed: closed")
+    IOException closed();
+    
     @Message(id = 8030, value = "Failed to encode parameter specification")
     InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
     

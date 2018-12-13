@@ -18,7 +18,7 @@
 
 package org.wildfly.security.credential.store.impl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential.store._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

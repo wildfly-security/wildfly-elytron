@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential.store._private.ElytronMessages;
 
 /**
  * Compatibility class for PicketBox VAULT.dat files, which consist of a single serialized instance of

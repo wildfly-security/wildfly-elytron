@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.util.ElytronMessages;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
