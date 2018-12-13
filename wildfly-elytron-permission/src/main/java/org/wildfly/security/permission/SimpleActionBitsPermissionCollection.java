@@ -23,7 +23,6 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.util.ArrayIterator;
 
 /**
