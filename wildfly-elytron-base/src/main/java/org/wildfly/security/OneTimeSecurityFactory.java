@@ -18,7 +18,7 @@
 
 package org.wildfly.security;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.ElytronMessages.log;
 
 import java.security.GeneralSecurityException;
 
