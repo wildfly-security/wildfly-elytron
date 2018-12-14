@@ -20,7 +20,7 @@ package org.wildfly.security.auth.util;
 import static java.security.AccessController.doPrivileged;
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.util.ElytronMessages.log;
 
 import java.io.File;
 import java.io.IOException;

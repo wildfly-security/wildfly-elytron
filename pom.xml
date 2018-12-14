@@ -339,6 +339,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-auth-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-base</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1080,6 +1085,7 @@
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-auth</module>
         <module>wildfly-elytron-auth-server</module>
+        <module>wildfly-elytron-auth-util</module>
         <module>wildfly-elytron-base</module>
         <module>wildfly-elytron-credential</module>
         <module>wildfly-elytron-credential-store</module>
