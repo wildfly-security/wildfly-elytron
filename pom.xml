@@ -421,6 +421,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-realm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-realm-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1096,6 +1102,7 @@
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-permission</module>
+        <module>wildfly-elytron-realm</module>
         <module>wildfly-elytron-realm-jdbc</module>
         <module>wildfly-elytron-realm-ldap</module>
         <module>wildfly-elytron-realm-token</module>
