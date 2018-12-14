@@ -20,7 +20,7 @@ package org.wildfly.security.auth.server;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server.ElytronMessages.log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +47,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@Deprecated
 public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {
 
     HttpAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final HttpServerAuthenticationMechanismFactory factory) {
