@@ -427,6 +427,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-permission</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1115,6 +1121,7 @@
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
         <module>wildfly-elytron-mechanism</module>
+        <module>wildfly-elytron-mechanism-digest</module>
         <module>wildfly-elytron-permission</module>
         <module>wildfly-elytron-realm</module>
         <module>wildfly-elytron-realm-jdbc</module>

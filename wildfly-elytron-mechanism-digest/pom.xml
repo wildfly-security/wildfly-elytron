@@ -29,25 +29,23 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl-digest</artifactId>
+    <artifactId>wildfly-elytron-mechanism-digest</artifactId>
 
-    <name>WildFly Elytron - SASL Digest</name>
-    <description>WildFly Security Digest SASL Implementation</description>
+    <name>WildFly Elytron - Mechanism Digest</name>
+    <description>WildFly Security Mechanism Digest</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-titan</artifactId>
-        </dependency>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency> 
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-digest</artifactId>
-        </dependency>
-
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency> 
         <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <scope>provided</scope>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
         </dependency>
     </dependencies>
 
