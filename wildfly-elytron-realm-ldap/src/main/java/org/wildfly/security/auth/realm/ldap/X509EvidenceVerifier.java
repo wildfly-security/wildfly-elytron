@@ -19,7 +19,6 @@
 package org.wildfly.security.auth.realm.ldap;
 
 import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;

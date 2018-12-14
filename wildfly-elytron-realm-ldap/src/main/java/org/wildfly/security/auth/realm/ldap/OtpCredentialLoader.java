@@ -28,7 +28,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
 /**
  * A {@link CredentialLoader} for loading OTP credentials stored within defined attributes of LDAP entries.

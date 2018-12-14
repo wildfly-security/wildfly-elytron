@@ -114,16 +114,16 @@ public interface ElytronMessages extends BasicLogger {
 //    void logVersion(String versionString);
 
     // Used both for LDAP Realm and wildfly-elyton-credential
-    @Message(id = 2, value = "Parameter %s is empty")
-    IllegalArgumentException emptyParameter(String parameter);
+//    @Message(id = 2, value = "Parameter %s is empty")
+//    IllegalArgumentException emptyParameter(String parameter);
 
     // Multi Use
-    @Message(id = 3, value = "This builder has already been built")
-    IllegalStateException builderAlreadyBuilt();
+//    @Message(id = 3, value = "This builder has already been built")
+//    IllegalStateException builderAlreadyBuilt();
 
     // Used both for LDAP Realm and wildfly-elyton-credential
-    @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
-    IllegalArgumentException unrecognizedAlgorithm(String algorithm);
+//    @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
+//    IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
 //    @Message(id = 5, value = "Cannot instantiate self-referential factory")
 //    IllegalStateException cannotInstantiateSelfReferentialFactory();
@@ -132,9 +132,9 @@ public interface ElytronMessages extends BasicLogger {
 //    IllegalArgumentException unexpectedTrailingGarbageInX500principal();
 
     // Used both for LDAP Realm and mechanisms
-    @LogMessage(level = WARN)
-    @Message(id = 7, value = "Credential destroying failed")
-    void credentialDestroyingFailed(@Cause Throwable cause);
+//    @LogMessage(level = WARN)
+//    @Message(id = 7, value = "Credential destroying failed")
+//    void credentialDestroyingFailed(@Cause Throwable cause);
 
 //    @Message(id = 8, value = "The given credential is not supported here")
 //    IllegalArgumentException credentialNotSupported();
@@ -278,11 +278,11 @@ public interface ElytronMessages extends BasicLogger {
     // RuntimeException couldNotParsePrivateKey(@Cause Throwable cause);
 
     // Multi Use
-    @Message(id = 1041, value = "Could not obtain credential")
-    RuntimeException couldNotObtainCredential();
+//    @Message(id = 1041, value = "Could not obtain credential")
+//    RuntimeException couldNotObtainCredential();
 
-    @Message(id = 1042, value = "Could not obtain credential")
-    RuntimeException couldNotObtainCredentialWithCause(@Cause Throwable cause);
+//    @Message(id = 1042, value = "Could not obtain credential")
+//    RuntimeException couldNotObtainCredentialWithCause(@Cause Throwable cause);
 
     // @Message(id = 1043, value = "Invalid password key specification for algorithm \"%s\"")
     // RuntimeException invalidPasswordKeySpecificationForAlgorithm(String algorithm, @Cause Throwable cause);
@@ -314,35 +314,35 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
     // RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
 
-    @Message(id = 1053, value = "Insufficient data to form a digest and a salt")
-    InvalidKeySpecException insufficientDataToFormDigestAndSalt();
+//    @Message(id = 1053, value = "Insufficient data to form a digest and a salt")
+//    InvalidKeySpecException insufficientDataToFormDigestAndSalt();
 
-    @Message(id = 1054, value = "Invalid salt \"%s%s\"")
-    IllegalArgumentException invalidSalt(char lo, char hi);
+//    @Message(id = 1054, value = "Invalid salt \"%s%s\"")
+//    IllegalArgumentException invalidSalt(char lo, char hi);
 
-    @Message(id = 1055, value = "Invalid rounds \"%s%s%s%s\"")
-    IllegalArgumentException invalidRounds(char b0, char b1, char b2, char b3);
+//    @Message(id = 1055, value = "Invalid rounds \"%s%s%s%s\"")
+//    IllegalArgumentException invalidRounds(char b0, char b1, char b2, char b3);
 
-    @Message(id = 1056, value = "Invalid salt \"%s%s%s%s\"")
-    IllegalArgumentException invalidSalt(char b0, char b1, char b2, char b3);
+//    @Message(id = 1056, value = "Invalid salt \"%s%s%s%s\"")
+//    IllegalArgumentException invalidSalt(char b0, char b1, char b2, char b3);
 
-    @Message(id = 1057, value = "No DirContext supplier set")
-    IllegalStateException noDirContextSupplierSet();
+//    @Message(id = 1057, value = "No DirContext supplier set")
+//    IllegalStateException noDirContextSupplierSet();
 
-    @Message(id = 1058, value = "No principal mapping definition")
-    IllegalStateException noPrincipalMappingDefinition();
+//    @Message(id = 1058, value = "No principal mapping definition")
+//    IllegalStateException noPrincipalMappingDefinition();
 
 //    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
 //    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
 
-    @Message(id = 1060, value = "Could not obtain principal")
-    RuntimeException couldNotObtainPrincipal();
+//    @Message(id = 1060, value = "Could not obtain principal")
+//    RuntimeException couldNotObtainPrincipal();
 
 //    @Message(id = 1061, value = "Public key is null")
 //    IllegalArgumentException publicKeyIsNull();
 
-    @Message(id = 1062, value = "No provider URL has been set")
-    IllegalStateException noProviderUrlSet();
+//    @Message(id = 1062, value = "No provider URL has been set")
+//    IllegalStateException noProviderUrlSet();
 
 //    @Message(id = 1063, value = "Private key is null")
 //    IllegalArgumentException privateKeyIsNull();
@@ -405,11 +405,11 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity \"%s\" from server")
     // RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
 
-    @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
-    RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
+//    @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
+//    RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
 
-    @Message(id = 1080, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
-    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn, @Cause Throwable cause);
+//    @Message(id = 1080, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
+//    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn, @Cause Throwable cause);
 
     @Message(id = 1081, value = "Filesystem-backed realm encountered invalid OTP definition in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidOtpDefinition(Path path, int lineNumber, String name, @Cause Throwable cause);
@@ -417,20 +417,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1082, value = "Filesystem-backed realm encountered invalid OTP algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidOtpAlgorithm(String algorithm, Path path, int lineNumber, String name, @Cause Throwable cause);
 
-    @Message(id = 1083, value = "Ldap-backed realm cannot to obtain not existing identity \"%s\"")
-    RealmUnavailableException ldapRealmIdentityNotExists(String identity);
+//    @Message(id = 1083, value = "Ldap-backed realm cannot to obtain not existing identity \"%s\"")
+//    RealmUnavailableException ldapRealmIdentityNotExists(String identity);
 
-    @Message(id = 1084, value = "Error while consuming results from search. SearchDn [%s], Filter [%s], Filter Args [%s].")
-    RuntimeException ldapRealmErrorWhileConsumingResultsFromSearch(String searchDn, String filter, String filterArgs, @Cause Throwable cause);
+//    @Message(id = 1084, value = "Error while consuming results from search. SearchDn [%s], Filter [%s], Filter Args [%s].")
+//    RuntimeException ldapRealmErrorWhileConsumingResultsFromSearch(String searchDn, String filter, String filterArgs, @Cause Throwable cause);
 
-    @Message(id = 1085, value = "LDAP realm persister does not support given credential type")
-    RealmUnavailableException ldapRealmsPersisterNotSupported();
+//    @Message(id = 1085, value = "LDAP realm persister does not support given credential type")
+//    RealmUnavailableException ldapRealmsPersisterNotSupported();
 
-    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
-    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
+//    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
+//    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
 
-    @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
-    RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
+//    @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
+//    RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
 
 //    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
 //    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
@@ -438,8 +438,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     // AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
-    @Message(id = 1090, value = "Unknown LDAP password scheme")
-    InvalidKeySpecException unknownLdapPasswordScheme();
+//    @Message(id = 1090, value = "Unknown LDAP password scheme")
+//    InvalidKeySpecException unknownLdapPasswordScheme();
 
 //    @LogMessage(level = WARN)
 //    @Message(id = 1091, value = "Post-association peer context action failed")
@@ -459,30 +459,30 @@ public interface ElytronMessages extends BasicLogger {
 //    RealmUnavailableException unableToCreateIdentity();
 
     // Multi Use
-    @Message(id = 1096, value = "No such identity")
-    RealmUnavailableException noSuchIdentity();
+//    @Message(id = 1096, value = "No such identity")
+//    RealmUnavailableException noSuchIdentity();
 
-    @Message(id = 1097, value = "Ldap-backed realm failed to delete identity from server")
-    RealmUnavailableException ldapRealmFailedDeleteIdentityFromServer(@Cause Throwable cause);
+//    @Message(id = 1097, value = "Ldap-backed realm failed to delete identity from server")
+//    RealmUnavailableException ldapRealmFailedDeleteIdentityFromServer(@Cause Throwable cause);
 
-    @Message(id = 1098, value = "Ldap-backed realm failed to create identity on server")
-    RealmUnavailableException ldapRealmFailedCreateIdentityOnServer(@Cause Throwable cause);
+//    @Message(id = 1098, value = "Ldap-backed realm failed to create identity on server")
+//    RealmUnavailableException ldapRealmFailedCreateIdentityOnServer(@Cause Throwable cause);
 
-    @Message(id = 1099, value = "Ldap-backed realm is not configured to allow create new identities (new identity parent and attributes has to be set)")
-    RealmUnavailableException ldapRealmNotConfiguredToSupportCreatingIdentities();
+//    @Message(id = 1099, value = "Ldap-backed realm is not configured to allow create new identities (new identity parent and attributes has to be set)")
+//    RealmUnavailableException ldapRealmNotConfiguredToSupportCreatingIdentities();
 
-    @Message(id = 1100, value = "Ldap-backed realm does not contain mapping to set Elytron attribute \"%s\" of identity \"%s\"")
-    RealmUnavailableException ldapRealmCannotSetAttributeWithoutMapping(String attribute, String identity);
+//    @Message(id = 1100, value = "Ldap-backed realm does not contain mapping to set Elytron attribute \"%s\" of identity \"%s\"")
+//    RealmUnavailableException ldapRealmCannotSetAttributeWithoutMapping(String attribute, String identity);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1101, value = "Ldap-backed realm does not support setting of filtered attribute \"%s\" (identity \"%s\")")
-    void ldapRealmDoesNotSupportSettingFilteredAttribute(String attribute, String identity);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1101, value = "Ldap-backed realm does not support setting of filtered attribute \"%s\" (identity \"%s\")")
+//    void ldapRealmDoesNotSupportSettingFilteredAttribute(String attribute, String identity);
 
-    @Message(id = 1102, value = "Ldap-backed realm requires exactly one value of attribute \"%s\" mapped to RDN (identity \"%s\")")
-    RealmUnavailableException ldapRealmRequiresExactlyOneRdnAttribute(String attribute, String identity);
+//    @Message(id = 1102, value = "Ldap-backed realm requires exactly one value of attribute \"%s\" mapped to RDN (identity \"%s\")")
+//    RealmUnavailableException ldapRealmRequiresExactlyOneRdnAttribute(String attribute, String identity);
 
-    @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
-    RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
+//    @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
+//    RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
 
     @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
     RuntimeException tokenRealmFailedToObtainPrincipal(@Cause Throwable cause);
@@ -493,11 +493,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1106, value = "Could not obtain SSLContext")
 //    IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
 
-    @Message(id = 1108, value = "Ldap-backed realm identity search failed")
-    RealmUnavailableException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
+//    @Message(id = 1108, value = "Ldap-backed realm identity search failed")
+//    RealmUnavailableException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
 
-    @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
-    RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
+//    @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
+//    RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
 
     // @Message(id = 1110, value = "Peer identities were already set on this context")
     // IllegalStateException peerIdentitiesAlreadySet();
@@ -544,8 +544,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1124, value = "The security realm does not support updating a credential")
 //    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
 
-    @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
-    RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
+    // @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
+    // RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
 
     @LogMessage(level = WARN)
     @Message(id = 1126, value = "Jwt-based token realm not configured with a list of valid issuers. Ignoring issuer verification.")
@@ -609,12 +609,12 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
     // IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
 
-    @LogMessage
-    @Message(id = 1146, value = "LDAP Realm unable to register listener, defering action.")
-    void ldapRealmDeferRegistration();
+//    @LogMessage
+//    @Message(id = 1146, value = "LDAP Realm unable to register listener, defering action.")
+//    void ldapRealmDeferRegistration();
 
-    @Message(id = 1147, value = "Invalid LDAP name [%s]")
-    RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
+//    @Message(id = 1147, value = "Invalid LDAP name [%s]")
+//    RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
 
 //    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
 //    IllegalStateException classLoaderSecurityDomainExists();
@@ -622,8 +622,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
 //    IllegalArgumentException cantWithSameSecurityDomainDomain();
 
-    @Message(id = 1150, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
-    NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
+//    @Message(id = 1150, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
+//    NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
 
 //    @Message(id = 1151, value = "Evidence Verification Failed.")
 //    SecurityException authenticationFailedEvidenceVerification();
@@ -631,8 +631,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1152, value = "Authorization Check Failed.")
 //    SecurityException authenticationFailedAuthorization();
 
-    @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
-    RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
+    // @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
+    // RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
 
     @Message(id = 1154, value = "Failed to read key store")
     RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
@@ -1007,8 +1007,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 4024, value = "Invalid client mode, expected %s, got %s")
 //    IllegalArgumentException invalidClientMode(boolean expectedMode, boolean givenMode);
 
-    @Message(id = 4025, value = "DirContext tries to connect without ThreadLocalSSLSocketFactory thread local setting")
-    IllegalStateException threadLocalSslSocketFactoryThreadLocalNotSet();
+//    @Message(id = 4025, value = "DirContext tries to connect without ThreadLocalSSLSocketFactory thread local setting")
+//    IllegalStateException threadLocalSslSocketFactoryThreadLocalNotSet();
 
 //    @Message(id = 4026, value = "Could not create trust manager [%s]")
 //    IllegalStateException sslErrorCreatingTrustManager(String name, @Cause Throwable cause);

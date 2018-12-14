@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -74,7 +74,6 @@ import javax.naming.ldap.Rdn;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock;

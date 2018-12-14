@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
