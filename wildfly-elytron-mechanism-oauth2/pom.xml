@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl-oauth2</artifactId>
+    <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
 
-    <name>WildFly Elytron - SASL OAuth2</name>
-    <description>WildFly Security OAuth2 SASL Implementation</description>
+    <name>WildFly Elytron - Mechanism OAuth2</name>
+    <description>WildFly Security Mechanism OAuth2</description>
 
     <dependencies>
         <dependency>
@@ -41,12 +41,20 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency> 
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency> 
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
+            <groupId>org.jboss.spec.javax.json</groupId>
+            <artifactId>jboss-json-api_1.0_spec</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>
