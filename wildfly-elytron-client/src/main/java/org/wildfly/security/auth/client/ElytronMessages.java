@@ -23,6 +23,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
 
@@ -51,6 +52,9 @@ interface ElytronMessages extends BasicLogger {
     
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
+    
+    @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
+    ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
     
     @Message(id = 1028, value = "Invalid port number \"%d\"")
     IllegalArgumentException invalidPortNumber(int port);
@@ -92,6 +96,12 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 1135, value = "Failed to load keystore data")
     ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
     
+    @Message(id = 1136, value = "Failed to create keystore")
+    ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
+    
+    @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
+    ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
+    
     @Message(id = 1139, value = "Failed to create credential store")
     ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
@@ -101,12 +111,27 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 1141, value = "No PEM content found")
     ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
     
+    @Message(id = 1143, value = "Invalid URL [%s]")
+    ConfigXMLParseException xmlInvalidUrl(String url);
+    
+    @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
+    ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
+    
+    @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
+    ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
+    
+    @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
+    ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
+    
     @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
     ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
     
     @LogMessage(level = WARN)
     @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
     void xmlDeprecatedElement(String name, XMLLocation location);
+    
+    @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
+    ConfigXMLParseException missingAlias(@Param Location location);
     
     @Message(id = 2010, value = "Unknown key store specified")
     ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
@@ -116,6 +141,17 @@ interface ElytronMessages extends BasicLogger {
     
     @Message(id = 4028, value = "No default key manager available")
     NoSuchAlgorithmException noDefaultKeyManager();
+
+    @Message(id = 9501, value = "Duplicate attribute (\"%s\") found in configuration.")
+    ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
     
+    @Message(id = 9502, value = "Duplicate credential store name found in configuration \"%s\"")
+    ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
+    
+    @Message(id = 9503, value = "Credential store name \"%s\" not defined")
+    ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
+    
+    @Message(id = 9527, value = "Invalid credential store reference")
+    ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
     
 }

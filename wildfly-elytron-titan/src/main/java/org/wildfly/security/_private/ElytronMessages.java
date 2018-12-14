@@ -159,8 +159,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1001, value = "No module found for identifier \"%s\"")
 //    ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
 
-    @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
-    ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
+//    @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
+//    ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
 //    @Message(id = 1003, value = "No authentication is in progress")
 //    IllegalStateException noAuthenticationInProgress();
@@ -578,11 +578,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1135, value = "Failed to load keystore data")
 //    ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1136, value = "Failed to create keystore")
-    ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
+//    @Message(id = 1136, value = "Failed to create keystore")
+//    ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
-    ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
+//    @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
+//    ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
 
     @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
     RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
@@ -599,8 +599,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
     // ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
 
-    @Message(id = 1143, value = "Invalid URL [%s]")
-    ConfigXMLParseException xmlInvalidUrl(String url);
+//    @Message(id = 1143, value = "Invalid URL [%s]")
+//    ConfigXMLParseException xmlInvalidUrl(String url);
 
     // @Message(id = 1144, value = "Realm failed to obtain identity from cache")
     // RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
@@ -649,8 +649,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1158, value = "Unable to create kerberos GSS credential")
     SecurityException unableToCreateKerberosCredential(@Cause Exception e);
 
-    @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
-    ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
+//    @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
+//    ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
 
 //    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
 //    IOException keyTabDoesNotExists(String keyTab);
@@ -658,11 +658,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
 //    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
 
-    @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
-    ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
+//    @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
+//    ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
 
-    @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
-    ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
+//    @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
+//    ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
 
 //    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
 //    ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
@@ -826,8 +826,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
 //    InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
 
-    @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
-    ConfigXMLParseException missingAlias(@Param Location location);
+//    @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
+//    ConfigXMLParseException missingAlias(@Param Location location);
 
     /* util package */
 
@@ -1867,14 +1867,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 9500, value = "External storage key under alias \"%s\" has to be a SecretKey")
 //    CredentialStoreException wrongTypeOfExternalStorageKey(String keyAlias);
 
-    @Message(id = 9501, value = "Duplicate attribute (\"%s\") found in configuration.")
-    ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
+//    @Message(id = 9501, value = "Duplicate attribute (\"%s\") found in configuration.")
+//    ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
 
-    @Message(id = 9502, value = "Duplicate credential store name found in configuration \"%s\"")
-    ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
+//    @Message(id = 9502, value = "Duplicate credential store name found in configuration \"%s\"")
+//    ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
 
-    @Message(id = 9503, value = "Credential store name \"%s\" not defined")
-    ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
+//    @Message(id = 9503, value = "Credential store name \"%s\" not defined")
+//    ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
 
 //    @Message(id = 9504, value = "Cannot acquire a credential from the credential store")
 //    CredentialStoreException cannotAcquireCredentialFromStore(@Cause Throwable cause);
@@ -1948,8 +1948,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
 //    CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
 
-    @Message(id = 9527, value = "Invalid credential store reference")
-    ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
+//    @Message(id = 9527, value = "Invalid credential store reference")
+//    ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
 
 //    @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
 //    CredentialStoreException externalPathMissing(String keyStoreType);

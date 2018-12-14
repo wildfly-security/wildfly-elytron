@@ -88,7 +88,6 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.client.ElytronMessages;
 import org.wildfly.security.asn1.util.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
