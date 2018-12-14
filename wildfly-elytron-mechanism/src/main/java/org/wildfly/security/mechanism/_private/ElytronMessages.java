@@ -29,8 +29,8 @@ import org.jboss.logging.annotations.Param;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
-import org.wildfly.security.mechanism.scram.ScramServerException;
+import org.wildfly.security.mechanism.ScramServerErrorCode;
+import org.wildfly.security.mechanism.ScramServerException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -164,6 +164,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5038, value = "Nonces do not match")
     AuthenticationMechanismException mechNoncesDoNotMatch();
+
+    @Message(id = 5039, value = "Invalid length of nonce received")
+    AuthenticationMechanismException invalidNonceLength();
 
     @Message(id = 5040, value = "Iteration count %d is below the minimum of %d")
     AuthenticationMechanismException mechIterationCountIsTooLow(int iterationCount, int minimumIterationCount);

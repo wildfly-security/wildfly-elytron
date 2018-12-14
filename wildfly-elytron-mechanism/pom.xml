@@ -29,24 +29,30 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl-scram</artifactId>
+    <artifactId>wildfly-elytron-mechanism</artifactId>
 
-    <name>WildFly Elytron - SASL SCRAM</name>
-    <description>WildFly Security SCRAM SASL Implementation</description>
+    <name>WildFly Elytron - Mechanism</name>
+    <description>WildFly Security Mechanism</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-titan</artifactId>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-scram</artifactId>
+            <artifactId>wildfly-elytron-http</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl-scram</artifactId>
+    <artifactId>wildfly-elytron-mechanism-scram</artifactId>
 
-    <name>WildFly Elytron - SASL SCRAM</name>
-    <description>WildFly Security SCRAM SASL Implementation</description>
+    <name>WildFly Elytron - Mechanism SCRAM</name>
+    <description>WildFly Security Mechanism SCRAM</description>
 
     <dependencies>
         <dependency>
@@ -41,14 +41,13 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-scram</artifactId>
-        </dependency>
-
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency> 
         <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <scope>provided</scope>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
         </dependency>
     </dependencies>
 
 </project>
+

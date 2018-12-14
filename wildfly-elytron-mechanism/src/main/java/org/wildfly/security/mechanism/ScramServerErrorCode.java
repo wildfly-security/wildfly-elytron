@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.mechanism.scram;
+package org.wildfly.security.mechanism;
 
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
