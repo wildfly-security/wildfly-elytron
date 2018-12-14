@@ -475,6 +475,11 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-anonymous</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1141,6 +1146,7 @@
         <module>wildfly-elytron-realm-jdbc</module>
         <module>wildfly-elytron-realm-ldap</module>
         <module>wildfly-elytron-realm-token</module>
+        <module>wildfly-elytron-sasl</module>
         <module>wildfly-elytron-sasl-anonymous</module>
         <module>wildfly-elytron-sasl-digest</module>
         <module>wildfly-elytron-sasl-entity</module>
