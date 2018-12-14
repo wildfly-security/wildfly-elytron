@@ -25,7 +25,6 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 
 final class SSLConfiguratorImpl implements SSLConfigurator {
 
