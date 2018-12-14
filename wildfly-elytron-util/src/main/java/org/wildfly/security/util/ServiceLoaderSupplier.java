@@ -19,7 +19,6 @@
 package org.wildfly.security.util;
 
 import org.wildfly.common.array.Arrays2;
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -54,7 +53,7 @@ public class ServiceLoaderSupplier<E> implements Supplier<E[]> {
         if (result == null) {
             synchronized (this) {
                 if (result == null) {
-                    if (WildFlySecurityManager.isChecking()) {
+                    if (System.getSecurityManager() != null) {
                         result = AccessController.doPrivileged((PrivilegedAction<E[]>) () -> loadServices(service, classLoader), acc);
                     } else {
                         result = loadServices(service, classLoader);
