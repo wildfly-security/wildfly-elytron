@@ -77,7 +77,6 @@ import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.permission.InvalidPermissionClassException;
 import org.wildfly.security.permission.PermissionVerifier;
-import org.wildfly.security.x500.cert.acme.AcmeException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -862,14 +861,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 3009, value = "Invalid base 64 character")
 //    DecodeException invalidBase64Character();
 
-    @Message(id = 3010, value = "Malformed PEM content at offset %d")
-    IllegalArgumentException malformedPemContent(long offset);
+//    @Message(id = 3010, value = "Malformed PEM content at offset %d")
+//    IllegalArgumentException malformedPemContent(long offset);
 
-    @Message(id = 3011, value = "Invalid PEM type (expected \"%s\", got \"%s\"")
-    IllegalArgumentException invalidPemType(String expected, String actual);
+//    @Message(id = 3011, value = "Invalid PEM type (expected \"%s\", got \"%s\"")
+//    IllegalArgumentException invalidPemType(String expected, String actual);
 
-    @Message(id = 3012, value = "Certificate parse error")
-    IllegalArgumentException certificateParseError(@Cause CertificateException cause);
+//    @Message(id = 3012, value = "Certificate parse error")
+//    IllegalArgumentException certificateParseError(@Cause CertificateException cause);
 
 //    @Message(id = 3013, value = "Permission collection must be read-only")
 //    SecurityException permissionCollectionMustBeReadOnly();
@@ -902,8 +901,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
 //    SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
 
-    @Message(id = 3023, value = "PublicKey parse error")
-    IllegalArgumentException publicKeyParseError(@Cause Throwable cause);
+//    @Message(id = 3023, value = "PublicKey parse error")
+//    IllegalArgumentException publicKeyParseError(@Cause Throwable cause);
 
     // @Message(id = 3024, value = "Unsupported key encoding format [%s]")
     // IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
@@ -932,8 +931,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
     IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
 
-    @Message(id = 3033, value = "PrivateKey parse error")
-    IllegalArgumentException privateKeyParseError(@Cause Throwable cause);
+//    @Message(id = 3033, value = "PrivateKey parse error")
+//    IllegalArgumentException privateKeyParseError(@Cause Throwable cause);
 
     /* ssl package */
 
@@ -1627,8 +1626,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* asn1 package */
 
-    @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
-    ASN1Exception asnUnrecognisedAlgorithm(String algorithm);
+//    @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
+//    ASN1Exception asnUnrecognisedAlgorithm(String algorithm);
 
 //    @Message(id = 7002, value = "Invalid general name type")
 //    ASN1Exception asnInvalidGeneralNameType();
@@ -1637,8 +1636,8 @@ public interface ElytronMessages extends BasicLogger {
     // ASN1Exception asnInvalidTrustedAuthorityType();
 
     // Duplicated in ASN.1
-    @Message(id = 7004, value = "Unexpected ASN.1 tag encountered")
-    ASN1Exception asnUnexpectedTag();
+//    @Message(id = 7004, value = "Unexpected ASN.1 tag encountered")
+//    ASN1Exception asnUnexpectedTag();
 //
 //    @Message(id = 7005, value = "Unable to read X.509 certificate data")
 //    ASN1Exception asnUnableToReadCertificateData(@Cause Throwable cause);
@@ -1958,80 +1957,80 @@ public interface ElytronMessages extends BasicLogger {
 
     /* X.500 exceptions */
 
-    @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")
-    IllegalArgumentException extensionAlreadyExists(String oid);
+//    @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")
+//    IllegalArgumentException extensionAlreadyExists(String oid);
 
-    @Message(id = 10001, value = "No signature algorithm name given")
-    IllegalArgumentException noSignatureAlgorithmNameGiven();
+//    @Message(id = 10001, value = "No signature algorithm name given")
+//    IllegalArgumentException noSignatureAlgorithmNameGiven();
 
-    @Message(id = 10002, value = "Signature algorithm name \"%s\" is not recognized")
-    IllegalArgumentException unknownSignatureAlgorithmName(String signatureAlgorithmName);
+//    @Message(id = 10002, value = "Signature algorithm name \"%s\" is not recognized")
+//    IllegalArgumentException unknownSignatureAlgorithmName(String signatureAlgorithmName);
 
-    @Message(id = 10003, value = "No signing key given")
-    IllegalArgumentException noSigningKeyGiven();
+//    @Message(id = 10003, value = "No signing key given")
+//    IllegalArgumentException noSigningKeyGiven();
 
-    @Message(id = 10004, value = "Signing key algorithm name \"%s\" is not compatible with signature algorithm name \"%s\"")
-    IllegalArgumentException signingKeyNotCompatWithSig(String signingKeyAlgorithm, String signatureAlgorithmName);
+//    @Message(id = 10004, value = "Signing key algorithm name \"%s\" is not compatible with signature algorithm name \"%s\"")
+//    IllegalArgumentException signingKeyNotCompatWithSig(String signingKeyAlgorithm, String signatureAlgorithmName);
 
-    @Message(id = 10005, value = "Not-valid-before date of %s is after not-valid-after date of %s")
-    IllegalArgumentException validAfterBeforeValidBefore(ZonedDateTime notValidBefore, ZonedDateTime notValidAfter);
+//    @Message(id = 10005, value = "Not-valid-before date of %s is after not-valid-after date of %s")
+//    IllegalArgumentException validAfterBeforeValidBefore(ZonedDateTime notValidBefore, ZonedDateTime notValidAfter);
 
-    @Message(id = 10006, value = "No issuer DN given")
-    IllegalArgumentException noIssuerDnGiven();
+//    @Message(id = 10006, value = "No issuer DN given")
+//    IllegalArgumentException noIssuerDnGiven();
+//
+//    @Message(id = 10007, value = "No public key given")
+//    IllegalArgumentException noPublicKeyGiven();
 
-    @Message(id = 10007, value = "No public key given")
-    IllegalArgumentException noPublicKeyGiven();
+//    @Message(id = 10008, value = "Issuer and subject unique ID are only allowed in certificates with version 2 or higher")
+//    IllegalArgumentException uniqueIdNotAllowed();
+//
+//    @Message(id = 10009, value = "Extensions are only allowed in certificates with version 3 or higher")
+//    IllegalArgumentException extensionsNotAllowed();
 
-    @Message(id = 10008, value = "Issuer and subject unique ID are only allowed in certificates with version 2 or higher")
-    IllegalArgumentException uniqueIdNotAllowed();
+//    @Message(id = 10010, value = "X.509 encoding of public key with algorithm \"%s\" failed")
+//    IllegalArgumentException invalidKeyForCert(String publicKeyAlgorithm, @Cause Exception cause);
 
-    @Message(id = 10009, value = "Extensions are only allowed in certificates with version 3 or higher")
-    IllegalArgumentException extensionsNotAllowed();
+//    @Message(id = 10011, value = "Failed to sign certificate")
+//    IllegalArgumentException certSigningFailed(@Cause Exception cause);
 
-    @Message(id = 10010, value = "X.509 encoding of public key with algorithm \"%s\" failed")
-    IllegalArgumentException invalidKeyForCert(String publicKeyAlgorithm, @Cause Exception cause);
+//    @Message(id = 10012, value = "Certificate serial number must be positive")
+//    IllegalArgumentException serialNumberTooSmall();
+//
+//    @Message(id = 10013, value = "Certificate serial number too large (cannot exceed 20 octets)")
+//    IllegalArgumentException serialNumberTooLarge();
 
-    @Message(id = 10011, value = "Failed to sign certificate")
-    IllegalArgumentException certSigningFailed(@Cause Exception cause);
+//    @Message(id = 10014, value = "Failed to sign certification request info")
+//    IllegalArgumentException certRequestInfoSigningFailed(@Cause Exception cause);
 
-    @Message(id = 10012, value = "Certificate serial number must be positive")
-    IllegalArgumentException serialNumberTooSmall();
+//    @Message(id = 10015, value = "No certificate given")
+//    IllegalArgumentException noCertificateGiven();
 
-    @Message(id = 10013, value = "Certificate serial number too large (cannot exceed 20 octets)")
-    IllegalArgumentException serialNumberTooLarge();
+//    @Message(id = 10016, value = "Unable to determine key size")
+//    IllegalArgumentException unableToDetermineKeySize();
 
-    @Message(id = 10014, value = "Failed to sign certification request info")
-    IllegalArgumentException certRequestInfoSigningFailed(@Cause Exception cause);
+//    @Message(id = 10017, value = "No DN given")
+//    IllegalArgumentException noDnGiven();
 
-    @Message(id = 10015, value = "No certificate given")
-    IllegalArgumentException noCertificateGiven();
+//    @Message(id = 10018, value = "Failed to generate self-signed X.509 certificate")
+//    IllegalArgumentException selfSignedCertificateGenerationFailed(@Cause Exception cause);
 
-    @Message(id = 10016, value = "Unable to determine key size")
-    IllegalArgumentException unableToDetermineKeySize();
+//    @Message(id = 10019, value = "Unable to determine default compatible signature algorithm name for key algorithm name \"%s\"")
+//    IllegalArgumentException unableToDetermineDefaultCompatibleSignatureAlgorithmName(String keyAlgorithmName);
 
-    @Message(id = 10017, value = "No DN given")
-    IllegalArgumentException noDnGiven();
+//    @Message(id = 10020, value = "Creating an X.509 certificate extension from a string value is not supported for extension name \"%s\"")
+//    IllegalArgumentException certificateExtensionCreationFromStringNotSupported(String extensionName);
 
-    @Message(id = 10018, value = "Failed to generate self-signed X.509 certificate")
-    IllegalArgumentException selfSignedCertificateGenerationFailed(@Cause Exception cause);
+//    @Message(id = 10021, value = "Invalid X.509 certificate extension string value \"%s\"")
+//    IllegalArgumentException invalidCertificateExtensionStringValue(String extensionValue);
 
-    @Message(id = 10019, value = "Unable to determine default compatible signature algorithm name for key algorithm name \"%s\"")
-    IllegalArgumentException unableToDetermineDefaultCompatibleSignatureAlgorithmName(String keyAlgorithmName);
+//    @Message(id = 10022, value = "Failed to create X.509 certificate extension from string value")
+//    IllegalArgumentException certificateExtensionCreationFromStringFailed(@Cause Exception cause);
 
-    @Message(id = 10020, value = "Creating an X.509 certificate extension from a string value is not supported for extension name \"%s\"")
-    IllegalArgumentException certificateExtensionCreationFromStringNotSupported(String extensionName);
+//    @Message(id = 10023, value = "X.509 certificate extension \"%s\" must be non-critical")
+//    IllegalArgumentException certificateExtensionMustBeNonCritical(String extensionName);
 
-    @Message(id = 10021, value = "Invalid X.509 certificate extension string value \"%s\"")
-    IllegalArgumentException invalidCertificateExtensionStringValue(String extensionValue);
-
-    @Message(id = 10022, value = "Failed to create X.509 certificate extension from string value")
-    IllegalArgumentException certificateExtensionCreationFromStringFailed(@Cause Exception cause);
-
-    @Message(id = 10023, value = "X.509 certificate extension \"%s\" must be non-critical")
-    IllegalArgumentException certificateExtensionMustBeNonCritical(String extensionName);
-
-    @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
-    IllegalArgumentException invalidCertificateExtensionStringValue();
+//    @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
+//    IllegalArgumentException invalidCertificateExtensionStringValue();
 
 //    @Message(id = 10025, value = "Non-X.509 certificate found in certificate array")
 //    IllegalArgumentException nonX509CertificateInCertificateArray();
@@ -2045,89 +2044,89 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 10028, value = "Unable to create X.509 certificate chain from map of certificates")
 //    IllegalArgumentException unableToCreateCertificateChainFromCertificateMap();
 
-    @Message(id = 10029, value = "Failed to generate ACME account key pair")
-    IllegalArgumentException acmeAccountKeyPairGenerationFailed(@Cause Exception cause);
-
-    @Message(id = 10030, value = "No ACME server URL given")
-    IllegalArgumentException noAcmeServerUrlGiven();
-
-    @Message(id = 10031, value = "Unsupported ACME account signature algorithm \"%s\"")
-    IllegalArgumentException unsupportedAcmeAccountSignatureAlgorithm(String signatureAlgorithm);
-
-    @Message(id = 10032, value = "Unable to create ACME signature")
-    IllegalArgumentException unableToCreateAcmeSignature(@Cause Exception cause);
-
-    @Message(id = 10033, value = "Unable to retrieve ACME server directory URLs")
-    AcmeException unableToRetrieveAcmeServerDirectoryUrls(@Cause Exception cause);
-
-    @Message(id = 10034, value = "No nonce provided by ACME server")
-    AcmeException noNonceProvidedByAcmeServer();
-
-    @Message(id = 10035, value = "No account location URL provided by ACME server")
-    AcmeException noAccountLocationUrlProvidedByAcmeServer();
-
-    @Message(id = 10036, value = "Unable to obtain new nonce from ACME server")
-    AcmeException unableToObtainNewNonceFromAcmeServer();
-
-    @Message(id = 10037, value = "Unable to obtain JSON response from ACME server")
-    AcmeException unableToObtainJsonResponseFromAcmeServer(@Cause Exception cause);
-
-    @Message(id = 10038, value = "Unexpected HTTP status code in response from ACME server \"%d\": \"%s\"")
-    AcmeException unexpectedResponseCodeFromAcmeServer(int responseCode, String responseMessage);
-
-    @Message(id = 10039, value = "Bad ACME replay nonce, maximum retries attempted")
-    AcmeException badAcmeNonce();
-
-    @Message(id = 10040, value = "Unexpected content type in response from ACME server \"%s\"")
-    AcmeException unexpectedContentTypeFromAcmeServer(String contentType);
-
-    @Message(id = 10041, value = "Invalid content type in response from ACME server")
-    AcmeException invalidContentTypeFromAcmeServer();
-
-    @Message(id = 10042, value = "Domain name is null")
-    AcmeException domainNameIsNull();
-
-    @Message(id = 10043, value = "Domain names is empty")
-    AcmeException domainNamesIsEmpty();
-
-    @Message(id = 10044, value = "No certificate URL provided by ACME server")
-    AcmeException noCertificateUrlProvidedByAcmeServer();
-
-    @Message(id = 10045, value = "No certificate will be issued by the ACME server")
-    AcmeException noCertificateWillBeIssuedByAcmeServer();
-
-    @Message(id = 10046, value = "Unable to get encoded form of certificate to be revoked")
-    AcmeException unableToGetEncodedFormOfCertificateToBeRevoked(@Cause Exception cause);
-
-    @Message(id = 10047, value = "Unable to determine key authorization string")
-    AcmeException unableToDetermineKeyAuthorizationString(@Cause Exception cause);
-
-    @Message(id = 10048, value = "Challenge response failed validation by the ACME server")
-    AcmeException challengeResponseFailedValidationByAcmeServer();
-
-    @Message(id = 10049, value = "Unable to download certificate chain from ACME server")
-    AcmeException unableToDownloadCertificateChainFromAcmeServer(@Cause Exception cause);
-
-    @Message(id = 10050, value = "ACME account does not exist")
-    AcmeException acmeAccountDoesNotExist();
-
-    @Message(id = 10051, value = "User action required since the ACME server's terms of service have changed, visit \"%s\" for details")
-    AcmeException userActionRequired(String url);
-
-    @Message(id = 10052, value = "Rate limit has been exceeded, try again after \"%s\"")
-    AcmeException rateLimitExceededTryAgainLater(Instant instant);
-
-    @Message(id = 10053, value = "Rate limit has been exceeded")
-    AcmeException rateLimitExceeded();
-
-    @Message(id = 10054, value = "Resource not supported by the ACME server \"%s\"")
-    AcmeException resourceNotSupportedByAcmeServer(String resource);
-
-    @Message(id = 10055, value = "Unsupported ACME account public key type \"%s\"")
-    IllegalArgumentException unsupportedAcmeAccountPublicKeyType(String keyAlgorithmName);
-
-    @Message(id = 10056, value = "Unable to determine curve parameter from alg header \"%s\"")
-    IllegalArgumentException unableToDetermineCurveParameterFromAlgHeader(String algHeader);
+//    @Message(id = 10029, value = "Failed to generate ACME account key pair")
+//    IllegalArgumentException acmeAccountKeyPairGenerationFailed(@Cause Exception cause);
+//
+//    @Message(id = 10030, value = "No ACME server URL given")
+//    IllegalArgumentException noAcmeServerUrlGiven();
+//
+//    @Message(id = 10031, value = "Unsupported ACME account signature algorithm \"%s\"")
+//    IllegalArgumentException unsupportedAcmeAccountSignatureAlgorithm(String signatureAlgorithm);
+//
+//    @Message(id = 10032, value = "Unable to create ACME signature")
+//    IllegalArgumentException unableToCreateAcmeSignature(@Cause Exception cause);
+//
+//    @Message(id = 10033, value = "Unable to retrieve ACME server directory URLs")
+//    AcmeException unableToRetrieveAcmeServerDirectoryUrls(@Cause Exception cause);
+//
+//    @Message(id = 10034, value = "No nonce provided by ACME server")
+//    AcmeException noNonceProvidedByAcmeServer();
+//
+//    @Message(id = 10035, value = "No account location URL provided by ACME server")
+//    AcmeException noAccountLocationUrlProvidedByAcmeServer();
+//
+//    @Message(id = 10036, value = "Unable to obtain new nonce from ACME server")
+//    AcmeException unableToObtainNewNonceFromAcmeServer();
+//
+//    @Message(id = 10037, value = "Unable to obtain JSON response from ACME server")
+//    AcmeException unableToObtainJsonResponseFromAcmeServer(@Cause Exception cause);
+//
+//    @Message(id = 10038, value = "Unexpected HTTP status code in response from ACME server \"%d\": \"%s\"")
+//    AcmeException unexpectedResponseCodeFromAcmeServer(int responseCode, String responseMessage);
+//
+//    @Message(id = 10039, value = "Bad ACME replay nonce, maximum retries attempted")
+//    AcmeException badAcmeNonce();
+//
+//    @Message(id = 10040, value = "Unexpected content type in response from ACME server \"%s\"")
+//    AcmeException unexpectedContentTypeFromAcmeServer(String contentType);
+//
+//    @Message(id = 10041, value = "Invalid content type in response from ACME server")
+//    AcmeException invalidContentTypeFromAcmeServer();
+//
+//    @Message(id = 10042, value = "Domain name is null")
+//    AcmeException domainNameIsNull();
+//
+//    @Message(id = 10043, value = "Domain names is empty")
+//    AcmeException domainNamesIsEmpty();
+//
+//    @Message(id = 10044, value = "No certificate URL provided by ACME server")
+//    AcmeException noCertificateUrlProvidedByAcmeServer();
+//
+//    @Message(id = 10045, value = "No certificate will be issued by the ACME server")
+//    AcmeException noCertificateWillBeIssuedByAcmeServer();
+//
+//    @Message(id = 10046, value = "Unable to get encoded form of certificate to be revoked")
+//    AcmeException unableToGetEncodedFormOfCertificateToBeRevoked(@Cause Exception cause);
+//
+//    @Message(id = 10047, value = "Unable to determine key authorization string")
+//    AcmeException unableToDetermineKeyAuthorizationString(@Cause Exception cause);
+//
+//    @Message(id = 10048, value = "Challenge response failed validation by the ACME server")
+//    AcmeException challengeResponseFailedValidationByAcmeServer();
+//
+//    @Message(id = 10049, value = "Unable to download certificate chain from ACME server")
+//    AcmeException unableToDownloadCertificateChainFromAcmeServer(@Cause Exception cause);
+//
+//    @Message(id = 10050, value = "ACME account does not exist")
+//    AcmeException acmeAccountDoesNotExist();
+//
+//    @Message(id = 10051, value = "User action required since the ACME server's terms of service have changed, visit \"%s\" for details")
+//    AcmeException userActionRequired(String url);
+//
+//    @Message(id = 10052, value = "Rate limit has been exceeded, try again after \"%s\"")
+//    AcmeException rateLimitExceededTryAgainLater(Instant instant);
+//
+//    @Message(id = 10053, value = "Rate limit has been exceeded")
+//    AcmeException rateLimitExceeded();
+//
+//    @Message(id = 10054, value = "Resource not supported by the ACME server \"%s\"")
+//    AcmeException resourceNotSupportedByAcmeServer(String resource);
+//
+//    @Message(id = 10055, value = "Unsupported ACME account public key type \"%s\"")
+//    IllegalArgumentException unsupportedAcmeAccountPublicKeyType(String keyAlgorithmName);
+//
+//    @Message(id = 10056, value = "Unable to determine curve parameter from alg header \"%s\"")
+//    IllegalArgumentException unableToDetermineCurveParameterFromAlgHeader(String algHeader);
 
     /* Audit Exceptions */
 

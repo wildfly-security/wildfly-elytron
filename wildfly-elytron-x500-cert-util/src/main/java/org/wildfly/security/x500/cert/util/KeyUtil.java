@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500.cert.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.x500.cert.util.ElytronMessages.log;
 
 import java.security.Key;
 import java.security.MessageDigest;

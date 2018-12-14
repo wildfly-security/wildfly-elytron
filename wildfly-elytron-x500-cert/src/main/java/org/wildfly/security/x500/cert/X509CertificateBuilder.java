@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500.cert;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.x500.cert.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;

@@ -347,6 +347,10 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-permission</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId> 
+            <artifactId>wildfly-elytron-x500-cert</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.logging</groupId>

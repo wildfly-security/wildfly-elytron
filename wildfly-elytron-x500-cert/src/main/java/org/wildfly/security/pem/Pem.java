@@ -18,7 +18,7 @@
 
 package org.wildfly.security.pem;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.pem.ElytronMessages.log;
 
 import java.security.KeyFactory;
 import java.security.PrivateKey;

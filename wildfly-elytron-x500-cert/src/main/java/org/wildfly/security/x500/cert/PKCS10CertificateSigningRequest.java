@@ -18,7 +18,7 @@
 
 package org.wildfly.security.x500.cert;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.x500.cert.ElytronMessages.log;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getDefaultCompatibleSignatureAlgorithmName;
 import static org.wildfly.security.x500.cert.util.KeyUtil.getKeyIdentifier;
 import static org.wildfly.security.x500.cert.CertUtil.getX509CertificateExtension;
