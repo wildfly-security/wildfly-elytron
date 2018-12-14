@@ -1584,8 +1584,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6006, value = "An authorization check for user '%s' failed.")
     String authorizationFailed(String username);
 
-    @Message(id = 6007, value = "Username or password missing from authentication attempt.")
-    String usernameOrPasswordMissing();
+//    @Message(id = 6007, value = "Username or password missing from authentication attempt.")
+//    String usernameOrPasswordMissing();
 
     @LogMessage(level = WARN)
     @Message(id = 6008, value = "Failed to logout participant [%s]. Participant will be removed from list of participants but its local session may still be active.")
