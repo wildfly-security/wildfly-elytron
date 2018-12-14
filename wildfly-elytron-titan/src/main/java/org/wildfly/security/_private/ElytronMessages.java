@@ -884,8 +884,8 @@ public interface ElytronMessages extends BasicLogger {
 //    InvalidPermissionClassException noPermissionConstructor(String className);
 
     // Used by Permissions and JACC
-    @Message(id = 3018, value = "Cannot add permissions to a read-only permission collection")
-    SecurityException readOnlyPermissionCollection();
+//    @Message(id = 3018, value = "Cannot add permissions to a read-only permission collection")
+//    SecurityException readOnlyPermissionCollection();
 
 //    @Message(id = 3019, value = "Failure to deserialize object: field \"%s\" is null")
 //    InvalidObjectException invalidObjectNull(String fieldName);

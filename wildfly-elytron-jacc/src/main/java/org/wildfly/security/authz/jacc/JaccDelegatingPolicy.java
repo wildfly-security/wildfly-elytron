@@ -18,7 +18,6 @@
 package org.wildfly.security.authz.jacc;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;

@@ -46,6 +46,9 @@ interface ElytronMessages extends BasicLogger {
 
     /* authz package */
 
+    @Message(id = 3018, value = "Cannot add permissions to a read-only permission collection")
+    SecurityException readOnlyPermissionCollection();
+
     @LogMessage(level = ERROR)
     @Message(id = 8500, value = "Failed to check permissions for protection domain [%s] and permission [%s].")
     void authzFailedToCheckPermission(ProtectionDomain domain, Permission permission, @Cause Throwable cause);
