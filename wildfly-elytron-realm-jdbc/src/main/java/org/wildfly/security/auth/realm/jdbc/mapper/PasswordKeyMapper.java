@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.auth.realm.jdbc.mapper;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.jdbc._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;

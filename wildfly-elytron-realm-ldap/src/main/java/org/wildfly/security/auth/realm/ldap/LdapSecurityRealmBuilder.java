@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import org.wildfly.common.Assert;

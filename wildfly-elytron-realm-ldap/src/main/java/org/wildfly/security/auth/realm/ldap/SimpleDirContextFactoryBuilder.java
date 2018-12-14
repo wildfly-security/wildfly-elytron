@@ -32,7 +32,7 @@ import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;

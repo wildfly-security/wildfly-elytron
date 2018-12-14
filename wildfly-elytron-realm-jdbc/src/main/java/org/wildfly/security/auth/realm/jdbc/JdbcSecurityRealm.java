@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.jdbc._private.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.Provider;
