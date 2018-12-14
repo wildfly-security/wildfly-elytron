@@ -163,7 +163,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
         Map<String, Object> silentProp = new HashMap<>();
         silentProp.put("silent", "true");
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(BASIC_NAME, silentProp, callbackHandler()));
+        mechanisms.add(basicFactory.createAuthenticationMechanism(BASIC_NAME, silentProp, callbackHandler()));
         authenticator = HttpAuthenticator.builder()
                 .setMechanismSupplier(() -> mechanisms)
                 .setHttpExchangeSpi(exchangeSpi)
@@ -179,7 +179,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         digestProps.put(CONFIG_REALM, "http-auth@example.org");
         digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
 
-        mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler()));
+        mechanisms.add(digestFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler()));
         authenticator = HttpAuthenticator.builder()
                 .setMechanismSupplier(() -> mechanisms)
                 .setHttpExchangeSpi(exchangeSpi)
