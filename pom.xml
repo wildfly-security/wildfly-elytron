@@ -562,6 +562,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-security-manager-action</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1153,6 +1158,7 @@
         <module>wildfly-elytron-sasl-plain</module>
         <module>wildfly-elytron-sasl-scram</module>
         <module>wildfly-elytron-security-manager</module>
+        <module>wildfly-elytron-security-manager-action</module>
         <module>wildfly-elytron-util</module>
         <module>wildfly-elytron-x500</module>
         <module>wildfly-elytron-x500-cert</module>
