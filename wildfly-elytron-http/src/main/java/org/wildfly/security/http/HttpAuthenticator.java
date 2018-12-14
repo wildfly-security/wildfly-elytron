@@ -19,7 +19,7 @@
 package org.wildfly.security.http;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.http._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
