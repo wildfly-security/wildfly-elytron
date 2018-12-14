@@ -277,8 +277,9 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1040, value = "Could not parse private key")
     // RuntimeException couldNotParsePrivateKey(@Cause Throwable cause);
 
-//    @Message(id = 1041, value = "Could not obtain credential")
-//    RuntimeException couldNotObtainCredential();
+    // Multi Use
+    @Message(id = 1041, value = "Could not obtain credential")
+    RuntimeException couldNotObtainCredential();
 
     @Message(id = 1042, value = "Could not obtain credential")
     RuntimeException couldNotObtainCredentialWithCause(@Cause Throwable cause);

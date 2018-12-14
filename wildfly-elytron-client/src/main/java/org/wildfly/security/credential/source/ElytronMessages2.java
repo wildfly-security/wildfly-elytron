@@ -18,25 +18,14 @@
 
 package org.wildfly.security.credential.source;
 
-import static org.jboss.logging.Logger.Level.WARN;
-
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-
 import javax.security.sasl.SaslException;
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamReader;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-import org.jboss.logging.annotations.Param;
-import org.wildfly.client.config.ConfigXMLParseException;
-import org.wildfly.client.config.ConfigurationXMLStreamReader;
-import org.wildfly.client.config.XMLLocation;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -45,18 +34,18 @@ import org.wildfly.client.config.XMLLocation;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-interface ElytronMessages extends BasicLogger {
+interface ElytronMessages2 extends BasicLogger {
 
-    ElytronMessages saslOAuth2 = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.oauth2");
+    ElytronMessages2 saslOAuth2 = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security.sasl.oauth2");
     
     @Message(id = 1106, value = "Could not obtain SSLContext")
     IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
     
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
-    SaslException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
+    AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
     
     @Message(id = 5125, value = "Unable to handle response from server")
-    SaslException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
     
     @Message(id = 9001, value = "Client credentials not provided")
     IllegalStateException oauth2ClientCredentialsNotProvided();
