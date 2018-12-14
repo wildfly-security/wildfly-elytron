@@ -42,7 +42,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to

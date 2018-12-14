@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.realm;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -41,7 +41,6 @@ import java.util.Enumeration;
 import java.util.Set;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;

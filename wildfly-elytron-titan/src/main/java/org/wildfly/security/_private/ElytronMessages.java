@@ -171,18 +171,18 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
 //    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
-    @Message(id = 1006, value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line")
-    RealmUnavailableException noRealmFoundInProperties();
+//    @Message(id = 1006, value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line")
+//    RealmUnavailableException noRealmFoundInProperties();
 
-    @LogMessage(level = Logger.Level.DEBUG)
-    @Message(id = 1007, value = "JAAS authentication failed for principal %s")
-    void debugJAASAuthenticationFailure(Principal principal, @Cause Throwable cause);
+//    @LogMessage(level = Logger.Level.DEBUG)
+//    @Message(id = 1007, value = "JAAS authentication failed for principal %s")
+//    void debugJAASAuthenticationFailure(Principal principal, @Cause Throwable cause);
 
-    @Message(id = 1008, value = "Failed to create login context")
-    RealmUnavailableException failedToCreateLoginContext(@Cause Throwable cause);
+//    @Message(id = 1008, value = "Failed to create login context")
+//    RealmUnavailableException failedToCreateLoginContext(@Cause Throwable cause);
 
-    @Message(id = 1009, value = "Failed to instantiate custom CallbackHandler")
-    RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
+//    @Message(id = 1009, value = "Failed to instantiate custom CallbackHandler")
+//    RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
 
     // @Message(id = 1010, value = "Credential cannot be converted to a password")
     // FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
@@ -190,53 +190,53 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1011, value = "Unrecognized principal type for %s")
     // IllegalArgumentException unrecognizedPrincipalType(Principal principal);
 
-    @Message(id = 1012, value = "Filesystem-backed realm unexpectedly failed to open path \"%s\" for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmFailedToOpen(Path path, String finalName, @Cause IOException cause);
+//    @Message(id = 1012, value = "Filesystem-backed realm unexpectedly failed to open path \"%s\" for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmFailedToOpen(Path path, String finalName, @Cause IOException cause);
 
-    @Message(id = 1013, value = "Filesystem-backed realm unexpectedly failed to read path \"%s\" for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmFailedToRead(Path path, String finalName, @Cause Exception cause);
+//    @Message(id = 1013, value = "Filesystem-backed realm unexpectedly failed to read path \"%s\" for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmFailedToRead(Path path, String finalName, @Cause Exception cause);
 
     // @Message(id = 1014, value = "Invalid empty name given")
     // IllegalArgumentException invalidEmptyName();
 
-    @Message(id = 1015, value = "Filesystem-backed realm encountered invalid file content in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmInvalidContent(Path path, int lineNumber, String name);
-
-    @Message(id = 1016, value = "Filesystem-backed realm encountered missing required attribute \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmMissingAttribute(String attribute, Path path, int lineNumber, String name);
-
-    @Message(id = 1017, value = "Filesystem-backed realm encountered invalid password format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmInvalidPasswordFormat(String format, Path path, int lineNumber, String name);
-
-    @Message(id = 1018, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
+//    @Message(id = 1015, value = "Filesystem-backed realm encountered invalid file content in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmInvalidContent(Path path, int lineNumber, String name);
+//
+//    @Message(id = 1016, value = "Filesystem-backed realm encountered missing required attribute \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmMissingAttribute(String attribute, Path path, int lineNumber, String name);
+//
+//    @Message(id = 1017, value = "Filesystem-backed realm encountered invalid password format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmInvalidPasswordFormat(String format, Path path, int lineNumber, String name);
+//
+//    @Message(id = 1018, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
 
 //    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
 //    RealmUnavailableException unableToObtainExclusiveAccess();
 
-    @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
-    RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
+//    @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
+//    RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
+//
+//    @Message(id = 1021, value = "Filesystem-backed realm failed to delete identity \"%s\"")
+//    RealmUnavailableException fileSystemRealmDeleteFailed(String name, @Cause IOException e);
 
-    @Message(id = 1021, value = "Filesystem-backed realm failed to delete identity \"%s\"")
-    RealmUnavailableException fileSystemRealmDeleteFailed(String name, @Cause IOException e);
+//    @Message(id = 1022, value = "Filesystem-backed realm failed to find identity \"%s\"")
+//    RealmUnavailableException fileSystemRealmNotFound(String name);
 
-    @Message(id = 1022, value = "Filesystem-backed realm failed to find identity \"%s\"")
-    RealmUnavailableException fileSystemRealmNotFound(String name);
-
-    @Message(id = 1023, value = "Filesystem-backed realm failed to write to file \"%s\" for identity \"%s\"")
-    RealmUnavailableException fileSystemRealmFailedToWrite(Path tempPath, String name, @Cause Exception e);
-
-    @Message(id = 1024, value = "Filesystem-backed realm cannot create duplicate identity for identity \"%s\"")
-    RealmUnavailableException fileSystemRealmAlreadyExists(String name, @Cause Throwable e);
-
-    @Message(id = 1025, value = "Filesystem-backed realm encountered invalid certificate format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmCertificateReadError(String format, Path path, int lineNumber, String name);
-
-    @Message(id = 1026, value = "Filesystem-backed realm encountered invalid key format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmUnsupportedKeyFormat(String format, Path path, int lineNumber, String name);
-
-    @Message(id = 1027, value = "Filesystem-backed realm encountered invalid key algorithm for format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name, @Cause Exception e);
+//    @Message(id = 1023, value = "Filesystem-backed realm failed to write to file \"%s\" for identity \"%s\"")
+//    RealmUnavailableException fileSystemRealmFailedToWrite(Path tempPath, String name, @Cause Exception e);
+//
+//    @Message(id = 1024, value = "Filesystem-backed realm cannot create duplicate identity for identity \"%s\"")
+//    RealmUnavailableException fileSystemRealmAlreadyExists(String name, @Cause Throwable e);
+//
+//    @Message(id = 1025, value = "Filesystem-backed realm encountered invalid certificate format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmCertificateReadError(String format, Path path, int lineNumber, String name);
+//
+//    @Message(id = 1026, value = "Filesystem-backed realm encountered invalid key format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmUnsupportedKeyFormat(String format, Path path, int lineNumber, String name);
+//
+//    @Message(id = 1027, value = "Filesystem-backed realm encountered invalid key algorithm for format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name, @Cause Exception e);
 
 //    @Message(id = 1028, value = "Invalid port number \"%d\"")
 //    IllegalArgumentException invalidPortNumber(int port);
@@ -348,8 +348,8 @@ public interface ElytronMessages extends BasicLogger {
 //    IllegalArgumentException privateKeyIsNull();
 
     // Multi Use
-    @Message(id = 1064, value = "Invalid identity name")
-    IllegalArgumentException invalidName();
+//    @Message(id = 1064, value = "Invalid identity name")
+//    IllegalArgumentException invalidName();
 
 //    @Message(id = 1065, value = "Pattern requires a capture group")
 //    IllegalArgumentException patternRequiresCaptureGroup();
@@ -411,11 +411,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1080, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
 //    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn, @Cause Throwable cause);
 
-    @Message(id = 1081, value = "Filesystem-backed realm encountered invalid OTP definition in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmInvalidOtpDefinition(Path path, int lineNumber, String name, @Cause Throwable cause);
-
-    @Message(id = 1082, value = "Filesystem-backed realm encountered invalid OTP algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmInvalidOtpAlgorithm(String algorithm, Path path, int lineNumber, String name, @Cause Throwable cause);
+//    @Message(id = 1081, value = "Filesystem-backed realm encountered invalid OTP definition in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmInvalidOtpDefinition(Path path, int lineNumber, String name, @Cause Throwable cause);
+//
+//    @Message(id = 1082, value = "Filesystem-backed realm encountered invalid OTP algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+//    RealmUnavailableException fileSystemRealmInvalidOtpAlgorithm(String algorithm, Path path, int lineNumber, String name, @Cause Throwable cause);
 
 //    @Message(id = 1083, value = "Ldap-backed realm cannot to obtain not existing identity \"%s\"")
 //    RealmUnavailableException ldapRealmIdentityNotExists(String identity);
@@ -585,8 +585,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
 //    ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
 
-    @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
-    RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
+//    @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
+//    RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
 
 //    @Message(id = 1139, value = "Failed to create credential store")
 //    ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
@@ -634,8 +634,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1153, value = "Direct LDAP verification failed with DN [%s] and absolute DN [%s]")
     // RealmUnavailableException directLdapVerificationFailed(String distinguishedName, String absoluteName, @Cause Exception e);
 
-    @Message(id = 1154, value = "Failed to read key store")
-    RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
+//    @Message(id = 1154, value = "Failed to read key store")
+//    RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
 
 //    @Message(id = 1155, value = "Security domain mismatch")
 //    IllegalArgumentException securityDomainMismatch();
@@ -2147,8 +2147,8 @@ public interface ElytronMessages extends BasicLogger {
     //@Message(id = 11004, value = "Invalid suffix \"%s\" - rotating by second or millisecond is not supported")
     //IllegalArgumentException rotatingBySecondUnsupported(String suffix);
 
-    @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
-    IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
+//    @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
+//    IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
 
 //    @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
 //    CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);

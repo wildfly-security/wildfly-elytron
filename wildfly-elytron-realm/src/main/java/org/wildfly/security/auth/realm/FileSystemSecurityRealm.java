@@ -75,7 +75,7 @@ import org.wildfly.common.codec.Base32Alphabet;
 import org.wildfly.common.codec.Base64Alphabet;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.realm.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
