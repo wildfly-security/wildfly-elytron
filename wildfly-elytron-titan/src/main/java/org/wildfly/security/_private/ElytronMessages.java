@@ -112,9 +112,9 @@ public interface ElytronMessages extends BasicLogger {
     ElytronMessages httpBasic = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.basic");
     ElytronMessages acme = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.x500.cert.acme");
 
-    @LogMessage
-    @Message(id = 1, value = "WildFly Elytron version %s")
-    void logVersion(String versionString);
+//    @LogMessage
+//    @Message(id = 1, value = "WildFly Elytron version %s")
+//    void logVersion(String versionString);
 
     // Used both for LDAP Realm and wildfly-elyton-credential
     @Message(id = 2, value = "Parameter %s is empty")
@@ -148,8 +148,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 10, value = "Identity locator field \"%s\" is not set")
     // IllegalStateException locatorFieldNotSet(String fieldName);
 
-    @Message(id = 11, value = "Unable to create service for '%s.%s' ")
-    NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
+//    @Message(id = 11, value = "Unable to create service for '%s.%s' ")
+//    NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
 
 //    @Message(id = 12, value = "Unable to load OIDs database from properties file")
 //    IllegalStateException unableToLoadOidsFromPropertiesFile(@Cause Throwable cause);

@@ -18,7 +18,7 @@
 
 package org.wildfly.security;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.ElytronMessages.log;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.credential.store.CredentialStore;
 
 
 /**
@@ -318,9 +317,9 @@ public class WildFlyElytronProvider extends VersionedProvider {
     private void putCredentialStoreProviderImplementations() {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, "KeyStoreCredentialStore", "org.wildfly.security.credential.store.impl.KeyStoreCredentialStore", emptyList, emptyMap));
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, "VaultCredentialStore", "org.wildfly.security.credential.store.impl.VaultCredentialStore", emptyList, emptyMap));
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, "MapCredentialStore", "org.wildfly.security.credential.store.impl.MapCredentialStore", emptyList, emptyMap));
+        putService(new Service(this, "CredentialStore", "KeyStoreCredentialStore", "org.wildfly.security.credential.store.impl.KeyStoreCredentialStore", emptyList, emptyMap));
+        putService(new Service(this, "CredentialStore", "VaultCredentialStore", "org.wildfly.security.credential.store.impl.VaultCredentialStore", emptyList, emptyMap));
+        putService(new Service(this, "CredentialStore", "MapCredentialStore", "org.wildfly.security.credential.store.impl.MapCredentialStore", emptyList, emptyMap));
     }
 
     class ProviderService extends Service {

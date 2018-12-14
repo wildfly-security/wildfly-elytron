@@ -18,8 +18,12 @@
 
 package org.wildfly.security;
 
+import java.security.NoSuchAlgorithmException;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
+import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
@@ -35,7 +39,14 @@ public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
+    @LogMessage
+    @Message(id = 1, value = "WildFly Elytron version %s")
+    void logVersion(String versionString);
+    
     @Message(id = 5, value = "Cannot instantiate self-referential factory")
     IllegalStateException cannotInstantiateSelfReferentialFactory();
 
+    @Message(id = 11, value = "Unable to create service for '%s.%s' ")
+    NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
+    
 }
