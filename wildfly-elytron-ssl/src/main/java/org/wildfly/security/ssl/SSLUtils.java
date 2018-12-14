@@ -49,10 +49,9 @@ import javax.net.ssl.X509TrustManager;
 import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.ssl.ElytronMessages.log;
 
 /**
  * SSL factories and utilities.

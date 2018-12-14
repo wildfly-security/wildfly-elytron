@@ -47,8 +47,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.wildfly.security._private.ElytronMessages;
-
 /**
  * Instances of this class acts as an explorer of the network data of an
  * SSL/TLS connection.

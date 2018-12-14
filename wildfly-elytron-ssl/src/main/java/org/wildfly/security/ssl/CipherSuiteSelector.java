@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security._private.ElytronMessages;
 
 /**
  * An immutable filter for SSL/TLS cipher suites.

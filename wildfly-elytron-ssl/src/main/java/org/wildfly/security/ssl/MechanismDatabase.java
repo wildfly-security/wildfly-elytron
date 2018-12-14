@@ -18,7 +18,7 @@
 
 package org.wildfly.security.ssl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.ssl.ElytronMessages.log;
 
 import java.io.IOError;
 import java.io.IOException;
