@@ -63,7 +63,6 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
 import org.wildfly.security.asn1.ASN1Exception;
-import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.AuthorizationFailureException;
@@ -608,8 +607,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1144, value = "Realm failed to obtain identity from cache")
     // RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
 
-    @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
-    IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
+    // @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
+    // IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
 
     @LogMessage
     @Message(id = 1146, value = "LDAP Realm unable to register listener, defering action.")

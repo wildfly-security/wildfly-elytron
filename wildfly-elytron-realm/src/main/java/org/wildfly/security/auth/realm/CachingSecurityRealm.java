@@ -19,12 +19,11 @@
 package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.RealmIdentity;
