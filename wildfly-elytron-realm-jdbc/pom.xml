@@ -39,6 +39,11 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-titan</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-realm</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

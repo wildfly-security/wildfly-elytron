@@ -339,6 +339,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-auth-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -423,9 +428,40 @@
                 <artifactId>wildfly-elytron-jaspi</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-scram</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-permission</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-realm</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -449,10 +485,19 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-anonymous</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-digest</artifactId>
@@ -1090,6 +1135,7 @@
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-auth</module>
         <module>wildfly-elytron-auth-server</module>
+        <module>wildfly-elytron-auth-server-deprecated</module>
         <module>wildfly-elytron-auth-util</module>
         <module>wildfly-elytron-base</module>
         <module>wildfly-elytron-client</module>
@@ -1107,11 +1153,18 @@
         <module>wildfly-elytron-http-util</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
+        <module>wildfly-elytron-mechanism</module>
+        <module>wildfly-elytron-mechanism-digest</module>
+        <module>wildfly-elytron-mechanism-oauth2</module>
+        <module>wildfly-elytron-mechanism-scram</module>
         <module>wildfly-elytron-permission</module>
+        <module>wildfly-elytron-realm</module>
         <module>wildfly-elytron-realm-jdbc</module>
         <module>wildfly-elytron-realm-ldap</module>
         <module>wildfly-elytron-realm-token</module>
+        <module>wildfly-elytron-sasl</module>
         <module>wildfly-elytron-sasl-anonymous</module>
+        <module>wildfly-elytron-sasl-deprecated</module>
         <module>wildfly-elytron-sasl-digest</module>
         <module>wildfly-elytron-sasl-entity</module>
         <module>wildfly-elytron-sasl-external</module>

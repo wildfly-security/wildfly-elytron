@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**

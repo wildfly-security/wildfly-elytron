@@ -63,7 +63,6 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
 import org.wildfly.security.asn1.ASN1Exception;
-import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.AuthorizationFailureException;
@@ -73,8 +72,6 @@ import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
-import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
-import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.permission.InvalidPermissionClassException;
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -608,8 +605,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1144, value = "Realm failed to obtain identity from cache")
     // RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
 
-    @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
-    IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
+    // @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
+    // IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
 
     @LogMessage
     @Message(id = 1146, value = "LDAP Realm unable to register listener, defering action.")
@@ -645,9 +642,9 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
 //    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
-    void unableToResolveMechanismConfiguration(@Cause Throwable e);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
+//    void unableToResolveMechanismConfiguration(@Cause Throwable e);
 
     @Message(id = 1158, value = "Unable to create kerberos GSS credential")
     SecurityException unableToCreateKerberosCredential(@Cause Exception e);
@@ -1029,8 +1026,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* mechanism package */
 
-    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
-    AuthenticationMechanismException mechMessageAfterComplete();
+//    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
+//    AuthenticationMechanismException mechMessageAfterComplete();
 
 //    @Message(id = 5002, value = "Authentication mechanism user name contains an invalid or disallowed character")
 //    AuthenticationMechanismException mechUserNameContainsInvalidCharacter();
@@ -1040,20 +1037,20 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5004, value = "Authentication mechanism authorization failed")
 //    AuthenticationMechanismException mechAuthorizationFailed(@Cause Throwable cause);
 
-    @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
-    IllegalStateException mechAuthenticationNotComplete();
+//    @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
+//    IllegalStateException mechAuthenticationNotComplete();
 
 //    @Message(id = 5006, value = "Authentication mechanism does not support security layer (wrapping/unwrapping)")
 //    IllegalStateException mechNoSecurityLayer();
 
-    @Message(id = 5007, value = "Invalid authentication mechanism negotiation message received")
-    AuthenticationMechanismException mechInvalidMessageReceived();
+//    @Message(id = 5007, value = "Invalid authentication mechanism negotiation message received")
+//    AuthenticationMechanismException mechInvalidMessageReceived();
 
-    @Message(id = 5008, value = "No authentication mechanism login name was given")
-    AuthenticationMechanismException mechNoLoginNameGiven();
+//    @Message(id = 5008, value = "No authentication mechanism login name was given")
+//    AuthenticationMechanismException mechNoLoginNameGiven();
 
-    @Message(id = 5009, value = "No authentication mechanism password was given")
-    AuthenticationMechanismException mechNoPasswordGiven();
+//    @Message(id = 5009, value = "No authentication mechanism password was given")
+//    AuthenticationMechanismException mechNoPasswordGiven();
 
 //    @Message(id = 5010, value = "Authentication mechanism authentication failed due to one or more malformed fields")
 //    AuthenticationMechanismException mechMalformedFields(@Cause IllegalArgumentException ex);
@@ -1061,14 +1058,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5011, value = "Authentication mechanism message is too long")
 //    AuthenticationMechanismException mechMessageTooLong();
 
-    @Message(id = 5012, value = "Authentication mechanism server-side authentication failed")
-    AuthenticationMechanismException mechServerSideAuthenticationFailed(@Cause Exception e);
+//    @Message(id = 5012, value = "Authentication mechanism server-side authentication failed")
+//    AuthenticationMechanismException mechServerSideAuthenticationFailed(@Cause Exception e);
 
 //    @Message(id = 5013, value = "Authentication mechanism password not verified")
 //    AuthenticationMechanismException mechPasswordNotVerified();
 
-    @Message(id = 5014, value = "Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
-    AuthenticationMechanismException mechAuthorizationFailed(String userName, String authorizationId);
+//    @Message(id = 5014, value = "Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
+//    AuthenticationMechanismException mechAuthorizationFailed(String userName, String authorizationId);
     
     // Multi Use
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
@@ -1084,11 +1081,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5018, value = "Channel binding data changed")
 //    AuthenticationMechanismException mechChannelBindingChanged();
 
-    @Message(id = 5019, value = "No token was given")
-    AuthenticationMechanismException mechNoTokenGiven();
+//    @Message(id = 5019, value = "No token was given")
+//    AuthenticationMechanismException mechNoTokenGiven();
 
-    @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
-    IllegalArgumentException mechSelectorUnexpectedEnd(String string);
+//    @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
+//    IllegalArgumentException mechSelectorUnexpectedEnd(String string);
 
     // 5021
 
@@ -1113,8 +1110,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5028, value = "Unable to create name for acceptor")
 //    AuthenticationMechanismException mechUnableToCreateNameForAcceptor(@Cause Exception e);
 
-    @Message(id = 5029, value = "Unable to create GSSContext")
-    AuthenticationMechanismException mechUnableToCreateGssContext(@Cause Exception e);
+//    @Message(id = 5029, value = "Unable to create GSSContext")
+//    AuthenticationMechanismException mechUnableToCreateGssContext(@Cause Exception e);
 
 //    @Message(id = 5030, value = "Unable to set GSSContext request flags")
 //    AuthenticationMechanismException mechUnableToSetGssContextRequestFlags(@Cause Exception e);
@@ -1125,14 +1122,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5032, value = "GSS-API mechanism mismatch between SASL client and server")
 //    AuthenticationMechanismException mechGssApiMechanismMismatch();
 
-    @Message(id = 5033, value = "Channel binding not supported for this SASL mechanism")
-    AuthenticationMechanismException mechChannelBindingNotSupported();
-
-    @Message(id = 5034, value = "Channel binding type mismatch between SASL client and server")
-    AuthenticationMechanismException mechChannelBindingTypeMismatch();
-
-    @Message(id = 5035, value = "Channel binding not provided by client")
-    AuthenticationMechanismException mechChannelBindingNotProvided();
+//    @Message(id = 5033, value = "Channel binding not supported for this SASL mechanism")
+//    AuthenticationMechanismException mechChannelBindingNotSupported();
+//
+//    @Message(id = 5034, value = "Channel binding type mismatch between SASL client and server")
+//    AuthenticationMechanismException mechChannelBindingTypeMismatch();
+//
+//    @Message(id = 5035, value = "Channel binding not provided by client")
+//    AuthenticationMechanismException mechChannelBindingNotProvided();
 
 //    @Message(id = 5036, value = "Unable to determine peer name")
 //    AuthenticationMechanismException mechUnableToDeterminePeerName(@Cause Exception e);
@@ -1140,11 +1137,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5037, value = "Authentication mechanism client refuses to initiate authentication")
 //    AuthenticationMechanismException mechClientRefusesToInitiateAuthentication();
 
-    @Message(id = 5038, value = "Nonces do not match")
-    AuthenticationMechanismException mechNoncesDoNotMatch();
-
-    @Message(id = 5039, value = "Invalid length of nonce received")
-    AuthenticationMechanismException invalidNonceLength();
+//    @Message(id = 5038, value = "Nonces do not match")
+//    AuthenticationMechanismException mechNoncesDoNotMatch();
+//
+//    @Message(id = 5039, value = "Invalid length of nonce received")
+//    AuthenticationMechanismException invalidNonceLength();
 
 //    @Message(id = 5040, value = "Iteration count %d is below the minimum of %d")
 //    AuthenticationMechanismException mechIterationCountIsTooLow(int iterationCount, int minimumIterationCount);
@@ -1161,11 +1158,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5044, value = "Invalid server message")
 //    AuthenticationMechanismException mechInvalidServerMessageWithCause(@Cause Throwable cause);
 
-    @Message(id = 5045, value = "Invalid client message")
-    AuthenticationMechanismException mechInvalidClientMessage();
-
-    @Message(id = 5046, value = "Invalid client message")
-    AuthenticationMechanismException mechInvalidClientMessageWithCause(@Cause Throwable cause);
+//    @Message(id = 5045, value = "Invalid client message")
+//    AuthenticationMechanismException mechInvalidClientMessage();
+//
+//    @Message(id = 5046, value = "Invalid client message")
+//    AuthenticationMechanismException mechInvalidClientMessageWithCause(@Cause Throwable cause);
 
 //    @Message(id = 5047, value = "[%s] Authentication mechanism message is for mismatched mechanism \"%s\"")
 //    AuthenticationMechanismException mechUnmatchedMechanism(String mechName, String otherMechName);
@@ -1173,18 +1170,18 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5048, value = "[%s] Server rejected authentication")
     // AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
 
-    @Message(id = 5049, value = "Server authenticity cannot be verified")
-    AuthenticationMechanismException mechServerAuthenticityCannotBeVerified();
+//    @Message(id = 5049, value = "Server authenticity cannot be verified")
+//    AuthenticationMechanismException mechServerAuthenticityCannotBeVerified();
 
 //    @Message(id = 5050, value = "Callback handler does not support user name")
 //    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportUserName(@Cause Throwable cause);
 
-    @Message(id = 5051, value = "Callback handler does not support credential acquisition")
-    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportCredentialAcquisition(@Cause Throwable cause);
-
-    @Message(id = 5052, value = "Callback handler does not support authorization")
-    AuthenticationMechanismException mechAuthorizationUnsupported(@Cause Throwable cause);
-
+//    @Message(id = 5051, value = "Callback handler does not support credential acquisition")
+//    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportCredentialAcquisition(@Cause Throwable cause);
+//
+//    @Message(id = 5052, value = "Callback handler does not support authorization")
+//    AuthenticationMechanismException mechAuthorizationUnsupported(@Cause Throwable cause);
+//
     // Multi Use
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
     AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
@@ -1192,8 +1189,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5054, value = "[%s] Salt must be specified")
     // AuthenticationMechanismException mechSaltMustBeSpecified(String mechName);
 
-    @Message(id = 5055, value = "Authentication rejected (invalid proof)")
-    AuthenticationMechanismException mechAuthenticationRejectedInvalidProof();
+//    @Message(id = 5055, value = "Authentication rejected (invalid proof)")
+//    AuthenticationMechanismException mechAuthenticationRejectedInvalidProof();
 
 //    @Message(id = 5056, value = "Client sent extra message")
 //    AuthenticationMechanismException mechClientSentExtraMessage();
@@ -1201,8 +1198,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5057, value = "Server sent extra message")
 //    AuthenticationMechanismException mechServerSentExtraMessage();
 
-    @Message(id = 5058, value = "Authentication failed")
-    AuthenticationMechanismException mechAuthenticationFailed();
+//    @Message(id = 5058, value = "Authentication failed")
+//    AuthenticationMechanismException mechAuthenticationFailed();
 
     // @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
     // AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
@@ -1219,8 +1216,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5063, value = "Cannot get clear password from two way password")
 //    AuthenticationMechanismException mechCannotGetTwoWayPasswordChars(@Cause Throwable cause);
 
-    @Message(id = 5064, value = "Hashing algorithm not supported")
-    AuthenticationMechanismException mechMacAlgorithmNotSupported(@Cause Throwable cause);
+//    @Message(id = 5064, value = "Hashing algorithm not supported")
+//    AuthenticationMechanismException mechMacAlgorithmNotSupported(@Cause Throwable cause);
 
 //    @Message(id = 5065, value = "keyword cannot be empty")
 //    AuthenticationMechanismException mechKeywordCannotBeEmpty();
@@ -1267,8 +1264,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5079, value = "No ciphers offered by server")
 //    AuthenticationMechanismException mechNoCiphersOfferedByServer();
 
-    @Message(id = 5080, value = "Callback handler not provided user name")
-    AuthenticationMechanismException mechNotProvidedUserName();
+//    @Message(id = 5080, value = "Callback handler not provided user name")
+//    AuthenticationMechanismException mechNotProvidedUserName();
 
     // @Message(id = 5081, value = "[%s] Callback handler not provided pre-digested password")
     // AuthenticationMechanismException mechNotProvidedPreDigested(String mechName);
@@ -1276,8 +1273,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 5082, value = "[%s] Callback handler not provided clear password")
     // AuthenticationMechanismException mechNotProvidedClearPassword(String mechName);
 
-    @Message(id = 5083, value = "Missing \"%s\" directive")
-    AuthenticationMechanismException mechMissingDirective(String directive);
+//    @Message(id = 5083, value = "Missing \"%s\" directive")
+//    AuthenticationMechanismException mechMissingDirective(String directive);
 
 //    @Message(id = 5084, value = "nonce-count must equal to %d, but it is %d")
 //    AuthenticationMechanismException mechNonceCountMustEqual(int expected, int actual);
@@ -1288,8 +1285,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5086, value = "Charset can be only \"utf-8\" or unspecified (to use ISO 8859-1)")
 //    AuthenticationMechanismException mechUnknownCharset();
 
-    @Message(id = 5087, value = "Client selected realm not offered by server (%s)")
-    AuthenticationMechanismException mechDisallowedClientRealm(String clientRealm);
+//    @Message(id = 5087, value = "Client selected realm not offered by server (%s)")
+//    AuthenticationMechanismException mechDisallowedClientRealm(String clientRealm);
 
 //    @Message(id = 5088, value = "digest-uri \"%s\" not accepted")
 //    AuthenticationMechanismException mechMismatchedWrongDigestUri(String actual);
@@ -1297,8 +1294,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5089, value = "Unexpected qop value: \"%s\"")
 //    AuthenticationMechanismException mechUnexpectedQop(String qop);
 
-    @Message(id = 5090, value = "Wrapping is not configured")
-    IllegalStateException wrappingNotConfigured();
+//    @Message(id = 5090, value = "Wrapping is not configured")
+//    IllegalStateException wrappingNotConfigured();
 
 //    @Message(id = 5091, value = "Authentication name string is too long")
 //    AuthenticationMechanismException mechAuthenticationNameTooLong();
@@ -1418,62 +1415,62 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5129, value = "Failed to create challenge file")
 //    AuthenticationMechanismException mechFailedToCreateChallengeFile(@Cause Throwable cause);
 
-    @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
-    IllegalArgumentException invalidNonAsciiSpace(int input);
+//    @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
+//    IllegalArgumentException invalidNonAsciiSpace(int input);
 
-    @Message(id = 5131, value = "Invalid ASCII control \"0x%X\"")
-    IllegalArgumentException invalidAsciiControl(int input);
+//    @Message(id = 5131, value = "Invalid ASCII control \"0x%X\"")
+//    IllegalArgumentException invalidAsciiControl(int input);
 
-    @Message(id = 5132, value = "Invalid non-ASCII control \"0x%X\"")
-    IllegalArgumentException invalidNonAsciiControl(int input);
+//    @Message(id = 5132, value = "Invalid non-ASCII control \"0x%X\"")
+//    IllegalArgumentException invalidNonAsciiControl(int input);
 
-    @Message(id = 5133, value = "Invalid private use character \"0x%X\"")
-    IllegalArgumentException invalidPrivateUseCharacter(int input);
+//    @Message(id = 5133, value = "Invalid private use character \"0x%X\"")
+//    IllegalArgumentException invalidPrivateUseCharacter(int input);
 
-    @Message(id = 5134, value = "Invalid non-character code point \"0x%X\"")
-    IllegalArgumentException invalidNonCharacterCodePoint(int input);
+//    @Message(id = 5134, value = "Invalid non-character code point \"0x%X\"")
+//    IllegalArgumentException invalidNonCharacterCodePoint(int input);
 
-    @Message(id = 5135, value = "Invalid surrogate code point \"0x%X\"")
-    IllegalArgumentException invalidSurrogateCodePoint(int input);
+//    @Message(id = 5135, value = "Invalid surrogate code point \"0x%X\"")
+//    IllegalArgumentException invalidSurrogateCodePoint(int input);
 
-    @Message(id = 5136, value = "Invalid plain text code point \"0x%X\"")
-    IllegalArgumentException invalidPlainTextCodePoint(int input);
+//    @Message(id = 5136, value = "Invalid plain text code point \"0x%X\"")
+//    IllegalArgumentException invalidPlainTextCodePoint(int input);
 
-    @Message(id = 5137, value = "Invalid non-canonical code point \"0x%X\"")
-    IllegalArgumentException invalidNonCanonicalCodePoint(int input);
+//    @Message(id = 5137, value = "Invalid non-canonical code point \"0x%X\"")
+//    IllegalArgumentException invalidNonCanonicalCodePoint(int input);
 
-    @Message(id = 5138, value = "Invalid control character \"0x%X\"")
-    IllegalArgumentException invalidControlCharacter(int input);
+//    @Message(id = 5138, value = "Invalid control character \"0x%X\"")
+//    IllegalArgumentException invalidControlCharacter(int input);
 
-    @Message(id = 5139, value = "Invalid tagging character \"0x%X\"")
-    IllegalArgumentException invalidTaggingCharacter(int input);
+//    @Message(id = 5139, value = "Invalid tagging character \"0x%X\"")
+//    IllegalArgumentException invalidTaggingCharacter(int input);
 
-    @Message(id = 5140, value = "Unassigned code point \"0x%X\"")
-    IllegalArgumentException unassignedCodePoint(int input);
+//    @Message(id = 5140, value = "Unassigned code point \"0x%X\"")
+//    IllegalArgumentException unassignedCodePoint(int input);
 
-    @Message(id = 5141, value = "Invalid surrogate pair (high at end of string) \"0x%X\"")
-    IllegalArgumentException invalidSurrogatePairHightAtEnd(char input);
+//    @Message(id = 5141, value = "Invalid surrogate pair (high at end of string) \"0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairHightAtEnd(char input);
 
-    @Message(id = 5142, value = "Invalid surrogate pair (second is not low) \"0x%X 0x%X\"")
-    IllegalArgumentException invalidSurrogatePairSecondIsNotLow(char high, char low);
+//    @Message(id = 5142, value = "Invalid surrogate pair (second is not low) \"0x%X 0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairSecondIsNotLow(char high, char low);
 
-    @Message(id = 5143, value = "Invalid surrogate pair (low without high) \"0x%X\"")
-    IllegalArgumentException invalidSurrogatePairLowWithoutHigh(char low);
+//    @Message(id = 5143, value = "Invalid surrogate pair (low without high) \"0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairLowWithoutHigh(char low);
 
-    @Message(id = 5144, value = "Invalid code point \"0x%X\"")
-    IllegalArgumentException invalidCodePoint(int input);
+//    @Message(id = 5144, value = "Invalid code point \"0x%X\"")
+//    IllegalArgumentException invalidCodePoint(int input);
 
-    @Message(id = 5145, value = "Disallowed R/AL directionality character in L string")
-    IllegalArgumentException disallowedRalDirectionalityInL();
+//    @Message(id = 5145, value = "Disallowed R/AL directionality character in L string")
+//    IllegalArgumentException disallowedRalDirectionalityInL();
 
-    @Message(id = 5146, value = "Disallowed L directionality character in R/AL string")
-    IllegalArgumentException disallowedLDirectionalityInRal();
+//    @Message(id = 5146, value = "Disallowed L directionality character in R/AL string")
+//    IllegalArgumentException disallowedLDirectionalityInRal();
 
-    @Message(id = 5147, value = "Missing trailing R/AL directionality character")
-    IllegalArgumentException missingTrailingRal();
+//    @Message(id = 5147, value = "Missing trailing R/AL directionality character")
+//    IllegalArgumentException missingTrailingRal();
 
-    @Message(id = 5148, value = "Invalid escape sequence")
-    IllegalArgumentException invalidEscapeSequence();
+//    @Message(id = 5148, value = "Invalid escape sequence")
+//    IllegalArgumentException invalidEscapeSequence();
 
     // @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
     // AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
@@ -1512,14 +1509,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5160, value = "Invalid OTP alternate dictionary")
 //    AuthenticationMechanismException mechInvalidOTPAlternateDictionary();
 
-    @Message(id = 5161, value = "Unable to retrieve password for \"%s\"")
-    AuthenticationMechanismException mechUnableToRetrievePassword(String userName);
+//    @Message(id = 5161, value = "Unable to retrieve password for \"%s\"")
+//    AuthenticationMechanismException mechUnableToRetrievePassword(String userName);
 
 //    @Message(id = 5162, value = "Unable to update password for \"%s\"")
 //    AuthenticationMechanismException mechUnableToUpdatePassword(String userName);
 
-    @Message(id = 5163, value = "Authentication mechanism server timed out")
-    AuthenticationMechanismException mechServerTimedOut();
+//    @Message(id = 5163, value = "Authentication mechanism server timed out")
+//    AuthenticationMechanismException mechServerTimedOut();
 
 //    @Message(id = 5164, value = "Unable to obtain exclusive access for \"%s\"")
 //    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String userName);
@@ -1527,14 +1524,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5165, value = "OTP re-initialization failed")
 //    AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
 
-    @Message(id = 5166, value = "Server rejected authentication")
-    ScramServerException scramServerRejectedAuthentication(@Param ScramServerErrorCode errorCode);
+//    @Message(id = 5166, value = "Server rejected authentication")
+//    ScramServerException scramServerRejectedAuthentication(@Param ScramServerErrorCode errorCode);
 
 //    @Message(id = 5167, value = "Invalid OTP password format type")
 //    AuthenticationMechanismException mechInvalidOTPPasswordFormatType();
 
-    @Message(id = 5168, value = "Unsupported algorithm selected \"%s\"")
-    AuthenticationMechanismException mechUnsupportedAlgorithm(String algorithm);
+//    @Message(id = 5168, value = "Unsupported algorithm selected \"%s\"")
+//    AuthenticationMechanismException mechUnsupportedAlgorithm(String algorithm);
 
 //    @Message(id = 5169, value = "[%s] Clients response token does not match expected token")
 //    String mechResponseTokenMismatch(String mechName);
@@ -1557,8 +1554,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5175, value = "Unable to determine bound server name")
 //    AuthenticationMechanismException mechUnableToDetermineBoundServerName(@Cause Exception e);
 
-    @Message(id = 5176, value = "Unsupported callback")
-    AuthenticationMechanismException mechCallbackHandlerUnsupportedCallback(@Cause Throwable cause);
+//    @Message(id = 5176, value = "Unsupported callback")
+//    AuthenticationMechanismException mechCallbackHandlerUnsupportedCallback(@Cause Throwable cause);
 
 //    @Message(id = 5177, value = "One of \"%s\" and \"%s\" directives has to be defined")
 //    AuthenticationMechanismException mechOneOfDirectivesHasToBeDefined(String directive1, String directive2);

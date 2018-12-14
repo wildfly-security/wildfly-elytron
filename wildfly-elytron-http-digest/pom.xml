@@ -39,7 +39,11 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-titan</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism-digest</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
