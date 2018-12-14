@@ -395,7 +395,12 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-jaspi</artifactId>
-        </dependency>        
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.wildfly.security</groupId>
