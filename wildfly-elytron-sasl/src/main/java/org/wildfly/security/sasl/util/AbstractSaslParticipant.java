@@ -55,7 +55,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
     private final String protocol;
     private final String serverName;
     private ElytronMessages log;
-    private org.wildfly.security._private.ElytronMessages legacyLog;
+    private org.wildfly.security.sasl._private.ElytronMessages legacyLog;
 
     private int state = -1;
     private SaslWrapper wrapper;
@@ -87,14 +87,14 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @param callbackHandler the callback handler
      * @param log mechanism specific logger
      */
-    @Deprecated
-    protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, org.wildfly.security._private.ElytronMessages log) {
-        this.callbackHandler = callbackHandler;
-        this.mechanismName = mechanismName;
-        this.protocol = protocol;
-        this.serverName = serverName;
-        this.legacyLog = log;
-    }
+//    @Deprecated
+//    protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, ElytronMessages log) {
+//        this.callbackHandler = callbackHandler;
+//        this.mechanismName = mechanismName;
+//        this.protocol = protocol;
+//        this.serverName = serverName;
+//        this.legacyLog = log;
+//    }
 
     /**
      * Construct a new instance.
@@ -110,7 +110,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         this.mechanismName = mechanismName;
         this.protocol = protocol;
         this.serverName = serverName;
-        this.legacyLog = org.wildfly.security._private.ElytronMessages.sasl;
+        this.legacyLog = org.wildfly.security.sasl._private.ElytronMessages.sasl;
     }
 
     /**

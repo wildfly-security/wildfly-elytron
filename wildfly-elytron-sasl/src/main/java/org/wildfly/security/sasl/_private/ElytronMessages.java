@@ -45,6 +45,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
     void unableToResolveMechanismConfiguration(@Cause Throwable e);
     
+    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
+    AuthenticationMechanismException mechMessageAfterComplete();
+    
     @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
     IllegalStateException mechAuthenticationNotComplete();
     
@@ -56,6 +59,12 @@ public interface ElytronMessages extends BasicLogger {
     
     @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedEnd(String string);
+    
+    @Message(id = 5058, value = "Authentication failed")
+    AuthenticationMechanismException mechAuthenticationFailed();
+    
+    @Message(id = 5090, value = "Wrapping is not configured")
+    IllegalStateException wrappingNotConfigured();
     
     @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
     IllegalArgumentException invalidNonAsciiSpace(int input);
@@ -117,5 +126,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
     
-    
+    @Message(id = 5163, value = "Authentication mechanism server timed out")
+    AuthenticationMechanismException mechServerTimedOut();
 }

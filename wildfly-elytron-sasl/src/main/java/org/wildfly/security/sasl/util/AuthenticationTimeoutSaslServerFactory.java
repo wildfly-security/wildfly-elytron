@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.sasl;
+import static org.wildfly.security.sasl._private.ElytronMessages.sasl;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;

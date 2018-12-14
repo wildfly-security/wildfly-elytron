@@ -1026,8 +1026,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* mechanism package */
 
-    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
-    AuthenticationMechanismException mechMessageAfterComplete();
+//    @Message(id = 5001, value = "Authentication mechanism exchange received a message after authentication was already complete")
+//    AuthenticationMechanismException mechMessageAfterComplete();
 
 //    @Message(id = 5002, value = "Authentication mechanism user name contains an invalid or disallowed character")
 //    AuthenticationMechanismException mechUserNameContainsInvalidCharacter();
@@ -1198,8 +1198,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5057, value = "Server sent extra message")
 //    AuthenticationMechanismException mechServerSentExtraMessage();
 
-    @Message(id = 5058, value = "Authentication failed")
-    AuthenticationMechanismException mechAuthenticationFailed();
+//    @Message(id = 5058, value = "Authentication failed")
+//    AuthenticationMechanismException mechAuthenticationFailed();
 
     // @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
     // AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
@@ -1294,8 +1294,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5089, value = "Unexpected qop value: \"%s\"")
 //    AuthenticationMechanismException mechUnexpectedQop(String qop);
 
-    @Message(id = 5090, value = "Wrapping is not configured")
-    IllegalStateException wrappingNotConfigured();
+//    @Message(id = 5090, value = "Wrapping is not configured")
+//    IllegalStateException wrappingNotConfigured();
 
 //    @Message(id = 5091, value = "Authentication name string is too long")
 //    AuthenticationMechanismException mechAuthenticationNameTooLong();
@@ -1515,8 +1515,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5162, value = "Unable to update password for \"%s\"")
 //    AuthenticationMechanismException mechUnableToUpdatePassword(String userName);
 
-    @Message(id = 5163, value = "Authentication mechanism server timed out")
-    AuthenticationMechanismException mechServerTimedOut();
+//    @Message(id = 5163, value = "Authentication mechanism server timed out")
+//    AuthenticationMechanismException mechServerTimedOut();
 
 //    @Message(id = 5164, value = "Unable to obtain exclusive access for \"%s\"")
 //    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String userName);

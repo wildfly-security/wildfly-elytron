@@ -22,7 +22,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl._private.ElytronMessages;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 
 /**
  * A base class for SASL client implementations.
@@ -63,12 +63,12 @@ public abstract class AbstractSaslClient extends AbstractSaslParticipant impleme
      * @param hasInitialResponse {@code true} if the mechanism supports an initial response, {@code false} otherwise
      * @param log mechanism specific logger
      */
-    @Deprecated
-    protected AbstractSaslClient(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final boolean hasInitialResponse, ElytronMessages log) {
-        super(mechanismName, protocol, serverName, callbackHandler, log);
-        this.authorizationId = authorizationId;
-        this.hasInitialResponse = hasInitialResponse;
-    }
+//    @Deprecated
+//    protected AbstractSaslClient(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final boolean hasInitialResponse, ElytronMessages log) {
+//        super(mechanismName, protocol, serverName, callbackHandler, log);
+//        this.authorizationId = authorizationId;
+//        this.hasInitialResponse = hasInitialResponse;
+//    }
 
     /**
      * Construct a new instance.
