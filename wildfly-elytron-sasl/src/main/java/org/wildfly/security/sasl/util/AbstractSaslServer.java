@@ -53,10 +53,10 @@ public abstract class AbstractSaslServer extends AbstractSaslParticipant impleme
      * @param callbackHandler the callback handler
      * @param log mechanism specific logger
      */
-    @Deprecated
-    protected AbstractSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, org.wildfly.security._private.ElytronMessages log) {
-        super(mechanismName, protocol, serverName, callbackHandler, log);
-    }
+//    @Deprecated
+//    protected AbstractSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, org.wildfly.security._private.ElytronMessages log) {
+//        super(mechanismName, protocol, serverName, callbackHandler, log);
+//    }
 
     /**
      * Construct a new instance.

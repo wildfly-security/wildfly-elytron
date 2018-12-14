@@ -37,7 +37,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl._private.ElytronMessages.log;
 
 /**
  * A {@link SaslServerFactory} which uses the currently installed security providers to acquire a delegate

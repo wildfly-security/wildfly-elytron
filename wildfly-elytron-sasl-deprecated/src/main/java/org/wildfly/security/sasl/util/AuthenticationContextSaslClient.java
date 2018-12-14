@@ -29,6 +29,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class AuthenticationContextSaslClient extends AbstractDelegatingSaslClient {
 
     private AuthenticationContext context;
