@@ -353,8 +353,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
 
-    @Message(id = 1065, value = "Pattern requires a capture group")
-    IllegalArgumentException patternRequiresCaptureGroup();
+//    @Message(id = 1065, value = "Pattern requires a capture group")
+//    IllegalArgumentException patternRequiresCaptureGroup();
 
 //    @LogMessage(level = WARN)
 //    @Message(id = 1066, value = "Invalid string count for mechanism database entry \"%s\"")
@@ -534,14 +534,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
 //    IllegalStateException tooLateToSetMechanismInformation();
 
-    @Message(id = 1121, value = "Unable to perform initial JAAS login.")
-    GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
+//    @Message(id = 1121, value = "Unable to perform initial JAAS login.")
+//    GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
 
-    @Message(id = 1122, value = "No Kerberos principals found.")
-    GeneralSecurityException noKerberosPrincipalsFound();
+//    @Message(id = 1122, value = "No Kerberos principals found.")
+//    GeneralSecurityException noKerberosPrincipalsFound();
 
-    @Message(id = 1123, value = "Too many Kerberos principals found.")
-    GeneralSecurityException tooManyKerberosPrincipalsFound();
+//    @Message(id = 1123, value = "Too many Kerberos principals found.")
+//    GeneralSecurityException tooManyKerberosPrincipalsFound();
 
 //    @Message(id = 1124, value = "The security realm does not support updating a credential")
 //    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
@@ -655,11 +655,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
     ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
 
-    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
-    IOException keyTabDoesNotExists(String keyTab);
+//    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
+//    IOException keyTabDoesNotExists(String keyTab);
 
-    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
-    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
+//    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
+//    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
 
     @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
     ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
@@ -670,8 +670,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
 //    ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
 
-    @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
-    GeneralSecurityException initialLoginSkipped(long seconds);
+//    @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
+//    GeneralSecurityException initialLoginSkipped(long seconds);
 
 //    @LogMessage(level = WARN)
 //    @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
@@ -925,8 +925,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 3030, value = "I/O operation failed: closed")
 //    IOException closed();
 
-    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
-    GeneralSecurityException tooManyKerberosTicketsFound();
+//    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
+//    GeneralSecurityException tooManyKerberosTicketsFound();
 
     @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
     IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
@@ -1565,8 +1565,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* http package */
 
-    @Message(id = 6000, value = "Status code can not be set at this time.")
-    IllegalStateException statusCodeNotNow();
+//    @Message(id = 6000, value = "Status code can not be set at this time.")
+//    IllegalStateException statusCodeNotNow();
 
 //    @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
 //    String incorrectlyFormattedHeader(String headerName);
@@ -1580,8 +1580,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
     // IllegalStateException httpSessionNotSupported();
 
-    @Message(id = 6005, value= "Attachments are not supported on this scope.")
-    UnsupportedOperationException noAttachmentSupport();
+//    @Message(id = 6005, value= "Attachments are not supported on this scope.")
+//    UnsupportedOperationException noAttachmentSupport();
 
     @Message(id = 6006, value = "An authorization check for user '%s' failed.")
     String authorizationFailed(String username);
@@ -1606,14 +1606,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
 //    HttpAuthenticationException digestMechanismRequireRealm();
 
-    @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
-    HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
+//    @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
+//    HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
 
-    @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
-    HttpAuthenticationException httpAuthenticationNoMechanisms();
+//    @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
+//    HttpAuthenticationException httpAuthenticationNoMechanisms();
 
-    @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
-    HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
+//    @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
+//    HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
 
 //    @Message(id = 6019, value = "Unable to authenticate using DIGEST mechanism - mechanism realm name (%s) is not valid")
 //    HttpAuthenticationException digestMechanismInvalidRealm(String realm);
