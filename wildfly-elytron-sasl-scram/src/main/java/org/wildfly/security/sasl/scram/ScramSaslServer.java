@@ -26,12 +26,12 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.ScramServerException;
 import org.wildfly.security.mechanism.scram.ScramFinalClientMessage;
 import org.wildfly.security.mechanism.scram.ScramFinalServerMessage;
 import org.wildfly.security.mechanism.scram.ScramInitialClientMessage;
 import org.wildfly.security.mechanism.scram.ScramInitialServerResult;
 import org.wildfly.security.mechanism.scram.ScramServer;
-import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
 /**

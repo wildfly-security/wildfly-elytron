@@ -37,11 +37,11 @@ import java.util.function.Supplier;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.mechanism._private.ElytronMessages;
 
 /**
  * The {@link HttpServerAuthenticationMechanismFactory} implementation for the HTTP Digest authentication mechanism.

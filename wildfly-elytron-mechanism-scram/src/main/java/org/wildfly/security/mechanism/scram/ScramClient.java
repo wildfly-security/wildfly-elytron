@@ -42,6 +42,7 @@ import org.wildfly.common.codec.DecodeException;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.mechanism._private.MechanismUtil;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.ScramServerErrorCode;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;

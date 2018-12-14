@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.mechanism.scram;
+package org.wildfly.security.mechanism;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
