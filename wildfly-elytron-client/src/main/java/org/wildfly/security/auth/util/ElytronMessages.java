@@ -16,17 +16,11 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
-
-import java.security.NoSuchAlgorithmException;
+package org.wildfly.security.auth.util;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
-import org.jboss.logging.annotations.LogMessage;
-import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
 
 /**
  * Log messages and exceptions for Elytron.
@@ -35,18 +29,8 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-public interface ElytronMessages extends BasicLogger {
+interface ElytronMessages extends BasicLogger {
 
-    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
-
-    @LogMessage
-    @Message(id = 1, value = "WildFly Elytron version %s")
-    void logVersion(String versionString);
-    
-    @Message(id = 5, value = "Cannot instantiate self-referential factory")
-    IllegalStateException cannotInstantiateSelfReferentialFactory();
-
-    @Message(id = 11, value = "Unable to create service for '%s.%s' ")
-    NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
+	ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     
 }

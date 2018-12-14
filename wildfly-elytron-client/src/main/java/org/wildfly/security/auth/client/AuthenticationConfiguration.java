@@ -20,7 +20,7 @@ package org.wildfly.security.auth.client;
 
 import static java.security.AccessController.doPrivileged;
 import static java.security.AccessController.getContext;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.client.ElytronMessages.log;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;

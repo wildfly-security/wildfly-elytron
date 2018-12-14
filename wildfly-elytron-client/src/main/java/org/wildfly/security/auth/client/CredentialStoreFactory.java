@@ -18,7 +18,7 @@
 package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.xmlLog;
+import static org.wildfly.security.auth.client.ElytronMessages.xmlLog;
 
 import java.security.GeneralSecurityException;
 import java.security.Provider;

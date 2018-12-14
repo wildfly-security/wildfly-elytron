@@ -22,7 +22,7 @@ import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.xmlLog;
+import static org.wildfly.security.auth.client.ElytronMessages.xmlLog;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.util.ProviderUtil.findProvider;
 
@@ -88,7 +88,6 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.asn1.util.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
