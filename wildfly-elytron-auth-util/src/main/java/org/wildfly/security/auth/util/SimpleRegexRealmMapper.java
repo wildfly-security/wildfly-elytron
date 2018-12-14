@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.util.ElytronMessages.log;
 
 import java.security.Principal;
 import java.util.regex.Matcher;

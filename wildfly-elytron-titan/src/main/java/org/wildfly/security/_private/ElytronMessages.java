@@ -352,8 +352,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
 
-    @Message(id = 1065, value = "Pattern requires a capture group")
-    IllegalArgumentException patternRequiresCaptureGroup();
+//    @Message(id = 1065, value = "Pattern requires a capture group")
+//    IllegalArgumentException patternRequiresCaptureGroup();
 
 //    @LogMessage(level = WARN)
 //    @Message(id = 1066, value = "Invalid string count for mechanism database entry \"%s\"")
@@ -533,14 +533,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
 //    IllegalStateException tooLateToSetMechanismInformation();
 
-    @Message(id = 1121, value = "Unable to perform initial JAAS login.")
-    GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
+//    @Message(id = 1121, value = "Unable to perform initial JAAS login.")
+//    GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
 
-    @Message(id = 1122, value = "No Kerberos principals found.")
-    GeneralSecurityException noKerberosPrincipalsFound();
+//    @Message(id = 1122, value = "No Kerberos principals found.")
+//    GeneralSecurityException noKerberosPrincipalsFound();
 
-    @Message(id = 1123, value = "Too many Kerberos principals found.")
-    GeneralSecurityException tooManyKerberosPrincipalsFound();
+//    @Message(id = 1123, value = "Too many Kerberos principals found.")
+//    GeneralSecurityException tooManyKerberosPrincipalsFound();
 
 //    @Message(id = 1124, value = "The security realm does not support updating a credential")
 //    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
@@ -654,11 +654,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
     ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
 
-    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
-    IOException keyTabDoesNotExists(String keyTab);
+//    @Message(id = 1160, value = "KeyTab [%s] does not exists.")
+//    IOException keyTabDoesNotExists(String keyTab);
 
-    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
-    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
+//    @Message(id = 1161, value = "No keys for Kerberos principal [%s] was found in KeyTab [%s].")
+//    IOException noKeysForPrincipalInKeyTab(String principal, String keyTab);
 
     @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
     ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
@@ -669,8 +669,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
     ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
 
-    @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
-    GeneralSecurityException initialLoginSkipped(long seconds);
+//    @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
+//    GeneralSecurityException initialLoginSkipped(long seconds);
 
     @LogMessage(level = WARN)
     @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
@@ -924,8 +924,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 3030, value = "I/O operation failed: closed")
 //    IOException closed();
 
-    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
-    GeneralSecurityException tooManyKerberosTicketsFound();
+//    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
+//    GeneralSecurityException tooManyKerberosTicketsFound();
 
     @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
     IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
