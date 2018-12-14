@@ -52,7 +52,7 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.util.JsonUtil.toAttributes;
+import static org.wildfly.security.json.util.JsonUtil.toAttributes;
 
 /**
  * <p>A {@link TokenValidator} capable of validating and parsing JWT. Most of the validations performed by this validator are

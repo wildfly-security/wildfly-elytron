@@ -425,6 +425,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-json-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jaspi</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1153,6 +1159,7 @@
         <module>wildfly-elytron-http-util</module>
         <module>wildfly-elytron-jacc</module>
         <module>wildfly-elytron-jaspi</module>
+        <module>wildfly-elytron-json-util</module>
         <module>wildfly-elytron-mechanism</module>
         <module>wildfly-elytron-mechanism-digest</module>
         <module>wildfly-elytron-mechanism-oauth2</module>
