@@ -374,6 +374,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1142,6 +1147,7 @@
         <module>wildfly-elytron-credential</module>
         <module>wildfly-elytron-credential-store</module>
         <module>wildfly-elytron-credential-source-deprecated</module>
+        <module>wildfly-elytron-digest</module>
         <module>wildfly-elytron-http</module>
         <module>wildfly-elytron-http-basic</module>
         <module>wildfly-elytron-http-bearer</module>
