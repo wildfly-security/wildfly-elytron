@@ -19,6 +19,7 @@
 package org.wildfly.security.util;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.spec.InvalidParameterSpecException;
 
 import org.jboss.logging.BasicLogger;
@@ -41,9 +42,30 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9, value = "Invalid name \"%s\"")
     IllegalArgumentException generalInvalidName(String str);
-    
+
+    @Message(id = 3025, value = "Iteration count not specified for password based encryption")
+    IllegalArgumentException iterationCountNotSpecified();
+
+    @Message(id = 3026, value = "Salt not specified for password based encryption")
+    IllegalArgumentException saltNotSpecified();
+
+    @Message(id = 3027, value = "Initial key not specified for password based encryption")
+    IllegalArgumentException initialKeyNotSpecified();
+
+    @Message(id = 3028, value = "Security provider \"%s\" doesn't exist")
+    IllegalArgumentException securityProviderDoesnExist(String providerName);
+
+    @Message(id = 3029, value = "No such key algorithm \"%s\"")
+    IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
+
     @Message(id = 3030, value = "I/O operation failed: closed")
     IOException closed();
+
+    @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
+    IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
+
+    @Message(id = 4020, value = "Mechanism \"%s\" not supported by transformation mapper")
+    IllegalArgumentException mechanismNotSupported(String mechanism);
     
     @Message(id = 8030, value = "Failed to encode parameter specification")
     InvalidParameterSpecException failedToEncode(@Cause Throwable cause);

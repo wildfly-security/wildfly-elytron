@@ -20,7 +20,7 @@ package org.wildfly.security.util;
 
 import org.wildfly.common.Assert;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.util.ElytronMessages.log;
 import static org.wildfly.security.util.TransformationSpec.HIGH_STRENGTH;
 import static org.wildfly.security.util.TransformationSpec.MEDIUM_STRENGTH;
 import static org.wildfly.security.util.TransformationSpec.LOW_STRENGTH;
