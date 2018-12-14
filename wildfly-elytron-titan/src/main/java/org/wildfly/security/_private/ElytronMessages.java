@@ -948,8 +948,9 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 4004, value = "Credential validation failed: certificate is not trusted for principal [%s]")
 //    CertificateException notTrusted(Principal principal);
 
-//    @Message(id = 4005, value = "No default trust manager available")
-//    NoSuchAlgorithmException noDefaultTrustManager();
+    // Multi Use
+    @Message(id = 4005, value = "No default trust manager available")
+    NoSuchAlgorithmException noDefaultTrustManager();
 
 //    @Message(id = 4006, value = "No context for SSL connection")
 //    SSLHandshakeException noContextForSslConnection();
@@ -1068,15 +1069,17 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5014, value = "Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
     AuthenticationMechanismException mechAuthorizationFailed(String userName, String authorizationId);
-
-//    @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
-//    IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, long offset, String string);
+    
+    // Multi Use
+    @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, long offset, String string);
 
 //    @Message(id = 5016, value = "Unrecognized token \"%s\" in mechanism selection string \"%s\"")
 //    IllegalArgumentException mechSelectorUnknownToken(String word, String string);
 
-//    @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
-//    IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
+    // Multi Use
+    @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
 
 //    @Message(id = 5018, value = "Channel binding data changed")
 //    AuthenticationMechanismException mechChannelBindingChanged();
