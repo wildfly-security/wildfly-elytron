@@ -33,6 +33,7 @@ import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SHA512_256;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
+import static org.wildfly.security.http.impl.BasicAuthenticationMechanism.SILENT;
 import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
@@ -107,7 +108,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
 
         switch (mechanismName) {
             case BASIC_NAME:
-                return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);
+                return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), Boolean.parseBoolean((String) properties.get(SILENT)), false);
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
             case DIGEST_NAME:
