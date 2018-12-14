@@ -159,8 +159,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1000, value = "Authentication name was already set on this context")
 //    IllegalStateException nameAlreadySet();
 
-    @Message(id = 1001, value = "No module found for identifier \"%s\"")
-    ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
+//    @Message(id = 1001, value = "No module found for identifier \"%s\"")
+//    ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e, String moduleIdentifier);
 
     @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
@@ -241,11 +241,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1027, value = "Filesystem-backed realm encountered invalid key algorithm for format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name, @Cause Exception e);
 
-    @Message(id = 1028, value = "Invalid port number \"%d\"")
-    IllegalArgumentException invalidPortNumber(int port);
+//    @Message(id = 1028, value = "Invalid port number \"%d\"")
+//    IllegalArgumentException invalidPortNumber(int port);
 
-    @Message(id = 1029, value = "Invalid host specification \"%s\"")
-    IllegalArgumentException invalidHostSpec(String hostSpec);
+//    @Message(id = 1029, value = "Invalid host specification \"%s\"")
+//    IllegalArgumentException invalidHostSpec(String hostSpec);
 
 //    @Message(id = 1030, value = "Unable to read credential")
 //    IOException unableToReadCredential(@Cause Exception e);
@@ -262,11 +262,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1034, value = "Invalid credential type specified")
 //    IllegalStateException invalidCredentialTypeSpecified();
 
-    @Message(id = 1035, value = "Unable to create key manager")
-    IOException unableToCreateKeyManager(@Cause Exception e);
+//    @Message(id = 1035, value = "Unable to create key manager")
+//    IOException unableToCreateKeyManager(@Cause Exception e);
 
-    @Message(id = 1036, value = "Unable to create trust manager")
-    IOException unableToCreateTrustManager(@Cause Exception e);
+//    @Message(id = 1036, value = "Unable to create trust manager")
+//    IOException unableToCreateTrustManager(@Cause Exception e);
 
 //    @Message(id = 1037, value = "Certificate chain is empty")
 //    IllegalArgumentException certificateChainIsEmpty();
@@ -280,8 +280,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1040, value = "Could not parse private key")
     // RuntimeException couldNotParsePrivateKey(@Cause Throwable cause);
 
-    @Message(id = 1041, value = "Could not obtain credential")
-    RuntimeException couldNotObtainCredential();
+//    @Message(id = 1041, value = "Could not obtain credential")
+//    RuntimeException couldNotObtainCredential();
 
     @Message(id = 1042, value = "Could not obtain credential")
     RuntimeException couldNotObtainCredentialWithCause(@Cause Throwable cause);
@@ -443,9 +443,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1090, value = "Unknown LDAP password scheme")
     InvalidKeySpecException unknownLdapPasswordScheme();
 
-    @LogMessage(level = WARN)
-    @Message(id = 1091, value = "Post-association peer context action failed")
-    void postAssociationFailed(@Cause Throwable cause);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1091, value = "Post-association peer context action failed")
+//    void postAssociationFailed(@Cause Throwable cause);
 
 //    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
 //    IllegalArgumentException invalidMechRealmSelection(String realmName);
@@ -492,8 +492,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
     RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
 
-    @Message(id = 1106, value = "Could not obtain SSLContext")
-    IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
+//    @Message(id = 1106, value = "Could not obtain SSLContext")
+//    IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
 
     @Message(id = 1108, value = "Ldap-backed realm identity search failed")
     RealmUnavailableException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
@@ -561,25 +561,25 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
     void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
 
-    @Message(id = 1129, value = "Unknown SSL context \"%s\" specified")
-    ConfigXMLParseException xmlUnknownSslContextSpecified(@Param Location location, String name);
+//    @Message(id = 1129, value = "Unknown SSL context \"%s\" specified")
+//    ConfigXMLParseException xmlUnknownSslContextSpecified(@Param Location location, String name);
 
-    @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
-    ConfigXMLParseException xmlDuplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
+//    @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
+//    ConfigXMLParseException xmlDuplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
 
     // 1131 "Public and private key parameters are mismatched" -> moved to credentials package
 
-    @Message(id = 1132, value = "Unknown authentication configuration \"%s\" specified")
-    ConfigXMLParseException xmlUnknownAuthenticationConfigurationSpecified(@Param Location location, String name);
+//    @Message(id = 1132, value = "Unknown authentication configuration \"%s\" specified")
+//    ConfigXMLParseException xmlUnknownAuthenticationConfigurationSpecified(@Param Location location, String name);
 
-    @Message(id = 1133, value = "Failed to create credential")
-    ConfigXMLParseException xmlFailedToCreateCredential(@Param Location location, @Cause Throwable cause);
+//    @Message(id = 1133, value = "Failed to create credential")
+//    ConfigXMLParseException xmlFailedToCreateCredential(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1134, value = "Duplicate authentication configuration name \"%s\"")
-    ConfigXMLParseException xmlDuplicateAuthenticationConfigurationName(String name, @Param ConfigurationXMLStreamReader reader);
+//    @Message(id = 1134, value = "Duplicate authentication configuration name \"%s\"")
+//    ConfigXMLParseException xmlDuplicateAuthenticationConfigurationName(String name, @Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1135, value = "Failed to load keystore data")
-    ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
+//    @Message(id = 1135, value = "Failed to load keystore data")
+//    ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
 
     @Message(id = 1136, value = "Failed to create keystore")
     ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
@@ -590,14 +590,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
     RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
 
-    @Message(id = 1139, value = "Failed to create credential store")
-    ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
+//    @Message(id = 1139, value = "Failed to create credential store")
+//    ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1140, value = "Wrong PEM content type; expected %s, actually was %s")
-    ConfigXMLParseException xmlWrongPemType(@Param ConfigurationXMLStreamReader reader, Class<?> expected, Class<?> actual);
+//    @Message(id = 1140, value = "Wrong PEM content type; expected %s, actually was %s")
+//    ConfigXMLParseException xmlWrongPemType(@Param ConfigurationXMLStreamReader reader, Class<?> expected, Class<?> actual);
 
-    @Message(id = 1141, value = "No PEM content found")
-    ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
+//    @Message(id = 1141, value = "No PEM content found")
+//    ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
 
     // @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
     // ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
@@ -667,15 +667,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
     ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid, @Cause Throwable cause);
 
-    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
-    ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
+//    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
+//    ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName, String serviceType, String algorithm);
 
     @Message(id = 1165, value = "Initial JAAS login skipped as it has failed in last %d seconds")
     GeneralSecurityException initialLoginSkipped(long seconds);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
-    void xmlDeprecatedElement(String name, XMLLocation location);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
+//    void xmlDeprecatedElement(String name, XMLLocation location);
 
 //    @Message(id = 1167, value = "Unable to construct provider '%s'.")
 //    SecurityException unableToConstructProvider(String className, @Cause Throwable cause);
@@ -752,8 +752,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 2009, value = "Unable to create a new KeyStore instance")
 //    IOException unableToCreateKeyStore(@Cause Exception cause);
 
-    @Message(id = 2010, value = "Unknown key store specified")
-    ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
+//    @Message(id = 2010, value = "Unknown key store specified")
+//    ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
 
     // id = 2011 "Failed to load keystore data"
 
@@ -948,8 +948,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4004, value = "Credential validation failed: certificate is not trusted for principal [%s]")
     CertificateException notTrusted(Principal principal);
 
-    @Message(id = 4005, value = "No default trust manager available")
-    NoSuchAlgorithmException noDefaultTrustManager();
+//    @Message(id = 4005, value = "No default trust manager available")
+//    NoSuchAlgorithmException noDefaultTrustManager();
 
     @Message(id = 4006, value = "No context for SSL connection")
     SSLHandshakeException noContextForSslConnection();
@@ -1017,8 +1017,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4027, value = "SecurityDomain of SSLContext does not support X509PeerCertificateChainEvidence verification")
     IllegalArgumentException securityDomainOfSSLContextDoesNotSupportX509();
 
-    @Message(id = 4028, value = "No default key manager available")
-    NoSuchAlgorithmException noDefaultKeyManager();
+//    @Message(id = 4028, value = "No default key manager available")
+//    NoSuchAlgorithmException noDefaultKeyManager();
 
     @Message(id = 4029, value = "Default context cannot be null")
     IllegalStateException defaultContextCannotBeNull();
@@ -1859,8 +1859,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 9000, value = "Public and private key parameters are mismatched")
 //    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
 
-    @Message(id = 9001, value = "Client credentials not provided")
-    IllegalStateException oauth2ClientCredentialsNotProvided();
+//    @Message(id = 9001, value = "Client credentials not provided")
+//    IllegalStateException oauth2ClientCredentialsNotProvided();
 
     /* credential.store. package */
 
