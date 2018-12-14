@@ -484,11 +484,11 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
 //    RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
 
-    @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
-    RuntimeException tokenRealmFailedToObtainPrincipal(@Cause Throwable cause);
-
-    @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
-    RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
+//    @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
+//    RuntimeException tokenRealmFailedToObtainPrincipal(@Cause Throwable cause);
+//
+//    @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
+//    RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
 
 //    @Message(id = 1106, value = "Could not obtain SSLContext")
 //    IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
@@ -508,23 +508,23 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
 //    IllegalStateException cannotSucceedNotAuthorized();
 
-    @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
-    IllegalStateException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
+//    @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
+//    IllegalStateException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
 
-    @Message(id = 1114, value = "Invalid token format. Tokens must have a signature part accordingly with JWS specification")
-    IllegalArgumentException tokenRealmJwtInvalidFormat();
+//    @Message(id = 1114, value = "Invalid token format. Tokens must have a signature part accordingly with JWS specification")
+//    IllegalArgumentException tokenRealmJwtInvalidFormat();
 
-    @Message(id = 1115, value = "Failed to parse token")
-    IllegalStateException tokenRealmJwtParseFailed(@Cause Throwable cause);
-
-    @Message(id = 1116, value = "Signature verification failed")
-    IllegalStateException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
-
-    @Message(id = 1117, value = "Invalid signature algorithm [%s]")
-    IllegalArgumentException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
-
-    @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
-    IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
+//    @Message(id = 1115, value = "Failed to parse token")
+//    IllegalStateException tokenRealmJwtParseFailed(@Cause Throwable cause);
+//
+//    @Message(id = 1116, value = "Signature verification failed")
+//    IllegalStateException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
+//
+//    @Message(id = 1117, value = "Invalid signature algorithm [%s]")
+//    IllegalArgumentException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
+//
+//    @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
+//    IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
 
 //    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
 //    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
@@ -547,17 +547,17 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
     // RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1126, value = "Jwt-based token realm not configured with a list of valid issuers. Ignoring issuer verification.")
-    void tokenRealmJwtWarnNoIssuerIgnoringIssuerCheck();
+//    @LogMessage(level = WARN)
+//    @Message(id = 1126, value = "Jwt-based token realm not configured with a list of valid issuers. Ignoring issuer verification.")
+//    void tokenRealmJwtWarnNoIssuerIgnoringIssuerCheck();
+//
+//    @LogMessage(level = WARN)
+//    @Message(id = 1127, value = "Jwt-based token not configured with a list of valid audiences. Ignoring audience verification.")
+//    void tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
 
-    @LogMessage(level = WARN)
-    @Message(id = 1127, value = "Jwt-based token not configured with a list of valid audiences. Ignoring audience verification.")
-    void tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
-
-    @LogMessage(level = WARN)
-    @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
-    void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
+//    @LogMessage(level = WARN)
+//    @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
+//    void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
 
 //    @Message(id = 1129, value = "Unknown SSL context \"%s\" specified")
 //    ConfigXMLParseException xmlUnknownSslContextSpecified(@Param Location location, String name);
@@ -708,17 +708,17 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1177, value = "Authorization failed.")
 //    IOException authorizationFailed();
 
-    @LogMessage(level = WARN)
-    @Message(id = 1178, value = "Unable to update jwk set from \"%1$s\".")
-    void unableToFetchJwks(String url);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1178, value = "Unable to update jwk set from \"%1$s\".")
+//    void unableToFetchJwks(String url);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1179, value = "SSL not configured. jku claim will not be supported.")
-    void tokenRealmJwtNoSSLIgnoringJku();
+//    @LogMessage(level = WARN)
+//    @Message(id = 1179, value = "SSL not configured. jku claim will not be supported.")
+//    void tokenRealmJwtNoSSLIgnoringJku();
 
-    @LogMessage
-    @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
-    void tokenRealmJwkMissingClaim(String claim);
+//    @LogMessage
+//    @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
+//    void tokenRealmJwkMissingClaim(String claim);
 
     /* keystore package */
 

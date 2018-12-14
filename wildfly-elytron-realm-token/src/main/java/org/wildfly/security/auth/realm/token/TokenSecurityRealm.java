@@ -19,8 +19,8 @@
 package org.wildfly.security.auth.realm.token;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.token._private.ElytronMessages;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;

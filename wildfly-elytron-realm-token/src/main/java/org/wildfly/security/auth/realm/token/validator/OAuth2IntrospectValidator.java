@@ -43,7 +43,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
 import static org.wildfly.security.util.JsonUtil.toAttributes;
 
 /**
