@@ -284,14 +284,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1042, value = "Could not obtain credential")
     RuntimeException couldNotObtainCredentialWithCause(@Cause Throwable cause);
 
-    @Message(id = 1043, value = "Invalid password key specification for algorithm \"%s\"")
-    RuntimeException invalidPasswordKeySpecificationForAlgorithm(String algorithm, @Cause Throwable cause);
+    // @Message(id = 1043, value = "Invalid password key specification for algorithm \"%s\"")
+    // RuntimeException invalidPasswordKeySpecificationForAlgorithm(String algorithm, @Cause Throwable cause);
 
     // @Message(id = 1044, value = "Salt is expected when creating \"%s\" passwords")
     // RuntimeException saltIsExpectedWhenCreatingPasswords(String type);
 
-    @Message(id = 1045, value = "Could not obtain PasswordFactory for algorithm \"%s\"")
-    RuntimeException couldNotObtainPasswordFactoryForAlgorithm(String algorithm, @Cause Throwable cause);
+    // @Message(id = 1045, value = "Could not obtain PasswordFactory for algorithm \"%s\"")
+    // RuntimeException couldNotObtainPasswordFactoryForAlgorithm(String algorithm, @Cause Throwable cause);
 
     // @Message(id = 1046, value = "Unknown password type or algorithm \"%s\"")
     // InvalidKeyException unknownPasswordTypeOrAlgorithm(String algorithm);
@@ -302,17 +302,17 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 1048, value = "Invalid password key for algorithm \"%s\"")
     // RuntimeException invalidPasswordKeyForAlgorithm(String algorithm, @Cause Throwable cause);
 
-    @Message(id = 1049, value = "Could not open connection")
-    RuntimeException couldNotOpenConnection(@Cause Throwable cause);
+    // @Message(id = 1049, value = "Could not open connection")
+    // RuntimeException couldNotOpenConnection(@Cause Throwable cause);
 
-    @Message(id = 1050, value = "Could not execute query \"%s\"")
-    RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
+    // @Message(id = 1050, value = "Could not execute query \"%s\"")
+    // RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
     // @Message(id = 1051, value = "Could not resolve password algorithm for credential name \"%s\"")
     // InvalidKeyException couldNotResolveAlgorithmByCredentialName(String credentialName);
 
-    @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
-    RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
+    // @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
+    // RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
 
     @Message(id = 1053, value = "Insufficient data to form a digest and a salt")
     InvalidKeySpecException insufficientDataToFormDigestAndSalt();
