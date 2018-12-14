@@ -42,13 +42,14 @@ import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.server.ElytronMessages.log;
 
 /**
  * A SASL server factory configuration.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslServerFactory, SaslException> {
     private final SaslServerFactory saslServerFactory;
 

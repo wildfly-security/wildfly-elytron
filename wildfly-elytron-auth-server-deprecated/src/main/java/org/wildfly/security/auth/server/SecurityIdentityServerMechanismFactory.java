@@ -42,6 +42,7 @@ import org.wildfly.security.http.HttpServerRequest;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@Deprecated
 class SecurityIdentityServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory delegate;
