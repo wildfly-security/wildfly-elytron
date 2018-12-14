@@ -15,7 +15,7 @@
 
 package org.wildfly.security.ssl;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.ssl.ElytronMessages.log;
 
 import java.util.LinkedHashMap;
 import java.util.List;

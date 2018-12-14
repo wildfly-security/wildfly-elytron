@@ -1,14 +1,11 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015 Red Hat, Inc., and individual contributors
+ * Copyright 2018 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +15,18 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security.ssl.ElytronMessages.log;
+
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.security.Principal;
 import java.security.cert.Certificate;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -35,25 +37,34 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSessionContext;
 import javax.security.cert.X509Certificate;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.ssl._private.SelectingContext;
+
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SelectingServerSSLEngine extends SSLEngine {
+class SNISSLEngine extends SSLEngine implements SelectingContext {
 
     private static final SSLEngineResult UNDERFLOW_UNWRAP = new SSLEngineResult(SSLEngineResult.Status.BUFFER_UNDERFLOW, SSLEngineResult.HandshakeStatus.NEED_UNWRAP, 0, 0);
     private static final SSLEngineResult OK_UNWRAP = new SSLEngineResult(SSLEngineResult.Status.OK, SSLEngineResult.HandshakeStatus.NEED_UNWRAP, 0, 0);
     private final AtomicReference<SSLEngine> currentRef;
+    private Function<SSLEngine, SSLEngine> selectionCallback = Function.identity();
 
-    SelectingServerSSLEngine(final SSLContextSelector selector) {
+    SNISSLEngine(final SNIContextMatcher selector) {
         currentRef = new AtomicReference<>(new InitialState(selector, SSLContext::createSSLEngine));
     }
 
-    SelectingServerSSLEngine(final SSLContextSelector selector, final String host, final int port) {
+    SNISSLEngine(final SNIContextMatcher selector, final String host, final int port) {
         super(host, port);
         currentRef = new AtomicReference<>(new InitialState(selector, sslContext -> sslContext.createSSLEngine(host, port)));
+    }
+
+    public Function<SSLEngine, SSLEngine> getSelectionCallback() {
+        return selectionCallback;
+    }
+
+    public void setSelectionCallback(Function<SSLEngine, SSLEngine> selectionCallback) {
+        this.selectionCallback = selectionCallback;
     }
 
     public SSLEngineResult wrap(final ByteBuffer[] srcs, final int offset, final int length, final ByteBuffer dst) throws SSLException {
@@ -165,7 +176,7 @@ class SelectingServerSSLEngine extends SSLEngine {
     }
 
     public void setNeedClientAuth(final boolean clientAuth) {
-         currentRef.get().setNeedClientAuth(clientAuth);
+        currentRef.get().setNeedClientAuth(clientAuth);
     }
 
     public boolean getNeedClientAuth() {
@@ -194,29 +205,32 @@ class SelectingServerSSLEngine extends SSLEngine {
 
     class InitialState extends SSLEngine {
 
-        private final SSLContextSelector selector;
+        private final SNIContextMatcher selector;
         private final AtomicInteger flags = new AtomicInteger(FL_SESSION_CRE);
         private final Function<SSLContext, SSLEngine> engineFunction;
-        private int packetBufferSize = SSLExplorer.RECORD_HEADER_SIZE;
+        private int packetBufferSize = SNISSLExplorer.RECORD_HEADER_SIZE;
+        private String[] enabledSuites;
+        private String[] enabledProtocols;
+
         private final SSLSession handshakeSession = new SSLSession() {
             public byte[] getId() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public SSLSessionContext getSessionContext() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public long getCreationTime() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public long getLastAccessedTime() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public void invalidate() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public boolean isValid() {
@@ -224,7 +238,7 @@ class SelectingServerSSLEngine extends SSLEngine {
             }
 
             public void putValue(final String s, final Object o) {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public Object getValue(final String s) {
@@ -235,11 +249,11 @@ class SelectingServerSSLEngine extends SSLEngine {
             }
 
             public String[] getValueNames() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public Certificate[] getPeerCertificates() throws SSLPeerUnverifiedException {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public Certificate[] getLocalCertificates() {
@@ -247,31 +261,31 @@ class SelectingServerSSLEngine extends SSLEngine {
             }
 
             public X509Certificate[] getPeerCertificateChain() throws SSLPeerUnverifiedException {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public Principal getLocalPrincipal() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public String getCipherSuite() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public String getProtocol() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
 
             public String getPeerHost() {
-                return SelectingServerSSLEngine.this.getPeerHost();
+                return SNISSLEngine.this.getPeerHost();
             }
 
             public int getPeerPort() {
-                return SelectingServerSSLEngine.this.getPeerPort();
+                return SNISSLEngine.this.getPeerPort();
             }
 
             public int getPacketBufferSize() {
@@ -279,11 +293,11 @@ class SelectingServerSSLEngine extends SSLEngine {
             }
 
             public int getApplicationBufferSize() {
-                throw Assert.unsupported();
+                throw new UnsupportedOperationException();
             }
         };
 
-        InitialState(final SSLContextSelector selector, final Function<SSLContext, SSLEngine> engineFunction) {
+        InitialState(final SNIContextMatcher selector, final Function<SSLContext, SSLEngine> engineFunction) {
             this.selector = selector;
             this.engineFunction = engineFunction;
         }
@@ -300,21 +314,28 @@ class SelectingServerSSLEngine extends SSLEngine {
             SSLEngine next;
             final int mark = src.position();
             try {
-                if (src.remaining() < SSLExplorer.RECORD_HEADER_SIZE) {
-                    packetBufferSize = SSLExplorer.RECORD_HEADER_SIZE;
+                if (src.remaining() < SNISSLExplorer.RECORD_HEADER_SIZE) {
+                    packetBufferSize = SNISSLExplorer.RECORD_HEADER_SIZE;
                     return UNDERFLOW_UNWRAP;
                 }
-                final int requiredSize = SSLExplorer.getRequiredSize(src);
+                final int requiredSize = SNISSLExplorer.getRequiredSize(src);
                 if (src.remaining() < requiredSize) {
                     packetBufferSize = requiredSize;
                     return UNDERFLOW_UNWRAP;
                 }
-                SSLContext sslContext = selector.selectContext(SSLExplorer.explore(src));
+                List<SNIServerName> names = SNISSLExplorer.explore(src);
+                SSLContext sslContext = selector.getContext(names);
                 if (sslContext == null) {
                     // no SSL context is available
-                    throw ElytronMessages.log.noContextForSslConnection();
+                    throw log.noSNIContextForSslConnection();
                 }
                 next = engineFunction.apply(sslContext);
+                if (enabledSuites != null) {
+                    next.setEnabledCipherSuites(enabledSuites);
+                }
+                if (enabledProtocols != null) {
+                    next.setEnabledProtocols(enabledProtocols);
+                }
                 next.setUseClientMode(false);
                 final int flagsVal = flags.get();
                 if ((flagsVal & FL_WANT_C_AUTH) != 0) {
@@ -325,6 +346,7 @@ class SelectingServerSSLEngine extends SSLEngine {
                 if ((flagsVal & FL_SESSION_CRE) != 0) {
                     next.setEnableSessionCreation(true);
                 }
+                next = selectionCallback.apply(next);
                 currentRef.set(next);
             } finally {
                 src.position(mark);
@@ -353,27 +375,34 @@ class SelectingServerSSLEngine extends SSLEngine {
         }
 
         public String[] getSupportedCipherSuites() {
-            throw Assert.unsupported();
+            if(enabledSuites == null) {
+                return new String[0];
+            }
+            return enabledSuites;
         }
 
         public String[] getEnabledCipherSuites() {
-            throw Assert.unsupported();
+            return enabledSuites;
         }
 
         public void setEnabledCipherSuites(final String[] suites) {
-            throw Assert.unsupported();
+            this.enabledSuites = suites;
         }
 
         public String[] getSupportedProtocols() {
-            throw Assert.unsupported();
+            if(enabledProtocols == null) {
+                return new String[0];
+            }
+            //this kinda sucks, but there is not much else we can do
+            return enabledProtocols;
         }
 
         public String[] getEnabledProtocols() {
-            throw Assert.unsupported();
+            return enabledProtocols;
         }
 
         public void setEnabledProtocols(final String[] protocols) {
-            throw Assert.unsupported();
+            this.enabledProtocols = protocols;
         }
 
         public SSLSession getSession() {
@@ -388,7 +417,7 @@ class SelectingServerSSLEngine extends SSLEngine {
         }
 
         public void setUseClientMode(final boolean mode) {
-            if (mode) throw Assert.unsupported();
+            if (mode) throw new UnsupportedOperationException();
         }
 
         public boolean getUseClientMode() {
@@ -404,7 +433,7 @@ class SelectingServerSSLEngine extends SSLEngine {
                     return;
                 }
                 newVal = oldVal & FL_SESSION_CRE | FL_NEED_C_AUTH;
-            } while (! flags.compareAndSet(oldVal, newVal));
+            } while (!flags.compareAndSet(oldVal, newVal));
         }
 
         public boolean getNeedClientAuth() {
@@ -420,7 +449,7 @@ class SelectingServerSSLEngine extends SSLEngine {
                     return;
                 }
                 newVal = oldVal & FL_SESSION_CRE | FL_WANT_C_AUTH;
-            } while (! flags.compareAndSet(oldVal, newVal));
+            } while (!flags.compareAndSet(oldVal, newVal));
         }
 
         public boolean getWantClientAuth() {
@@ -436,7 +465,7 @@ class SelectingServerSSLEngine extends SSLEngine {
                     return;
                 }
                 newVal = oldVal ^ FL_SESSION_CRE;
-            } while (! flags.compareAndSet(oldVal, newVal));
+            } while (!flags.compareAndSet(oldVal, newVal));
         }
 
         public boolean getEnableSessionCreation() {
@@ -446,11 +475,11 @@ class SelectingServerSSLEngine extends SSLEngine {
 
     static final SSLEngine CLOSED_STATE = new SSLEngine() {
         public SSLEngineResult wrap(final ByteBuffer[] srcs, final int offset, final int length, final ByteBuffer dst) throws SSLException {
-            throw ElytronMessages.log.sslClosed();
+            throw new SSLException(new ClosedChannelException());
         }
 
         public SSLEngineResult unwrap(final ByteBuffer src, final ByteBuffer[] dsts, final int offset, final int length) throws SSLException {
-            throw ElytronMessages.log.sslClosed();
+            throw new SSLException(new ClosedChannelException());
         }
 
         public Runnable getDelegatedTask() {
@@ -473,27 +502,27 @@ class SelectingServerSSLEngine extends SSLEngine {
         }
 
         public String[] getSupportedCipherSuites() {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public String[] getEnabledCipherSuites() {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public void setEnabledCipherSuites(final String[] suites) {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public String[] getSupportedProtocols() {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public String[] getEnabledProtocols() {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public void setEnabledProtocols(final String[] protocols) {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public SSLSession getSession() {
@@ -501,7 +530,7 @@ class SelectingServerSSLEngine extends SSLEngine {
         }
 
         public void beginHandshake() throws SSLException {
-            throw ElytronMessages.log.sslClosed();
+            throw new SSLException(new ClosedChannelException());
         }
 
         public SSLEngineResult.HandshakeStatus getHandshakeStatus() {
@@ -509,7 +538,7 @@ class SelectingServerSSLEngine extends SSLEngine {
         }
 
         public void setUseClientMode(final boolean mode) {
-            throw Assert.unsupported();
+            throw new UnsupportedOperationException();
         }
 
         public boolean getUseClientMode() {
