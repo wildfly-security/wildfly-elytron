@@ -1562,8 +1562,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* http package */
 
-    @Message(id = 6000, value = "Status code can not be set at this time.")
-    IllegalStateException statusCodeNotNow();
+//    @Message(id = 6000, value = "Status code can not be set at this time.")
+//    IllegalStateException statusCodeNotNow();
 
 //    @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
 //    String incorrectlyFormattedHeader(String headerName);
@@ -1577,8 +1577,8 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
     // IllegalStateException httpSessionNotSupported();
 
-    @Message(id = 6005, value= "Attachments are not supported on this scope.")
-    UnsupportedOperationException noAttachmentSupport();
+//    @Message(id = 6005, value= "Attachments are not supported on this scope.")
+//    UnsupportedOperationException noAttachmentSupport();
 
     @Message(id = 6006, value = "An authorization check for user '%s' failed.")
     String authorizationFailed(String username);
@@ -1603,14 +1603,14 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
 //    HttpAuthenticationException digestMechanismRequireRealm();
 
-    @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
-    HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
+//    @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
+//    HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
 
-    @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
-    HttpAuthenticationException httpAuthenticationNoMechanisms();
+//    @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
+//    HttpAuthenticationException httpAuthenticationNoMechanisms();
 
-    @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
-    HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
+//    @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
+//    HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
 
 //    @Message(id = 6019, value = "Unable to authenticate using DIGEST mechanism - mechanism realm name (%s) is not valid")
 //    HttpAuthenticationException digestMechanismInvalidRealm(String realm);

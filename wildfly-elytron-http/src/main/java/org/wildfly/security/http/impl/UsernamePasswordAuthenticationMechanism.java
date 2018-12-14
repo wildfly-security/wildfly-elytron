@@ -36,7 +36,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
-import static org.wildfly.security._private.ElytronMessages.httpUserPass;
+import static org.wildfly.security.http._private.ElytronMessages.httpUserPass;
 
 /**
  * A base class for HTTP mechanisms that operate on validation of plain text usernames and passwords.
