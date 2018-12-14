@@ -29,25 +29,21 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl</artifactId>
+    <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
 
-    <name>WildFly Elytron - SASL</name>
-    <description>WildFly Security SASL</description>
+    <name>WildFly Elytron - SASL Deprecated</name>
+    <description>WildFly Security SASL Deprecated</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential</artifactId>
-        </dependency>
+            <artifactId>wildfly-elytron-sasl</artifactId>
+        </dependency>    
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
+            <artifactId>wildfly-elytron-titan</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-ssl</artifactId>
-        </dependency>
-                        
+                
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>

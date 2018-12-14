@@ -642,9 +642,9 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
 //    IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
 
-    @LogMessage(level = WARN)
-    @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
-    void unableToResolveMechanismConfiguration(@Cause Throwable e);
+//    @LogMessage(level = WARN)
+//    @Message(id = 1157, value = "Unable to resolve MechanismConfiguration for MechanismInformation")
+//    void unableToResolveMechanismConfiguration(@Cause Throwable e);
 
     @Message(id = 1158, value = "Unable to create kerberos GSS credential")
     SecurityException unableToCreateKerberosCredential(@Cause Exception e);
@@ -1037,8 +1037,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5004, value = "Authentication mechanism authorization failed")
 //    AuthenticationMechanismException mechAuthorizationFailed(@Cause Throwable cause);
 
-    @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
-    IllegalStateException mechAuthenticationNotComplete();
+//    @Message(id = 5005, value = "Authentication mechanism authentication is not yet complete")
+//    IllegalStateException mechAuthenticationNotComplete();
 
 //    @Message(id = 5006, value = "Authentication mechanism does not support security layer (wrapping/unwrapping)")
 //    IllegalStateException mechNoSecurityLayer();
@@ -1084,8 +1084,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5019, value = "No token was given")
 //    AuthenticationMechanismException mechNoTokenGiven();
 
-    @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
-    IllegalArgumentException mechSelectorUnexpectedEnd(String string);
+//    @Message(id = 5020, value = "Unexpected end of mechanism selection string \"%s\"")
+//    IllegalArgumentException mechSelectorUnexpectedEnd(String string);
 
     // 5021
 
@@ -1415,62 +1415,62 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5129, value = "Failed to create challenge file")
 //    AuthenticationMechanismException mechFailedToCreateChallengeFile(@Cause Throwable cause);
 
-    @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
-    IllegalArgumentException invalidNonAsciiSpace(int input);
+//    @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
+//    IllegalArgumentException invalidNonAsciiSpace(int input);
 
-    @Message(id = 5131, value = "Invalid ASCII control \"0x%X\"")
-    IllegalArgumentException invalidAsciiControl(int input);
+//    @Message(id = 5131, value = "Invalid ASCII control \"0x%X\"")
+//    IllegalArgumentException invalidAsciiControl(int input);
 
-    @Message(id = 5132, value = "Invalid non-ASCII control \"0x%X\"")
-    IllegalArgumentException invalidNonAsciiControl(int input);
+//    @Message(id = 5132, value = "Invalid non-ASCII control \"0x%X\"")
+//    IllegalArgumentException invalidNonAsciiControl(int input);
 
-    @Message(id = 5133, value = "Invalid private use character \"0x%X\"")
-    IllegalArgumentException invalidPrivateUseCharacter(int input);
+//    @Message(id = 5133, value = "Invalid private use character \"0x%X\"")
+//    IllegalArgumentException invalidPrivateUseCharacter(int input);
 
-    @Message(id = 5134, value = "Invalid non-character code point \"0x%X\"")
-    IllegalArgumentException invalidNonCharacterCodePoint(int input);
+//    @Message(id = 5134, value = "Invalid non-character code point \"0x%X\"")
+//    IllegalArgumentException invalidNonCharacterCodePoint(int input);
 
-    @Message(id = 5135, value = "Invalid surrogate code point \"0x%X\"")
-    IllegalArgumentException invalidSurrogateCodePoint(int input);
+//    @Message(id = 5135, value = "Invalid surrogate code point \"0x%X\"")
+//    IllegalArgumentException invalidSurrogateCodePoint(int input);
 
-    @Message(id = 5136, value = "Invalid plain text code point \"0x%X\"")
-    IllegalArgumentException invalidPlainTextCodePoint(int input);
+//    @Message(id = 5136, value = "Invalid plain text code point \"0x%X\"")
+//    IllegalArgumentException invalidPlainTextCodePoint(int input);
 
-    @Message(id = 5137, value = "Invalid non-canonical code point \"0x%X\"")
-    IllegalArgumentException invalidNonCanonicalCodePoint(int input);
+//    @Message(id = 5137, value = "Invalid non-canonical code point \"0x%X\"")
+//    IllegalArgumentException invalidNonCanonicalCodePoint(int input);
 
-    @Message(id = 5138, value = "Invalid control character \"0x%X\"")
-    IllegalArgumentException invalidControlCharacter(int input);
+//    @Message(id = 5138, value = "Invalid control character \"0x%X\"")
+//    IllegalArgumentException invalidControlCharacter(int input);
 
-    @Message(id = 5139, value = "Invalid tagging character \"0x%X\"")
-    IllegalArgumentException invalidTaggingCharacter(int input);
+//    @Message(id = 5139, value = "Invalid tagging character \"0x%X\"")
+//    IllegalArgumentException invalidTaggingCharacter(int input);
 
-    @Message(id = 5140, value = "Unassigned code point \"0x%X\"")
-    IllegalArgumentException unassignedCodePoint(int input);
+//    @Message(id = 5140, value = "Unassigned code point \"0x%X\"")
+//    IllegalArgumentException unassignedCodePoint(int input);
 
-    @Message(id = 5141, value = "Invalid surrogate pair (high at end of string) \"0x%X\"")
-    IllegalArgumentException invalidSurrogatePairHightAtEnd(char input);
+//    @Message(id = 5141, value = "Invalid surrogate pair (high at end of string) \"0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairHightAtEnd(char input);
 
-    @Message(id = 5142, value = "Invalid surrogate pair (second is not low) \"0x%X 0x%X\"")
-    IllegalArgumentException invalidSurrogatePairSecondIsNotLow(char high, char low);
+//    @Message(id = 5142, value = "Invalid surrogate pair (second is not low) \"0x%X 0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairSecondIsNotLow(char high, char low);
 
-    @Message(id = 5143, value = "Invalid surrogate pair (low without high) \"0x%X\"")
-    IllegalArgumentException invalidSurrogatePairLowWithoutHigh(char low);
+//    @Message(id = 5143, value = "Invalid surrogate pair (low without high) \"0x%X\"")
+//    IllegalArgumentException invalidSurrogatePairLowWithoutHigh(char low);
 
-    @Message(id = 5144, value = "Invalid code point \"0x%X\"")
-    IllegalArgumentException invalidCodePoint(int input);
+//    @Message(id = 5144, value = "Invalid code point \"0x%X\"")
+//    IllegalArgumentException invalidCodePoint(int input);
 
-    @Message(id = 5145, value = "Disallowed R/AL directionality character in L string")
-    IllegalArgumentException disallowedRalDirectionalityInL();
+//    @Message(id = 5145, value = "Disallowed R/AL directionality character in L string")
+//    IllegalArgumentException disallowedRalDirectionalityInL();
 
-    @Message(id = 5146, value = "Disallowed L directionality character in R/AL string")
-    IllegalArgumentException disallowedLDirectionalityInRal();
+//    @Message(id = 5146, value = "Disallowed L directionality character in R/AL string")
+//    IllegalArgumentException disallowedLDirectionalityInRal();
 
-    @Message(id = 5147, value = "Missing trailing R/AL directionality character")
-    IllegalArgumentException missingTrailingRal();
+//    @Message(id = 5147, value = "Missing trailing R/AL directionality character")
+//    IllegalArgumentException missingTrailingRal();
 
-    @Message(id = 5148, value = "Invalid escape sequence")
-    IllegalArgumentException invalidEscapeSequence();
+//    @Message(id = 5148, value = "Invalid escape sequence")
+//    IllegalArgumentException invalidEscapeSequence();
 
     // @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
     // AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);

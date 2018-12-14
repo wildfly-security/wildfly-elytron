@@ -28,7 +28,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.server.MechanismInformation;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl._private.ElytronMessages.log;
 
 /**
  * A {@link SaslServerFactory} implementation that will always ensure mechanism information is passed to the {@link CallbackHandler} before the first authentication callbacks.

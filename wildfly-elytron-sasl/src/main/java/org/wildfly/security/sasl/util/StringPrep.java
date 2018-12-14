@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl._private.ElytronMessages.log;
 
 import java.text.Normalizer;
 
