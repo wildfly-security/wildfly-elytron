@@ -33,6 +33,7 @@ import java.util.ArrayList;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+// Class is in this module because tests are dependent on module wildfly-elytron-x500-cert for extracting Der content
 public class DERDecoderTest {
 
     @Test
