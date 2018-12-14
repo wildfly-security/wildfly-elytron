@@ -1587,19 +1587,19 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 6007, value = "Username or password missing from authentication attempt.")
 //    String usernameOrPasswordMissing();
 
-    @LogMessage(level = WARN)
-    @Message(id = 6008, value = "Failed to logout participant [%s]. Participant will be removed from list of participants but its local session may still be active.")
-    void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause  Throwable cause);
+//    @LogMessage(level = WARN)
+//    @Message(id = 6008, value = "Failed to logout participant [%s]. Participant will be removed from list of participants but its local session may still be active.")
+//    void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause  Throwable cause);
 
-    @Message(id = 6012, value = "Invalid logout message received for local session [%s]")
-    IllegalStateException httpMechSsoInvalidLogoutMessage(String localSessionId);
+//    @Message(id = 6012, value = "Invalid logout message received for local session [%s]")
+//    IllegalStateException httpMechSsoInvalidLogoutMessage(String localSessionId);
 
-    @LogMessage(level = ERROR)
-    @Message(id = 6013, value = "Failed to invalidate local session")
-    void errorHttpMechSsoFailedInvalidateLocalSession(@Cause  Throwable cause);
+//    @LogMessage(level = ERROR)
+//    @Message(id = 6013, value = "Failed to invalidate local session")
+//    void errorHttpMechSsoFailedInvalidateLocalSession(@Cause  Throwable cause);
 
-    @Message(id = 6014, value = "Authentication mechanism '%s' cannot be found")
-    HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);
+//    @Message(id = 6014, value = "Authentication mechanism '%s' cannot be found")
+//    HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);
 
 //    @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
 //    HttpAuthenticationException digestMechanismRequireRealm();

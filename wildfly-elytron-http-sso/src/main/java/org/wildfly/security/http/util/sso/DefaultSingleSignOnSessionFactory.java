@@ -33,7 +33,7 @@ import java.util.Base64;
 import java.util.function.Consumer;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.http.util.sso.ElytronMessages.log;
 
 /**
  * {@link SingleSignOnSessionFactory} that delegates the management of single sign-on entries to a {@link SingleSignOnManager}.
