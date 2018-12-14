@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.util;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.util.ElytronMessages.log;
 
 import java.io.IOException;
 import java.net.Authenticator;
@@ -50,6 +50,7 @@ import org.wildfly.security.permission.ElytronPermission;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@Deprecated
 public final class ElytronAuthenticator extends Authenticator {
 
     private static final AuthenticationContextConfigurationClient client = doPrivileged(AuthenticationContextConfigurationClient.ACTION);
