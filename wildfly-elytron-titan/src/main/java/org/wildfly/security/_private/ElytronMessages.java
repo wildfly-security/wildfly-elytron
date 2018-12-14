@@ -1543,8 +1543,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 5171, value = "Problem during decrypt: The decrypted result is null. The input data has a length of zero or too short to result in a new block.")
 //    AuthenticationMechanismException mechProblemDuringDecryptResultIsNull();
 
-    @Message(id = 5172, value = "Unable to locate MechanismConfiguration for mechanism.")
-    AuthenticationMechanismException unableToLocateMechanismConfiguration(@Cause Throwable cause);
+//    @Message(id = 5172, value = "Unable to locate MechanismConfiguration for mechanism.")
+//    AuthenticationMechanismException unableToLocateMechanismConfiguration(@Cause Throwable cause);
 
 //    @Message(id = 5173, value = "Unable to obtain server credential.")
 //    AuthenticationMechanismException unableToObtainServerCredential();
