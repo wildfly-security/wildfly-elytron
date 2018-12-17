@@ -40,6 +40,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+// dependend on module x500-cert because of X509CertificateBuilder
 public class X500Test {
 
     private static X509Certificate[] populateCertificateChain() throws Exception {
