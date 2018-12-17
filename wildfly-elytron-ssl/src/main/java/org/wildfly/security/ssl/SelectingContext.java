@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.ssl._private;
+package org.wildfly.security.ssl;
 
 import java.util.function.Function;
 
@@ -25,7 +25,7 @@ import javax.net.ssl.SSLEngine;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public interface SelectingContext {
+interface SelectingContext {
 
     void setSelectionCallback(Function<SSLEngine, SSLEngine> selectionCallback);
 
