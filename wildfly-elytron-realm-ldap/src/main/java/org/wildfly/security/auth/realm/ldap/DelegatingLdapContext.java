@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
+import static java.lang.System.getSecurityManager;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -502,7 +504,7 @@ class DelegatingLdapContext implements LdapContext {
 
     private ClassLoader setClassLoaderTo(final ClassLoader targetClassLoader){
         ClassLoader current = null;
-        if(WildFlySecurityManager.isChecking()){
+        if(getSecurityManager() != null){
             current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
             WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
         } else {

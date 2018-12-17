@@ -31,6 +31,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
+import static java.lang.System.getSecurityManager;
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
@@ -275,13 +276,13 @@ public class SimpleDirContextFactoryBuilder {
             throw log.noProviderUrlSet();
         }
         if(this.targetModule != null){
-            if(WildFlySecurityManager.isChecking()){
+            if(getSecurityManager() != null){
                 WildFlySecurityManager.doChecked(new GetModuleClassLoaderAction(this.targetModule));
             } else {
                 this.targetClassLoader = this.targetModule.getClassLoader();
             }
         } else {
-            if(WildFlySecurityManager.isChecking()){
+            if(getSecurityManager() != null){
                 WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
             } else {
                 this.targetClassLoader = this.getClass().getClassLoader();
@@ -470,7 +471,7 @@ public class SimpleDirContextFactoryBuilder {
 
         private ClassLoader setClassLoaderTo(final ClassLoader targetClassLoader){
             ClassLoader current = null;
-            if(WildFlySecurityManager.isChecking()){
+            if(getSecurityManager() != null){
                 current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
                 WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
             } else {

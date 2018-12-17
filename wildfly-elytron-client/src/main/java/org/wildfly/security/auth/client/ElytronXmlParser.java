@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
+import static java.lang.System.getSecurityManager;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
@@ -109,7 +110,6 @@ import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
-import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -135,11 +135,11 @@ public final class ElytronXmlParser {
 
     private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] {
-                    WildFlySecurityManager.isChecking() ?
+                    getSecurityManager() != null ?
                             AccessController.doPrivileged((PrivilegedAction<WildFlyElytronProvider>) () -> new WildFlyElytronProvider()) :
                             new WildFlyElytronProvider()
             },
-            WildFlySecurityManager.isChecking() ?
+            getSecurityManager() != null ?
                     AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true)) :
                     new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true));
 

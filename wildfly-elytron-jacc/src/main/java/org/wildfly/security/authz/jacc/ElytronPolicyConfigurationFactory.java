@@ -17,8 +17,6 @@
  */
 package org.wildfly.security.authz.jacc;
 
-import org.wildfly.security.manager.WildFlySecurityManager;
-
 import javax.security.jacc.PolicyConfiguration;
 import javax.security.jacc.PolicyConfigurationFactory;
 import javax.security.jacc.PolicyContext;
@@ -27,6 +25,7 @@ import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.lang.System.getSecurityManager;
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.authz.jacc.ElytronMessages.log;
@@ -69,7 +68,7 @@ public class ElytronPolicyConfigurationFactory extends PolicyConfigurationFactor
     static <P extends PolicyConfiguration> P getCurrentPolicyConfiguration() throws PolicyContextException {
         String contextID;
 
-        if (WildFlySecurityManager.isChecking()) {
+        if (getSecurityManager() != null) {
             contextID = doPrivileged(GET_CONTEXT_ID);
         } else {
             contextID = PolicyContext.getContextID();

@@ -18,11 +18,11 @@
 
 package org.wildfly.security.auth.jaspi.impl;
 
+import static java.lang.System.getSecurityManager;
+
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
-
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
  * Wrapper around {@link AccessController#doPrivileged(PrivilegedAction)} for the 'org.wildfly.extension.elytron' package.
@@ -32,11 +32,11 @@ import org.wildfly.security.manager.WildFlySecurityManager;
 final class SecurityActions {
 
     static <T> T doPrivileged(final PrivilegedAction<T> action) {
-        return WildFlySecurityManager.isChecking() ? AccessController.doPrivileged(action) : action.run();
+        return getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 
     static <T> T doPrivileged(final PrivilegedExceptionAction<T> action) throws Exception {
-        return WildFlySecurityManager.isChecking() ? AccessController.doPrivileged(action) : action.run();
+        return getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 
 }
