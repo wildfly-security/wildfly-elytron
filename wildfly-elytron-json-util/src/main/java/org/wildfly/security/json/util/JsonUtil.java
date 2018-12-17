@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.json.util;
 
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.MapAttributes;

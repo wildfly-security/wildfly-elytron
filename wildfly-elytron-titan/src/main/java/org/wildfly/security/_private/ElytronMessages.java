@@ -905,20 +905,20 @@ public interface ElytronMessages extends BasicLogger {
     // @Message(id = 3024, value = "Unsupported key encoding format [%s]")
     // IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
 
-    @Message(id = 3025, value = "Iteration count not specified for password based encryption")
-    IllegalArgumentException iterationCountNotSpecified();
+//    @Message(id = 3025, value = "Iteration count not specified for password based encryption")
+//    IllegalArgumentException iterationCountNotSpecified();
 
-    @Message(id = 3026, value = "Salt not specified for password based encryption")
-    IllegalArgumentException saltNotSpecified();
+//    @Message(id = 3026, value = "Salt not specified for password based encryption")
+//    IllegalArgumentException saltNotSpecified();
+//
+//    @Message(id = 3027, value = "Initial key not specified for password based encryption")
+//    IllegalArgumentException initialKeyNotSpecified();
 
-    @Message(id = 3027, value = "Initial key not specified for password based encryption")
-    IllegalArgumentException initialKeyNotSpecified();
+//    @Message(id = 3028, value = "Security provider \"%s\" doesn't exist")
+//    IllegalArgumentException securityProviderDoesnExist(String providerName);
 
-    @Message(id = 3028, value = "Security provider \"%s\" doesn't exist")
-    IllegalArgumentException securityProviderDoesnExist(String providerName);
-
-    @Message(id = 3029, value = "No such key algorithm \"%s\"")
-    IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
+//    @Message(id = 3029, value = "No such key algorithm \"%s\"")
+//    IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
 
 //    @Message(id = 3030, value = "I/O operation failed: closed")
 //    IOException closed();
@@ -926,8 +926,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
 //    GeneralSecurityException tooManyKerberosTicketsFound();
 
-    @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
-    IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
+//    @Message(id = 3032, value = "Base64 string created with unsupported PicketBox version \"%s\"")
+//    IllegalArgumentException wrongBase64InPBCompatibleMode(String base64);
 
 //    @Message(id = 3033, value = "PrivateKey parse error")
 //    IllegalArgumentException privateKeyParseError(@Cause Throwable cause);
@@ -992,8 +992,8 @@ public interface ElytronMessages extends BasicLogger {
 //    @Message(id = 4019, value = "Unknown key exchange name \"%s\"")
 //    IllegalArgumentException unknownKeyExchangeName(String name);
 
-    @Message(id = 4020, value = "Mechanism \"%s\" not supported by transformation mapper")
-    IllegalArgumentException mechanismNotSupported(String mechanism);
+//    @Message(id = 4020, value = "Mechanism \"%s\" not supported by transformation mapper")
+//    IllegalArgumentException mechanismNotSupported(String mechanism);
 
     @Message(id = 4021, value = "Invalid index %d")
     IndexOutOfBoundsException invalidIndex(int index);
