@@ -36,13 +36,26 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <!-- scope is compile ELY-1153 -->
-        </dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-asn1</artifactId>
+        </dependency>    
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency>    
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency>    
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http</artifactId>
+        </dependency>    
+    
+        <dependency>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
 
         <dependency>

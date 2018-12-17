@@ -48,7 +48,12 @@
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
             <!-- scope is compile ELY-1153 -->
-        </dependency>    
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>            
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>

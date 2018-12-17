@@ -37,9 +37,29 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential-store</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500</artifactId>
+        </dependency>        
+                
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -47,14 +67,18 @@
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>        
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>  
-        
+                
         <dependency>
-            <groupId>org.jboss.spec.javax.json</groupId>
-            <artifactId>jboss-json-api_1.0_spec</artifactId>
-            <scope>provided</scope>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
         </dependency>
     </dependencies>
 

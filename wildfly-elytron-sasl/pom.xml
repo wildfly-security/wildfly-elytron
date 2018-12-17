@@ -37,6 +37,14 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-base</artifactId>
+        </dependency>    
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential</artifactId>
         </dependency>
         <dependency>
@@ -51,6 +59,14 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-ssl</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-util</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500</artifactId>
+        </dependency>        
                         
         <dependency>
             <groupId>org.jboss.logging</groupId>

@@ -37,12 +37,28 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-asn1</artifactId>
+        </dependency>    
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-util</artifactId>
-        </dependency>        
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency>                
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
@@ -51,6 +67,14 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential-store</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-permission</artifactId>
+        </dependency>        
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-sasl</artifactId>
@@ -69,6 +93,10 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-x500-cert</artifactId>
         </dependency>
                                 
@@ -77,6 +105,11 @@
             <artifactId>jboss-logging-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>        
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
