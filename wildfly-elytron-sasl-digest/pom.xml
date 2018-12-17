@@ -37,19 +37,24 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-titan</artifactId>
+            <artifactId>wildfly-elytron-mechanism-digest</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-digest</artifactId>
+            <artifactId>wildfly-elytron-sasl</artifactId>
         </dependency>
-
+        
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <scope>provided</scope>
         </dependency>
-    </dependencies>
 
+         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>
 
