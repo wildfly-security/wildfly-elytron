@@ -19,7 +19,6 @@ package org.wildfly.security.http.form;
 
 import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.httpForm;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_ERROR_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_LOGIN_PAGE;
@@ -30,6 +29,7 @@ import static org.wildfly.security.http.HttpConstants.HTTP;
 import static org.wildfly.security.http.HttpConstants.HTTPS;
 import static org.wildfly.security.http.HttpConstants.LOCATION;
 import static org.wildfly.security.http.HttpConstants.POST;
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpForm;
 
 import java.io.IOException;
 import java.io.InputStream;

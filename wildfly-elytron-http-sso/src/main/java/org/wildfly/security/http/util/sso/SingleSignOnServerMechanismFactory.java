@@ -36,7 +36,7 @@ import javax.security.auth.callback.CallbackHandler;
 import java.security.Principal;
 import java.util.Map;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.http.util.sso.ElytronMessages.log;
 
 /**
  * <p>A {@link HttpServerAuthenticationMechanismFactory} which enables single sign-on to the mechanisms provided by a another

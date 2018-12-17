@@ -501,6 +501,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6006, value = "An authorization check for user '%s' failed.")
     String authorizationFailed(String username);
 
+    @Message(id = 6007, value = "Username or password missing from authentication attempt.")
+    String usernameOrPasswordMissing();
+
     @Message(id = 6015, value = "Unable to authenticate using DIGEST mechanism - realm name needs to be specified")
     HttpAuthenticationException digestMechanismRequireRealm();
 

@@ -34,10 +34,14 @@
     <name>WildFly Elytron - JACC</name>
     <description>WildFly Security JACC Implementation</description>
 
-    <dependencies>    
+    <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-titan</artifactId>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-security-manager</artifactId>
         </dependency>
         
         <dependency>

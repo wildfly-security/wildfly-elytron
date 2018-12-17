@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.http.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.HOST;
+import static org.wildfly.security.http.util.ElytronMessages.log;
 
 import java.util.Map;
 

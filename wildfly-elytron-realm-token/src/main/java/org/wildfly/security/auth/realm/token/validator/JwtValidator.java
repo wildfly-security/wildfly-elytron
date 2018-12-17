@@ -51,7 +51,7 @@ import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
 import static org.wildfly.security.json.util.JsonUtil.toAttributes;
 
 /**

@@ -43,8 +43,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
 import static org.wildfly.security.json.util.JsonUtil.toAttributes;
+
 
 /**
  * A RFC-7662 (OAuth2 Token Introspection) compliant {@link TokenValidator}.

@@ -19,8 +19,8 @@ package org.wildfly.security.http.util.sso;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpScopeNotification.SessionNotificationType.INVALIDATED;
+import static org.wildfly.security.http.util.sso.ElytronMessages.log;
 
 import java.io.DataOutputStream;
 import java.io.OutputStream;

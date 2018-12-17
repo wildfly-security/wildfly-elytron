@@ -18,7 +18,7 @@
 package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.http.util.ElytronMessages.log;
 
 import java.util.Collections;
 import java.util.Iterator;
