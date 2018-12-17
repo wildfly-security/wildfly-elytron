@@ -313,12 +313,6 @@
             -->
             <dependency>
                 <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-titan</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-asn1</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1140,8 +1134,6 @@
     </pluginRepositories>
 
     <modules>
-        <module>wildfly-elytron-titan</module>
-
         <module>wildfly-elytron-asn1</module>
         <module>wildfly-elytron-audit</module>
         <module>wildfly-elytron-auth</module>
