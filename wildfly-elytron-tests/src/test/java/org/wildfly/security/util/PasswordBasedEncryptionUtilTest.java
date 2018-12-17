@@ -31,6 +31,7 @@ import org.wildfly.security.password.util.ModularCrypt;
  * Tests for PasswordBasedEncryptionUtil class.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
+//has dependency on wildfly-elytron-credential because of ModularCrypt
 public class PasswordBasedEncryptionUtilTest {
 
     private static final String clearText = "Červenavý střizlíček a štebotavá žlůva ďobali ve sťavnatých ocúnech.";
