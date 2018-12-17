@@ -30,6 +30,7 @@ import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 
 import static org.junit.Assert.assertEquals;
 
+//has dependency on wildfly-elytron-credential because of OneTimePasswordAlgorithmSpec
 public class AbstractAlgorithmParametersSpiImplTest {
 
     @Test

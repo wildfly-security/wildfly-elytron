@@ -40,6 +40,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+//has dependency on wildfly-elytron-x500-cert because of X509Certificate, X509CertificateBuilder and SelfSignedX509CertificateAndSigningKey
 public class PemTest {
 
     private SelfSignedX509CertificateAndSigningKey createIssuerCertificate() {

@@ -30,6 +30,7 @@ import org.wildfly.security.auth.server.PrincipalDecoder;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+//dependent on module auth server because of PrincipalDecoder
 public class X500AttributePrincipalDecoderTest {
 
     @Test

@@ -35,6 +35,7 @@ import org.wildfly.security.auth.server.event.SecurityPermissionCheckFailedEvent
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+//has dependency on wildfly-elytron-realm because of SimpleMapBackedSecurityRealm
 public class SimpleSecurityEventFormatterTest {
 
     private static SecurityEventVisitor<?, String> simpleFormatter;
