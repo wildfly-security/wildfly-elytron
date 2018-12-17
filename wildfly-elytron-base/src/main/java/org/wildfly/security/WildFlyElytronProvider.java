@@ -39,6 +39,7 @@ import org.kohsuke.MetaInfServices;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @MetaInfServices(Provider.class)
+@Deprecated
 public class WildFlyElytronProvider extends VersionedProvider {
 
     private static final long serialVersionUID = 1267015094996624988L;

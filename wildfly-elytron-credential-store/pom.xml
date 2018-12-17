@@ -82,7 +82,7 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
-        </dependency>                        
+        </dependency>
     </dependencies>
     
 </project>

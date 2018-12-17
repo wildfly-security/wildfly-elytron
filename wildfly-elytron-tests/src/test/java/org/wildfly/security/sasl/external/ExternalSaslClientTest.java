@@ -26,6 +26,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,7 +38,10 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronSaslExternalProvider;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 
@@ -55,6 +60,17 @@ public class ExternalSaslClientTest extends BaseTestCase {
     private static final String[] MECHANISMS_EXTERNAL_ONLY = new String[] { EXTERNAL };
     private static final String[] MECHANISMS_WITH_EXTERNAL = new String[] { EXTERNAL, "TEST" };
     private static final String[] MECHANISMS_WITHOUT_EXTERNAL = new String[] { "TEST" };
+    private static final Provider provider = WildFlyElytronSaslExternalProvider.getInstance();
+
+    @BeforeClass
+    public static void registerProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void testMechanismNames() throws Exception {

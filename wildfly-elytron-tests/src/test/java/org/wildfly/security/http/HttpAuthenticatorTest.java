@@ -19,12 +19,19 @@
 package org.wildfly.security.http;
 
 import mockit.integration.junit4.JMockit;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
 import javax.security.auth.callback.CallbackHandler;
+
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -48,6 +55,18 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
     private TestingHttpExchangeSpi exchangeSpi = new TestingHttpExchangeSpi();
     private HttpAuthenticator authenticator;
+
+    private static final Provider provider = WildFlyElytronHttpDigestProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     private void testOneOfThree() throws Exception {
         mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");

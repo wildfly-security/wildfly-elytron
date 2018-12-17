@@ -24,16 +24,21 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslDigestProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -63,6 +68,18 @@ public class CompatibilityServerTest extends BaseTestCase {
                 return nonce.getBytes(StandardCharsets.UTF_8);
             }
         };
+    }
+
+    private static final Provider provider = WildFlyElytronSaslDigestProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
     }
 
     /**

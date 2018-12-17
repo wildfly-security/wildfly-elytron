@@ -20,20 +20,12 @@ package org.wildfly.security.sasl.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.Provider;
-import java.security.Security;
 import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.wildfly.security.WildFlyElytronProvider;
 
 /**
  * A base for the test cases to ensure the provider is registered before the test
@@ -42,28 +34,6 @@ import org.wildfly.security.WildFlyElytronProvider;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class BaseTestCase {
-
-    private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
-
-    @BeforeClass
-    public static void registerProvider() {
-        AccessController.doPrivileged(new PrivilegedAction<Integer>() {
-            public Integer run() {
-                return Security.insertProviderAt(wildFlyElytronProvider, 1);
-            }
-        });
-    }
-
-    @AfterClass
-    public static void removeProvider() {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            public Void run() {
-                Security.removeProvider(wildFlyElytronProvider.getName());
-
-                return null;
-            }
-        });
-    }
 
     // Utility methods for use by the Test classes.
 

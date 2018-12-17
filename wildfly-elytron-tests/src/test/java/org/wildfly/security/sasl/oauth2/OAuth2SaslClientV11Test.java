@@ -56,7 +56,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronCredentialStoreProvider;
+import org.wildfly.security.WildFlyElytronSaslOAuth2Provider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
@@ -79,7 +80,10 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 public class OAuth2SaslClientV11Test extends BaseTestCase {
 
     private static final MockWebServer server = new MockWebServer();
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronCredentialStoreProvider.getInstance(),
+            WildFlyElytronSaslOAuth2Provider.getInstance()
+    };
 
     private static Map<String, String> stores = new HashMap<>();
     private static String BASE_STORE_DIRECTORY = "target/ks-cred-stores";
@@ -99,7 +103,9 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        Security.addProvider(provider);
+        for (Provider provider : providers) {
+            Security.insertProviderAt(provider, 1);
+        }
         cleanCredentialStores();
         // setup vaults that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("ONE"))
@@ -117,7 +123,9 @@ public class OAuth2SaslClientV11Test extends BaseTestCase {
     @AfterClass
     public static void tearDown() throws Exception {
         server.shutdown();
-        Security.removeProvider(provider.getName());
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
     }
 
     @Test

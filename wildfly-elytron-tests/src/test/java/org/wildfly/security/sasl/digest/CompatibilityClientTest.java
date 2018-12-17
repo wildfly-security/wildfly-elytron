@@ -27,6 +27,8 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +44,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronCredentialStoreProvider;
+import org.wildfly.security.WildFlyElytronSaslDigestProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -76,6 +80,25 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     private SaslClient client;
 
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronSaslDigestProvider.getInstance(),
+            WildFlyElytronCredentialStoreProvider.getInstance()
+    };
+
+
+    private static void registerProviders() {
+        for (Provider provider : providers) {
+            Security.insertProviderAt(provider, 1);
+        }
+    }
+
+    @AfterClass
+    public static void removeProviders() {
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
+    }
+
     private void mockNonce(final String nonce){
         new MockUp<DigestSaslClient>(){
             @Mock
@@ -93,6 +116,7 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @BeforeClass
     public static void setupCredentialStore() throws Exception {
+        registerProviders();
         // setup credential store that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(CS_FILE_NAME)
                 .setKeyStorePassword("secret_store_1")

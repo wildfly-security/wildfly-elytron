@@ -27,6 +27,8 @@ import static org.junit.Assert.fail;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.Permissions;
+import java.security.Provider;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,9 +39,12 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslScramProvider;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.password.Password;
@@ -64,6 +69,18 @@ import mockit.integration.junit4.JMockit;
  */
 @RunWith(JMockit.class)
 public class ScramServerCompatibilityTest extends BaseTestCase {
+
+    private static final Provider provider = WildFlyElytronSaslScramProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     private void mockNonce(final String nonce) {
         Class<?> classToMock;

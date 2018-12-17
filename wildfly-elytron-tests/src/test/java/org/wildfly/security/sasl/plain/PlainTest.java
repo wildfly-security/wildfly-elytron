@@ -28,6 +28,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +40,11 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.WildFlyElytronSaslPlainProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -58,6 +64,25 @@ import org.wildfly.security.sasl.test.SaslServerBuilder;
 public class PlainTest extends BaseTestCase {
 
     private static final String PLAIN = "PLAIN";
+
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronSaslPlainProvider.getInstance(),
+            WildFlyElytronPasswordProvider.getInstance()
+    };
+
+    @BeforeClass
+    public static void registerProvider() {
+        for (Provider provider : providers) {
+            Security.insertProviderAt(provider, 1);
+        }
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
+    }
 
     /*
      *  Mechanism selection tests.

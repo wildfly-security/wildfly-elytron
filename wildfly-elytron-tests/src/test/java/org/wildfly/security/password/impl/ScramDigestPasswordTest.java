@@ -36,7 +36,7 @@ import org.junit.Test;
 import org.wildfly.common.codec.Base64Alphabet;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -54,7 +54,7 @@ import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 
 public class ScramDigestPasswordTest {
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
 
     @BeforeClass
     public static void registerProvider() {

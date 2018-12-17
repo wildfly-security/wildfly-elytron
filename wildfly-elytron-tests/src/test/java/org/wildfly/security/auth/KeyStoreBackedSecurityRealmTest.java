@@ -31,7 +31,8 @@ import java.security.Security;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronKeyStoreProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -49,16 +50,23 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
  */
 public class KeyStoreBackedSecurityRealmTest {
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronKeyStoreProvider.getInstance(),
+            WildFlyElytronPasswordProvider.getInstance()
+    };
 
     @BeforeClass
     public static void register() {
-        Security.addProvider(provider);
+        for (Provider provider : providers) {
+            Security.addProvider(provider);
+        }
     }
 
     @AfterClass
     public static void remove() {
-        Security.removeProvider(provider.getName());
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
     }
 
     @Test

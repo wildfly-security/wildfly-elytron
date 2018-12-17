@@ -55,7 +55,7 @@ import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
@@ -71,7 +71,7 @@ public class XmlConfigurationTest {
     static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
     static final String NS_ELYTRON_1_0_1 = "urn:elytron:1.0.1";
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
 
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";

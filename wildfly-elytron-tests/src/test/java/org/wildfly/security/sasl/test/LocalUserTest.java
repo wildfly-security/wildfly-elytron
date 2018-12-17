@@ -27,6 +27,8 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +40,11 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslLocalUserProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -56,6 +61,18 @@ import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
 public class LocalUserTest extends BaseTestCase {
 
     private static final String LOCAL_USER = "JBOSS-LOCAL-USER";
+
+    private static final Provider provider = WildFlyElytronSaslLocalUserProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     /*
      *  Normal SASL Client/Server interaction - Client First

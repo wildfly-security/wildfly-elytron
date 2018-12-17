@@ -55,7 +55,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronSaslGssapiProvider;
 import org.wildfly.security.sasl.WildFlySasl;
 
 @RunWith(Parameterized.class)
@@ -75,7 +75,7 @@ public class CommunicationSuiteChild {
     static final String SERVER_KEY_TAB = "serverKeyTab";
     static final String SERVER_UNBOUND_KEY_TAB = "serverUnboundKeyTab";
 
-    private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
+    private static final Provider wildFlyElytronProvider = WildFlyElytronSaslGssapiProvider.getInstance();
 
     private static Subject clientSubject;
     private static Subject serverSubject;
@@ -275,7 +275,7 @@ public class CommunicationSuiteChild {
     private Provider findProvider(final String filter, final boolean elytronProvider) {
         Provider[] providers = Security.getProviders(filter);
         for (Provider current : providers) {
-            if (current instanceof WildFlyElytronProvider) {
+            if (current instanceof WildFlyElytronSaslGssapiProvider) {
                 if (elytronProvider) {
                     return current;
                 }

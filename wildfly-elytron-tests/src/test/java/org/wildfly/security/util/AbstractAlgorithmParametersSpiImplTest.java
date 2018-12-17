@@ -25,7 +25,7 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 
 import static org.junit.Assert.assertEquals;
@@ -38,12 +38,12 @@ public class AbstractAlgorithmParametersSpiImplTest {
         final OneTimePasswordAlgorithmSpec start = new OneTimePasswordAlgorithmSpec("otp-sha1",
                 generateRandomOTPSeed(16), 14);
 
-        final AlgorithmParameters oneWay = AlgorithmParameters.getInstance("otp-sha1", new WildFlyElytronProvider());
+        final AlgorithmParameters oneWay = AlgorithmParameters.getInstance("otp-sha1", WildFlyElytronPasswordProvider.getInstance());
         oneWay.init(start);
 
         final byte[] encoded = oneWay.getEncoded();
 
-        final AlgorithmParameters orAnother = AlgorithmParameters.getInstance("otp-sha1", new WildFlyElytronProvider());
+        final AlgorithmParameters orAnother = AlgorithmParameters.getInstance("otp-sha1", WildFlyElytronPasswordProvider.getInstance());
 
         orAnother.init(encoded);
 

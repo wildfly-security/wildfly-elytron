@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -47,7 +47,7 @@ public class CommandCredentialSourceTest {
 
     private static CommandCredentialSource.Builder getBuilder() {
         final CommandCredentialSource.Builder builder = CommandCredentialSource.builder();
-        builder.setPasswordFactoryProvider(new WildFlyElytronProvider());
+        builder.setPasswordFactoryProvider(WildFlyElytronPasswordProvider.getInstance());
         addJava(builder);
         addCommand(builder);
         return builder;

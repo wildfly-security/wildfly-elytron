@@ -24,13 +24,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.security.Provider;
-import java.security.Security;
-
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.realm.JaasSecurityRealm;
@@ -48,17 +43,9 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  */
 public class JaasSecurityRealmTest {
 
-    private static final Provider provider = new WildFlyElytronProvider();
-
     @BeforeClass
     public static void init() {
-        Security.addProvider(provider);
         System.setProperty("java.security.auth.login.config", JaasSecurityRealmTest.class.getResource("login.config").toString());
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        Security.removeProvider(provider.getName());
     }
 
     @Test
