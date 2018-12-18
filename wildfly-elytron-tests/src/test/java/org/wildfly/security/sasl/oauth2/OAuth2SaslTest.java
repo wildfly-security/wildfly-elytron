@@ -65,6 +65,7 @@ import static org.junit.Assert.fail;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-realm-auth-token
 @RunWith(JMockit.class)
 public class OAuth2SaslTest extends BaseTestCase {
 

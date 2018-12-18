@@ -58,6 +58,7 @@ import static org.junit.Assert.fail;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-realm
 @Ignore
 public class LinkPolicyConfigurationTest {
 

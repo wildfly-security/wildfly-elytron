@@ -62,6 +62,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on auth-realm
 public class SecurityRealmIdentityCacheTest {
 
     private AtomicInteger realmHitCount = new AtomicInteger();

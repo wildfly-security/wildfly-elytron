@@ -66,6 +66,7 @@ import mockit.integration.junit4.JMockit;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
+// has dependency on wildfly-elytron-client, wildfly-elytron-credential
 @RunWith(JMockit.class)
 public class CompatibilityClientTest extends BaseTestCase {
 

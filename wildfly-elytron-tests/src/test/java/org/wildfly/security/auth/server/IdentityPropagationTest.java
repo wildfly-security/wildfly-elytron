@@ -42,6 +42,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+// has dependency on wildfly-elytron-realm
 public class IdentityPropagationTest {
 
     private static SecurityDomain domain1;

@@ -53,6 +53,7 @@ import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+// has dependency on wildfly-elytron-client
 public class LocalUserTest extends BaseTestCase {
 
     private static final String LOCAL_USER = "JBOSS-LOCAL-USER";

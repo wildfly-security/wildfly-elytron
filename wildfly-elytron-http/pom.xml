@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
-        </dependency>        
+        </dependency>
     </dependencies>
 
 </project>

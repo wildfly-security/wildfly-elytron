@@ -50,6 +50,7 @@ import org.wildfly.security.sasl.anonymous.AnonymousServerFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+// has dependency on wildfly-elytron-client
 public class AnonymousTest extends BaseTestCase {
 
     private static final String ANONYMOUS = "ANONYMOUS";

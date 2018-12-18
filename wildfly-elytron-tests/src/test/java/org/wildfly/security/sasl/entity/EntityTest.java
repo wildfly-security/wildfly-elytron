@@ -81,6 +81,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+//has dependency on x500-cert
 @RunWith(JMockit.class)
 public class EntityTest extends BaseTestCase {
 

@@ -99,6 +99,7 @@ import mockit.integration.junit4.JMockit;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+// has dependency on wildfly-elytron-client
 @RunWith(JMockit.class)
 public class OTPTest extends BaseTestCase {
 

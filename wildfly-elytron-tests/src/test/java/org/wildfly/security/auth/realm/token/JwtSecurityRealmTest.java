@@ -89,6 +89,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// dependent on wildfly-security-ssl
 @RunWith(JMockit.class)
 public class JwtSecurityRealmTest extends BaseTestCase {
 

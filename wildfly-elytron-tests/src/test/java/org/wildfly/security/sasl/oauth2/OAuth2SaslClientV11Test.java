@@ -76,6 +76,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-client
 public class OAuth2SaslClientV11Test extends BaseTestCase {
 
     private static final MockWebServer server = new MockWebServer();

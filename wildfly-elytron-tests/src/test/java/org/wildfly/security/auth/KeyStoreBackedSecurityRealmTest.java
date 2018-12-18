@@ -47,6 +47,7 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
+// has dependency on wildfly-elytron-auth-server, wildfly-elytron-realm, wildfly-elytron-credential,
 public class KeyStoreBackedSecurityRealmTest {
 
     private static final Provider provider = new WildFlyElytronProvider();

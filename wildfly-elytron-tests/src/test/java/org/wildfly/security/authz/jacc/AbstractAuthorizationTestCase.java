@@ -38,6 +38,7 @@ import java.util.HashSet;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-realm
 public abstract class AbstractAuthorizationTestCase {
 
     @BeforeClass

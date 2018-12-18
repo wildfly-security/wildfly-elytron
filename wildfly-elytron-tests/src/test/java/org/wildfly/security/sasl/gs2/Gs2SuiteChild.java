@@ -89,6 +89,7 @@ import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
+// has dependency on wildfly-elytron-client, wildfly-elytron-realm
 public class Gs2SuiteChild extends BaseTestCase {
 
     private static final String TEST_SERVER_1 = "test_server_1";

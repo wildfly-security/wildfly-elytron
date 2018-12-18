@@ -51,6 +51,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-credential, wildfly-elytron-client
 public class ElytronAuthenticatorTest {
 
     private static final int SERVER_PORT = 50831;

@@ -53,6 +53,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
+// has dependency on wildfly-elytron-realm
 public class IdentitySwitchingTest {
 
     private static SecurityDomain usersDomain;

@@ -33,6 +33,7 @@ import java.security.Security;
 /**
  * SHA-512/256 hashing test
  */
+// has dependency on wildfly-elytron-base
 public class Sha512_256MessageDigestTest {
 
     private static final Provider provider = new WildFlyElytronProvider();

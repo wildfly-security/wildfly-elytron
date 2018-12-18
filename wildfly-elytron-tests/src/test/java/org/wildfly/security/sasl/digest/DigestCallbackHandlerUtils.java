@@ -39,6 +39,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 /**
  * @author Kabir Khan
  */
+// has dependency on wildfly-elytron-client
 class DigestCallbackHandlerUtils {
 
     static CallbackHandler createClearPwdClientCallbackHandler(final String username, final String password, final String sentRealm) throws Exception {

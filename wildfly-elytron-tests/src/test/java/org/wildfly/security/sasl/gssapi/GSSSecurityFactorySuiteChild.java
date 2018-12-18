@@ -33,6 +33,7 @@ import org.wildfly.security.credential.GSSKerberosCredential;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+//has dependency on other tests (GssapiTestSuite)
 public class GSSSecurityFactorySuiteChild {
 
     @Test

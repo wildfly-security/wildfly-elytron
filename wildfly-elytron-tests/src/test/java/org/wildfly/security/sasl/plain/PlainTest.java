@@ -55,6 +55,7 @@ import org.wildfly.security.sasl.test.SaslServerBuilder;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+// has dependency on wildfly-elytron-client
 public class PlainTest extends BaseTestCase {
 
     private static final String PLAIN = "PLAIN";

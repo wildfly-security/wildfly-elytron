@@ -30,7 +30,6 @@ import java.time.temporal.TemporalUnit;
  *
  * @author <a href="https://github.com/ppalaga">Peter Palaga</a>
  */
-//tests for audit (in wildfly-elytron-tests) use this class, so cannot move it
 public class TestClock extends Clock {
     private volatile Instant instant;
     private final Object instantLock = new Object();

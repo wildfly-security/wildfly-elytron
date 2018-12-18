@@ -43,7 +43,6 @@ import java.util.Set;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  * @author <a href="mailto:yborgess@redhat.com">Yeray Borges</a>
  */
-//has dependency on TestClock from wildfly-elytron-tests (util)
 @RunWith(JMockit.class)
 public class SizeRotatingFileAuditEndpointTest {
     static File logDirFile;

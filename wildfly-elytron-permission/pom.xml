@@ -59,6 +59,13 @@
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <!--Test scope-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
                
     </dependencies>
 

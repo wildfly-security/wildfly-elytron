@@ -30,6 +30,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
+// has dependency on wildfly-credential-source-deprecated
 public class CommandCredentialSourceTest {
     @Test
     public void testCommand() throws GeneralSecurityException, IOException {

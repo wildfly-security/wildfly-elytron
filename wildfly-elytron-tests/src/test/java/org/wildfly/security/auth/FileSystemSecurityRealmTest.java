@@ -76,6 +76,7 @@ import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SAL
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-realm, wildfly-elytron-auth-server, wildfly-elytron-credential
 public class FileSystemSecurityRealmTest {
 
     private static final Provider provider = new WildFlyElytronProvider();

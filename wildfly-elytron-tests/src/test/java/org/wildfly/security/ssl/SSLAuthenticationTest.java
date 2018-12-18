@@ -90,6 +90,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+// has dependency on wildfly-elytron-client, wildfly-elytron-x500-cert, wildfly-elytron-realm, wildly-elytron-x500-deprecated
 public class SSLAuthenticationTest {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");

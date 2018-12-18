@@ -38,6 +38,7 @@ import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+// has dependency on wildfly-elytron-x500-cert
 public class FilteringKeyStoreTest {
     private static KeyStore baseKeyStore;
     private static final char[] PASSWORD = "Elytron".toCharArray();

@@ -31,6 +31,7 @@ import java.security.PrivilegedAction;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+// has dependency on wildfly-elytron-realm
 public class SecurityIdentityRule implements TestRule {
 
     private SecurityDomain securityDomain;

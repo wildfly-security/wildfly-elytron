@@ -416,7 +416,7 @@ public class LegacyPropertiesSecurityRealmTest {
     }
 
     private void checkVerifyIdentity(SecurityRealm realm, String username, String goodPassword,
-            String wrongPassword) throws RealmUnavailableException {
+                                     String wrongPassword) throws RealmUnavailableException {
         RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal(username));
         assertTrue(elytronIdentity.exists());
         PasswordGuessEvidence goodPasswordEvidence = new PasswordGuessEvidence(goodPassword.toCharArray());
