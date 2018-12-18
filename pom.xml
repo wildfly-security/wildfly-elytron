@@ -87,6 +87,7 @@
         <version.org.wildfly.common>1.5.1.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
+        <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->

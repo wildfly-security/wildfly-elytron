@@ -23,6 +23,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static org.wildfly.security.x500.X500.OID_AD_OCSP;
+import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,6 +46,7 @@ import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -80,10 +84,15 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
+
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
+import org.wildfly.security.x500.cert.AccessDescription;
+import org.wildfly.security.x500.cert.AuthorityInformationAccessExtension;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
+import org.wildfly.security.x500.cert.ExtendedKeyUsageExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
-import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
  * Simple test case to test authentication occurring during the establishment of an {@link SSLSession}.
@@ -94,28 +103,34 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 public class SSLAuthenticationTest {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
+    private static final int OCSP_PORT = 4854;
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
     private static final String ICA_JKS_LOCATION = "./target/test-classes/ica/jks";
     private static final String CA_CRL_LOCATION = "./target/test-classes/ca/crl";
     private static final String ICA_CRL_LOCATION = "./target/test-classes/ica/crl";
-    private static File ladybirdFile = null;
-    private static File scarabFile = null;
-    private static File dungFile = null;
-    private static File fireflyFile = null;
-    private static File beetlesFile = null;
-    private static File trustFile = null;
-    private static File shortwingedFile = null;
-    private static File roveFile = null;
-    private static File caBlankPemCrl = null;
-    private static File icaBlankPemCrl = null;
-    private static File blankBlankPemCrl = null;
-    private static File fireflyRevokedPemCrl = null;
-    private static File icaRevokedPemCrl = null;
-    private static File workingDirCA = null;
-    private static File workingDirICA = null;
-    private static File workingDirCACRL = null;
-    private static File workingDirICACRL = null;
+    private static final File WORKING_DIR_CA = new File(CA_JKS_LOCATION);
+    private static final File WORKING_DIR_ICA =  new File(ICA_JKS_LOCATION);
+    private static final File WORKING_DIR_CACRL = new File(CA_CRL_LOCATION);
+    private static final File WORKING_DIR_ICACRL = new File(ICA_CRL_LOCATION);
+    private static final File LADYBIRD_FILE = new File(WORKING_DIR_CA,"ladybird.keystore");
+    private static final File SCARAB_FILE = new File(WORKING_DIR_CA,"scarab.keystore");
+    private static final File DUNG_FILE = new File(WORKING_DIR_CA,"dung.keystore");
+    private static final File FIREFLY_FILE = new File(WORKING_DIR_CA,"firefly.keystore");
+    private static final File OCSP_RESPONDER_FILE = new File(WORKING_DIR_CA,"ocsp-responder.keystore");
+    private static final File OCSP_CHECKED_GOOD_FILE = new File(WORKING_DIR_CA,"ocsp-checked-good.keystore");
+    private static final File OCSP_CHECKED_REVOKED_FILE = new File(WORKING_DIR_CA,"ocsp-checked-revoked.keystore");
+    private static final File OCSP_CHECKED_UNKNOWN_FILE = new File(WORKING_DIR_CA,"ocsp-checked-unknown.keystore");
+    private static final File BEETLES_FILE = new File(WORKING_DIR_CA,"beetles.keystore");
+    private static final File TRUST_FILE = new File(WORKING_DIR_CA,"ca.truststore");
+    private static final File SHORTWINGED_FILE = new File(WORKING_DIR_ICA, "shortwinged.keystore");
+    private static final File ROVE_FILE = new File(WORKING_DIR_ICA, "rove.keystore");
+    private static final File CA_BLANK_PEM_CRL = new File(WORKING_DIR_CACRL, "blank.pem");
+    private static final File ICA_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank.pem");
+    private static final File BLANK_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank-blank.pem");
+    private static final File FIREFLY_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "firefly-revoked.pem");
+    private static final File ICA_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ica-revoked.pem");
+    private static TestingOcspServer ocspServer = null;
 
     /**
      * Get the key manager backed by the specified key store.
@@ -125,7 +140,7 @@ public class SSLAuthenticationTest {
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
-        keyManagerFactory.init(loadKeyStore(keystorePath), PASSWORD);
+        keyManagerFactory.init(createKeyStore(keystorePath), PASSWORD);
 
         for (KeyManager current : keyManagerFactory.getKeyManagers()) {
             if (current instanceof X509ExtendedKeyManager) {
@@ -136,6 +151,10 @@ public class SSLAuthenticationTest {
         throw new IllegalStateException("Unable to obtain X509ExtendedKeyManager.");
     }
 
+    private static TrustManagerFactory getTrustManagerFactory() throws Exception {
+        return TrustManagerFactory.getInstance("PKIX");
+    }
+
     /**
      * Get the trust manager that trusts all certificates signed by the certificate authority.
      *
@@ -143,8 +162,8 @@ public class SSLAuthenticationTest {
      * @throws KeyStoreException
      */
     private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
-        trustManagerFactory.init(loadKeyStore("/ca/jks/ca.truststore"));
+        TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
+        trustManagerFactory.init(createKeyStore("/ca/jks/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
             if (current instanceof X509TrustManager) {
@@ -155,13 +174,13 @@ public class SSLAuthenticationTest {
         throw new IllegalStateException("Unable to obtain X509TrustManager.");
     }
 
-    private static KeyStore loadKeyStore() throws Exception{
+    private static KeyStore createKeyStore() throws Exception {
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(null,null);
         return ks;
     }
 
-    private static KeyStore loadKeyStore(final String path) throws Exception {
+    private static KeyStore createKeyStore(final String path) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("jks");
         try (InputStream caTrustStoreFile = SSLAuthenticationTest.class.getResourceAsStream(path)) {
             keyStore.load(caTrustStoreFile, PASSWORD);
@@ -171,31 +190,48 @@ public class SSLAuthenticationTest {
     }
 
     private static void createTemporaryKeyStoreFile(KeyStore keyStore, File outputFile, char[] password) throws Exception {
+        if (!outputFile.exists()) {
+            outputFile.createNewFile();
+        }
         try (FileOutputStream fos = new FileOutputStream(outputFile)){
             keyStore.store(fos, password);
         }
     }
 
-    private static void createKeyStores(File ladybirdFile, File scarabFile, File dungFile, File fireflyFile, File beetlesFile, File trustFile, File shortwingedFile, File roveFile, File caBlankPemCrl, File icaBlankPemCrl, File blankBlankPemCrl, File fireflyRevokedPemCrl, File icaRevokedPemCrl) throws Exception {
+    private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath) throws Exception {
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(createKeyStore(keyStorePath));
+
+        return SecurityDomain.builder()
+                .addRealm("KeystoreRealm", securityRealm)
+                .build()
+                .setDefaultRealmName("KeystoreRealm")
+                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
+                .build();
+    }
+
+    @BeforeClass
+    public static void beforeTest() throws Exception {
+        WORKING_DIR_CA.mkdirs();
+        WORKING_DIR_CACRL.mkdirs();
+        WORKING_DIR_ICA.mkdirs();
+        WORKING_DIR_ICACRL.mkdirs();
+
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
         X500Principal issuerDN = new X500Principal("CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority");
         X500Principal intermediateIssuerDN = new X500Principal("CN=Elytron ICA, ST=Elytron, C=UK, O=Intermediate Certificate Authority");
-        X500Principal ladybirdDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird");
-        X500Principal scarabDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab");
-        X500Principal dungDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Dung");
-        X500Principal fireflyDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Firefly");
-        X500Principal roveDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Rove");
 
-        KeyStore ladybirdKeyStore = loadKeyStore();
-        KeyStore scarabKeyStore = loadKeyStore();
-        KeyStore dungKeyStore = loadKeyStore();
-        KeyStore fireflyKeyStore = loadKeyStore();
-        KeyStore beetlesKeyStore = loadKeyStore();
-        KeyStore trustStore = loadKeyStore();
-        KeyStore shortwingedKeyStore = loadKeyStore();
-        KeyStore roveKeyStore = loadKeyStore();
+        KeyStore ladybirdKeyStore = createKeyStore();
+        KeyStore scarabKeyStore = createKeyStore();
+        KeyStore dungKeyStore = createKeyStore();
+        KeyStore fireflyKeyStore = createKeyStore();
+        KeyStore beetlesKeyStore = createKeyStore();
+        KeyStore trustStore = createKeyStore();
+        KeyStore shortwingedKeyStore = createKeyStore();
+        KeyStore roveKeyStore = createKeyStore();
 
         // Generates the issuer certificate and adds it to the keystores
         SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
@@ -233,7 +269,7 @@ public class SSLAuthenticationTest {
 
         X509Certificate ladybirdCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
-                .setSubjectDn(ladybirdDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird"))
                 .setSignatureAlgorithmName("SHA1withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(ladybirdPublicKey)
@@ -249,7 +285,7 @@ public class SSLAuthenticationTest {
 
         X509Certificate scarabCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
-                .setSubjectDn(scarabDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab"))
                 .setSignatureAlgorithmName("SHA1withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(scarabPublicKey)
@@ -265,7 +301,7 @@ public class SSLAuthenticationTest {
 
         X509Certificate dungCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
-                .setSubjectDn(dungDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Dung"))
                 .setSignatureAlgorithmName("SHA1withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(dungPublicKey)
@@ -281,7 +317,7 @@ public class SSLAuthenticationTest {
 
         X509Certificate fireflyCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
-                .setSubjectDn(fireflyDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Firefly"))
                 .setSignatureAlgorithmName("SHA1withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(fireflyPublicKey)
@@ -297,7 +333,7 @@ public class SSLAuthenticationTest {
 
         X509Certificate roveCertificate = new X509CertificateBuilder()
                 .setIssuerDn(intermediateIssuerDN)
-                .setSubjectDn(roveDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Rove"))
                 .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(intermediateIssuerSigningKey)
                 .setPublicKey(rovePublicKey)
@@ -306,11 +342,102 @@ public class SSLAuthenticationTest {
                 .build();
         roveKeyStore.setKeyEntry("rove", roveSigningKey, PASSWORD, new X509Certificate[]{roveCertificate,intermediateIssuerCertificate,issuerCertificate});
 
+        // Generates certificate and keystore for OCSP responder
+        KeyPair ocspResponderKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey ocspResponderSigningKey = ocspResponderKeys.getPrivate();
+        PublicKey ocspResponderPublicKey = ocspResponderKeys.getPublic();
+
+        X509Certificate ocspResponderCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"))
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(ocspResponderPublicKey)
+                .setSerialNumber(new BigInteger("15"))
+                .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .addExtension(new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)))
+                .build();
+        KeyStore ocspResponderKeyStore = createKeyStore();
+        ocspResponderKeyStore.setCertificateEntry("ca", issuerCertificate);
+        ocspResponderKeyStore.setKeyEntry("ocspResponder", ocspResponderSigningKey, PASSWORD, new X509Certificate[]{ocspResponderCertificate,issuerCertificate});
+        createTemporaryKeyStoreFile(ocspResponderKeyStore, OCSP_RESPONDER_FILE, PASSWORD);
+
+        // Generates GOOD certificate referencing the OCSP responder
+        KeyPair ocspCheckedGoodKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey ocspCheckedGoodSigningKey = ocspCheckedGoodKeys.getPrivate();
+        PublicKey ocspCheckedGoodPublicKey = ocspCheckedGoodKeys.getPublic();
+
+        X509Certificate ocspCheckedGoodCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"))
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(ocspCheckedGoodPublicKey)
+                .setSerialNumber(new BigInteger("16"))
+                .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )))
+                .build();
+        KeyStore ocspCheckedGoodKeyStore = createKeyStore();
+        ocspCheckedGoodKeyStore.setCertificateEntry("ca", issuerCertificate);
+        ocspCheckedGoodKeyStore.setKeyEntry("checked", ocspCheckedGoodSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedGoodCertificate,issuerCertificate});
+        createTemporaryKeyStoreFile(ocspCheckedGoodKeyStore, OCSP_CHECKED_GOOD_FILE, PASSWORD);
+
+        // Generates REVOKED certificate referencing the OCSP responder
+        KeyPair ocspCheckedRevokedKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey ocspCheckedRevokedSigningKey = ocspCheckedRevokedKeys.getPrivate();
+        PublicKey ocspCheckedRevokedPublicKey = ocspCheckedRevokedKeys.getPublic();
+
+        X509Certificate ocspCheckedRevokedCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"))
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(ocspCheckedRevokedPublicKey)
+                .setSerialNumber(new BigInteger("17"))
+                .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )))
+                .build();
+        KeyStore ocspCheckedRevokedKeyStore = createKeyStore();
+        ocspCheckedRevokedKeyStore.setCertificateEntry("ca", issuerCertificate);
+        ocspCheckedRevokedKeyStore.setKeyEntry("checked", ocspCheckedRevokedSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedRevokedCertificate,issuerCertificate});
+        createTemporaryKeyStoreFile(ocspCheckedRevokedKeyStore, OCSP_CHECKED_REVOKED_FILE, PASSWORD);
+
+        // Generates UNKNOWN certificate referencing the OCSP responder
+        KeyPair ocspCheckedUnknownKeys = keyPairGenerator.generateKeyPair();
+        PrivateKey ocspCheckedUnknownSigningKey = ocspCheckedUnknownKeys.getPrivate();
+        PublicKey ocspCheckedUnknownPublicKey = ocspCheckedUnknownKeys.getPublic();
+
+        X509Certificate ocspCheckedUnknownCertificate = new X509CertificateBuilder()
+                .setIssuerDn(issuerDN)
+                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"))
+                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setPublicKey(ocspCheckedUnknownPublicKey)
+                .setSerialNumber(new BigInteger("18"))
+                .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )))
+                .build();
+        KeyStore ocspCheckedUnknownKeyStore = createKeyStore();
+        ocspCheckedUnknownKeyStore.setCertificateEntry("ca", issuerCertificate);
+        ocspCheckedUnknownKeyStore.setKeyEntry("checked", ocspCheckedUnknownSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedUnknownCertificate,issuerCertificate});
+        createTemporaryKeyStoreFile(ocspCheckedUnknownKeyStore, OCSP_CHECKED_UNKNOWN_FILE, PASSWORD);
+
+
         // Adds trusted certs for beetles
         beetlesKeyStore.setCertificateEntry("ladybird", ladybirdCertificate);
         beetlesKeyStore.setCertificateEntry("scarab", scarabCertificate);
         beetlesKeyStore.setCertificateEntry("dung", dungCertificate);
         beetlesKeyStore.setCertificateEntry("firefly", fireflyCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedGood", ocspCheckedGoodCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedRevoked", ocspCheckedRevokedCertificate);
+        beetlesKeyStore.setCertificateEntry("ocspCheckedUnknown", ocspCheckedUnknownCertificate);
 
         // Adds trusted cert for shortwinged
         shortwingedKeyStore.setCertificateEntry("rove", roveCertificate);
@@ -378,21 +505,22 @@ public class SSLAuthenticationTest {
                         .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
         );
 
-        // Create the temporary files
-        createTemporaryKeyStoreFile(ladybirdKeyStore, ladybirdFile, PASSWORD);
-        createTemporaryKeyStoreFile(scarabKeyStore, scarabFile, PASSWORD);
-        createTemporaryKeyStoreFile(dungKeyStore, dungFile, PASSWORD);
-        createTemporaryKeyStoreFile(fireflyKeyStore, fireflyFile, PASSWORD);
-        createTemporaryKeyStoreFile(beetlesKeyStore, beetlesFile, PASSWORD);
-        createTemporaryKeyStoreFile(trustStore, trustFile, PASSWORD);
-        createTemporaryKeyStoreFile(shortwingedKeyStore, shortwingedFile, PASSWORD);
-        createTemporaryKeyStoreFile(roveKeyStore, roveFile, PASSWORD);
 
-        PemWriter caBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(caBlankPemCrl)));
-        PemWriter icaBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(icaBlankPemCrl)));
-        PemWriter blankBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(blankBlankPemCrl)));
-        PemWriter fireflyRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(fireflyRevokedPemCrl)));
-        PemWriter icaRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(icaRevokedPemCrl)));
+        // Create the temporary files
+        createTemporaryKeyStoreFile(ladybirdKeyStore, LADYBIRD_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(scarabKeyStore, SCARAB_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(dungKeyStore, DUNG_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(fireflyKeyStore, FIREFLY_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(beetlesKeyStore, BEETLES_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(trustStore, TRUST_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
+        createTemporaryKeyStoreFile(roveKeyStore, ROVE_FILE, PASSWORD);
+
+        PemWriter caBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(CA_BLANK_PEM_CRL)));
+        PemWriter icaBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ICA_BLANK_PEM_CRL)));
+        PemWriter blankBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(BLANK_BLANK_PEM_CRL)));
+        PemWriter fireflyRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(FIREFLY_REVOKED_PEM_CRL)));
+        PemWriter icaRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ICA_REVOKED_PEM_CRL)));
 
         caBlankCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
         icaBlankCrlOutput.writeObject(new MiscPEMGenerator(icaBlankCrlHolder));
@@ -406,9 +534,17 @@ public class SSLAuthenticationTest {
         blankBlankCrlOutput.close();
         fireflyRevokedCrlOutput.close();
         icaRevokedCrlOutput.close();
+
+        ocspServer = new TestingOcspServer(OCSP_PORT);
+        ocspServer.createIssuer(1, issuerCertificate);
+        ocspServer.createCertificate(1, 1, ocspCheckedGoodCertificate);
+        ocspServer.createCertificate(2, 1, ocspCheckedRevokedCertificate);
+        ocspServer.revokeCertificate(2, 4);
+        ocspServer.start();
+
     }
 
-    private static org.bouncycastle.asn1.x500.X500Name convertSunStyleToBCStyle(Principal dn){
+    private static org.bouncycastle.asn1.x500.X500Name convertSunStyleToBCStyle(Principal dn) {
         String dnName = dn.getName();
         String[] dnComponents = dnName.split(", ");
         StringBuilder dnBuffer = new StringBuilder(dnName.length());
@@ -422,79 +558,30 @@ public class SSLAuthenticationTest {
         return new X500Name(dnBuffer.toString());
     }
 
-    @BeforeClass
-    public static void beforeTest() throws Exception{
-        workingDirCA = new File(CA_JKS_LOCATION);
-        if (workingDirCA.exists() == false) {
-            workingDirCA.mkdirs();
-        }
-        workingDirICA = new File(ICA_JKS_LOCATION);
-        if (workingDirICA.exists() == false) {
-            workingDirICA.mkdirs();
-        }
-        workingDirCACRL = new File(CA_CRL_LOCATION);
-        if (workingDirCACRL.exists() == false) {
-            workingDirCACRL.mkdirs();
-        }
-        workingDirICACRL = new File(ICA_CRL_LOCATION);
-        if (workingDirICACRL.exists() == false) {
-            workingDirICACRL.mkdirs();
-        }
-
-        ladybirdFile = new File(workingDirCA,"ladybird.keystore");
-        scarabFile = new File(workingDirCA,"scarab.keystore");
-        dungFile = new File(workingDirCA,"dung.keystore");
-        fireflyFile = new File(workingDirCA,"firefly.keystore");
-        beetlesFile = new File(workingDirCA,"beetles.keystore");
-        trustFile = new File(workingDirCA,"ca.truststore");
-        shortwingedFile = new File(workingDirICA, "shortwinged.keystore");
-        roveFile = new File(workingDirICA, "rove.keystore");
-        caBlankPemCrl = new File(workingDirCACRL, "blank.pem");
-        icaBlankPemCrl = new File(workingDirICACRL, "blank.pem");
-        blankBlankPemCrl = new File(workingDirICACRL, "blank-blank.pem");
-        fireflyRevokedPemCrl = new File(workingDirCACRL, "firefly-revoked.pem");
-        icaRevokedPemCrl = new File(workingDirCACRL, "ica-revoked.pem");
-
-        createKeyStores(ladybirdFile, scarabFile, dungFile, fireflyFile, beetlesFile, trustFile, shortwingedFile, roveFile, caBlankPemCrl, icaBlankPemCrl, blankBlankPemCrl, fireflyRevokedPemCrl, icaRevokedPemCrl);
-    }
-
-
     @AfterClass
-    public static void afterTest(){
-        ladybirdFile.delete();
-        ladybirdFile = null;
-        scarabFile.delete();
-        scarabFile = null;
-        dungFile.delete();
-        dungFile = null;
-        fireflyFile.delete();
-        fireflyFile = null;
-        beetlesFile.delete();
-        beetlesFile = null;
-        trustFile.delete();
-        trustFile = null;
-        shortwingedFile.delete();
-        shortwingedFile = null;
-        roveFile.delete();
-        roveFile = null;
-        workingDirCA.delete();
-        workingDirCA = null;
-        workingDirICA.delete();
-        workingDirICA = null;
-        caBlankPemCrl.delete();
-        caBlankPemCrl = null;
-        icaBlankPemCrl.delete();
-        icaBlankPemCrl = null;
-        blankBlankPemCrl.delete();
-        blankBlankPemCrl = null;
-        fireflyRevokedPemCrl.delete();
-        fireflyRevokedPemCrl = null;
-        icaRevokedPemCrl.delete();
-        icaRevokedPemCrl = null;
-        workingDirCACRL.delete();
-        workingDirCACRL = null;
-        workingDirICACRL.delete();
-        workingDirICACRL = null;
+    public static void afterTest() throws Exception {
+        ocspServer.stop();
+        LADYBIRD_FILE.delete();
+        SCARAB_FILE.delete();
+        DUNG_FILE.delete();
+        FIREFLY_FILE.delete();
+        OCSP_RESPONDER_FILE.delete();
+        OCSP_CHECKED_GOOD_FILE.delete();
+        OCSP_CHECKED_REVOKED_FILE.delete();
+        OCSP_CHECKED_UNKNOWN_FILE.delete();
+        BEETLES_FILE.delete();
+        TRUST_FILE.delete();
+        SHORTWINGED_FILE.delete();
+        ROVE_FILE.delete();
+        CA_BLANK_PEM_CRL.delete();
+        ICA_BLANK_PEM_CRL.delete();
+        BLANK_BLANK_PEM_CRL.delete();
+        FIREFLY_REVOKED_PEM_CRL.delete();
+        ICA_REVOKED_PEM_CRL.delete();
+        WORKING_DIR_CA.delete();
+        WORKING_DIR_ICA.delete();
+        WORKING_DIR_CACRL.delete();
+        WORKING_DIR_ICACRL.delete();
     }
 
 
@@ -538,19 +625,8 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testTwoWay() throws Exception {
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
-
-        SecurityDomain securityDomain = SecurityDomain.builder()
-                .addRealm("KeystoreRealm", securityRealm)
-                .build()
-                .setDefaultRealmName("KeystoreRealm")
-                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
-                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
-                .build();
-
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(securityDomain)
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
@@ -563,19 +639,8 @@ public class SSLAuthenticationTest {
 
     @Test
     public void testTwoWayIca() throws Exception {
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ica/jks/shortwinged.keystore"));
-
-        SecurityDomain securityDomain = SecurityDomain.builder()
-                .addRealm("KeystoreRealm", securityRealm)
-                .build()
-                .setDefaultRealmName("KeystoreRealm")
-                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
-                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
-                .build();
-
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(securityDomain)
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ica/jks/shortwinged.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
@@ -586,6 +651,45 @@ public class SSLAuthenticationTest {
         assertEquals("Principal Name", "rove", identity.getPrincipal().getName());
     }
 
+    @Test
+    public void testOcspGood() throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", true);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "ocspcheckedgood", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testClientSideOcsp() throws Exception {
+        SSLContext serverContextGood = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ca/jks/ocsp-checked-good.keystore"))
+                .build().create();
+
+        SSLContext serverContextRevoked = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ca/jks/ocsp-checked-revoked.keystore"))
+                .build().create();
+
+        SSLContext clientContext = new SSLContextBuilder()
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .build())
+                .setClientMode(true)
+                .build().create();
+
+        performConnectionTest(serverContextGood, clientContext, true);
+        performConnectionTest(serverContextRevoked, clientContext, false);
+    }
+
     private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid) throws Exception {
         System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_1.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
@@ -594,6 +698,10 @@ public class SSLAuthenticationTest {
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         SSLContext clientContext = contextConfigurationClient.getSSLContext(URI.create(clientUri), context);
 
+        return performConnectionTest(serverContext, clientContext, expectValid);
+    }
+
+    private SecurityIdentity performConnectionTest(SSLContext serverContext, SSLContext clientContext, boolean expectValid) throws Exception {
         SSLServerSocketFactory sslServerSocketFactory = serverContext.getServerSocketFactory();
 
         SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(1111, 10, InetAddress.getLoopbackAddress());
