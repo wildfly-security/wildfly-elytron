@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
+import static java.lang.System.getSecurityManager;
 import static java.security.AccessController.doPrivileged;
 import static java.security.AccessController.getContext;
 import static org.wildfly.security.auth.client.ElytronMessages.log;
@@ -103,7 +104,6 @@ import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -168,11 +168,11 @@ public final class AuthenticationConfiguration {
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] {
-                    WildFlySecurityManager.isChecking() ?
+                    getSecurityManager() != null ?
                             AccessController.doPrivileged((PrivilegedAction<WildFlyElytronProvider>) () -> new WildFlyElytronProvider()) :
                             new WildFlyElytronProvider()
             },
-            WildFlySecurityManager.isChecking() ?
+            getSecurityManager() !=null ?
                     AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true)) :
                     new ProviderServiceLoaderSupplier(AuthenticationConfiguration.class.getClassLoader(), true),
             INSTALLED_PROVIDERS);

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.realm;
 
+import static java.lang.System.getSecurityManager;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
 import javax.security.auth.Subject;
@@ -51,7 +52,6 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
  * A JAAS based {@link SecurityRealm} implementation.
@@ -102,7 +102,7 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
-        if (WildFlySecurityManager.isChecking()) {
+        if (getSecurityManager() != null) {
             try {
                 return AccessController.doPrivileged((PrivilegedExceptionAction<LoginContext>) () -> new LoginContext(loginConfig, subject, handler));
             } catch (PrivilegedActionException pae) {

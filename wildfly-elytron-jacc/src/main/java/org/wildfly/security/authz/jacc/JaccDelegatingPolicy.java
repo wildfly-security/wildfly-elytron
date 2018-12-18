@@ -21,7 +21,6 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 import javax.security.jacc.EJBMethodPermission;
 import javax.security.jacc.EJBRoleRefPermission;
@@ -43,6 +42,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static java.lang.System.getSecurityManager;
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security.authz.jacc.ElytronMessages.log;
 
@@ -69,7 +69,7 @@ public class JaccDelegatingPolicy extends Policy {
      * calls.
      */
     public JaccDelegatingPolicy() {
-        this(WildFlySecurityManager.isChecking() ? doPrivileged(GET_POLICY_ACTION) : Policy.getPolicy());
+        this(getSecurityManager() != null ? doPrivileged(GET_POLICY_ACTION) : Policy.getPolicy());
     }
 
     /**

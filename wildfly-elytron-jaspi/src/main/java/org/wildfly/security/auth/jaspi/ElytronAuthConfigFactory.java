@@ -16,6 +16,7 @@
 
 package org.wildfly.security.auth.jaspi;
 
+import static java.lang.System.getSecurityManager;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.auth.jaspi._private.ElytronMessages.log;
 
@@ -35,7 +36,6 @@ import javax.security.auth.message.config.AuthConfigFactory;
 import javax.security.auth.message.config.AuthConfigProvider;
 import javax.security.auth.message.config.RegistrationListener;
 
-import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.manager.action.GetContextClassLoaderAction;
 
 /**
@@ -304,14 +304,14 @@ public class ElytronAuthConfigFactory extends AuthConfigFactory {
     }
 
     private static void checkPermission(final SecurityPermission securityPermission) {
-        SecurityManager securityManager = System.getSecurityManager();
+        SecurityManager securityManager = getSecurityManager();
         if (securityManager != null) {
             securityManager.checkPermission(securityPermission);
         }
     }
 
     private static ClassLoader identifyClassLoader() {
-        ClassLoader classLoader = WildFlySecurityManager.isChecking()
+        ClassLoader classLoader = getSecurityManager() != null
                 ? AccessController.doPrivileged(GetContextClassLoaderAction.getInstance())
                 : GetContextClassLoaderAction.getInstance().run();
 

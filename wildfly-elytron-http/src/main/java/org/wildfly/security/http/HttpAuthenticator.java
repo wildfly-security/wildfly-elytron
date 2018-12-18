@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http;
 
+import static java.lang.System.getSecurityManager;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
@@ -48,7 +49,6 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 
 /**
@@ -156,7 +156,7 @@ public class HttpAuthenticator {
     }
 
     private ServerAuthenticationContext createServerAuthenticationContext() {
-        if (WildFlySecurityManager.isChecking()) {
+        if (getSecurityManager() != null) {
             return AccessController.doPrivileged((PrivilegedAction<ServerAuthenticationContext>) () -> securityDomain.createNewAuthenticationContext());
         }
 
