@@ -37,7 +37,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSessionContext;
 import javax.security.cert.X509Certificate;
 
-import org.wildfly.security.ssl.SelectingContext;
+import org.wildfly.security.ssl._private.SelectingContext;
 
 
 /**
