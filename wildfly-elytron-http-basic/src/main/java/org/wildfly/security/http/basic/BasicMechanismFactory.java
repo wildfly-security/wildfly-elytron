@@ -21,7 +21,9 @@ package org.wildfly.security.http.basic;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
 
+import java.security.Provider;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -39,6 +41,12 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class BasicMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
+    public BasicMechanismFactory() {
+    }
+
+    public BasicMechanismFactory(final Provider provider) {    	
+    }
+	
 	/**
 	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
 	 */

@@ -21,6 +21,7 @@ package org.wildfly.security.http.spnego;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 
+import java.security.Provider;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -37,6 +38,12 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class SpnegoMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+
+    public SpnegoMechanismFactory() {
+    }
+
+    public SpnegoMechanismFactory(final Provider provider) {
+    }
 
 	/**
 	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
@@ -55,11 +62,11 @@ public class SpnegoMechanismFactory implements HttpServerAuthenticationMechanism
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
-        
+
         if (SPNEGO_NAME.equals(mechanismName)) {
-        	return new SpnegoAuthenticationMechanism(callbackHandler, properties);        	
+        	return new SpnegoAuthenticationMechanism(callbackHandler, properties);
         }
-        
+
 		return null;
 	}
 
