@@ -21,6 +21,7 @@ package org.wildfly.security.http.form;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 
+import java.security.Provider;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -37,6 +38,12 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class FormMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+
+    public FormMechanismFactory() {
+    }
+
+    public FormMechanismFactory(final Provider provider) {
+    }
 
 	/**
 	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
@@ -55,11 +62,11 @@ public class FormMechanismFactory implements HttpServerAuthenticationMechanismFa
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
-        
+
         if (FORM_NAME.equals(mechanismName)) {
-        	return new FormAuthenticationMechanism(callbackHandler, properties);        	
+        	return new FormAuthenticationMechanism(callbackHandler, properties);
         }
-        
+
 		return null;
 	}
 

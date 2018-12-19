@@ -22,6 +22,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_SKIP_CERTIFICATE_VERIFICATION;
 
+import java.security.Provider;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -38,6 +39,12 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class ClientCertMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+
+    public ClientCertMechanismFactory() {
+    }
+
+    public ClientCertMechanismFactory(final Provider provider) {
+    }
 
 	/**
 	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
@@ -56,11 +63,11 @@ public class ClientCertMechanismFactory implements HttpServerAuthenticationMecha
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
-        
+
         if (CLIENT_CERT_NAME.equals(mechanismName)) {
-        	return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));        	
+        	return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
         }
-        
+
 		return null;
 	}
 
