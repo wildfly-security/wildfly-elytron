@@ -116,7 +116,31 @@
             </resource>
         </resources>
 
-        <plugins>
+        <plugins>        
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0-jboss-1</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <release>8</release>
+                            <buildDirectory>${project.build.directory}</buildDirectory>
+                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>        
+        
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
