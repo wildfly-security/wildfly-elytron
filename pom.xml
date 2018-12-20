@@ -417,6 +417,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-deprecated</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-digest</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1174,6 +1179,7 @@
         <module>wildfly-elytron-http-basic</module>
         <module>wildfly-elytron-http-bearer</module>
         <module>wildfly-elytron-http-cert</module>
+        <module>wildfly-elytron-http-deprecated</module>
         <module>wildfly-elytron-http-digest</module>
         <module>wildfly-elytron-http-form</module>
         <module>wildfly-elytron-http-spnego</module>
