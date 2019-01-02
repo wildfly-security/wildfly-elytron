@@ -50,7 +50,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.WildFlyElytronSaslDigestProvider;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -76,16 +77,24 @@ public class DigestTest extends BaseTestCase {
 
     private static final String QOP_PROPERTY = "javax.security.sasl.qop";
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronSaslDigestProvider.getInstance(),
+            WildFlyElytronPasswordProvider.getInstance()
+    };
+
 
     @BeforeClass
     public static void registerPasswordProvider() {
-        Security.addProvider(provider);
+        for (Provider provider : providers) {
+            Security.insertProviderAt(provider, 1);
+        }
     }
 
     @AfterClass
     public static void removePasswordProvider() {
-        Security.removeProvider(provider.getName());
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
     }
 
     /*

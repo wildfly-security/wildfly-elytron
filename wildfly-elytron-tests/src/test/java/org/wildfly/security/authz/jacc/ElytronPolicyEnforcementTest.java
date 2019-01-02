@@ -20,7 +20,7 @@ package org.wildfly.security.authz.jacc;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
@@ -62,7 +62,7 @@ import static org.junit.Assert.fail;
 // has dependency on wildfly-elytron-realm
 public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase {
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
 
     @BeforeClass
     public static void onBeforeClass() {

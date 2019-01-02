@@ -42,6 +42,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -61,10 +63,13 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslOTPProvider;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.PasswordResetCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -104,6 +109,18 @@ import mockit.integration.junit4.JMockit;
 public class OTPTest extends BaseTestCase {
 
     private long timeout;
+
+    private static final Provider provider = WildFlyElytronSaslOTPProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @After
     public void dispose() throws Exception {

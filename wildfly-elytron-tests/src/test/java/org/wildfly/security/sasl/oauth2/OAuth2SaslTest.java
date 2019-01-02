@@ -21,9 +21,13 @@ package org.wildfly.security.sasl.oauth2;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslOAuth2Provider;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
@@ -52,6 +56,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -68,6 +74,18 @@ import static org.junit.Assert.fail;
 // has dependency on wildfly-elytron-realm-auth-token
 @RunWith(JMockit.class)
 public class OAuth2SaslTest extends BaseTestCase {
+
+    private static final Provider provider = WildFlyElytronSaslOAuth2Provider.getInstance();
+
+    @BeforeClass
+    public static void registerProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void testQueryMechanisms() {

@@ -88,7 +88,21 @@ import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronCredentialStoreProvider;
+import org.wildfly.security.WildFlyElytronKeyProvider;
+import org.wildfly.security.WildFlyElytronKeyStoreProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.WildFlyElytronSaslAnonymousProvider;
+import org.wildfly.security.WildFlyElytronSaslDigestProvider;
+import org.wildfly.security.WildFlyElytronSaslEntityProvider;
+import org.wildfly.security.WildFlyElytronSaslExternalProvider;
+import org.wildfly.security.WildFlyElytronSaslGs2Provider;
+import org.wildfly.security.WildFlyElytronSaslGssapiProvider;
+import org.wildfly.security.WildFlyElytronSaslLocalUserProvider;
+import org.wildfly.security.WildFlyElytronSaslOAuth2Provider;
+import org.wildfly.security.WildFlyElytronSaslOTPProvider;
+import org.wildfly.security.WildFlyElytronSaslPlainProvider;
+import org.wildfly.security.WildFlyElytronSaslScramProvider;
 import org.wildfly.security.asn1.util.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -134,16 +148,34 @@ import org.wildfly.security.x500.X500;
 public final class ElytronXmlParser {
 
     private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
-            () -> new Provider[] {
-                    getSecurityManager() != null ?
-                            AccessController.doPrivileged((PrivilegedAction<WildFlyElytronProvider>) () -> new WildFlyElytronProvider()) :
-                            new WildFlyElytronProvider()
-            },
+            () -> getSecurityManager() != null ?
+                    AccessController.doPrivileged((PrivilegedAction<Provider[]>) () -> getWildFlyElytronProviders()) :
+                    getWildFlyElytronProviders(),
             getSecurityManager() != null ?
                     AccessController.doPrivileged((PrivilegedAction<ProviderServiceLoaderSupplier>) () -> new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true)) :
                     new ProviderServiceLoaderSupplier(ElytronXmlParser.class.getClassLoader(), true));
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(ELYTRON_PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
+
+    private static Provider[] getWildFlyElytronProviders() {
+        return new Provider[] {
+                WildFlyElytronPasswordProvider.getInstance(),
+                WildFlyElytronCredentialStoreProvider.getInstance(),
+                WildFlyElytronKeyProvider.getInstance(),
+                WildFlyElytronKeyStoreProvider.getInstance(),
+                WildFlyElytronSaslAnonymousProvider.getInstance(),
+                WildFlyElytronSaslDigestProvider.getInstance(),
+                WildFlyElytronSaslEntityProvider.getInstance(),
+                WildFlyElytronSaslExternalProvider.getInstance(),
+                WildFlyElytronSaslGs2Provider.getInstance(),
+                WildFlyElytronSaslGssapiProvider.getInstance(),
+                WildFlyElytronSaslLocalUserProvider.getInstance(),
+                WildFlyElytronSaslOAuth2Provider.getInstance(),
+                WildFlyElytronSaslOTPProvider.getInstance(),
+                WildFlyElytronSaslPlainProvider.getInstance(),
+                WildFlyElytronSaslScramProvider.getInstance()
+        };
+    }
 
     static final Map<String, Version> KNOWN_NAMESPACES;
 

@@ -23,7 +23,7 @@ import org.junit.runners.model.Statement;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.apacheds.LdapService;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
@@ -68,7 +68,7 @@ public class DirContextFactoryRule implements TestRule {
     static final String SERVER_CREDENTIAL = "serverPassword";
     static final int LDAP_PORT = 11390;
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String LDAP_DIRECTORY_LOCATION = "./target/test-classes/ldap";
     private static final String LDIF_LOCATION = "/elytron-x509-verification.ldif";

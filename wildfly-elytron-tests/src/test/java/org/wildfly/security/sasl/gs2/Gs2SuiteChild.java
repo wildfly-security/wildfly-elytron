@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,9 +61,11 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.security.WildFlyElytronSaslGs2Provider;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -97,6 +101,18 @@ public class Gs2SuiteChild extends BaseTestCase {
     private static Subject serverSubject;
     private SaslServer saslServer;
     private SaslClient saslClient;
+
+    private static final Provider provider = WildFlyElytronSaslGs2Provider.getInstance();
+
+    @BeforeClass
+    public static void registerProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @BeforeClass
     public static void init() throws LoginException {

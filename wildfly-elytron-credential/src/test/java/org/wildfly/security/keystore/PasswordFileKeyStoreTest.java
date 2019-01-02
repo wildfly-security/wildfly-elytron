@@ -32,7 +32,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronKeyStoreProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
@@ -44,16 +45,23 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
  */
 public class PasswordFileKeyStoreTest {
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider[] providers = new Provider[] {
+            WildFlyElytronPasswordProvider.getInstance(),
+            WildFlyElytronKeyStoreProvider.getInstance()
+    };
 
     @BeforeClass
     public static void register() {
-        Security.addProvider(provider);
+        for (Provider provider : providers) {
+            Security.addProvider(provider);
+        }
     }
 
     @AfterClass
     public static void remove() {
-        Security.removeProvider(provider.getName());
+        for (Provider provider : providers) {
+            Security.removeProvider(provider.getName());
+        }
     }
 
     @Test

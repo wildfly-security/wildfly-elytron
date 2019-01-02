@@ -29,7 +29,9 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.GeneralSecurityException;
@@ -59,10 +61,13 @@ import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.WildFlyElytronSaslEntityProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -88,10 +93,21 @@ public class EntityTest extends BaseTestCase {
     private static final String CLIENT_KEYSTORE_ALIAS = "testclient1";
     private static final String KEYSTORE_TYPE = "JKS";
     private static final char[] KEYSTORE_PASSWORD = "password".toCharArray();
+    private static final Provider provider = WildFlyElytronSaslEntityProvider.getInstance();
     private KeyStore serverKeyStore = null;
     private KeyStore clientKeyStore = null;
     private KeyStore serverTrustStore = null;
     private KeyStore clientTrustStore = null;
+
+    @BeforeClass
+    public static void registerProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     private void createClientKeyStoreServerTrustStore(KeyStore clientKeyStore, KeyStore serverTrustStore) throws Exception {
         // Generate testclient2.example.com self signed certificate

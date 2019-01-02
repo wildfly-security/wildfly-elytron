@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
@@ -69,7 +69,7 @@ public class SecurityRealmIdentityCacheTest {
 
     @Before
     public void onBefore() {
-        Security.addProvider(new WildFlyElytronProvider());
+        Security.addProvider(WildFlyElytronPasswordProvider.getInstance());
     }
 
     @Test

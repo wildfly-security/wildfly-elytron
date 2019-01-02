@@ -19,11 +19,17 @@
 package org.wildfly.security.http;
 
 import mockit.integration.junit4.JMockit;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
+import java.security.Provider;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +46,18 @@ import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
  */
 @RunWith(JMockit.class)
 public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
+
+    private static final Provider provider = WildFlyElytronHttpDigestProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void testRfc2617() throws Exception {

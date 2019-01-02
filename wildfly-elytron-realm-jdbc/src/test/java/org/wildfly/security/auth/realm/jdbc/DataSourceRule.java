@@ -21,7 +21,7 @@ import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.WildFlyElytronPasswordProvider;
 
 import javax.sql.DataSource;
 import java.security.Provider;
@@ -32,7 +32,7 @@ import java.security.Security;
  */
 public class DataSourceRule implements TestRule {
 
-    private static final Provider provider = new WildFlyElytronProvider();
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
     private JDBCDataSource dataSource;
 
     @Override
