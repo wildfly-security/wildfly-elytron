@@ -529,6 +529,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-sasl-auth-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1205,6 +1210,7 @@
         <module>wildfly-elytron-realm-token</module>
         <module>wildfly-elytron-sasl</module>
         <module>wildfly-elytron-sasl-anonymous</module>
+        <module>wildfly-elytron-sasl-auth-util</module>
         <module>wildfly-elytron-sasl-deprecated</module>
         <module>wildfly-elytron-sasl-digest</module>
         <module>wildfly-elytron-sasl-entity</module>

@@ -16,22 +16,21 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.util;
+package org.wildfly.security.sasl.auth.util;
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.sasl.util.AbstractDelegatingSaslServer;
 
 /**
  * A delegating {@link SaslServer} which establishes a specific {@link AuthenticationContext} for the duration
  * of the authentication process.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.sasl.auth.util.AuthenticationContextSaslServer} instead.
  */
-@Deprecated
 public final class AuthenticationContextSaslServer extends AbstractDelegatingSaslServer {
 
     private AuthenticationContext context;

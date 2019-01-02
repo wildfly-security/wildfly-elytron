@@ -16,34 +16,31 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.util;
+package org.wildfly.security.sasl.auth.util;
 
+import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
 
-import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.sasl.util.AbstractDelegatingSaslClient;
 
 /**
- * A delegating {@link SaslServer} which establishes a specific {@link AuthenticationContext} for the duration
+ * A delegating {@link SaslClient} which establishes a specific {@link AuthenticationContext} for the duration
  * of the authentication process.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.sasl.auth.util.AuthenticationContextSaslServer} instead.
  */
-@Deprecated
-public final class AuthenticationContextSaslServer extends AbstractDelegatingSaslServer {
+public final class AuthenticationContextSaslClient extends AbstractDelegatingSaslClient {
 
     private AuthenticationContext context;
-    private ExceptionUnaryOperator<byte[], SaslException> responseAction = delegate::evaluateResponse;
 
     /**
      * Construct a new instance.
      *
-     * @param delegate the delegate SASL server
+     * @param delegate the delegate SASL client
      * @param context the authentication context to use
      */
-    public AuthenticationContextSaslServer(final SaslServer delegate, final AuthenticationContext context) {
+    public AuthenticationContextSaslClient(final SaslClient delegate, final AuthenticationContext context) {
         super(delegate);
         this.context = context;
     }
@@ -51,15 +48,15 @@ public final class AuthenticationContextSaslServer extends AbstractDelegatingSas
     /**
      * Construct a new instance.
      *
-     * @param delegate the delegate SASL server
+     * @param delegate the delegate SASL client
      */
-    public AuthenticationContextSaslServer(final SaslServer delegate) {
+    public AuthenticationContextSaslClient(final SaslClient delegate) {
         super(delegate);
         context = AuthenticationContext.captureCurrent();
     }
 
-    public byte[] evaluateResponse(final byte[] response) throws SaslException {
-        return context.runExFunction(responseAction, response);
+    public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
+        return context.runExBiFunction(SaslClient::evaluateChallenge, delegate, challenge);
     }
 
     public void dispose() throws SaslException {
@@ -67,7 +64,6 @@ public final class AuthenticationContextSaslServer extends AbstractDelegatingSas
             super.dispose();
         } finally {
             context = null;
-            responseAction = null;
         }
     }
 }

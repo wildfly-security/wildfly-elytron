@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.util;
+package org.wildfly.security.sasl.auth.util;
 
 import java.util.Map;
 
@@ -27,15 +27,14 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.math.HashMath;
 import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.sasl.util.AbstractDelegatingSaslClientFactory;
 
 /**
  * A delegating {@link SaslClientFactory} which establishes a specific {@link AuthenticationContext} for the duration
  * of the authentication process.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.sasl.auth.util.AuthenticationContextSaslClientFactory} instead.
  */
-@Deprecated
 public final class AuthenticationContextSaslClientFactory extends AbstractDelegatingSaslClientFactory {
     private final AuthenticationContext context;
 
