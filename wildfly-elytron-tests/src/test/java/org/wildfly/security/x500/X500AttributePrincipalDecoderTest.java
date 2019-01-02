@@ -24,6 +24,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
 import org.wildfly.security.auth.server.PrincipalDecoder;
+import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
  * Tests for the X500AttributePrincipalDecoder.

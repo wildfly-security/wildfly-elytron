@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.x500;
+package org.wildfly.security.x500.principal;
 
 import java.security.Principal;
 import java.util.Arrays;
@@ -25,16 +25,13 @@ import java.util.stream.Collectors;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.server.PrincipalDecoder;
-import org.wildfly.security.x500.ElytronMessages;
 import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**
  * A principal decoder which decodes an attribute from an X.500 principal.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.x500.principal.X500AttributePrincipalDecoder} instead
  */
-@Deprecated
 public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
     private static final String[] NO_REQUIRED_OIDS = new String[0];
 

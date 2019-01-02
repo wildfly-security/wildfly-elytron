@@ -643,6 +643,11 @@
                 <artifactId>wildfly-elytron-x500-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-x500-principal</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!--
                  External Modules
@@ -1225,6 +1230,7 @@
         <module>wildfly-elytron-x500-cert-acme</module>
         <module>wildfly-elytron-x500-cert-util</module>
         <module>wildfly-elytron-x500-deprecated</module>
+        <module>wildfly-elytron-x500-principal</module>
         <module>wildfly-elytron-tests-common</module>
         <module>wildfly-elytron-tests</module>
         <module>wildfly-elytron</module>

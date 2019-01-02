@@ -80,10 +80,10 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
-import org.wildfly.security.x500.X500AttributePrincipalDecoder;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
+import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 
 /**
  * Simple test case to test authentication occurring during the establishment of an {@link SSLSession}.
