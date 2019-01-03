@@ -60,13 +60,13 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         this.saslServerFactory = saslServerFactory;
     }
 
-    SaslServer doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<SaslServerFactory> factoryTransformation) throws SaslException {
+    protected SaslServer doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<SaslServerFactory> factoryTransformation) throws SaslException {
         SaslServer server = new SecurityIdentitySaslServerFactory(factoryTransformation.apply(getFactory())).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
         log.tracef("Created SaslServer [%s] for mechanism [%s]", server, name);
         return server;
     }
 
-    Collection<String> getAllSupportedMechNames() {
+    protected Collection<String> getAllSupportedMechNames() {
         final String[] names = saslServerFactory.getMechanismNames(Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true"));
         // todo: filter down based on SASL selection criteria
         if (names == null || names.length == 0) {
@@ -78,23 +78,23 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
-    Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
+    protected Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
         return SaslMechanismInformation.getSupportedServerEvidenceTypes(mechName);
     }
 
-    Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
+    protected Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
         return SaslMechanismInformation.getSupportedServerEvidenceAlgorithms(mechName, evidenceType);
     }
 
-    Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
+    protected Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
         return SaslMechanismInformation.getSupportedServerCredentialTypes(mechName);
     }
 
-    Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
+    protected Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
         return SaslMechanismInformation.getSupportedServerCredentialAlgorithms(mechName, credentialType);
     }
 
-    boolean usesCredentials(final String mechName) {
+    protected boolean usesCredentials(final String mechName) {
         return SaslMechanismInformation.needsServerCredentials(mechName);
     }
 

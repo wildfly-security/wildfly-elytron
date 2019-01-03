@@ -55,19 +55,19 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         super(securityDomain, mechanismConfigurationSelector, factory);
     }
 
-    HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
+    protected HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
         HttpServerAuthenticationMechanism server = new SecurityIdentityServerMechanismFactory(factoryTransformation.apply(getFactory())).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
         log.tracef("Created HttpServerAuthenticationMechanism [%s] for mechanism [%s]", server, name);
         return server;
     }
 
-    Collection<String> getAllSupportedMechNames() {
+    protected Collection<String> getAllSupportedMechNames() {
         return asList(getFactory().getMechanismNames(Collections.emptyMap()));
     }
 
     // TODO: at some point these should no longer be hard-coded
 
-    Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
+    protected Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME: {
                 return singleton(PasswordGuessEvidence.class);
@@ -78,11 +78,11 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
-    Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
+    protected Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
         return emptySet();
     }
 
-    Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
+    protected Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME:
             case "DIGEST": {
@@ -94,7 +94,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
-    Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
+    protected Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME: {
                 return singleton("*");
@@ -108,7 +108,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
-    boolean usesCredentials(final String mechName) {
+    protected boolean usesCredentials(final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME:
             case "DIGEST": {

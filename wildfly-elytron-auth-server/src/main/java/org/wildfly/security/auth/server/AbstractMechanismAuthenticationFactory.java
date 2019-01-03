@@ -30,13 +30,13 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
 
-abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception> implements MechanismAuthenticationFactory<M, F, E> {
+public abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception> implements MechanismAuthenticationFactory<M, F, E> {
 
     private final SecurityDomain securityDomain;
     private final MechanismConfigurationSelector mechanismConfigurationSelector;
     private final F factory;
 
-    AbstractMechanismAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final F factory) {
+    protected AbstractMechanismAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final F factory) {
         this.securityDomain = securityDomain;
         this.mechanismConfigurationSelector = mechanismConfigurationSelector;
         this.factory = factory;
@@ -54,15 +54,15 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
         return doCreate(name, new ServerAuthenticationContext(securityDomain, mechanismConfigurationSelector).createCallbackHandler(), factoryTransformation);
     }
 
-    abstract M doCreate(String name, CallbackHandler callbackHandler, final UnaryOperator<F> factoryTransformation) throws E;
+    protected abstract M doCreate(String name, CallbackHandler callbackHandler, final UnaryOperator<F> factoryTransformation) throws E;
 
-    abstract Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(String mechName);
+    protected abstract Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(String mechName);
 
-    abstract Collection<String> getSupportedEvidenceAlgorithmNames(Class<? extends AlgorithmEvidence> evidenceType, String mechName);
+    protected abstract Collection<String> getSupportedEvidenceAlgorithmNames(Class<? extends AlgorithmEvidence> evidenceType, String mechName);
 
-    abstract Collection<Class<? extends Credential>> getSupportedCredentialTypes(String mechName);
+    protected abstract Collection<Class<? extends Credential>> getSupportedCredentialTypes(String mechName);
 
-    abstract Collection<String> getSupportedCredentialAlgorithmNames(Class<? extends AlgorithmCredential> credentialType, String mechName);
+    protected abstract Collection<String> getSupportedCredentialAlgorithmNames(Class<? extends AlgorithmCredential> credentialType, String mechName);
 
     /**
      * Determine whether the given mechanism name needs credentials from a realm in order to authenticate.
@@ -70,7 +70,7 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
      * @param mechName the mechanism name
      * @return {@code true} if the mechanism requires realm credential support, {@code false} if it does not
      */
-    abstract boolean usesCredentials(String mechName);
+    protected abstract boolean usesCredentials(String mechName);
 
     public Collection<String> getMechanismNames() {
         final Collection<String> names = new LinkedHashSet<>();
@@ -119,14 +119,14 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
         return names;
     }
 
-    abstract Collection<String> getAllSupportedMechNames();
+    protected abstract Collection<String> getAllSupportedMechNames();
 
-    abstract static class Builder<M, F, E extends Exception> implements MechanismAuthenticationFactory.Builder<M, F, E> {
+    protected abstract static class Builder<M, F, E extends Exception> implements MechanismAuthenticationFactory.Builder<M, F, E> {
         private SecurityDomain securityDomain;
         private MechanismConfigurationSelector mechanismConfigurationSelector;
         private F factory;
 
-        Builder() {
+        protected Builder() {
         }
 
         public Builder<M, F, E> setSecurityDomain(final SecurityDomain securityDomain) {
@@ -146,15 +146,15 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
             return this;
         }
 
-        SecurityDomain getSecurityDomain() {
+        public SecurityDomain getSecurityDomain() {
             return securityDomain;
         }
 
-        MechanismConfigurationSelector getMechanismConfigurationSelector() {
+        public MechanismConfigurationSelector getMechanismConfigurationSelector() {
             return mechanismConfigurationSelector;
         }
 
-        F getFactory() {
+        public F getFactory() {
             return factory;
         }
     }
