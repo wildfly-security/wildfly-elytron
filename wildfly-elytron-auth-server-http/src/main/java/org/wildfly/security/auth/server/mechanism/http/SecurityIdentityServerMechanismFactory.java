@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.server;
+package org.wildfly.security.auth.server.http;
 
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
@@ -30,6 +30,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -41,9 +42,7 @@ import org.wildfly.security.http.HttpServerRequest;
  * the callback handler is returned instead.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.http.SecurityIdentityServerMechanismFactory} instead
  */
-@Deprecated
 class SecurityIdentityServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory delegate;

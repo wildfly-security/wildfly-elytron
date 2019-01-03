@@ -29,16 +29,16 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
+    <artifactId>wildfly-elytron-auth-server-http</artifactId>
 
-    <name>WildFly Elytron - Auth Server Deprecated </name>
-    <description>WildFly Security Auth Server Deprecated</description>
+    <name>WildFly Elytron - Auth Server HTTP</name>
+    <description>WildFly Security Auth Server HTTP</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>    
+        </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-server</artifactId>
@@ -50,18 +50,6 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server-http</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-sasl</artifactId>
         </dependency>
                 
         <dependency>
