@@ -167,6 +167,7 @@ public abstract class AcmeClientSpi {
     private static final String USER_AGENT_STRING = "Elytron ACME Client/" + Version.getVersion();
 
     private static final JsonObject EMPTY_PAYLOAD = Json.createObjectBuilder().build();
+    private static final String EMPTY_STRING = "";
 
     /**
      * Get the resource URLs needed to perform operations from the ACME server.
@@ -456,7 +457,7 @@ public abstract class AcmeClientSpi {
         List<AcmeChallenge> selectedChallenges = new ArrayList<>(authorizationUrls.size());
         try {
             for (String authorizationUrl : authorizationUrls) {
-                connection = sendGetRequest(authorizationUrl, HttpURLConnection.HTTP_OK, JSON_CONTENT_TYPE);
+                connection = sendPostAsGetRequest(account, staging, authorizationUrl, JSON_CONTENT_TYPE, HttpURLConnection.HTTP_OK);
                 jsonResponse = getJsonResponse(connection);
                 AcmeChallenge selectedChallenge = respondToChallenges(account, staging, jsonResponse);
                 if (selectedChallenge != null) {
@@ -466,7 +467,7 @@ public abstract class AcmeClientSpi {
 
             // poll the authorization resources until server has finished validating the challenge responses
             for (String authorizationUrl : authorizationUrls) {
-                jsonResponse = pollResourceUntilFinalized(authorizationUrl);
+                jsonResponse = pollResourceUntilFinalized(account, staging, authorizationUrl);
                 if (! jsonResponse.getString(STATUS).equals(VALID)) {
                     throw acme.challengeResponseFailedValidationByAcmeServer();
                 }
@@ -508,7 +509,7 @@ public abstract class AcmeClientSpi {
             final String orderUrl = getLocation(connection);
 
             // poll the order resource until the server has made the certificate chain available
-            jsonResponse = pollResourceUntilFinalized(orderUrl);
+            jsonResponse = pollResourceUntilFinalized(account, staging, orderUrl);
             if (! jsonResponse.getString(STATUS).equals(VALID)) {
                 throw acme.noCertificateWillBeIssuedByAcmeServer();
             }
@@ -518,7 +519,7 @@ public abstract class AcmeClientSpi {
             if (certificateUrl == null) {
                 throw acme.noCertificateUrlProvidedByAcmeServer();
             }
-            connection = sendGetRequest(certificateUrl, HttpURLConnection.HTTP_OK, PEM_CERTIFICATE_CHAIN_CONTENT_TYPE);
+            connection = sendPostAsGetRequest(account, staging, certificateUrl, PEM_CERTIFICATE_CHAIN_CONTENT_TYPE, HttpURLConnection.HTTP_OK);
             X509Certificate[] certificateChain = getPemCertificateChain(connection);
             PrivateKey privateKey = selfSignedX509CertificateAndSigningKey.getSigningKey();
             return new X509CertificateChainAndSigningKey(certificateChain, privateKey);
@@ -559,7 +560,7 @@ public abstract class AcmeClientSpi {
         JsonObject jsonResponse = getJsonResponse(connection);
         AcmeChallenge selectedChallenge = respondToChallenges(account, staging, jsonResponse);
         try {
-            jsonResponse = pollResourceUntilFinalized(authorizationUrl);
+            jsonResponse = pollResourceUntilFinalized(account, staging, authorizationUrl);
             if (! jsonResponse.getString(STATUS).equals(VALID)) {
                 throw acme.challengeResponseFailedValidationByAcmeServer();
             }
@@ -685,8 +686,7 @@ public abstract class AcmeClientSpi {
 
     String[] queryAccountContactUrls(AcmeAccount account, boolean staging) throws AcmeException {
         Assert.checkNotNullParam("account", account);
-        HttpURLConnection connection = sendPostRequestWithRetries(account, staging, getAccountUrl(account, staging), false,
-                getEncodedJson(EMPTY_PAYLOAD), HttpURLConnection.HTTP_OK);
+        HttpURLConnection connection = sendPostAsGetRequest(account, staging, getAccountUrl(account, staging), null, HttpURLConnection.HTTP_OK);
         JsonObject jsonResponse = getJsonResponse(connection);
         JsonArray contactsArray = jsonResponse.getJsonArray(CONTACT);
         if (contactsArray != null && contactsArray.size() > 0) {
@@ -701,8 +701,7 @@ public abstract class AcmeClientSpi {
 
     String queryAccountStatus(AcmeAccount account, boolean staging) throws AcmeException {
         Assert.checkNotNullParam("account", account);
-        HttpURLConnection connection = sendPostRequestWithRetries(account, staging, getAccountUrl(account, staging), false,
-                getEncodedJson(EMPTY_PAYLOAD), HttpURLConnection.HTTP_OK);
+        HttpURLConnection connection = sendPostAsGetRequest(account, staging, getAccountUrl(account, staging), null, HttpURLConnection.HTTP_OK);
         JsonObject jsonResponse = getJsonResponse(connection);
         return jsonResponse.getString(STATUS);
     }
@@ -741,8 +740,21 @@ public abstract class AcmeClientSpi {
         }
     }
 
+    private HttpURLConnection sendPostAsGetRequest(AcmeAccount account, boolean staging, String resourceUrl,
+                                                   String expectedContentType, int... expectedResponseCodes) throws AcmeException {
+        // payload of the JWS must be a zero-length octet string
+        return sendPostRequestWithRetries(account, staging, resourceUrl, false, EMPTY_STRING,
+                expectedContentType, expectedResponseCodes);
+    }
+
     private HttpURLConnection sendPostRequestWithRetries(AcmeAccount account, boolean staging, String resourceUrl, boolean useJwk, String encodedPayload,
                                                          int... expectedResponseCodes) throws AcmeException {
+        return sendPostRequestWithRetries(account, staging, resourceUrl, useJwk, encodedPayload, null, expectedResponseCodes);
+    }
+
+
+    private HttpURLConnection sendPostRequestWithRetries(AcmeAccount account, boolean staging, String resourceUrl, boolean useJwk, String encodedPayload,
+                                                         String expectedContentType, int... expectedResponseCodes) throws AcmeException {
         try {
             final URL url = new URL(resourceUrl);
             HttpURLConnection connection;
@@ -767,6 +779,12 @@ public abstract class AcmeClientSpi {
 
                 for (int expectedResponseCode : expectedResponseCodes) {
                     if (expectedResponseCode == responseCode) {
+                        if (expectedContentType != null) {
+                            String contentType = connection.getContentType();
+                            if (! checkContentType(connection, expectedContentType)) {
+                                throw acme.unexpectedContentTypeFromAcmeServer(contentType);
+                            }
+                        }
                         return connection;
                     }
                 }
@@ -782,12 +800,12 @@ public abstract class AcmeClientSpi {
         }
     }
 
-    private JsonObject pollResourceUntilFinalized(String resourceUrl) throws AcmeException {
+    private JsonObject pollResourceUntilFinalized(AcmeAccount account, boolean staging, String resourceUrl) throws AcmeException {
         boolean statusFinalized;
         JsonObject jsonResponse;
         do {
             statusFinalized = true;
-            HttpURLConnection connection = sendGetRequest(resourceUrl, HttpURLConnection.HTTP_OK, JSON_CONTENT_TYPE);
+            HttpURLConnection connection = sendPostAsGetRequest(account, staging, resourceUrl, JSON_CONTENT_TYPE, HttpURLConnection.HTTP_OK);
             jsonResponse = getJsonResponse(connection);
             String status = jsonResponse.getString(STATUS);
             if (! status.equals(VALID) && ! status.equals(INVALID)) {
