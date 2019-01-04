@@ -29,10 +29,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-x500-deprecated</artifactId>
+    <artifactId>wildfly-elytron-x500-principal</artifactId>
 
-    <name>WildFly Elytron - X.500 Deprecated</name>
-    <description>WildFly Security X.500 Deprecated</description>
+    <name>WildFly Elytron - X.500 Principals</name>
+    <description>WildFly Security X.500 Principals</description>
 
     <dependencies>
         <dependency>
@@ -42,10 +42,6 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-x500</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500-principal</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
