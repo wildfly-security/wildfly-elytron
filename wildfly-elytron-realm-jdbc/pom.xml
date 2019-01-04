@@ -72,6 +72,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
+        </dependency>
+
         <!--Test scope-->
         <dependency>
             <groupId>junit</groupId>
