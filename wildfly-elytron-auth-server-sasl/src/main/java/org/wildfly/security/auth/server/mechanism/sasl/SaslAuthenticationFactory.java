@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.server;
+package org.wildfly.security.auth.server.sasl;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,6 +29,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.security.auth.server.AbstractMechanismAuthenticationFactory;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
@@ -42,15 +45,13 @@ import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
-import static org.wildfly.security.auth.server.ElytronMessages.log;
+import static org.wildfly.security.auth.server.sasl.ElytronMessages.log;
 
 /**
  * A SASL server factory configuration.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory} instead
  */
-@Deprecated
 public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslServerFactory, SaslException> {
     private final SaslServerFactory saslServerFactory;
 

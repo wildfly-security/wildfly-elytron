@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.server;
+package org.wildfly.security.auth.server.http;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import static org.wildfly.security.auth.server.ElytronMessages.log;
+import static org.wildfly.security.auth.server.http.ElytronMessages.log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +28,9 @@ import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.auth.server.AbstractMechanismAuthenticationFactory;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -46,9 +49,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  * {@link HttpServerAuthenticationMechanismFactory} for obtaining configured mechanisms.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- * @deprecated Use {@link org.wildfly.security.auth.server.http.HttpAuthenticationFactory} instead
  */
-@Deprecated
 public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {
 
     HttpAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final HttpServerAuthenticationMechanismFactory factory) {
