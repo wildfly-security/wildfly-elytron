@@ -25,8 +25,8 @@ import java.util.Collections;
 import org.ietf.jgss.GSSCredential;
 import org.junit.Test;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory;
 
 /**
  * Testing of obtaining a {@link GSSCredential} from the {@link GSSCredentialSecurityFactory}.

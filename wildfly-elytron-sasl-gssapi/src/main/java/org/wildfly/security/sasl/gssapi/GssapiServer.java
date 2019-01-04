@@ -18,8 +18,8 @@
 
 package org.wildfly.security.sasl.gssapi;
 
-import static org.wildfly.security.auth.util.GSSCredentialSecurityFactory.KERBEROS_V5;
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslGssapi;
+import static org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory.KERBEROS_V5;
 import static org.wildfly.security.sasl.WildFlySasl.GSSAPI_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.sasl.util.SaslMechanismInformation.Names.GSSAPI;
 import java.io.IOException;

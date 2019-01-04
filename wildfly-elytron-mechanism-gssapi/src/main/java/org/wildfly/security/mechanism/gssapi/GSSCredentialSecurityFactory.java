@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.util;
+package org.wildfly.security.mechanism.gssapi;
 
 import static java.security.AccessController.doPrivileged;
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.auth.util.ElytronMessages.log;
+import static org.wildfly.security.mechanism.gssapi.ElytronMessages.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,9 +58,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  * A {@link SecurityFactory} implementation for obtaining a {@link GSSCredential}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- * @deprecated Use {@link org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory} instead
  */
-@Deprecated
 public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKerberosCredential> {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
