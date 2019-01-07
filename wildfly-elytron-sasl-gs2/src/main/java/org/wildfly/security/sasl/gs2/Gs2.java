@@ -28,7 +28,8 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.codec.Base32Alphabet;
 import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
+import org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory;
+
 
 /**
  * Constants and utility methods for the GS2 mechanism family.

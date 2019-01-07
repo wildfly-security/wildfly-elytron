@@ -29,19 +29,19 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl-gs2</artifactId>
+    <artifactId>wildfly-elytron-mechanism-gssapi</artifactId>
 
-    <name>WildFly Elytron - SASL GS2</name>
-    <description>WildFly Security GS2 SASL Implementation</description>
+    <name>WildFly Elytron - Mechanism GSSAPI</name>
+    <description>WildFly Security Mechanism GSSAPI</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-asn1</artifactId>
-        </dependency>
+            <artifactId>wildfly-elytron-auth-server</artifactId>
+        </dependency>    
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
+            <artifactId>wildfly-elytron-base</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -49,31 +49,30 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism-gssapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-sasl</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-security-manager</artifactId>
-        </dependency>        
-    
+        </dependency>
+        
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
-
+        
         <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+        </dependency>        
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
+               
     </dependencies>
 
 </project>
