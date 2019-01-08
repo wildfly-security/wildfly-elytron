@@ -37,7 +37,7 @@ public final class WildFlyElytronKeyProvider extends WildFlyElytronBaseProvider 
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronKeyProvider() {
+    public WildFlyElytronKeyProvider() {
         super("WildFlyElytronKeyProvider", "1.0", "WildFly Elytron Key Provider");
         putService(new Service(this, "SecretKeyFactory", "1.2.840.113549.1.7.1", "org.wildfly.security.key.RawSecretKeyFactory", Collections.emptyList(), Collections.emptyMap()));
 

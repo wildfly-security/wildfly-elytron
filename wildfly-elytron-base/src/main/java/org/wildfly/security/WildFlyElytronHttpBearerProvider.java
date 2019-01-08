@@ -36,7 +36,7 @@ public final class WildFlyElytronHttpBearerProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronHttpBearerProvider() {
+    public WildFlyElytronHttpBearerProvider() {
         super("WildFlyElytronHttpBearerProvider", "1.0", "WildFly Elytron HTTP Bearer Provider");
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BEARER_TOKEN", "org.wildfly.security.http.bearer.BearerTokenAuthenticationMechanism", emptyList, emptyMap));
     }

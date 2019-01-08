@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslLocalUserProvider extends WildFlyElytronBas
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslLocalUserProvider() {
+    public WildFlyElytronSaslLocalUserProvider() {
         super("WildFlyElytronSaslLocalUserProvider", "1.0", "WildFly Elytron SASL Local User Provider");
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "JBOSS-LOCAL-USER",  "org.wildfly.security.sasl.localuser.LocalUserServerFactory", emptyList, emptyMap));
         putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "JBOSS-LOCAL-USER",  "org.wildfly.security.sasl.localuser.LocalUserClientFactory", emptyList, emptyMap));

@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslScramProvider extends WildFlyElytronBasePro
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslScramProvider() {
+    public WildFlyElytronSaslScramProvider() {
         super("WildFlyElytronSaslScramProvider", "1.0", "WildFly Elytron SASL SCRAM Provider");
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-512-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-384-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));

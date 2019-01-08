@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslPlainProvider extends WildFlyElytronBasePro
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslPlainProvider() {
+    public WildFlyElytronSaslPlainProvider() {
         super("WildFlyElytronSaslPlainProvider", "1.0", "WildFly Elytron SASL Plain Provider");
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "PLAIN",  "org.wildfly.security.sasl.plain.PlainSaslServerFactory", emptyList, emptyMap));
         putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "PLAIN",  "org.wildfly.security.sasl.plain.PlainSaslClientFactory", emptyList, emptyMap));

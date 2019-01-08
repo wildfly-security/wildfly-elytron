@@ -36,7 +36,7 @@ public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBa
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronHttpClientCertProvider() {
+    public WildFlyElytronHttpClientCertProvider() {
         super("WildFlyElytronHttpClientCertProvider", "1.0", "WildFly Elytron HTTP CLIENT_CERT Provider");
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "CLIENT_CERT", "org.wildfly.security.http.cert.ClientCertMechanismFactory", emptyList, emptyMap));
     }

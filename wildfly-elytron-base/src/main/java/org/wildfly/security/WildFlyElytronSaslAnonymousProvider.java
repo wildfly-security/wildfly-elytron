@@ -37,7 +37,7 @@ public final class WildFlyElytronSaslAnonymousProvider extends WildFlyElytronBas
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslAnonymousProvider() {
+    public WildFlyElytronSaslAnonymousProvider() {
         super("WildFlyElytronSaslAnonymousProvider", "1.0", "WildFly Elytron SASL Anonymous Provider");
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "ANONYMOUS",  "org.wildfly.security.sasl.anonymous.AnonymousServerFactory", emptyList, emptyMap));
         putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "ANONYMOUS",  "org.wildfly.security.sasl.anonymous.AnonymousClientFactory", emptyList, emptyMap));

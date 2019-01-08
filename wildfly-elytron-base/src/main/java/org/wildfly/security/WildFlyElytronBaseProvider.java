@@ -37,7 +37,6 @@ import org.kohsuke.MetaInfServices;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MetaInfServices(Provider.class)
 public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
 
     protected static final String HTTP_SERVER_FACTORY_TYPE = "HttpServerAuthenticationMechanismFactory";

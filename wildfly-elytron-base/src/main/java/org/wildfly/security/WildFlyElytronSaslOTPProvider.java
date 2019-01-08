@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslOTPProvider extends WildFlyElytronBaseProvi
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslOTPProvider() {
+    public WildFlyElytronSaslOTPProvider() {
         super("WildFlyElytronSaslOTPProvider", "1.0", "WildFly Elytron SASL OTP Provider");
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "OTP",  "org.wildfly.security.sasl.otp.OTPSaslServerFactory", emptyList, emptyMap));
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "OTP",  "org.wildfly.security.sasl.otp.OTPSaslClientFactory", emptyList, emptyMap));

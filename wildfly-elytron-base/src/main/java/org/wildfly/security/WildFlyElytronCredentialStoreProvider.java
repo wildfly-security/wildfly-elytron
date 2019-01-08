@@ -36,7 +36,7 @@ public final class WildFlyElytronCredentialStoreProvider extends WildFlyElytronB
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronCredentialStoreProvider() {
+    public WildFlyElytronCredentialStoreProvider() {
         super("WildFlyElytronCredentialStoreProvider", "1.0", "WildFly Elytron CredentialStore Provider");
         putService(new Service(this, "CredentialStore", "KeyStoreCredentialStore", "org.wildfly.security.credential.store.impl.KeyStoreCredentialStore", emptyList, emptyMap));
         putService(new Service(this, "CredentialStore", "VaultCredentialStore", "org.wildfly.security.credential.store.impl.VaultCredentialStore", emptyList, emptyMap));
