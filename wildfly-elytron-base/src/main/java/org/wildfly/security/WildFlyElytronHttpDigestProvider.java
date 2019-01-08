@@ -37,7 +37,7 @@ public final class WildFlyElytronHttpDigestProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronHttpDigestProvider() {
+    public WildFlyElytronHttpDigestProvider() {
         super("WildFlyElytronHttpDigestProvider", "1.0", "WildFly Elytron HTTP DIGEST Provider");
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap));

@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslEntityProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslEntityProvider() {
+    public WildFlyElytronSaslEntityProvider() {
         super("WildFlyElytronSaslEntityProvider", "1.0", "WildFly Elytron SASL Entity Provider");
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-U-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-M-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));

@@ -37,7 +37,7 @@ public final class WildFlyElytronPasswordProvider extends WildFlyElytronBaseProv
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronPasswordProvider() {
+    public WildFlyElytronPasswordProvider() {
         super("WildFlyElytronPasswordProvider", "1.0", "WildFly Elytron Password Provider");
         putPasswordImplementations();
         putAlgorithmParametersImplementations();

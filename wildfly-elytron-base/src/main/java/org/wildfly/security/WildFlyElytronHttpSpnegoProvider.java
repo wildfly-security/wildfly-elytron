@@ -36,7 +36,7 @@ public final class WildFlyElytronHttpSpnegoProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronHttpSpnegoProvider() {
+    public WildFlyElytronHttpSpnegoProvider() {
         super("WildFlyElytronHttpSpnegoProvider", "1.0", "WildFly Elytron HTTP SPNEGO Provider");
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap));
     }

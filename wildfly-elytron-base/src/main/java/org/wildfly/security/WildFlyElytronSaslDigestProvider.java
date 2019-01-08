@@ -37,7 +37,7 @@ public final class WildFlyElytronSaslDigestProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslDigestProvider() {
+    public WildFlyElytronSaslDigestProvider() {
         super("WildFlyElytronSaslDigestProvider", "1.0", "WildFly Elytron SASL Digest Provider");
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));

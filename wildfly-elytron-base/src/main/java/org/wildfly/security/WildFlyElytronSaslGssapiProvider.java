@@ -36,7 +36,7 @@ public final class WildFlyElytronSaslGssapiProvider extends WildFlyElytronBasePr
     /**
      * Construct a new instance.
      */
-    private WildFlyElytronSaslGssapiProvider() {
+    public WildFlyElytronSaslGssapiProvider() {
         super("WildFlyElytronSaslGssapiProvider", "1.0", "WildFly Elytron SASL GSSAPI Provider");
         putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "GSSAPI",  "org.wildfly.security.sasl.gssapi.GssapiServerFactory", emptyList, emptyMap));
         putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "GSSAPI",  "org.wildfly.security.sasl.gssapi.GssapiClientFactory", emptyList, emptyMap));
