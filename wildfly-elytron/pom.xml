@@ -75,47 +75,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
-
-            <!-- TODO - Restore XML Validation 
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>xml-maven-plugin</artifactId>
-                <configuration>
-                    <validationSets>
-                        <validationSet>
-                            <dir>src/test/resources/</dir>
-                            <includes>
-                                <include>**/*-v1_0.xml</include>
-                            </includes>
-                            <systemId>src/test/resources/schema/wrapped-elytron-1_0.xsd</systemId>
-                        </validationSet>
-                        <validationSet>
-                            <dir>src/test/resources/</dir>
-                            <includes>
-                                <include>**/*-v1_1.xml</include>
-                            </includes>
-                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_1.xsd</systemId>
-                        </validationSet>
-                        <validationSet>
-                            <dir>src/test/resources/</dir>
-                            <includes>
-                                <include>**/*-v1_2.xml</include>
-                            </includes>
-                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_2.xsd</systemId>
-                        </validationSet>
-                    </validationSets>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>validate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
