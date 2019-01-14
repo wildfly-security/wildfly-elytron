@@ -76,10 +76,10 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
 
-            <!-- TODO - Restore XML Validation 
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>xml-maven-plugin</artifactId>
+                <version>${version.org.codehaus.mojo.xml.plugin}</version>
                 <configuration>
                     <validationSets>
                         <validationSet>
@@ -97,7 +97,7 @@
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_1.xsd</systemId>
                         </validationSet>
                         <validationSet>
-                            <dir>src/test/resources/</dir>
+                            <dir>${project.parent.basedir}/wildfly-elytron-client/src/test/resources/</dir>
                             <includes>
                                 <include>**/*-v1_2.xml</include>
                             </includes>
@@ -114,7 +114,6 @@
                     </execution>
                 </executions>
             </plugin>
-            -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -144,6 +143,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -758,6 +758,7 @@
                 <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
                 <!-- 2.20.x doesn't start on JDK10-->
                 <version.surefire.plugin>2.19.1</version.surefire.plugin>
+                <version.org.codehaus.mojo.xml.plugin>1.0.2</version.org.codehaus.mojo.xml.plugin>
             </properties>
         </profile>
         <profile>
