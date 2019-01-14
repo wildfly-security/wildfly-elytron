@@ -97,7 +97,7 @@
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_1.xsd</systemId>
                         </validationSet>
                         <validationSet>
-                            <dir>${project.parent.basedir}/wildfly-elytron-client/src/test/resources/</dir>
+                            <dir>${project.parent.basedir}/auth/client/src/test/resources/</dir>
                             <includes>
                                 <include>**/*-v1_2.xml</include>
                             </includes>
