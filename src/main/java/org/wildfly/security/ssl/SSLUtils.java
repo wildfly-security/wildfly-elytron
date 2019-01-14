@@ -26,8 +26,9 @@ import java.security.Provider.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -94,7 +95,7 @@ public final class SSLUtils {
      * @return the SSL context factory
      */
     public static SecurityFactory<SSLContext> createSslContextFactory(ProtocolSelector protocolSelector, Supplier<Provider[]> providerSupplier, String providerName) {
-        final Map<String, List<Provider>> preferredProviderByAlgorithm = new IdentityHashMap<>();
+        final Map<String, List<Provider>> preferredProviderByAlgorithm = new HashMap<>();
 
         // compile all the providers that support SSLContext.
 
@@ -108,11 +109,11 @@ public final class SSLUtils {
                 for (Provider.Service service : services) {
                     if (SERVICE_TYPE.equals(service.getType())) {
                         String protocolName = service.getAlgorithm();
-                        List<Provider> providerList = preferredProviderByAlgorithm.computeIfAbsent(protocolName, s -> new ArrayList<>());
+                        List<Provider> providerList = preferredProviderByAlgorithm.computeIfAbsent(protocolName.toUpperCase(Locale.ENGLISH), s -> new ArrayList<>());
                         providerList.add(provider);
 
                         if (log.isTraceEnabled()) {
-                            log.tracef("Provider %s was added for algorithm %s", provider, protocolName);
+                            log.tracef("Provider %s was added for algorithm %s", provider, protocolName.toUpperCase(Locale.ENGLISH));
                         }
                     }
                 }
@@ -127,7 +128,7 @@ public final class SSLUtils {
         if (supportedProtocols.length > 0) {
             return () -> {
                 for (String protocol : supportedProtocols) {
-                    List<Provider> providerList = preferredProviderByAlgorithm.getOrDefault(protocol, Collections.emptyList());
+                    List<Provider> providerList = preferredProviderByAlgorithm.getOrDefault(protocol.toUpperCase(Locale.ENGLISH), Collections.emptyList());
                     if (log.isTraceEnabled()) {
                         if (providerList.isEmpty()) {
                             log.tracef("No providers are available for protocol %s", protocol);
