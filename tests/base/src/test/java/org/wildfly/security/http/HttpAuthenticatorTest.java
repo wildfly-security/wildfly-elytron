@@ -44,6 +44,7 @@ import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
+import static org.wildfly.security.http.HttpConstants.OK;
 
 /**
  * Test of using multiple HTTP authentication mechanisms.
@@ -55,6 +56,20 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
     private TestingHttpExchangeSpi exchangeSpi = new TestingHttpExchangeSpi();
     private HttpAuthenticator authenticator;
+    private String digestHeader = "Digest username=\"Mufasa\",\n" +
+            "       realm=\"http-auth@example.org\",\n" +
+            "       uri=\"/dir/index.html\",\n" +
+            "       algorithm=MD5,\n" +
+            "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n" +
+            "       nc=00000001,\n" +
+            "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n" +
+            "       qop=auth,\n" +
+            "       response=\"8ca523f5e9506fed4657c9700eebdbec\",\n" +
+            "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
+
+    private CallbackHandler callbackHandler() {
+        return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
+    }
 
     private static final Provider provider = WildFlyElytronHttpDigestProvider.getInstance();
 
@@ -75,7 +90,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         digestProps.put(CONFIG_REALM, "http-auth@example.org");
         digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
 
-        CallbackHandler callbackHandler = getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
+        CallbackHandler callbackHandler = callbackHandler();
 
         final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
         mechanisms.add(digestFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler));
@@ -96,25 +111,17 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         exchangeSpi.setStatusCode(0);
     }
 
-    @Test
-    public void testDigestMd5() throws Exception {
-        testOneOfThree();
-
-        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(
-                "Digest username=\"Mufasa\",\n" +
-                        "       realm=\"http-auth@example.org\",\n" +
-                        "       uri=\"/dir/index.html\",\n" +
-                        "       algorithm=MD5,\n" +
-                        "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n" +
-                        "       nc=00000001,\n" +
-                        "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n" +
-                        "       qop=auth,\n" +
-                        "       response=\"8ca523f5e9506fed4657c9700eebdbec\",\n" +
-                        "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\""
-        ));
+    private void authenticateWithDigestMD5() throws HttpAuthenticationException {
+        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(digestHeader));
         Assert.assertTrue("Digest-MD5 successful", authenticator.authenticate());
         Assert.assertEquals(0, exchangeSpi.getStatusCode());
         Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
+    }
+
+    @Test
+    public void testDigestMd5() throws Exception {
+        testOneOfThree();
+        authenticateWithDigestMD5();
     }
 
     @Test
@@ -148,6 +155,67 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         Assert.assertTrue("Digest-SHA-256 successful", authenticator.authenticate());
         Assert.assertEquals(0, exchangeSpi.getStatusCode());
         Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
+    }
+
+    public List<HttpServerAuthenticationMechanism> prepareBasicSilentMechanisms() throws Exception {
+        mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");
+
+        final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
+        Map<String, Object> silentProp = new HashMap<>();
+        silentProp.put("silent", "true");
+        mechanisms.add(mechanismFactory.createAuthenticationMechanism(BASIC_NAME, silentProp, callbackHandler()));
+        authenticator = HttpAuthenticator.builder()
+                .setMechanismSupplier(() -> mechanisms)
+                .setHttpExchangeSpi(exchangeSpi)
+                .setRequired(true)
+                .build();
+
+        return mechanisms;
+    }
+
+    public void prepareSilentBasicWithDigestMechanisms() throws Exception{
+        List<HttpServerAuthenticationMechanism> mechanisms = prepareBasicSilentMechanisms();
+        Map<String, Object> digestProps = new HashMap<>();
+        digestProps.put(CONFIG_REALM, "http-auth@example.org");
+        digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
+
+        mechanisms.add(mechanismFactory.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler()));
+        authenticator = HttpAuthenticator.builder()
+                .setMechanismSupplier(() -> mechanisms)
+                .setHttpExchangeSpi(exchangeSpi)
+                .setRequired(true)
+                .build();
+    }
+
+    @Test
+    public void testBasicSilent() throws Exception {
+        prepareBasicSilentMechanisms();
+
+        Assert.assertFalse(authenticator.authenticate());
+        List<String> responses = exchangeSpi.getResponseAuthenticateHeaders();
+        assertEquals("Basic authentication with silent mode does not send challenge if AUTHORIZATION header is not present", 0, responses.size());
+        Assert.assertEquals(OK, exchangeSpi.getStatusCode());
+
+        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(
+                "Basic "    // empty credentials
+        ));
+        Assert.assertFalse(authenticator.authenticate());
+        responses = exchangeSpi.getResponseAuthenticateHeaders();
+        assertEquals("Basic authentication with silent mode sends challenge when AUTHORIZATION header is present", 1, responses.size());
+        Assert.assertEquals(UNAUTHORIZED, exchangeSpi.getStatusCode());
+
+        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(
+                "Basic TXVmYXNhOkNpcmNsZSBvZiBMaWZl"
+        ));
+        Assert.assertTrue("Basic auth successful", authenticator.authenticate());
+        Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
+    }
+
+    @Test
+    public void testBasicSilentWithDigest() throws Exception{
+        // authenticate using only DIGEST mechanism
+        prepareSilentBasicWithDigestMechanisms();
+        authenticateWithDigestMD5();
     }
 
 }

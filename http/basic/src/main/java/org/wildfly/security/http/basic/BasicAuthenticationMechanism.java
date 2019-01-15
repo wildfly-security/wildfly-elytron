@@ -53,7 +53,7 @@ import org.wildfly.security.http.impl.UsernamePasswordAuthenticationMechanism;
  */
 final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
 
-    // TODO - Undertow also has a silent mode for HTTP authentication.
+    static final String SILENT = "silent";
 
     private static final String CHALLENGE_PREFIX = "Basic ";
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
@@ -62,17 +62,26 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
     private final String configuredRealm;
 
     /**
+     * If silent is true then this mechanism will only take effect if there is an Authorization header.
+     *
+     * This allows you to combine basic auth with form auth, so human users will use form based auth, but allows
+     * programmatic clients to login using basic auth.
+     */
+    private final boolean silent;
+
+    /**
      * Construct a new instance of {@code BasicAuthenticationMechanism}.
      *
      * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
      * @param configuredRealm a configured realm name from the configuration.
      * @param includeCharset should the charset be included in the challenge.
      */
-    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String configuredRealm, final boolean includeCharset) {
+    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String configuredRealm, final boolean silent, final boolean includeCharset) {
         super(checkNotNullParam("callbackHandler", callbackHandler));
 
         this.includeCharset = includeCharset;
         this.configuredRealm = configuredRealm;
+        this.silent = silent;
     }
 
     /**
@@ -134,7 +143,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                     int colonPos = indexOf(decodedValue, ':');
                     if (colonPos <= 0) {
                         // We flag as failed so the browser is re-challenged - sending an error the browser believes it's input was valid.
-                        request.authenticationFailed(httpBasic.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(displayRealmName, response));
+                        request.authenticationFailed(httpBasic.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(request, displayRealmName, response));
                         return;
                     }
 
@@ -161,7 +170,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                                 httpBasic.debugf("User %s authorization failed.", username);
                                 fail();
 
-                                request.authenticationFailed(httpBasic.authorizationFailed(username), response -> prepareResponse(displayRealmName, response));
+                                request.authenticationFailed(httpBasic.authorizationFailed(username), response -> prepareResponse(request, displayRealmName, response));
                                 return;
                             }
 
@@ -169,7 +178,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                             httpBasic.debugf("User %s authentication failed.", username);
                             fail();
 
-                            request.authenticationFailed(httpBasic.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
+                            request.authenticationFailed(httpBasic.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(request, displayRealmName, response));
                             return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {
@@ -184,10 +193,18 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
             }
         }
 
-        request.noAuthenticationInProgress(response -> prepareResponse(displayRealmName, response));
+        request.noAuthenticationInProgress(response -> prepareResponse(request, displayRealmName, response));
     }
 
-    private void prepareResponse(String realmName, HttpServerResponse response) {
+    private void prepareResponse(final HttpServerRequest request, String realmName, HttpServerResponse response) {
+        if (silent) {
+            //if silent we only send a challenge if the request contained auth headers
+            //otherwise we assume another method will send the challenge
+            String authHeader = request.getFirstRequestHeaderValue(AUTHORIZATION);
+            if(authHeader == null) {
+                return;     //CHALLENGE NOT SENT
+            }
+        }
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(realmName).append("\"");
         if (includeCharset) {

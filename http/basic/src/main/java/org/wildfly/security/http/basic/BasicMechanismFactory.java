@@ -21,7 +21,7 @@ package org.wildfly.security.http.basic;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.http.basic.BasicAuthenticationMechanism.SILENT;
 
 import java.security.Provider;
 import java.util.Map;
@@ -44,9 +44,9 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
     public BasicMechanismFactory() {
     }
 
-    public BasicMechanismFactory(final Provider provider) {    	
+    public BasicMechanismFactory(final Provider provider) {
     }
-	
+
 	/**
 	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
 	 */
@@ -64,11 +64,11 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
-        
+
         if (BASIC_NAME.equals(mechanismName)) {
-        	return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);        	
+            return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), Boolean.parseBoolean((String) properties.get(SILENT)), false);
         }
-        
+
 		return null;
 	}
 
