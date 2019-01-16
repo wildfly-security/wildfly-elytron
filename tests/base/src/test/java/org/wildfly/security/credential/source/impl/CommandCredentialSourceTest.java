@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import static org.junit.Assert.*;
 
