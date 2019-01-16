@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSManager;
@@ -24,6 +24,7 @@ import org.ietf.jgss.Oid;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.GSSKerberosCredential;
+import org.wildfly.security.credential.source.CredentialSource;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -32,7 +33,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.spec.AlgorithmParameterSpec;
 
-import static org.wildfly.security.credential.source.ElytronMessages.log;
+import static org.wildfly.security.credential.source.impl.ElytronMessages.log;
 
 /**
  * A credential source which acquires a credential from local kerberos ticket cache.
@@ -40,11 +41,10 @@ import static org.wildfly.security.credential.source.ElytronMessages.log;
  *
  * Successful obtaining from cache requires set system property {@code javax.security.auth.useSubjectCredsOnly} to {@code false}.
  *
- * @deprecated Kerberos based authentication mechanism obtains credential himself, see {@link org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource} to use with the new wildfly-elytron-credential-source-impl module
+ * @deprecated Kerberos based authentication mechanism obtains credential himself
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-@Deprecated
 public class LocalKerberosCredentialSource implements CredentialSource {
 
     private final Oid[] mechanismOids;

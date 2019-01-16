@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -27,19 +27,18 @@ import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 
-import static org.wildfly.security.credential.source.ElytronMessages.log;
+import static org.wildfly.security.credential.source.impl.ElytronMessages.log;
 
 /**
  * A credential source which is backed by an entry in a credential store.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.CredentialStoreCredentialSource} instead
  */
-@Deprecated
 public final class CredentialStoreCredentialSource implements CredentialSource {
     private final SecurityFactory<CredentialStore> credentialStoreFactory;
     private final String alias;

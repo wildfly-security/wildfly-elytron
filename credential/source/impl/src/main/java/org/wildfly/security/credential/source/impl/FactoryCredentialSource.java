@@ -16,12 +16,13 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.source.CredentialSource;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -31,9 +32,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * A credential source which is backed by a credential security factory.
  *
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.FactoryCredentialSource} instead
  */
-@Deprecated
 public class FactoryCredentialSource implements CredentialSource {
     private SecurityFactory<? extends Credential> credentialFactory;
 
