@@ -61,7 +61,6 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-@Deprecated
 public class OAuth2CredentialSource implements CredentialSource {
 
     /**
