@@ -233,7 +233,7 @@ public interface HttpServerRequest extends HttpServerScopes {
     /**
      * Returns the request input stream.
      *
-     * @return the input stream
+     * @return the input stream or {@code null} if not supported.
      */
     InputStream getInputStream();
 

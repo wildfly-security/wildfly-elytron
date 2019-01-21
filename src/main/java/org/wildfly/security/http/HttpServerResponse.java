@@ -53,7 +53,7 @@ public interface HttpServerResponse {
     /**
      * Returns the output stream.
      *
-     * @return the output stream
+     * @return the output stream or {@code null} if not supported.
      */
     OutputStream getOutputStream();
 
