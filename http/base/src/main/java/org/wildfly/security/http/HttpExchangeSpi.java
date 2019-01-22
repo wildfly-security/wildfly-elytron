@@ -219,7 +219,7 @@ public interface HttpExchangeSpi extends HttpServerScopes {
     /**
      * Returns the request input stream.
      *
-     * @return the input stream
+     * @return the input stream or {@code null} if not supported.
      */
     InputStream getRequestInputStream();
 
@@ -240,7 +240,7 @@ public interface HttpExchangeSpi extends HttpServerScopes {
     /**
      * Returns the response output stream.
      *
-     * @return the output stream
+     * @return the output stream or {@code null} if not supported.
      */
     OutputStream getResponseOutputStream();
 
