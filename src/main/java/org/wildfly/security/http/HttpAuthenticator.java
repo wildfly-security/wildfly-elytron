@@ -46,9 +46,11 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 
 /**
@@ -130,6 +132,10 @@ public class HttpAuthenticator {
         try (ServerAuthenticationContext authenticationContext = createServerAuthenticationContext()) {
             authenticationContext.setAuthenticationName(username);
             if (authenticationContext.verifyEvidence(evidence)) {
+                if (evidence instanceof PasswordGuessEvidence) {
+                    authenticationContext.addPrivateCredential(
+                            new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, ((PasswordGuessEvidence) evidence).getGuess())));
+                }
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
