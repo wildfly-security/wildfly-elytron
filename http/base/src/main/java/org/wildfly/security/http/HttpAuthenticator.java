@@ -20,10 +20,10 @@ package org.wildfly.security.http;
 
 import static java.lang.System.getSecurityManager;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.http._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
+import static org.wildfly.security.http._private.ElytronMessages.log;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,9 +47,10 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * A HTTP based authenticator responsible for performing the authentication of the current request based on the policies of the
@@ -130,6 +131,10 @@ public class HttpAuthenticator {
         try (ServerAuthenticationContext authenticationContext = createServerAuthenticationContext()) {
             authenticationContext.setAuthenticationName(username);
             if (authenticationContext.verifyEvidence(evidence)) {
+                if (evidence instanceof PasswordGuessEvidence) {
+                    authenticationContext.addPrivateCredential(
+                            new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, ((PasswordGuessEvidence) evidence).getGuess())));
+                }
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
