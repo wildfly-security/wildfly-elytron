@@ -103,7 +103,7 @@ import org.wildfly.security.WildFlyElytronSaslOAuth2Provider;
 import org.wildfly.security.WildFlyElytronSaslOTPProvider;
 import org.wildfly.security.WildFlyElytronSaslPlainProvider;
 import org.wildfly.security.WildFlyElytronSaslScramProvider;
-import org.wildfly.security.asn1.util.OidsUtil;
+import org.wildfly.security.asn1.OidsUtil;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1.util;
+package org.wildfly.security.asn1;
 
 import org.junit.Assert;
 import org.junit.Test;

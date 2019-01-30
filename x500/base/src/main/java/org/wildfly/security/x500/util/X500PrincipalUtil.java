@@ -19,11 +19,11 @@
 package org.wildfly.security.x500.util;
 
 import static org.wildfly.security.x500._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.util.ASN1.BMP_STRING_TYPE;
-import static org.wildfly.security.asn1.util.ASN1.IA5_STRING_TYPE;
-import static org.wildfly.security.asn1.util.ASN1.PRINTABLE_STRING_TYPE;
-import static org.wildfly.security.asn1.util.ASN1.UNIVERSAL_STRING_TYPE;
-import static org.wildfly.security.asn1.util.ASN1.UTF8_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.BMP_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.IA5_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.PRINTABLE_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.UNIVERSAL_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.UTF8_STRING_TYPE;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

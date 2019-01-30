@@ -16,10 +16,10 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1.util;
+package org.wildfly.security.asn1;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.asn1._private.ElytronMessages;
+import org.wildfly.security.asn1.ElytronMessages;
 
 import java.io.InputStream;
 import java.util.HashMap;

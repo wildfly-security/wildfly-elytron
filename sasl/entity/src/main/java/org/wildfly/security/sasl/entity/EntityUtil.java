@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.wildfly.security.asn1.util.ASN1.*;
+import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslEntity;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.x500.GeneralName.*;
