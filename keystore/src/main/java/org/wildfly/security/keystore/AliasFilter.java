@@ -18,7 +18,7 @@
 package org.wildfly.security.keystore;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.credential._private.ElytronMessages.log;
+import static org.wildfly.security.keystore.ElytronMessages.log;
 
 import java.security.KeyStore;
 import java.util.function.Function;
@@ -85,10 +85,7 @@ public abstract class AliasFilter implements Predicate<String> {
             }
 
         };
-    }
-
-
-    public abstract boolean test(String t);
+    }    public abstract boolean test(String t);
 
     /**
      * Create an AliasFilter based on a filterString in one of the following formats: -

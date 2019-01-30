@@ -18,7 +18,7 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security.credential._private.ElytronMessages.log;
+import static org.wildfly.security.keystore.ElytronMessages.log;
 
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.util.LdapUtil;

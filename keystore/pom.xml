@@ -25,12 +25,11 @@
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
         <version>1.9.0.Alpha1-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-credential</artifactId>
+    <artifactId>wildfly-elytron-keystore</artifactId>
 
     <name>WildFly Elytron - Credential</name>
     <description>WildFly Security Credential API</description>
@@ -38,19 +37,7 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-asn1</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-keystore</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500</artifactId>
         </dependency>
 
         <dependency>
@@ -74,10 +61,14 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--Test scope-->
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-digest</artifactId>
+            <artifactId>wildfly-elytron-asn1</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -93,11 +84,6 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcmail-jdk15on</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jmockit</groupId>
-            <artifactId>jmockit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

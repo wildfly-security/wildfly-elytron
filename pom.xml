@@ -484,6 +484,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-keystore</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-mechanism</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1244,6 +1250,7 @@
         <module>http/util</module>
         <module>jacc</module>
         <module>json-util</module>
+        <module>keystore</module>
         <module>manager/base</module>
         <module>manager/action</module>
         <module>mechanism/base</module>

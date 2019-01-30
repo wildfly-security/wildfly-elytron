@@ -38,10 +38,7 @@ class ModifyTrackingKeyStoreSpi extends DelegatingKeyStoreSpi {
 
     private final KeyStore delegate;
     private volatile boolean initialised = false;
-    private volatile boolean modified = false;
-
-
-    ModifyTrackingKeyStoreSpi(KeyStore delegate) {
+    private volatile boolean modified = false;    ModifyTrackingKeyStoreSpi(KeyStore delegate) {
         this.delegate = delegate;
     }
 
