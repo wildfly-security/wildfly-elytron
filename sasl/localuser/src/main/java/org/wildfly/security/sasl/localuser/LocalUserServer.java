@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,7 +41,7 @@ import javax.security.sasl.SaslServer;
 import org.wildfly.common.Assert;
 import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslLocal;
@@ -120,7 +122,11 @@ final class LocalUserServer extends AbstractSaslServer implements SaslServer {
     }
 
     private static String getProperty(final String name) {
-        return WildFlySecurityManager.getPropertyPrivileged(name, null);
+        return doPrivileged(new ReadPropertyAction(name, null));
+    }
+
+    private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+        return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 
     private Random getRandom() {
