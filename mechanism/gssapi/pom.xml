@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-security-manager</artifactId>
+            <artifactId>wildfly-elytron-security-manager-action</artifactId>
         </dependency>
         
         <dependency>
