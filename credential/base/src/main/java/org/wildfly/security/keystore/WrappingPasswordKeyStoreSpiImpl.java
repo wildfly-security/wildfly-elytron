@@ -30,8 +30,6 @@ import java.security.cert.Certificate;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.wildfly.security.credential._private.ElytronMessages;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 

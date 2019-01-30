@@ -175,7 +175,4 @@ abstract class DelegatingKeyStoreSpi extends KeyStoreSpi {
         if (exceptionType.isInstance(cause)) {
             throw exceptionType.cast(cause);
         }
-    }
-
-
-}
+    }}

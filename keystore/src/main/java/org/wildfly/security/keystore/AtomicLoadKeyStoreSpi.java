@@ -18,9 +18,7 @@
 
 package org.wildfly.security.keystore;
 
-import org.wildfly.security.credential._private.ElytronMessages;
-
-import static org.wildfly.security.credential._private.ElytronMessages.log;
+import static org.wildfly.security.keystore.ElytronMessages.log;
 
 import java.io.IOException;
 import java.io.InputStream;
