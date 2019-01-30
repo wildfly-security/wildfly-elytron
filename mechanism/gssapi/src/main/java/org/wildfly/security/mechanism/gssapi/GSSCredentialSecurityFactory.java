@@ -17,13 +17,13 @@
  */
 package org.wildfly.security.mechanism.gssapi;
 
-import static java.security.AccessController.doPrivileged;
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.mechanism.gssapi.ElytronMessages.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -52,7 +52,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.credential.GSSKerberosCredential;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 
 /**
  * A {@link SecurityFactory} implementation for obtaining a {@link GSSCredential}.
@@ -323,15 +323,14 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             final Subject subject = new Subject();
 
             try {
-                final ClassLoader oldCl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
-                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(Builder.class.getClassLoader());
+                final ClassLoader oldCl = doPrivileged(new SetContextClassLoaderAction(Builder.class.getClassLoader()));
                 final LoginContext lc;
                 try {
                     lc = new LoginContext("KDC", subject, (c) -> {
                         throw new FastUnsupportedCallbackException(c[0]);
                     }, configuration);
                 } finally {
-                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldCl);
+                    doPrivileged(new SetContextClassLoaderAction(oldCl));
                 }
                 log.tracef("Logging in using LoginContext and subject [%s]", subject);
                 lc.login();
@@ -379,6 +378,10 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 }
                 throw new GeneralSecurityException(e.getCause());
             }
+        }
+
+        private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+            return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
         }
 
         private void checkKeyTab() throws IOException {
