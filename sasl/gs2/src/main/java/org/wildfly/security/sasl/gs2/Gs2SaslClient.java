@@ -22,6 +22,8 @@ import static org.wildfly.security.asn1.util.ASN1.APPLICATION_SPECIFIC_MASK;
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslGs2;
 import static org.wildfly.security.sasl.gs2.Gs2Util.TOKEN_HEADER_TAG;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -40,7 +42,8 @@ import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
+import org.wildfly.security.manager.action.SetContextClassLoaderFromClassAction;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -259,12 +262,15 @@ final class Gs2SaslClient extends AbstractSaslClient {
     }
 
     private static byte[] initSecContext(final GSSContext gssContext, final byte[] inputBuf, final int offset, final int len) throws GSSException {
-        final ClassLoader old = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(Gs2SaslClient.class);
+        final ClassLoader old = doPrivileged(new SetContextClassLoaderFromClassAction(Gs2SaslClient.class));
         try {
             return gssContext.initSecContext(inputBuf, offset, len);
         } finally {
-            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
+            doPrivileged(new SetContextClassLoaderAction(old));
         }
+    }
 
+    private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+        return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 }
