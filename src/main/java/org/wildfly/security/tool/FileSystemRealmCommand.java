@@ -119,7 +119,7 @@ class FileSystemRealmCommand extends Command {
         option.setArgName(NAME_ARG);
         options.addOption(option);
 
-        option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineDebug()).build();
+        option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
         options.addOption(option);
 
         option = Option.builder().longOpt(DEBUG_PARAM).desc(ElytronToolMessages.msg.cmdLineDebug()).build();
@@ -569,7 +569,7 @@ class FileSystemRealmCommand extends Command {
                 }
                 ArrayList<String> userAttributes = usersMap.get(user);
                 if (userAttributes == null) {
-                    String message = String.format("Roles were found for user %1$s, but user %1%s was not defined.", user);
+                    String message = String.format("Roles were found for user %1$s, but user %1$s was not defined.", user);
                     warningHandler(message);
                     ArrayList<String> attributesWithEmptyPassword = new ArrayList<>();
                     attributesWithEmptyPassword.add(null);
@@ -601,6 +601,8 @@ class FileSystemRealmCommand extends Command {
                         identity.setCredentials(Collections.singleton(new PasswordCredential(digestPassword)));
                     }
                     identity.dispose();
+                } catch (NullPointerException e) {
+                    warningHandler(String.format("Could not read realm name from the users file"));
                 } catch (Exception e) {
                     warningHandler(String.format("Could not create realm for user %s due to error: ", key) + e.getMessage());
                 }
