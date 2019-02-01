@@ -43,6 +43,7 @@ import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 /**
@@ -70,7 +71,13 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
             ABSOLUTE_BASE_DIR + "output-4",
             RELATIVE_BASE_DIR + "output-5",
             ABSOLUTE_BASE_DIR + "output-6",
-            ABSOLUTE_BASE_DIR + "output-7"
+            ABSOLUTE_BASE_DIR + "output-7",
+            ABSOLUTE_BASE_DIR + "wrong-output-1",
+            ABSOLUTE_BASE_DIR + "wrong-output-2",
+            ABSOLUTE_BASE_DIR + "wrong-output-3",
+            ABSOLUTE_BASE_DIR + "wrong-output-4",
+            ABSOLUTE_BASE_DIR + "wrong-output-5",
+            ABSOLUTE_BASE_DIR + "wrong-output-6"
     };
     private static final String[] OUTPUT_LOCATIONS_BULK = {
             RELATIVE_BASE_DIR + "output-1-bulk",
@@ -78,7 +85,12 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
             RELATIVE_BASE_DIR + "output-3-bulk",
             RELATIVE_BASE_DIR + "output-4-bulk",
             ABSOLUTE_BASE_DIR + "output-5-bulk",
-            ABSOLUTE_BASE_DIR + "output-6-bulk"
+            ABSOLUTE_BASE_DIR + "output-6-bulk",
+            ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-1",
+            ABSOLUTE_BASE_DIR + "output-1-bulk-wrong-2",
+            ABSOLUTE_BASE_DIR + "output-2-bulk-wrong-2",
+            ABSOLUTE_BASE_DIR + "output-3-bulk-wrong-2",
+            ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-2"
     };
 
     private static final String ELYTRON_PASSWORD = "testPasswordElytron";
@@ -183,9 +195,13 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
             assertTrue(existingIdentity.exists());
 
             if (name.equals("elytron")) {
-                assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(ELYTRON_PASSWORD.toCharArray())));
+                if (existingIdentity.getCredential(PasswordCredential.class) != null) {
+                    assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(ELYTRON_PASSWORD.toCharArray())));
+                }
             } else if (name.equals("javajoe")) {
-                assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(JAVAJOE_PASSWORD.toCharArray())));
+                if (existingIdentity.getCredential(PasswordCredential.class) != null) {
+                    assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(JAVAJOE_PASSWORD.toCharArray())));
+                }
             }
 
             AuthorizationIdentity authorizationIdentity = existingIdentity.getAuthorizationIdentity();
@@ -451,7 +467,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public void testMalformedUsersFileSilent() throws Exception {
         String usersFile = ABSOLUTE_BASE_DIR_USERS + "wrong-users-1.properties";
         String rolesFile = ABSOLUTE_BASE_DIR_ROLES + "roles-1.properties";
-        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-2";
 
         String[] args = new String[]{"--silent", "-u", usersFile, "-r", rolesFile, "-o", outputLocation};
         String output = executeCommandAndCheckStatusAndGetOutput(args, EXPECTED_WARNING);
@@ -462,7 +478,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public void testNoRealmUsersFile() throws Exception {
         String usersFile = ABSOLUTE_BASE_DIR_USERS + "wrong-users-2.properties";
         String rolesFile = ABSOLUTE_BASE_DIR_ROLES + "roles-1.properties";
-        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-3";
 
         String[] args = new String[]{"-u", usersFile, "-r", rolesFile, "-o", outputLocation};
         executeCommandAndCheckStatus(args, EXPECTED_WARNING);
@@ -472,7 +488,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public void testNoRealmUsersFileSilent() throws Exception {
         String usersFile = ABSOLUTE_BASE_DIR_USERS + "wrong-users-2.properties";
         String rolesFile = ABSOLUTE_BASE_DIR_ROLES + "roles-1.properties";
-        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-4";
 
         String[] args = new String[]{"--silent", "-u", usersFile, "-r", rolesFile, "-o", outputLocation};
         String output = executeCommandAndCheckStatusAndGetOutput(args, EXPECTED_WARNING);
@@ -483,7 +499,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public void testWrongUserInRolesFile() throws Exception {
         String usersFile = ABSOLUTE_BASE_DIR_USERS + "users-1.properties";
         String rolesFile = ABSOLUTE_BASE_DIR_ROLES + "wrong-roles-1.properties";
-        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-5";
 
         String[] args = new String[]{"-u", usersFile, "-r", rolesFile, "-o", outputLocation};
         executeCommandAndCheckStatus(args, EXPECTED_WARNING);
@@ -493,7 +509,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     public void testWrongUserInRolesFileSilent() throws Exception {
         String usersFile = ABSOLUTE_BASE_DIR_USERS + "users-1.properties";
         String rolesFile = ABSOLUTE_BASE_DIR_ROLES + "wrong-roles-1.properties";
-        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        String outputLocation = ABSOLUTE_BASE_DIR + "wrong-output-6";
 
         String[] args = new String[]{"--silent", "-u", usersFile, "-r", rolesFile, "-o", outputLocation};
         String output = executeCommandAndCheckStatusAndGetOutput(args, EXPECTED_WARNING);
@@ -564,10 +580,10 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
         userMap4.put(JAVAJOE_USER, JAVAJOE_MULTIPLE_ROLES);
 
         Map<String, Map<String, ArrayList<String>>> userMaps = new HashMap<>(1);
-        userMaps.put(OUTPUT_LOCATIONS_BULK[3], userMap4);
+        userMaps.put(OUTPUT_LOCATIONS_BULK[6], userMap4);
 
         Map<String, String[]> optionalParamsMap = new HashMap<>();
-        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[3], new String[]{"nameOfFileSystemRealm4", "nameOfSecurityDomain4"});
+        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[6], new String[]{"nameOfFileSystemRealm6", "nameOfSecurityDomain6"});
 
         run(descriptionFile, EXPECTED_WARNING);
         checkMultipleFileSystemRealmCreatedSuccessfully(userMaps, optionalParamsMap);
@@ -575,7 +591,7 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
 
     @Test
     public void testBulkFileContainingMalformedUsersFile() throws Exception {
-        String descriptorFile = RELATIVE_BASE_DIR + "descriptor-file-1";
+        String descriptorFile = RELATIVE_BASE_DIR + "wrong-descriptor-file-2";
 
         Map<String, ArrayList<String>> userMap1 = new HashMap<>();
         userMap1.put(ELYTRON_USER, ELYTRON_SINGLE_ROLE);
@@ -589,16 +605,16 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
         userMap4.put(JAVAJOE_USER, JAVAJOE_MULTIPLE_ROLES);
 
         Map<String, Map<String, ArrayList<String>>> userMaps = new HashMap<>();
-        userMaps.put(OUTPUT_LOCATIONS_BULK[0], userMap1);
-        userMaps.put(OUTPUT_LOCATIONS_BULK[1], userMap2);
-        userMaps.put(OUTPUT_LOCATIONS_BULK[2], userMap3);
-        userMaps.put(OUTPUT_LOCATIONS_BULK[3], userMap4);
+        userMaps.put(OUTPUT_LOCATIONS_BULK[7], userMap1);
+        userMaps.put(OUTPUT_LOCATIONS_BULK[8], userMap2);
+        userMaps.put(OUTPUT_LOCATIONS_BULK[9], userMap3);
+        userMaps.put(OUTPUT_LOCATIONS_BULK[10], userMap4);
 
         Map<String, String[]> optionalParamsMap = new HashMap<>();
-        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[0], new String[]{"nameOfFileSystemRealm1", "nameOfSecurityDomain1"});
-        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[1], new String[]{"nameOfFileSystemRealm2", "nameOfSecurityDomain2"});
-        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[2], new String[]{DEFAULT_FILESYSTEM_REALM_NAME, DEFAULT_SECURITY_DOMAIN_NAME});
-        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[3], new String[]{"nameOfFileSystemRealm4", "nameOfSecurityDomain4"});
+        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[7], new String[]{"nameOfFileSystemRealm1", "nameOfSecurityDomain1"});
+        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[8], new String[]{"nameOfFileSystemRealm2", "nameOfSecurityDomain2"});
+        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[9], new String[]{DEFAULT_FILESYSTEM_REALM_NAME, DEFAULT_SECURITY_DOMAIN_NAME});
+        optionalParamsMap.put(OUTPUT_LOCATIONS_BULK[10], new String[]{"nameOfFileSystemRealm4", "nameOfSecurityDomain4"});
 
         run(descriptorFile, EXPECTED_WARNING);
         checkMultipleFileSystemRealmCreatedSuccessfully(userMaps, optionalParamsMap);
