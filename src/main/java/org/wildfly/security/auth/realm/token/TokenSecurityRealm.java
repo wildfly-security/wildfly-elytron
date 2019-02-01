@@ -45,8 +45,8 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     private final TokenValidator strategy;
     private final String principalClaimName;
-    /** A function that extracts the principal name from the set of token claims. Takes precedence over {@linkplain #principalClaimName} */
-    private final Function<Attributes, String> principalClaimNameFunc;
+    /** A function that maps the set of token claims to a Principal. */
+    private final Function<Attributes, Principal> claimToPrincipal;
 
     /**
      * Returns a {@link Builder} instance that can be used to configure and create a {@link TokenSecurityRealm}.
@@ -66,7 +66,11 @@ public final class TokenSecurityRealm implements SecurityRealm {
             this.principalClaimName = configuration.principalClaimName;
         }
 
-        this.principalClaimNameFunc = configuration.principalClaimNameFunc;
+        if (configuration.claimToPrincipal == null) {
+            this.claimToPrincipal = this::defaultClaimToPrincipal;
+        } else {
+            this.claimToPrincipal = configuration.claimToPrincipal;
+        }
 
         this.strategy = Assert.checkNotNullParam("tokenValidationStrategy", configuration.strategy);
     }
@@ -98,6 +102,26 @@ public final class TokenSecurityRealm implements SecurityRealm {
         return BearerTokenEvidence.class.equals(evidenceType);
     }
 
+    /**
+     * The default implementation of the claimToPrincipal mapping function. Takes the {@linkplain #principalClaimName} claim
+     * value and wraps it in a {@linkplain NamePrincipal}.
+     * @param claims - token claims
+     * @return the NamePrincipal or null on failure to extract claim value
+     */
+    private Principal defaultClaimToPrincipal(Attributes claims) {
+        Principal principal = null;
+        try {
+            if (!claims.containsKey(principalClaimName)) {
+                throw ElytronMessages.log.tokenRealmFailedToObtainPrincipalWithClaim(principalClaimName);
+            }
+            String principalName = claims.getFirst(principalClaimName);
+            principal = new NamePrincipal(principalName);
+        } catch (Exception e) {
+            throw ElytronMessages.log.tokenRealmFailedToObtainPrincipal(e);
+        }
+        return principal;
+    }
+
     final class TokenRealmIdentity implements RealmIdentity {
 
         private final BearerTokenEvidence evidence;
@@ -112,28 +136,15 @@ public final class TokenSecurityRealm implements SecurityRealm {
         }
         @Override
         public Principal getRealmIdentityPrincipal() {
+            Principal principal = null;
             try {
                 if (exists()) {
-                    // First try the principalClaimNameFunc if it exists
-                    String principalName = null;
-                    if (principalClaimNameFunc != null) {
-                        principalName = principalClaimNameFunc.apply(claims);
-                    }
-                    // Next check the given claim name
-                    if(principalName == null) {
-                        if (!this.claims.containsKey(principalClaimName)) {
-                            throw ElytronMessages.log.tokenRealmFailedToObtainPrincipalWithClaim(principalClaimName);
-                        }
-                        principalName = this.claims.getFirst(principalClaimName);
-                    }
-
-                    return new NamePrincipal(principalName);
+                    principal = claimToPrincipal.apply(this.claims);
                 }
             } catch (Exception e) {
                 throw ElytronMessages.log.tokenRealmFailedToObtainPrincipal(e);
             }
-
-            return null;
+            return principal;
         }
 
         @Override
@@ -206,7 +217,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
     public static class Builder {
 
         private String principalClaimName = "username";
-        private Function<Attributes, String> principalClaimNameFunc;
+        private Function<Attributes, Principal> claimToPrincipal;
         private TokenValidator strategy;
 
         /**
@@ -226,8 +237,14 @@ public final class TokenSecurityRealm implements SecurityRealm {
             return this;
         }
 
-        public Builder principalClaimName(Function<Attributes, String> func) {
-            this.principalClaimNameFunc = func;
+        /**
+         * A function that maps the set of token claims to a Principal. If not specified, a function that takes the
+         * {@linkplain #principalClaimName} claim value and wraps in in a {@linkplain NamePrincipal} is used.
+         * @param func - the claim set to Principal mapping function.
+         * @return the token Principal.
+         */
+        public Builder claimToPrincipal(Function<Attributes, Principal> func) {
+            this.claimToPrincipal = func;
             return this;
         }
 

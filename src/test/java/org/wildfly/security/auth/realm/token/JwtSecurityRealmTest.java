@@ -75,6 +75,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -593,7 +594,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
 
         TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName((Attributes claims) -> {
+                .claimToPrincipal((Attributes claims) -> {
                     // This is the MP-JWT spec logic
                     String pn = claims.getFirst("upn");
                     if (pn == null) {
@@ -602,7 +603,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                     if (pn == null) {
                         pn = claims.getFirst("sub");
                     }
-                    return pn;
+                    return new NamePrincipal(pn);
                 })
                 .validator(JwtValidator.builder()
                                    .issuer("elytron-oauth2-realm")
@@ -626,14 +627,6 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
 
         TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName((Attributes claims) -> {
-                    // Try to extract claims that don't exist so we fallback to principalClaimName(String) value
-                    String pn = claims.getFirst("upn");
-                    if (pn == null) {
-                        pn = claims.getFirst("preferred_name");
-                    }
-                    return pn;
-                })
                 .principalClaimName("sub")
                 .validator(JwtValidator.builder()
                                    .issuer("elytron-oauth2-realm")
