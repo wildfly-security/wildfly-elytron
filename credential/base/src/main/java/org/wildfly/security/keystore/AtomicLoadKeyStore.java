@@ -92,6 +92,27 @@ public class AtomicLoadKeyStore extends KeyStore {
     }
 
     /**
+     * Create a new {@code AtomicLoadKeyStore} instance that wraps specified {@link KeyStore}.
+     *
+     * @param keyStore the {@link KeyStore} to be wrapped
+     * @return the new {@code AtomicLoadKeyStore} instance
+     */
+    public static AtomicLoadKeyStore atomize(KeyStore keyStore) throws CertificateException, NoSuchAlgorithmException, IOException {
+        final String type = keyStore.getType();
+        final Provider provider = keyStore.getProvider();
+        AtomicLoadKeyStoreSpi keyStoreSpi = new AtomicLoadKeyStoreSpi(() -> KeyStore.getInstance(type, provider));
+        AtomicLoadKeyStore result = new AtomicLoadKeyStore(keyStoreSpi, provider, type);
+        result.load(null, null);
+        result.setKeyStore(keyStore);
+
+        return result;
+    }
+
+    private void setKeyStore(KeyStore keyStore) {
+        this.keyStoreSpi.restoreKeyStore(keyStore);
+    }
+
+    /**
      * Performs the same action as {@link #load(InputStream, char[])} except a {@link LoadKey} is returned that can be used to revert the load.
      *
      * @param inputStream the stream to load from or {@code null}
