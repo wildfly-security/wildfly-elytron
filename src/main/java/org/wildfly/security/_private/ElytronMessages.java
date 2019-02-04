@@ -832,6 +832,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
     ConfigXMLParseException missingAlias(@Param Location location);
 
+    @Message(id = 2035, value = "KeyStore type could not be detected")
+    KeyStoreException keyStoreTypeNotDetected();
+
     /* util package */
 
     @Message(id = 3001, value = "Unexpected padding")

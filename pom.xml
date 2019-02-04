@@ -146,6 +146,13 @@
                             </includes>
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_2.xsd</systemId>
                         </validationSet>
+                        <validationSet>
+                            <dir>src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_3.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_3.xsd</systemId>
+                        </validationSet>
                     </validationSets>
                 </configuration>
                 <executions>
@@ -626,6 +633,12 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcmail-jdk15on</artifactId>
             <version>1.56</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.60</version>
             <scope>test</scope>
         </dependency>
 
