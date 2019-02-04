@@ -23,7 +23,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
-import static org.wildfly.security.http._private.ElytronMessages.log;
+import static org.wildfly.security.http.ElytronMessages.log;
 
 import java.io.InputStream;
 import java.io.OutputStream;

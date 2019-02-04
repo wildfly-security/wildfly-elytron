@@ -490,6 +490,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-http</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-mechanism-digest</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1249,6 +1255,7 @@
         <module>mechanism/base</module>
         <module>mechanism/digest</module>
         <module>mechanism/gssapi</module>
+        <module>mechanism/http</module>
         <module>mechanism/oauth2</module>
         <module>mechanism/scram</module>
         <module>permission</module>

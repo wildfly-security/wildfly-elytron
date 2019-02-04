@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http._private;
+package org.wildfly.security.http;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-import org.wildfly.security.http.HttpAuthenticationException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -31,7 +30,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-public interface ElytronMessages extends BasicLogger {
+interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     ElytronMessages httpUserPass = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.password");

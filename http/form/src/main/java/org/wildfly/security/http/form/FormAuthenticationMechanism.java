@@ -51,7 +51,7 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
-import org.wildfly.security.http.impl.UsernamePasswordAuthenticationMechanism;
+import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
  * A generic FORM authentication mechanism which is usable in a number of different scenarios.
