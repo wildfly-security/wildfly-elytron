@@ -30,7 +30,7 @@ import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.util.function.Supplier;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.credential._private.ElytronMessages.log;
 import static org.wildfly.security.util.ProviderUtil.findProvider;
 
 /**

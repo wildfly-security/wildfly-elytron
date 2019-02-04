@@ -183,6 +183,9 @@ public interface ElytronMessages extends BasicLogger {
     
     @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
     InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
+
+    @Message(id = 2035, value = "KeyStore type could not be detected")
+    KeyStoreException keyStoreTypeNotDetected();
     
     // Also used in SASL / OTP
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
