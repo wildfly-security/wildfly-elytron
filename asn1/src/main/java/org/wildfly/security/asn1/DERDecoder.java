@@ -18,8 +18,8 @@
 
 package org.wildfly.security.asn1;
 
-import static org.wildfly.security.asn1._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.util.ASN1.*;
+import static org.wildfly.security.asn1.ElytronMessages.log;
+import static org.wildfly.security.asn1.ASN1.*;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;

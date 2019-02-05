@@ -16,9 +16,9 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1.util;
+package org.wildfly.security.asn1;
 
-import static org.wildfly.security.asn1._private.ElytronMessages.log;
+import static org.wildfly.security.asn1.ElytronMessages.log;
 
 import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.asn1.ASN1Decoder;

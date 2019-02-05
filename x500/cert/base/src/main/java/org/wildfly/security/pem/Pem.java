@@ -39,7 +39,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.asn1.util.ASN1;
+import org.wildfly.security.asn1.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.x500.cert.PKCS10CertificateSigningRequest;
 
