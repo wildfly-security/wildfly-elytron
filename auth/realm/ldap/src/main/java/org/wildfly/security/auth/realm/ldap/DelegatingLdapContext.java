@@ -18,10 +18,9 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import static java.lang.System.getSecurityManager;
-
-import org.wildfly.common.Assert;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Hashtable;
 
 import javax.naming.Binding;
 import javax.naming.Context;
@@ -42,7 +41,9 @@ import javax.naming.ldap.ExtendedResponse;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import javax.net.SocketFactory;
-import java.util.Hashtable;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 
 /**
  * Delegating {@link LdapContext} allowing redefine close and reconnect operations.
@@ -503,14 +504,10 @@ class DelegatingLdapContext implements LdapContext {
     }
 
     private ClassLoader setClassLoaderTo(final ClassLoader targetClassLoader){
-        ClassLoader current = null;
-        if(getSecurityManager() != null){
-            current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
-            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
-        } else {
-            current = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(targetClassLoader);
-        }
-        return current;
+        return doPrivileged(new SetContextClassLoaderAction(targetClassLoader));
+    }
+
+    private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+        return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 }
