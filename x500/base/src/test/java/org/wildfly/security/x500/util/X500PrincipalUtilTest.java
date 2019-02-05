@@ -24,7 +24,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
 import org.wildfly.security.asn1.ASN1Encodable;
-import org.wildfly.security.asn1.util.ASN1;
+import org.wildfly.security.asn1.ASN1;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500AttributeTypeAndValue;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.asn1._private;
+package org.wildfly.security.asn1;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -66,7 +66,7 @@ import org.wildfly.security.asn1.ASN1Exception;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-public interface ElytronMessages extends BasicLogger {
+interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
