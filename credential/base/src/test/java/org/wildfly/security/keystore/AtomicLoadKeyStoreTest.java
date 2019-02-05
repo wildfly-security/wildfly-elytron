@@ -105,6 +105,27 @@ public class AtomicLoadKeyStoreTest {
         assertFalse(theStore.containsAlias(ALIAS_TWO));
     }
 
+    @Test
+    public void testAtomize() throws Exception {
+        KeyStore keyStoreOne = KeyStore.getInstance(KEY_STORE_TYPE);
+        keyStoreOne.load(new FileInputStream(this.keyStoreOne), STORE_PASSWORD);
+
+        AtomicLoadKeyStore theStore = AtomicLoadKeyStore.atomize(keyStoreOne);
+
+        assertTrue(theStore.containsAlias(ALIAS_ONE));
+        assertFalse(theStore.containsAlias(ALIAS_TWO));
+
+        LoadKey key = load(theStore, keyStoreTwo);
+
+        assertFalse(theStore.containsAlias(ALIAS_ONE));
+        assertTrue(theStore.containsAlias(ALIAS_TWO));
+
+        theStore.revert(key);
+
+        assertTrue(theStore.containsAlias(ALIAS_ONE));
+        assertFalse(theStore.containsAlias(ALIAS_TWO));
+    }
+
     private AtomicLoadKeyStore atomicLoadKeyStore() throws GeneralSecurityException, IOException {
         AtomicLoadKeyStore theStore = AtomicLoadKeyStore.newInstance(KEY_STORE_TYPE);
         theStore.load(null, null);

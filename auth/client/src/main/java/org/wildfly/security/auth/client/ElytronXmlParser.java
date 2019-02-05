@@ -121,6 +121,7 @@ import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
+import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory;
@@ -138,7 +139,6 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509CRLExtendedTrustManager;
 import org.wildfly.security.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.util.ProviderUtil;
-import org.wildfly.security.x500.X500;
 
 /**
  * A parser for the Elytron XML schema.
@@ -184,7 +184,8 @@ public final class ElytronXmlParser {
         VERSION_1_0("urn:elytron:1.0", null),
         VERSION_1_0_1("urn:elytron:1.0.1", VERSION_1_0),
         VERSION_1_1("urn:elytron:client:1.1", VERSION_1_0_1),
-        VERSION_1_2("urn:elytron:client:1.2", VERSION_1_1);
+        VERSION_1_2("urn:elytron:client:1.2", VERSION_1_1),
+        VERSION_1_3("urn:elytron:client:1.3", VERSION_1_2);
 
         final String namespace;
 
@@ -1535,7 +1536,7 @@ public final class ElytronXmlParser {
                     throw reader.unexpectedAttribute(i);
             }
         }
-        if (type == null) {
+        if (type == null && !xmlVersion.isAtLeast(Version.VERSION_1_3)) {
             throw missingAttribute(reader, "type");
         }
         if (name == null) {
@@ -1646,18 +1647,26 @@ public final class ElytronXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = new KeyStoreCreateFactory(providersSupplier, provider, type, location);
-                if (wrap == Boolean.TRUE) {
-                    keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
-                }
-                if (fileSource != null) {
-                    keyStoreFactory = new FileLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, fileSource, location);
-                } else if (resourceSource != null) {
-                    keyStoreFactory = new ResourceLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, resourceSource, location);
-                } else if (uriSource != null) {
-                    keyStoreFactory = new URILoadingKeyStoreFactory(keyStoreFactory, passwordFactory, uriSource, location);
+                ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = null;
+                if (type == null || type.equalsIgnoreCase("automatic")) {
+                    keyStoreFactory = new UnknownTypeFileKeyStoreFactory(providers, provider, passwordFactory, fileSource, resourceSource, uriSource, location);
+                    if (wrap) {
+                        keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
+                    }
                 } else {
-                    keyStoreFactory = new NullLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, location);
+                    keyStoreFactory = new KeyStoreCreateFactory(providersSupplier, provider, type, location);
+                    if (wrap == Boolean.TRUE) {
+                        keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
+                    }
+                    if (fileSource != null) {
+                        keyStoreFactory = new FileLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, fileSource, location);
+                    } else if (resourceSource != null) {
+                        keyStoreFactory = new ResourceLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, resourceSource, location);
+                    } else if (uriSource != null) {
+                        keyStoreFactory = new URILoadingKeyStoreFactory(keyStoreFactory, passwordFactory, uriSource, location);
+                    } else {
+                        keyStoreFactory = new NullLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, location);
+                    }
                 }
                 keyStoresMap.put(name, keyStoreFactory);
                 return;
@@ -1935,7 +1944,7 @@ public final class ElytronXmlParser {
     }
 
     /**
-     * Parse an XML element of type {@code key-store-type} from an XML reader.
+     * Parse an XML element of type {@code credential-store-type} from an XML reader.
      *
      * @param reader the XML stream reader
      * @param xmlVersion the version of parsed XML
@@ -2955,6 +2964,48 @@ public final class ElytronXmlParser {
         }
     }
 
+    static final class UnknownTypeFileKeyStoreFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {
+        private final String providerName;
+        private final Supplier<Provider[]> providers;
+        private final XMLLocation location;
+        protected final ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory;
+        private final String fileName;
+        private final ExceptionSupplier<InputStream, IOException> resourceSupplier;
+        private final URI uri;
+
+        UnknownTypeFileKeyStoreFactory(final Supplier<Provider[]> providers, final String providerName, final ExceptionSupplier<char[], ConfigXMLParseException> passwordFactory, final String fileName, final ExceptionSupplier<InputStream, IOException> resourceSupplier, final URI uri, final XMLLocation location) {
+            this.providerName = providerName;
+            this.providers = providers;
+            this.location = location;
+            this.passwordFactory = passwordFactory;
+            this.fileName = fileName;
+            this.resourceSupplier = resourceSupplier;
+            this.uri = uri;
+        }
+
+        @Override
+        public KeyStore get() throws ConfigXMLParseException {
+            KeyStore keyStore = null;
+            try {
+                FileInputStream fin = null;
+                if (fileName != null) {
+                    fin = new FileInputStream(fileName);
+                } else if (resourceSupplier != null) {
+                    InputStream is = resourceSupplier.get();
+                    if (is instanceof FileInputStream) {
+                        fin = (FileInputStream) is;
+                    }
+                } else {
+                    fin = new FileInputStream(uri.toURL().getFile());
+                }
+                keyStore = KeyStoreUtil.loadKeyStore(providers, providerName, fin, fileName, passwordFactory.get());
+            } catch (Exception e) {
+                throw xmlLog.xmlFailedToCreateKeyStore(location, e);
+            }
+            return keyStore;
+        }
+    }
+
     static final class PasswordKeyStoreFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {
         private final ExceptionSupplier<KeyStore, ConfigXMLParseException> delegateFactory;
 
@@ -3046,29 +3097,6 @@ public final class ElytronXmlParser {
             return null;
         }
 
-    }
-
-    static final class PrivateKeyKeyStoreEntryCredentialFactory implements ExceptionSupplier<X509CertificateChainPrivateCredential, ConfigXMLParseException> {
-        private final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entrySupplier;
-        private final XMLLocation location;
-
-        PrivateKeyKeyStoreEntryCredentialFactory(final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> entrySupplier, final XMLLocation location) {
-            this.entrySupplier = entrySupplier;
-            this.location = location;
-        }
-
-        public X509CertificateChainPrivateCredential get() throws ConfigXMLParseException {
-            final KeyStore.Entry entry = entrySupplier.get();
-            if (entry == null) {
-                throw xmlLog.keyStoreEntryMissing(location, "unknown");
-            }
-            if (entry instanceof KeyStore.PrivateKeyEntry) {
-                final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
-                return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
-            }
-            throw xmlLog.xmlInvalidKeyStoreEntryType(location, "unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
-        }
     }
 
     static final class DeferredSupplier<T>  implements Supplier<T> {

@@ -55,6 +55,7 @@ public class ElytronTool {
         commandRegistry.put(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, new CredentialStoreCommand()); // assigned exit codes 5 - 10
         commandRegistry.put(MaskCommand.MASK_COMMAND, new MaskCommand()); // uses exit code 7
         commandRegistry.put(VaultCommand.VAULT_COMMAND, new VaultCommand()); // uses exit code 7
+        commandRegistry.put(FileSystemRealmCommand.FILE_SYSTEM_REALM_COMMAND, new FileSystemRealmCommand()); // uses exit code 7
     }
 
     /**

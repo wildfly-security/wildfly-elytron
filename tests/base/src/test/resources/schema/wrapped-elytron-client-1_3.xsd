@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ elytron-client-1_2.xsd wrapped into <configuration> element for needs of tests XML validation.
+  ~ elytron-client-1_3.xsd wrapped into <configuration> element for needs of tests XML validation.
   ~ THIS XSD IS TEST ONLY
   -->
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:el="urn:elytron:client:1.2"
+            xmlns:el="urn:elytron:client:1.3"
             version="1.0">
 
-    <xsd:import namespace="urn:elytron:client:1.2" schemaLocation="src/main/resources/schema/elytron-client-1_2.xsd"/>
+    <xsd:import namespace="urn:elytron:client:1.3" schemaLocation="src/main/resources/schema/elytron-client-1_3.xsd"/>
 
     <xsd:element name="configuration">
         <xsd:complexType>

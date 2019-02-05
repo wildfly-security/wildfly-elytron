@@ -24,6 +24,8 @@ import static org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -41,7 +43,8 @@ import org.ietf.jgss.MessageProp;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSKerberosCredential;
-import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
+import org.wildfly.security.manager.action.SetContextClassLoaderFromClassAction;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -313,13 +316,16 @@ final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
     }
 
     private static byte[] initSecContext(final GSSContext gssContext, final byte[] inputBuf, final int offset, final int len) throws GSSException {
-        final ClassLoader old = WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(GssapiClient.class);
+        final ClassLoader old = doPrivileged(new SetContextClassLoaderFromClassAction(GssapiClient.class));
         try {
             return gssContext.initSecContext(inputBuf, offset, len);
         } finally {
-            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
+            doPrivileged(new SetContextClassLoaderAction(old));
         }
+    }
 
+    private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+        return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
 
 }
