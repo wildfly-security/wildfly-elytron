@@ -42,12 +42,14 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonValue;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -65,15 +67,20 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
@@ -576,6 +583,64 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
     }
 
+    /**
+     * Test using a claim mapping function to extract the token principal name
+     * @throws Exception
+     */
+    @Test
+    public void testAltPrincipaNames() throws Exception {
+        JsonObjectBuilder altBuilder = Json.createObjectBuilder()
+                .add("upn", "upn:elytron@jboss.org");
+        PlainObject plainObject = new PlainObject(new PlainHeader(), new Payload(createClaims(10, 0, altBuilder.build()).build().toString()));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .claimToPrincipal((Attributes claims) -> {
+                    // This is the MP-JWT spec logic
+                    String pn = claims.getFirst("upn");
+                    if (pn == null) {
+                        pn = claims.getFirst("preferred_name");
+                    }
+                    if (pn == null) {
+                        pn = claims.getFirst("sub");
+                    }
+                    return new NamePrincipal(pn);
+                })
+                .validator(JwtValidator.builder()
+                                   .issuer("elytron-oauth2-realm")
+                                   .audience("my-app-valid").build())
+                .build();
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
+
+        assertNotNull(realmIdentity);
+        assertTrue(realmIdentity.exists());
+        assertEquals("upn:elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
+    }
+    /**
+     * Test using a claim mapping function to extract the token principal name that returns null to validate
+     * fallback to the {@linkplain TokenSecurityRealm.Builder#principalClaimName(String)} setting.
+     * @throws Exception
+     */
+    @Test
+    public void testAltPrincipaNamesSubFallback() throws Exception {
+        PlainObject plainObject = new PlainObject(new PlainHeader(), new Payload(createClaims(10, 0).build().toString()));
+        BearerTokenEvidence evidence = new BearerTokenEvidence(plainObject.serialize());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                                   .issuer("elytron-oauth2-realm")
+                                   .audience("my-app-valid").build())
+                .build();
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
+
+        assertNotNull(realmIdentity);
+        assertTrue(realmIdentity.exists());
+        assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
+    }
+
     private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {
         RealmIdentity identity = realm.getRealmIdentity(evidence);
         assertNotNull(identity);
@@ -623,6 +688,9 @@ public class JwtSecurityRealmTest extends BaseTestCase {
     }
 
     private JsonObjectBuilder createClaims(int expirationOffset, int notBeforeOffset) {
+        return createClaims(expirationOffset, notBeforeOffset, null);
+    }
+    private JsonObjectBuilder createClaims(int expirationOffset, int notBeforeOffset, JsonObject additionalClaims) {
         JsonObjectBuilder claimsBuilder = Json.createObjectBuilder()
                 .add("active", true)
                 .add("sub", "elytron@jboss.org")
@@ -630,6 +698,12 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                 .add("aud", Json.createArrayBuilder().add("my-app-valid").add("third-app-valid").add("another-app-valid").build())
                 .add("exp", (System.currentTimeMillis() / 1000) + expirationOffset);
 
+        if (additionalClaims != null) {
+            for(String name : additionalClaims.keySet()) {
+                JsonValue value = additionalClaims.get(name);
+                claimsBuilder.add(name, value);
+            }
+        }
         if (notBeforeOffset > 0) {
             claimsBuilder.add("nbf", (System.currentTimeMillis() / 1000) + notBeforeOffset);
         }
