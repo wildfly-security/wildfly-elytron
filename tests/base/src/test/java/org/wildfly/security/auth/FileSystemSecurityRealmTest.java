@@ -48,7 +48,6 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.util.PasswordUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +64,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -225,7 +225,7 @@ public class FileSystemSecurityRealmTest {
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         char[] actualPassword = "secretPassword".toCharArray();
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
-                new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
+                new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
 
         assertCreateIdentityWithPassword(actualPassword, bCryptPassword);
@@ -234,7 +234,7 @@ public class FileSystemSecurityRealmTest {
     @Test
     public void testCreateIdentityWithScramCredential() throws Exception {
         char[] actualPassword = "secretPassword".toCharArray();
-        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
         PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
         EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(4096, salt));
         ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
@@ -266,7 +266,7 @@ public class FileSystemSecurityRealmTest {
     @Test
     public void testCreateIdentityWithSimpleSaltedDigest() throws Exception {
         char[] actualPassword = "secretPassword".toCharArray();
-        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
         SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
         EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, spac);
         PasswordFactory passwordFactory = PasswordFactory.getInstance(SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512);
@@ -294,7 +294,7 @@ public class FileSystemSecurityRealmTest {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
-                new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
+                new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
 
         credentials.add(new PasswordCredential(bCryptPassword));
@@ -342,7 +342,7 @@ public class FileSystemSecurityRealmTest {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
-                new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
+                new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
         credentials.add(new PasswordCredential(bCryptPassword));
 
@@ -440,6 +440,12 @@ public class FileSystemSecurityRealmTest {
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(actualPassword)));
         existingIdentity.dispose();
+    }
+
+    private static byte[] generateRandomSalt(int saltSize) {
+        byte[] randomSalt = new byte[saltSize];
+        ThreadLocalRandom.current().nextBytes(randomSalt);
+        return randomSalt;
     }
 
     private Path getRootPath(boolean deleteIfExists) throws Exception {

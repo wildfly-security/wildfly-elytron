@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.password.util;
+package org.wildfly.security.password.impl;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -25,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PasswordUtil {
+final class PasswordUtil {
 
     /**
      * Generate a random salt as byte array.

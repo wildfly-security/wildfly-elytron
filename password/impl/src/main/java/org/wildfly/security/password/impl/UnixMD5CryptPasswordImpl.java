@@ -32,7 +32,6 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;

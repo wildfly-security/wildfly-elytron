@@ -32,7 +32,6 @@ import java.util.Arrays;
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
