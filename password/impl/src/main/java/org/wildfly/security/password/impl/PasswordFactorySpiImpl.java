@@ -18,7 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
-import static org.wildfly.security.credential._private.ElytronMessages.log;
+import static org.wildfly.security.password.impl.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
 import static org.wildfly.security.password.interfaces.ClearPassword.*;

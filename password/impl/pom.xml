@@ -30,41 +30,22 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-jaspi</artifactId>
+    <artifactId>wildfly-elytron-password-impl</artifactId>
 
-    <name>WildFly Elytron - JASPI</name>
-    <description>WildFly Security JASPI Implementation</description>
+    <name>WildFly Elytron - Password Implementation</name>
+    <description>WildFly Security Password Implementation</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
-        </dependency>            
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-permission</artifactId>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-realm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-security-manager-action</artifactId>
-        </dependency>
-        
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -74,46 +55,29 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <scope>provided</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
-        </dependency>                
-        
-        <dependency>
-            <groupId>org.jboss.spec.javax.security.auth.message</groupId>
-            <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.1_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
         </dependency>
 
         <!--Test scope-->
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-password-impl</artifactId>
+            <artifactId>wildfly-elytron-digest</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
 </project>
