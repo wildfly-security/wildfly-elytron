@@ -520,6 +520,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-password-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-permission</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1258,6 +1264,7 @@
         <module>mechanism/gssapi</module>
         <module>mechanism/oauth2</module>
         <module>mechanism/scram</module>
+        <module>password/impl</module>
         <module>permission</module>
         <module>sasl/anonymous</module>
         <module>sasl/auth/util</module>
