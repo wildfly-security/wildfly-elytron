@@ -1127,6 +1127,9 @@ public abstract class AcmeClientSpi {
 
     private static boolean checkContentType(HttpURLConnection connection, String expectedMediaType) throws AcmeException {
         String contentType = connection.getContentType();
+        if (contentType == null) {
+            return false;
+        }
         CodePointIterator cpi = CodePointIterator.ofString(contentType);
         CodePointIterator di = cpi.delimitedBy(CONTENT_TYPE_DELIMS);
         String mediaType = di.drainToString().trim();
