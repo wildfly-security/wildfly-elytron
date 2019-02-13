@@ -46,9 +46,12 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 
 /**
@@ -59,7 +62,7 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  */
 public class HttpAuthenticator {
 
-    private static final String AUTHENTICATED_PRINCIPAL_KEY = HttpAuthenticator.class.getName() + ".authenticated-principal";
+    private static final String AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
 
     private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
     private final SecurityDomain securityDomain;
@@ -130,12 +133,19 @@ public class HttpAuthenticator {
         try (ServerAuthenticationContext authenticationContext = createServerAuthenticationContext()) {
             authenticationContext.setAuthenticationName(username);
             if (authenticationContext.verifyEvidence(evidence)) {
+                if (evidence instanceof PasswordGuessEvidence) {
+                    log.tracef("Associating credential for '%s' with identity.", username);
+                    authenticationContext.addPrivateCredential(
+                            new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, ((PasswordGuessEvidence) evidence).getGuess())));
+                }
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-                    if (sessionScope != null && sessionScope.supportsAttachments()
-                            && (sessionScope.exists() || sessionScope.create())) {
-                        sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, username);
+                    if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
+                        log.tracef("Caching identity for '%s' against session scope.", username);
+                        sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, authorizedIdentity));
+                    } else {
+                        log.tracef("Unable to cache identity for '%s'.", username);
                     }
                     setupProgramaticLogout(sessionScope);
 
@@ -170,23 +180,45 @@ public class HttpAuthenticator {
 
         HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
         if (sessionScope != null && sessionScope.supportsAttachments()) {
-            String principalName = sessionScope.getAttachment(AUTHENTICATED_PRINCIPAL_KEY, String.class);
-            if (principalName != null) {
+            CachedIdentity cachedIdentity = sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY, CachedIdentity.class);
+            if (cachedIdentity != null) {
                 ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
+                SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
+
                 try {
-                    authenticationContext.setAuthenticationName(principalName);
-                    if (authenticationContext.authorize()) {
-                        SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
-                        httpExchangeSpi.authenticationComplete(authorizedIdentity, programaticMechanismName);
+                    boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
+                    boolean cache = false;
+
+                    if (authorized == false) {
+                        log.trace("Unable to use SecurityIdentity from CachedIdentity - attempting to recreate");
+
+                        authenticationContext.setAuthenticationName(cachedIdentity.getName());
+                        authorized = authenticationContext.authorize();
+                        cache = true;
+                    }
+
+                    if (authorized) {
+                        securityIdentity = authenticationContext.getAuthorizedIdentity();
+
+                        httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
                         setupProgramaticLogout(sessionScope);
 
+                        if (cache) {
+                            log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
+                            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(cachedIdentity.getMechanismName(), securityIdentity));
+                        }
+
                         return true;
-                    } else {
-                        sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null); // Whatever was in there no longer works so just drop it.
                     }
                 } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
                     httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
                 }
+
+                log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
+                sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null); // Whatever was in there no longer works so just
+                                                                              // drop it.
+            } else {
+                log.trace("No CachedIdentity to restore.");
             }
         }
 
@@ -195,7 +227,7 @@ public class HttpAuthenticator {
 
     private void setupProgramaticLogout(HttpScope sessionScope) {
         logoutHandlerConsumer.accept(() -> {
-            sessionScope.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null);
+            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null);
         });
     }
 
