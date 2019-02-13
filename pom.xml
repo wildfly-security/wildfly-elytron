@@ -80,7 +80,7 @@
         <version.org.wildfly.client.config>1.0.0.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.4.0.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
-        <version.org.mock-server.mockserver-netty>5.3.0</version.org.mock-server.mockserver-netty>
+        <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -576,12 +576,6 @@
             <artifactId>mockserver-netty</artifactId>
             <version>${version.org.mock-server.mockserver-netty}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
