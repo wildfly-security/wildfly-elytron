@@ -18,13 +18,12 @@
 
 package org.wildfly.security.cache;
 
-import org.wildfly.security.auth.server.SecurityIdentity;
+import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.io.Serializable;
 import java.security.Principal;
-import java.util.function.Supplier;
 
-import static org.wildfly.common.Assert.checkNotNullParam;
+import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
  * Represents a cached identity, managed by an {@link IdentityCache}.
@@ -48,7 +47,7 @@ public final class CachedIdentity implements Serializable {
      * @param securityIdentity the identity to cache
      */
     public CachedIdentity(String mechanismName, SecurityIdentity securityIdentity) {
-        this(mechanismName, securityIdentity, () -> checkNotNullParam("securityIdentity", securityIdentity).getPrincipal());
+        this(mechanismName, checkNotNullParam("securityIdentity", securityIdentity), securityIdentity.getPrincipal());
     }
 
     /**
@@ -58,12 +57,12 @@ public final class CachedIdentity implements Serializable {
      * @param principal the principal of this cached identity
      */
     public CachedIdentity(String mechanismName, Principal principal) {
-        this(mechanismName, null, () -> principal);
+        this(mechanismName, null, principal);
     }
 
-    private CachedIdentity(String mechanismName, SecurityIdentity securityIdentity, Supplier<Principal> principalSupplier) {
+    private CachedIdentity(String mechanismName, SecurityIdentity securityIdentity, Principal principal) {
         this.mechanismName = checkNotNullParam("mechanismName", mechanismName);
-        this.name = checkNotNullParam("name", checkNotNullParam("principal", principalSupplier.get()).getName());
+        this.name = checkNotNullParam("name", checkNotNullParam("principal", principal).getName());
         this.securityIdentity = securityIdentity;
     }
 
