@@ -519,6 +519,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6022, value = "Invalid nonce count %s")
     HttpAuthenticationException invalidNonceCount(int nonceCount);
 
+    @Message(id = 6023, value = "An authorization check failed.")
+    String authorizationFailed();
+
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
     ASN1Exception asnUnrecognisedAlgorithm(String algorithm);
 

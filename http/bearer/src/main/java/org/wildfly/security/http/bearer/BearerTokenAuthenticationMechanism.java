@@ -101,16 +101,20 @@ final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticati
                             handleCallback(new IdentityCredentialCallback(new BearerTokenCredential(tokenEvidence.getToken()), true));
                             handleCallback(AuthenticationCompleteCallback.SUCCEEDED);
                             request.authenticationComplete();
-                            return;
+                        } else {
+                            httpBearer.debugf("Token authorization failed.");
+                            request.authenticationFailed(httpBearer.authorizationFailed(), response -> response.setStatusCode(FORBIDDEN));
                         }
+                    } else {
+                        httpBearer.debugf("Token authentication failed.");
+                        request.authenticationFailed(httpBearer.authenticationFailed(), this::unauthorizedResponse);
                     }
-                    httpBearer.debugf("Token authentication failed.");
-                    request.authenticationFailed("Invalid bearer token", response -> response.setStatusCode(FORBIDDEN));
                     return;
                 }
             }
         }
 
+        httpBearer.authenticationFailed();
         request.noAuthenticationInProgress(this::unauthorizedResponse);
     }
 
