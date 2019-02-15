@@ -44,6 +44,7 @@ public class DEREncoderTest {
     @Test
     public void testEncodeEmptyOctetString() throws Exception {
         DEREncoder encoder = new DEREncoder();
+
         encoder.encodeOctetString("");
         assertArrayEquals(new byte[] {4, 0}, encoder.getEncoded());
 
