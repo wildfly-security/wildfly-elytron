@@ -1,4 +1,4 @@
-WildFly Elytron
+ WildFly Elytron
 ===============
 
 WildFly Elytron is a new WildFly sub-project which is completely replacing the combination of PicketBox and JAAS as the WildFly client and  server security mechanism.
