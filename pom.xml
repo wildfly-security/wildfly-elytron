@@ -63,9 +63,9 @@
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
 
-        <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.0.6.Final</version.org.jboss.logmanager>
-        <version.org.jboss.logmanager.log4j-jboss>1.1.4.Final</version.org.jboss.logmanager.log4j-jboss>
+        <version.org.jboss.logging>3.3.2.Final</version.org.jboss.logging>
+        <version.org.jboss.logmanager>2.1.7.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.1.0.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.6.0.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
@@ -1020,7 +1020,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.7.0.Final</version>
+                                    <version>1.8.0.Final</version>
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>

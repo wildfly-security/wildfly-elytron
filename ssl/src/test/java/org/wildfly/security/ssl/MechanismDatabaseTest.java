@@ -21,6 +21,11 @@ package org.wildfly.security.ssl;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.net.ssl.SSLServerSocketFactory;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class MechanismDatabaseTest {
 
     @Test
@@ -43,4 +48,20 @@ public class MechanismDatabaseTest {
         System.out.println(entry);
     }
 
+    @Test
+    public void testAllJdkCipherSuitesMapping() {
+        final MechanismDatabase mechanismDatabase = MechanismDatabase.getInstance();
+
+        SSLServerSocketFactory ssf = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+        String[] supportedCipherSuites = ssf.getSupportedCipherSuites();
+        List<String> TLS1_3CipherSuites = Arrays.asList("TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_CCM_SHA256", "TLS_AES_128_CCM_8_SHA256");
+
+        // New TLS 1.3 cipher suites are excluded until TLS 1.3 support is added.
+        // TLS_EMPTY_RENEGOTIATION_INFO_SCSV is being excluded because it is not a true cipher suite, see: https://tools.ietf.org/html/rfc5746#section-3.3
+        String unknownCipherSuites = Arrays.stream(supportedCipherSuites)
+                .filter(cipherSuite -> !TLS1_3CipherSuites.contains(cipherSuite) && !cipherSuite.equals("TLS_EMPTY_RENEGOTIATION_INFO_SCSV") && mechanismDatabase.getCipherSuite(cipherSuite) == null)
+                .collect(Collectors.joining(", "));
+
+        Assert.assertTrue("There are JDK cipher suites which are unknown to Elytron MechanismDatabase: " + unknownCipherSuites, unknownCipherSuites.isEmpty());
+    }
 }
