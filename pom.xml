@@ -1020,7 +1020,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.7.0.Final</version>
+                                    <version>1.8.0.Final</version>
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>

@@ -128,7 +128,19 @@ public class PrincipalMappingSuiteChild {
         RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(new NamePrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
+        int tryNumber = 0;
+        int maxTries = 2;
+        while(true) {
+            try {
+                identity = realm.getRealmIdentity(new NamePrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
+                break;
+            } catch (RealmUnavailableException e) {
+                tryNumber++;
+                if (tryNumber == maxTries) {
+                    throw e;
+                }
+            }
+        }
         assertFalse("Exists", identity.exists());
     }
 
