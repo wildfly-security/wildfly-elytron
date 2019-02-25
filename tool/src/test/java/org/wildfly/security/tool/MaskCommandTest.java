@@ -19,6 +19,7 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 
 import org.junit.Assert;
@@ -49,7 +50,7 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] args = {"--iteration", "123", "--salt", "ASDF1234", "--secret", secret};
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
-        String retValNoNewLine = retVal.substring(0, retVal.length() - 1);
+        String retValNoNewLine = retVal.substring(0, retVal.indexOf(System.getProperty("line.separator")));
         assertTrue("output has to be the as pre-generated one", ("MASK-" + pbGenerated + ";" + "ASDF1234" + ";" + 123).equals(retValNoNewLine));
     }
 
@@ -105,7 +106,7 @@ public class MaskCommandTest extends AbstractCommandTest {
             String[] args = { "--secret", "super_secret", "--salt", salt[i], "--iteration", "123" };
             try {
                 executeCommandAndCheckStatus(args);
-                if (salt[i].getBytes().length != correctSaltByteSize) {
+                if (salt[i].getBytes(StandardCharsets.UTF_8).length != correctSaltByteSize) {
                     Assert.fail("It must fail.");
                 }
             } catch (RuntimeException e) {
