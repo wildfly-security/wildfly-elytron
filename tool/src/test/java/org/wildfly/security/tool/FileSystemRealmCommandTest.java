@@ -59,39 +59,13 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
     private static final int EXPECTED_ERROR = 7;
 
     private static final String RELATIVE_BASE_DIR = "./target/test-classes/filesystem-realm/";
-    private static final String ABSOLUTE_BASE_DIR = Paths.get(FileSystemRealmCommandTest.class.getProtectionDomain().getCodeSource().getLocation().getPath()).toAbsolutePath() + "/filesystem-realm/";
+    private static String ABSOLUTE_BASE_DIR = "";
     private static final String RELATIVE_BASE_DIR_USERS = RELATIVE_BASE_DIR + "users/";
     private static final String RELATIVE_BASE_DIR_ROLES = RELATIVE_BASE_DIR + "roles/";
-    private static final String ABSOLUTE_BASE_DIR_USERS = ABSOLUTE_BASE_DIR + "users/";
-    private static final String ABSOLUTE_BASE_DIR_ROLES = ABSOLUTE_BASE_DIR + "roles/";
-    private static final String[] OUTPUT_LOCATIONS_CLI = {
-            RELATIVE_BASE_DIR + "output-1",
-            ABSOLUTE_BASE_DIR + "output-2",
-            RELATIVE_BASE_DIR + "output-3",
-            ABSOLUTE_BASE_DIR + "output-4",
-            RELATIVE_BASE_DIR + "output-5",
-            ABSOLUTE_BASE_DIR + "output-6",
-            ABSOLUTE_BASE_DIR + "output-7",
-            ABSOLUTE_BASE_DIR + "wrong-output-1",
-            ABSOLUTE_BASE_DIR + "wrong-output-2",
-            ABSOLUTE_BASE_DIR + "wrong-output-3",
-            ABSOLUTE_BASE_DIR + "wrong-output-4",
-            ABSOLUTE_BASE_DIR + "wrong-output-5",
-            ABSOLUTE_BASE_DIR + "wrong-output-6"
-    };
-    private static final String[] OUTPUT_LOCATIONS_BULK = {
-            RELATIVE_BASE_DIR + "output-1-bulk",
-            RELATIVE_BASE_DIR + "output-2-bulk",
-            RELATIVE_BASE_DIR + "output-3-bulk",
-            RELATIVE_BASE_DIR + "output-4-bulk",
-            ABSOLUTE_BASE_DIR + "output-5-bulk",
-            ABSOLUTE_BASE_DIR + "output-6-bulk",
-            ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-1",
-            ABSOLUTE_BASE_DIR + "output-1-bulk-wrong-2",
-            ABSOLUTE_BASE_DIR + "output-2-bulk-wrong-2",
-            ABSOLUTE_BASE_DIR + "output-3-bulk-wrong-2",
-            ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-2"
-    };
+    private static String ABSOLUTE_BASE_DIR_USERS = "";
+    private static String ABSOLUTE_BASE_DIR_ROLES = "";
+    private static String[] OUTPUT_LOCATIONS_CLI = new String[13];
+    private static String[] OUTPUT_LOCATIONS_BULK = new String[11];
 
     private static final String ELYTRON_PASSWORD = "testPasswordElytron";
     private static final String JAVAJOE_PASSWORD = "testPasswordJavaJoe";
@@ -245,6 +219,41 @@ public class FileSystemRealmCommandTest extends AbstractCommandTest {
 
         assertEquals(scriptLines.get(0), expectedFileSystemRealmScript.toString());
         assertEquals(scriptLines.get(1), expectedSecurityDomainScript.toString());
+    }
+
+    @BeforeClass
+    public static void getAbsolutePaths() throws Exception {
+        ABSOLUTE_BASE_DIR = Paths.get(FileSystemRealmCommandTest.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+                .toAbsolutePath()
+                + System.getProperty("file.separator")
+                + "filesystem-realm"
+                + System.getProperty("file.separator");
+        ABSOLUTE_BASE_DIR_USERS = ABSOLUTE_BASE_DIR + "users" + System.getProperty("file.separator");
+        ABSOLUTE_BASE_DIR_ROLES = ABSOLUTE_BASE_DIR + "roles" + System.getProperty("file.separator");
+        OUTPUT_LOCATIONS_CLI[0] = RELATIVE_BASE_DIR + "output-1";
+        OUTPUT_LOCATIONS_CLI[1] = ABSOLUTE_BASE_DIR + "output-2";
+        OUTPUT_LOCATIONS_CLI[2] = RELATIVE_BASE_DIR + "output-3";
+        OUTPUT_LOCATIONS_CLI[3] = ABSOLUTE_BASE_DIR + "output-4";
+        OUTPUT_LOCATIONS_CLI[4] = RELATIVE_BASE_DIR + "output-5";
+        OUTPUT_LOCATIONS_CLI[5] = ABSOLUTE_BASE_DIR + "output-6";
+        OUTPUT_LOCATIONS_CLI[6] = ABSOLUTE_BASE_DIR + "output-7";
+        OUTPUT_LOCATIONS_CLI[7] = ABSOLUTE_BASE_DIR + "wrong-output-1";
+        OUTPUT_LOCATIONS_CLI[8] = ABSOLUTE_BASE_DIR + "wrong-output-2";
+        OUTPUT_LOCATIONS_CLI[9] = ABSOLUTE_BASE_DIR + "wrong-output-3";
+        OUTPUT_LOCATIONS_CLI[10] = ABSOLUTE_BASE_DIR + "wrong-output-4";
+        OUTPUT_LOCATIONS_CLI[11] = ABSOLUTE_BASE_DIR + "wrong-output-5";
+        OUTPUT_LOCATIONS_CLI[12] = ABSOLUTE_BASE_DIR + "wrong-output-6";
+        OUTPUT_LOCATIONS_BULK[0] = RELATIVE_BASE_DIR + "output-1-bulk";
+        OUTPUT_LOCATIONS_BULK[1] = RELATIVE_BASE_DIR + "output-2-bulk";
+        OUTPUT_LOCATIONS_BULK[2] = RELATIVE_BASE_DIR + "output-3-bulk";
+        OUTPUT_LOCATIONS_BULK[3] = RELATIVE_BASE_DIR + "output-4-bulk";
+        OUTPUT_LOCATIONS_BULK[4] = ABSOLUTE_BASE_DIR + "output-5-bulk";
+        OUTPUT_LOCATIONS_BULK[5] = ABSOLUTE_BASE_DIR + "output-6-bulk";
+        OUTPUT_LOCATIONS_BULK[6] = ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-1";
+        OUTPUT_LOCATIONS_BULK[7] = ABSOLUTE_BASE_DIR + "output-1-bulk-wrong-2";
+        OUTPUT_LOCATIONS_BULK[8] = ABSOLUTE_BASE_DIR + "output-2-bulk-wrong-2";
+        OUTPUT_LOCATIONS_BULK[9] = ABSOLUTE_BASE_DIR + "output-3-bulk-wrong-2";
+        OUTPUT_LOCATIONS_BULK[10] = ABSOLUTE_BASE_DIR + "output-4-bulk-wrong-2";
     }
 
     @BeforeClass

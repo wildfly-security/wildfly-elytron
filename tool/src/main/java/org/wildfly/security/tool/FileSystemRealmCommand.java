@@ -408,7 +408,8 @@ class FileSystemRealmCommand extends Command {
                     copyAddResetDescriptor(descriptor);
                     count.getAndIncrement();
                 } else {
-                    String[] parts = line.split(":");
+                    // Since Windows URIs have a colon, only split at first occurrence
+                    String[] parts = line.split(":", 2);
                     String option = parts[0];
                     String arg = parts[1];
                     switch (option) {
