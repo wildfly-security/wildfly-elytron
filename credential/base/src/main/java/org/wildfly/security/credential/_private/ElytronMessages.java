@@ -81,6 +81,18 @@ public interface ElytronMessages extends BasicLogger {
     
     @Message(id = 1037, value = "Certificate chain is empty")
     IllegalArgumentException certificateChainIsEmpty();
+
+    @Message(id = 1053, value = "Insufficient data to form a digest and a salt")
+    InvalidKeySpecException insufficientDataToFormDigestAndSalt();
+
+    @Message(id = 1054, value = "Invalid salt \"%s%s\"")
+    IllegalArgumentException invalidSalt(char lo, char hi);
+
+    @Message(id = 1055, value = "Invalid rounds \"%s%s%s%s\"")
+    IllegalArgumentException invalidRounds(char b0, char b1, char b2, char b3);
+
+    @Message(id = 1056, value = "Invalid salt \"%s%s%s%s\"")
+    IllegalArgumentException invalidSalt(char b0, char b1, char b2, char b3);
     
     @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
     IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();

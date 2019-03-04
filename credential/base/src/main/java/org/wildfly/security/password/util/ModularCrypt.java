@@ -20,9 +20,13 @@ package org.wildfly.security.password.util;
 
 import static org.wildfly.security.credential._private.ElytronMessages.log;
 import static java.lang.Math.max;
+import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
+import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
@@ -331,6 +335,30 @@ public final class ModularCrypt {
         }
     }
 
+    public static Password createPassword(byte[] password, String algorithm) throws InvalidKeySpecException {
+        Assert.checkNotNullParam("password", password);
+        Assert.checkNotNullParam("algorithm", algorithm);
+        switch(algorithm) {
+            case UnixDESCryptPassword.ALGORITHM_CRYPT_DES: {
+                return createCryptBasedPassword(password);
+            }
+            case BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES: {
+                return createBsdCryptBasedPassword(password);
+            }
+            default: throw log.invalidKeySpecUnknownCryptStringAlgorithm();
+        }
+    }
+
+    public static void composePassword(ByteArrayOutputStream out, Password password) throws IOException {
+        Assert.checkNotNullParam("out", out);
+        Assert.checkNotNullParam("password", password);
+        if (password instanceof UnixDESCryptPassword) {
+            composeCryptBasedPassword(out, (UnixDESCryptPassword) password);
+        } else if (password instanceof  BSDUnixDESCryptPassword) {
+            composeBsdCryptBasedPassword(out, (BSDUnixDESCryptPassword) password);
+        }
+    }
+
     private static int parseModCryptIterationCount(final CodePointIterator reader, final int minIterations, final int maxIterations,
             final int defaultIterations) throws InvalidKeySpecException {
         int iterationCount;
@@ -618,20 +646,84 @@ public final class ModularCrypt {
         return -1;
     }
 
-    /**
-     * The modular crypt alphabet, used in various modular crypt password types.
-     */
-    public static final Base64Alphabet MOD_CRYPT = new ModCryptBase64Alphabet(false);
+    private static Password createCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
+        if (userPassword.length != 20) {
+            throw log.insufficientDataToFormDigestAndSalt();
+        }
+
+        final int lo = MOD_CRYPT.decode(userPassword[7] & 0xff);
+        final int hi = MOD_CRYPT.decode(userPassword[8] & 0xff);
+        if (lo == -1 || hi == -1) {
+            throw log.invalidSalt((char) lo, (char) hi);
+        }
+        short salt = (short) (lo | hi << 6);
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(MOD_CRYPT, false).drain();
+
+        return UnixDESCryptPassword.createRaw(ALGORITHM_CRYPT_DES, salt, hash);
+    }
+
+    private static Password createBsdCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
+        if (userPassword.length != 27) {
+            throw log.insufficientDataToFormDigestAndSalt();
+        }
+
+        int b0 = MOD_CRYPT.decode(userPassword[8] & 0xff);
+        int b1 = MOD_CRYPT.decode(userPassword[9] & 0xff);
+        int b2 = MOD_CRYPT.decode(userPassword[10] & 0xff);
+        int b3 = MOD_CRYPT.decode(userPassword[11] & 0xff);
+        if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
+            throw log.invalidRounds((char) b0, (char) b1, (char) b2, (char) b3);
+        }
+        int iterationCount = b0 | b1 << 6 | b2 << 12 | b3 << 18;
+
+        b0 = MOD_CRYPT.decode(userPassword[12] & 0xff);
+        b1 = MOD_CRYPT.decode(userPassword[13] & 0xff);
+        b2 = MOD_CRYPT.decode(userPassword[14] & 0xff);
+        b3 = MOD_CRYPT.decode(userPassword[15] & 0xff);
+        if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
+            throw log.invalidSalt((char) b0, (char) b1, (char) b2, (char) b3);
+        }
+        int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
+
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(MOD_CRYPT, false).drain();
+        return BSDUnixDESCryptPassword.createRaw(ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
+    }
+
+    private static void composeCryptBasedPassword(ByteArrayOutputStream out, UnixDESCryptPassword password) throws IOException {
+        out.write(MOD_CRYPT.encode(password.getSalt() & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
+        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(MOD_CRYPT, false).asUtf8().drain());
+    }
+
+    private static void composeBsdCryptBasedPassword(ByteArrayOutputStream out, BSDUnixDESCryptPassword password) throws IOException {
+
+        out.write(MOD_CRYPT.encode(password.getIterationCount() & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getIterationCount() >> 6 & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getIterationCount() >> 12 & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getIterationCount() >> 18 & 0x3f));
+
+        out.write(MOD_CRYPT.encode(password.getSalt() & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getSalt() >> 6 & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getSalt() >> 12 & 0x3f));
+        out.write(MOD_CRYPT.encode(password.getSalt() >> 18 & 0x3f));
+
+        out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(MOD_CRYPT, false).asUtf8().drain());
+    }
 
     /**
      * The modular crypt alphabet, used in various modular crypt password types.
      */
-    public static final Base64Alphabet MOD_CRYPT_LE = new ModCryptBase64Alphabet(true);
+    static final Base64Alphabet MOD_CRYPT = new ModCryptBase64Alphabet(false);
+
+    /**
+     * The modular crypt alphabet, used in various modular crypt password types.
+     */
+    static final Base64Alphabet MOD_CRYPT_LE = new ModCryptBase64Alphabet(true);
 
     /**
      * The BCrypt alphabet.
      */
-    public static final Base64Alphabet BCRYPT = new Base64Alphabet(false) {
+    static final Base64Alphabet BCRYPT = new Base64Alphabet(false) {
         public int encode(final int val) {
             if (val == 0) {
                 return '.';
@@ -664,7 +756,7 @@ public final class ModularCrypt {
         }
     };
 
-    static class ModCryptBase64Alphabet extends Base64Alphabet {
+    private static class ModCryptBase64Alphabet extends Base64Alphabet {
         ModCryptBase64Alphabet(final boolean littleEndian) {
             super(littleEndian);
         }

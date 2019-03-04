@@ -25,13 +25,11 @@ import org.junit.Test;
 import org.wildfly.common.codec.Alphabet;
 import org.wildfly.common.codec.Base32Alphabet;
 import org.wildfly.common.codec.Base64Alphabet;
-import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * Tests for PasswordBasedEncryptionUtil class.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-//has dependency on wildfly-elytron-credential because of ModularCrypt
 public class PasswordBasedEncryptionUtilTest {
 
     private static final String clearText = "Červenavý střizlíček a štebotavá žlůva ďobali ve sťavnatých ocúnech.";
@@ -50,9 +48,6 @@ public class PasswordBasedEncryptionUtilTest {
         Alphabet[] alphabets = {
             Base64Alphabet.STANDARD,
             PasswordBasedEncryptionUtil.PICKETBOX_COMPATIBILITY,
-            ModularCrypt.BCRYPT,
-            ModularCrypt.MOD_CRYPT,
-            ModularCrypt.MOD_CRYPT_LE,
             Base32Alphabet.STANDARD,
         };
 
