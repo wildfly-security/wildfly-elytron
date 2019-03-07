@@ -42,7 +42,7 @@
         </dependency>    
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-http</artifactId>
+            <artifactId>wildfly-elytron-mechanism-http</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>

@@ -69,22 +69,10 @@ public class CryptCompatibilityTest {
 
         System.out.println(new String(forStorage, StandardCharsets.UTF_8));
 
-        byte[] saltBytes = new byte[2];
-        byte[] digestBase64 = new byte[forStorage.length - 9];
-
-        System.arraycopy(forStorage, 7, saltBytes, 0, 2);
-        System.arraycopy(forStorage, 9, digestBase64, 0, digestBase64.length);
-
-        final short salt = (short) convertSaltRepresentation(saltBytes);
-
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
-
-        SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
-
+        UnixDESCryptPassword testPass = (UnixDESCryptPassword) ModularCrypt.createPassword(forStorage, UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
-        UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
 
-        assertTrue(pf.verify(password, (PASSWORD).toCharArray()));
+        assertTrue(pf.verify(pf.translate(testPass), (PASSWORD).toCharArray()));
         System.out.println("Have something split out.");
     }
 
@@ -94,32 +82,10 @@ public class CryptCompatibilityTest {
 
         System.out.println(new String(forStorage, StandardCharsets.UTF_8));
 
-        byte[] saltBytes = new byte[2];
-        byte[] digestBase64 = new byte[forStorage.length - 9];
-
-        System.arraycopy(forStorage, 7, saltBytes, 0, 2);
-        System.arraycopy(forStorage, 9, digestBase64, 0, digestBase64.length);
-
-        final short salt = (short) convertSaltRepresentation(saltBytes);
-
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(ModularCrypt.MOD_CRYPT, false).drain();
-
-        SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
-
+        UnixDESCryptPassword testPass = (UnixDESCryptPassword) ModularCrypt.createPassword(forStorage, UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
-        UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
 
-        assertTrue(pf.verify(password, (LONG_PASSWORD).toCharArray()));
-    }
-
-    private static int convertSaltRepresentation(final byte[] saltBytes) throws InvalidKeySpecException {
-        int salt = 0;
-
-        for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & ModularCrypt.MOD_CRYPT.decode(saltBytes[i]));
-        }
-
-        return salt;
+        assertTrue(pf.verify(pf.translate(testPass), (LONG_PASSWORD).toCharArray()));
     }
 
 }

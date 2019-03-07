@@ -216,64 +216,6 @@
                     <version>${version.jar.plugin}</version>
                 </plugin>
 
-                <!-- Javadoc -->
-                <plugin>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <configuration>
-                        <notimestamp>true</notimestamp>
-                        <doclint>none</doclint>
-                        <show>protected</show>
-                        <sourcepath>${project.basedir}/src/main/java9;${project.basedir}/src/main/java</sourcepath>
-                        <sourceFileIncludes>
-                            <include>org/wildfly/security/*.java</include>
-                            <include>org/wildfly/security/asn1/*.java</include>
-                            <include>org/wildfly/security/auth/*.java</include>
-                            <include>org/wildfly/security/auth/callback/*.java</include>
-                            <include>org/wildfly/security/auth/client/*.java</include>
-                            <include>org/wildfly/security/auth/jaspi/*.java</include>
-                            <include>org/wildfly/security/auth/permission/*.java</include>
-                            <include>org/wildfly/security/auth/principal/*.java</include>
-                            <include>org/wildfly/security/auth/server/*.java</include>
-                            <include>org/wildfly/security/auth/server/event/*.java</include>
-                            <include>org/wildfly/security/auth/util/*.java</include>
-                            <include>org/wildfly/security/authz/*.java</include>
-                            <include>org/wildfly/security/credential/*.java</include>
-                            <include>org/wildfly/security/credential/source/*.java</include>
-                            <include>org/wildfly/security/credential/store/*.java</include>
-                            <include>org/wildfly/security/evidence/*.java</include>
-                            <include>org/wildfly/security/http/*.java</include>
-                            <include>org/wildfly/security/key/*.java</include>
-                            <include>org/wildfly/security/manager/*.java</include>
-                            <include>org/wildfly/security/manager/action/*.java</include>
-                            <include>org/wildfly/security/mechanism/*.java</include>
-                            <include>org/wildfly/security/password/*.java</include>
-                            <include>org/wildfly/security/password/interfaces/*.java</include>
-                            <include>org/wildfly/security/password/spec/*.java</include>
-                            <include>org/wildfly/security/permission/*.java</include>
-                            <include>org/wildfly/security/sasl/util/*.java</include>
-                            <include>org/wildfly/security/ssl/*.java</include>
-                            <include>org/wildfly/security/x500/*.java</include>
-                            <include>org/wildfly/security/x500/cert/*.java</include>
-                        </sourceFileIncludes>
-                        <sourceFileExcludes>
-                            <exclude>org/wildfly/security/manager/JDKSpecific.java</exclude>
-                        </sourceFileExcludes>
-                        <destDir>api-javadoc</destDir>
-                    </configuration>
-                    <executions>
-                        <execution><!-- mvn javadoc:javadoc@full-javadoc -->
-                            <id>full-javadoc</id>
-                            <configuration>
-                                <destDir>full-javadoc</destDir>
-                                <show>private</show>
-                                <sourceFileIncludes>
-                                    <include>**\/\*.java</include>
-                                </sourceFileIncludes>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-
                 <!-- Checkstyle -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
