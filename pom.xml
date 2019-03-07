@@ -280,14 +280,17 @@
                             ${project.basedir}/http/util/src/main/java/;
                             ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
+                            ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
                             ${project.basedir}/manager/base/src/main/java/;
                             ${project.basedir}/mechanism/base/src/main/java/;
                             ${project.basedir}/mechanism/digest/src/main/java/;
                             ${project.basedir}/mechanism/gssapi/src/main/java/;
+                            ${project.basedir}/mechanism/http/src/main/java/;
                             ${project.basedir}/mechanism/oauth2/src/main/java/;
                             ${project.basedir}/mechanism/scram/src/main/java/;
+                            ${project.basedir}/password/impl/src/main/java/;
                             ${project.basedir}/permission/src/main/java/;
                             ${project.basedir}/sasl/anonymous/src/main/java/;
                             ${project.basedir}/sasl/auth/util/src/main/java/;
