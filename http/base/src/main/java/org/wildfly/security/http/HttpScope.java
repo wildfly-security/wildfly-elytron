@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http;
 
-import static org.wildfly.security.http._private.ElytronMessages.log;
+import static org.wildfly.security.http.ElytronMessages.log;
 
 import java.io.InputStream;
 import java.util.function.Consumer;

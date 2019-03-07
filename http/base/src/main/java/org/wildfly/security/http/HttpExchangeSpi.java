@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http;
 
-import static org.wildfly.security.http._private.ElytronMessages.httpClientCert;
+import static org.wildfly.security.http.ElytronMessages.httpClientCert;
 
 import java.io.InputStream;
 import java.io.OutputStream;

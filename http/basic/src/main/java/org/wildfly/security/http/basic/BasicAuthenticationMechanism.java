@@ -44,7 +44,7 @@ import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.http.impl.UsernamePasswordAuthenticationMechanism;
+import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
  * Implementation of the HTTP BASIC authentication mechanism
