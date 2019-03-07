@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -50,7 +51,6 @@ import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.password.util.PasswordUtil;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -137,7 +137,7 @@ public class PasswordSupportTest {
     public void testVerifyAndObtainBCryptPasswordCredential() throws Exception {
         String userName = "john";
         String userPassword = "bcrypt_abcd1234";
-        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
         int iterationCount = 10;
 
         createBcryptPasswordTable(userName, userPassword, salt, iterationCount);
@@ -172,7 +172,7 @@ public class PasswordSupportTest {
     public void testVerifyAndObtainBCryptEncodedPasswordCredential() throws Exception {
         String userName = "john";
         String userPassword = "bcrypt_abcd1234";
-        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
         int iterationCount = 10;
 
         createBcryptEncodedTable(userName, userPassword, salt, iterationCount);
@@ -330,7 +330,7 @@ public class PasswordSupportTest {
             Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_salted_digest_password (name, digest, salt) VALUES (?, ?, ?)");
         ) {
-            byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+            byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
             SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
             EncryptablePasswordSpec eps = new EncryptablePasswordSpec(userPassword.toCharArray(), spac);
             PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
@@ -383,7 +383,7 @@ public class PasswordSupportTest {
             Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_scram_digest_password (name, digest, salt, iterationCount) VALUES (?, ?, ?, ?)");
         ) {
-            byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+            byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
             PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
             IteratedSaltedPasswordAlgorithmSpec algoSpec = new IteratedSaltedPasswordAlgorithmSpec(4096, salt);
             EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(userPassword.toCharArray(), algoSpec);
@@ -413,7 +413,7 @@ public class PasswordSupportTest {
             Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_modular_password (name, password) VALUES (?, ?)");
         ) {
-            byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+            byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
             PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, salt))
@@ -502,5 +502,11 @@ public class PasswordSupportTest {
             statement.executeUpdate("DROP TABLE IF EXISTS user_clear_password");
             statement.executeUpdate("CREATE TABLE user_clear_password ( id INTEGER IDENTITY, name VARCHAR(100), password VARCHAR(50))");
         }
+    }
+
+    private static byte[] generateRandomSalt(int saltSize) {
+        byte[] randomSalt = new byte[saltSize];
+        ThreadLocalRandom.current().nextBytes(randomSalt);
+        return randomSalt;
     }
 }
