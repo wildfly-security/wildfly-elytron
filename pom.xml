@@ -1113,7 +1113,7 @@
             <id>compatibilityCheck</id>
             <activation>
                 <property>
-                    <name>!skipCompatibility</name>
+                    <name>checkCompatibility</name>
                 </property>
             </activation>
             <build>
