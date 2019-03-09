@@ -79,6 +79,10 @@ public final class StringPrep {
     public static final long PROFILE_SASL_STORED = 0
         | PROFILE_SASL_QUERY
         | FORBID_UNASSIGNED;
+    
+    public static final long PROFILE_SASL_STORED_NON_NORMALIZED = (0
+            | PROFILE_SASL_STORED)
+            & ~NORMALIZE_KC;
 
     // StringPrep section 3 - Mapping
 
