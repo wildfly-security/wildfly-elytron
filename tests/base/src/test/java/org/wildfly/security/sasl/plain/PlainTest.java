@@ -50,6 +50,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.SaslMechanismSelector;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 
@@ -252,6 +253,31 @@ public class PlainTest extends BaseTestCase {
         // server is complete even if an exception is thrown.  Ref: JDK
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
+    }
+
+    /**
+     * Test a successful exchange using the PLAIN mechanism and a non-normalized password.
+     */
+    @Test
+    public void testSuccessfulExchange_NoNormalization() throws Exception {
+        String username = "George\u00A8";
+        String password = "password\u00A8";
+        SaslServer server = createSaslServer(username, password.toCharArray());
+
+        CallbackHandler clientCallback = createClientCallbackHandler(username, password.toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, username, "TestProtocol", "TestServer", Collections.singletonMap(WildFlySasl.SKIP_NORMALIZATION, "true"), clientCallback);
+
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
+        assertTrue(client.hasInitialResponse());
+        byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals(username + "\0" +  username +  "\0" + password, new String(message, StandardCharsets.UTF_8));
+
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals(username, server.getAuthorizationID());
     }
 
     /**
