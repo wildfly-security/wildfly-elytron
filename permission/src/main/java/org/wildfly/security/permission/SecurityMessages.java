@@ -34,5 +34,5 @@ public interface SecurityMessages {
 
     @Message(id = 5, value = "Invalid action '%s' at offset %d of '%s'")
     IllegalArgumentException invalidAction(String action, int offset, String actionString);
-    
+
 }

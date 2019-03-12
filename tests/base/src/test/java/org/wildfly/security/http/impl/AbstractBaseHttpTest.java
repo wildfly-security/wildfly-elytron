@@ -76,7 +76,7 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 // has dependency on wildfly-elytron-sasl, wildfly-elytron-http-basic and wildfly-elytron-digest
 public class AbstractBaseHttpTest extends BaseTestCase {
 
-	protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
+    protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();
 
     protected void mockDigestNonce(final String nonce){

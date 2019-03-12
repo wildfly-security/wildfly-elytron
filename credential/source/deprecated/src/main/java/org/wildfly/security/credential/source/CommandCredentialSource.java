@@ -21,7 +21,6 @@ package org.wildfly.security.credential.source;
 import static org.wildfly.common.Assert.checkNotEmptyParam;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.credential.source.ElytronMessages.log;
-import static java.security.AccessController.doPrivileged;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,7 +32,6 @@ import java.nio.charset.Charset;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
@@ -47,7 +45,6 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
-//import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
@@ -59,8 +56,8 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 @Deprecated
 public final class CommandCredentialSource implements CredentialSource {
 
-	private static final File NULL_FILE = new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null");
-	
+    private static final File NULL_FILE = new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null");
+
     //private static final File NULL_FILE = new File(
     //        (WildFlySecurityManager.isChecking() ? doPrivileged((PrivilegedAction<String>) () -> System.getProperty("os.name")) : System.getProperty("os.name"))
     //        .startsWith("Windows") ? "NUL" : "/dev/null");

@@ -31,6 +31,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
+
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 
@@ -50,81 +51,83 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8, value = "The given credential is not supported here")
     IllegalArgumentException credentialNotSupported();
-    
+
     @Message(id = 1000, value = "Authentication name was already set on this context")
     IllegalStateException nameAlreadySet();
-    
+
     @Message(id = 1003, value = "No authentication is in progress")
     IllegalStateException noAuthenticationInProgress();
-    
+
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
-    
+
     @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
     RealmUnavailableException unableToObtainExclusiveAccess();
-    
+
     @Message(id = 1033, value = "User does not exist")
     IllegalStateException userDoesNotExist();
-    
+
     @Message(id = 1034, value = "Invalid credential type specified")
     IllegalStateException invalidCredentialTypeSpecified();
-    
+
     @Message(id = 1064, value = "Invalid identity name")
     IllegalArgumentException invalidName();
-    
+
     @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
-    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
-    
+    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal,
+            @Cause Throwable cause);
+
     @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
     IllegalArgumentException invalidMechRealmSelection(String realmName);
-    
+
     @Message(id = 1093, value = "Mechanism realm was already selected")
     IllegalStateException mechRealmAlreadySelected();
-    
+
     @Message(id = 1095, value = "Unable to create identity")
     RealmUnavailableException unableToCreateIdentity();
-    
+
     @Message(id = 1096, value = "No such identity")
     RealmUnavailableException noSuchIdentity();
-    
+
     @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
     IllegalStateException cannotSucceedNotAuthorized();
-    
+
     @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
-    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
-    
+    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName,
+            String hostName, String protocol);
+
     @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
     IllegalStateException tooLateToSetMechanismInformation();
-    
+
     @Message(id = 1124, value = "The security realm does not support updating a credential")
     UnsupportedOperationException credentialUpdateNotSupportedByRealm();
-    
+
     @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
     IllegalStateException classLoaderSecurityDomainExists();
-    
+
     @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
     IllegalArgumentException cantWithSameSecurityDomainDomain();
-    
+
     @Message(id = 1151, value = "Evidence Verification Failed.")
     SecurityException authenticationFailedEvidenceVerification();
-    
+
     @Message(id = 1152, value = "Authorization Check Failed.")
     SecurityException authenticationFailedAuthorization();
 
     @Message(id = 1155, value = "Security domain mismatch")
     IllegalArgumentException securityDomainMismatch();
-    
+
     @Message(id = 1156, value = "Cannot obtain a credential from a security factory")
     IOException cannotObtainCredentialFromFactory(@Cause GeneralSecurityException e);
-    
+
     @LogMessage(level = ERROR)
     @Message(id = 1094, value = "An event handler threw an exception")
     void eventHandlerFailed(@Cause Throwable cause);
-    
+
     @Message(id = 8510, value = "Role mapper has already been initialized.")
     IllegalStateException roleMappedAlreadyInitialized();
-    
+
     @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
     IllegalStateException roleMappedNotInitialized();
-    
+
 }

@@ -19,7 +19,6 @@
 package org.wildfly.security.asn1;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.asn1.ElytronMessages;
 
 import java.io.InputStream;
 import java.util.HashMap;

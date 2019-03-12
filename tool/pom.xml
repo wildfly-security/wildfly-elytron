@@ -314,8 +314,6 @@
                 --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED --add-exports jdk.unsupported/sun.reflect=ALL-UNNAMED
                 --add-exports java.base/sun.security.x509=ALL-UNNAMED
                 </modular.jdk.args>
-                <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
-                <checkstyle.skip>true</checkstyle.skip>
             </properties>
             <build>
                 <plugins>

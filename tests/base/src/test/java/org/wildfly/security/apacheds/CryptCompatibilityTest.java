@@ -20,7 +20,6 @@ package org.wildfly.security.apacheds;
 
 import static org.junit.Assert.assertTrue;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -33,11 +32,9 @@ import org.apache.directory.api.ldap.model.password.PasswordUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
-import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 
 /**

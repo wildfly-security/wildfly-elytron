@@ -27,6 +27,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
 import org.wildfly.security.http.HttpAuthenticationException;
 
 /**
@@ -42,14 +43,14 @@ interface ElytronMessages extends BasicLogger {
 
     @LogMessage(level = WARN)
     @Message(id = 6008, value = "Failed to logout participant [%s]. Participant will be removed from list of participants but its local session may still be active.")
-    void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause  Throwable cause);
+    void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause Throwable cause);
 
     @Message(id = 6012, value = "Invalid logout message received for local session [%s]")
     IllegalStateException httpMechSsoInvalidLogoutMessage(String localSessionId);
 
     @LogMessage(level = ERROR)
     @Message(id = 6013, value = "Failed to invalidate local session")
-    void errorHttpMechSsoFailedInvalidateLocalSession(@Cause  Throwable cause);
+    void errorHttpMechSsoFailedInvalidateLocalSession(@Cause Throwable cause);
 
     @Message(id = 6014, value = "Authentication mechanism '%s' cannot be found")
     HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);

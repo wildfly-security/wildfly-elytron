@@ -42,11 +42,11 @@ interface ElytronMessages extends BasicLogger {
     @LogMessage
     @Message(id = 1, value = "WildFly Elytron version %s")
     void logVersion(String versionString);
-    
+
     @Message(id = 5, value = "Cannot instantiate self-referential factory")
     IllegalStateException cannotInstantiateSelfReferentialFactory();
 
     @Message(id = 11, value = "Unable to create service for '%s.%s' ")
     NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
-    
+
 }
