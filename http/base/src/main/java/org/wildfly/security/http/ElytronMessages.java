@@ -35,20 +35,20 @@ interface ElytronMessages extends BasicLogger {
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     ElytronMessages httpUserPass = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.password");
     ElytronMessages httpClientCert = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.cert");
-    
+
     @Message(id = 6000, value = "Status code can not be set at this time.")
     IllegalStateException statusCodeNotNow();
-    
-    @Message(id = 6005, value= "Attachments are not supported on this scope.")
+
+    @Message(id = 6005, value = "Attachments are not supported on this scope.")
     UnsupportedOperationException noAttachmentSupport();
 
     @Message(id = 6016, value = "HTTP authentication failed validating request, no mechanisms remain to continue authentication.")
     HttpAuthenticationException httpAuthenticationFailedEvaluatingRequest();
-    
+
     @Message(id = 6017, value = "HTTP authentication is required but no authentication mechansims are available.")
     HttpAuthenticationException httpAuthenticationNoMechanisms();
 
     @Message(id = 6018, value = "HTTP authentication none of the responders successfuly sent a response.")
     HttpAuthenticationException httpAuthenticationNoSuccessfulResponder();
-    
+
 }

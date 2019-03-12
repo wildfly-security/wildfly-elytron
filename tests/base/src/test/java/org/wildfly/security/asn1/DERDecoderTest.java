@@ -24,7 +24,6 @@ import static org.wildfly.security.pem.Pem.extractDerContent;
 
 import org.junit.Test;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.asn1.ASN1;
 
 import java.util.ArrayList;
 

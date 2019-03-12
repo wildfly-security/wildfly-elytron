@@ -29,8 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.kohsuke.MetaInfServices;
-
 /**
  * The base {@link Provider} implementation for security services made available by Elytron.
  *

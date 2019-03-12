@@ -18,13 +18,12 @@
 
 package org.wildfly.security.credential.source;
 
-import javax.security.sasl.SaslException;
-
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**
@@ -37,16 +36,16 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 interface ElytronMessages2 extends BasicLogger {
 
     ElytronMessages2 saslOAuth2 = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security.sasl.oauth2");
-    
+
     @Message(id = 1106, value = "Could not obtain SSLContext")
     IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
-    
+
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
     AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
-    
+
     @Message(id = 5125, value = "Unable to handle response from server")
     AuthenticationMechanismException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
-    
+
     @Message(id = 9001, value = "Client credentials not provided")
     IllegalStateException oauth2ClientCredentialsNotProvided();
 }

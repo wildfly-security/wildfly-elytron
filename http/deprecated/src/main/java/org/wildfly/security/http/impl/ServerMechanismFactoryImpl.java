@@ -41,23 +41,23 @@ import org.wildfly.security.http.util.AggregateServerMechanismFactory;
 @Deprecated
 public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMechanismFactory {
 
-	private final HttpServerAuthenticationMechanismFactory delegate;
+    private final HttpServerAuthenticationMechanismFactory delegate;
 
-	public ServerMechanismFactoryImpl() {
-		delegate = new AggregateServerMechanismFactory(new BasicMechanismFactory(), new BearerMechanismFactory(),
-				new ClientCertMechanismFactory(), new DigestMechanismFactory(),
-				new FormMechanismFactory(), new SpnegoMechanismFactory());
-	}
+    public ServerMechanismFactoryImpl() {
+        delegate = new AggregateServerMechanismFactory(new BasicMechanismFactory(), new BearerMechanismFactory(),
+                new ClientCertMechanismFactory(), new DigestMechanismFactory(), new FormMechanismFactory(),
+                new SpnegoMechanismFactory());
+    }
 
-	@Override
-	public String[] getMechanismNames(Map<String, ?> properties) {
-		return delegate.getMechanismNames(properties);
-	}
+    @Override
+    public String[] getMechanismNames(Map<String, ?> properties) {
+        return delegate.getMechanismNames(properties);
+    }
 
-	@Override
-	public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
-			Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
-		return delegate.createAuthenticationMechanism(mechanismName, properties, callbackHandler);
-	}
+    @Override
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
+            Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
+        return delegate.createAuthenticationMechanism(mechanismName, properties, callbackHandler);
+    }
 
 }

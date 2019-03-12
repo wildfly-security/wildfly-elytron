@@ -54,7 +54,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1171, value = "Invalid message type '%s', expected '%s'.")
     IllegalArgumentException invalidMessageType(String actualMessageType, String expectedMessageType);
-    
+
     @Message(id = 1172, value = "Message does not wrap existing message of type '%s'")
     IllegalArgumentException messageDoesNotWrapExistingMessage(String messageType);
 
@@ -69,7 +69,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1176, value = "Invalid AuthStatus %s returned from ServerAuthModule %s.")
     IllegalStateException invalidAuthStatus(AuthStatus authStatus, String serverAuthModule);
-    
+
     @Message(id = 1177, value = "Authorization failed.")
     IOException authorizationFailed();
 

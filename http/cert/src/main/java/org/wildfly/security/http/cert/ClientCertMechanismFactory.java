@@ -28,6 +28,7 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.kohsuke.MetaInfServices;
+
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -46,29 +47,31 @@ public class ClientCertMechanismFactory implements HttpServerAuthenticationMecha
     public ClientCertMechanismFactory(final Provider provider) {
     }
 
-	/**
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
-	 */
-	@Override
-	public String[] getMechanismNames(Map<String, ?> properties) {
-		return new String[] { CLIENT_CERT_NAME };
-	}
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
+    @Override
+    public String[] getMechanismNames(Map<String, ?> properties) {
+        return new String[]{CLIENT_CERT_NAME};
+    }
 
-	/**
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
-	 */
-	@Override
-	public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
-			Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String,
+     * java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
+    @Override
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
+            Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
         if (CLIENT_CERT_NAME.equals(mechanismName)) {
-        	return new ClientCertAuthenticationMechanism(callbackHandler, Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
+            return new ClientCertAuthenticationMechanism(callbackHandler,
+                    Boolean.parseBoolean((String) properties.get(CONFIG_SKIP_CERTIFICATE_VERIFICATION)));
         }
 
-		return null;
-	}
+        return null;
+    }
 
 }

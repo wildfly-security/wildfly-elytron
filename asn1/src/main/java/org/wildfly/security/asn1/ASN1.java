@@ -21,8 +21,6 @@ package org.wildfly.security.asn1;
 import static org.wildfly.security.asn1.ElytronMessages.log;
 
 import org.wildfly.common.array.Arrays2;
-import org.wildfly.security.asn1.ASN1Decoder;
-import org.wildfly.security.asn1.ASN1Exception;
 
 /**
  * A class that contains ASN.1 constants and utilities.

@@ -25,9 +25,7 @@ import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.cert.CertificateException;
 import java.util.function.Supplier;
 
 import static org.wildfly.security.keystore.ElytronMessages.log;

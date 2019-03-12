@@ -278,9 +278,9 @@ public class SimpleDirContextFactoryBuilder {
             throw log.noProviderUrlSet();
         }
         if(this.targetModule != null){
-        	this.targetClassLoader = doPrivileged(new GetModuleClassLoaderAction(this.targetModule));
+            this.targetClassLoader = doPrivileged(new GetModuleClassLoaderAction(this.targetModule));
         } else {
-        	this.targetClassLoader = doPrivileged(new GetClassLoaderAction(this.getClass()));
+            this.targetClassLoader = doPrivileged(new GetClassLoaderAction(this.getClass()));
         }
         built = true;
         return new SimpleDirContextFactory();
@@ -467,7 +467,7 @@ public class SimpleDirContextFactoryBuilder {
             return doPrivileged(new SetContextClassLoaderAction(targetClassLoader));
         }
     }
-    
+
     private static <T> T doPrivileged(final PrivilegedAction<T> action) {
         return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
     }
