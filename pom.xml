@@ -1111,7 +1111,7 @@
             <id>compatibilityCheck</id>
             <activation>
                 <property>
-                    <name>checkCompatibility</name>
+                    <name>!skipCompatibility</name>
                 </property>
             </activation>
             <build>
