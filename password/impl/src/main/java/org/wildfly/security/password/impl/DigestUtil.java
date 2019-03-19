@@ -17,25 +17,12 @@
  */
 package org.wildfly.security.password.impl;
 
-import static org.wildfly.security.password.impl.ElytronMessages.log;
-
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
-import java.security.spec.InvalidKeySpecException;
-import java.util.HashMap;
-import java.util.function.Supplier;
-
-import javax.security.sasl.SaslException;
 
 import org.wildfly.common.bytes.ByteStringBuilder;
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.TwoWayPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
  * Common utility functions used by Digest authentication mechanisms.

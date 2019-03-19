@@ -44,52 +44,52 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 2, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
-    
+
     @Message(id = 4, value = "Unrecognized algorithm \"%s\"")
     IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
     SaslException mechInvalidOTPAlgorithm(String algorithm);
-    
+
     @Message(id = 8013, value = "No such MessageDigest algorithm for \"%s\"")
     InvalidKeySpecException invalidKeySpecNoSuchMessageDigestAlgorithm(String algorithm);
-    
+
     @Message(id = 8014, value = "No such MessageDigest algorithm for \"%s\"")
     InvalidKeyException invalidKeyNoSuchMessageDigestAlgorithm(String algorithm);
-    
+
     @Message(id = 8015, value = "Cannot verify password")
     InvalidKeyException invalidKeyCannotVerifyPassword(@Cause Throwable cause);
-    
+
     @Message(id = 8017, value = "DES crypt password hash must be %d bytes")
     InvalidKeyException invalidKeyDesCryptPasswordHashMustBeBytes(int bytes);
-    
+
     @Message(id = 8018, value = "Salt must be %d bytes (%d bits)")
     InvalidParameterSpecException invalidParameterSpecSaltMustBeBytesBits(int bytes, int bits);
-    
+
     @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
     IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
-    
+
     @Message(id = 8021, value = "Invalid salt: must be %d bytes long")
     IllegalArgumentException invalidSaltMustBeBytesLong(int length);
-    
+
     @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
     InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);
 
     @Message(id = 8023, value = "Salt must be %d bytes")
     InvalidParameterSpecException invalidParameterSpecSaltMustBeBytes(int bytes);
-    
+
     @Message(id = 8024, value = "BSD DES crypt password hash must be %d bytes")
     InvalidKeyException invalidKeyBsdDesCryptPasswordHashMustBeBytes(int bytes);
-    
+
     @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
     InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
-    
+
     @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
     InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
-    
+
     @Message(id = 8027, value = "Unknown password type or algorithm")
     InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
-    
+
     @Message(id = 8028, value = "Invalid algorithm \"%s\"")
     NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
 

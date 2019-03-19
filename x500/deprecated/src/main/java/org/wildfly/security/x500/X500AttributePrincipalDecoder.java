@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.server.PrincipalDecoder;
-import org.wildfly.security.x500.ElytronMessages;
 import org.wildfly.security.x500.util.X500PrincipalUtil;
 
 /**

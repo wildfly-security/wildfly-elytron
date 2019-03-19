@@ -29,6 +29,7 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.kohsuke.MetaInfServices;
+
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -47,29 +48,30 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
     public BasicMechanismFactory(final Provider provider) {
     }
 
-	/**
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
-	 */
-	@Override
-	public String[] getMechanismNames(Map<String, ?> properties) {
-		return new String[] { BASIC_NAME };
-	}
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
+    @Override
+    public String[] getMechanismNames(Map<String, ?> properties) {
+        return new String[]{BASIC_NAME};
+    }
 
-	/* (non-Javadoc)
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
-	 */
-	@Override
-	public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
-			Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
+    /* (non-Javadoc)
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
+    @Override
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
+            Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
         if (BASIC_NAME.equals(mechanismName)) {
-            return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), Boolean.parseBoolean((String) properties.get(SILENT)), false);
+            return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM),
+                    Boolean.parseBoolean((String) properties.get(SILENT)), false);
         }
 
-		return null;
-	}
+        return null;
+    }
 
 }

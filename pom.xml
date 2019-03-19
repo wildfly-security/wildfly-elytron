@@ -57,7 +57,7 @@
     <properties>
         <jdk.min.version>9</jdk.min.version>
         <version.commons-cli>1.3.1</version.commons-cli>
-        <version.org.apache.commons>3.5</version.org.apache.commons>
+        <version.org.apache.commons>3.8</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
         <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
@@ -280,14 +280,17 @@
                             ${project.basedir}/http/util/src/main/java/;
                             ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
+                            ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
                             ${project.basedir}/manager/base/src/main/java/;
                             ${project.basedir}/mechanism/base/src/main/java/;
                             ${project.basedir}/mechanism/digest/src/main/java/;
                             ${project.basedir}/mechanism/gssapi/src/main/java/;
+                            ${project.basedir}/mechanism/http/src/main/java/;
                             ${project.basedir}/mechanism/oauth2/src/main/java/;
                             ${project.basedir}/mechanism/scram/src/main/java/;
+                            ${project.basedir}/password/impl/src/main/java/;
                             ${project.basedir}/permission/src/main/java/;
                             ${project.basedir}/sasl/anonymous/src/main/java/;
                             ${project.basedir}/sasl/auth/util/src/main/java/;
@@ -1097,8 +1100,6 @@
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
                 <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
-                <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
-                <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
                 <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
                 <!-- 2.20.x doesn't start on JDK10-->
@@ -1106,12 +1107,11 @@
             </properties>
         </profile>
 
-        <!-- TODO Restore JAPICMP Comparison.
         <profile>
             <id>compatibilityCheck</id>
             <activation>
                 <property>
-                    <name>!skipCompatibility</name>
+                    <name>checkCompatibility</name>
                 </property>
             </activation>
             <build>
@@ -1120,6 +1120,7 @@
                         <groupId>com.github.siom79.japicmp</groupId>
                         <artifactId>japicmp-maven-plugin</artifactId>
                         <version>0.13.0</version>
+                        <inherited>false</inherited>
                         <configuration>
                             <oldVersion>
                                 <dependency>
@@ -1129,16 +1130,340 @@
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
-                            <newVersion>
-                                <file>
-                                    <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
-                                </file>
-                            </newVersion>
+                            <newVersions>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-asn1</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-audit</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-server</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-server-http</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-base</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-credential</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-credential-store</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-client</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-digest</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-basic</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-bearer</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-cert</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-digest</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-form</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-spnego</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-sso</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-jacc</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-json-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-keystore</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-jaspi</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-digest</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-gssapi</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-http</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-scram</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-password-impl</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-permission</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-realm</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-realm-jdbc</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-realm-ldap</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-realm-token</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-anonymous</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-auth-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-digest</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-entity</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-external</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-gs2</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-gssapi</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-localuser</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-oauth2</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-otp</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-plain</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-sasl-scram</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-security-manager</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-security-manager-action</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-ssl</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-tool</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500-cert</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500-cert-acme</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500-cert-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-x500-principal</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                            </newVersions>
                             <parameter>
+                                <ignoreMissingClasses>true</ignoreMissingClasses>
+                                <skipPomModules>false</skipPomModules>
                                 <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
                                 <overrideCompatibilityChangeParameters>
-                                    <overrideCompatibilityChangeParameter> allowing new method in interface if default impl provided 
+                                    <overrideCompatibilityChangeParameter> allowing new method in interface if default impl provided
                                         <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
                                         <binaryCompatible>true</binaryCompatible>
                                         <sourceCompatible>true</sourceCompatible>
@@ -1172,6 +1497,7 @@
                                     <include>org.wildfly.security.permission</include>
                                     <include>org.wildfly.security.sasl.util</include>
                                     <include>org.wildfly.security.ssl</include>
+                                    <include>org.wildfly.security.tool</include>
                                     <include>org.wildfly.security.x500</include>
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
@@ -1186,32 +1512,10 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>javax.xml.bind</groupId>
-                                <artifactId>jaxb-api</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>com.sun.xml.bind</groupId>
-                                <artifactId>jaxb-core</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>com.sun.xml.bind</groupId>
-                                <artifactId>jaxb-impl</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>javax.activation</groupId>
-                                <artifactId>javax.activation-api</artifactId>
-                                <version>1.2.0</version>
-                            </dependency>
-                        </dependencies>
                     </plugin>
                 </plugins>
             </build>
-        </profile>-->
+        </profile>
         <profile>
             <id>skip-default-tests</id>
             <build>

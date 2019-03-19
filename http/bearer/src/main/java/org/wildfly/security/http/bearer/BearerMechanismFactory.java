@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.kohsuke.MetaInfServices;
+
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -45,29 +46,29 @@ public class BearerMechanismFactory implements HttpServerAuthenticationMechanism
     public BearerMechanismFactory(final Provider provider) {
     }
 
-	/**
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
-	 */
-	@Override
-	public String[] getMechanismNames(Map<String, ?> properties) {
-		return new String[] { BEARER_TOKEN };
-	}
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
+    @Override
+    public String[] getMechanismNames(Map<String, ?> properties) {
+        return new String[]{BEARER_TOKEN};
+    }
 
-	/* (non-Javadoc)
-	 * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
-	 */
-	@Override
-	public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
-			Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
+    /* (non-Javadoc)
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
+    @Override
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName,
+            Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         checkNotNullParam("mechanismName", mechanismName);
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
         if (BEARER_TOKEN.equals(mechanismName)) {
-        	return new BearerTokenAuthenticationMechanism(callbackHandler);
+            return new BearerTokenAuthenticationMechanism(callbackHandler);
         }
 
-		return null;
-	}
+        return null;
+    }
 
 }

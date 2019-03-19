@@ -31,6 +31,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -50,78 +51,79 @@ public interface ElytronMessages extends BasicLogger {
     // Duplicated in wildfly-elytron-credential
     @Message(id = 2009, value = "Unable to create a new KeyStore instance")
     IOException unableToCreateKeyStore(@Cause Exception cause);
-    
+
     @Message(id = 9500, value = "External storage key under alias \"%s\" has to be a SecretKey")
     CredentialStoreException wrongTypeOfExternalStorageKey(String keyAlias);
-    
+
     @Message(id = 9504, value = "Cannot acquire a credential from the credential store")
     CredentialStoreException cannotAcquireCredentialFromStore(@Cause Throwable cause);
-    
+
     @Message(id = 9505, value = "Cannot perform operation '%s': Credential store is set non modifiable")
     CredentialStoreException nonModifiableCredentialStore(String operation);
-    
+
     @Message(id = 9507, value = "Invalid protection parameter given: %s")
     CredentialStoreException invalidProtectionParameter(CredentialStore.ProtectionParameter protectionParameter);
-    
+
     @Message(id = 9508, value = "Cannot write credential to store")
     CredentialStoreException cannotWriteCredentialToStore(@Cause Throwable cause);
-    
+
     @Message(id = 9509, value = "Unsupported credential type %s")
     UnsupportedCredentialTypeException unsupportedCredentialType(Class<?> type);
-    
+
     @Message(id = 9510, value = "Invalid credential store keystore entry %s: expected %s")
-    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType, Class<? extends KeyStore.Entry> expectedType);
-    
+    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType,
+            Class<? extends KeyStore.Entry> expectedType);
+
     @Message(id = 9511, value = "Unable to read credential %s from store")
     CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
-    
+
     @Message(id = 9512, value = "Unable to remove credential from store")
     CredentialStoreException cannotRemoveCredentialFromStore(@Cause Throwable cause);
-    
+
     @Message(id = 9513, value = "Unable to flush credential store to storage")
     CredentialStoreException cannotFlushCredentialStore(@Cause Throwable cause);
-    
+
     @Message(id = 9514, value = "Unable to initialize credential store")
     CredentialStoreException cannotInitializeCredentialStore(@Cause Throwable cause);
-    
+
     @Message(id = 9515, value = "Ignored unrecognized key store entry \"%s\"")
     @LogMessage(level = DEBUG)
     void logIgnoredUnrecognizedKeyStoreEntry(String alias);
-    
+
     @Message(id = 9516, value = "Failed to read a credential entry from the key store")
     @LogMessage(level = WARN)
     void logFailedToReadKeyFromKeyStore(@Cause Throwable cause);
-    
+
     @Message(id = 9517, value = "This credential store type requires a store-wide protection parameter")
     CredentialStoreException protectionParameterRequired();
-    
+
     @Message(id = 9518, value = "Automatic storage creation for the Credential Store is disabled \"%s\"")
     CredentialStoreException automaticStorageCreationDisabled(String location);
-    
+
     @Message(id = 9519, value = "Unexpected credential store external storage file version \"%s\"")
     IOException unexpectedFileVersion(String version);
-    
+
     @Message(id = 9520, value = "Unrecognized entry type \"%s\"")
     IOException unrecognizedEntryType(String entryType);
-    
+
     @Message(id = 9521, value = "Internal encryption problem while reading \"%s\"")
     IOException internalEncryptionProblem(@Cause Exception e, String location);
-  
+
     @Message(id = 9522, value = "\"%s\" is not a block based algorithm")
     CredentialStoreException algorithmNotBlockBased(String algorithm);
-    
+
     @Message(id = 9523, value = "Algorithm \"%s\" does not use an initialization vector (IV)")
     CredentialStoreException algorithmNotIV(String algorithm);
-    
+
     @Message(id = 9524, value = "The actual number of bytes read %d is different from the expected number of bytes %d to be read")
     IOException readBytesMismatch(int actual, int expected);
-    
+
     @Message(id = 9525, value = "location and externalPath initial attributes are the same. [location=%s, externalPath=%s]")
     CredentialStoreException locationAndExternalPathAreIdentical(String location, String externalPath);
-    
-    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s" )
+
+    @Message(id = 9526, value = "Unable to initialize credential store as attribute %s is unsupported in %s")
     CredentialStoreException unsupportedAttribute(String attribute, List<String> validAttribute);
-    
+
     @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
     CredentialStoreException externalPathMissing(String keyStoreType);
 
