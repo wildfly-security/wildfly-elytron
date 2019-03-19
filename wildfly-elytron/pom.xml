@@ -507,8 +507,6 @@
             <properties>
                 <!-- [WFCORE-1431] remove SASL workaround -->
                 <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
-                <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
-                <checkstyle.skip>true</checkstyle.skip>
                 <!-- use version of jboss-logging that works much better with JDK9 -->
                 <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
                 <!-- 2.20.x doesn't start on JDK10-->

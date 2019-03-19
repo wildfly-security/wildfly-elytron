@@ -66,20 +66,20 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 4020, value = "Mechanism \"%s\" not supported by transformation mapper")
     IllegalArgumentException mechanismNotSupported(String mechanism);
-    
+
     @Message(id = 8030, value = "Failed to encode parameter specification")
     InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
-    
+
     @Message(id = 8031, value = "Failed to decode parameter specification")
     IOException failedToDecode(@Cause Throwable cause);
-    
+
     @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
     InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
-    
+
     @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
     IOException invalidFormat(String expected, String actual);
-    
+
     @Message(id = 8034, value = "Algorithm parameters instance not initialized")
     IllegalStateException algorithmParametersNotInitialized();
-    
+
 }

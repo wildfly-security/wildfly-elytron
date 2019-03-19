@@ -19,7 +19,6 @@
 package org.wildfly.security.mechanism;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**
  * A SCRAM server-side exception with an error code.

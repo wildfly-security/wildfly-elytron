@@ -40,29 +40,29 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3013, value = "Permission collection must be read-only")
     SecurityException permissionCollectionMustBeReadOnly();
-    
+
     @Message(id = 3015, value = "Could not load permission class \"%s\"")
     InvalidPermissionClassException permissionClassMissing(String className, @Cause ClassNotFoundException cause);
-    
+
     @Message(id = 3016, value = "Could not instantiate permission class \"%s\"")
     InvalidPermissionClassException permissionInstantiation(String className, @Cause Throwable cause);
-    
+
     @Message(id = 3017, value = "No valid permission constructor found on class \"%s\"")
     InvalidPermissionClassException noPermissionConstructor(String className);
-    
+
     @Message(id = 3018, value = "Cannot add permissions to a read-only permission collection")
     SecurityException readOnlyPermissionCollection();
 
     @Message(id = 3019, value = "Failure to deserialize object: field \"%s\" is null")
     InvalidObjectException invalidObjectNull(String fieldName);
-    
+
     @Message(id = 3020, value = "Expected empty actions string, got \"%s\"")
     IllegalArgumentException expectedEmptyActions(String actions);
-    
+
     @Message(id = 3021, value = "Invalid permission type; expected %s, got %s")
     IllegalArgumentException invalidPermissionType(Class<? extends Permission> expected, Permission actual);
-    
+
     @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
     SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
-    
+
 }

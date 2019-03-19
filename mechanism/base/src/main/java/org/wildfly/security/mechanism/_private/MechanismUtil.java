@@ -36,7 +36,6 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.http.HttpScope;
-import org.wildfly.security.mechanism._private.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
