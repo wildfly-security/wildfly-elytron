@@ -578,7 +578,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return (password instanceof BSDUnixDESCryptPassword);
             }
             case ALGORITHM_SCRAM_SHA_1:
-            case ALGORITHM_SCRAM_SHA_256: {
+            case ALGORITHM_SCRAM_SHA_256:
+            case ALGORITHM_SCRAM_SHA_384:
+            case ALGORITHM_SCRAM_SHA_512: {
                 return (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_OTP_MD5:
@@ -713,7 +715,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 break;
             }
             case ALGORITHM_SCRAM_SHA_1:
-            case ALGORITHM_SCRAM_SHA_256: {
+            case ALGORITHM_SCRAM_SHA_256:
+            case ALGORITHM_SCRAM_SHA_384:
+            case ALGORITHM_SCRAM_SHA_512: {
                 if (password instanceof ScramDigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
                 } else if (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm())) {
