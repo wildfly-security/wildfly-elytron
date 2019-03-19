@@ -1126,7 +1126,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.8.0.Final</version>
+                                    <version>1.8.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
@@ -1508,6 +1508,9 @@
                                     <exclude>org.wildfly.security.sasl.util.AbstractSaslClient#AbstractSaslClient(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, java.lang.String, boolean, org.wildfly.security._private.ElytronMessages)</exclude>
                                     <exclude>org.wildfly.security.sasl.util.AbstractSaslParticipant#AbstractSaslParticipant(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
                                     <exclude>org.wildfly.security.sasl.util.AbstractSaslServer#AbstractSaslServer(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
+                                    <!-- ByteStringBuilder is private API so should not have been accessed via public API -->
+                                    <exclude>org.wildfly.security.sasl.util.StringPrep#encode(char[], org.wildfly.security.util.ByteStringBuilder, long)</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.StringPrep#encode(java.lang.String, org.wildfly.security.util.ByteStringBuilder, long)</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
