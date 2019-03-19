@@ -1263,6 +1263,11 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-keystore</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-jaspi</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -1283,12 +1288,22 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-mechanism-http</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-mechanism-scram</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-password-impl</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
@@ -1408,12 +1423,6 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-tests-common</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>test-jar</type>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-util</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -1488,6 +1497,7 @@
                                     <include>org.wildfly.security.permission</include>
                                     <include>org.wildfly.security.sasl.util</include>
                                     <include>org.wildfly.security.ssl</include>
+                                    <include>org.wildfly.security.tool</include>
                                     <include>org.wildfly.security.x500</include>
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
