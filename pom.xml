@@ -1501,6 +1501,14 @@
                                     <include>org.wildfly.security.x500</include>
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
+                                <excludes>
+                                    <!-- ElytronMessages is private API so should not have been accessed via public API -->
+                                    <exclude>org.wildfly.security.mechanism.MechanismUtil#getPasswordCredential(java.lang.String, javax.security.auth.callback.CallbackHandler, java.lang.Class, java.lang.String, java.security.spec.AlgorithmParameterSpec, java.security.spec.AlgorithmParameterSpec, java.util.function.Supplier, org.wildfly.security._private.ElytronMessages)</exclude>
+                                    <exclude>org.wildfly.security.mechanism.MechanismUtil#handleCallbacks(org.wildfly.security._private.ElytronMessages, javax.security.auth.callback.CallbackHandler, javax.security.auth.callback.Callback[])</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslClient#AbstractSaslClient(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, java.lang.String, boolean, org.wildfly.security._private.ElytronMessages)</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslParticipant#AbstractSaslParticipant(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslServer#AbstractSaslServer(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
+                                </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
                         </configuration>
