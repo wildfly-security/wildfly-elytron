@@ -25,7 +25,7 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 
 import static org.junit.Assert.assertEquals;

@@ -69,7 +69,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronSaslOTPProvider;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.PasswordResetCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;

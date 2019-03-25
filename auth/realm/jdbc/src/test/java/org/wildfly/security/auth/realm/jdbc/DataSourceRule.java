@@ -21,7 +21,7 @@ import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 
 import javax.sql.DataSource;
 import java.security.Provider;

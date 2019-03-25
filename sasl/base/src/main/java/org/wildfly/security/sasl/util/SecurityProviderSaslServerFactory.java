@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;

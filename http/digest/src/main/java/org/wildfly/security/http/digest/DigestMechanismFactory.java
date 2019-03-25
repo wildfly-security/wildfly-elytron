@@ -27,7 +27,7 @@ import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
 import static org.wildfly.security.http.HttpConstants.MD5;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SHA512_256;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
 import java.util.ArrayList;

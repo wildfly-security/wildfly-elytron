@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Principal;
 import java.security.Provider;

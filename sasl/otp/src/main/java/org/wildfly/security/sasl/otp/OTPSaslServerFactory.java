@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
 import java.util.Map;

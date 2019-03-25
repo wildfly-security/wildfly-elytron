@@ -628,6 +628,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-provider-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-realm</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1255,6 +1261,7 @@
         <module>mechanism/scram</module>
         <module>password/impl</module>
         <module>permission</module>
+        <module>provider/util</module>
         <module>sasl/anonymous</module>
         <module>sasl/auth/util</module>
         <module>sasl/base</module>

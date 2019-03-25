@@ -16,15 +16,15 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.provider.util;
+
+import org.wildfly.common.Assert;
 
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import org.wildfly.common.Assert;
 
 /**
  * Utilities for dealing with security providers.

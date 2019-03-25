@@ -29,7 +29,7 @@ import java.security.Provider;
 import java.util.function.Supplier;
 
 import static org.wildfly.security.keystore.ElytronMessages.log;
-import static org.wildfly.security.util.ProviderUtil.findProvider;
+import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
 /**
  * Utility functions for manipulating KeyStores.

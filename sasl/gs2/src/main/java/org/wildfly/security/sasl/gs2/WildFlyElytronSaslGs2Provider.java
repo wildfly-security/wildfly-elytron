@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.sasl.gs2;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the GS2 SASL authentication mechanism.
