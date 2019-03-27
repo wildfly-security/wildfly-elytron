@@ -473,7 +473,7 @@ public final class ElytronXmlParser {
                     case "cipher-suite": {
                         if (isSet(foundBits, 1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 1);
-                        cipherSuiteSelector = parseCipherSuiteSelectorType(reader);
+                        cipherSuiteSelector = parseCipherSuiteSelectorType(reader, xmlVersion);
                         break;
                     }
                     case "protocol": {
@@ -2617,26 +2617,37 @@ public final class ElytronXmlParser {
      * @return the parsed cipher suite selector
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static CipherSuiteSelector parseCipherSuiteSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static CipherSuiteSelector parseCipherSuiteSelectorType(ConfigurationXMLStreamReader reader, Version xmlVersion) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         CipherSuiteSelector selector = null;
+        CipherSuiteSelector names = null;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("selector")) {
                 selector = CipherSuiteSelector.fromString(reader.getAttributeValueResolved(i));
+            } else if (xmlVersion.isAtLeast(Version.VERSION_1_5) && reader.getAttributeLocalName(i).equals("names")) {
+                names = CipherSuiteSelector.fromNamesString(reader.getAttributeValueResolved(i));
             } else {
                 throw reader.unexpectedAttribute(i);
             }
         }
-        if (selector == null) {
+        if (selector == null && ! xmlVersion.isAtLeast(Version.VERSION_1_5)) {
             throw missingAttribute(reader, "selector");
+        } else if (selector == null && names == null && xmlVersion.isAtLeast(Version.VERSION_1_5)) {
+            throw xmlLog.atLeastOneCipherSuiteAttributeMustBeProvided("selector", "names");
+        }
+        if (selector == null) {
+            selector = CipherSuiteSelector.openSslDefault(); // default cipher suites pre TLSv1.3
+        }
+        if ((names == null) && xmlVersion.isAtLeast(Version.VERSION_1_5)) {
+            names = CipherSuiteSelector.openSslDefaultCipherSuites(); // default cipher suites for TLSv1.3
         }
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                return selector;
+                return CipherSuiteSelector.aggregate(names, selector);
             } else {
                 throw reader.unexpectedContent();
             }

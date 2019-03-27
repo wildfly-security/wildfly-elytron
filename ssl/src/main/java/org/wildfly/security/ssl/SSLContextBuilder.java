@@ -49,7 +49,7 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  * <ul>
  *     <li>The security domain defaults to being empty (no client authentication possible)</li>
  *     <li>The principal decoder defaults to the {@linkplain PrincipalDecoder#DEFAULT default principal decoder}</li>
- *     <li>The cipher suite selector defaults to {@link CipherSuiteSelector#openSslDefault()}</li>
+ *     <li>The cipher suite selector defaults to {@link CipherSuiteSelector#openSslCombinedDefault()}</li>
  *     <li>The protocol suite selector defaults to {@link ProtocolSelector#DEFAULT_SELECTOR}</li>
  *     <li>The "require client authentication" flag defaults to {@code false}</li>
  *     <li>The provider supplier defaults to {@link Security#getProviders() Security::getProviders}</li>
@@ -60,7 +60,7 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 public final class SSLContextBuilder {
 
     private SecurityDomain securityDomain;
-    private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
+    private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslCombinedDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean useCipherSuitesOrder = true;
     private boolean wantClientAuth;

@@ -35,6 +35,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
@@ -46,6 +48,26 @@ import org.wildfly.client.config.XMLLocation;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+        @ValidIdRange(min = 1001, max = 1002),
+        @ValidIdRange(min = 1028, max = 1029),
+        @ValidIdRange(min = 1035, max = 1036),
+        @ValidIdRange(min = 1041, max = 1041),
+        @ValidIdRange(min = 1064, max = 1064),
+        @ValidIdRange(min = 1091, max = 1091),
+        @ValidIdRange(min = 1129, max = 1144),
+        @ValidIdRange(min = 1159, max = 1159),
+        @ValidIdRange(min = 1162, max = 1164),
+        @ValidIdRange(min = 1166, max = 1166),
+        @ValidIdRange(min = 2034, max = 2034),
+        @ValidIdRange(min = 2010, max = 2010),
+        @ValidIdRange(min = 4005, max = 4005),
+        @ValidIdRange(min = 4028, max = 4028),
+        @ValidIdRange(min = 9501, max = 9503),
+        @ValidIdRange(min = 9527, max = 9527),
+        @ValidIdRange(min = 9529, max = 9529),
+        @ValidIdRange(min = 14000, max = 14999)
+})
 interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
@@ -164,5 +186,8 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9529, value = "Unsupported algorithm \"%s\" for %s type")
     ConfigXMLParseException xmlUnsupportedAlgorithmForType(@Param Location location, String algorithm, String type);
+
+    @Message(id = 14000, value = "At least one of the '%s' and '%s' cipher-suite attributes must be provided")
+    ConfigXMLParseException atLeastOneCipherSuiteAttributeMustBeProvided(String attribute1, String attribute2);
 
 }

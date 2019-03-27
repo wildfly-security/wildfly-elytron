@@ -48,7 +48,8 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 @ValidIdRanges({
     @ValidIdRange(min = 1066, max = 1077),
     @ValidIdRange(min = 4001, max = 4031),
-    @ValidIdRange(min = 5015, max = 5017)
+    @ValidIdRange(min = 5015, max = 5017),
+    @ValidIdRange(min = 15000, max = 15999)
 })
 interface ElytronMessages extends BasicLogger {
 
@@ -186,5 +187,8 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
+
+    @Message(id = 15000, value = "Uknown cipher suite name '%s' in names string '%s'")
+    IllegalArgumentException unknownCipherSuiteName(String name, String string);
 
 }

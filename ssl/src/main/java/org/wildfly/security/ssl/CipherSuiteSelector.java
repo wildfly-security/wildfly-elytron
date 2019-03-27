@@ -19,6 +19,7 @@
 package org.wildfly.security.ssl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,6 +54,19 @@ public abstract class CipherSuiteSelector {
         }
     };
 
+    private static final CipherSuiteSelector TLS13_EMPTY = new CipherSuiteSelector(null) {
+        void applyFilter(final Set<String> enabled, final Map<MechanismDatabase.Entry, String> supported) {
+        }
+
+        void toString(final StringBuilder b) {
+            b.append("(empty)");
+        }
+
+        MechanismDatabase getMechanismDatabase() {
+            return MechanismDatabase.getTLS13Instance();
+        }
+    };
+
     /**
      * Get the basic empty SSL cipher suite selector.
      *
@@ -62,8 +76,26 @@ public abstract class CipherSuiteSelector {
         return EMPTY;
     }
 
+    /**
+     * Get the basic empty SSL cipher suite selector.
+     *
+     * @param useTLS13 {@code true} if the TLSv1.3 mechanism database should be used by this selector and {@code false} otherwise
+     * @return the empty selector
+     */
+    public static CipherSuiteSelector empty(final boolean useTLS13) {
+        return useTLS13 ? TLS13_EMPTY : EMPTY;
+    }
+
+    /**
+     * OpenSSL default cipher suites for TLSv1.3.
+     */
+    public static final String OPENSSL_DEFAULT_CIPHER_SUITE_NAMES = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
+
     static final CipherSuiteSelector OPENSSL_ALL = empty().add(CipherSuitePredicate.matchOpenSslAll());
     static final CipherSuiteSelector OPENSSL_DEFAULT = openSslAll().deleteFully(CipherSuitePredicate.matchOpenSslDefaultDeletes());
+    // OpenSSL default cipher suites for TLSv1.3
+    static final CipherSuiteSelector OPENSSL_DEFAULT_CIPHER_SUITES = CipherSuiteSelector.fromNamesString(OPENSSL_DEFAULT_CIPHER_SUITE_NAMES);
+    static final CipherSuiteSelector OPENSSL_COMBINED_DEFAULT = aggregate(OPENSSL_DEFAULT_CIPHER_SUITES, OPENSSL_DEFAULT);
 
     /**
      * Get the cipher selector which OpenSSL defines as {@code DEFAULT}.
@@ -84,6 +116,27 @@ public abstract class CipherSuiteSelector {
     public static CipherSuiteSelector openSslAll() {
         return OPENSSL_ALL;
     }
+
+    /**
+     * Get the cipher selector which OpenSSL defines as the default cipher suites for TLSv1.3.
+     *
+     * @return the selector
+     */
+    public static CipherSuiteSelector openSslDefaultCipherSuites() {
+        return OPENSSL_DEFAULT_CIPHER_SUITES;
+    }
+
+    /**
+     * Get the cipher selector which OpenSSL defines as {@code DEFAULT} combined with the
+     * cipher suites which OpenSSL defines as the default cipher suites for TLSv1.3.
+     *
+     * @return the selector
+     */
+    public static CipherSuiteSelector openSslCombinedDefault() {
+        return OPENSSL_COMBINED_DEFAULT;
+    }
+
+
 
     /* -- delete -- */
 
@@ -216,13 +269,20 @@ public abstract class CipherSuiteSelector {
         applyFilter(enabled, supported);
     }
 
+    MechanismDatabase getMechanismDatabase() {
+        if (prev != null) {
+            return prev.getMechanismDatabase();
+        }
+        return MechanismDatabase.getInstance();
+    }
+
     /**
      * Evaluate this selector against the given list of JSSE supported mechanisms.
      *
      * @param supportedMechanisms the supported mechanisms
      * @return the enabled mechanisms (not {@code null})
      */
-    public final String[] evaluate(String[] supportedMechanisms) {
+    public String[] evaluate(String[] supportedMechanisms) {
         if (ElytronMessages.tls.isTraceEnabled()) {
             StringBuilder b = new StringBuilder(supportedMechanisms.length * 16);
             b.append("Evaluating filter \"").append(this).append("\" on supported mechanisms:");
@@ -231,7 +291,7 @@ public abstract class CipherSuiteSelector {
             }
             ElytronMessages.tls.trace(b);
         }
-        final MechanismDatabase database = MechanismDatabase.getInstance();
+        final MechanismDatabase database = getMechanismDatabase();
         final LinkedHashMap<MechanismDatabase.Entry, String> supportedMap = new LinkedHashMap<>(supportedMechanisms.length);
         for (String supportedMechanism : supportedMechanisms) {
             final MechanismDatabase.Entry entry = database.getCipherSuite(supportedMechanism);
@@ -433,6 +493,74 @@ public abstract class CipherSuiteSelector {
             // current character should be : or EOS after parse* methods
         }
         return current;
+    }
+
+    /**
+     * Create a cipher suite selector from the given OpenSSL-style TLSv1.3 cipher suites string. The format for this string
+     * is a simple colon (":") separated list of TLSv1.3 cipher suite names.
+     *
+     * @param names the string to parse
+     * @return the parsed cipher suite selector
+     * @throws IllegalArgumentException if the given string is not valid
+     */
+    public static CipherSuiteSelector fromNamesString(String names) throws IllegalArgumentException {
+        final CodePointIterator cpi = CodePointIterator.ofString(names);
+        final CodePointIterator di = cpi.delimitedBy(':');
+        CipherSuiteSelector current = empty(true);
+        while (cpi.hasNext()) {
+            if (di.hasNext()) {
+                String name = di.drainToString();
+                final MechanismDatabase database = MechanismDatabase.getTLS13Instance();
+                MechanismDatabase.Entry entry = database.getCipherSuiteOpenSSLName(name);
+                if (entry == null) {
+                    throw ElytronMessages.log.unknownCipherSuiteName(name, names);
+                }
+                current = current.add(name);
+            } else {
+                cpi.next(); // skip the colon
+            }
+        }
+        return current;
+    }
+
+    /**
+     * Create an aggregate {@link CipherSuiteSelector}. Each cipher suite selector is executed in order.
+     *
+     * @param cipherSuiteSelector1 the first cipher suite selector
+     * @param cipherSuiteSelector2 the second cipher suite selector
+     * @return the aggregate cipher suite selector (not {@code null})
+     */
+    public static CipherSuiteSelector aggregate(final CipherSuiteSelector cipherSuiteSelector1, final CipherSuiteSelector cipherSuiteSelector2) {
+        return new CipherSuiteSelector(null) {
+            void toString(StringBuilder b) {
+                if (cipherSuiteSelector1 != null && cipherSuiteSelector1 != EMPTY) {
+                    cipherSuiteSelector1.toString(b);
+                }
+                if (cipherSuiteSelector2 != null && cipherSuiteSelector2 != EMPTY) {
+                    cipherSuiteSelector2.toString(b);
+                }
+            }
+
+            void applyFilter(Set<String> enabled, Map<MechanismDatabase.Entry, String> supported) {
+                if (cipherSuiteSelector1 != null) {
+                    cipherSuiteSelector1.applyFilter(enabled, supported);
+                }
+                if (cipherSuiteSelector2 != null) {
+                    cipherSuiteSelector2.applyFilter(enabled, supported);
+                }
+            }
+
+            public String[] evaluate(String[] supportedMechanisms) {
+                ArrayList<String> enabledList = new ArrayList<>();
+                if (cipherSuiteSelector1 != null) {
+                    enabledList.addAll(Arrays.asList(cipherSuiteSelector1.evaluate(supportedMechanisms)));
+                }
+                if (cipherSuiteSelector2 != null) {
+                    enabledList.addAll(Arrays.asList(cipherSuiteSelector2.evaluate(supportedMechanisms)));
+                }
+                return enabledList.toArray(new String[enabledList.size()]);
+            }
+        };
     }
 
     private static CipherSuiteSelector parseMoveToEnd(final CipherSuiteSelector current, final CodePointIterator i) {

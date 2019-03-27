@@ -35,21 +35,32 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 class MechanismDatabase {
-    private static final MechanismDatabase INSTANCE = new MechanismDatabase();
+    private static final MechanismDatabase INSTANCE = new MechanismDatabase("MechanismDatabase.properties");
+    private static final MechanismDatabase TLS13_INSTANCE = new MechanismDatabase("TLS13MechanismDatabase.properties", true);
 
     private final Map<String, Entry> entriesByStdName;
     private final Map<String, Entry> entriesByOSSLName;
     private final Entry[][] algorithmsById;
+    private final boolean isTLS13;
 
     static MechanismDatabase getInstance() {
         return INSTANCE;
     }
 
-    MechanismDatabase() {
+    static MechanismDatabase getTLS13Instance() {
+        return TLS13_INSTANCE;
+    }
+
+    MechanismDatabase(String databaseFileName) {
+        this(databaseFileName, false);
+    }
+
+    MechanismDatabase(String databaseFileName, boolean isTLS13) {
+        this.isTLS13 = isTLS13;
         // load and initialize database properties
         final LinkedProperties properties = new LinkedProperties();
 
-        try (InputStream stream = getClass().getResourceAsStream("MechanismDatabase.properties")) {
+        try (InputStream stream = getClass().getResourceAsStream(databaseFileName)) {
             try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 properties.load(reader);
             }
@@ -86,12 +97,12 @@ class MechanismDatabase {
                 boolean ok = true;
                 final String[] openSslNames = strings[0].split("\\|");
                 final KeyAgreement key = KeyAgreement.forName(strings[1]);
-                if (key == null) {
+                if (! isTLS13 && key == null) {
                     log.warnInvalidKeyExchangeForMechanismDatabaseEntry(strings[1], name);
                     ok = false;
                 }
                 final Authentication auth = Authentication.forName(strings[2]);
-                if (auth == null) {
+                if ((! isTLS13 && auth == null) || (isTLS13 && ! strings[2].equals("ANY"))) {
                     log.warnInvalidAuthenticationForMechanismDatabaseEntry(strings[2], name);
                     ok = false;
                 }
@@ -106,7 +117,7 @@ class MechanismDatabase {
                     ok = false;
                 }
                 final Protocol prot = Protocol.forName(strings[5]);
-                if (prot == null) {
+                if ((prot == null) || (isTLS13 ^ prot.equals(Protocol.TLSv1_3))) {
                     log.warnInvalidProtocolForMechanismDatabaseEntry(strings[5], name);
                     ok = false;
                 }
@@ -162,8 +173,11 @@ class MechanismDatabase {
                             }
                         }
                     }
-                    addTo(entriesByKeyExchange, key, entry);
-                    addTo(entriesByAuthentication, auth, entry);
+
+                    if (! isTLS13) {
+                        addTo(entriesByKeyExchange, key, entry);
+                        addTo(entriesByAuthentication, auth, entry);
+                    }
                     addTo(entriesByEncryption, enc, entry);
                     addTo(entriesByDigest, digest, entry);
                     addTo(entriesByProtocol, prot, entry);
@@ -258,6 +272,10 @@ class MechanismDatabase {
             return null;
         }
         return row[byte2];
+    }
+
+    boolean isTLS13() {
+        return isTLS13;
     }
 
     static final class Entry {
