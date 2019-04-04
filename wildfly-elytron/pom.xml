@@ -901,6 +901,7 @@
                                     <include>org.wildfly.security.password</include>
                                     <include>org.wildfly.security.password.interfaces</include>
                                     <include>org.wildfly.security.password.spec</include>
+                                    <!-- <include>org.wildfly.security.password.util</include>-->
                                     <include>org.wildfly.security.permission</include>
                                     <include>org.wildfly.security.sasl.util</include>
                                     <include>org.wildfly.security.ssl</include>

@@ -361,6 +361,7 @@
                                     <include>org/wildfly/security/password/*.java</include>
                                     <include>org/wildfly/security/password/interfaces/*.java</include>
                                     <include>org/wildfly/security/password/spec/*.java</include>
+                                    <include>org/wildfly/security/password/util/*.java</include>
                                     <include>org/wildfly/security/permission/*.java</include>
                                     <include>org/wildfly/security/sasl/util/*.java</include>
                                     <include>org/wildfly/security/sasl/auth/util/*.java</include>
