@@ -37,4 +37,5 @@ Contributions
 When submitting bug fixes please start from the 1.3.x branch and submit the pull request against this branch.
 
 All new features and enhancements should be submitted to master only.
+
 https://developer.jboss.org/wiki/GettingStartedWithWildFlyElytron
