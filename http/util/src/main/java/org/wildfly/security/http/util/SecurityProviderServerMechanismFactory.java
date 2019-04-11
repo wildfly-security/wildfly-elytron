@@ -19,7 +19,7 @@ package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.util.ElytronMessages.log;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;

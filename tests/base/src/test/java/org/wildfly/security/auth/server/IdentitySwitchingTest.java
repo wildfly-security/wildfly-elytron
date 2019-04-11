@@ -31,7 +31,7 @@ import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;

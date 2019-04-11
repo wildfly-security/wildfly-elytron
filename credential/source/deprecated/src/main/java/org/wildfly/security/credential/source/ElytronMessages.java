@@ -28,6 +28,7 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStoreException;
 
@@ -45,16 +46,16 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1030, value = "Unable to read credential")
     IOException unableToReadCredential(@Cause Exception e);
-    
+
     @Message(id = 5053, value = "Callback handler failed for unknown reason")
     SaslException mechCallbackHandlerFailedForUnknownReason(@Cause Throwable cause);
-    
+
     @Message(id = 5125, value = "Unable to handle response from server")
     SaslException mechUnableToHandleResponseFromServer(@Cause Throwable cause);
-    
+
     @Message(id = 9506, value = "Credential store command interrupted")
     InterruptedIOException credentialCommandInterrupted();
-    
+
     @Message(id = 9511, value = "Unable to read credential %s from store")
     CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
 

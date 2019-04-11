@@ -21,7 +21,7 @@ package org.wildfly.security.auth.realm;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.BufferedReader;
 import java.io.IOException;

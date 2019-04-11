@@ -38,36 +38,36 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
     IllegalArgumentException unexpectedTrailingGarbageInX500principal();
-    
+
     @Message(id = 10025, value = "Non-X.509 certificate found in certificate array")
     IllegalArgumentException nonX509CertificateInCertificateArray();
-    
+
     @Message(id = 10026, value = "Starting public key not found in certificate array")
     IllegalArgumentException startingPublicKeyNotFoundInCertificateArray();
-    
+
     @Message(id = 10027, value = "Incomplete certificate array")
     IllegalArgumentException incompleteCertificateArray();
-    
+
     @Message(id = 10028, value = "Unable to create X.509 certificate chain from map of certificates")
     IllegalArgumentException unableToCreateCertificateChainFromCertificateMap();
-    
+
     @Message(id = 5110, value = "Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)")
     IllegalArgumentException invalidValueForTrustedAuthorityType();
-    
+
     @Message(id = 5111, value = "Invalid value for a general name type; expected a value between 0 and 8 (inclusive)")
     IllegalArgumentException invalidValueForGeneralNameType();
-    
+
     @Message(id = 7006, value = "Invalid general name for URI type")
     ASN1Exception asnInvalidGeneralNameForUriType(@Cause Throwable cause);
-    
+
     @Message(id = 7007, value = "Invalid general name for IP address type")
     ASN1Exception asnInvalidGeneralNameForIpAddressType();
-    
+
     @Message(id = 7008, value = "IP address general name cannot be resolved")
     ASN1Exception asnIpAddressGeneralNameCannotBeResolved(@Cause Throwable cause);
-    
+
     @Message(id = 7025, value = "Invalid general name for URI type: missing scheme")
     ASN1Exception asnInvalidGeneralNameForUriTypeMissingScheme();
-    
-  
+
+
 }

@@ -20,10 +20,8 @@ package org.wildfly.security.x500.cert.util;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-import org.wildfly.security.asn1.ASN1Exception;
 
 /**
  * Log messages and exceptions for Elytron.

@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.credential.store;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for credential store implementations.

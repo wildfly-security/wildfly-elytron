@@ -34,5 +34,5 @@ interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
-   
+
 }

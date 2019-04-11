@@ -23,7 +23,7 @@ import org.junit.runners.model.Statement;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.apacheds.LdapService;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;

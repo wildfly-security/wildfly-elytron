@@ -33,6 +33,4 @@ import org.jboss.logging.annotations.MessageLogger;
 interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
-
-   
 }

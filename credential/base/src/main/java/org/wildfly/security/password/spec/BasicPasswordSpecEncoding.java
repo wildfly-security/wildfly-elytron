@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.password.spec;
 
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.common.iteration.ByteIterator;

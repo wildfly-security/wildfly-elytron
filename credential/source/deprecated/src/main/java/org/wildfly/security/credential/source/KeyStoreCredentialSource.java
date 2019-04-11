@@ -28,7 +28,6 @@ import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.credential.source.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.KeyPairCredential;

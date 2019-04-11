@@ -16,25 +16,9 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.provider.util;
 
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
-
-import org.wildfly.security.WildFlyElytronCredentialStoreProvider;
-import org.wildfly.security.WildFlyElytronKeyProvider;
-import org.wildfly.security.WildFlyElytronKeyStoreProvider;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
-import org.wildfly.security.WildFlyElytronSaslAnonymousProvider;
-import org.wildfly.security.WildFlyElytronSaslDigestProvider;
-import org.wildfly.security.WildFlyElytronSaslEntityProvider;
-import org.wildfly.security.WildFlyElytronSaslExternalProvider;
-import org.wildfly.security.WildFlyElytronSaslGs2Provider;
-import org.wildfly.security.WildFlyElytronSaslGssapiProvider;
-import org.wildfly.security.WildFlyElytronSaslLocalUserProvider;
-import org.wildfly.security.WildFlyElytronSaslOAuth2Provider;
-import org.wildfly.security.WildFlyElytronSaslOTPProvider;
-import org.wildfly.security.WildFlyElytronSaslPlainProvider;
-import org.wildfly.security.WildFlyElytronSaslScramProvider;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Provider;
 import java.util.ArrayList;
@@ -68,21 +52,9 @@ public class ProviderServiceLoaderSupplier extends ServiceLoaderSupplier<Provide
         Provider[] providers = INSTALLED_PROVIDERS.get();
         Set<Class<?>> installedProvidersSet = new HashSet<>((providers != null ? providers.length : 0) + (elytronProviderStaticallyAdded ? 15 : 0));
         if (elytronProviderStaticallyAdded) {
-            installedProvidersSet.add(WildFlyElytronPasswordProvider.class);
-            installedProvidersSet.add(WildFlyElytronCredentialStoreProvider.class);
-            installedProvidersSet.add(WildFlyElytronKeyProvider.class);
-            installedProvidersSet.add(WildFlyElytronKeyStoreProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslAnonymousProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslDigestProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslEntityProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslExternalProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslGs2Provider.class);
-            installedProvidersSet.add(WildFlyElytronSaslGssapiProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslLocalUserProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslOAuth2Provider.class);
-            installedProvidersSet.add(WildFlyElytronSaslOTPProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslPlainProvider.class);
-            installedProvidersSet.add(WildFlyElytronSaslScramProvider.class);
+            for (Class elytronProviderClassName : ProviderFactory.getWildflyElytronProviderClasses(ProviderServiceLoaderSupplier.class.getClassLoader())) {
+                installedProvidersSet.add(elytronProviderClassName);
+            }
         }
         if (providers != null) {
             for (int i = 0; i < providers.length; i++) {

@@ -45,7 +45,6 @@ import org.wildfly.security.x500.cert.X509CertificateChainAndSigningKey;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
