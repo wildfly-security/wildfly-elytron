@@ -164,7 +164,7 @@ public final class WildFlySasl {
      * Note: This is a server only property and is not used client side.
      */
     public static final String GSSAPI_CREATE_NAME_GSS_INIT = "wildfly.sasl.gssapi.server.create-name-gss-init";
-    
+
     /**
      * A property used to disable Unicode normalization for passwords.
      *
