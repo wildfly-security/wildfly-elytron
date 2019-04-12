@@ -55,7 +55,7 @@ import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;

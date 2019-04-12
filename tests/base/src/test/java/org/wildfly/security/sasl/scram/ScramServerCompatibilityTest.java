@@ -44,7 +44,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronSaslScramProvider;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.password.Password;

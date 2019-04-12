@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.scram;
 
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslScram;
-import static org.wildfly.security.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.IOException;
 import java.security.Provider;

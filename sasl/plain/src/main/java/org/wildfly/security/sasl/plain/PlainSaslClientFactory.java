@@ -44,7 +44,13 @@ public final class PlainSaslClientFactory implements SaslClientFactory {
         if (props == null) props = Collections.emptyMap();
         if (PlainSasl.isMatched(props, false)) for (String mechanism : mechanisms) {
             if (SaslMechanismInformation.Names.PLAIN.equals(mechanism)) {
-                return new PlainSaslClient(authorizationId, cbh);
+                boolean skipNormalization;
+                if (props.containsKey(WildFlySasl.SKIP_NORMALIZATION)) {
+                    skipNormalization = Boolean.parseBoolean((String) props.get(WildFlySasl.SKIP_NORMALIZATION));
+                } else {
+                    skipNormalization = false;
+                }
+                return new PlainSaslClient(authorizationId, cbh, skipNormalization);
             }
         }
         return null;

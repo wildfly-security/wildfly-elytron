@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;

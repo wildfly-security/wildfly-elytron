@@ -16,12 +16,13 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.sasl.digest;
 
 import java.security.Provider;
 import java.util.Collections;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the Digest SASL authentication mechanism.

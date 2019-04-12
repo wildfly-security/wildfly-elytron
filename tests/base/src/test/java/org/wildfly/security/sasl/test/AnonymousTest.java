@@ -40,7 +40,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronSaslAnonymousProvider;
+import org.wildfly.security.sasl.anonymous.WildFlyElytronSaslAnonymousProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;

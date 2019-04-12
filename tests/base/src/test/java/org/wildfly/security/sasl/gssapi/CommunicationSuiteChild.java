@@ -55,7 +55,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.wildfly.security.WildFlyElytronSaslGssapiProvider;
 import org.wildfly.security.sasl.WildFlySasl;
 
 //has dependency on other tests (GssapiTestSuite)

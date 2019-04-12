@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;

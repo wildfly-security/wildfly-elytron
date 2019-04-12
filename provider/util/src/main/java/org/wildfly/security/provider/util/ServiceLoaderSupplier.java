@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.provider.util;
 
 import org.wildfly.common.array.Arrays2;
 

@@ -44,11 +44,13 @@ final class PlainSaslClient implements SaslClient, SaslWrapper {
 
     private final String authorizationId;
     private final CallbackHandler cbh;
+    private final long profile;
     private boolean complete = false;
 
-    PlainSaslClient(final String authorizationId, final CallbackHandler cbh) {
+    PlainSaslClient(final String authorizationId, final CallbackHandler cbh, final boolean skipNormalization) {
         this.authorizationId = authorizationId;
         this.cbh = cbh;
+        this.profile = skipNormalization ? StringPrep.PROFILE_SASL_STORED_NON_NORMALIZED : StringPrep.PROFILE_SASL_STORED;
     }
 
     public String getMechanismName() {
@@ -87,12 +89,12 @@ final class PlainSaslClient implements SaslClient, SaslWrapper {
         try {
             final ByteStringBuilder b = new ByteStringBuilder();
             if (authorizationId != null) {
-                StringPrep.encode(authorizationId, b, StringPrep.PROFILE_SASL_STORED);
+                StringPrep.encode(authorizationId, b, this.profile);
             }
             b.append((byte) 0);
-            StringPrep.encode(name, b, StringPrep.PROFILE_SASL_STORED);
+            StringPrep.encode(name, b, this.profile);
             b.append((byte) 0);
-            StringPrep.encode(password, b, StringPrep.PROFILE_SASL_STORED);
+            StringPrep.encode(password, b, this.profile);
             return b.toArray();
         } catch (IllegalArgumentException ex) {
             throw saslPlain.mechMalformedFields(ex).toSaslException();

@@ -37,7 +37,7 @@ import javax.security.auth.message.callback.PasswordValidationCallback;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.jaspi.impl.JaspiAuthenticationContext;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;

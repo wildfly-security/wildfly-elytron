@@ -165,4 +165,11 @@ public final class WildFlySasl {
      */
     public static final String GSSAPI_CREATE_NAME_GSS_INIT = "wildfly.sasl.gssapi.server.create-name-gss-init";
 
+    /**
+     * A property used to disable Unicode normalization for passwords.
+     *
+     * Note: This is a client only property and is not used server side.
+     */
+    public static final String SKIP_NORMALIZATION = "org.wildfly.sasl.skip-normalization";
+
 }
