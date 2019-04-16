@@ -118,4 +118,15 @@ public abstract class SecurityEventVisitor<P, R> {
         return handlePermissionCheckEvent(event, param);
     }
 
+    /**
+     * Handle an auditable event that is to be logged to syslog.
+     *
+     * @param event the security event
+     * @param param the visitor parameter
+     * @return the visitor return value
+     */
+    public R handleSyslogAuditEvent(final SyslogAuditEvent event, final P param) {
+        return handleSyslogAuditEvent(event, param);
+    }
+
 }

@@ -1031,6 +1031,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-api</artifactId>
+                <version>3.7.2.Final</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${version.junit.junit}</version>
