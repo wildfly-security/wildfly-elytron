@@ -25,8 +25,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.function.Supplier;
 
-import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import javax.json.spi.JsonProvider;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
@@ -44,14 +44,17 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
 
     private final Supplier<DateTimeFormatter> dateTimeFormatterSupplier;
 
+    private final JsonProvider jsonProvider;
+
     JsonSecurityEventFormatter(Builder builder) {
         this.dateTimeFormatterSupplier = builder.dateTimeFormatterSupplier;
+        this.jsonProvider = JsonProvider.provider();
     }
 
     @Override
     public String handleUnknownEvent(SecurityEvent event, Void param) {
         checkNotNullParam("event", event);
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
         handleUnknownEvent(event, objectBuilder);
         return objectBuilder.build().toString();
     }
@@ -62,7 +65,7 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
         objectBuilder.add("event", event.getClass().getSimpleName());
         objectBuilder.add("event-time", dateFormat.format(event.getInstant()));
 
-        JsonObjectBuilder securityIdentityBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder securityIdentityBuilder = jsonProvider.createObjectBuilder();
         SecurityIdentity securityIdentity = event.getSecurityIdentity();
         securityIdentityBuilder.add("name", securityIdentity.getPrincipal().getName());
         securityIdentityBuilder.add("creation-time", dateFormat.format(securityIdentity.getCreationTime()));
@@ -73,7 +76,7 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     @Override
     public String handleDefiniteOutcomeEvent(SecurityDefiniteOutcomeEvent event, Void param) {
         checkNotNullParam("event", event);
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
         handleDefiniteOutcomeEvent(event, objectBuilder);
         return objectBuilder.build().toString();
     }
@@ -86,7 +89,7 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     @Override
     public String handleAuthenticationFailedEvent(SecurityAuthenticationFailedEvent event, Void param) {
         checkNotNullParam("event", event);
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
         handleAuthenticationFailedEvent(event, objectBuilder);
         return objectBuilder.build().toString();
     }
@@ -103,7 +106,7 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     @Override
     public String handlePermissionCheckEvent(SecurityPermissionCheckEvent event, Void param) {
         checkNotNullParam("event", event);
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
         handlePermissionCheckEvent(event, objectBuilder);
         return objectBuilder.build().toString();
     }
@@ -112,7 +115,7 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
         handleDefiniteOutcomeEvent(event, objectBuilder);
 
         Permission permission = event.getPermission();
-        JsonObjectBuilder permissionBuilder = Json.createObjectBuilder();
+        JsonObjectBuilder permissionBuilder = jsonProvider.createObjectBuilder();
         permissionBuilder.add("type", permission.getClass().getName());
         permissionBuilder.add("actions", permission.getActions());
         permissionBuilder.add("name", permission.getName());
