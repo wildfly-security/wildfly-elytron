@@ -99,14 +99,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
      */
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
-        // try to re-authenticate based on a previously cached identity
-        if (attemptReAuthentication(request)) {
-            return;
-        }
-
         // Is current request an authentication attempt?
         if (POST.equals(request.getRequestMethod()) && request.getRequestURI().getPath().endsWith(postLocation)) {
             attemptAuthentication(request);
+            return;
+        }
+
+        // try to re-authenticate based on a previously cached identity
+        if (attemptReAuthentication(request)) {
             return;
         }
 
@@ -174,6 +174,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         try {
             if (authenticate(null, username, passwordChars)) {
                 IdentityCache identityCache = createIdentityCache(request);
+                identityCache.remove();  // We are mid NEW authentication so don't want to import an old identity.
                 if (authorize(username, request, identityCache)) {
                     httpForm.debugf("User [%s] authenticated successfully", username);
                     succeed();
