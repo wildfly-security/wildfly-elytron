@@ -64,7 +64,7 @@ public interface ModifiableSecurityRealm extends SecurityRealm {
      * @return the {@link ModifiableRealmIdentity} for the provided information (not {@code null})
      */
     default ModifiableRealmIdentity getRealmIdentityForUpdate(Evidence evidence) throws RealmUnavailableException {
-        final Principal principal = evidence.getPrincipal();
+        final Principal principal = evidence.getDecodedPrincipal();
         return principal == null ? ModifiableRealmIdentity.NON_EXISTENT : getRealmIdentityForUpdate(principal);
     }
 

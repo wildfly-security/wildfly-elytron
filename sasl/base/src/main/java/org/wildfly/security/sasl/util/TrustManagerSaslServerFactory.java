@@ -38,6 +38,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
@@ -82,6 +83,8 @@ public final class TrustManagerSaslServerFactory extends AbstractDelegatingSaslS
                     final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
                     final X509PeerCertificateChainEvidence peerCertificateChainEvidence = evidenceVerifyCallback.getEvidence(X509PeerCertificateChainEvidence.class);
                     if (peerCertificateChainEvidence != null) {
+                        EvidenceDecodePrincipalCallback evidenceDecodePrincipalCallback = new EvidenceDecodePrincipalCallback(peerCertificateChainEvidence);
+                        cbh.handle(new ArrayList<>(Arrays.asList(evidenceDecodePrincipalCallback)).toArray(new Callback[1]));
                         final X509TrustManager trustManager = getTrustManager();
                         try {
                             trustManager.checkClientTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());

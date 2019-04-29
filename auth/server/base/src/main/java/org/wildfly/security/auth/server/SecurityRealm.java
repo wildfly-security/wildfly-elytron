@@ -60,7 +60,7 @@ public interface SecurityRealm {
      * @return the {@link RealmIdentity} for the provided evidence (not {@code null})
      */
     default RealmIdentity getRealmIdentity(Evidence evidence) throws RealmUnavailableException {
-        final Principal principal = evidence.getPrincipal();
+        final Principal principal = evidence.getDecodedPrincipal();
         return principal == null ? RealmIdentity.NON_EXISTENT : getRealmIdentity(principal);
     }
 

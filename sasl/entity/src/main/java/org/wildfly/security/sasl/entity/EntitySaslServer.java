@@ -23,6 +23,7 @@ import static org.wildfly.security.mechanism._private.ElytronMessages.saslEntity
 import static org.wildfly.security.sasl.entity.Entity.keyType;
 
 import java.security.InvalidKeyException;
+import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Signature;
@@ -167,7 +168,12 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
 
                     // Determine the authorization identity
-                    clientName = evidence.getPrincipal().getName(X500Principal.CANONICAL);
+                    Principal principal = evidence.getDecodedPrincipal();
+                    if (principal instanceof X500Principal) {
+                        clientName = ((X500Principal) principal).getName(X500Principal.CANONICAL);
+                    } else {
+                        clientName = principal.getName();
+                    }
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);

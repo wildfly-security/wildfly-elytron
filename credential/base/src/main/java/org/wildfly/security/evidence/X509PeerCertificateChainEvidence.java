@@ -31,6 +31,7 @@ import org.wildfly.common.Assert;
 public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence {
 
     private final X509Certificate[] peerCertificateChain;
+    private Principal decodedPrincipal;
 
     /**
      * Construct a new instance.
@@ -46,10 +47,24 @@ public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence
      * Get the {@link Principal} represented by the first certificate in the chain.
      *
      * @return the {@link Principal} represented by the first certificate in the chain.
+     * @deprecated Use {@link #getDefaultPrincipal()} or {@link #getDecodedPrincipal()} instead.
      */
+    @Deprecated
     @Override
     public X500Principal getPrincipal() {
         return getFirstCertificate().getSubjectX500Principal();
+    }
+
+    public X500Principal getDefaultPrincipal() {
+        return getFirstCertificate().getSubjectX500Principal();
+    }
+
+    public Principal getDecodedPrincipal() {
+        return decodedPrincipal;
+    }
+
+    public void setDecodedPrincipal(Principal decodedPrincipal) {
+        this.decodedPrincipal = decodedPrincipal;
     }
 
     /**
