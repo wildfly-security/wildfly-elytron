@@ -33,9 +33,43 @@ public interface Evidence {
      * Get the {@link Principal} which can be derived from this evidence, this can be {@code null} if there is no derived Principal.
      *
      * @return the {@link Principal} which can be derived from this evidence, this can be {@code null} if there is no derived Principal.
+     * @deprecated Use {@link #getDefaultPrincipal()} or {@link #getDecodedPrincipal()} instead.
      */
+    @Deprecated
     default Principal getPrincipal() {
         return null;
+    }
+
+    /**
+     * Get the default {@link Principal} associated with this evidence (may be {@code null}).
+     *
+     * @return the default {@link Principal} associated with this evidence (may be{@code null})
+     * @since 1.10.0
+     */
+    default Principal getDefaultPrincipal() {
+        return getPrincipal();
+    }
+
+    /**
+     * Get the {@link Principal} derived from this evidence using an evidence decoder (may be {@code null}).
+     *
+     * @return the {@link Principal} derived from this evidence using an evidence decoder (may be {@code null})
+     * @since 1.10.0
+     */
+    default Principal getDecodedPrincipal() {
+        return getDefaultPrincipal();
+    }
+
+    /**
+     * Set the {@link Principal} derived from this evidence using an evidence decoder (may be {@code null}).
+     * This method is a no-op by default. It is intended to be implemented by evidence types that can be
+     * associated with a principal derived from an evidence decoder.
+     *
+     * @param principal the principal derived from this evidence using an evidence decoder (may be {@code null})
+     * @since 1.10.0
+     */
+    default void setDecodedPrincipal(Principal principal) {
+        // no-op
     }
 
     /**

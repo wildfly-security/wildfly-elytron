@@ -100,6 +100,7 @@ public final class SecurityDomain {
     private final UnaryOperator<SecurityIdentity> securityIdentityTransformer;
     private final Predicate<SecurityDomain> trustedSecurityDomain;
     private final Consumer<SecurityEvent> securityEventListener;
+    private final Function<Evidence, Principal> evidenceDecoder;
 
     SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -112,6 +113,7 @@ public final class SecurityDomain {
         this.securityIdentityTransformer = builder.securityIdentityTransformer;
         this.trustedSecurityDomain = builder.trustedSecurityDomain;
         this.securityEventListener = builder.securityEventListener;
+        this.evidenceDecoder = builder.evidenceDecoder;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
         final Map<String, RoleMapper> copiedRoleMappers;
         if (originalRoleMappers.isEmpty()) {
@@ -784,6 +786,10 @@ public final class SecurityDomain {
         }
     }
 
+    Function<Evidence, Principal> getEvidenceDecoder() {
+        return evidenceDecoder;
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -802,6 +808,7 @@ public final class SecurityDomain {
         private UnaryOperator<SecurityIdentity> securityIdentityTransformer = UnaryOperator.identity();
         private Predicate<SecurityDomain> trustedSecurityDomain = domain -> false;
         private Consumer<SecurityEvent> securityEventListener = e -> {};
+        private Function<Evidence, Principal> evidenceDecoder = evidence -> evidence.getDefaultPrincipal();
 
         Builder() {
         }
@@ -1004,6 +1011,21 @@ public final class SecurityDomain {
          */
         public Builder setSecurityEventListener(final Consumer<SecurityEvent> securityEventListener) {
             this.securityEventListener = Assert.checkNotNullParam("securityEventListener", securityEventListener);
+            return this;
+        }
+
+        /**
+         * Set the evidence decoder for this security domain which will be used to extract the principal from the given
+         * {@link Evidence}.
+         *
+         * @param evidenceDecoder the evidence decoder (must not be {@code null})
+         * @return this builder
+         * @since 1.10.0
+         */
+        public Builder setEvidenceDecoder(EvidenceDecoder evidenceDecoder) {
+            Assert.checkNotNullParam("evidenceDecoder", evidenceDecoder);
+            assertNotBuilt();
+            this.evidenceDecoder = evidenceDecoder;
             return this;
         }
 
