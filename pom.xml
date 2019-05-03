@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>25</version>
+        <version>35</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -82,7 +82,7 @@
         <version.net.minidev.json-smart>2.3</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>4.39.2</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
-        <version.org.wildfly.checkstyle-config>1.0.6.Final</version.org.wildfly.checkstyle-config>
+        <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.0.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.5.1.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
@@ -92,8 +92,6 @@
         <!-- Checkstyle configuration -->
         <linkXRef>false</linkXRef>
 
-        <!-- version from jboss-parent is 6.15 but then some checks fail -->
-        <version.checkstyle>6.8</version.checkstyle>
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
         <modular.jdk.args/>
         <modular.jdk.props/>
