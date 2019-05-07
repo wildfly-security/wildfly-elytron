@@ -127,4 +127,7 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 10056, value = "Unable to determine curve parameter from alg header \"%s\"")
     IllegalArgumentException unableToDetermineCurveParameterFromAlgHeader(String algHeader);
+
+    @Message(id = 10057, value = "No ACME server staging URL given")
+    AcmeException noAcmeServerStagingUrlGiven();
 }

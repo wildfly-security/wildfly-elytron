@@ -181,6 +181,9 @@ public abstract class AcmeClientSpi {
         Assert.checkNotNullParam("account", account);
         final Map<AcmeResource, URL> resourceUrls = account.getResourceUrls(staging);
         if (resourceUrls.isEmpty()) {
+            if (staging && account.getServerUrl(true) == null) {
+                throw acme.noAcmeServerStagingUrlGiven();
+            }
             HttpURLConnection connection = sendGetRequest(account.getServerUrl(staging), HttpURLConnection.HTTP_OK, JSON_CONTENT_TYPE);
             JsonObject directoryJson = getJsonResponse(connection);
             try {
@@ -206,6 +209,9 @@ public abstract class AcmeClientSpi {
      */
     public AcmeMetadata getMetadata(AcmeAccount account, boolean staging) throws AcmeException {
         Assert.checkNotNullParam("account", account);
+        if (staging && account.getServerUrl(true) == null) {
+            throw acme.noAcmeServerStagingUrlGiven();
+        }
         HttpURLConnection connection = sendGetRequest(account.getServerUrl(staging), HttpURLConnection.HTTP_OK, JSON_CONTENT_TYPE);
         JsonObject directoryJson = getJsonResponse(connection);
         JsonObject metadata = directoryJson.getJsonObject(META);
