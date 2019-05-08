@@ -15,7 +15,7 @@ addons:
       description: Elytron Coverity Scan via Travis CI
     notification_email: josef.cacek@gmail.com
     build_command_prepend: mvn clean
-    build_command: mvn -DskipTests=true compile
+    build_command: mvn -s .travis-settings.xml -DskipTests=true compile
     branch_pattern: master
   sonarqube:
     organization: wildfly-security
@@ -23,7 +23,7 @@ addons:
       secure: Lul8OuAJ+kZG9eTdbsIow1yEqqcawRMHEPJxj43wQyVsmiDCxijUxRI0Rs4JI16evaosRcY/6rIhSPUwh8VxuNkoGXKMXv99YjTEqgpzpjOvhMWZM0dQPBcDWyCgJR0G3m26VQx1bGDDqaBfU3iHIy02judvBjgqpv/5EA9GWAE=
 script:
 # The 'version.sonar.plugin' property used in the following command is just a workaround for an incorrect version used in jboss-parent POM
-- mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dversion.sonar.plugin=3.3.0.603
+- mvn -s .travis-settings.xml clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dversion.sonar.plugin=3.3.0.603
 cache:
   directories:
   - "$HOME/.m2/repository"
