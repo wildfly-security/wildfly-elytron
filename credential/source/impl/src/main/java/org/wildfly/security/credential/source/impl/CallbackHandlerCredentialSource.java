@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import java.io.IOException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -31,15 +31,14 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * A credential source which is backed by a callback handler.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.CallbackHandlerCredentialSource} instead
  */
-@Deprecated
 public final class CallbackHandlerCredentialSource implements CredentialSource {
     private final CallbackHandler callbackHandler;
 

@@ -309,7 +309,6 @@
                             ${project.basedir}/tests/common/src/main/java/;
                             ${project.basedir}/tool/src/main/java/;
                             ${project.basedir}/util/src/main/java/;
-                            ${project.basedir}/wildfly-elytron-titan/src/main/java/;
                             ${project.basedir}/x500/base/src/main/java/;
                             ${project.basedir}/x500/cert/acme/src/main/java/;
                             ${project.basedir}/x500/cert/base/src/main/java/;
@@ -496,6 +495,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-source-impl</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1236,6 +1240,7 @@
         <module>credential/base</module>
         <module>credential/store</module>
         <module>credential/source/deprecated</module>
+        <module>credential/source/impl</module>
         <module>digest</module>
         <module>http/base</module>
         <module>http/basic</module>
