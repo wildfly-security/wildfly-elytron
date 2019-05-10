@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
-        <version>1.9.0.Final</version>
+        <version>1.9.1.CR1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -533,7 +533,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.8.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
+                                    <version>1.9.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
@@ -601,6 +601,11 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-credential-source-impl</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
@@ -901,7 +906,7 @@
                                     <include>org.wildfly.security.password</include>
                                     <include>org.wildfly.security.password.interfaces</include>
                                     <include>org.wildfly.security.password.spec</include>
-                                    <!-- <include>org.wildfly.security.password.util</include>-->
+                                    <include>org.wildfly.security.password.util</include>
                                     <include>org.wildfly.security.permission</include>
                                     <include>org.wildfly.security.sasl.util</include>
                                     <include>org.wildfly.security.ssl</include>
@@ -910,15 +915,7 @@
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
                                 <excludes>
-                                    <!-- ElytronMessages is private API so should not have been accessed via public API -->
-                                    <exclude>org.wildfly.security.mechanism.MechanismUtil#getPasswordCredential(java.lang.String, javax.security.auth.callback.CallbackHandler, java.lang.Class, java.lang.String, java.security.spec.AlgorithmParameterSpec, java.security.spec.AlgorithmParameterSpec, java.util.function.Supplier, org.wildfly.security._private.ElytronMessages)</exclude>
-                                    <exclude>org.wildfly.security.mechanism.MechanismUtil#handleCallbacks(org.wildfly.security._private.ElytronMessages, javax.security.auth.callback.CallbackHandler, javax.security.auth.callback.Callback[])</exclude>
-                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslClient#AbstractSaslClient(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, java.lang.String, boolean, org.wildfly.security._private.ElytronMessages)</exclude>
-                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslParticipant#AbstractSaslParticipant(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
-                                    <exclude>org.wildfly.security.sasl.util.AbstractSaslServer#AbstractSaslServer(java.lang.String, java.lang.String, java.lang.String, javax.security.auth.callback.CallbackHandler, org.wildfly.security._private.ElytronMessages)</exclude>
-                                    <!-- ByteStringBuilder is private API so should not have been accessed via public API -->
-                                    <exclude>org.wildfly.security.sasl.util.StringPrep#encode(char[], org.wildfly.security.util.ByteStringBuilder, long)</exclude>
-                                    <exclude>org.wildfly.security.sasl.util.StringPrep#encode(java.lang.String, org.wildfly.security.util.ByteStringBuilder, long)</exclude>
+                                    
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
