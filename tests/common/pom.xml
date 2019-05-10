@@ -5,7 +5,7 @@
     <parent>
         <artifactId>wildfly-elytron-parent</artifactId>
         <groupId>org.wildfly.security</groupId>
-        <version>1.9.0.CR6-SNAPSHOT</version>
+        <version>1.9.0.Final</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
