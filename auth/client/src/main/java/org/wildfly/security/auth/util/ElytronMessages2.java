@@ -29,8 +29,8 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
-interface ElytronMessages extends BasicLogger {
+interface ElytronMessages2 extends BasicLogger {
 
-    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
+    ElytronMessages2 log = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security");
 
 }
