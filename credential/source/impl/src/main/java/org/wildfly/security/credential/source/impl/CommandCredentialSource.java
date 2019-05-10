@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 import static org.wildfly.common.Assert.checkNotEmptyParam;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.credential.source.ElytronMessages.log;
+import static org.wildfly.security.credential.source.impl.ElytronMessages.log;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,6 +45,7 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
@@ -52,9 +53,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * A credential source which acquires a credential from the command line.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- * @deprecated Use {@link org.wildfly.security.credential.source.impl.CommandCredentialSource} instead
  */
-@Deprecated
 public final class CommandCredentialSource implements CredentialSource {
 
     private static final File NULL_FILE = new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null");

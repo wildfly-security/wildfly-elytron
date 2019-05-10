@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.credential.source;
+package org.wildfly.security.credential.source.impl;
 
 /**
  * Class that simulates credential command for tests.
