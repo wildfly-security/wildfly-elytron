@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.util;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security.auth.util.ElytronMessages.log;
+import static org.wildfly.security.auth.util.ElytronMessages2.log;
 
 import java.io.IOException;
 import java.net.Authenticator;
