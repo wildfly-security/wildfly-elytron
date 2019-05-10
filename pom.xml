@@ -309,7 +309,6 @@
                             ${project.basedir}/tests/common/src/main/java/;
                             ${project.basedir}/tool/src/main/java/;
                             ${project.basedir}/util/src/main/java/;
-                            ${project.basedir}/wildfly-elytron-titan/src/main/java/;
                             ${project.basedir}/x500/base/src/main/java/;
                             ${project.basedir}/x500/cert/acme/src/main/java/;
                             ${project.basedir}/x500/cert/base/src/main/java/;
