@@ -103,12 +103,15 @@ public class JaccDelegatingPolicy extends Policy {
                 if (impliesRolePermission(domain, permission, policyConfiguration)) {
                     return true;
                 }
+
+                // Here we check the permissions mapped to the current identity.
+                // We only perform this check for JACC permissions otherwise we intercept all
+                // SecurityManager checks.
+                if (impliesIdentityPermission(permission)) {
+                    return true;
+                }
             }
 
-            // here we check the permissions mapped to the current identity.
-            if (impliesIdentityPermission(permission)) {
-                return true;
-            }
         } catch (Exception e) {
             log.authzFailedToCheckPermission(domain, permission, e);
         }
