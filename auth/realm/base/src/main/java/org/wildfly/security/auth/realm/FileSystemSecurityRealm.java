@@ -367,7 +367,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         void parseCredential(String algorithm, String format, String body) throws RealmUnavailableException, XMLStreamException;
     }
 
-    class Identity implements ModifiableRealmIdentity {
+    static class Identity implements ModifiableRealmIdentity {
 
         private static final String BASE64_FORMAT = "base64";
         private static final String MCF_FORMAT = "crypt";
@@ -1071,7 +1071,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
     }
 
-    final class LoadedIdentity {
+    static final class LoadedIdentity {
         private final String name;
         private final List<Credential> credentials;
         private final Attributes attributes;
