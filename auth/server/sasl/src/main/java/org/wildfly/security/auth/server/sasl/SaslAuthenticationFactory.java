@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -114,6 +115,8 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
      */
     public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<SaslServer, SaslServerFactory, SaslException> {
 
+         private ScheduledExecutorService scheduledExecutorService;
+
         /**
          * Construct a new instance.
          */
@@ -135,12 +138,37 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             return this;
         }
 
+         /**
+          * Set the scheduled executor service.
+          *
+          * @param scheduledExecutorService the scheduled executor service.
+          * @return this builder
+          */
+        public Builder setScheduledExecutorService(final ScheduledExecutorService scheduledExecutorService) {
+            this.scheduledExecutorService = scheduledExecutorService;
+            return this;
+        }
+
+         /**
+          * Get the scheduled executor service.
+          *
+          * @return scheduled executor service (may be {@code null})
+          */
+        public ScheduledExecutorService getScheduledExecutorService() {
+            return this.scheduledExecutorService;
+        }
+
         public SaslAuthenticationFactory build() {
             AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(new SetMechanismInformationSaslServerFactory(getFactory()));
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }
-            factory = new AuthenticationTimeoutSaslServerFactory(factory, SecurityDomain.getScheduledExecutorService()); // Use an authentication timeout
+            if (this.scheduledExecutorService == null) {
+                // Use the default executor service as a custom one was not provided
+               this.scheduledExecutorService = SecurityDomain.getScheduledExecutorService();
+            }
+            factory = new AuthenticationTimeoutSaslServerFactory(factory, this.scheduledExecutorService);
+
             return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), factory);
         }
     }
