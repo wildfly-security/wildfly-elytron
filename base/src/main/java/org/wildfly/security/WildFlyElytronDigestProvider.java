@@ -27,7 +27,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for Digest implementations.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated Use org.wildfly.security.digest.WildFlyElytronDigestProvider instead
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronDigestProvider extends WildFlyElytronBaseProvider {
 

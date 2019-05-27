@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.security.WildFlyElytronDigestProvider;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

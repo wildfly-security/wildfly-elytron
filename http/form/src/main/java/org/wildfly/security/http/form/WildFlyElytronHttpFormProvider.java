@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.form;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
- * Provider for the HTTP BASIC authentication mechanism.
+ * Provider for the HTTP FORM authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpBasicProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronHttpFormProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 3029961619967561017L;
-    private static WildFlyElytronHttpBasicProvider INSTANCE = new WildFlyElytronHttpBasicProvider();
+    private static final long serialVersionUID = 3872696509387755963L;
+    private static WildFlyElytronHttpFormProvider INSTANCE = new WildFlyElytronHttpFormProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpBasicProvider() {
-        super("WildFlyElytronHttpBasicProvider", "1.0", "WildFly Elytron HTTP BASIC Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap));
+    public WildFlyElytronHttpFormProvider() {
+        super("WildFlyElytronHttpFormProvider", "1.0", "WildFly Elytron HTTP FORM Provider");
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap));
     }
 
     /**
-     * Get the HTTP BASIC authentication mechanism provider instance.
+     * Get the HTTP FORM authentication mechanism provider instance.
      *
-     * @return the HTTP BASIC authentication mechanism provider instance
+     * @return the HTTP FORM authentication mechanism provider instance
      */
-    public static WildFlyElytronHttpBasicProvider getInstance() {
+    public static WildFlyElytronHttpFormProvider getInstance() {
         return INSTANCE;
     }
 
