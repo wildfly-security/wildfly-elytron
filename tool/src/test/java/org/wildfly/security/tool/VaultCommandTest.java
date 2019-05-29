@@ -19,15 +19,58 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Assert;
+import java.io.File;
+
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
 import org.junit.Test;
+import org.junit.Assert;
 
 /**
  * Tests related to Vault 2.0 -> credential store conversion.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
 public class VaultCommandTest extends AbstractCommandTest {
+    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
+    private static final String TARGET_LOCATION = "./target";
+
+    private static File workingDir = null;
+    private static File credentialStoreFile1 = null;
+    private static File credentialStoreFile2 = null;
+    private static File credentialStoreFileMore = null;
+
+    @BeforeClass
+    public static void beforeTest() throws Exception {
+        workingDir = new File(TARGET_LOCATION);
+        if (workingDir.exists() == false) {
+            workingDir.mkdirs();
+        }
+
+        credentialStoreFile1 = new File(workingDir, "v1-cs-1.store");
+        credentialStoreFile2 = new File(workingDir, "v1-cs-2.store");
+        credentialStoreFileMore = new File(workingDir, "v1-cs-more.store");
+    }
+
+    @AfterClass
+    public static void afterTest() {
+        if (workingDir != null) {
+            workingDir.delete();
+            workingDir = null;
+        }
+        if (credentialStoreFile1 != null) {
+            credentialStoreFile1.delete();
+            credentialStoreFile1 = null;
+        }
+        if (credentialStoreFile2 != null) {
+            credentialStoreFile2.delete();
+            credentialStoreFile2 = null;
+        }
+        if (credentialStoreFileMore != null) {
+            credentialStoreFileMore.delete();
+            credentialStoreFileMore = null;
+        }
+    }
 
     @Override
     protected String getCommandType() {
@@ -42,8 +85,16 @@ public class VaultCommandTest extends AbstractCommandTest {
     public void singleConversionBasicTest() throws Exception {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = {"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                "--location", storeFileName, "--alias", "test"};
+        String[] args;
+        if (IS_IBM) {
+            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data_ibm/", "--keystore", "target/test-classes/vault-v1/vault-jceks-ibm.keystore",
+                    "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
+                    "--location", storeFileName, "--alias", "test"};
+        } else {
+            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore",
+                    "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
+                    "--location", storeFileName, "--alias", "test"};
+        }
         // conversion
         executeCommandAndCheckStatus(args);
 
@@ -69,12 +120,22 @@ public class VaultCommandTest extends AbstractCommandTest {
      */
     @Test
     public void bulkConversionBasicTest() throws Exception {
-        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc"};
+        String[] args;
+        if (IS_IBM) {
+            args = new String[]{"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc-ibm"};
+        } else {
+            args = new String[]{"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc"};
+        }
         // conversion
         String output = executeCommandAndCheckStatusAndGetOutput(args);
         String[] parts = output.split("converted to credential store");
         Assert.assertTrue("Three credential stores has to be created", parts.length == 4);
-        Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
+        if (IS_IBM) {
+            Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks-ibm.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks-ibm.keystore") > 0);
+        } else {
+            Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
+        }
+
 
         // check result
         args = new String[] { "--location", "target/v1-cs-more.store" , "--aliases", "--summary",
@@ -110,8 +171,14 @@ public class VaultCommandTest extends AbstractCommandTest {
     public void testDuplicateOptions() {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args = {"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
+        String[] args;
+        if (IS_IBM) {
+            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data_ibm/", "--keystore", "target/test-classes/vault-v1/vault-jceks-ibm.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
+                    "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
+        } else {
+            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
+                    "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
+        }
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
 
