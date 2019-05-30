@@ -24,9 +24,12 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -49,6 +52,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
 
     private final Supplier<Provider[]> providerSupplier;
     private volatile Provider[] providers;
+    private volatile Map<String, List<Service>> services;
 
     /**
      * Construct a new instance which uses the globally registered {@link Provider} instances.
@@ -90,24 +94,29 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
-        Set<String> names = new LinkedHashSet<>();
-        for (Provider current : getProviders()) {
-            Set<Service> services = current.getServices();
-            if (services != null) {
-                for (Service currentService : services) {
-                    if (SERVICE_TYPE.equals(currentService.getType())) {
-                        try {
-                            String[] serviceMechNames = ((HttpServerAuthenticationMechanismFactory) currentService.newInstance(null)).getMechanismNames(properties);
-                            Collections.addAll(names, serviceMechNames);
-                        } catch (NoSuchAlgorithmException e) {
-                            log.debug("Unable to create instance", e);
-                        }
+        Map<String, List<Service>> services = getServices();
+        final Set<String> names;
+        if (properties.isEmpty()) {
+            /*
+             * If no properties are provided that could filter the names return them all.
+             */
+            names = services.keySet();
+        } else {
+            names = new LinkedHashSet<>();
+            for (List<Service> currentServices : services.values()) {
+                for (Service currentService : currentServices) {
+                    try {
+                        String[] serviceMechNames = ((HttpServerAuthenticationMechanismFactory) currentService.newInstance(null)).getMechanismNames(properties);
+                        Collections.addAll(names, serviceMechNames);
+                    } catch (NoSuchAlgorithmException e) {
+                        log.debug("Unable to create instance", e);
                     }
                 }
             }
         }
         if (names.size() == 0 && log.isTraceEnabled()) {
-            log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
+            log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(),
+                    Arrays.toString(providerSupplier.get()));
         }
         return names.toArray(new String[names.size()]);
     }
@@ -117,39 +126,55 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
-        for (Provider current : getProviders()) {
-            Set<Service> services = current.getServices();
-            if (services != null) {
-                for (Service currentService : services) {
-                    if (SERVICE_TYPE.equals(currentService.getType())) {
-                        try {
-                            HttpServerAuthenticationMechanismFactory factory = (HttpServerAuthenticationMechanismFactory) currentService.newInstance(null);
-                            HttpServerAuthenticationMechanism mechanism = factory.createAuthenticationMechanism(mechanismName, properties, callbackHandler);
-                            if (mechanism != null) {
-                                return mechanism;
-                            }
-                        } catch (NoSuchAlgorithmException e) {
-                            log.debug("Unable to create instance", e);
-                        }
+        List<Service> services = getServices().get(mechanismName);
+        if (services != null) {
+            for (Service currentService : services) {
+                try {
+                    HttpServerAuthenticationMechanismFactory factory = (HttpServerAuthenticationMechanismFactory) currentService.newInstance(null);
+                    HttpServerAuthenticationMechanism mechanism = factory.createAuthenticationMechanism(mechanismName, properties, callbackHandler);
+                    if (mechanism != null) {
+                        return mechanism;
                     }
+                } catch (NoSuchAlgorithmException e) {
+                    log.debug("Unable to create instance", e);
                 }
             }
         }
         if (log.isTraceEnabled()) {
-            log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
+            log.tracef("No %s provided by provider loader in %s", SERVICE_TYPE, getClass().getSimpleName());
         }
         return null;
     }
 
-    private Provider[] getProviders() {
-        if (providers == null) {
-            synchronized (this) {
-                if (providers == null) {
-                    providers = providerSupplier.get();
+    private Map<String, List<Service>> getServices() {
+        if (services == null) {
+            synchronized(this) {
+                if (services == null) {
+                    if (providers == null) {
+                        providers = providerSupplier.get();
+                    }
+                    Map<String, List<Service>> services = new HashMap<>();
+                    for (Provider provider : providers) {
+                        Set<Service> providerServices = provider.getServices();
+                        for (Service currentService : providerServices) {
+                            if (SERVICE_TYPE.equals(currentService.getType())) {
+                                String algorithm = currentService.getAlgorithm();
+                                if (services.containsKey(algorithm)) {
+                                    services.get(algorithm).add(currentService);
+                                } else {
+                                    List<Service> serviceList = new ArrayList<>();
+                                    serviceList.add(currentService);
+                                    services.put(algorithm, serviceList);
+                                }
+                            }
+                        }
+                    }
+                    this.services = services;
                 }
             }
         }
-        return providers;
+
+        return services;
     }
 
 }
