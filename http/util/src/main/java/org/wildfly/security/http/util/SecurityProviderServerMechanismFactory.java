@@ -39,6 +39,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
 /**
  * A {@link HttpServerAuthenticationMechanismFactory} that loads factories from a supplied array of {@link Provider} instances.
+ * The provider service instances may or may not be cached.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -47,6 +48,14 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
     private static final String SERVICE_TYPE = HttpServerAuthenticationMechanismFactory.class.getSimpleName();
 
     private final Supplier<Provider[]> providerSupplier;
+    private volatile Provider[] providers;
+
+    /**
+     * Construct a new instance which uses the globally registered {@link Provider} instances.
+     */
+    public SecurityProviderServerMechanismFactory() {
+        this(INSTALLED_PROVIDERS);
+    }
 
     /**
      * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
@@ -58,10 +67,22 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
     }
 
     /**
-     * Construct a new instance which uses the globally registered {@link Provider} instances.
+     * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
+     *
+     * @param providers the provider instances this factory should use.
      */
-    public SecurityProviderServerMechanismFactory() {
-        this(INSTALLED_PROVIDERS);
+    public SecurityProviderServerMechanismFactory(Provider[] providers) {
+        this.providerSupplier = null;
+        this.providers = checkNotNullParam("providers", providers);
+    }
+
+    /**
+     * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
+     *
+     * @param provider the provider instance this factory should use.
+     */
+    public SecurityProviderServerMechanismFactory(Provider provider) {
+        this(new Provider[] { checkNotNullParam("provider", provider) });
     }
 
     /**
@@ -70,7 +91,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
         Set<String> names = new LinkedHashSet<>();
-        for (Provider current : providerSupplier.get()) {
+        for (Provider current : getProviders()) {
             Set<Service> services = current.getServices();
             if (services != null) {
                 for (Service currentService : services) {
@@ -96,7 +117,7 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
      */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
-        for (Provider current : providerSupplier.get()) {
+        for (Provider current : getProviders()) {
             Set<Service> services = current.getServices();
             if (services != null) {
                 for (Service currentService : services) {
@@ -118,6 +139,17 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
             log.tracef("No %s provided by provider loader in %s: %s", SERVICE_TYPE, getClass().getSimpleName(), Arrays.toString(providerSupplier.get()));
         }
         return null;
+    }
+
+    private Provider[] getProviders() {
+        if (providers == null) {
+            synchronized (this) {
+                if (providers == null) {
+                    providers = providerSupplier.get();
+                }
+            }
+        }
+        return providers;
     }
 
 }
