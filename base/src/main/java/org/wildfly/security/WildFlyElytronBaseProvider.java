@@ -21,10 +21,12 @@ package org.wildfly.security;
 import static org.wildfly.security.ElytronMessages.log;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -189,14 +191,43 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
 
     protected class ProviderService extends Service {
 
+        private final boolean withProvider;
+        private final boolean reUsable;
         private volatile Reference<Class<?>> implementationClassRef;
+        private volatile Reference<Object> instance;
 
         public ProviderService(Provider provider, String type, String algorithm, String className, List<String> aliases, Map<String,String> attributes) {
+            this(provider, type, algorithm, className, aliases, attributes, true, false);
+        }
+
+        public ProviderService(Provider provider, String type, String algorithm, String className, List<String> aliases, Map<String,String> attributes, boolean withProvider,  boolean reUsable) {
             super(provider, type, algorithm, className, aliases, attributes);
+            this.withProvider = withProvider;
+            this.reUsable = reUsable;
         }
 
         @Override
         public Object newInstance(Object constructorParameter) throws NoSuchAlgorithmException {
+            if (reUsable) {
+                Reference<Object> instance = this.instance;
+                Object response;
+                if (instance == null || (response = instance.get()) == null) {
+                    synchronized(this) {
+                        instance = this.instance;
+                        if (instance == null || (response = instance.get()) == null) {
+                            response = withProvider ? newInstance() : super.newInstance(constructorParameter);
+                            this.instance = new SoftReference<Object>(response);
+                        }
+                    }
+                }
+
+                return response;
+            }
+
+            return withProvider ? newInstance() : super.newInstance(constructorParameter);
+        }
+
+        private Object newInstance() throws NoSuchAlgorithmException {
             Class<?> implementationClass = getImplementationClass();
 
             try {
