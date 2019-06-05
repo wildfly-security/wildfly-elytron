@@ -26,7 +26,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for the HTTP Bearer authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated use org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider instead
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpBearerProvider extends WildFlyElytronBaseProvider {
 

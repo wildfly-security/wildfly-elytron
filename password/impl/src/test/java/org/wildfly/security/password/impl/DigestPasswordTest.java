@@ -36,7 +36,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.WildFlyElytronDigestProvider;
+import org.wildfly.security.digest.WildFlyElytronDigestProvider;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.DigestPassword;

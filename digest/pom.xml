@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
-        <version>1.9.2.CR1-SNAPSHOT</version>
+        <version>1.10.0.CR1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -39,6 +39,16 @@
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
             <!-- scope is compile ELY-1153 -->
+        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-base</artifactId>
         </dependency>
     </dependencies>
 

@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.bearer;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
- * Provider for the HTTP SPNEGO authentication mechanism.
+ * Provider for the HTTP Bearer authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated use org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpSpnegoProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronHttpBearerProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 9211317885580156246L;
-    private static WildFlyElytronHttpSpnegoProvider INSTANCE = new WildFlyElytronHttpSpnegoProvider();
+    private static final long serialVersionUID = -797775107834905210L;
+    private static WildFlyElytronHttpBearerProvider INSTANCE = new WildFlyElytronHttpBearerProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpSpnegoProvider() {
-        super("WildFlyElytronHttpSpnegoProvider", "1.0", "WildFly Elytron HTTP SPNEGO Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap, true, true));
+    public WildFlyElytronHttpBearerProvider() {
+        super("WildFlyElytronHttpBearerProvider", "1.0", "WildFly Elytron HTTP Bearer Provider");
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BEARER_TOKEN", "org.wildfly.security.http.bearer.BearerMechanismFactory", emptyList, emptyMap));
     }
 
     /**
-     * Get the HTTP SPNEGO authentication mechanism provider instance.
+     * Get the HTTP Bearer authentication mechanism provider instance.
      *
-     * @return the HTTP SPNEGO authentication mechanism provider instance
+     * @return the HTTP Bearer authentication mechanism provider instance
      */
-    public static WildFlyElytronHttpSpnegoProvider getInstance() {
+    public static WildFlyElytronHttpBearerProvider getInstance() {
         return INSTANCE;
     }
 

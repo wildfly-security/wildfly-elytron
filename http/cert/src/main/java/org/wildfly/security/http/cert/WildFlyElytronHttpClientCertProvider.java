@@ -16,19 +16,18 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.cert;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the HTTP CLIENT_CERT authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider
  */
-@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBaseProvider {
 
@@ -40,7 +39,7 @@ public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBa
      */
     public WildFlyElytronHttpClientCertProvider() {
         super("WildFlyElytronHttpClientCertProvider", "1.0", "WildFly Elytron HTTP CLIENT_CERT Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "CLIENT_CERT", "org.wildfly.security.http.cert.ClientCertMechanismFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "CLIENT_CERT", "org.wildfly.security.http.cert.ClientCertMechanismFactory", emptyList, emptyMap));
     }
 
     /**

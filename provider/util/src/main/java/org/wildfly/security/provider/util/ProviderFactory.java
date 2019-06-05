@@ -38,6 +38,13 @@ public class ProviderFactory {
     private static String[] elytronProviderClassNames = new String[]{
             "org.wildfly.security.password.WildFlyElytronPasswordProvider",
             "org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider",
+            "org.wildfly.security.digest.WildFlyElytronDigestProvider",
+            "org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider",
+            "org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider",
+            "org.wildfly.security.http.bearer.WildFlyElytronHttpClientCertProvider",
+            "org.wildfly.security.http.bearer.WildFlyElytronHttpDigestProvider",
+            "org.wildfly.security.http.bearer.WildFlyElytronHttpFormProvider",
+            "org.wildfly.security.http.bearer.WildFlyElytronHttpSpnegoProvider",
             "org.wildfly.security.key.WildFlyElytronKeyProvider",
             "org.wildfly.security.keystore.WildFlyElytronKeyStoreProvider",
             "org.wildfly.security.sasl.anonymous.WildFlyElytronSaslAnonymousProvider",

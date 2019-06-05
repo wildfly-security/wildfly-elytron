@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http;
+package org.wildfly.security.http.digest;
 
 import mockit.integration.junit4.JMockit;
 
@@ -25,7 +25,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.wildfly.security.WildFlyElytronHttpDigestProvider;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
 import java.security.Provider;

@@ -16,20 +16,19 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.digest;
 
 import java.security.Provider;
 import java.util.Collections;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the HTTP DIGEST authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpDigestProvider extends WildFlyElytronBaseProvider {
 
@@ -41,9 +40,9 @@ public final class WildFlyElytronHttpDigestProvider extends WildFlyElytronBasePr
      */
     public WildFlyElytronHttpDigestProvider() {
         super("WildFlyElytronHttpDigestProvider", "1.0", "WildFly Elytron HTTP DIGEST Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap));
 
         putService(new Service(this, "MessageDigest", "SHA-512-256", "org.wildfly.security.digest.SHA512_256MessageDigest", Collections.emptyList(), Collections.emptyMap()));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "clear", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));

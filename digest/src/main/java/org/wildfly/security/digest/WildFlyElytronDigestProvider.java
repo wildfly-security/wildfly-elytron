@@ -16,39 +16,39 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.digest;
 
 import java.security.Provider;
+import java.util.Collections;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 import org.kohsuke.MetaInfServices;
 
 /**
- * Provider for the HTTP SPNEGO authentication mechanism.
+ * Provider for Digest implementations.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated use org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpSpnegoProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronDigestProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 9211317885580156246L;
-    private static WildFlyElytronHttpSpnegoProvider INSTANCE = new WildFlyElytronHttpSpnegoProvider();
+    private static final long serialVersionUID = 2531323760912222262L;
+    private static WildFlyElytronDigestProvider INSTANCE = new WildFlyElytronDigestProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpSpnegoProvider() {
-        super("WildFlyElytronHttpSpnegoProvider", "1.0", "WildFly Elytron HTTP SPNEGO Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap, true, true));
+    public WildFlyElytronDigestProvider() {
+        super("WildFlyElytronDigestProvider", "1.0", "WildFly Elytron Digest Provider");
+        putService(new Service(this, "MessageDigest", "SHA-512-256", "org.wildfly.security.digest.SHA512_256MessageDigest", Collections.emptyList(), Collections.emptyMap()));
     }
 
     /**
-     * Get the HTTP SPNEGO authentication mechanism provider instance.
+     * Get the Digest implementations provider instance.
      *
-     * @return the HTTP SPNEGO authentication mechanism provider instance
+     * @return the Digest implementations provider instance
      */
-    public static WildFlyElytronHttpSpnegoProvider getInstance() {
+    public static WildFlyElytronDigestProvider getInstance() {
         return INSTANCE;
     }
 
