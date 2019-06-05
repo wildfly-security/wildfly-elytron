@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.cert;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
- * Provider for the HTTP BASIC authentication mechanism.
+ * Provider for the HTTP CLIENT_CERT authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpBasicProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 3029961619967561017L;
-    private static WildFlyElytronHttpBasicProvider INSTANCE = new WildFlyElytronHttpBasicProvider();
+    private static final long serialVersionUID = -4105163673151031877L;
+    private static WildFlyElytronHttpClientCertProvider INSTANCE = new WildFlyElytronHttpClientCertProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpBasicProvider() {
-        super("WildFlyElytronHttpBasicProvider", "1.0", "WildFly Elytron HTTP BASIC Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap));
+    public WildFlyElytronHttpClientCertProvider() {
+        super("WildFlyElytronHttpClientCertProvider", "1.0", "WildFly Elytron HTTP CLIENT_CERT Provider");
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "CLIENT_CERT", "org.wildfly.security.http.cert.ClientCertMechanismFactory", emptyList, emptyMap));
     }
 
     /**
-     * Get the HTTP BASIC authentication mechanism provider instance.
+     * Get the HTTP CLIENT_CERT authentication mechanism provider instance.
      *
-     * @return the HTTP BASIC authentication mechanism provider instance
+     * @return the HTTP CLIENT_CERT authentication mechanism provider instance
      */
-    public static WildFlyElytronHttpBasicProvider getInstance() {
+    public static WildFlyElytronHttpClientCertProvider getInstance() {
         return INSTANCE;
     }
 

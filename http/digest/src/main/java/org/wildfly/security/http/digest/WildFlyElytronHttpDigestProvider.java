@@ -16,20 +16,19 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.digest;
 
 import java.security.Provider;
 import java.util.Collections;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the HTTP DIGEST authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpDigestProvider extends WildFlyElytronBaseProvider {
 

@@ -26,7 +26,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for the HTTP CLIENT_CERT authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated Use org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBaseProvider {
 

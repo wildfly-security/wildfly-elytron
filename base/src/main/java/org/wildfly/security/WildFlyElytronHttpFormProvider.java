@@ -26,7 +26,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for the HTTP FORM authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated Use org.wildfly.security.http.form.WildFlyElytronHttpFormProvider instead
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpFormProvider extends WildFlyElytronBaseProvider {
 

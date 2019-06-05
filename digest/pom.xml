@@ -40,6 +40,16 @@
             <artifactId>wildfly-common</artifactId>
             <!-- scope is compile ELY-1153 -->
         </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-base</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
