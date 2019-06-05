@@ -1,4 +1,5 @@
 org.wildfly.security
+org.wildfly.security._private
 org.wildfly.security.asn1
 org.wildfly.security.audit
 org.wildfly.security.auth
