@@ -143,7 +143,7 @@ public class AtomicLoadKeyStore extends KeyStore {
     /**
      * An opaque key representing an atomic keystore state.
      */
-    public class LoadKey {
+   public static class LoadKey {
 
         private final KeyStore keyStore;
 

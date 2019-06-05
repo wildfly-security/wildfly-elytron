@@ -215,7 +215,7 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class DefaultCallbackHandler implements CallbackHandler {
+    private static class DefaultCallbackHandler implements CallbackHandler {
 
         private final Principal principal;
         private final PasswordGuessEvidence evidence;
@@ -245,7 +245,7 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class JaasAuthorizationIdentity implements AuthorizationIdentity {
+    private static class JaasAuthorizationIdentity implements AuthorizationIdentity {
 
         private static final String CALLER_PRINCIPAL_GROUP = "CallerPrincipal";
 

@@ -497,7 +497,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     }
 
-    private class AccountEntry {
+    private static class AccountEntry {
 
         private final String name;
         private final String passwordRepresentation;
