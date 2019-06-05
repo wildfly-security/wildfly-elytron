@@ -39,7 +39,7 @@ public final class WildFlyElytronHttpBasicProvider extends WildFlyElytronBasePro
      */
     public WildFlyElytronHttpBasicProvider() {
         super("WildFlyElytronHttpBasicProvider", "1.0", "WildFly Elytron HTTP BASIC Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap, true, true));
     }
 
     /**
