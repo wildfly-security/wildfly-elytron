@@ -18,21 +18,13 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import org.jboss.modules.Module;
-import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.auth.client.AuthenticationConfiguration;
-import org.wildfly.security.auth.client.AuthenticationContext;
-import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.credential.source.CredentialSource;
-import org.wildfly.security.manager.WildFlySecurityManager;
-import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.util._private.Arrays2;
-
-import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
+
+import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Hashtable;
+import java.util.Properties;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
@@ -45,9 +37,20 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import java.net.URI;
-import java.util.Hashtable;
-import java.util.Properties;
+
+import org.jboss.modules.Module;
+import org.wildfly.security.util._private.Arrays2;
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.manager.action.GetClassLoaderAction;
+import org.wildfly.security.manager.action.GetModuleClassLoaderAction;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * A simple builder for a {@link DirContextFactory} which creates new contexts on demand and disposes of them as soon as they
@@ -275,17 +278,9 @@ public class SimpleDirContextFactoryBuilder {
             throw log.noProviderUrlSet();
         }
         if(this.targetModule != null){
-            if(WildFlySecurityManager.isChecking()){
-                WildFlySecurityManager.doChecked(new GetModuleClassLoaderAction(this.targetModule));
-            } else {
-                this.targetClassLoader = this.targetModule.getClassLoader();
-            }
+           this.targetClassLoader = doPrivileged(new GetModuleClassLoaderAction(this.targetModule));
         } else {
-            if(WildFlySecurityManager.isChecking()){
-                WildFlySecurityManager.getClassLoaderPrivileged(this.getClass());
-            } else {
-                this.targetClassLoader = this.getClass().getClassLoader();
-            }
+           this.targetClassLoader = doPrivileged(new GetClassLoaderAction(this.getClass()));
         }
         built = true;
         return new SimpleDirContextFactory();
@@ -469,16 +464,12 @@ public class SimpleDirContextFactoryBuilder {
         }
 
         private ClassLoader setClassLoaderTo(final ClassLoader targetClassLoader){
-            ClassLoader current = null;
-            if(WildFlySecurityManager.isChecking()){
-                current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
-                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(targetClassLoader);
-            } else {
-                current = Thread.currentThread().getContextClassLoader();
-                Thread.currentThread().setContextClassLoader(targetClassLoader);
-            }
-            return current;
+           return doPrivileged(new SetContextClassLoaderAction(targetClassLoader));
         }
     }
+
+    private static <T> T doPrivileged(final PrivilegedAction<T> action) {
+       return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
+   }
 
 }
