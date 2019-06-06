@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-tool</artifactId>
-    <version>1.4.2.CR1-SNAPSHOT</version>
+    <version>1.4.2.Final</version>
     <packaging>jar</packaging>
 
     <name>WildFly Elytron Tool</name>
