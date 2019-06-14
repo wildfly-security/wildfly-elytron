@@ -61,6 +61,7 @@
 01006 - 01082    wildfly-elytron-realm
 01138 - 01154    wildfly-elytron-realm
 11005            wildfly-elytron-realm
+13000 - 13999    wildfly-elytron-realm
 01043 - 01052    wildfly-elytron-realm-jdbc
 00002- 00007     wildfly-elytron-realm-ldap
 01041 - 01153    wildfly-elytron-realm-ldap
@@ -90,7 +91,6 @@
 
 # New Ranges Should Be Allocated In Blocks of 1,000
 12000 - 12999
-13000 - 13999
 14000 - 14999
 15000 - 15999
 16000 - 16999

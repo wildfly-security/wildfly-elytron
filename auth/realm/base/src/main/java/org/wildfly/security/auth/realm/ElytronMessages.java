@@ -44,7 +44,8 @@ import org.wildfly.security.auth.server.SecurityRealm;
 @ValidIdRanges({
     @ValidIdRange(min = 1006, max = 1082),
     @ValidIdRange(min = 1138, max = 1154),
-    @ValidIdRange(min = 11005, max = 11005)
+    @ValidIdRange(min = 11005, max = 11005),
+    @ValidIdRange(min = 13000, max = 13999)
 })
 interface ElytronMessages extends BasicLogger {
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
@@ -118,6 +119,9 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
     IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
+
+    @Message(id = 13000, value = "Authorization principal cannot be null after transformation")
+    IllegalStateException transformedPrincipalCannotBeNull();
 
     @Message(id = 1154, value = "Failed to read key store")
     RealmUnavailableException failedToReadKeyStore(@Cause KeyStoreException e);
