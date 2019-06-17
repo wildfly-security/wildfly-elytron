@@ -169,6 +169,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 4030, value = "No context for SSL connection")
     SSLException noSNIContextForSslConnection(); // TODO Compare with noContextForSslConnection.
 
+    @Message(id = 4031, value = "TrustManagerFactory algorithm [%s] does not support certificate revocation")
+    IllegalStateException sslErrorCreatingRevocationTrustManager(String name, @Cause Throwable cause);
+
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, long offset, String string);
 

@@ -26,7 +26,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for the HTTP Bearer authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated use org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider instead
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpBearerProvider extends WildFlyElytronBaseProvider {
 
@@ -38,7 +40,7 @@ public final class WildFlyElytronHttpBearerProvider extends WildFlyElytronBasePr
      */
     public WildFlyElytronHttpBearerProvider() {
         super("WildFlyElytronHttpBearerProvider", "1.0", "WildFly Elytron HTTP Bearer Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BEARER_TOKEN", "org.wildfly.security.http.bearer.BearerMechanismFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BEARER_TOKEN", "org.wildfly.security.http.bearer.BearerMechanismFactory", emptyList, emptyMap, true, true));
     }
 
     /**

@@ -40,18 +40,18 @@ public final class WildFlyElytronSaslDigestProvider extends WildFlyElytronBasePr
      */
     public WildFlyElytronSaslDigestProvider() {
         super("WildFlyElytronSaslDigestProvider", "1.0", "WildFly Elytron SASL Digest Provider");
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-256",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-384",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-MD5",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-512",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-512-256",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-256",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-384",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-MD5",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-256",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA-384",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-SHA",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "DIGEST-MD5",  "org.wildfly.security.sasl.digest.DigestServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-512",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-512-256",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-256",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA-384",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-SHA",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "DIGEST-MD5",  "org.wildfly.security.sasl.digest.DigestClientFactory", emptyList, emptyMap, true, true));
 
         putService(new Service(this, "MessageDigest", "SHA-512-256", "org.wildfly.security.digest.SHA512_256MessageDigest", Collections.emptyList(), Collections.emptyMap()));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "clear", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));

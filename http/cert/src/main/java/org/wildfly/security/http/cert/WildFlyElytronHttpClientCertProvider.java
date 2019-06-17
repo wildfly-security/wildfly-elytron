@@ -16,19 +16,18 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.cert;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
  * Provider for the HTTP CLIENT_CERT authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated Use org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider
  */
-@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpClientCertProvider extends WildFlyElytronBaseProvider {
 

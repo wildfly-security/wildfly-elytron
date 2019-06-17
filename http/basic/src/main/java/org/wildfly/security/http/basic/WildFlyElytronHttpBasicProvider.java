@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.basic;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
- * Provider for the HTTP SPNEGO authentication mechanism.
+ * Provider for the HTTP BASIC authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated use org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpSpnegoProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronHttpBasicProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 9211317885580156246L;
-    private static WildFlyElytronHttpSpnegoProvider INSTANCE = new WildFlyElytronHttpSpnegoProvider();
+    private static final long serialVersionUID = 3029961619967561017L;
+    private static WildFlyElytronHttpBasicProvider INSTANCE = new WildFlyElytronHttpBasicProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpSpnegoProvider() {
-        super("WildFlyElytronHttpSpnegoProvider", "1.0", "WildFly Elytron HTTP SPNEGO Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap, true, true));
+    public WildFlyElytronHttpBasicProvider() {
+        super("WildFlyElytronHttpBasicProvider", "1.0", "WildFly Elytron HTTP BASIC Provider");
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "BASIC", "org.wildfly.security.http.basic.BasicMechanismFactory", emptyList, emptyMap, true, true));
     }
 
     /**
-     * Get the HTTP SPNEGO authentication mechanism provider instance.
+     * Get the HTTP BASIC authentication mechanism provider instance.
      *
-     * @return the HTTP SPNEGO authentication mechanism provider instance
+     * @return the HTTP BASIC authentication mechanism provider instance
      */
-    public static WildFlyElytronHttpSpnegoProvider getInstance() {
+    public static WildFlyElytronHttpBasicProvider getInstance() {
         return INSTANCE;
     }
 

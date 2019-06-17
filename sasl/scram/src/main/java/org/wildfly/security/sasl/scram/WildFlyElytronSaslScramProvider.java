@@ -39,22 +39,22 @@ public final class WildFlyElytronSaslScramProvider extends WildFlyElytronBasePro
      */
     public WildFlyElytronSaslScramProvider() {
         super("WildFlyElytronSaslScramProvider", "1.0", "WildFly Elytron SASL SCRAM Provider");
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-512-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-384-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-256-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-1-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-512",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-384",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-256",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-1",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-512-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-384-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-256-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-1-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-512",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-384",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-256",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
-        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-1",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-512-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-384-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-256-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-1-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-512",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-384",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-256",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "SCRAM-SHA-1",  "org.wildfly.security.sasl.scram.ScramSaslServerFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-512-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-384-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-256-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-1-PLUS",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-512",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-384",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-256",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "SCRAM-SHA-1",  "org.wildfly.security.sasl.scram.ScramSaslClientFactory", emptyList, emptyMap, true, true));
 
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "clear", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "scram-sha-1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));

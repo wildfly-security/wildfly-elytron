@@ -16,39 +16,38 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.http.form;
 
 import java.security.Provider;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.WildFlyElytronBaseProvider;
 
 /**
- * Provider for the HTTP SPNEGO authentication mechanism.
+ * Provider for the HTTP FORM authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- * @deprecated use org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider instead
  */
-@Deprecated
 @MetaInfServices(Provider.class)
-public final class WildFlyElytronHttpSpnegoProvider extends WildFlyElytronBaseProvider {
+public final class WildFlyElytronHttpFormProvider extends WildFlyElytronBaseProvider {
 
-    private static final long serialVersionUID = 9211317885580156246L;
-    private static WildFlyElytronHttpSpnegoProvider INSTANCE = new WildFlyElytronHttpSpnegoProvider();
+    private static final long serialVersionUID = 3872696509387755963L;
+    private static WildFlyElytronHttpFormProvider INSTANCE = new WildFlyElytronHttpFormProvider();
 
     /**
      * Construct a new instance.
      */
-    public WildFlyElytronHttpSpnegoProvider() {
-        super("WildFlyElytronHttpSpnegoProvider", "1.0", "WildFly Elytron HTTP SPNEGO Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap, true, true));
+    public WildFlyElytronHttpFormProvider() {
+        super("WildFlyElytronHttpFormProvider", "1.0", "WildFly Elytron HTTP FORM Provider");
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap, true, true));
     }
 
     /**
-     * Get the HTTP SPNEGO authentication mechanism provider instance.
+     * Get the HTTP FORM authentication mechanism provider instance.
      *
-     * @return the HTTP SPNEGO authentication mechanism provider instance
+     * @return the HTTP FORM authentication mechanism provider instance
      */
-    public static WildFlyElytronHttpSpnegoProvider getInstance() {
+    public static WildFlyElytronHttpFormProvider getInstance() {
         return INSTANCE;
     }
 

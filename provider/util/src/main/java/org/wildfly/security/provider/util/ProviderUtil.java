@@ -51,8 +51,25 @@ public final class ProviderUtil {
      * @return the provider, or {@code null} if none is found
      */
     public static Provider findProvider(Supplier<Provider[]> providerSupplier, String providerName, Class<?> serviceType, String algorithm) {
+        Assert.checkNotNullParam("providerSupplier", providerSupplier);
+        return findProvider(providerSupplier.get(), providerName, serviceType, algorithm);
+    }
+
+    /**
+     * Find the first provider from the supplier which provides the given service type and algorithm name.  The simple
+     * name of the service type class is used to identify the service.
+     *
+     * If a providerName is specified the match will only be tested against providers with the name specified.
+     *
+     * @param providers the providers to searchr (must not be {@code null})
+     * @param providerName the name of the provider, can be {@code null}
+     * @param serviceType the service type as a class name (must not be {@code null})
+     * @param algorithm the algorithm name (must not be {@code null})
+     * @return the provider, or {@code null} if none is found
+     */
+    public static Provider findProvider(Provider[] providers, String providerName, Class<?> serviceType, String algorithm) {
         Assert.checkNotNullParam("serviceType", serviceType);
-        return findProvider(providerSupplier, providerName, serviceType.getSimpleName(), algorithm);
+        return findProvider(providers, providerName, serviceType.getSimpleName(), algorithm);
     }
 
     /**
@@ -67,7 +84,23 @@ public final class ProviderUtil {
      * @return the provider, or {@code null} if none is found
      */
     public static Provider findProvider(Supplier<Provider[]> providerSupplier, String providerName, String serviceType, String algorithm) {
-        final Provider.Service service = findProviderService(providerSupplier, providerName, serviceType, algorithm);
+        Assert.checkNotNullParam("providerSupplier", providerSupplier);
+        return findProvider(providerSupplier.get(), providerName, serviceType, algorithm);
+    }
+
+    /**
+     * Find the first provider from the supplier which provides the given service type and algorithm name.
+     *
+     * If a providerName is specified the match will only be tested against providers with the name specified.
+     *
+     * @param providers the providers to search (must not be {@code null})
+     * @param providerName the name of the provider, can be {@code null}
+     * @param serviceType the service type (must not be {@code null})
+     * @param algorithm the algorithm name (must not be {@code null})
+     * @return the provider, or {@code null} if none is found
+     */
+    public static Provider findProvider(Provider[] providers, String providerName, String serviceType, String algorithm) {
+        final Provider.Service service = findProviderService(providers, providerName, serviceType, algorithm);
         return service == null ? null : service.getProvider();
     }
 
@@ -83,8 +116,24 @@ public final class ProviderUtil {
      * @return the provider service, or {@code null} if none is found
      */
     public static Provider.Service findProviderService(Supplier<Provider[]> providerSupplier, String providerName, Class<?> serviceType, String algorithm) {
+        Assert.checkNotNullParam("providerSupplier", providerSupplier);
+        return findProviderService(providerSupplier.get(), providerName, serviceType, algorithm);
+    }
+
+    /**
+     * Find a provider service which provides the given service type and algorithm name.
+     *
+     * If a providerName is specified the match will only be tested against providers with the name specified.
+     *
+     * @param providers the providers to search (must not be {@code null})
+     * @param providerName the name of the provider, can be {@code null}
+     * @param serviceType the service type (must not be {@code null})
+     * @param algorithm the algorithm name (must not be {@code null})
+     * @return the provider service, or {@code null} if none is found
+     */
+    public static Provider.Service findProviderService(Provider[] providers, String providerName, Class<?> serviceType, String algorithm) {
         Assert.checkNotNullParam("serviceType", serviceType);
-        return findProviderService(providerSupplier, providerName, serviceType.getSimpleName(), algorithm);
+        return findProviderService(providers, providerName, serviceType.getSimpleName(), algorithm);
     }
 
     /**
@@ -100,9 +149,27 @@ public final class ProviderUtil {
      */
     public static Provider.Service findProviderService(Supplier<Provider[]> providerSupplier, String providerName, String serviceType, String algorithm) {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
+
+        return findProviderService(providerSupplier.get(), providerName, serviceType, algorithm);
+    }
+
+    /**
+     * Find a provider service which provides the given service type and algorithm name.
+     *
+     * If a providerName is specified the match will only be tested against providers with the name specified.
+     *
+     * @param providers the providers to search (must not be {@code null})
+     * @param providerName the name of the provider, can be {@code null}
+     * @param serviceType the service type (must not be {@code null})
+     * @param algorithm the algorithm name (must not be {@code null})
+     * @return the provider service, or {@code null} if none is found
+     */
+    public static Provider.Service findProviderService(Provider[] providers, String providerName, String serviceType, String algorithm) {
+        Assert.checkNotNullParam("providers", providers);
         Assert.checkNotNullParam("serviceType", serviceType);
         Assert.checkNotNullParam("algorithm", algorithm);
-        for (Provider provider : providerSupplier.get()) {
+        for (int i = 0; i < providers.length; i++) {
+            Provider provider = Assert.checkNotNullArrayParam("providers", i, providers[i]);
             if (providerName == null || providerName.equals(provider.getName())) {
                 Provider.Service providerService = provider.getService(serviceType, algorithm);
                 if (providerService != null) {
@@ -122,9 +189,22 @@ public final class ProviderUtil {
      */
     public static Provider.Service findProviderService(Supplier<Provider[]> providerSupplier, Predicate<Provider.Service> matchPredicate) {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
+
+        return findProviderService(providerSupplier.get(), matchPredicate);
+    }
+
+    /**
+     * Find a provider service which matches the given predicate.
+     *
+     * @param providers the providers to search
+     * @param matchPredicate the predicate to test
+     * @return the provider service, or {@code null} if none is found
+     */
+    public static Provider.Service findProviderService(Provider[] providers, Predicate<Provider.Service> matchPredicate) {
+        Assert.checkNotNullParam("providers", providers);
         Assert.checkNotNullParam("matchPredicate", matchPredicate);
-        for (Provider provider : providerSupplier.get()) {
-            for (Provider.Service service : provider.getServices()) {
+        for (int i = 0; i < providers.length; i++) {
+            for (Provider.Service service : Assert.checkNotNullArrayParam("providers", i, providers[i]).getServices()) {
                 if (matchPredicate.test(service)) {
                     return service;
                 }

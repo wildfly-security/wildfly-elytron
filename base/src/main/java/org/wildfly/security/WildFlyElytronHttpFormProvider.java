@@ -26,7 +26,9 @@ import org.kohsuke.MetaInfServices;
  * Provider for the HTTP FORM authentication mechanism.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @deprecated Use org.wildfly.security.http.form.WildFlyElytronHttpFormProvider instead
  */
+@Deprecated
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpFormProvider extends WildFlyElytronBaseProvider {
 
@@ -38,7 +40,7 @@ public final class WildFlyElytronHttpFormProvider extends WildFlyElytronBaseProv
      */
     public WildFlyElytronHttpFormProvider() {
         super("WildFlyElytronHttpFormProvider", "1.0", "WildFly Elytron HTTP FORM Provider");
-        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap, true, true));
     }
 
     /**

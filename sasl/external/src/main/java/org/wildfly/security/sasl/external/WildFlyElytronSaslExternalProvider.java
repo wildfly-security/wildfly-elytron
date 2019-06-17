@@ -40,8 +40,8 @@ public final class WildFlyElytronSaslExternalProvider extends WildFlyElytronBase
      */
     public WildFlyElytronSaslExternalProvider() {
         super("WildFlyElytronSaslExternalProvider", "1.0", "WildFly Elytron SASL External Provider");
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "EXTERNAL",  "org.wildfly.security.sasl.external.ExternalSaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "EXTERNAL",  "org.wildfly.security.sasl.external.ExternalSaslClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "EXTERNAL",  "org.wildfly.security.sasl.external.ExternalSaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "EXTERNAL",  "org.wildfly.security.sasl.external.ExternalSaslClientFactory", emptyList, emptyMap, false, true));
     }
 
     /**

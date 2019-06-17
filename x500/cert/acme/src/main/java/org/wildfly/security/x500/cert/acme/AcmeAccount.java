@@ -137,9 +137,9 @@ public final class AcmeAccount {
      */
     public String getServerUrl(boolean staging) {
         if (staging) {
-            return stagingServerUrl;
+            return getStagingServerUrl();
         } else {
-            return serverUrl;
+            return getServerUrl();
         }
     }
 

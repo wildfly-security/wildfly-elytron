@@ -39,18 +39,18 @@ public final class WildFlyElytronSaslEntityProvider extends WildFlyElytronBasePr
      */
     public WildFlyElytronSaslEntityProvider() {
         super("WildFlyElytronSaslEntityProvider", "1.0", "WildFly Elytron SASL Entity Provider");
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-U-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-M-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-U-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-M-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-U-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "9798-M-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-U-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-M-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-U-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-M-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-U-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "9798-M-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-RSA-SHA1-ENC",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-DSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-U-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "9798-M-ECDSA-SHA1",  "org.wildfly.security.sasl.entity.EntitySaslClientFactory", emptyList, emptyMap, false, true));
     }
 
     /**

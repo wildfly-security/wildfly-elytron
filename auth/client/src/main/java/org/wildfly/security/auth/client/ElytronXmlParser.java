@@ -121,7 +121,7 @@ import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
-import org.wildfly.security.ssl.X509CRLExtendedTrustManager;
+import org.wildfly.security.ssl.X509RevocationTrustManager;
 
 /**
  * A parser for the Elytron XML schema.
@@ -142,7 +142,8 @@ public final class ElytronXmlParser {
         VERSION_1_0_1("urn:elytron:1.0.1", VERSION_1_0),
         VERSION_1_1("urn:elytron:client:1.1", VERSION_1_0_1),
         VERSION_1_2("urn:elytron:client:1.2", VERSION_1_1),
-        VERSION_1_3("urn:elytron:client:1.3", VERSION_1_2);
+        VERSION_1_3("urn:elytron:client:1.3", VERSION_1_2),
+        VERSION_1_4("urn:elytron:client:1.4", VERSION_1_3);
 
         final String namespace;
 
@@ -507,7 +508,13 @@ public final class ElytronXmlParser {
                     case "trust-manager": {
                         if (isSet(foundBits, 7) || !xmlVersion.isAtLeast(Version.VERSION_1_1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 7);
-                        parseTrustManager(reader, trustManagerBuilder);
+                        parseTrustManager(reader, trustManagerBuilder, xmlVersion);
+                        break;
+                    }
+                    case "ocsp": {
+                        if (isSet(foundBits, 8) || !xmlVersion.isAtLeast(Version.VERSION_1_4)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 8);
+                        parseOcsp(reader, trustManagerBuilder, keyStoresMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -565,6 +572,14 @@ public final class ElytronXmlParser {
         boolean crl = false;
         InputStream crlStream = null;
         int maxCertPath = 5;
+        boolean ocsp = false;
+        boolean preferCrls = false;
+        boolean onlyLeafCert = false;
+        boolean softFail = false;
+        URI ocspResponder = null;
+        boolean maxCertPathSet = false;
+        String responderCertAlias = null;
+        ExceptionSupplier<KeyStore, ConfigXMLParseException> responderStoreSupplier = null;
 
         TrustManagerBuilder(Supplier<Provider[]> providers, Location xmlLocation) {
             this.providers = providers;
@@ -594,6 +609,39 @@ public final class ElytronXmlParser {
         void setMaxCertPath(int maxCertPath) {
             checkMinimumParameter("maxCertPath", 1, maxCertPath);
             this.maxCertPath = maxCertPath;
+            this.maxCertPathSet = true;
+        }
+
+        boolean isMaxCertPathSet() {
+            return maxCertPathSet;
+        }
+
+        public void setOcsp() {
+            this.ocsp = true;
+        }
+
+        public void setPreferCrls(boolean preferCrls) {
+            this.preferCrls = preferCrls;
+        }
+
+        public void setOnlyLeafCert(boolean onlyLeafCert) {
+            this.onlyLeafCert = onlyLeafCert;
+        }
+
+        public void setSoftFail(boolean softFail) {
+            this.softFail = softFail;
+        }
+
+        public void setOcspResponder(URI ocspResponder) {
+            this.ocspResponder = ocspResponder;
+        }
+
+        public void setOcspRescponderCertAlias(String alias) {
+            this.responderCertAlias = alias;
+        }
+
+        public void setOcspResponderCertKeystoreSupplier(ExceptionSupplier<KeyStore, ConfigXMLParseException> supplier) {
+            this.responderStoreSupplier = supplier;
         }
 
         X509TrustManager build() throws NoSuchAlgorithmException, KeyStoreException, ConfigXMLParseException {
@@ -604,8 +652,32 @@ public final class ElytronXmlParser {
             }
 
             final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm, provider);
-            if (crl) {
-                return new X509CRLExtendedTrustManager(trustStore, trustManagerFactory, crlStream, maxCertPath, null);
+            if (crl || ocsp) {
+                X509RevocationTrustManager.Builder revocationBuilder = X509RevocationTrustManager.builder();
+                revocationBuilder.setCrlStream(crlStream);
+                revocationBuilder.setResponderURI(ocspResponder);
+                revocationBuilder.setTrustManagerFactory(trustManagerFactory);
+                revocationBuilder.setTrustStore(trustStore);
+                revocationBuilder.setOnlyEndEntity(onlyLeafCert);
+                revocationBuilder.setSoftFail(softFail);
+
+                if (crl && ocsp) {
+                    revocationBuilder.setPreferCrls(preferCrls);
+                    revocationBuilder.setNoFallback(false);
+                } else if (crl) {
+                    revocationBuilder.setPreferCrls(true);
+                    revocationBuilder.setNoFallback(true);
+                } else {
+                    revocationBuilder.setPreferCrls(false);
+                    revocationBuilder.setNoFallback(true);
+                }
+
+                if (responderCertAlias != null) {
+                    KeyStore responderStore = responderStoreSupplier != null ? responderStoreSupplier.get() : trustStore;
+                    revocationBuilder.setOcspResponderCert((X509Certificate) responderStore.getCertificate(responderCertAlias));
+                }
+
+                return revocationBuilder.build();
             } else {
                 trustManagerFactory.init(trustStore);
             }
@@ -677,9 +749,10 @@ public final class ElytronXmlParser {
                     path = reader.getAttributeValueResolved(i);
                     break;
                 }
-                case "maximum-cert-path": {
-                    if (maxCertPath != 0) throw reader.unexpectedAttribute(i);
-                    maxCertPath = reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE);
+                case "maximum-cert-path": { //Deprecated
+                    if (builder.isMaxCertPathSet()) throw reader.unexpectedAttribute(i);
+                    xmlLog.xmlDeprecatedElement("maximum-cert-path", reader.getLocation());
+                    builder.setMaxCertPath(reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE));
                     break;
                 }
                 default: throw reader.unexpectedAttribute(i);
@@ -720,6 +793,54 @@ public final class ElytronXmlParser {
                     }
                 }
                 if (maxCertPath != 0) builder.setMaxCertPath(maxCertPath);
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static void parseOcsp(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        boolean gotPreferCrls = false;
+        boolean gotResponder = false;
+        boolean gotResponderCertAlias = false;
+        boolean gotResponderKeystore = false;
+        builder.setOcsp();
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "responder": {
+                    if (gotResponder) throw reader.unexpectedAttribute(i);
+                    builder.setOcspResponder(reader.getURIAttributeValueResolved(i));
+                    gotResponder = true;
+                    break;
+                }
+                case "prefer-crls": {
+                    if (gotPreferCrls) throw reader.unexpectedAttribute(i);
+                    builder.setPreferCrls(reader.getBooleanAttributeValueResolved(i));
+                    gotPreferCrls = true;
+                    break;
+                }
+                case "responder-certificate": {
+                    if (gotResponderCertAlias) throw reader.unexpectedAttribute(i);
+                    builder.setOcspRescponderCertAlias(reader.getAttributeValueResolved(i));
+                    gotResponderCertAlias = true;
+                    break;
+                }
+                case "responder-keystore": {
+                    if (gotResponderKeystore) throw reader.unexpectedAttribute(i);
+                    builder.setOcspResponderCertKeystoreSupplier(keyStoresMap.get(reader.getAttributeValueResolved(i)));
+                    gotResponderKeystore = true;
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == END_ELEMENT) {
                 return;
             } else {
                 throw reader.unexpectedContent();
@@ -867,10 +988,12 @@ public final class ElytronXmlParser {
         return builder.append(']').toString();
     }
 
-    private static void parseTrustManager(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder) throws ConfigXMLParseException {
+    private static void parseTrustManager(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String providerName = null;
         String algorithm = null;
+        boolean gotSoftFail = false;
+        boolean gotOnlyLeafCert = false;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
@@ -882,6 +1005,29 @@ public final class ElytronXmlParser {
                 case "algorithm": {
                     if (algorithm != null) throw reader.unexpectedAttribute(i);
                     algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                case "soft-fail": {
+                    if (gotSoftFail || !xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                        throw reader.unexpectedAttribute(i);
+                    }
+                    gotSoftFail = true;
+                    builder.setSoftFail(reader.getBooleanAttributeValueResolved(i));
+                    break;
+                }
+                case "maximum-cert-path": {
+                    if (builder.isMaxCertPathSet() || !xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                        throw reader.unexpectedAttribute(i);
+                    }
+                    builder.setMaxCertPath(reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE));
+                    break;
+                }
+                case "only-leaf-cert": {
+                    if (gotOnlyLeafCert || !xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                        throw reader.unexpectedAttribute(i);
+                    }
+                    gotOnlyLeafCert = true;
+                    builder.setOnlyLeafCert(reader.getBooleanAttributeValueResolved(i));
                     break;
                 }
                 default: throw reader.unexpectedAttribute(i);
