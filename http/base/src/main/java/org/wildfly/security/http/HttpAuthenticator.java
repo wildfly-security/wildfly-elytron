@@ -323,7 +323,9 @@ public class HttpAuthenticator {
                 // If authentication was required it should have been picked up in the previous block.
                 return true;
             } finally {
-                authenticationMechanisms.forEach(m -> m.dispose());
+                for (HttpServerAuthenticationMechanism current : authenticationMechanisms) {
+                    current.dispose();
+                }
             }
         }
 

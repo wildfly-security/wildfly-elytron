@@ -39,8 +39,8 @@ public final class WildFlyElytronSaslOAuth2Provider extends WildFlyElytronBasePr
      */
     public WildFlyElytronSaslOAuth2Provider() {
         super("WildFlyElytronSaslOAuth2Provider", "1.0", "WildFly Elytron SASL OAuth2 Provider");
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "OAUTHBEARER",  "org.wildfly.security.sasl.oauth2.OAuth2SaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "OAUTHBEARER",  "org.wildfly.security.sasl.oauth2.OAuth2SaslClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "OAUTHBEARER",  "org.wildfly.security.sasl.oauth2.OAuth2SaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "OAUTHBEARER",  "org.wildfly.security.sasl.oauth2.OAuth2SaslClientFactory", emptyList, emptyMap, false, true));
     }
 
     /**

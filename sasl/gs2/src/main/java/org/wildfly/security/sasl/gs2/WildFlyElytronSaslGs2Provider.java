@@ -39,10 +39,10 @@ public final class WildFlyElytronSaslGs2Provider extends WildFlyElytronBaseProvi
      */
     public WildFlyElytronSaslGs2Provider() {
         super("WildFlyElytronSaslGs2Provider", "1.0", "WildFly Elytron SASL GS2 Provider");
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap));
-        putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap, false, true));
+        putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap, false, true));
     }
 
     /**
