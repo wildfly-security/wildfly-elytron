@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ elytron-client-1_4.xsd wrapped into <configuration> element for needs of tests XML validation.
+  ~ THIS XSD IS TEST ONLY
+  -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:el="urn:elytron:client:1.4"
+            version="1.0">
+
+    <xsd:import namespace="urn:elytron:client:1.4" schemaLocation="src/main/resources/schema/elytron-client-1_4.xsd"/>
+
+    <xsd:element name="configuration">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:element ref="el:authentication-client" />
+            </xsd:all>
+        </xsd:complexType>
+    </xsd:element>
+
+</xsd:schema>

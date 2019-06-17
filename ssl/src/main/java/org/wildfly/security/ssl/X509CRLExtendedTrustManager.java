@@ -24,6 +24,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.io.InputStream;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CRL;
@@ -51,7 +52,9 @@ import org.wildfly.security.x500.X500;
  * Extension to the {@link X509TrustManager} interface to support CRL verification.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ * @deprecated use {@link X509RevocationTrustManager} instead
  */
+@Deprecated
 public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager {
 
     private static final int DEFAULT_MAX_CERT_PATH_LENGTH = 5;
@@ -84,6 +87,7 @@ public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager 
             params.setRevocationEnabled(true);
             params.setMaxPathLength(maxCertPath);
 
+
             trustManagerFactory.init(new CertPathTrustManagerParameters(params));
 
             X509TrustManager[] trustManagers = Stream.of(trustManagerFactory.getTrustManagers()).map(trustManager -> trustManager instanceof X509TrustManager ? (X509TrustManager) trustManager : null).filter(Objects::nonNull).toArray(X509TrustManager[]::new);
@@ -93,6 +97,8 @@ public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager 
             }
 
             this.trustManager = trustManagers[0];
+        } catch (InvalidAlgorithmParameterException e) {
+            throw ElytronMessages.log.sslErrorCreatingRevocationTrustManager(trustManagerFactory.getAlgorithm(), e);
         } catch (GeneralSecurityException e) {
             throw ElytronMessages.log.sslErrorCreatingTrustManager(getClass().getName(), e);
         }
