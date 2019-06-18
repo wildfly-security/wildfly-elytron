@@ -35,6 +35,7 @@ import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
+import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -113,15 +114,22 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
         }
 
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
-        if (! skipVerification) {
+
             try {
-                MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, callback);
+                if (! skipVerification) {
+                    MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, callback);
+                } else {
+                    // Since handling of EvidenceVerifyCallback is being skipped here, ensure evidence
+                    // decoding still takes place
+                    EvidenceDecodePrincipalCallback evidenceDecodePrincipalCallback = new EvidenceDecodePrincipalCallback(evidence);
+                    MechanismUtil.handleCallbacks(httpClientCert, callbackHandler, evidenceDecodePrincipalCallback);
+                }
             } catch (AuthenticationMechanismException e) {
                 throw e.toHttpAuthenticationException();
             } catch (UnsupportedCallbackException e) {
                 throw httpClientCert.mechCallbackHandlerFailedForUnknownReason(e).toHttpAuthenticationException();
             }
-        }
+
         boolean verified = callback.isVerified();
         httpClientCert.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b  verification skipped: %b", verified, skipVerification);
 
@@ -129,11 +137,11 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
             final BooleanSupplier authorizedFunction;
             final Callback authorizeCallBack;
             if (cacheFunction != null) {
-                CachedIdentityAuthorizeCallback cacheCallback = new CachedIdentityAuthorizeCallback(evidence.getPrincipal(), cacheFunction, true);
+                CachedIdentityAuthorizeCallback cacheCallback = new CachedIdentityAuthorizeCallback(evidence.getDecodedPrincipal(), cacheFunction, true);
                 authorizedFunction = cacheCallback::isAuthorized;
                 authorizeCallBack = cacheCallback;
             } else {
-                String name = evidence.getPrincipal().getName();
+                String name = evidence.getDecodedPrincipal().getName();
                 AuthorizeCallback plainCallback = new AuthorizeCallback(name, name);
                 authorizedFunction = plainCallback::isAuthorized;
                 authorizeCallBack = plainCallback;
@@ -148,7 +156,7 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
             }
 
             boolean authorized = authorizedFunction.getAsBoolean();
-            httpClientCert.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
+            httpClientCert.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getDecodedPrincipal(), authorized);
             if (authorized && succeed(request)) {
                 httpClientCert.trace("Authentication succeed");
                 return true;

@@ -52,6 +52,7 @@ import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
+import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.ExclusiveNameCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
@@ -760,6 +761,17 @@ public final class ServerAuthenticationContext implements AutoCloseable {
     }
 
     /**
+     * Set the decoded evidence principal.
+     *
+     * @param evidence the evidence to decode and associate with a principal
+     * @since 1.10.0
+     */
+    public void setDecodedEvidencePrincipal(Evidence evidence) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidence", evidence);
+        evidence.setDecodedPrincipal(stateRef.get().getSecurityDomain().getEvidenceDecoder().apply(evidence));
+    }
+
+    /**
      * Add a public credential to the identity being authenticated.
      *
      * @param credential the credential to add (must not be {@code null})
@@ -992,6 +1004,9 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     evidenceVerifyCallback.setVerified(verifyEvidence(evidenceVerifyCallback.getEvidence()));
 
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof EvidenceDecodePrincipalCallback) {
+                    EvidenceDecodePrincipalCallback evidenceDecodePrincipalCallback = (EvidenceDecodePrincipalCallback) callback;
+                    setDecodedEvidencePrincipal(evidenceDecodePrincipalCallback.getEvidence());
                 } else if (callback instanceof SSLCallback) {
                     SSLCallback sslCallback = (SSLCallback) callback;
                     this.sslConnection = sslCallback.getSslConnection();
@@ -1627,7 +1642,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             // TODO: this method probably should never cause a state change... consider setEvidence or something instead?
             final AtomicReference<State> stateRef = getStateRef();
-            final Principal evidencePrincipal = evidence.getPrincipal();
+            setDecodedEvidencePrincipal(evidence);
+            Principal evidencePrincipal = evidence.getDecodedPrincipal();
             log.tracef("Evidence verification: evidence = %s  evidencePrincipal = %s", evidence, evidencePrincipal);
             final MechanismRealmConfiguration mechanismRealmConfiguration = getMechanismRealmConfiguration();
             if (evidencePrincipal != null) {
@@ -1974,7 +1990,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             // At this stage, we just verify that the evidence principal matches, and verify it with the realm.
-            final Principal evidencePrincipal = evidence.getPrincipal();
+            final Principal evidencePrincipal = evidence.getDecodedPrincipal();
             return (evidencePrincipal == null || isSamePrincipal(evidencePrincipal)) && getRealmIdentity().verifyEvidence(evidence);
         }
 
