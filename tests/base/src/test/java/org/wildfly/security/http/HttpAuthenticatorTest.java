@@ -25,7 +25,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.wildfly.security.digest.WildFlyElytronHttpDigestProvider;
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
 import javax.security.auth.callback.CallbackHandler;
