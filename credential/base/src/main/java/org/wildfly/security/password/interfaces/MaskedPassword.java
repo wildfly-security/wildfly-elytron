@@ -59,7 +59,10 @@ public interface MaskedPassword extends TwoWayPassword {
     String ALGORITHM_MASKED_HMAC_SHA256_AES_256 = "masked-HMAC-SHA256-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA384_AES_256 = "masked-HMAC-SHA384-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA512_AES_256 = "masked-HMAC-SHA512-AES-256";
-    /* DEPRECATED - unusable for masked passwords, needs to be kept for compatibility */
+    /**
+     * DEPRECATED - unusable for masked passwords as there is no encryption support in javax.crypto.Cipher for PKDBF2
+     * family of algorithms, needs to be kept for compatibility
+     */
     @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA1 = "masked-PBKDF-HMAC-SHA1";
     @Deprecated

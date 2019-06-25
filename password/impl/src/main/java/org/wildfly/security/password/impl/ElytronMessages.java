@@ -84,8 +84,8 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 8025, value = "Expected to get a \"%s\" as spec, got \"%s\"")
     InvalidKeySpecException invalidKeySpecExpectedSpecGotSpec(String expected, String got);
 
-    @Message(id = 8026, value = "Unknown algorithm or incompatible PasswordSpec")
-    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
+    @Message(id = 8026, value = "Unknown algorithm \"%s\" or incompatible PasswordSpec \"%s\"")
+    InvalidKeySpecException invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec(String algorithm, String passwordSpec);
 
     @Message(id = 8027, value = "Unknown password type or algorithm")
     InvalidKeyException invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();

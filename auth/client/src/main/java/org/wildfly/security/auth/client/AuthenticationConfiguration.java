@@ -28,6 +28,7 @@ import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
@@ -35,6 +36,7 @@ import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,6 +75,7 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
 import org.wildfly.common.array.Arrays2;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -105,7 +108,9 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.provider.util.ProviderFactory;
 import org.wildfly.security.provider.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.sasl.SaslMechanismSelector;
@@ -677,6 +682,76 @@ public final class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration usePassword(String password) {
         return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray()));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but converts the given masked password to a
+     * clear password and uses the clear password to authenticate.
+     *
+     * @param password the password to use
+     * @return the new configuration
+     * @throws NoSuchAlgorithmException if algorithm used to get PasswordFactory instance is invalid
+     * @throws InvalidKeySpecException if invalid spec is used to generate password
+     */
+    public AuthenticationConfiguration useMaskedPassword(MaskedPassword password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        Assert.assertNotNull(password);
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+        final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+        final char[] clearPassword = spec.getEncodedPassword();
+
+        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        Password finalPassword = factory.generatePassword(new ClearPasswordSpec(clearPassword)).castAs(ClearPassword.class);
+        final CredentialSource filtered = getCredentialSource().without(PasswordCredential.class);
+        return finalPassword == null ? useCredentials(filtered) : useCredentials(filtered).useCredential(new PasswordCredential(finalPassword));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given masked password to authenticate.
+     *
+     * @param maskedPasswordBytes the masked password bytes (must not be {@code null})
+     * @param algorithm the algorithm (can be {@code null}, default:"masked-MD5-DES")
+     * @param initialKeyMaterial the initial key material (can be {@code null}, default:"somearbitrarycrazystringthatdoesnotmatter")
+     * @param iterationCount the iteration count (must not be less than 1)
+     * @param salt the salt bytes (must not be {@code null})
+     * @param initializationVector the initialization vector (can be {@code null})
+     * @return the new configuration
+     * @throws NoSuchAlgorithmException if algorithm used to get PasswordFactory instance is invalid
+     * @throws InvalidKeySpecException if invalid spec is used to generate password
+     */
+    public AuthenticationConfiguration useMaskedPassword(byte[] maskedPasswordBytes, String algorithm, char[] initialKeyMaterial, int iterationCount, byte[] salt, byte[] initializationVector) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
+        Assert.assertNotNull(salt);
+        Assert.assertNotNull(maskedPasswordBytes);
+        if (algorithm == null) algorithm = MaskedPassword.ALGORITHM_MASKED_MD5_DES;
+        if (initialKeyMaterial == null) initialKeyMaterial = "somearbitrarycrazystringthatdoesnotmatter".toCharArray();
+        final MaskedPasswordSpec spec = new MaskedPasswordSpec(initialKeyMaterial, iterationCount, salt, maskedPasswordBytes, initializationVector);
+
+        PasswordFactory factory = PasswordFactory.getInstance(algorithm);
+        MaskedPassword password = factory.generatePassword(spec).castAs(MaskedPassword.class);
+        return useMaskedPassword(password);
+    }
+
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given masked password to authenticate.
+     *
+     * @param maskedPassword the masked password, as a string (must not be {@code null})
+     * @param algorithm the algorithm (can be {@code null}, default:"masked-MD5-DES")
+     * @param initialKeyMaterial the initial key material, as a string(can be {@code null}, default:"somearbitrarycrazystringthatdoesnotmatter")
+     * @param iterationCount the iteration count, as an integer (must not be less than 1)
+     * @param salt the salt, as a string (must not be {@code null})
+     * @param initializationVector the initialization vector, as a string (can be {@code null})
+     * @return the new configuration
+     * @throws NoSuchAlgorithmException if algorithm used to get PasswordFactory instance is invalid
+     * @throws InvalidKeySpecException if invalid spec is used to generate password
+     */
+    public AuthenticationConfiguration useMaskedPassword(String maskedPassword, String algorithm, String initialKeyMaterial, int iterationCount, String salt, String initializationVector) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        byte[] finalMaskedPasswordBytes = maskedPassword == null ? null : CodePointIterator.ofString(maskedPassword).base64Decode().drain();
+        char[] finalInitialKeyMaterial = initialKeyMaterial == null ? null : initialKeyMaterial.toCharArray();
+        byte[] finalSalt = salt == null ? null : CodePointIterator.ofString(salt).asUtf8().drain();
+        byte[] finalInitializationVector = initializationVector == null ? null : CodePointIterator.ofString(initializationVector).base64Decode().drain();
+
+        return useMaskedPassword(finalMaskedPasswordBytes, algorithm, finalInitialKeyMaterial, iterationCount, finalSalt, finalInitializationVector);
     }
 
     /**

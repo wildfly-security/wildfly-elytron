@@ -73,7 +73,7 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         this.salt = salt;
         this.maskedPasswordBytes = maskedPasswordBytes;
         this.initializationVector = initializationVector;
-        unmask();
+        unmask(); //preform an unmask to validate parameters
     }
 
     private MaskedPasswordImpl(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final char[] chars) throws InvalidKeySpecException {

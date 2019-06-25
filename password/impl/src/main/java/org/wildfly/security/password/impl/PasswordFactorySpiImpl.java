@@ -39,7 +39,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
-
+import javax.security.sasl.SaslException;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -48,15 +48,17 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
-import org.wildfly.security.password.interfaces.ScramDigestPassword;
-import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
-import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
+import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
@@ -65,11 +67,7 @@ import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.HashPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-
-import javax.security.sasl.SaslException;
 
 /**
  * The Elytron-provided password factory SPI implementation, which supports all the provided password types.
@@ -498,7 +496,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 break;
             }
         }
-        throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
+        throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec(algorithm, keySpec == null ? null : keySpec.getClass().getSimpleName());
     }
 
     @Override
