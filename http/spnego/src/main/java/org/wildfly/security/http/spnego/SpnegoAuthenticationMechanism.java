@@ -28,6 +28,7 @@ import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.http.HttpConstants.CONFIG_DISABLE_RESTORE_SECURITY_IDENTITY;
 import static org.wildfly.security.mechanism._private.ElytronMessages.httpSpnego;
 import static org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory.SPNEGO;
 
@@ -90,6 +91,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
     private final CallbackHandler callbackHandler;
     private final GSSManager gssManager;
     private final Scope[] storageScopes;
+    private final boolean disableRestoreSecurityIdentity;
 
     SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
         checkNotNullParam("callbackHandler", callbackHandler);
@@ -97,6 +99,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
 
         this.callbackHandler = callbackHandler;
         this.gssManager = properties.containsKey(CONFIG_GSS_MANAGER) ? (GSSManager) properties.get(CONFIG_GSS_MANAGER) : GSSManager.getInstance();
+        this.disableRestoreSecurityIdentity = properties.containsKey(CONFIG_DISABLE_RESTORE_SECURITY_IDENTITY) && Boolean.parseBoolean((String) properties.get(CONFIG_DISABLE_RESTORE_SECURITY_IDENTITY));
 
         // JDK-8194073 workaround (for Oracle JDK + native Kerberos)
         if (properties.containsKey(CONFIG_CREATE_NAME_GSS_INIT) && Boolean.parseBoolean((String) properties.get(CONFIG_CREATE_NAME_GSS_INIT))) {
@@ -321,7 +324,9 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
     }
 
     private IdentityCache createIdentityCache(final IdentityCache existingCache, final HttpScope httpScope, boolean forUpdate) {
-        if (existingCache != null || // If we have a cache continue to use it.
+       if (disableRestoreSecurityIdentity ? existingCache != null && existingCache.get() != null && existingCache.get().getSecurityIdentity() != null
+             : existingCache != null || // disable-restore-security-identity option is "true": Use the cache only if it has SecurityIdentity.
+                                        // disable-restore-security-identity option is "false" (default): If we have a cache continue to use it.
                 httpScope == null || // If we don't have a scope we can't create a cache (existing cache is null so return it)
                 !httpScope.supportsAttachments() || // It is not null but if it doesn't support attachments pointless to wrap in a cache
                 (!httpScope.exists() && (!forUpdate || !httpScope.create())) // Doesn't exist and if update is requested can't be created
