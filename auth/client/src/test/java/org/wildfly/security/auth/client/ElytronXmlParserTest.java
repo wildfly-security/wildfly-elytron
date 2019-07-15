@@ -1,23 +1,49 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2019 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.wildfly.security.auth.client;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 
+import javax.net.ssl.SSLContext;
 import javax.security.auth.x500.X500Principal;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
@@ -29,6 +55,7 @@ public class ElytronXmlParserTest {
     private static File KEYSTORE_DIR = new File("./target/keystore");
     private static final String CLIENT_KEYSTORE_FILENAME = "/client.keystore";
     private static final char[] PASSWORD = "password".toCharArray();
+    private static final Provider provider = new WildFlyElytronProvider();
 
 
     /**
@@ -90,13 +117,49 @@ public class ElytronXmlParserTest {
 
     @Test
     public void testKeyStoreClearPassword() throws ConfigXMLParseException, URISyntaxException {
-        URL config = getClass().getResource("test-wildfly-config-v1_2.xml");
+        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
         SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
         Assert.assertNotNull(authContext);
     }
 
+    @Test
+    public void testKeyStoreMaskedPassword() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        RuleNode<SecurityFactory<SSLContext>> node = authContext.create().sslRuleMatching(new URI("http://masked/"), null, null);
+        Assert.assertNotNull(node);
+        Assert.assertNotNull(node.getConfiguration().create());
+    }
+
+    @Test
+    public void testClearCredential() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://clear/"), null, null);
+        Assert.assertNotNull(node);
+        Password password = node.getConfiguration().getCredentialSource().getCredential(PasswordCredential.class).getPassword();
+        Assert.assertTrue(password instanceof ClearPassword);
+        Assert.assertEquals(new String(PASSWORD), new String(((ClearPassword)password).getPassword()));
+    }
+
+    @Test
+    public void testMaskedCredential() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        RuleNode<AuthenticationConfiguration> node = authContext.create().authRuleMatching(new URI("http://masked/"), null, null);
+        Assert.assertNotNull(node);
+        Password password = node.getConfiguration().getCredentialSource().getCredential(PasswordCredential.class).getPassword();
+        Assert.assertEquals(new String(PASSWORD), new String(((ClearPassword)password).getPassword()));
+
+    }
+
     @BeforeClass
     public static void prepareKeyStores() throws Exception {
+        Security.addProvider(provider);
+
         if (KEYSTORE_DIR.exists() == false) {
             KEYSTORE_DIR.mkdirs();
         }
@@ -111,5 +174,10 @@ public class ElytronXmlParserTest {
         try (FileOutputStream clientStream = new FileOutputStream(clientFile)){
             clientKeyStore.store(clientStream, PASSWORD);
         }
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
     }
 }

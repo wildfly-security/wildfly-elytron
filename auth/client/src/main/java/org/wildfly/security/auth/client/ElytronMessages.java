@@ -162,4 +162,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 9527, value = "Invalid credential store reference")
     ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
 
+    @Message(id = 9529, value = "Unsupported algorithm \"%s\" for %s type")
+    ConfigXMLParseException xmlUnsupportedAlgorithmForType(@Param Location location, String algorithm, String type);
+
 }

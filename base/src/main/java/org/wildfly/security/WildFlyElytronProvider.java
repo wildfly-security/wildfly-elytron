@@ -133,11 +133,6 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new Service(this, ALG_PARAMS_TYPE, "masked-HMAC-SHA224-AES-256", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, "masked-HMAC-SHA384-AES-256", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, "masked-HMAC-SHA512-AES-256", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "masked-PBKDF-HMAC-SHA1", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "masked-PBKDF-HMAC-SHA224", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "masked-PBKDF-HMAC-SHA256", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "masked-PBKDF-HMAC-SHA384", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
-        putService(new Service(this, ALG_PARAMS_TYPE, "masked-PBKDF-HMAC-SHA512", "org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl", emptyList, emptyMap));
     }
 
     private void putKeyStoreImplementations() {
@@ -230,11 +225,6 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-HMAC-SHA256-AES-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-HMAC-SHA384-AES-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-HMAC-SHA512-AES-256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-PBKDF-HMAC-SHA1", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-PBKDF-HMAC-SHA224", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-PBKDF-HMAC-SHA256", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-PBKDF-HMAC-SHA384", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
-        putService(new Service(this, PASSWORD_FACTORY_TYPE, "masked-PBKDF-HMAC-SHA512", "org.wildfly.security.password.impl.PasswordFactorySpiImpl", emptyList, emptyMap));
     }
 
     private void putSaslMechanismImplementations() {

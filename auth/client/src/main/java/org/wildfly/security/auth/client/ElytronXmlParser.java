@@ -109,8 +109,11 @@ import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
 import org.wildfly.security.provider.util.ProviderFactory;
@@ -906,6 +909,12 @@ public final class ElytronXmlParser {
                         keyStoreCredential = () -> new PasswordEntry(credential.get());
                         break;
                     }
+                    case "key-store-masked-password": {
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_4)) throw reader.unexpectedElement();
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseMaskedPassword(reader, providers);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
+                        break;
+                    }
                     case "credential-store-reference": {
                         if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_0_1)) {
                             throw reader.unexpectedElement();
@@ -1423,6 +1432,26 @@ public final class ElytronXmlParser {
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
                         break;
                     }
+                    case "masked-password": {
+                        if ( ! xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                            throw reader.unexpectedElement();
+                        }
+                        final XMLLocation location = reader.getLocation();
+                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseMaskedPassword(reader, providers);
+                        Password maskedPassword = password.get();
+                        Password finalPassword;
+                        try {
+                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(maskedPassword.getAlgorithm(), providers);
+                            final ClearPasswordSpec spec = passwordFactory.getKeySpec(maskedPassword, ClearPasswordSpec.class);
+                            final char[] clearPassword = spec.getEncodedPassword();
+                            PasswordFactory clearPasswordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, providers);
+                            finalPassword = clearPasswordFactory.generatePassword(new ClearPasswordSpec(clearPassword)).castAs(ClearPassword.class);
+                        } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                            throw xmlLog.xmlFailedToCreateCredential(location, cause);
+                        }
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(finalPassword))));
+                        break;
+                    }
                     case "key-pair": {
                         KeyPair keyPair = parseKeyPair(reader, xmlVersion);
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(keyPair))));
@@ -1709,6 +1738,26 @@ public final class ElytronXmlParser {
                         passwordFactory = () -> ((ClearPassword)clearPassword.get()).getPassword();
                         break;
                     }
+                    case "key-store-masked-password": {
+                        // group 2
+                        if (gotCredential || !xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotCredential = true;
+                        final XMLLocation nestedLocation = reader.getLocation();
+                        final ExceptionSupplier<Password, ConfigXMLParseException> maskedPassword = parseMaskedPassword(reader, providersSupplier);
+                        passwordFactory = () -> {
+                            try {
+                                Password password = maskedPassword.get();
+                                PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm());
+                                ClearPasswordSpec spec = factory.getKeySpec(password, ClearPasswordSpec.class);
+                                return spec.getEncodedPassword();
+                            } catch (GeneralSecurityException e) {
+                                throw xmlLog.xmlFailedToCreateCredential(nestedLocation, e);
+                            }
+                        };
+                        break;
+                    }
                     case "file": {
                         // group 1
                         if (gotSource || gotCredential) {
@@ -1831,6 +1880,12 @@ public final class ElytronXmlParser {
                     case "key-store-clear-password": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
                         ExceptionSupplier<Password, ConfigXMLParseException> credential = parseClearPassword(reader, providers);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
+                        break;
+                    }
+                    case "key-store-masked-password": {
+                        if (keyStoreCredential != null || !xmlVersion.isAtLeast(Version.VERSION_1_4)) throw reader.unexpectedElement();
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseMaskedPassword(reader, providers);
                         keyStoreCredential = () -> new PasswordEntry(credential.get());
                         break;
                     }
@@ -2633,6 +2688,78 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
+    /**
+     * Parse an XML element of type {@code masked-password-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return a {@link MaskedPassword} supplier
+     * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
+     */
+    static ExceptionSupplier<Password, ConfigXMLParseException> parseMaskedPassword(ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String algorithm = MaskedPassword.ALGORITHM_MASKED_MD5_DES;
+        char[] initialKeyMaterial = "somearbitrarycrazystringthatdoesnotmatter".toCharArray();
+        int iterationCount = 0;
+        byte[] salt = null;
+        byte[] maskedPasswordBytes = null;
+        byte[] initializationVector = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "algorithm":
+                    algorithm = reader.getAttributeValueResolved(i);
+                    break;
+                case "key-material":
+                    initialKeyMaterial = reader.getAttributeValueResolved(i).toCharArray();
+                    break;
+                case "iteration-count":
+                    iterationCount = reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE);
+                    break;
+                case "salt":
+                    salt = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).asUtf8().drain();
+                    break;
+                case "masked-password":
+                    maskedPasswordBytes = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).base64Decode().drain();
+                    break;
+                case "initialization-vector":
+                    initializationVector = CodePointIterator.ofString(reader.getAttributeValueResolved(i)).base64Decode().drain();
+                    break;
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (iterationCount == 0) throw missingAttribute(reader, "iteration-count");
+        if (salt == null) throw missingAttribute(reader, "salt");
+        if (maskedPasswordBytes == null) throw missingAttribute(reader, "masked-password");
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                final XMLLocation location = reader.getLocation();
+                if (!MaskedPassword.isMaskedAlgorithm(algorithm)) {
+                    throw xmlLog.xmlUnsupportedAlgorithmForType(location, algorithm, MaskedPassword.class.getSimpleName());
+                }
+                final String finalAlgorithm = algorithm;
+                final MaskedPasswordSpec spec = new MaskedPasswordSpec(initialKeyMaterial, iterationCount, salt, maskedPasswordBytes, initializationVector);
+                return () -> {
+                    try {
+                        PasswordFactory factory = PasswordFactory.getInstance(finalAlgorithm, providers);
+                        return Assert.assertNotNull(factory.generatePassword(spec).castAs(MaskedPassword.class));
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                        throw xmlLog.xmlFailedToCreateCredential(location, cause);
+                    }
+                };
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+
+
+
     static Map<String, String> parsePropertiesType(ConfigurationXMLStreamReader reader, final Version xmlVersion) throws ConfigXMLParseException {
         if (reader.getAttributeCount() > 0) {
             throw reader.unexpectedAttribute(0);
@@ -2730,6 +2857,7 @@ public final class ElytronXmlParser {
     static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseOAuth2BearerTokenType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Version xmlVersion) throws ConfigXMLParseException {
         URI tokenEndpointUri = requireSingleURIAttribute(reader, "token-endpoint-uri");
         ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier = null;
+        DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(ProviderFactory.getElytronProviderSupplier(WildFlyElytronPasswordProvider.class.getClassLoader()));
         builderSupplier = () -> {
             try {
                 return OAuth2CredentialSource.builder(tokenEndpointUri.toURL());
@@ -2748,6 +2876,20 @@ public final class ElytronXmlParser {
                     }
                     case "client-credentials": {
                         builderSupplier = parseOAuth2ClientCredentials(reader, builderSupplier, credentialStoresMap, xmlVersion);
+                        break;
+                    }
+                    case "masked-resource-owner-credentials": {
+                        if (!xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                            throw reader.unexpectedElement();
+                        }
+                        builderSupplier = parseOAuth2MaskedResourceOwnerCredentials(reader, builderSupplier, xmlVersion, providersSupplier);
+                        break;
+                    }
+                    case "masked-client-credentials": {
+                        if (!xmlVersion.isAtLeast(Version.VERSION_1_4)) {
+                            throw reader.unexpectedElement();
+                        }
+                        builderSupplier = parseOAuth2MaskedClientCredentials(reader, builderSupplier, xmlVersion, providersSupplier);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -2918,6 +3060,122 @@ public final class ElytronXmlParser {
                             throw xmlLog.xmlFailedToCreateCredential(finalLocation, e);
                         }
                     };
+                }
+                throw reader.unexpectedContent();
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code oauth2-bearer-token-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param builderSupplier the builder supplier
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> parseOAuth2MaskedResourceOwnerCredentials(ConfigurationXMLStreamReader reader, final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier, Version xmlVersion, Supplier<Provider[]> providers) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        XMLLocation nestedLocation = null;
+        String userName = null;
+        String password = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            if ("name".equals(reader.getAttributeLocalName(i))) {
+                if (userName != null) throw reader.unexpectedAttribute(i);
+                userName = reader.getAttributeValueResolved(i);
+                break;
+            }
+            else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (userName == null) throw reader.missingRequiredAttribute(xmlVersion.namespace, "name");
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader, xmlVersion);
+                if ("masked-password".equals(reader.getLocalName())) {
+                    if (password != null) {
+                        throw reader.unexpectedElement();
+                    }
+                    nestedLocation = reader.getLocation();
+                    Password maskedPassword = parseMaskedPassword(reader, providers).get();
+                    try {
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(maskedPassword.getAlgorithm(), providers);
+                        final ClearPasswordSpec spec = passwordFactory.getKeySpec(maskedPassword, ClearPasswordSpec.class);
+                        password = String.valueOf(spec.getEncodedPassword());
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                        throw xmlLog.xmlFailedToCreateCredential(nestedLocation, cause);
+                    }
+                } else {
+                    throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                final String finalUserName = userName;
+                if (password != null) {
+                    final String finalPassword = password;
+                    return () -> builderSupplier.get().useResourceOwnerPassword(finalUserName, finalPassword);
+                }
+                throw reader.missingRequiredAttribute(xmlVersion.namespace, "password");
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code oauth2-client-credentials-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param builderSupplier the builder supplier
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> parseOAuth2MaskedClientCredentials(ConfigurationXMLStreamReader reader, final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier, Version xmlVersion,Supplier<Provider[]> providers) throws ConfigXMLParseException {
+        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
+        XMLLocation nestedLocation = null;
+        String id = null;
+        String secret = null;
+        for (int i = 0; i < reader.getAttributeCount(); i ++) {
+            checkAttributeNamespace(reader, i);
+            if ("client-id".equals(reader.getAttributeLocalName(i))) {
+                if (id != null) throw reader.unexpectedAttribute(i);
+                id = reader.getAttributeValueResolved(i);
+                break;
+            }
+            else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader, xmlVersion);
+                if ("masked-client-secret".equals(reader.getLocalName())) {
+                    if (secret != null) {
+                        throw reader.unexpectedElement();
+                    }
+                    nestedLocation = reader.getLocation();
+                    Password maskedPassword = parseMaskedPassword(reader, providers).get();
+                    try {
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(maskedPassword.getAlgorithm(), providers);
+                        final ClearPasswordSpec spec = passwordFactory.getKeySpec(maskedPassword, ClearPasswordSpec.class);
+                        secret = String.valueOf(spec.getEncodedPassword());
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                        throw xmlLog.xmlFailedToCreateCredential(nestedLocation, cause);
+                    }
+                } else {
+                    throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                if (id == null) throw reader.unexpectedContent();
+                final String finalId = id;
+                if (secret != null) {
+                    final String finalSecret = secret;
+                    return () -> builderSupplier.get().clientCredentials(finalId, finalSecret);
                 }
                 throw reader.unexpectedContent();
             } else {

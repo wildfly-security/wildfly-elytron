@@ -32,13 +32,15 @@ final class RawMaskedPassword extends RawPassword implements MaskedPassword {
     private final int iterationCount;
     private final byte[] salt;
     private final byte[] maskedPasswordBytes;
+    private final byte[] initializationVector;
 
-    RawMaskedPassword(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] maskedPasswordBytes) {
+    RawMaskedPassword(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] maskedPasswordBytes, final byte[] initializationVector) {
         super(algorithm);
         this.initialKeyMaterial = initialKeyMaterial;
         this.iterationCount = iterationCount;
         this.salt = salt;
         this.maskedPasswordBytes = maskedPasswordBytes;
+        this.initializationVector = initializationVector;
     }
 
     public char[] getInitialKeyMaterial() {
@@ -57,12 +59,16 @@ final class RawMaskedPassword extends RawPassword implements MaskedPassword {
         return maskedPasswordBytes.clone();
     }
 
+    public byte[] getInitializationVector() {
+        return initializationVector == null ? null : initializationVector.clone();
+    }
+
     public RawMaskedPassword clone() {
         return this;
     }
 
     public int hashCode() {
-        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes)), iterationCount), getAlgorithm().hashCode());
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes)), iterationCount), Arrays.hashCode(initializationVector)), getAlgorithm().hashCode());
     }
 
     public boolean equals(final Object obj) {
@@ -70,6 +76,6 @@ final class RawMaskedPassword extends RawPassword implements MaskedPassword {
             return false;
         }
         RawMaskedPassword other = (RawMaskedPassword) obj;
-        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && getAlgorithm().equals(other.getAlgorithm());
+        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && Arrays.equals(initializationVector, other.initializationVector) && getAlgorithm().equals(other.getAlgorithm());
     }
 }
