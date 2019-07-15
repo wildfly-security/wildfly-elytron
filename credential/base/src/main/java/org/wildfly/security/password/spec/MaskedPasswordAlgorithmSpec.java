@@ -32,6 +32,7 @@ public final class MaskedPasswordAlgorithmSpec implements AlgorithmParameterSpec
     private final char[] initialKeyMaterial;
     private final int iterationCount;
     private final byte[] salt;
+    private final byte[] initializationVector;
 
     /**
      * Construct a new instance.
@@ -46,6 +47,24 @@ public final class MaskedPasswordAlgorithmSpec implements AlgorithmParameterSpec
         this.initialKeyMaterial = initialKeyMaterial;
         this.iterationCount = iterationCount;
         this.salt = salt;
+        this.initializationVector = null;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param initialKeyMaterial the initial key material (must not be {@code null})
+     * @param iterationCount the iteration count
+     * @param salt the salt bytes (must not be {@code null})
+     * @param initializationVector the initialization vector (can be {@code null})
+     */
+    public MaskedPasswordAlgorithmSpec(final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] initializationVector) {
+        Assert.checkNotNullParam("initialKeyMaterial", initialKeyMaterial);
+        Assert.checkNotNullParam("salt", salt);
+        this.initialKeyMaterial = initialKeyMaterial;
+        this.iterationCount = iterationCount;
+        this.salt = salt;
+        this.initializationVector = initializationVector;
     }
 
     /**
@@ -75,16 +94,27 @@ public final class MaskedPasswordAlgorithmSpec implements AlgorithmParameterSpec
         return salt;
     }
 
+    /**
+     * Get the initialization vector.
+     *
+     * @return the initialization vector (can be {@code null})
+     */
+    public byte[] getInitializationVector() {
+        return initializationVector;
+    }
+
+
     public boolean equals(Object other) {
         if (! (other instanceof MaskedPasswordAlgorithmSpec)) return false;
         MaskedPasswordAlgorithmSpec otherSpec = (MaskedPasswordAlgorithmSpec) other;
         return otherSpec == this
             || Arrays.equals(initialKeyMaterial, otherSpec.initialKeyMaterial)
             && Arrays.equals(salt, otherSpec.salt)
-            && iterationCount == otherSpec.iterationCount;
+            && iterationCount == otherSpec.iterationCount
+            &&Arrays.equals(initializationVector, otherSpec.initializationVector);
     }
 
     public int hashCode() {
-        return (Arrays.hashCode(initialKeyMaterial) * 13 + iterationCount) * 13 + Arrays.hashCode(salt);
+        return ((Arrays.hashCode(initialKeyMaterial) * 13 + iterationCount) * 13 + Arrays.hashCode(salt)) * 13 + Arrays.hashCode(initializationVector);
     }
 }

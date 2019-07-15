@@ -303,6 +303,7 @@
             <xsd:element name="key-store-reference" type="key-store-ref-type"/>
             <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
             <xsd:element name="clear-password" type="clear-password-type"/>
+            <xsd:element name="masked-password" type="masked-password-type"/>
             <xsd:element name="key-pair" type="key-pair-type"/>
             <xsd:element name="certificate" type="certificate-type"/>
             <xsd:element name="public-key-pem" type="xsd:string">
@@ -580,6 +581,7 @@
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="key-store-masked-password" type="masked-password-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
             <xsd:element name="providers" type="providers-type" minOccurs="0"/>
@@ -624,6 +626,7 @@
         <xsd:choice minOccurs="0" maxOccurs="1">
             <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="key-store-masked-password" type="masked-password-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required">
@@ -685,6 +688,7 @@
         <xsd:choice minOccurs="0" maxOccurs="1">
             <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="key-store-masked-password" type="masked-password-type" minOccurs="1" maxOccurs="1"/>
             <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required">
@@ -799,8 +803,10 @@
             </xsd:documentation>
         </xsd:annotation>
         <xsd:choice maxOccurs="unbounded">
-            <xsd:element name="client-credentials" type="oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="resource-owner-credentials" type="resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="masked-resource-owner-credentials" type="masked-resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="client-credentials" type="oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="masked-client-credentials" type="masked-oauth2-client-credentials-type" minOccurs="0" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="token-endpoint-uri" type="xsd:anyURI" use="required" />
     </xsd:complexType>
@@ -830,6 +836,24 @@
         </xsd:attribute>
     </xsd:complexType>
 
+    <xsd:complexType name="masked-oauth2-client-credentials-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                An OAuth 2 bearer token client credentials.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:choice>
+            <xsd:element name="masked-client-secret" type="masked-password-type" minOccurs="0"/>
+        </xsd:choice>
+        <xsd:attribute name="client-id" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The client identifier.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
     <xsd:complexType name="resource-owner-credentials-type">
         <xsd:annotation>
             <xsd:documentation>
@@ -850,6 +874,24 @@
             <xsd:annotation>
                 <xsd:documentation>
                     The resource owner password.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="masked-resource-owner-credentials-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                An OAuth 2 bearer token resource owner credentials.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:choice>
+            <xsd:element name="masked-password" type="masked-password-type" minOccurs="0"/>
+        </xsd:choice>
+        <xsd:attribute name="name" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Name used for referencing the resource owner.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -973,6 +1015,56 @@
                 A password specified in the clear.
             </xsd:documentation>
         </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="masked-password-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                A masked password definition.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="algorithm" type="xsd:string" default="masked-MD5-DES">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The algorithm that was used to encrypt the password.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="key-material" type="xsd:string" default="somearbitrarycrazystringthatdoesnotmatter">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The initial key material that was used to encrypt the password.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="iteration-count" type="xsd:positiveInteger" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The iteration count that was used to encrypt the password.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="salt" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The salt that was used to encrypt the password.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="masked-password" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The base64 encrypted password. (without the "MASK-" prefix)
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="initialization-vector" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The initialization vector that was used to encrypt the password.
+                </xsd:documentation>
+            </xsd:annotation>
         </xsd:attribute>
     </xsd:complexType>
 

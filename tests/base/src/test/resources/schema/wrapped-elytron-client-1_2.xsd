@@ -7,7 +7,7 @@
             xmlns:el="urn:elytron:client:1.2"
             version="1.0">
 
-    <xsd:import namespace="urn:elytron:client:1.2" schemaLocation="src/main/resources/schema/elytron-client-1_2.xsd"/>
+    <xsd:import namespace="urn:elytron:client:1.2" schemaLocation="../../../../../../auth/client/src/main/resources/schema/elytron-client-1_2.xsd"/>
 
     <xsd:element name="configuration">
         <xsd:complexType>

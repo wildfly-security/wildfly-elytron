@@ -18,6 +18,9 @@
 
 package org.wildfly.security.util;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.AlgorithmParameters;
@@ -25,10 +28,12 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Test;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.interfaces.MaskedPassword;
+import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
-
-import static org.junit.Assert.assertEquals;
 
 //has dependency on wildfly-elytron-credential because of OneTimePasswordAlgorithmSpec
 public class AbstractAlgorithmParametersSpiImplTest {
@@ -52,6 +57,50 @@ public class AbstractAlgorithmParametersSpiImplTest {
         assertEquals(start.getAlgorithm(), end.getAlgorithm());
         assertEquals(start.getSeed(), end.getSeed());
         assertEquals(start.getSequenceNumber(), end.getSequenceNumber());
+    }
+
+    @Test
+    public void maskedPasswordParameterSpecWithoutIvEncoding() throws GeneralSecurityException, IOException {
+        final MaskedPasswordAlgorithmSpec start = new MaskedPasswordAlgorithmSpec("key".toCharArray(), 5, "salt".getBytes(StandardCharsets.UTF_8));
+
+        final AlgorithmParameters oneWay = AlgorithmParameters.getInstance(MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256, new WildFlyElytronProvider());
+        oneWay.init(start);
+
+        final byte[] encoded = oneWay.getEncoded();
+        assertEquals("MA4EA2tleQIBBQQEc2FsdA==", ByteIterator.ofBytes(encoded).base64Encode().drainToString()); // backward compatibility check
+
+        final AlgorithmParameters orAnother = AlgorithmParameters.getInstance(MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256, new WildFlyElytronProvider());
+
+        orAnother.init(encoded);
+
+        final MaskedPasswordAlgorithmSpec end = orAnother.getParameterSpec(MaskedPasswordAlgorithmSpec.class);
+
+        assertArrayEquals(start.getInitialKeyMaterial(), end.getInitialKeyMaterial());
+        assertEquals(start.getIterationCount(), end.getIterationCount());
+        assertArrayEquals(start.getSalt(), end.getSalt());
+        assertArrayEquals(start.getInitializationVector(), end.getInitializationVector());
+    }
+
+    @Test
+    public void maskedPasswordParameterSpecWithIvEncoding() throws GeneralSecurityException, IOException {
+        final MaskedPasswordAlgorithmSpec start = new MaskedPasswordAlgorithmSpec("key".toCharArray(), 5, "salt".getBytes(StandardCharsets.UTF_8), "iv".getBytes(StandardCharsets.UTF_8));
+
+        final AlgorithmParameters oneWay = AlgorithmParameters.getInstance(MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256, new WildFlyElytronProvider());
+        oneWay.init(start);
+
+        final byte[] encoded = oneWay.getEncoded();
+        assertEquals("MBIEA2tleQIBBQQEc2FsdAQCaXY=", ByteIterator.ofBytes(encoded).base64Encode().drainToString()); // backward compatibility check
+
+        final AlgorithmParameters orAnother = AlgorithmParameters.getInstance(MaskedPassword.ALGORITHM_MASKED_HMAC_SHA1_AES_256, new WildFlyElytronProvider());
+
+        orAnother.init(encoded);
+
+        final MaskedPasswordAlgorithmSpec end = orAnother.getParameterSpec(MaskedPasswordAlgorithmSpec.class);
+
+        assertArrayEquals(start.getInitialKeyMaterial(), end.getInitialKeyMaterial());
+        assertEquals(start.getIterationCount(), end.getIterationCount());
+        assertArrayEquals(start.getSalt(), end.getSalt());
+        assertArrayEquals(start.getInitializationVector(), end.getInitializationVector());
     }
 
     /**

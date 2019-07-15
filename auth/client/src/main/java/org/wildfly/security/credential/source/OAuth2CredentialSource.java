@@ -41,19 +41,27 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.wildfly.common.Assert;
 import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.MaskedPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.MaskedPasswordSpec;
 
 /**
  * A {@link CredentialSource} capable of authenticating against a OAuth2 compliant authorization server and obtaining
@@ -79,6 +87,7 @@ public class OAuth2CredentialSource implements CredentialSource {
     private String scopes;
     private final Supplier<SSLContext> sslContextSupplier;
     private final Supplier<HostnameVerifier> hostnameVerifierSupplier;
+    private static final char [] defaultKeyMaterial = "somearbitrarycrazystringthatdoesnotmatter".toCharArray();
 
     /**
      * Creates a new instance.
@@ -293,6 +302,82 @@ public class OAuth2CredentialSource implements CredentialSource {
         }
 
         /**
+         * <p>Configure OAuth2 Resource Owner Masked Password Grant Type as defined by the OAuth2 specification.
+         *
+         * <p>When using this grant type, make sure to also configure one of the supported client authentication methods. For instance,
+         * make sure to provide client credentials via {@link #clientCredentials(String, String)}.
+         *
+         * @param userName the resource owner's user name
+         * @param maskedPassword the masked password, as a string (must not be {@code null})
+         * @param algorithm the algorithm (can be {@code null}, default:"masked-MD5-DES")
+         * @param initialKeyMaterial the initial key material, as a string(can be {@code null}, default:"somearbitrarycrazystringthatdoesnotmatter")
+         * @param iterationCount the iteration count, as an integer (must not be less than 1)
+         * @param salt the salt, as a string (must not be {@code null})
+         * @param initializationVector the initialization vector, as a string (can be {@code null})
+         * @return this instance.
+         * @throws NoSuchAlgorithmException if algorithm used to get PasswordFactory instance is invalid
+         * @throws InvalidKeySpecException if invalid spec is used to generate password
+         */
+        public Builder useResourceOwnerMaskedPassword(String userName, String maskedPassword, String algorithm, String initialKeyMaterial, int iterationCount, String salt, String initializationVector) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+           String password = convertMaskedPasswordToClearText(maskedPassword, algorithm, initialKeyMaterial, iterationCount, salt, initializationVector);
+
+            configureAuthenticationHandler(parameters -> configureResourceOwnerCredentialsParameters(parameters, userName, password));
+            return this;
+        }
+
+        /**
+         * <p>Configure OAuth2 Masked Client Credentials Grant Type as defined by the OAuth2 specification.
+         *
+         * @param id the client id
+         * @param maskedSecret the masked password, as a string (must not be {@code null})
+         * @param algorithm the algorithm (can be {@code null}, default:"masked-MD5-DES")
+         * @param initialKeyMaterial the initial key material, as a string(can be {@code null}, default:"somearbitrarycrazystringthatdoesnotmatter")
+         * @param iterationCount the iteration count, as an integer (must not be less than 1)
+         * @param salt the salt, as a string (must not be {@code null})
+         * @param initializationVector the initialization vector, as a string (can be {@code null})
+         * @return this instance.
+         * @throws NoSuchAlgorithmException if algorithm used to get PasswordFactory instance is invalid
+         * @throws InvalidKeySpecException if invalid spec is used to generate password
+         */
+        public Builder maskedClientCredentials(String id, String maskedSecret, String algorithm, String initialKeyMaterial, int iterationCount, String salt, String initializationVector) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+
+            String secret = convertMaskedPasswordToClearText(maskedSecret, algorithm, initialKeyMaterial, iterationCount, salt, initializationVector);
+
+            checkNotNullParam("id", id);
+            checkNotNullParam("secret", secret);
+            configureAuthenticationHandler(parameters -> {
+                AuthenticationContext context = AuthenticationContext.captureCurrent();
+                AuthenticationContextConfigurationClient client = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+                AuthenticationConfiguration configuration = client.getAuthenticationConfiguration(URI.create(tokenEndpointUrl.toString()), context);
+                CallbackHandler handler = client.getCallbackHandler(configuration);
+
+                // if there is a handler associated with the configuration, we try to resolve username/password and change grant type to resource owner credentials
+                if (handler != null) {
+                    NameCallback nameCallback = new NameCallback("Username");
+                    PasswordCallback passwordCallback = new PasswordCallback("Password", false);
+
+                    try {
+                        handler.handle(new Callback[]{nameCallback, passwordCallback});
+                    } catch (Exception ignore) {
+                    }
+
+                    String userName = nameCallback.getName();
+                    char[] password = passwordCallback.getPassword();
+
+                    if (userName != null && password != null) {
+                        configureResourceOwnerCredentialsParameters(parameters, userName, String.valueOf(password));
+                    }
+                }
+
+                configureClientCredentialsParameters(parameters, id, secret.toCharArray());
+            });
+            return this;
+        }
+
+
+        /**
          * TThe {@link SSLContext} to be used in case connections to remote server require TLS/HTTPS.
          *
          * @param sslContext the SSLContext
@@ -367,6 +452,24 @@ public class OAuth2CredentialSource implements CredentialSource {
             } else {
                 authenticationHandler = authenticationHandler.andThen(handler);
             }
+        }
+
+        private String convertMaskedPasswordToClearText(String maskedPassword, String algorithm, String initialKeyMaterial, int iterationCount, String salt, String initializationVector) throws NoSuchAlgorithmException, InvalidKeySpecException {
+            Assert.assertNotNull(maskedPassword);
+            Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
+            Assert.assertNotNull(salt);
+
+            byte[] finalMaskedSecretBytes = CodePointIterator.ofString(maskedPassword).base64Decode().drain();
+            if (algorithm == null) algorithm = MaskedPassword.ALGORITHM_MASKED_MD5_DES;
+            char[] finalInitialKeyMaterial = initialKeyMaterial == null ? defaultKeyMaterial : initialKeyMaterial.toCharArray();
+            byte[] finalSalt = CodePointIterator.ofString(salt).asUtf8().drain();
+            byte[] finalInitializationVector = initializationVector == null ? null : CodePointIterator.ofString(initializationVector).base64Decode().drain();
+
+            MaskedPasswordSpec spec = new MaskedPasswordSpec(finalInitialKeyMaterial, iterationCount, finalSalt, finalMaskedSecretBytes, finalInitializationVector);
+            PasswordFactory factory = PasswordFactory.getInstance(algorithm);
+            MaskedPassword password = factory.generatePassword(spec).castAs(MaskedPassword.class);
+            ClearPasswordSpec clearSpec = factory.getKeySpec(password, ClearPasswordSpec.class);
+            return String.valueOf(clearSpec.getEncodedPassword());
         }
     }
 }

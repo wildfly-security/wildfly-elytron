@@ -59,10 +59,19 @@ public interface MaskedPassword extends TwoWayPassword {
     String ALGORITHM_MASKED_HMAC_SHA256_AES_256 = "masked-HMAC-SHA256-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA384_AES_256 = "masked-HMAC-SHA384-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA512_AES_256 = "masked-HMAC-SHA512-AES-256";
+    /**
+     * DEPRECATED - unusable for masked passwords as there is no encryption support in javax.crypto.Cipher for PKDBF2
+     * family of algorithms, needs to be kept for compatibility
+     */
+    @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA1 = "masked-PBKDF-HMAC-SHA1";
+    @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA224 = "masked-PBKDF-HMAC-SHA224";
+    @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA256 = "masked-PBKDF-HMAC-SHA256";
+    @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA384 = "masked-PBKDF-HMAC-SHA384";
+    @Deprecated
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA512 = "masked-PBKDF-HMAC-SHA512";
 
     /**
@@ -109,11 +118,6 @@ public interface MaskedPassword extends TwoWayPassword {
             case ALGORITHM_MASKED_HMAC_SHA256_AES_256: return "PBEWithHmacSHA256AndAES_256";
             case ALGORITHM_MASKED_HMAC_SHA384_AES_256: return "PBEWithHmacSHA384AndAES_256";
             case ALGORITHM_MASKED_HMAC_SHA512_AES_256: return "PBEWithHmacSHA512AndAES_256";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA1: return "PBKDF2WithHmacSHA1";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA224: return "PBKDF2WithHmacSHA224";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA256: return "PBKDF2WithHmacSHA256";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA384: return "PBKDF2WithHmacSHA384";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA512: return "PBKDF2WithHmacSHA512";
             default: return null;
         }
     }
@@ -145,6 +149,15 @@ public interface MaskedPassword extends TwoWayPassword {
      * @return the masked password bytes (must not be {@code null})
      */
     byte[] getMaskedPasswordBytes();
+
+    /**
+     * Get the initialization vector.
+     *
+     * @return the initialization vector ({@code null} if not used)
+     */
+    default byte[] getInitializationVector() {
+        return null;
+    }
 
     default MaskedPasswordAlgorithmSpec getParameterSpec() {
         return new MaskedPasswordAlgorithmSpec(getInitialKeyMaterial(), getIterationCount(), getSalt());
@@ -189,6 +202,25 @@ public interface MaskedPassword extends TwoWayPassword {
         Assert.checkNotNullParam("initialKeyMaterial", initialKeyMaterial);
         Assert.checkNotNullParam("salt", salt);
         Assert.checkNotNullParam("maskedPasswordBytes", maskedPasswordBytes);
-        return new RawMaskedPassword(algorithm, initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone());
+        return new RawMaskedPassword(algorithm, initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone(), null);
+    }
+
+    /**
+     * Create a raw instance of this password type.
+     *
+     * @param algorithm the algorithm name (must not be {@code null})
+     * @param initialKeyMaterial the initial key material (must not be {@code null})
+     * @param iterationCount the iteration count
+     * @param salt the salt (must not be {@code null})
+     * @param maskedPasswordBytes the masked password bytes (must not be {@code null})
+     * @param initializationVector the initialization vector (can be {@code null})
+     * @return the raw instance (not {@code null})
+     */
+    static MaskedPassword createRaw(String algorithm, char[] initialKeyMaterial, int iterationCount, byte[] salt, byte[] maskedPasswordBytes, byte[] initializationVector) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("initialKeyMaterial", initialKeyMaterial);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("maskedPasswordBytes", maskedPasswordBytes);
+        return new RawMaskedPassword(algorithm, initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone(), initializationVector);
     }
 }
