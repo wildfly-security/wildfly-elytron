@@ -49,4 +49,7 @@ public interface HttpServerAuthenticationMechanismFactory {
      */
     HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException;
 
+    default void shutdown() {
+        return;
+    }
 }

@@ -105,4 +105,12 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
         return null;
     }
 
+    /*
+     * Shut down the NonceManager created by the DigestMechanismFactory
+     */
+    @Override
+    public void shutdown() {
+        nonceManager.shutDown();
+    }
+
 }

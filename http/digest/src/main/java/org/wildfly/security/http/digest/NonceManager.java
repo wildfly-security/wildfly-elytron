@@ -25,7 +25,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
+
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +46,7 @@ public class NonceManager {
 
     private static final int PREFIX_LENGTH = Integer.BYTES + Long.BYTES;
 
-    private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     private final AtomicInteger nonceCounter = new AtomicInteger();
     private final Map<String, NonceState> usedNonces = new HashMap<>();
 
@@ -96,6 +96,8 @@ public class NonceManager {
 
         this.privateKey = new byte[keySize];
         new SecureRandom().nextBytes(privateKey);
+        executor.setRemoveOnCancelPolicy(true);
+        executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     }
 
     /**
@@ -269,6 +271,13 @@ public class NonceManager {
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * must be called in order to shut down executor
+     */
+    public void shutDown() {
+        if (executor != null) { executor.shutdownNow(); }
     }
 
     private static class NonceState {
