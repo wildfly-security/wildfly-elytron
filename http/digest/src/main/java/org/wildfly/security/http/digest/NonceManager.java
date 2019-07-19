@@ -26,6 +26,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +47,7 @@ public class NonceManager {
 
     private static final int PREFIX_LENGTH = Integer.BYTES + Long.BYTES;
 
-    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    private final ScheduledExecutorService executor;
     private final AtomicInteger nonceCounter = new AtomicInteger();
     private final Map<String, NonceState> usedNonces = new HashMap<>();
 
@@ -77,6 +78,10 @@ public class NonceManager {
 
         this.privateKey = new byte[keySize];
         new SecureRandom().nextBytes(privateKey);
+        ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1);
+        INSTANCE.setRemoveOnCancelPolicy(true);
+        INSTANCE.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        executor = INSTANCE;
     }
 
     /**
@@ -96,8 +101,39 @@ public class NonceManager {
 
         this.privateKey = new byte[keySize];
         new SecureRandom().nextBytes(privateKey);
-        executor.setRemoveOnCancelPolicy(true);
-        executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1);
+        INSTANCE.setRemoveOnCancelPolicy(true);
+        INSTANCE.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        executor = INSTANCE;
+    }
+
+    /**
+     * @param validityPeriod the time in ms that nonces are valid for in ms.
+     * @param nonceSessionTime the time in ms a nonce is usable for after it's last use where nonce counts are in use.
+     * @param singleUse are nonces single use?
+     * @param keySize the number of bytes to use in the private key of this node.
+     * @param algorithm the message digest algorithm to use when creating the digest portion of the nonce.
+     * @param log mechanism specific logger.
+     * @param customExecutor a custom ScheduledExecutorService to be used
+     */
+    NonceManager(long validityPeriod, long nonceSessionTime, boolean singleUse, int keySize, String algorithm, ElytronMessages log, ScheduledExecutorService customExecutor) {
+        this.validityPeriodNano = validityPeriod * 1000000;
+        this.nonceSessionTime = nonceSessionTime;
+        this.singleUse = singleUse;
+        this.algorithm = algorithm;
+        this.log = log;
+
+        this.privateKey = new byte[keySize];
+        new SecureRandom().nextBytes(privateKey);
+        if (customExecutor == null) {
+            ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1);
+            INSTANCE.setRemoveOnCancelPolicy(true);
+            INSTANCE.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+            executor = INSTANCE;
+        }
+        else {
+            executor = customExecutor;
+        }
     }
 
     /**
@@ -273,11 +309,8 @@ public class NonceManager {
         }
     }
 
-    /**
-     * must be called in order to shut down executor
-     */
-    public void shutDown() {
-        if (executor != null) { executor.shutdownNow(); }
+    public void shutdown() {
+        if (executor != null) { executor.shutdown(); }
     }
 
     private static class NonceState {

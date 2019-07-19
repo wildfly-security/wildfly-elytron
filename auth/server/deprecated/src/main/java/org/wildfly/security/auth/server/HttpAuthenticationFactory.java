@@ -120,6 +120,10 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
+    public void shutdownAuthenticationMechanismFactory() {
+        super.getFactory().shutdown();
+    }
+
     /**
      * Obtain a new {@link Builder} capable of building a {@link HttpAuthenticationFactory}.
      *
