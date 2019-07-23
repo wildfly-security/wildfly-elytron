@@ -1358,7 +1358,9 @@ public final class AuthenticationConfiguration {
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
         final SaslClientFactory finalSaslClientFactory = saslClientFactory;
-        saslClientFactory = doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext);
+        final boolean captureAccessControlContext = Boolean.parseBoolean(System.getProperty("wildfly.elytron.capture.access.control.context", "true"));
+        saslClientFactory = captureAccessControlContext ? doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext) :
+                new PrivilegedSaslClientFactory(finalSaslClientFactory);
 
         SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
