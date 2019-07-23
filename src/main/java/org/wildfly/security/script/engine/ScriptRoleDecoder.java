@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.script-engine;
+package org.wildfly.security.script.engine;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngineManager;
