@@ -49,4 +49,10 @@ public interface HttpServerAuthenticationMechanismFactory {
      */
     HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException;
 
+    /**
+     * Can be used for clean up
+     */
+    default void shutdown() {
+        return;
+    }
 }

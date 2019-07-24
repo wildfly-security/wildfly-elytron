@@ -94,6 +94,10 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
+        if (properties.containsKey("nonceManager")) {
+            nonceManager = (NonceManager) properties.get("nonceManager");
+        }
+
         switch (mechanismName) {
             case DIGEST_NAME:
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_NAME, MD5, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
@@ -103,6 +107,14 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
                 return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), DIGEST_SHA512_256_NAME, SHA512_256, providers, (String) properties.get(HttpConstants.CONFIG_VALIDATE_DIGEST_URI));
         }
         return null;
+    }
+
+    /*
+     * Shut down the NonceManager created by the DigestMechanismFactory
+     */
+    @Override
+    public void shutdown() {
+        nonceManager.shutdown();
     }
 
 }
