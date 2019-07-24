@@ -1,0 +1,120 @@
+# For the used ranges there may still be some gaps, the intent here has
+# been to try and collect closely related IDs into a range.
+
+00012            wildfly-elytron-asn1
+07004 - 07024    wildfly-elytron-asn1
+11001 - 11007    wildfly-elytron-audit
+00003            wildfly-elytron-auth-util
+01065            wildfly-elytron-auth-util
+01121 - 01123    wildfly-elytron-auth-util
+01160 - 01165    wildfly-elytron-auth-util
+03031            wildfly-elytron-auth-util
+00001            wildfly-elytron-base
+00005            wildfly-elytron-base
+00011            wildfly-elytron-base
+01106            wildfly-elytron-client
+05053            wildfly-elytron-client
+05125            wildfly-elytron-client
+09001            wildfly-elytron-client
+00002 - 00004    wildfly-elytron-credential
+01037            wildfly-elytron-credential
+01053 - 01063    wildfly-elytron-credential
+02032 - 02033    wildfly-elytron-credential
+05151            wildfly-elytron-credential
+08001 - 08029    wildfly-elytron-credential
+09000            wildfly-elytron-credential
+01030            wildfly-elytron-credential-source-deprecated
+05053            wildfly-elytron-credential-source-deprecated
+05125            wildfly-elytron-credential-source-deprecated
+09506            wildfly-elytron-credential-source-deprecated
+09511            wildfly-elytron-credential-source-deprecated
+01030            wildfly-elytron-credential-source-impl
+05053            wildfly-elytron-credential-source-impl
+05125            wildfly-elytron-credential-source-impl
+09506            wildfly-elytron-credential-source-impl
+09511            wildfly-elytron-credential-source-impl
+02009            wildfly-elytron-credential-store
+09500 - 09528    wildfly-elytron-credential-store
+11006            wildfly-elytron-credential-store
+06000 - 06018    wildfly-elytron-http
+06008 - 06014    wildfly-elytron-http-sso
+05172            wildfly-elytron-http-util
+03018            wildfly-elytron-jacc
+08500 - 08508    wildfly-elytron-jacc
+01167 - 01177    wildfly-elytron-jaspi
+02001 - 02035    wildfly-elytron-keystore
+08027            wildfly-elytron-keystore
+00007            wildfly-elytron-mechanism
+01151            wildfly-elytron-mechanism
+05001 - 05177    wildfly-elytron-mechanism
+06001 - 06022    wildfly-elytron-mechanism
+07001 - 07004    wildfly-elytron-mechanism
+00003            wildly-elytron-mechanism-gssapi
+01121 - 01123    wildly-elytron-mechanism-gssapi
+01160 - 01165    wildly-elytron-mechanism-gssapi
+03035            wildly-elytron-mechanism-gssapi
+00002 - 00004    wildfly-elytron-password-impl
+05151            wildfly-elytron-password-impl
+08013 - 08028    wildfly-elytron-password-impl
+03013 - 03022    wildfly-elytron-permission
+01006 - 01082    wildfly-elytron-realm
+01138 - 01154    wildfly-elytron-realm
+11005            wildfly-elytron-realm
+01043 - 01052    wildfly-elytron-realm-jdbc
+00002- 00007     wildfly-elytron-realm-ldap
+01041 - 01153    wildfly-elytron-realm-ldap
+04025            wildfly-elytron-realm-ldap
+01104 - 01180    wildfly-elytron-realm-token
+01157            wildfly-elytron-sasl
+05001 - 05163    wildfly-elytron-sasl
+01066 - 01077    wildfly-elytron-ssl
+04001 - 04031    wildfly-elytron-ssl
+05015 - 05017    wildfly-elytron-ssl
+00009            wildfly-elytron-util
+03025 - 03032    wildfly-elytron-util
+04020            wildfly-elytron-util
+08030 - 08034    wildfly-elytron-util
+00006            wildfly-elytron-x500
+10025 - 10028    wildfly-elytron-x500
+05110 - 05111    wildfly-elytron-x500
+07006 - 07025    wildfly-elytron-x500
+03010 - 03033    wildfly-elytron-x500-cert (1)
+07001 - 07004    wildfly-elytron-x500-cert (1)
+03010 - 03033    wildfly-elytron-x500-cert (2)
+07001 - 07004    wildfly-elytron-x500-cert (2)
+10000 - 10024    wildfly-elytron-x500-cert (2)
+10016 - 10057    wildfly-elytron-x500-cert-acme
+10016            wildfly-elytron-x500-cert-util
+
+
+# New Ranges Should Be Allocated In Blocks of 1,000
+12000 - 12999
+13000 - 13999
+14000 - 14999
+15000 - 15999
+16000 - 16999
+17000 - 17999
+18000 - 18999
+19000 - 19999
+20000 - 20999
+21000 - 21999
+22000 - 22999
+23000 - 23999
+24000 - 24999
+25000 - 25999
+26000 - 26999
+27000 - 27999
+28000 - 28999
+29000 - 29999
+30000 - 30999
+# Reserved For master / Elytron 2
+40000 - 40999 master
+41000 - 41999 master
+42000 - 42999 master
+43000 - 43999 master
+44000 - 44999 master
+45000 - 45999 master
+46000 - 46999 master
+47000 - 47999 master
+48000 - 48999 master
+49000 - 49999 master

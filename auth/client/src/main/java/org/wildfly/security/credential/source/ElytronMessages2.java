@@ -23,7 +23,8 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 /**
@@ -33,6 +34,12 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+    @ValidIdRange(min = 1106, max = 1106),
+    @ValidIdRange(min = 5053, max = 5053),
+    @ValidIdRange(min = 5125, max = 5125),
+    @ValidIdRange(min = 9001, max = 9001)
+})
 interface ElytronMessages2 extends BasicLogger {
 
     ElytronMessages2 saslOAuth2 = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security.sasl.oauth2");
