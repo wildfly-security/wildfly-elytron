@@ -251,10 +251,6 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-server-http</artifactId>
         </dependency>
         <dependency>
@@ -556,11 +552,6 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-auth-server</artifactId>
-                                    <version>${project.version}</version>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
@@ -915,6 +906,10 @@
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
                                 <excludes>
+                                    <exclude>org.wildfly.security.auth.server.HttpAuthenticationFactory</exclude>
+                                    <exclude>org.wildfly.security.auth.server.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.auth.server.MechanismAuthenticationFactory</exclude>
+                                    <exclude>org.wildfly.security.auth.server.SaslAuthenticationFactory</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
