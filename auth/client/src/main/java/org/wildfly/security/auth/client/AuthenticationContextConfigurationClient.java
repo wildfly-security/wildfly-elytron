@@ -348,6 +348,28 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
+     * Get the WebServices HTTP mechanism to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the HTTP mechanism to use
+     */
+    public String getWsHttpMech(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getWsHttpMechanism();
+    }
+
+    /**
+     * Get the actual WS-Security type to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the WS-Security type to use
+     */
+    public String getWsSecurityType(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getWsSecurityType();
+    }
+
+    /**
      * Get the authentication principal to use for the given configuration.
      *
      * @param configuration the configuration (must not be {@code null})

@@ -1243,6 +1243,13 @@ public final class ElytronXmlParser {
                         xmlLog.xmlDeprecatedElement(reader.getLocalName(), reader.getLocation());
                         break;
                     }
+                    case "webservices": {
+                        if (isSet(foundBits, 14)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 14);
+                        Map<String, ?> webServices = parseWebServicesType(reader, xmlVersion);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useWebServices(webServices));
+                        break;
+                    }
                     default: {
                         throw reader.unexpectedElement();
                     }
@@ -1290,6 +1297,45 @@ public final class ElytronXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 return providerSupplier;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    static Map<String, ?> parseWebServicesType(ConfigurationXMLStreamReader reader, final Version xmlVersion) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+
+        int foundBits = 0;
+        if (! reader.hasNext()) {
+            throw reader.unexpectedDocumentEnd();
+        }
+        Map<String, String> propertiesMap = new HashMap<>();
+
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader, xmlVersion);
+                switch (reader.getLocalName()) {
+                    case "set-http-mechanism": {
+                        if (isSet(foundBits, 0)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 0);
+                        final String httpMechName = parseNameType(reader);
+                        propertiesMap.put("http-mechanism", httpMechName);
+                        break;
+                    }
+                    case "set-ws-security-type": {
+                        if (isSet(foundBits, 1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 1);
+                        final String wsSecurityType = parseNameType(reader);
+                        propertiesMap.put("ws-security-type", wsSecurityType);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return propertiesMap;
             } else {
                 throw reader.unexpectedContent();
             }
