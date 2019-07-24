@@ -52,7 +52,7 @@
 00003            wildly-elytron-mechanism-gssapi
 01121 - 01123    wildly-elytron-mechanism-gssapi
 01160 - 01165    wildly-elytron-mechanism-gssapi
-03035            wildly-elytron-mechanism-gssapi
+03031            wildly-elytron-mechanism-gssapi
 00002 - 00004    wildfly-elytron-password-impl
 05151            wildfly-elytron-password-impl
 08013 - 08028    wildfly-elytron-password-impl
