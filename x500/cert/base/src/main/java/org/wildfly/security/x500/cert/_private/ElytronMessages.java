@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.x500.cert;
+package org.wildfly.security.x500.cert._private;
 
 import java.security.cert.CertificateException;
 import java.time.ZonedDateTime;
@@ -42,7 +42,7 @@ import org.wildfly.security.asn1.ASN1Exception;
     @ValidIdRange(min = 7001, max = 7004),
     @ValidIdRange(min = 10000, max = 10024)
 })
-interface ElytronMessages extends BasicLogger {
+public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
