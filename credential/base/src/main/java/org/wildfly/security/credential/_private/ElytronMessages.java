@@ -30,6 +30,8 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -38,6 +40,15 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+    @ValidIdRange(min = 2, max = 4),
+    @ValidIdRange(min = 1037, max = 1037),
+    @ValidIdRange(min = 1053, max = 1063),
+    @ValidIdRange(min = 2032, max = 2033),
+    @ValidIdRange(min = 5151, max = 5151),
+    @ValidIdRange(min = 8001, max = 8029),
+    @ValidIdRange(min = 9000, max = 9000)
+})
 public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");

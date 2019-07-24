@@ -26,6 +26,8 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
@@ -39,6 +41,13 @@ import org.wildfly.security.mechanism.ScramServerException;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+    @ValidIdRange(min = 7, max = 7),
+    @ValidIdRange(min = 1151, max = 1151),
+    @ValidIdRange(min = 5001, max = 5177),
+    @ValidIdRange(min = 6001, max = 6022),
+    @ValidIdRange(min = 7001, max = 7004)
+})
 public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");

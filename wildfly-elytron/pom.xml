@@ -915,7 +915,7 @@
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
                                 <excludes>
-                                    
+                                    <exclude>org.wildfly.security.x500.cert.ElytronMessages_$logger</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>

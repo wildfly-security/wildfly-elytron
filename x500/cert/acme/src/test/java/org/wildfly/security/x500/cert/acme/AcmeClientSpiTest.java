@@ -80,7 +80,7 @@ public class AcmeClientSpiTest {
     private static AcmeAccount.Builder populateBasicBuilder() throws Exception {
         AcmeAccount.Builder builder = AcmeAccount.builder()
                 .setTermsOfServiceAgreed(true)
-                .setContactUrls(new String[] { "mailto:admin@example.com" } )
+                .setContactUrls(new String[] { "mailto:admin@anexample.com" } )
                 .setServerUrl("http://localhost:4001/directory");
         return builder;
     }
@@ -95,19 +95,19 @@ public class AcmeClientSpiTest {
 
     private static final String KEYSTORE = "account.keystore";
     private static final char[] KEYSTORE_PASSWORD = "elytron".toCharArray();
-    private static final String ACCOUNT_1 = "account1";
-    private static final String ACCOUNT_2 = "account2";
-    private static final String ACCOUNT_3 = "account3";
-    private static final String ACCOUNT_4 = "account4";
-    private static final String ACCOUNT_5 = "account5";
-    private static final String ACCOUNT_6 = "account6";
-    private static final String ACCOUNT_7 = "account7";
-    private static final String ACCOUNT_8 = "account8";
-    private static final String ACCOUNT_9 = "account9";
-    private static final String REVOKE_ALIAS = "revokealias";
-    private static final String REVOKE_WITH_REASON_ALIAS = "revokewithreasonalias";
-    private static final String NEW_KEY_ALIAS = "newkey";
-    private static final String NEW_EC_KEY_ALIAS = "neweckey";
+    private static final String ACCOUNT_1_V2 = "account1v2";
+    private static final String ACCOUNT_2_V2 = "account2v2";
+    private static final String ACCOUNT_3_V2 = "account3v2";
+    private static final String ACCOUNT_4_V2 = "account4v2";
+    private static final String ACCOUNT_5_V2 = "account5v2";
+    private static final String ACCOUNT_6_V2 = "account6v2";
+    private static final String ACCOUNT_7_V2 = "account7v2";
+    private static final String ACCOUNT_8_V2 = "account8v2";
+    private static final String ACCOUNT_9_V2 = "account9v2";
+    private static final String REVOKE_ALIAS_V2 = "revokealiasv2";
+    private static final String REVOKE_WITH_REASON_ALIAS_V2 = "revokewithreasonaliasv2";
+    private static final String NEW_KEY_ALIAS_V2 = "newkeyv2";
+    private static final String NEW_EC_KEY_ALIAS_V2 = "neweckeyv2";
     private static HashMap<String, X509Certificate> aliasToCertificateMap;
     private static HashMap<String, PrivateKey> aliasToPrivateKeyMap;
     private static ClientAndServer server; // used to simulate a Let's Encrypt server instance
@@ -149,7 +149,7 @@ public class AcmeClientSpiTest {
         }
         server = new ClientAndServer(4001);
         client = new MockWebServer();
-        client.start(5002); // this is the port our mock Let's Encrypt server will use to access the client
+        client.start(5002); // this is the port our mock Let's Encrypt server will use to access the client, can also use client.start(InetAddress.getByName("172.17.0.1"), 5002); when running boulder server locally
     }
 
     @AfterClass
@@ -171,7 +171,7 @@ public class AcmeClientSpiTest {
     public void testCreateAccount() throws Exception {
         final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/384";
         server = setupTestCreateAccount();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_1);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_1_V2);
         assertNull(account.getAccountUrl());
         acmeClient.createAccount(account, false);
         assertEquals(NEW_ACCT_LOCATION, account.getAccountUrl());
@@ -181,16 +181,16 @@ public class AcmeClientSpiTest {
     public void testCreateAccountOnlyReturnExisting() throws Exception {
         final String NEW_ACCT_LOCATION_1 = "http://localhost:4001/acme/acct/387";
         server = setupTestCreateAccountOnlyReturnExisting();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_2);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_2_V2);
         acmeClient.createAccount(account, false);
         assertEquals(NEW_ACCT_LOCATION_1, account.getAccountUrl());
-        AcmeAccount sameAccount = populateBasicAccount(ACCOUNT_2);
+        AcmeAccount sameAccount = populateBasicAccount(ACCOUNT_2_V2);
 
         // the key corresponding to ACCOUNT_2 is associated with an already registered account
         acmeClient.createAccount(sameAccount, false, true);
         assertEquals(account.getAccountUrl(), sameAccount.getAccountUrl());
 
-        AcmeAccount newAccount = populateBasicAccount(ACCOUNT_3);
+        AcmeAccount newAccount = populateBasicAccount(ACCOUNT_3_V2);
         try {
             // the key corresponding to ACCOUNT_3 is not associated with an already registered account
             acmeClient.createAccount(newAccount, false, true);
@@ -203,7 +203,7 @@ public class AcmeClientSpiTest {
     public void testCreateAccountWithECPublicKey() throws Exception {
         final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/389";
         server = setupTestCreateAccountWithECPublicKey();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_4);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_4_V2);
         assertNull(account.getAccountUrl());
         acmeClient.createAccount(account, false);
         assertEquals(NEW_ACCT_LOCATION, account.getAccountUrl());
@@ -211,9 +211,9 @@ public class AcmeClientSpiTest {
 
     @Test
     public void testUpdateAccount() throws Exception {
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/1";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/5";
         server = setupTestUpdateAccount();
-        AcmeAccount account = populateAccount(ACCOUNT_1);
+        AcmeAccount account = populateAccount(ACCOUNT_1_V2);
         account.setAccountUrl(ACCT_LOCATION);
         String[] contacts = new String[] { "mailto:certificates@examples.com", "mailto:admin@examples.com"};
         acmeClient.updateAccount(account, false, false, contacts);
@@ -229,9 +229,9 @@ public class AcmeClientSpiTest {
 
     @Test
     public void testDeactivateAccount() throws Exception {
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/4";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/17";
         server = setupTestDeactivateAccount();
-        AcmeAccount account = populateAccount(ACCOUNT_5);
+        AcmeAccount account = populateAccount(ACCOUNT_5_V2);
         account.setAccountUrl(ACCT_LOCATION);
         assertEquals(Acme.VALID, acmeClient.queryAccountStatus(account, false));
 
@@ -246,9 +246,9 @@ public class AcmeClientSpiTest {
 
     @Test
     public void testGetNonce() throws Exception {
-        final String NEW_NONCE_RESPONSE = "d4o3tdwrnpzwi9xgI21EqNdDyInvLcrENqTXthWD0qg";
+        final String NEW_NONCE_RESPONSE = "zincG439TOpiDIeJBbmInMOo_xnZV0jpUstA4VZgSiyuFy0";
         server = setupTestGetNonce();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_1);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_1_V2);
         account.setNonce(CodePointIterator.ofString("rtJAy_mcjDFGnnzCOAbGMGM6w8P3qU0bRDMf8sjt5IU").base64Decode(BASE64_URL, false).drain());
         String nonce = ByteIterator.ofBytes(account.getNonce()).base64Encode(BASE64_URL, false).drainToString();
         assertNotNull(nonce);
@@ -261,24 +261,24 @@ public class AcmeClientSpiTest {
     @Test
     public void testObtainCertificateChain() throws Exception {
         server = setupTestObtainCertificate();
-        AcmeAccount account = populateAccount(ACCOUNT_1);
-        String domainName = "fjsljghasldfjgk.com"; // randomly generated domain name
+        AcmeAccount account = populateAccount(ACCOUNT_3_V2);
+        String domainName = "fjsljghasldfjgkv2.com"; // randomly generated domain name
         obtainCertificateChain(null, -1, account, domainName);
     }
 
     @Test
     public void testObtainCertificateChainWithKeySize() throws Exception {
         server = setupTestObtainCertificateWithKeySize();
-        AcmeAccount account = populateAccount(ACCOUNT_6);
-        String domainName = "inlneseppwkfwew.com"; // randomly generated domain name
+        AcmeAccount account = populateAccount(ACCOUNT_6_V2);
+        String domainName = "inlneseppwkfwewv2.com"; // randomly generated domain name
         obtainCertificateChain("RSA", 4096, account, domainName);
     }
 
     @Test
     public void testObtainCertificateChainWithECPublicKey() throws Exception {
         server = setupTestObtainCertificateWithECPublicKey();
-        AcmeAccount account = populateAccount(ACCOUNT_7);
-        String domainName = "mndelkdnbcilohg.com"; // randomly generated domain name
+        AcmeAccount account = populateAccount(ACCOUNT_7_V2);
+        String domainName = "mndelkdnbcilohgv2.com"; // randomly generated domain name
         obtainCertificateChain("EC", 256, account, domainName);
     }
 
@@ -286,7 +286,7 @@ public class AcmeClientSpiTest {
     public void testObtainCertificateChainWithUnsupportedPublicKey() throws Exception {
         try {
             server = setupTestObtainCertificateWithUnsupportedPublicKey();
-            AcmeAccount account = populateAccount(ACCOUNT_7);
+            AcmeAccount account = populateAccount(ACCOUNT_7_V2);
             String domainName = "iraclzlcqgaymrc.com";
             obtainCertificateChain("DSA", 2048, account, domainName);
             fail("Expected AcmeException not thrown");
@@ -327,23 +327,24 @@ public class AcmeClientSpiTest {
     @Test
     public void testRevokeCertificateWithoutReason() throws Exception {
         server = setupTestRevokeCertificate();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_1);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_1_V2);
         revokeCertificate(account, null);
     }
 
     @Test
     public void testRevokeCertificateWithReason() throws Exception {
         server = setupTestRevokeCertificateWithReason();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_1);
-        revokeCertificate(account, CRLReason.AA_COMPROMISE);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_1_V2);
+        revokeCertificate(account, CRLReason.KEY_COMPROMISE);
+
     }
 
     private void revokeCertificate(AcmeAccount account, CRLReason reason) throws Exception {
         X509Certificate certificateToRevoke;
         if (reason == null) {
-            certificateToRevoke = aliasToCertificateMap.get(REVOKE_ALIAS);
+            certificateToRevoke = aliasToCertificateMap.get(REVOKE_ALIAS_V2);
         } else {
-            certificateToRevoke = aliasToCertificateMap.get(REVOKE_WITH_REASON_ALIAS);
+            certificateToRevoke = aliasToCertificateMap.get(REVOKE_WITH_REASON_ALIAS_V2);
         }
         acmeClient.revokeCertificate(account, false, certificateToRevoke, reason);
     }
@@ -351,7 +352,7 @@ public class AcmeClientSpiTest {
     @Test
     public void testChangeAccountKey() throws Exception {
         server = setupTestChangeAccountKey();
-        AcmeAccount account = populateAccount(ACCOUNT_6);
+        AcmeAccount account = populateAccount(ACCOUNT_6_V2);
         X509Certificate oldCertificate = account.getCertificate();
         X500Principal oldDn = account.getDn();
         acmeClient.changeAccountKey(account, false);
@@ -363,12 +364,12 @@ public class AcmeClientSpiTest {
     @Test
     public void testChangeAccountKeySpecifyCertificateAndPrivateKey() throws Exception {
         server = setupTestChangeAccountKeySpecifyCertificateAndPrivateKey();
-        AcmeAccount account = populateAccount(ACCOUNT_8);
+        AcmeAccount account = populateAccount(ACCOUNT_8_V2);
         X500Principal oldDn = account.getDn();
 
         // RSA account key
-        X509Certificate newCertificate = aliasToCertificateMap.get(NEW_KEY_ALIAS);
-        PrivateKey newPrivateKey = aliasToPrivateKeyMap.get(NEW_KEY_ALIAS);
+        X509Certificate newCertificate = aliasToCertificateMap.get(NEW_KEY_ALIAS_V2);
+        PrivateKey newPrivateKey = aliasToPrivateKeyMap.get(NEW_KEY_ALIAS_V2);
         acmeClient.changeAccountKey(account, false, newCertificate, newPrivateKey);
         assertEquals(newCertificate, account.getCertificate());
         assertEquals(newPrivateKey, account.getPrivateKey());
@@ -376,8 +377,8 @@ public class AcmeClientSpiTest {
         assertEquals(Acme.VALID, acmeClient.queryAccountStatus(account, false));
 
         // ECDSA account key
-        newCertificate = aliasToCertificateMap.get(NEW_EC_KEY_ALIAS);
-        newPrivateKey = aliasToPrivateKeyMap.get(NEW_EC_KEY_ALIAS);
+        newCertificate = aliasToCertificateMap.get(NEW_EC_KEY_ALIAS_V2);
+        newPrivateKey = aliasToPrivateKeyMap.get(NEW_EC_KEY_ALIAS_V2);
         acmeClient.changeAccountKey(account, false, newCertificate, newPrivateKey);
         assertEquals(newCertificate, account.getCertificate());
         assertEquals(newPrivateKey, account.getPrivateKey());
@@ -385,7 +386,7 @@ public class AcmeClientSpiTest {
         assertEquals(Acme.VALID, acmeClient.queryAccountStatus(account, false));
 
         // attempting to change the account key to a key that is already in use for a different account should fail
-        account = populateAccount(ACCOUNT_9);
+        account = populateAccount(ACCOUNT_9_V2);
         X509Certificate oldCertificate = account.getCertificate();
         PrivateKey oldPrivateKey = account.getPrivateKey();
         try {
@@ -400,7 +401,7 @@ public class AcmeClientSpiTest {
     @Test
     public void testGetMetadata() throws Exception {
         server = setupTestGetMetadata();
-        AcmeAccount account = populateBasicAccount(ACCOUNT_8);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_8_V2);
         AcmeMetadata metadata = acmeClient.getMetadata(account, false);
         assertNotNull(metadata);
         assertEquals("https://boulder:4431/terms/v7", metadata.getTermsOfServiceUrl());
@@ -686,7 +687,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator()  +
-                "  \"TrOIFke5bdM\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"wnR-SBn2GN4\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -701,26 +702,25 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_NONCE_RESPONSE = "8-k95dsqpJLtOQapuL-0XGrBH0UM6lcfdop9OUp05_I";
+        final String NEW_NONCE_RESPONSE = "zincwl_lThkXLp0V7HAAcQEbIrx1R-gTI_ZQ8INAsrR5aQU";
 
-        final String NEW_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJwdUwtV2NNWVVKMkFqZHkxVXNVZ056am42ZWNEeGlXZDdOR1VHcTI2N1NPTHdoS2pTV1dNd2tvcGZjZzVWTWpQSldFRTM4SUlYeWpXNW5GS0NxRkFJZjNabGloXzFTTGNqZ1ZGYmlibi1vTUdGTFpzOWdncjJialJHSnNic0pRSU9LbWdWczJ5M2w1UmNJeUYyTS1VT3g0R3RBVVFKc1lpdHRjaEJMeHFqczBTQmpXZHRwV3phWDRmd1RDeng0OFJYdVpoa3lfbUtBeUtiaEFZbklHZERoY1ZJWnNmZjZ6ekVNMWJwSkVENk9CWmg2cHlQLU4wa094Y0dtUFBDSE1mME16d2puSzhWckZQRWFJSWZRQWJVQzFyVGF1aXFaWDdnbEVuTjJrWXFPd2w4ZzNuZjVmYlg2c1V1RFUxNWZWMGNtZFV0aHk4X0dIeUUycWR6alBSTHcifSwibm9uY2UiOiI4LWs5NWRzcXBKTHRPUWFwdUwtMFhHckJIMFVNNmxjZmRvcDlPVXAwNV9JIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6dHJ1ZSwiY29udGFjdCI6WyJtYWlsdG86YWRtaW5AZXhhbXBsZS5jb20iXX0\",\"signature\":\"Js_fvpkTcDkWhJqwYNMdDqQKz6pWTxT0I5XzT0PrF0hTupSMc0uvUBc19xD64_x4fFsEZMlv1l_d2jm1pt-7nySWcYQFbkYh-tdRuxygzCCXdFhsXsw3MGh13KghkgiawjW37TFw8DrIWSwlsuGEIjofF2TqExecX0mkyF-vl6VA7Gm9oiqxfRiKx-X4YaO7-ijUnG7EMyesSKfu3PmBcaPsO9gIjRQ4FHrOb1RTSmTupskb4pZ0D2tkwKZcWWmXwO2XnLPjF5ZZi6c0p7GA_f578r665toyqP9n7PV6Vlf8w8XrM_EsF201r4oCFyVTEuAYx9fozKYIEhZe-PDWdw\"}";
+        final String NEW_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJoOE9lZTViZURSZ3hOUGVfZU1FOUg2Vm83NEZ1ZzhIZ3Jpa2ZiZkNhVTNsS0Y2NDhRRzFYMWtHRFpUaEF5OGRhcUo4YnY2YzNQSmRueDJIcjhqT3psNTA5Ym5NNmNDV2Z5d1RwY0lab1V6UVFaTFlfSzhHTURBeWdsc1FySXRnQ2lRYWxJcWJ1SkVrb2MzV1FBSXhKMjN4djliSzV4blZRa1RXNHJWQkFjWU5Rd29CakdZT1dTaXpUR2ZqZ21RcVRYbG9hYW1GWkpuOTdIbmIxcWp5NVZZbTA2YnV5cXdBYUdIczFDTHUzY0xaZ1FwVkhRNGtGc3prOFlPNVVBRWppb2R1Z1dwWlVSdTlUdFJLek4wYmtFZGVRUFlWcGF1cFVxMWNxNDdScDJqcVZVWGRpUUxla3l4clFidDhBMnVHNEx6RFF1LWI0Y1pwcG16YzNobGhTR3cifSwibm9uY2UiOiJ6aW5jd2xfbFRoa1hMcDBWN0hBQWNRRWJJcngxUi1nVElfWlE4SU5Bc3JSNWFRVSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6dHJ1ZSwiY29udGFjdCI6WyJtYWlsdG86YWRtaW5AYW5leGFtcGxlLmNvbSJdfQ\",\"signature\":\"RPIM6OGU33uPXurdKJuKwXNkJbgEXcUr9QxEBjynhzROWGreB_p6esSlTxTkkNmP8EIBmcc2g5FjkBHjwIhqcvVC5AHhJ0XMq-WhRqlMdwQFn55nuG5O4nOrfr-5u31jw8DGnHs0Lv3_X4rVfLomT8y1eZ_IzPdZzw_QaEJWWIlrn-H_AkcmbZUxvozJ1yvadQ6cUUl9Hw6Kj8sSSdcUQ9tGtfAOiiXDtH-42-G0pMUivnJKyF5m8HdMXqKeFvRk4gvei-NdCzK44uehvoRTULQFbeu-h8YzWBZJwP1LXX8LSyLacxrXH8vukN8qjbBXXrB-QcimuPba4jmF124IDg\"}";
 
         final String NEW_ACCT_RESPONSE_BODY = "{" + System.lineSeparator()  +
-                "  \"id\": 384," + System.lineSeparator()  +
                 "  \"key\": {" + System.lineSeparator()  +
                 "    \"kty\": \"RSA\"," + System.lineSeparator()  +
-                "    \"n\": \"puL-WcMYUJ2Ajdy1UsUgNzjn6ecDxiWd7NGUGq267SOLwhKjSWWMwkopfcg5VMjPJWEE38IIXyjW5nFKCqFAIf3Zlih_1SLcjgVFbibn-oMGFLZs9ggr2bjRGJsbsJQIOKmgVs2y3l5RcIyF2M-UOx4GtAUQJsYittchBLxqjs0SBjWdtpWzaX4fwTCzx48RXuZhky_mKAyKbhAYnIGdDhcVIZsff6zzEM1bpJED6OBZh6pyP-N0kOxcGmPPCHMf0MzwjnK8VrFPEaIIfQAbUC1rTauiqZX7glEnN2kYqOwl8g3nf5fbX6sUuDU15fV0cmdUthy8_GHyE2qdzjPRLw\"," + System.lineSeparator()  +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator()  +
                 "    \"e\": \"AQAB\"" + System.lineSeparator()  +
                 "  }," + System.lineSeparator()  +
                 "  \"contact\": [" + System.lineSeparator()  +
-                "    \"mailto:admin@example.com\"" + System.lineSeparator()  +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator()  +
                 "  ]," + System.lineSeparator()  +
-                "  \"initialIp\": \"127.0.0.1\"," + System.lineSeparator()  +
-                "  \"createdAt\": \"2018-04-23T11:10:28.490176768-04:00\"," + System.lineSeparator()  +
+                "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator()  +
+                "  \"createdAt\": \"2019-07-12T16:52:19.171896513Z\"," + System.lineSeparator()  +
                 "  \"status\": \"valid\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_ACCT_REPLAY_NONCE = "20y41JJoZ3Rn0VCEKDRa5AzT0kjcz6b6FushFyVS4zY";
+        final String NEW_ACCT_REPLAY_NONCE = "taroOQPjumKybWIQEmqmB2DZ8ouIQ5uBoaDQZosCDyUzbJs";
         final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/384";
 
         return new AcmeMockServerBuilder(server)
@@ -734,7 +734,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY_1 = "{" + System.lineSeparator()  +
-                "  \"5ZnL5mAsOXE\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"uwKlE_UCMLQ\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -749,31 +749,30 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_NONCE_RESPONSE_1 = "4UlRsB6SRdVCGnNiN3Ll8XKbc1LBw22RAy8PyK7KWlg";
+        final String NEW_NONCE_RESPONSE_1 = "taro5SS8kLFXO5cjVun3PmV2OlNxMd3fXvbM3pdwwxakjOM";
 
-        final String NEW_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJrc2ttSXFLaXcxejFSRXpwTzBXR3B5MWtiT2xYNENIb1dHMFJib0RoSk5KVHRLR2xYcmFMN1lESnBpdFZsUmt0cWlxRDlYdExEUl9qN2llSVlkbUhuOHpkbkV0aGVEaVZ6Wk5UQVFXRGtmbXJnVlRiN1JzS01mVW9qNWR1YnY2YWFLZWVObXpTRFZDQ1hfbU15RnU5QlllV3ZxS1V4OUNXWW84YWRvOU1kQmJMUExYZWJuenhtcVlkOWJUc3JqTkxjYXBWSm50NDhENzdObjdlVURfQWNnclFTOXRyLW1FM01MRTNkeUMyZGpEbC1pY3RkTXJIXzlFdGxhQ3ViUkF6NV9tZG8xWFFlTDdMOHdFVGxqaVdQQ2NCZi03S0xRXzlkTUFpeHk4Yy1ZenplejlNWnQ1bUt0N1FIcWlFdEV5Wm1jNWdaVjNpNUdYMUZiSlY1Vmt3cVEifSwibm9uY2UiOiI0VWxSc0I2U1JkVkNHbk5pTjNMbDhYS2JjMUxCdzIyUkF5OFB5SzdLV2xnIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6dHJ1ZSwiY29udGFjdCI6WyJtYWlsdG86YWRtaW5AZXhhbXBsZS5jb20iXX0\",\"signature\":\"bkMP9_HkVWKqvc0iA6SyJedP44L7wKbTLVJ8d2Q6E1iY0_MrqnjZooYPeFQuc4BkmMw3iqm7wB1dmPXtIvieEs4BN8aCduDkCL2KYGcHfbZbjo2x5i3EcOX2n31GYVsC1RCW_2tao6-kNk9q-qivrER2acBwY3fuDTW9Cp1H_71MipA6OJiOhvbBvziCp8ux3GdZpT2wZNJXBZrDyhw0axbaZ-E8-Gzq2HCZU1FiEb72zOoaizc5oYBMYgT5KVSwtAXzKi2oCyoisHv1H-W7iiKLUvRkdDstxuH7VjakhRzRgRwXHY9kStu4QZX9IzrTKFcnXoviSEUMfedjahDLWQ\"}";
+        final String NEW_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJzeWVfcW5QeUZLRnRQX0ZLM3FkbENadG1HSGJ3emM1Z0JRMU9ydEIxZXZQSHNxdkZYUWp0MGRPTHRRT01mZTIzUmhrZVRhdDJsSlYxUENWcGNJWE8zc2pvSV82WFNyNnhUbWNkSmN0QmVVc3BleS1TN1RjRDdNd1ZfWUVCbVNGa09SRWdLMFBidDYyVGQtUURjZnlJZjJOdWJsc1FFYlNQaEp6TUNfeWw0VWM5aFRHYlByVFp6dFlxMHpla21XWEUxNTZ0QlEwRFBWZmFiczhfUE5qUGhMbFJSZDlMVHVwako2cTk1VFdHRUlrdjdUeGxQVDN3ZHJ1b2dLU2g2aTdlMVVzUk1ITTJISU40aUdZajFGVkU3NVlvanIzYzdweGJOU01QejFYa3NlNDdXTUt1NkYxWHlNckhJUVF3RUtvN1pnZUx6UmpldTExaDE5Uy12WExzMVEifSwibm9uY2UiOiJ0YXJvNVNTOGtMRlhPNWNqVnVuM1BtVjJPbE54TWQzZlh2Yk0zcGR3d3hha2pPTSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6dHJ1ZSwiY29udGFjdCI6WyJtYWlsdG86YWRtaW5AYW5leGFtcGxlLmNvbSJdfQ\",\"signature\":\"Kk5vvHVInimOZcOvuPF2Ug0xz6uLLLpSagcvzTrrjebUuWHmjGa-e7Cdvoik8mXT7_5PqZuqJn-09NRYFTHA21vddbc2vZzkV628ip7JJaD8w0NE3hSgctP602Lg2EMPP8m5zCrtIpF95_WVr4XMgKklRBLHXPpCUq2m74K5rs49pMwUSqVTRjpTfXrBupqwiyav-08dLvr8UbVz4F3Qru8Zkhgk_SvZsSJyKSVeX2JD4Dlwbw8GfhK68rBhlCyW5XQw9ESF73jY17DZIXLWXbwybWAqyymGr0Nn92YuBW6DEm4M4L4ech3xEAhBvtdeVYTWSpdz812G1HS-3mUMsQ\"}";
 
         final String NEW_ACCT_RESPONSE_BODY_1 = "{" + System.lineSeparator()  +
-                "  \"id\": 387," + System.lineSeparator()  +
                 "  \"key\": {" + System.lineSeparator()  +
                 "    \"kty\": \"RSA\"," + System.lineSeparator()  +
-                "    \"n\": \"kskmIqKiw1z1REzpO0WGpy1kbOlX4CHoWG0RboDhJNJTtKGlXraL7YDJpitVlRktqiqD9XtLDR_j7ieIYdmHn8zdnEtheDiVzZNTAQWDkfmrgVTb7RsKMfUoj5dubv6aaKeeNmzSDVCCX_mMyFu9BYeWvqKUx9CWYo8ado9MdBbLPLXebnzxmqYd9bTsrjNLcapVJnt48D77Nn7eUD_AcgrQS9tr-mE3MLE3dyC2djDl-ictdMrH_9EtlaCubRAz5_mdo1XQeL7L8wETljiWPCcBf-7KLQ_9dMAixy8c-Yzzez9MZt5mKt7QHqiEtEyZmc5gZV3i5GX1FbJV5VkwqQ\"," + System.lineSeparator()  +
+                "    \"n\": \"sye_qnPyFKFtP_FK3qdlCZtmGHbwzc5gBQ1OrtB1evPHsqvFXQjt0dOLtQOMfe23RhkeTat2lJV1PCVpcIXO3sjoI_6XSr6xTmcdJctBeUspey-S7TcD7MwV_YEBmSFkOREgK0Pbt62Td-QDcfyIf2NublsQEbSPhJzMC_yl4Uc9hTGbPrTZztYq0zekmWXE156tBQ0DPVfabs8_PNjPhLlRRd9LTupjJ6q95TWGEIkv7TxlPT3wdruogKSh6i7e1UsRMHM2HIN4iGYj1FVE75Yojr3c7pxbNSMPz1Xkse47WMKu6F1XyMrHIQQwEKo7ZgeLzRjeu11h19S-vXLs1Q\"," + System.lineSeparator()  +
                 "    \"e\": \"AQAB\"" + System.lineSeparator()  +
                 "  }," + System.lineSeparator()  +
                 "  \"contact\": [" + System.lineSeparator()  +
-                "    \"mailto:admin@example.com\"" + System.lineSeparator()  +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator()  +
                 "  ]," + System.lineSeparator()  +
-                "  \"initialIp\": \"127.0.0.1\"," + System.lineSeparator()  +
-                "  \"createdAt\": \"2018-04-23T13:05:44.561791555-04:00\"," + System.lineSeparator()  +
+                "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator()  +
+                "  \"createdAt\": \"2019-07-12T18:19:27Z\"," + System.lineSeparator()  +
                 "  \"status\": \"valid\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_ACCT_REPLAY_NONCE_1 = "wR25VhDQw1ciGDZhP88SbWjJ4hzNEh6a1PVjAbyEzO4";
+        final String NEW_ACCT_REPLAY_NONCE_1 = "zincDL7vtuouQnFx6xo2JNdqIZczLS7C0mrF06CyYc_kzSA";
         final String NEW_ACCT_LOCATION_1 = "http://localhost:4001/acme/acct/387";
 
 
         final String DIRECTORY_RESPONSE_BODY_2 = "{" + System.lineSeparator()  +
-                "  \"-McmmrFKskk\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"ICJvijdsr6w\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -788,17 +787,17 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_NONCE_RESPONSE_2 = "ixsnb6zqvuwJ0o6_tM6hXn-cGA1pTXwTe3IoO6T8sVs";
+        final String NEW_NONCE_RESPONSE_2 = "taroJafrl2Lz_cpp7Vd_LXnWw1CAjX1Q0ege5VktFeKoFNw";
 
-        final String NEW_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJrc2ttSXFLaXcxejFSRXpwTzBXR3B5MWtiT2xYNENIb1dHMFJib0RoSk5KVHRLR2xYcmFMN1lESnBpdFZsUmt0cWlxRDlYdExEUl9qN2llSVlkbUhuOHpkbkV0aGVEaVZ6Wk5UQVFXRGtmbXJnVlRiN1JzS01mVW9qNWR1YnY2YWFLZWVObXpTRFZDQ1hfbU15RnU5QlllV3ZxS1V4OUNXWW84YWRvOU1kQmJMUExYZWJuenhtcVlkOWJUc3JqTkxjYXBWSm50NDhENzdObjdlVURfQWNnclFTOXRyLW1FM01MRTNkeUMyZGpEbC1pY3RkTXJIXzlFdGxhQ3ViUkF6NV9tZG8xWFFlTDdMOHdFVGxqaVdQQ2NCZi03S0xRXzlkTUFpeHk4Yy1ZenplejlNWnQ1bUt0N1FIcWlFdEV5Wm1jNWdaVjNpNUdYMUZiSlY1Vmt3cVEifSwibm9uY2UiOiJpeHNuYjZ6cXZ1d0owbzZfdE02aFhuLWNHQTFwVFh3VGUzSW9PNlQ4c1ZzIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"driFYa_o5h7nQgc9U5zngmuTIjIf_uSlxZuzmg_qrfN6dJD5z0fEA_I69dPv6APlVAz93zHWXGtkCrFDgJVJl41o6jaFu8a7Y8BAavGAR8j2rw6Z-Rn8VqFtV8U3e8WLRNN_0P7M7vLZR9EH4v7JMovPsE6oMUYPrpbCSEJhv1Cs3f0MHqffDsbKk3pC7KLby15_1H4V9nf8ZRnOvFrVf2lMjMfBeLkDUB2fbtNMTmEe5e6xVaCuNkWr1mvYisOyddxpt3lpym1OeO3wciIQclkehcee7u13QWsN650r9TuHe335aUmLatsYn6xlD16lhjAyzcmB8OEPfP8G8iUrrA\"}";
+        final String NEW_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJzeWVfcW5QeUZLRnRQX0ZLM3FkbENadG1HSGJ3emM1Z0JRMU9ydEIxZXZQSHNxdkZYUWp0MGRPTHRRT01mZTIzUmhrZVRhdDJsSlYxUENWcGNJWE8zc2pvSV82WFNyNnhUbWNkSmN0QmVVc3BleS1TN1RjRDdNd1ZfWUVCbVNGa09SRWdLMFBidDYyVGQtUURjZnlJZjJOdWJsc1FFYlNQaEp6TUNfeWw0VWM5aFRHYlByVFp6dFlxMHpla21XWEUxNTZ0QlEwRFBWZmFiczhfUE5qUGhMbFJSZDlMVHVwako2cTk1VFdHRUlrdjdUeGxQVDN3ZHJ1b2dLU2g2aTdlMVVzUk1ITTJISU40aUdZajFGVkU3NVlvanIzYzdweGJOU01QejFYa3NlNDdXTUt1NkYxWHlNckhJUVF3RUtvN1pnZUx6UmpldTExaDE5Uy12WExzMVEifSwibm9uY2UiOiJ0YXJvSmFmcmwyTHpfY3BwN1ZkX0xYbld3MUNBalgxUTBlZ2U1Vmt0RmVLb0ZOdyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"BYz8MmioQYWkUaLtX-WDpbtwug22XQ6EwGWXTrqdQfIUavE6gOykdtWQ85OnVQBxyTZ2yL8VDeT-keoXDblsW8JZGwdiEFhs-Qa5XuNsf4i3Ypr6CvfdurlTyLgfvLBINVf9Gg7iVJfa4ky0o7bQ2xTrDIs_KdExbSS455ykGIgudUC3FM1zptXDuvKNB8nRNAlm_6VKBvhon29Bv_rXD4qtenPA-1msRms6eI0TQiGjcjVraWls06aSaK2kV28fGairfIhy0VCHPlXXmBDn5Y22mVWEJGs9bzSwjzeAQRvKeJ-gRJY8gck73HyGlYTEHXm-emCxp99QyxzzgjF-3w\"}";
 
         final String NEW_ACCT_RESPONSE_BODY_2 = "";
 
-        final String NEW_ACCT_REPLAY_NONCE_2 = "TnWjtuWLDLzjSTYL4bh_0UPGzapEi5pNl5g31OCMRbI";
+        final String NEW_ACCT_REPLAY_NONCE_2 = "zincZZ9vYu6kBpmZ4nc6zeAh12XuqZdL1b4O5XKtrxe8Phc";
         final String NEW_ACCT_LOCATION_2 = "http://localhost:4001/acme/acct/387";
 
         final String DIRECTORY_RESPONSE_BODY_3 = "{" + System.lineSeparator()  +
-                "  \"VmW3Odu7SoU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"gHEVwDX1V0w\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -813,9 +812,9 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_NONCE_RESPONSE_3 = "Vm1A1FUMCqxZR6Z_aTxmqy9AqfwSnB3a61Tsw8yFgBE";
+        final String NEW_NONCE_RESPONSE_3 = "taroNkY-FLXLmfEVGBxpKnY6NZg5hZc-U0ppPGjJHzY0hqA";
 
-        final String NEW_ACCT_REQUEST_BODY_3 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJxYmFNS2hZSDdCRVNaNVRERzdicnI5UmNZdFVhWFRucHJEVVBSTmhIQXBhTDZ5UHhHTnBrcXNhYWZhdDFtVWxzb1NkQjkybHotVjJmUTJjWTJTbjRuU0h6QkFxblRkVlRDa3hNOTZZUFZMT0RWckFRcDIwYlFheG12b1JMbHFUZUVRa3EyX0NjOFBObzB6TmEzOExGUzl1Y1JQZ3hUWkdxczJvdExGWjUtSUxLQXZhSWZSY0VURGhkWHVZU1pLTEwtdXh5ZnF0T0xDd0NrUlU0X2ZRdDg1UUZKXzhHc0V6VVV5V1JnOXFKSWZ4UkRsUjdCYmk4QmNRMzd6OEh6V205SzQxbEZkei1icWdOUDQ3UTJXdWQ1b1dJNmIzRE5UVmVCc1QzOTB1NmdUNGhfbWNaRF9HQXBicElUa2hIdk1HVHN2WDUwSThKNXRhclFCN25McTU1M3cifSwibm9uY2UiOiJWbTFBMUZVTUNxeFpSNlpfYVR4bXF5OUFxZndTbkIzYTYxVHN3OHlGZ0JFIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"FKs5xndYr-LWLhzusCndaNQFhUUQZ1K-fH1-A941dWMTeQbdQSULKX2R5Vh0yoz9sNMss1oljSt8vjdSNupwT0nbGMtFpZh_ElPEzXjXgVqGrV5FzYcwZfI6w9_NkgjH035aE_-OteTv8SBRR_Z_aY9JJlDm7jRvC7Xph_Z_bkpuxN1hOM_ax6ySsE2UXp60szSykdZVvFVvOK_4goEps1GcZ-kWmvmxYEG_aDoXwZi6TwpnM_bNAXlP2FDj8TFm3VhU7DbhJxvpAv0ERVdtvfuwb-d3NBacLib_koW5S9I1g77bLxJxQRXhODoJkRlggbofwnEbm3Pa6y5tJHoGsQ\"}";
+        final String NEW_ACCT_REQUEST_BODY_3 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJuWVJ5RGQ4b1ZPZ3hTRlVzX2xoYllvMjNGWEFHelVJRTl0dFVCdEJ3N3VHc1U5aEpsSi1RYXlxbHJfZGwwUHNoYjVaeFk4a0h0ZEY5QkVOX1F1Slp4emlzMWNzNFhUY0YzbjVBRUswcFVtS3VQSGt3ck9PNExFN1l3RHBEM0Q1YjRHVjFpVFUyY1ZyRmhMVmI1WmQtTnl6NVRJOWlCbDM3N0FJRmt6aU00Rmx2aS1CV19UZEJmTVVFVURtNW85dFBCU2N2M255YThhSFpJYmdyaW5Ubm1IMFBQMk1vNW50czJjd19zU0d0aENXWkhqWVp1MjRmWE5wb1RjTE1OVldBLTJPSjR0dWtGamlwWC03ckhZRUJiclRSd2FIVnlTOEd2UFp5bjU5b3VYZzAwVWhCdEhRTHROUldPQy1tV29TdFBXOWxjOHNCQm1YdlJiTzdFUkU1dVEifSwibm9uY2UiOiJ0YXJvTmtZLUZMWExtZkVWR0J4cEtuWTZOWmc1aFpjLVUwcHBQR2pKSHpZMGhxQSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"ZXIi2tBFFy3CkhryuzwRouXxMkWDVQU2QDQPNFmVBdL4KHCTwWEY465rtrfC7LHI3I-6t6f2PeQwCJQAFqmdrGi19y1OGvw9HkNt2ydHJJmYqV0QVckkztNyOmJiIMQrZO5MBf0LxlEPJzHUndp-nROCN_eqMfWw9USKDPRbeF_LPbcc4FCds9u7NARNZS6DLR6ZeRBeYc3krZamDXPoDENeQywp4D6hVHzGSyy0-dQz5ubUcL1TIZc-fas2HYMQBGCmYWGolurz9BCPw8Epr5-bPyzXiviv0YHzhglHJJ3GQxZrFwt7ktB6BF_kwUq00s8iWroFfQTYjzNJGaW4BQ\"}";
 
         final String NEW_ACCT_RESPONSE_BODY_3 = "{" + System.lineSeparator()  +
                 "  \"type\": \"urn:ietf:params:acme:error:accountDoesNotExist\"," + System.lineSeparator()  +
@@ -823,7 +822,7 @@ public class AcmeClientSpiTest {
                 "  \"status\": 400" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_ACCT_REPLAY_NONCE_3 = "rtJAy_mcjDFGnnzCOAbGMGM6w8P3qU0bRDMf8sjt5IU";
+        final String NEW_ACCT_REPLAY_NONCE_3 = "zincV6rCJkzqPJkWh2h7V7WNx1H7i702ZoeHrqDW14PqS_I";
         final String NEW_ACCT_LOCATION_3 = "";
 
         return new AcmeMockServerBuilder(server)
@@ -843,7 +842,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator()  +
-                "  \"YlEPLZkkmYU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"Z7Y00Dy_3Sg\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -858,25 +857,24 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_NONCE_RESPONSE = "7bNmFPLpdcNFpSxolQF_8evQ6xtzX3bKyEwsi24nYHA";
+        final String NEW_NONCE_RESPONSE = "zincl7lAw10tD4XFE7ox5RjhT8cJCV_E-WH9dsTk9XEyjSM";
 
         final String NEW_ACCT_RESPONSE_BODY = "{" + System.lineSeparator()  +
-                "  \"id\": 389," + System.lineSeparator()  +
                 "  \"key\": {" + System.lineSeparator()  +
                 "    \"kty\": \"EC\"," + System.lineSeparator()  +
                 "    \"crv\": \"P-256\"," + System.lineSeparator()  +
-                "    \"x\": \"hpB4Z3w5IOsY7ADpPoA-nkwOl3Rh2pCVnzO6ByUMeww\"," + System.lineSeparator()  +
-                "    \"y\": \"zeaxTqrr6evY_ind3ZeVQZneL2X79nmlTxhO8aObl5A\"" + System.lineSeparator()  +
+                "    \"x\": \"7lOVNI-Bdpr7ul6yiTEM3HebXC_wIC6eOsRH-KJa_qI\"," + System.lineSeparator()  +
+                "    \"y\": \"8qCLlwQYodZLDH_PpRBNlKGU0Zi7TyDQJisJYu6UtRI\"" + System.lineSeparator()  +
                 "  }," + System.lineSeparator()  +
                 "  \"contact\": [" + System.lineSeparator()  +
-                "    \"mailto:admin@example.com\"" + System.lineSeparator()  +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator()  +
                 "  ]," + System.lineSeparator()  +
-                "  \"initialIp\": \"127.0.0.1\"," + System.lineSeparator()  +
-                "  \"createdAt\": \"2018-04-24T11:04:39.436869571-04:00\"," + System.lineSeparator()  +
+                "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator()  +
+                "  \"createdAt\": \"2019-07-12T18:33:03.388635187Z\"," + System.lineSeparator()  +
                 "  \"status\": \"valid\"" + System.lineSeparator()  +
                 "}";
 
-        final String NEW_ACCT_REPLAY_NONCE = "XCFz0nWlCpEs-49S1p7qks-S0JcXS7uw2g4gQtJwUEI";
+        final String NEW_ACCT_REPLAY_NONCE = "taro8nLXKU--IKNClMMk4Kfan_ntlWxjMCsVbGZgXAgUr5k";
         final String NEW_ACCT_LOCATION = "http://localhost:4001/acme/acct/389";
 
         return new AcmeMockServerBuilder(server)
@@ -890,9 +888,9 @@ public class AcmeClientSpiTest {
     private ClientAndServer setupTestUpdateAccount() {
 
         // set up a mock Let's Encrypt server
-        final String ACCT_PATH = "/acme/acct/1";
+        final String ACCT_PATH = "/acme/acct/5";
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator()  +
-                "  \"UlOnbFfGuy0\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"s9YSaVf283g\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -907,35 +905,33 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator()  +
                 "}" + System.lineSeparator() ;
 
-        final String NEW_NONCE_RESPONSE = "pWTITfHw-_6KvHfsJADIIiIrDVwroGcLId5ox444dJY";
+        final String NEW_NONCE_RESPONSE = "zincBBJG7qwuzAVpZZuNp2fjrxKQXRijNtcQ_1P8A51q0jg";
 
-        final String UPDATE_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoicFdUSVRmSHctXzZLdkhmc0pBRElJaUlyRFZ3cm9HY0xJZDVveDQ0NGRKWSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSJ9\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6ZmFsc2UsImNvbnRhY3QiOlsibWFpbHRvOmNlcnRpZmljYXRlc0BleGFtcGxlcy5jb20iLCJtYWlsdG86YWRtaW5AZXhhbXBsZXMuY29tIl19\",\"signature\":\"OXZEmTDelTETz_ySHuEKjaEgaD1-ZFh51PZjvXGyNBIo5ZiEv4gAoRx0Zewz6woyb8xqi74A8HEYwlSqt4tXtOwUhAJTnXOVntVk0gbVSqQESnyTrw5Dixhvue7JRt6T6n_6KWL8geFQH4ed8y56Sc-OchwKDodDNeDYkqw1skiF0dRb-YdlVKKg-7pj-tDfSW-dSffUWnG99zH5-fdXyaDQZ0xviSzRYZpB6K6vAABa1jgBcufJcKSyeweoieCIMmEL9mJcLb0RNizK1rLWY_sd7xfVOV77_xStkYYDE3MAxrFVslGPKdqcnvqS1lPLV41532sNM9PP5gIa0dDLig\"}";
+        final String UPDATE_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoiemluY0JCSkc3cXd1ekFWcFpadU5wMmZqcnhLUVhSaWpOdGNRXzFQOEE1MXEwamciLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9hY2N0LzUifQ\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6ZmFsc2UsImNvbnRhY3QiOlsibWFpbHRvOmNlcnRpZmljYXRlc0BleGFtcGxlcy5jb20iLCJtYWlsdG86YWRtaW5AZXhhbXBsZXMuY29tIl19\",\"signature\":\"KWpsGaL3JkrOBvFlRnuluQ-jz6HB5NFzWBF06Y3dzImdgnngR5NVr8XoO76_Pofn84kA9QvyNeQJKyLvHljg3t3KrTIrmOcdMDtDvYOQNtxf0eontk17Si-vS3J1VjlCv2tBHSi_DB9vCHhSw6yRKr6RXYu79PU1Vgl42E_evhxOsxIL-ZFqWW9sW5O-gaRRjwQMrWJaCORetZiwwnEoqUllfneT6-A-DFZyCUEioB56mYMIKxri2X0r1viWtAybHpDUOVY42JSSweIf2JpLz-JdtJsi1FSQUjJKT-UOF1zHE8OgP8dDcEdMyhgmjU2GQYfd2-2cLes-gKAy5fIsag\"}";
 
         final String UPDATE_ACCT_RESPONSE_BODY_1 = "{" + System.lineSeparator() +
-                "  \"id\": 1," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"puL-WcMYUJ2Ajdy1UsUgNzjn6ecDxiWd7NGUGq267SOLwhKjSWWMwkopfcg5VMjPJWEE38IIXyjW5nFKCqFAIf3Zlih_1SLcjgVFbibn-oMGFLZs9ggr2bjRGJsbsJQIOKmgVs2y3l5RcIyF2M-UOx4GtAUQJsYittchBLxqjs0SBjWdtpWzaX4fwTCzx48RXuZhky_mKAyKbhAYnIGdDhcVIZsff6zzEM1bpJED6OBZh6pyP-N0kOxcGmPPCHMf0MzwjnK8VrFPEaIIfQAbUC1rTauiqZX7glEnN2kYqOwl8g3nf5fbX6sUuDU15fV0cmdUthy8_GHyE2qdzjPRLw\"," + System.lineSeparator() +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:certificates@examples.com\"," + System.lineSeparator() +
                 "    \"mailto:admin@examples.com\"" + System.lineSeparator() +
+                "    \"mailto:certificates@examples.com\"," + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-20T21:14:45Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-12T16:52:19Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}";
 
-        final String UPDATE_ACCT_REPLAY_NONCE_1 = "qQQ5Etbc4TYQxd0tn5kPxBXgR4L7Yq7UPbNHQIoPNDA";
+        final String UPDATE_ACCT_REPLAY_NONCE_1 = "taroYkIDLLAJW-Jo26PcEW8PjeJnfC6PQTyIOY4kEVj69V4";
 
-        final String UPDATE_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoicVFRNUV0YmM0VFlReGQwdG41a1B4QlhnUjRMN1lxN1VQYk5IUUlvUE5EQSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSJ9\",\"payload\":\"\",\"signature\":\"AZGMp91FTKC0Yb9eSO9F8oPTC1gZ0kJMMPGkgb3k8X4bgRTcRRslvwOIDcjc0GW0-oBukbtNIcT-IhcK-vFDtHm5n_IZJpvU-iurRGDbWXgjxKNAjX8WMdai06926E8aqmnRPmGOv8bliu1NncpL1yVGQ69JKk21hawPZ1YROYnY1dL_ul5ExyqW56lgVmYH4Tev0XYGD8ORC7yYvM7ZXRDQbL_yT2AoSaU0SyJyo6NatwXyK3m3IqcZ_QaHmD5f21oa5efdg99D4Z4FPF-WB_-nkg3GT2wZQZ7W9SupoholHMMGe9xYjyun5d740QY2GeTZtivOiwsIY-ndZS6g1w\"}";
+        final String UPDATE_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoidGFyb1lrSURMTEFKVy1KbzI2UGNFVzhQamVKbmZDNlBRVHlJT1k0a0VWajY5VjQiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9hY2N0LzUifQ\",\"payload\":\"\",\"signature\":\"hEXtEjuzm4DIwHdwF3-eVDuLwJYrMvIxXwwXYIY7zJjdgUTt9QDPZj6ItALeXr2JKhTH2klBihhaYPEhqDYjfTm3ia5hDYGUNQdXiOzrasONOx1zy3dIowkFoFnWHQs6qWZcrPOzqT5GofudBItb5Vy4c5g11TRJy5cntUzkclqINFSl2fhCHVy6IZwSEp6EmFuN6uCqnQzWEIfZQ_3NpmCFUtKXCag3WxmvXxhL0IrfxQWxKYjgaX89VoP_5gAc2OA_GIiBMtmkmvQNIws9lfZo8eM6mlsonIHIOQm1gJ2OWxK05I1fIfAfX2RgTCZek8bAdfmwP_IAd-XmJsh1LQ\"}";
 
         final String UPDATE_ACCT_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"id\": 1," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"puL-WcMYUJ2Ajdy1UsUgNzjn6ecDxiWd7NGUGq267SOLwhKjSWWMwkopfcg5VMjPJWEE38IIXyjW5nFKCqFAIf3Zlih_1SLcjgVFbibn-oMGFLZs9ggr2bjRGJsbsJQIOKmgVs2y3l5RcIyF2M-UOx4GtAUQJsYittchBLxqjs0SBjWdtpWzaX4fwTCzx48RXuZhky_mKAyKbhAYnIGdDhcVIZsff6zzEM1bpJED6OBZh6pyP-N0kOxcGmPPCHMf0MzwjnK8VrFPEaIIfQAbUC1rTauiqZX7glEnN2kYqOwl8g3nf5fbX6sUuDU15fV0cmdUthy8_GHyE2qdzjPRLw\"," + System.lineSeparator() +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
@@ -943,19 +939,18 @@ public class AcmeClientSpiTest {
                 "    \"mailto:admin@examples.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-20T21:14:45Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-12T16:52:19Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator() ;
 
-        final String UPDATE_ACCT_REPLAY_NONCE_2 = "TX5h0WKwHGrJ2GgievpTRzHI9vPswsIR8oAjKMEp_xA";
+        final String UPDATE_ACCT_REPLAY_NONCE_2 = "zincgt5sXshHjq3Je_kVdG2rtB34uFrpeaiWShTaC4IK-Dg";
 
-        final String UPDATE_ACCT_REQUEST_BODY_3 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiVFg1aDBXS3dIR3JKMkdnaWV2cFRSekhJOXZQc3dzSVI4b0FqS01FcF94QSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSJ9\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6ZmFsc2V9\",\"signature\":\"iFLiIcxjnMnzmt8iTBtawU5-ODlvixcPtSWyejHsiwnDbYpexpUmJCHP7cTBbnzLmyjaE2LMFFFxMqIkY7pWh2jFCb3onMvMbktzfO08N4QMASrTIHyPEbKsT961GFt5_JcTZVynn2Sid3jtprt0jJk15mDokrXYVwknOu-_4O_366M9HSbWFVvAu-uhOwy0GRS6gjdhm2VAdhhFv9GwdbGf832pZn6d9xPusWzeldIuWHJyvivb3uo-7jv1nKLJurwcAMc1ve0nhxwCBIYEwbBQMrvvCIeFgWJT5NFCiBnSreECv1xUOQHKd-uWoJTBXtjmq2oSjyT45r9rDzgacA\"}";
+        final String UPDATE_ACCT_REQUEST_BODY_3 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoiemluY2d0NXNYc2hIanEzSmVfa1ZkRzJydEIzNHVGcnBlYWlXU2hUYUM0SUstRGciLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9hY2N0LzUifQ\",\"payload\":\"eyJ0ZXJtc09mU2VydmljZUFncmVlZCI6ZmFsc2V9\",\"signature\":\"DCKNu7139HQhf67-7GpRc207rpxiP9UqkKXpOoCZytMqOHvRr-gha1ZBDsB0sSm254e1H8suuzwhLkuK1rXdYaJcOvi4zpYy_rnASu_QVYvIjwfqqC11yoWa7v_JKnoHJuxtqguaM3IkyUhVq_JWXKCG3KJgQUwY6ckzs9nSuU0ryFqM6wKZZAabXkPdbhyXHWB2g3xleRrfSoyJmS_2O0-in1s_vwpBcEZG10BrG8-atrplC5FxGbt4CsB7YrWhBR0ZnWKqSCQgtEDvxERBfK8SqUdL45VGFe2c2Nz6wM_RDmUXujIiW-Os7QSt7DDcqxqpCPq4tDxkMQo8S5IVFQ\"}";
 
         final String UPDATE_ACCT_RESPONSE_BODY_3 = "{" + System.lineSeparator() +
-                "  \"id\": 1," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"puL-WcMYUJ2Ajdy1UsUgNzjn6ecDxiWd7NGUGq267SOLwhKjSWWMwkopfcg5VMjPJWEE38IIXyjW5nFKCqFAIf3Zlih_1SLcjgVFbibn-oMGFLZs9ggr2bjRGJsbsJQIOKmgVs2y3l5RcIyF2M-UOx4GtAUQJsYittchBLxqjs0SBjWdtpWzaX4fwTCzx48RXuZhky_mKAyKbhAYnIGdDhcVIZsff6zzEM1bpJED6OBZh6pyP-N0kOxcGmPPCHMf0MzwjnK8VrFPEaIIfQAbUC1rTauiqZX7glEnN2kYqOwl8g3nf5fbX6sUuDU15fV0cmdUthy8_GHyE2qdzjPRLw\"," + System.lineSeparator() +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
@@ -963,19 +958,18 @@ public class AcmeClientSpiTest {
                 "    \"mailto:admin@examples.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-20T21:14:45Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-12T16:52:19Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator() ;
 
-        final String UPDATE_ACCT_REPLAY_NONCE_3 = "QH2Yt2vO38y3tqfqwiuqkz3q3EdBIDH6jfym7QhqOS8";
+        final String UPDATE_ACCT_REPLAY_NONCE_3 = "taroAi0lfzbfT2NuMa7mwJXkoehtNOed0rreDzTYXUNpmiY";
 
-        final String UPDATE_ACCT_REQUEST_BODY_4 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiUUgyWXQydk8zOHkzdHFmcXdpdXFrejNxM0VkQklESDZqZnltN1FocU9TOCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSJ9\",\"payload\":\"\",\"signature\":\"mnFtrac5kcUQIDfMzHC1v2crf3iTteZ50hzDQUcMxgqllRpMIKIedHTPdPjtc0KsXTYy3PbdjZVc_yN_x5_Ca5B2enAzQ5K9hTI8GeEOHoqLwbmNuHO2lg1abjQ0nS4PPYY2SMf1zIYO69oLrHw2m4vlkVssMoBr-Xw4z0a7tlJBmrPZYQHg8Tn3O75rc3D4Our51D6uL6ErMrrd5VYKdAxRuP1EvDdZvYTcgNcEy8eEXw1826i7zCafjdtkgol8NgkdoOYXHezSJNmcaYmy3vFVTxJ1qCsGuOYltSowlUwOJoAqno9B3CAkrX6i6dUlRAMkpGyHI_MfnVoxajwEbg\"}";
+        final String UPDATE_ACCT_REQUEST_BODY_4 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoidGFyb0FpMGxmemJmVDJOdU1hN213Slhrb2VodE5PZWQwcnJlRHpUWVhVTnBtaVkiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9hY2N0LzUifQ\",\"payload\":\"\",\"signature\":\"OcSx7GrtlfvGpnM_G-JdtZ6ldxCd8__0XGDqiFFKUD0BZyET8agwKzGySDHXke4LnlsZ8DVwgvwAqiKbCB8QPzA2byO7SQxQZRw3H1_ac0_0NdofEdcAdNy107Tr74bqDVGoZpG2JG8dHgqAY55q6rph3eS4iXy9zrYXnOI4NDWxIYIB_FpnX_bUVBEYHbqEMiG5A_kFNH5VJ8fANmkdMGMHTGMXfSWAfiwd3f_RgyMlD3l2-AtaETogV5FqfHLkpfZEUjdy4kPMbvuQwiRZhT5rrqPOK4hq4AQh99AzzrxSPTAkvDSFrr5gag-7zsA_jeLhvRdB-RIRpfLFhM-8WQ\"}";
 
         final String UPDATE_ACCT_RESPONSE_BODY_4 = "{" + System.lineSeparator() +
-                "  \"id\": 1," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"puL-WcMYUJ2Ajdy1UsUgNzjn6ecDxiWd7NGUGq267SOLwhKjSWWMwkopfcg5VMjPJWEE38IIXyjW5nFKCqFAIf3Zlih_1SLcjgVFbibn-oMGFLZs9ggr2bjRGJsbsJQIOKmgVs2y3l5RcIyF2M-UOx4GtAUQJsYittchBLxqjs0SBjWdtpWzaX4fwTCzx48RXuZhky_mKAyKbhAYnIGdDhcVIZsff6zzEM1bpJED6OBZh6pyP-N0kOxcGmPPCHMf0MzwjnK8VrFPEaIIfQAbUC1rTauiqZX7glEnN2kYqOwl8g3nf5fbX6sUuDU15fV0cmdUthy8_GHyE2qdzjPRLw\"," + System.lineSeparator() +
+                "    \"n\": \"h8Oee5beDRgxNPe_eME9H6Vo74Fug8HgrikfbfCaU3lKF648QG1X1kGDZThAy8daqJ8bv6c3PJdnx2Hr8jOzl509bnM6cCWfywTpcIZoUzQQZLY_K8GMDAyglsQrItgCiQalIqbuJEkoc3WQAIxJ23xv9bK5xnVQkTW4rVBAcYNQwoBjGYOWSizTGfjgmQqTXloaamFZJn97Hnb1qjy5VYm06buyqwAaGHs1CLu3cLZgQpVHQ4kFszk8YO5UAEjiodugWpZURu9TtRKzN0bkEdeQPYVpaupUq1cq47Rp2jqVUXdiQLekyxrQbt8A2uG4LzDQu-b4cZppmzc3hlhSGw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
@@ -983,11 +977,11 @@ public class AcmeClientSpiTest {
                 "    \"mailto:admin@examples.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-20T21:14:45Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-12T16:52:19Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator() ;
 
-        final String UPDATE_ACCT_REPLAY_NONCE_4 = "5R1YpUP-hOkoDdJVmsDYxyRTKFePzfd9hothQ_uDzDE";
+        final String UPDATE_ACCT_REPLAY_NONCE_4 = "zincF9GthBQVUdM6nr0SjD4s5WT6NF7yIPlf79ZvLi0onJ0";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
@@ -1000,11 +994,11 @@ public class AcmeClientSpiTest {
     }
 
     private ClientAndServer setupTestDeactivateAccount() {
-        final String ACCT_PATH = "/acme/acct/4";
+        final String ACCT_PATH = "/acme/acct/17";
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"ZrMhBE165Rs\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"uvnr4pUXRhY\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1019,47 +1013,45 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "_ot8jmk3kIPA7kVzbSxr7tFZFcEX3UA2QvNUYeoe-ME";
+        final String NEW_NONCE_RESPONSE = "zinchEUilHEBz4iXwM6Xm_W6C6_dmdK0dxD8jnyQoblcorE";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNCIsIm5vbmNlIjoiX290OGptazNrSVBBN2tWemJTeHI3dEZaRmNFWDNVQTJRdk5VWWVvZS1NRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNCJ9\",\"payload\":\"\",\"signature\":\"FVxUh-yhFJVXYbCFyxVyNgyKxCK_8hLJe86xymKv_kD7SvpjHLJLTwLJXO1wmoqWDe-xrXPNbn-9cMmEGZdj6wpXbZK_BWJYmkQgXnyfspbMZoztRBqmlm1eYabLL3szSi6bg2TQj0hP2NNw6YP60TD06wfzCranuxrUCj9Kqo6kOdlI20qLanJadST-xMaO3m8_wTZ0TJBb8ONYj2KQ6aWrnulzvx4Ngx3QmWai_ia3Pgr43He_8wKKE4nkJCzkT2dqhJagHgVzYtS5pYMPCfKF29CoFjSgUhmGmsXfq0dNyCzwQ6NuQ1EzO_jqFJrpTD-PpC-WeVIKtzqI_ynAOA\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTciLCJub25jZSI6InppbmNoRVVpbEhFQno0aVh3TTZYbV9XNkM2X2RtZEswZHhEOGpueVFvYmxjb3JFIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYWNjdC8xNyJ9\",\"payload\":\"\",\"signature\":\"KxQxrfXUolF0Hcag8v5Y7eHnq_pbXaRQUZRPkg0b1e1BhSn9nXMbl_9uTL6bDTrhl5P8inemfxH3h2v2RHTDeF2vGgTVP-YcdzlrYx_aqn_3iAOs9KCHsBx9Upyn3qrIN-Do48rffkfnCDRJQmc8sNNWDkbFFCI_BuGzsuSz-pyfcLzVPGyKwHqKghYbOdieXIBoxx7GUO4rxpOLIH4r2g2kvoLGRAggbzmz8ogYoe8JYTM-Rai6CUaBoZVOI2LKj87k5Yv509-QhMkavFy41mHmXk23e2d96olhJm429iNZq9Jpdh6IZAWQIX8p_kpEkAF1RdOxCEVQdy4MEkb2Ug\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"id\": 4," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"hUeAw6lgPh8RbmUW-KPexgLmvIRmW7Yf3Z60kUTK3WMIcJK3UxuLC5mSa8nSmzYTnvX9VE7JcjcoNaWn9g01qYbzTaRPMIDpryiEolmhZi4-Of7g-LREiXFRRUmEo9kdYuPOfBeGQRidbLegBP0uevJ0gmvxh-l3G4eal_ptZImDjRj0KQxA5Vv0dFrimIyGE8Cv-H_qXdysmfMtcUlMBQF2fw2kqyb-gpKZt9lsq97TolbkkEzPMR0PoKWdjL5UYlO-2PqU1L3YFjdLwU2M0Y8j9G9rTJkeUyrvi7W3QiXsXAyxJzHTZqKMyN3CAUFis0Imb2M9UIiEZ_a2EebxsQ\"," + System.lineSeparator() +
+                "    \"n\": \"gtzybTJ9uGLGmKifHStiqOdQhlP0kVG4RiWyrpSG4Za1SUBqBiCrdAQFugOUsADsv0glSeuFybdiLbNzrCVWz6ZgA23DKj2jQzqQsVR_lek9rJ-JdsqQ7yEnkXmtPZolC805LEJvd5mAZf-bq5cikMWSXUwt55i8HAPgmqu_kKhl_4fgiMV4RlK8FpS4q2mtUPmhy8embNckhJwQUxKJewTosZA265m3-sVO8oXTAvVJneg1xrXHUnwD0QJ562zOT1Ly42WOL72c1h6aotgWDDMFBWAl7qF7wg-I8VCRNeyJuhhr6HEOP22NB3_ly_vjtImJPXF9GZACD4zhMaRQmw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T16:42:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T19:41:43Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String QUERY_ACCT_REPLAY_NONCE = "k0uKQtflzUT-teQXog32goAtH142cmkNu4Cm8xWFkis";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroynNYu8XNbXtJvzVFq0gN2e0eiU9T2z_Vv22I3weQdq0";
 
-        final String UPDATE_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNCIsIm5vbmNlIjoiazB1S1F0Zmx6VVQtdGVRWG9nMzJnb0F0SDE0MmNta051NENtOHhXRmtpcyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNCJ9\",\"payload\":\"eyJzdGF0dXMiOiJkZWFjdGl2YXRlZCJ9\",\"signature\":\"TQZmkAUZ-yCLwbnnsUDuAX2EJhr_IudC8lQ1BqTzy5BTH_POy51yWbI_6sHsFTm9K2EKvrKuEtAbUioDx9hro5r0NkWzdB-VR9VEf07yAORN-H-2Bo-LfhxzH3qHA6POGYqTa-KWy4YJaCvqHk_9BWB3bIkzptcojf-L4OacqiND9pexJ_z-lMaF6ugiPrGuc-hg9Tme7Ij8hyz9NQRfte5x3JofPldUThJuNGvkyo0Ghne7JrI-4X6fsRp8eCwNigjphXeKoZ0Lsw_3-HqvB60OyLSH5lu6VCrxyKg7_bfsxw9-AQFLzQ9Ap3coCQofE_X0y4mAfAynQPzrVH01Wg\"}";
+        final String UPDATE_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTciLCJub25jZSI6InRhcm95bk5ZdThYTmJYdEp2elZGcTBnTjJlMGVpVTlUMnpfVnYyMkkzd2VRZHEwIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYWNjdC8xNyJ9\",\"payload\":\"eyJzdGF0dXMiOiJkZWFjdGl2YXRlZCJ9\",\"signature\":\"aqZ478VXBfPra-jqaiZ6LrqXBBU73fVj_db0egoRQXz-IYItPM6TRuP2u0aOLoEqwCoLkSSKylzdSDiY1bTtpEi3LjI5LxzblHYoY9_qZzrSnFPVJTueVWXsMvSz7u6z8gP6R8WK637bCez9hhGVgH225leaGissqRb85UmRXL6qlsniyYwwlrLqaFmExrcFzVGEz0lp9hKgyeCXSht2niDWQHvsOSFJEUVtUncrtktnyE9pdH2ZHR9Jo7LicH7x2EwkiVaSlxbK5A35l4KzWPCjfp-kwq-zKEuP6pT6tjimRW--ySg3zeHn4vKKOaSA1mGKXh-Bb3WYZPUe2rQ1vg\"}";
 
         final String UPDATE_ACCT_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"id\": 4," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"hUeAw6lgPh8RbmUW-KPexgLmvIRmW7Yf3Z60kUTK3WMIcJK3UxuLC5mSa8nSmzYTnvX9VE7JcjcoNaWn9g01qYbzTaRPMIDpryiEolmhZi4-Of7g-LREiXFRRUmEo9kdYuPOfBeGQRidbLegBP0uevJ0gmvxh-l3G4eal_ptZImDjRj0KQxA5Vv0dFrimIyGE8Cv-H_qXdysmfMtcUlMBQF2fw2kqyb-gpKZt9lsq97TolbkkEzPMR0PoKWdjL5UYlO-2PqU1L3YFjdLwU2M0Y8j9G9rTJkeUyrvi7W3QiXsXAyxJzHTZqKMyN3CAUFis0Imb2M9UIiEZ_a2EebxsQ\"," + System.lineSeparator() +
+                "    \"n\": \"gtzybTJ9uGLGmKifHStiqOdQhlP0kVG4RiWyrpSG4Za1SUBqBiCrdAQFugOUsADsv0glSeuFybdiLbNzrCVWz6ZgA23DKj2jQzqQsVR_lek9rJ-JdsqQ7yEnkXmtPZolC805LEJvd5mAZf-bq5cikMWSXUwt55i8HAPgmqu_kKhl_4fgiMV4RlK8FpS4q2mtUPmhy8embNckhJwQUxKJewTosZA265m3-sVO8oXTAvVJneg1xrXHUnwD0QJ562zOT1Ly42WOL72c1h6aotgWDDMFBWAl7qF7wg-I8VCRNeyJuhhr6HEOP22NB3_ly_vjtImJPXF9GZACD4zhMaRQmw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T16:42:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T19:41:43Z\"," + System.lineSeparator() +
                 "  \"status\": \"deactivated\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String UPDATE_ACCT_REPLAY_NONCE = "7a63cfZZxTpf-tUO94u_PTa9T_XLs987y_SI1i0yU3M";
+        final String UPDATE_ACCT_REPLAY_NONCE = "zincva7_lpvREqT5DgWxNxrRyAVtho7l4ijemb_9_YlZJrY";
 
-        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNCIsIm5vbmNlIjoiN2E2M2NmWlp4VHBmLXRVTzk0dV9QVGE5VF9YTHM5ODd5X1NJMWkweVUzTSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1vcmRlciJ9\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiMTcyLjE3LjAuMSJ9XX0\",\"signature\":\"GAZAQ3FtUVvdPJXgJ6yvsWQ64ZLUGa3R4vT7s0EyTOorh6_DfatIhS0x3Ow7-KlrAG1C1VMKPeQ8mpt0GqjCM3kiVsKMZU2ehhSvY6P7DTY2p9h9NDtH1L732Ka4UHIJ-vg-uGfFx-ChlwaR-i8g9rMiYO6l_iIZFu44jKQBjTxmg0nAO0334qfHHfk1py8XHxJSVtt0zM1pb-hdDD0NRUjmS9Kyg-RgmTjZj3P5FDTk12_e6sPWIgGoFuPyKHyCcOXP0yysUUJgm9yOs0F1m68rdcHb2L-RxBrmwEBDNEe8knLYDuC7KvILXZ9JoIbwAWuK9MGbuno7dQK2vneYdg\"}";
+        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTciLCJub25jZSI6InppbmN2YTdfbHB2UkVxVDVEZ1d4TnhyUnlBVnRobzdsNGlqZW1iXzlfWWxaSnJZIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LW9yZGVyIn0\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiMTcyLjE3LjAuMSJ9XX0\",\"signature\":\"a9LHneyMzSv8j8xWk1yWDD_n4sRGElhSCIO5PJBGshqAQQ4hrsKodxUCHBeQsQ16sCRoOWkI0k0RpOARdGVKoVkPRP1qs8wUhIJV62ljC4uXrMg4mjfQKZXbU8MBluf1k0nRdeKTlUhg7p8l9-sZzF5DUPV82g3VyP7kESWzmBJP6RlIrH0sPyfA-k9xAl9fr1SKSEGVQt0xvPk4mj6RihEBmYaGFVjAFum_gBrbo4YWWgBkLWB2Y9CmBqOHngDA7WuBSWaDme6WOMQX043EttYXaRDm_grz14ig6kmEkFYJEqD5fUMR8XcQ5rVuUYXCiEfqjivMh5HXTblN4dsXXQ\"}";
 
         final String ORDER_CERT_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"urn:ietf:params:acme:error:unauthorized\"," + System.lineSeparator() +
@@ -1067,7 +1059,7 @@ public class AcmeClientSpiTest {
                 "  \"status\": 403" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String ORDER_CERT_REPLAY_NONCE = "NjWUjJAn80Y5SfyZORhyUZ1MU15w4Zh3IiLSJdFi4jM";
+        final String ORDER_CERT_REPLAY_NONCE = "taroVNa0UnQN4LSCL9zs6QzJC4-_hwQwWigp7oPQiexJJs0";
         final String ORDER_LOCATION = "";
 
         return new AcmeMockServerBuilder(server)
@@ -1083,7 +1075,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"L3kiSpDcTos\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"68bTwETzqeg\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1098,7 +1090,7 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "d4o3tdwrnpzwi9xgI21EqNdDyInvLcrENqTXthWD0qg";
+        final String NEW_NONCE_RESPONSE = "zincG439TOpiDIeJBbmInMOo_xnZV0jpUstA4VZgSiyuFy0";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
@@ -1109,7 +1101,7 @@ public class AcmeClientSpiTest {
     private ClientAndServer setupTestObtainCertificate() {
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"hb7nxeqSiSo\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"UZT0cQcZznY\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1124,127 +1116,103 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "eV3KvqTuyA_bAaCZJ9ZgdQISvgGiNB_306WG1hf6qXk";
+        final String NEW_NONCE_RESPONSE = "zincZ90pZVS1o4ZQnDGedloqnC9spanlU1V1wWLntNiniwA";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJwdUwtV2NNWVVKMkFqZHkxVXNVZ056am42ZWNEeGlXZDdOR1VHcTI2N1NPTHdoS2pTV1dNd2tvcGZjZzVWTWpQSldFRTM4SUlYeWpXNW5GS0NxRkFJZjNabGloXzFTTGNqZ1ZGYmlibi1vTUdGTFpzOWdncjJialJHSnNic0pRSU9LbWdWczJ5M2w1UmNJeUYyTS1VT3g0R3RBVVFKc1lpdHRjaEJMeHFqczBTQmpXZHRwV3phWDRmd1RDeng0OFJYdVpoa3lfbUtBeUtiaEFZbklHZERoY1ZJWnNmZjZ6ekVNMWJwSkVENk9CWmg2cHlQLU4wa094Y0dtUFBDSE1mME16d2puSzhWckZQRWFJSWZRQWJVQzFyVGF1aXFaWDdnbEVuTjJrWXFPd2w4ZzNuZjVmYlg2c1V1RFUxNWZWMGNtZFV0aHk4X0dIeUUycWR6alBSTHcifSwibm9uY2UiOiJlVjNLdnFUdXlBX2JBYUNaSjlaZ2RRSVN2Z0dpTkJfMzA2V0cxaGY2cVhrIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"Rlkqyf_FBDoQTX5v0-JbBp2TEJL83tysY7j6O0fHldkG14MCr1nNSne-cbHoi3XrbK0i105cOstvYDtImFwGELAIr2KC4p7NVkR842tcsrcW-GarSjyZy0iydksdGlcQBJZ9597iKyn0LD6E3SMn6g-MIlmohaTgVX61WUhoJL5-JLEGQnuOPNt6UsNgXZrqvPxd_K80EDxHQqt50pqJkSef4I96mof_utLYPyovKWCRVU5t218WyjhNLPpCmAJ08s6crvrdJH-wCsAluOZ70mGIwPTC8rY4aiCUAyrXdVy9FCw0b3fZd_Q2jHJc5f5jJ9crHmNj-2F1knIQ_yyRiw\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJuWVJ5RGQ4b1ZPZ3hTRlVzX2xoYllvMjNGWEFHelVJRTl0dFVCdEJ3N3VHc1U5aEpsSi1RYXlxbHJfZGwwUHNoYjVaeFk4a0h0ZEY5QkVOX1F1Slp4emlzMWNzNFhUY0YzbjVBRUswcFVtS3VQSGt3ck9PNExFN1l3RHBEM0Q1YjRHVjFpVFUyY1ZyRmhMVmI1WmQtTnl6NVRJOWlCbDM3N0FJRmt6aU00Rmx2aS1CV19UZEJmTVVFVURtNW85dFBCU2N2M255YThhSFpJYmdyaW5Ubm1IMFBQMk1vNW50czJjd19zU0d0aENXWkhqWVp1MjRmWE5wb1RjTE1OVldBLTJPSjR0dWtGamlwWC03ckhZRUJiclRSd2FIVnlTOEd2UFp5bjU5b3VYZzAwVWhCdEhRTHROUldPQy1tV29TdFBXOWxjOHNCQm1YdlJiTzdFUkU1dVEifSwibm9uY2UiOiJ6aW5jWjkwcFpWUzFvNFpRbkRHZWRsb3FuQzlzcGFubFUxVjF3V0xudE5pbml3QSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"SiAzvfBH1yTZPpkTDXS129mVo5IskhJYTB3_hIClPVxOPl_cGSVd4qBCuJnBCoK3kpmHUML6QEJfhjQi4hzY6xljWP71YvJZDT_y4RERcJzFPBvvIJx6-Qcw9O_B9aY43AuspyiCOMgs6iBTfObl50BjuCsiWqOh7OF4STOdl1iZpQWeIdClJr20KRXzHikq1drPsKXyg0AOYKs6Wjv_GIbcQZ-bvesS6PNxH7r_hJFiDrvdu9I-mBrmg-85DGh98e-jmO7LHvqFCtrQp4IujRj7_9TDOjlqRudNlLP_KJn4Waa7VrUcgkEMYoXYvdmASnC5FKTTphXoz5dU42Sl8g\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "CuZc2AGqVfV0ukqf1zT7ZinVrzqCESVYSZEgm5GMH70";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/1";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroRaxMHOS9esn17VtzFmVBE954tN9DLvYoIp-efS2RlO8";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/8";
 
 
-        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiQ3VaYzJBR3FWZlYwdWtxZjF6VDdaaW5WcnpxQ0VTVllTWkVnbTVHTUg3MCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1vcmRlciJ9\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiZmpzbGpnaGFzbGRmamdrLmNvbSJ9XX0\",\"signature\":\"W8m13WauHy74xg_xe0DvHSLSbwZTQGCZIyC-K07cDgohgcoenB1V0R9NwIcOWz8eiOosZPnVNmxt655NrXyC2V6fmxpPLlJJtfRPD9vyB_PqOm2Lg5RD1gBB1o-TWRvcGAgdDU6CCHUBuFZMmmwY6GzIBBlYIS4YuusuSTmjdVLRLV_wcs4e3FV5Qddx8iWqM7clWzI1nkCtlBT8AtddBMmr5VQYx1-FAa2xYnH7l3tpQZO7FJdOzWwplVJpiwtS2SwBMlA8C6OtrHLRR3sEMP69OIlyy5kd6WvYYGgv0cIsXmdZocsyN2kkpg7oEI8zs_pbxqXJu1Fey_vkDAms5g\"}";
+        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvOCIsIm5vbmNlIjoidGFyb1JheE1IT1M5ZXNuMTdWdHpGbVZCRTk1NHROOURMdllvSXAtZWZTMlJsTzgiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9uZXctb3JkZXIifQ\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiZmpzbGpnaGFzbGRmamdrdjIuY29tIn1dfQ\",\"signature\":\"d2j2FmrpIKJiDG68OtAtqIbOm62LVifnjbOzHGZiex2pruKvzXrnrARp0iGzeMo-TLlx0L6ZoMkYKWIDlfUGKt_td4Ah3I02AMDzccTgBYeSfNJbjClt6ZI63YSNY2ZKp5XtY3plG_V3PPRDGyO7LJhothwat-ifYrs3FlApEeqKHpOUZThnJxS866bugPpgttmePp8nv7i2wGL5gdxmzWwEyf5rEFbC26uJXkzvL2FCFqdqm1dfF8Ee6LZrHP3XojsozEGiP2oVlZXu_2f9KCDAyAc9AALeot8OuRlVhDfGWRegqaiDx0WZ_J1_vpC-PBZ0QfM5Ue11N1xQRhRkDw\"}";
 
         final String ORDER_CERT_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T18:18:04.480847297Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-22T14:33:01.811142415Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"fjsljghasldfjgk.com\"" + System.lineSeparator() +
+                "      \"value\": \"fjsljghasldfjgkv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/33\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/1/3\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/8/38\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String ORDER_CERT_REPLAY_NONCE = "Te8QGF7zjTU2Lncm8ieXiQi8W2aHuQVeNe4FGauokOk";
-        final String ORDER_LOCATION = "http://localhost:4001/acme/order/1/3";
+        final String ORDER_CERT_REPLAY_NONCE = "zincRETf91sqQsqgJ8JVzGxZqZ0be7Bn2tGeU7AYqSsT3-s";
+        final String ORDER_LOCATION = "http://localhost:4001/acme/order/8/38";
 
-        final String AUTHZ_URL = "/acme/authz/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s";
-        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiVGU4UUdGN3pqVFUyTG5jbThpZVhpUWk4VzJhSHVRVmVOZTRGR2F1b2tPayIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2F1dGh6LzJFU2tiQ2k1Zl9CTnV1QU1XMjhUU3M2bjVHSjJxa2hycnpEejYzX0NMOHMifQ\",\"payload\":\"\",\"signature\":\"UToLcSsGlCvDTG2iDj90glUKgw-p1LC2Wc8ejbY6Osl2ZbZ3gddaEjbsKLPLJ8V8Uu7ElwT3ECRHzCMY3stFDwId4EsnHfGgnjb99LNpGTBQcNP-T7FTgZH_-hfpVTwavvc_Q3qaeGtyOYun1tEZu8lCoJEnowItBawdAMOgpa37USH6Ta4h83ET2Y4p0mDWbz3__IMhTMlYohIJ2zRi9V6a1dQF05AEkASa6OqDzz02EgzU66hLJj2qy3Si3IbVb7x2M1ZWDITSeM_ZmyGE5UumO0OcBRh__KyuQNqis95AM8dF_l1ChyOAmndKLskvhWKUOrFDtzmr-rmPPB-JrA\"}";
+        final String AUTHZ_URL = "/acme/authz/v2/33";
+        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvOCIsIm5vbmNlIjoiemluY1JFVGY5MXNxUXNxZ0o4SlZ6R3hacVowYmU3Qm4ydEdlVTdBWXFTc1QzLXMiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9hdXRoei92Mi8zMyJ9\",\"payload\":\"\",\"signature\":\"mNrjytqKNBd0JhUycZHW0dp4tQi67YrGvAKys5zOGi2t1HCKYtY53OKDXYSDTSI6tu3aZLzxlYJvK7Ufq153BXga1IOpoL6uD8vHqNWTU16FqjcMO7phBu0NLZqsf_6G0J3aiG6G1YWCNF-QrIhKhuazp1Ru0xX5hBaVvY2VCpUC7A4IKAgV5U5eKzJaWHuZgdfCSu1HDT57ShpV1F9yRwVU2JtZI07gNnPqE0CanAu423hJXEDgole-0vXbgRMTo5CiI5s_SA9t4iZD3O8cd2FA1eXpT8N9HqU5uvvs5cuD4gJCVyA5TiGEUucYJ7UfWjfLAGWbtFTpO0HjGyx-4A\"}";
         final String AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"fjsljghasldfjgk.com\"" + System.lineSeparator() +
+                "    \"value\": \"fjsljghasldfjgkv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-27T21:14:45Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-22T14:33:01Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/5\"," + System.lineSeparator() +
-                "      \"token\": \"TUucyKEqlOtB3AHYJgJXfyBDkKOlWcTpOyt_msVrXH0\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/6\"," + System.lineSeparator() +
-                "      \"token\": \"EsdnMEwgN_8vim67x99uXs4PRf0pEFYPoR2zb3xpNBQ\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/9Q-rVw\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/7\"," + System.lineSeparator() +
-                "      \"token\": \"CpKffHs2YglmLA3dcLsqqEGj54cd0QvyuYWsHDl-aFw\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/cJNUZw\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"http-01\"," + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/8\"," + System.lineSeparator() +
-                "      \"token\": \"h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/TYojGA\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String AUTHZ_REPLAY_NONCE = "H73CfbiAmBNqWm3rXPyC2RwCc5KCB6dVqsh5V5DL0Vg";
+        final String AUTHZ_REPLAY_NONCE = "taroG7xr6bCfeG1Ffcl7AxcmlGeDKuY0SmK3NsNMDSXazxM";
 
-        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiSDczQ2ZiaUFtQk5xV20zclhQeUMyUndDYzVLQ0I2ZFZxc2g1VjVETDBWZyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NoYWxsZW5nZS8yRVNrYkNpNWZfQk51dUFNVzI4VFNzNm41R0oycWtocnJ6RHo2M19DTDhzLzgifQ\",\"payload\":\"e30\",\"signature\":\"QFiqdvYvjKDz9YcbW6okDKwfJ5la8H0EBRwmGhVYQ9Vt33U9QjD056V-X7lnKrsGxcRnxagVberF3WwjYa247g_m-luPfTcFdUpbYjawETegZzEwl7YBSKOyzb6YWuKhCKL-6G_BzCrIv3pAb5_o4EQhfcoEB0l3e5UQyxe8cLyHkkKpAKHqpm1MqV_7wKAfF5XJ_iLCv1xjooWDea7TaSb64sFA4XfN8Mci5tkaxPiGYY-KeXxGmWkn9YQwBNuWEACpkVKximFH643FurlkI1ACdf335AbOh_t4E3WdJlbrsf869LL7Xb3I6GPUXb4ymQ__-Z8GBnyDjzQOd3kzsg\"}";
-        final String CHALLENGE_URL = "/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/8";
+        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvOCIsIm5vbmNlIjoidGFyb0c3eHI2YkNmZUcxRmZjbDdBeGNtbEdlREt1WTBTbUszTnNOTURTWGF6eE0iLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9jaGFsbGVuZ2UvdjIvMzMvOVEtclZ3In0\",\"payload\":\"e30\",\"signature\":\"Nig_RPCHfP5UGJ6erD3mKe4UdO3lc4Z_aefE9_ulVqfhQS1n_MSOR_TDILoR3zBHAPCXkmsImTKMV23T4Rf6YBHpmz4OJoHawmg100tbyvvS1dXCkitMGaTe9IaBEFi4ktUWDJkytQfn0oisHDt7UcystUgKiqPPfnxnCYsLdArfTZTadfu7iZaVSSN7LieN5pnHQwo_0DLcycBxWDyIvVJ8GZlyhapsTdAqkiATYb7kg0OlFZNDgdmXodAgc3lXmc2rGZvop1tNWbKcejI9yXBtnRQXXFEVEblUpwfTdeNJpeUcawuT8jxGD9TCc4NdIFz_ExlvMzWeWdoR0vyI_Q\"}";
+        final String CHALLENGE_URL = "/acme/challenge/v2/33/9Q-rVw";
 
         final String CHALLENGE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"http-01\"," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/8\"," + System.lineSeparator() +
-                "  \"token\": \"h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ\"" + System.lineSeparator() +
+                "  \"url\": \"http://localhost:4001/acme/challenge/v2/33/9Q-rVw\"," + System.lineSeparator() +
+                "  \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CHALLENGE_REPLAY_NONCE = "YtR3PkcqmSPtD5evNpAD7-N41wotJYjZVP0I1D9Dg74";
-        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/8";
-        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s>;rel=\"up\"";
-        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ";
-        final String CHALLENGE_FILE_CONTENTS = "h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ.p8ESGS6nX--L-ReV0llT4mUDFkS7Bt1cyMoa0zqPDkk"; //******* FJ FIX
+        final String CHALLENGE_REPLAY_NONCE = "zincn-OjDeCVuF7tlIX4TzeMCO6S1uxL8J6S8vlsiR0bJ9o";
+        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/v2/33/9Q-rVw";
+        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/v2/33>;rel=\"up\"";
+        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io";
+        final String CHALLENGE_FILE_CONTENTS = "qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io.ufCzRanjh1vid9iOZQJFYLBw91fP4XHc6_APvqfq8_E"; //******* FJ FIX
 
-        final String UPDATED_AUTHZ_REPLAY_NONCE = "Fw-xaxnQWkezLY7Mn5l5q4rN6YiK88_K3ZwWsZg1RDY";
+        final String UPDATED_AUTHZ_REPLAY_NONCE = "taro017s3xOBGzihgQW-BaBy-9GZXwTO509S5MZncYW4mpE";
         final String UPDATED_AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"fjsljghasldfjgk.com\"" + System.lineSeparator() +
+                "    \"value\": \"fjsljghasldfjgkv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-12-23T18:31:37Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-08-21T14:33:01Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/5\"," + System.lineSeparator() +
-                "      \"token\": \"TUucyKEqlOtB3AHYJgJXfyBDkKOlWcTpOyt_msVrXH0\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/6\"," + System.lineSeparator() +
-                "      \"token\": \"EsdnMEwgN_8vim67x99uXs4PRf0pEFYPoR2zb3xpNBQ\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"dns-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/7\"," + System.lineSeparator() +
-                "      \"token\": \"CpKffHs2YglmLA3dcLsqqEGj54cd0QvyuYWsHDl-aFw\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"valid\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s/8\"," + System.lineSeparator() +
-                "      \"token\": \"h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/9Q-rVw\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"," + System.lineSeparator() +
                 "      \"validationRecord\": [" + System.lineSeparator() +
                 "        {" + System.lineSeparator() +
-                "          \"url\": \"http://172.17.0.1:5002/.well-known/acme-challenge/h1-B7k5V9rPsKmJxGIU4yEeqqaSKypCeCIWqDe1GPXQ\"," + System.lineSeparator() +
-                "          \"hostname\": \"fjsljghasldfjgk.com\"," + System.lineSeparator() +
+                "          \"url\": \"http://fjsljghasldfjgkv2.com/.well-known/acme-challenge/qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"," + System.lineSeparator() +
+                "          \"hostname\": \"fjsljghasldfjgkv2.com\"," + System.lineSeparator() +
                 "          \"port\": \"5002\"," + System.lineSeparator() +
                 "          \"addressesResolved\": [" + System.lineSeparator() +
                 "            \"172.17.0.1\"" + System.lineSeparator() +
@@ -1252,85 +1220,97 @@ public class AcmeClientSpiTest {
                 "          \"addressUsed\": \"172.17.0.1\"" + System.lineSeparator() +
                 "        }" + System.lineSeparator() +
                 "      ]" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"dns-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/cJNUZw\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/33/TYojGA\"," + System.lineSeparator() +
+                "      \"token\": \"qB-dx1r8U2JsP0uXCLVmMKcFcgMRVESXnGX1n0Eb9io\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_URL = "/acme/finalize/1/3";
+        final String FINALIZE_URL = "/acme/finalize/8/38";
 
         final String FINALIZE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T18:31:37Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-22T14:33:01Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"fjsljghasldfjgk.com\"" + System.lineSeparator() +
+                "      \"value\": \"fjsljghasldfjgkv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/33\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/1/3\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/ff8aadf65d2fd76a59e8010a71b1aa0cfcb3\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/8/38\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ffd1a2730985d8e32ab1ac438aefc65518e5\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_REPLAY_NONCE = "fpOvJkPvyGfYKIrlhFiLuQV9p5KpUnsiAE7OF4DlBHE";
-        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/1/3";
+        final String FINALIZE_REPLAY_NONCE = "zincl2Z7DtAW_lUYY_g0XB2mg2s2im_ipXMJ2WrBXVXDn6g";
+        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/8/38";
 
-        final String CHECK_ORDER_URL = "/acme/order/1/3";
-        final String CHECK_ORDER_REPLAY_NONCE = "iAeto9P3tcrx_yxqayPuQ2qjIF2zPuDawOc18wyXl_g";
+        final String CHECK_ORDER_URL = "/acme/order/8/38";
+        final String CHECK_ORDER_REPLAY_NONCE = "taroqeMgGanpdqBR-8RJMZb0dUuK8xIyiFKuJpO_wQ1Ldj8";
 
-        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiZnBPdkprUHZ5R2ZZS0lybGhGaUx1UVY5cDVLcFVuc2lBRTdPRjREbEJIRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL29yZGVyLzEvMyJ9\",\"payload\":\"\",\"signature\":\"NQtYeOF6np1sZYlNoeap7dVGJzJMuUHyOQyFk14KssttTA3R5FEst26aLW_OI0nS-DVWC545v95ws5XWtbaW7PhMP6yusWInjKL8_2Ll6Wuv-TWc67I_fO1ureaCyJx7jxI20uSKDovINtx56v6bMH0gMpmXyRXqkJ2dtVluvpP9z5xA8EnvdTJX4JavuXYJDJbP7T-fVE5xC34Jid78ShFXp86xHh37gD2ezsSTWjGO73tScpqZD8S2KBWq38VzMHto1k8ZH57rNxHsZJ70vSgfWPRyxICoUjOENmjAJHbxC56JXpagQM9Czcogfth38xK5fsJwx_gDYE5Y5OAMoA\"}";
+        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvOCIsIm5vbmNlIjoiemluY2wyWjdEdEFXX2xVWVlfZzBYQjJtZzJzMmltX2lwWE1KMldyQlhWWERuNmciLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9vcmRlci84LzM4In0\",\"payload\":\"\",\"signature\":\"SEp14i23-CUnsolmHaGlJlRayBtU6yZHw6CGTpWAQWaVtwz5K-6P3SEfIJd2Hwr_-R14Qh1H_7ClbXgRiwvkDKaP0N8Ya1rzrUWO9j5er1dam1uQ7HXiwuh46XZ48ey_tKc9h4y_hWMv76kk6nq6q4vjVsgjdgciYBrn-NTFPU53yWytIO0QRhtkLEiJhboihDY0sdpjKJVvOmOc4uapsmK3BIr7sdDbtUEIlbAgqEIhLCUwT3Pdi_h8H7WcG6csqtjs7vsfnbFMf2mx90Wv08J4tVohB0bRq0FS6OztvxyYGOrwRVAOj4JV2hMKzOmkhIQvHJ7F4Jb4cQkhQDOQzw\"}";
         final String CHECK_ORDER_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T18:31:37Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-22T14:33:01Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"fjsljghasldfjgk.com\"" + System.lineSeparator() +
+                "      \"value\": \"fjsljghasldfjgkv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/2ESkbCi5f_BNuuAMW28TSs6n5GJ2qkhrrzDz63_CL8s\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/33\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/1/3\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/ff8aadf65d2fd76a59e8010a71b1aa0cfcb3\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/8/38\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ffd1a2730985d8e32ab1ac438aefc65518e5\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CERT_URL = "/acme/cert/ff8aadf65d2fd76a59e8010a71b1aa0cfcb3";
-        final String CERT_REPLAY_NONCE = "FJE8Ulv3I8TflPcbCyENdFBPe3pu62V1NmwqUA0GN5E";
+        final String CERT_URL = "/acme/cert/ffd1a2730985d8e32ab1ac438aefc65518e5";
+        final String CERT_REPLAY_NONCE = "zinclGQoEFMTDud-yvqcyzMsVhgC2LOBhQit5x9-U1OHQdQ";
 
-        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMSIsIm5vbmNlIjoiaUFldG85UDN0Y3J4X3l4cWF5UHVRMnFqSUYyelB1RGF3T2MxOHd5WGxfZyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NlcnQvZmY4YWFkZjY1ZDJmZDc2YTU5ZTgwMTBhNzFiMWFhMGNmY2IzIn0\",\"payload\":\"\",\"signature\":\"VseQTW_Log95lBnTCORmxTJpqq9UeZ2ItpFoj2wPt3bVnPz7PcLhdKaR1cFnnlZwEFMw0rPhzD-JBSusrEGnZ7a0qZ-CwFLDGhrldXZnlNfN2QMQSLVgcg8MupwYdm6W--YkMloqgWCIOPk5QMSIbCmHekZhkBeRNdL4ScNKatgnOMa3EmISFJNAMQ2eA_cVAn-8XO8qZ9S3qhhfJ86FjPV4b0b9GhI9U-tJgPNqNvzZIql3V8CyYr60MTRujXwLp1rJ-YhmKT9XnObsJo8rIRoWP-yxWrSMxcPMqXOrso-k9YJZU5PfG_met7M0NX6vS7a_MtJzyPKQmC3ZrAwN0Q\"}";
+        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvOCIsIm5vbmNlIjoidGFyb3FlTWdHYW5wZHFCUi04UkpNWmIwZFV1Szh4SXlpRkt1SnBPX3dRMUxkajgiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9jZXJ0L2ZmZDFhMjczMDk4NWQ4ZTMyYWIxYWM0MzhhZWZjNjU1MThlNSJ9\",\"payload\":\"\",\"signature\":\"lNDwbsEVCt7C99EkenioR8OJEEP0wWnz98Wue-_rL1GOqHXSsxpn-PjFRLMaUVCV4Hi44lolzoxyzjnBYDFtWnkWFsaGw09JdJ_oHi4x3EG74yk2bi-1O6fE2CVAT6-4trP7BljbskEdxyPpYa7kKRzybEAv9tP-DIObk_hhQONA8R5hgpAls81kXxMMFyW5HOx30YwujKGWR_XvPpkSEfg4DFxZh7n-UqrE0DONA3cQe9eDIPb3yfIxv5WGSTis2d4UnmVegLkJhYhDtLa4L_bzR78uwyIHg86CCbblWqo2SQLR94gYRudj3d1qckZBROGKtepabnSLonW9jfhSCw\"}";
         final String CERT_RESPONSE_BODY = "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
-                "MIIFRjCCBC6gAwIBAgITAP+KrfZdL9dqWegBCnGxqgz8szANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
-                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xODExMjMxNzMx" + System.lineSeparator() +
-                "MzdaFw0xOTAyMjExNzMxMzdaMB4xHDAaBgNVBAMTE2Zqc2xqZ2hhc2xkZmpnay5j" + System.lineSeparator() +
-                "b20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDbeFecNuAOSBc4TiE+" + System.lineSeparator() +
-                "uP6F4o6FMdKSR73ioNf+e37jUHjA2xFCU7WdAsffnVDOrE/vcaVAjee6ygLDOa5W" + System.lineSeparator() +
-                "233hhlqrAjleVXb63cmKeVAqK6mWudYqvmy4KkvcMVW6wcWQSUKn7HDdQSK2NXcV" + System.lineSeparator() +
-                "S5OtTnivdX/Jzyh78U/o7UkRGRlpq6GaFIejB+xKHC0r9jJAD3Rf6kE3WusZtxGt" + System.lineSeparator() +
-                "KU6fmmQ2gUMkn91RVASxMEsgV3nGwPVSKFs5YM/xHs27ktiCWRe4jiEdK2LAzEe/" + System.lineSeparator() +
-                "rWdJ8awRPQiosYALPb+vEfIIaGMOHbsamBo091J6RpORftB8hMMQmCaX8+YrTipw" + System.lineSeparator() +
-                "Avw1AgMBAAGjggJ6MIICdjAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYB" + System.lineSeparator() +
-                "BQUHAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFJpVcrQq28ZE" + System.lineSeparator() +
-                "YPxS/a8CFgoEoqO8MB8GA1UdIwQYMBaAFPt4TxL5YBWDLJ8XfzQZsy426kGJMGQG" + System.lineSeparator() +
-                "CCsGAQUFBwEBBFgwVjAiBggrBgEFBQcwAYYWaHR0cDovLzEyNy4wLjAuMTo0MDAy" + System.lineSeparator() +
-                "LzAwBggrBgEFBQcwAoYkaHR0cDovL2JvdWxkZXI6NDQzMC9hY21lL2lzc3Vlci1j" + System.lineSeparator() +
-                "ZXJ0MB4GA1UdEQQXMBWCE2Zqc2xqZ2hhc2xkZmpnay5jb20wJwYDVR0fBCAwHjAc" + System.lineSeparator() +
-                "oBqgGIYWaHR0cDovL2V4YW1wbGUuY29tL2NybDBABgNVHSAEOTA3MAgGBmeBDAEC" + System.lineSeparator() +
-                "ATArBgMqAwQwJDAiBggrBgEFBQcCARYWaHR0cDovL2V4YW1wbGUuY29tL2NwczCC" + System.lineSeparator() +
-                "AQQGCisGAQQB1nkCBAIEgfUEgfIA8AB3AN2ZNPyl5ySAyVZofYE0mQhJskn3tWnY" + System.lineSeparator() +
-                "x7yrP1zB825kAAABZ0HXcsAAAAQDAEgwRgIhANOS0vF4e5hs3GOmHPqOu9Nsf+/P" + System.lineSeparator() +
-                "rBqXIlZVv/sc4/OyAiEA9ylAXlcSXCwLIrSQ3Nd13m54f9hYefgGfLr65BuSsMwA" + System.lineSeparator() +
-                "dQAW6GnB0ZXq18P4lxrj8HYB94zhtp0xqFIYtoN/MagVCAAAAWdB13LAAAAEAwBG" + System.lineSeparator() +
-                "MEQCIAe17g1Q0vdsK5MHs6ypajNbdbNxYCcIXCF5EjYcYjdaAiAyRZJm1T/6ozfx" + System.lineSeparator() +
-                "IBxF9oC3j0Ma0q+1xzihaL3FZnWmYTANBgkqhkiG9w0BAQsFAAOCAQEATxbLjVMZ" + System.lineSeparator() +
-                "LSO2nx3rok4Ybdwc1OEV4PDlDc/e4NOGCRXR6ZflZlcvp5Gv4nEpHbosuyYfKPIh" + System.lineSeparator() +
-                "Ac3BPpxUxEC+r3I93p5iV8PXEhA/ajZSdp4nX1lxXR+CZtiGPJIhX9TzmR+Ba1BW" + System.lineSeparator() +
-                "zdklVzU5dmodSXGXV51G1IQKTUNOdNoo26plbII50OLkAbMacgji8G55bLsgLW97" + System.lineSeparator() +
-                "RxQY/XE3Phja6Pgcu3oIYPHmOGp/FPLKr7iL2uR8e1Cr/4ke53wdoCmDYctjvvrU" + System.lineSeparator() +
-                "ZFts88Q9Exu92/XH2BuClpDEzPW08quHG9k6jtes5bzd8zTmJxs8E1sbE9JXUKGC" + System.lineSeparator() +
-                "2kBDtvsu69hhHQ==" + System.lineSeparator() +
+                "MIIFSDCCBDCgAwIBAgITAP/RonMJhdjjKrGsQ4rvxlUY5TANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
+                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xOTA3MTUxMzMz" + System.lineSeparator() +
+                "MDJaFw0xOTEwMTMxMzMzMDJaMCAxHjAcBgNVBAMTFWZqc2xqZ2hhc2xkZmpna3Yy" + System.lineSeparator() +
+                "LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJdYcAK/Wc60J0yN" + System.lineSeparator() +
+                "OUj6ZOzP8jJFCDAMfkHXlK7io/jYAHdBGuDlFM6ov65ZBdQGpgxQ5fkJ/FoLjISo" + System.lineSeparator() +
+                "UGuPOH1CeMu5w/by1fPiQZ9SbdpoI1D7geoJZXjiuksuGRg/Jjg11FD3eCrCOthO" + System.lineSeparator() +
+                "f+I750q/p7/qpKZMTvCRCyCIFyhABY/gxX7AtvGuysRwLhnh4+D5dlJuYGDM5cc9" + System.lineSeparator() +
+                "Lf/r1sU7HNDEm+BY9BQZl3EIyfMqU2NZnnUEgkQTjGRa1KkDhpyQX6ojlepZAdOn" + System.lineSeparator() +
+                "wn7xG4HLW3aFJvjpVcZOaWF+8ARx7c/1+rn9zG+NVKmpAiTh3LsN5ta8ZYeQ5OgZ" + System.lineSeparator() +
+                "p9DYlJECAwEAAaOCAnowggJ2MA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUEFjAUBggr" + System.lineSeparator() +
+                "BgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAdBgNVHQ4EFgQUiXSw9phY" + System.lineSeparator() +
+                "9D/I5V0B9/VLD3orfoUwHwYDVR0jBBgwFoAU+3hPEvlgFYMsnxd/NBmzLjbqQYkw" + System.lineSeparator() +
+                "ZAYIKwYBBQUHAQEEWDBWMCIGCCsGAQUFBzABhhZodHRwOi8vMTI3LjAuMC4xOjQw" + System.lineSeparator() +
+                "MDIvMDAGCCsGAQUFBzAChiRodHRwOi8vYm91bGRlcjo0NDMwL2FjbWUvaXNzdWVy" + System.lineSeparator() +
+                "LWNlcnQwIAYDVR0RBBkwF4IVZmpzbGpnaGFzbGRmamdrdjIuY29tMCcGA1UdHwQg" + System.lineSeparator() +
+                "MB4wHKAaoBiGFmh0dHA6Ly9leGFtcGxlLmNvbS9jcmwwQAYDVR0gBDkwNzAIBgZn" + System.lineSeparator() +
+                "gQwBAgEwKwYDKgMEMCQwIgYIKwYBBQUHAgEWFmh0dHA6Ly9leGFtcGxlLmNvbS9j" + System.lineSeparator() +
+                "cHMwggECBgorBgEEAdZ5AgQCBIHzBIHwAO4AdQAW6GnB0ZXq18P4lxrj8HYB94zh" + System.lineSeparator() +
+                "tp0xqFIYtoN/MagVCAAAAWv2DRpoAAAEAwBGMEQCIE/rONbtJZRC1zabAJZ5i3L/" + System.lineSeparator() +
+                "7oDs/ZcJer6p+0OfliP+AiAtmgs5VWHfNmTBiSPNnkVLSMHnzA2ONOQSLFJ1Xsed" + System.lineSeparator() +
+                "0AB1AN2ZNPyl5ySAyVZofYE0mQhJskn3tWnYx7yrP1zB825kAAABa/YNGmkAAAQD" + System.lineSeparator() +
+                "AEYwRAIgHqL89OFhmhOAeSBf4qCMuQAsOoA7wEXpPotoR7fN5c8CIHz21nM018rT" + System.lineSeparator() +
+                "q8/xAWaiXb0EUC9RJzfUO9AHZ9VCwDWZMA0GCSqGSIb3DQEBCwUAA4IBAQAOlUUt" + System.lineSeparator() +
+                "rUX4aWPGnhIRZDNzeNu8cWyS56aSGGncRzMywNHdLb2BuUz20HTgBI58y6p16azY" + System.lineSeparator() +
+                "RNpA5v971YxYZu39IFqRYcBQ4FR8iORrwqPW1Kgh2OMA5qcbGNEEYq1NQQgcKTtR" + System.lineSeparator() +
+                "dBjUgSTzf2KOmwo8FWYm2Swy2aXObH8ByxO4RPLXs4wwDMr9OGUN8SmGE59zNvqI" + System.lineSeparator() +
+                "v90YxY7QsgL0dXy8Q2vlfwTAbucyKEBJkO00tdiUZb+vnrS3PZswZHx6QNBdKRNQ" + System.lineSeparator() +
+                "vjkL5lqSQzBDpc9TykM3wzpRgN03N34mLs3a69N5XFnz5dUt/PEDGU4Vcvmn/M0c" + System.lineSeparator() +
+                "jwsnZrDGIuXlHoTQ" + System.lineSeparator() +
                 "-----END CERTIFICATE-----" + System.lineSeparator() +
                 "" + System.lineSeparator() +
                 "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
@@ -1376,7 +1356,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"R0Qoi70t57s\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"z8YaUV3YTsY\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1391,126 +1371,102 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "as0qhFiJk4eKYeAXBE4Jr0c-cx5GphsCuRPNWF30img";
+        final String NEW_NONCE_RESPONSE = "zincV4PrcvXgFFHASC7eaoGW3hq-VNrQjsBOxMRhZjST6s8";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJoNWlULUY4UzZMczJLZlRMNUZpNV9hRzhpdWNZTl9yajJVXy16ck8yckpxczg2WHVHQnY1SDdMZm9vOWxqM3lsaXlxNVQ2ejdkY3RZOW1rZUZXUEIxaEk0Rjg3em16azFWR05PcnM5TV9KcDlPSVc4QVllNDFsMHBvWVpNQTllQkE0ZnV6YmZDTUdONTdXRjBfMjhRRmJuWTVXblhXR3VPa0N6QS04Uk5IQlRxX3Q1a1BWRV9jNFFVemRJcVoyZG54el9FZ05jdU1hMXVHZEs3YmNybEZIdmNrWjNxMkpsT0NEckxEdEJpYW96ZnlLR0lRUlpheGRYSlE2cl9tZVdHOWhmZUJuMTZKcG5nLTU4TFd6X0VIUVFtLTN1bl85UVl4d2pIY2RDdVBUQ1RXNEFwcFdnZ1FWdE00ZTd6U1ZzMkZYczdpaVZKVzhnMUF1dFFINU53Z1EifSwibm9uY2UiOiJhczBxaEZpSms0ZUtZZUFYQkU0SnIwYy1jeDVHcGhzQ3VSUE5XRjMwaW1nIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"ZyeduXF5oI4QUAg3ZF0zgVk8TXn4K-OdzRSOFkakYXVpbK2hwW7I7iuNh7YZIv_hUVmtMfglA9ZtISYif1lEqONDtkFWOyyZVxyom9TyjB-tdjtS77YNa-yYyELDE7O9MWBrI7m0PH6X6R2688VuNgfLtdzcjD_nWHzLbKoj8aGiIWLoArekPqq0Gg6I1hxgiCiDSaev8GvXcNDGDe9M9PhacbIyXrNGWNXxQAoOy-76Ly5ptW-2tjbLxpSYfZzJpQJP_bgK8OhndUf3TidvBS2TBI4tikGZIm6ZKsX6mwDH7kHseBf0HE--vuR7WwXnp2UKZcn-64lxGNTqIYPB0w\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJpcVZkd3laNGl0VlNoOFVWX2Z3NlpnVjh3Mk56SEtGdzZWeWl5cGRLMmlyUkk0T3BMdWhJNEhqQ3pSTHR0WkJPX3ZLRjFZaTB1dVdMaFFzMnVpWlJ5eXFCa0R6SXU3UnIwZWp2T2UtLVc2aWhLanE2WnNCQ2Q3eDhMUl9yYXp1X242V1BkQWJZeWZxdnBuS0V0bGZxdW4yMWJnWk1yT1R4YW0tS0FNS2kyNlJlVi1oVDlYU05kbWpoWnhtSzZzQ0NlTl9JOTVEUXZ1VG55VFctUUJFd2J2MVVOTEEtOXRIR3QyUzQ0a2JvT0JtemV6RGdPSVlfNFpNd3MtWXZucFd5VElsU0k3TmlNMVhKb1NXMHlSLWdjaFlRT1FuSEU2QUhtdk5KbV9zSTlZN0ZhQmJVeVJpS0RnTi1vZlR3cXNzdzZ2ejVucUxUanU3Y2dzWld4S1dESHcifSwibm9uY2UiOiJ6aW5jVjRQcmN2WGdGRkhBU0M3ZWFvR1czaHEtVk5yUWpzQk94TVJoWmpTVDZzOCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"gRo90mq436foiLKrfV1u60yA9P7Zow6VujoSib6QeqidIfM5Oi2dMg6qr5lnA43-BFrPlPrSEQ00AY2N1__hpbR8WDrheHVaizYh3ntmeQ3GoXqsu7pvXDMveIicr8JYNaGO2Lz78tw21LCIpz6Iyei_tOeIHdp7tBkB813eAdL6W9g7y6o7F-HqJf2zYfZ8p-inphteEXy_N2WYSxOUsVInEmmV2evPJZ-Q_wGPam1KqyOWavCxln5KdcgeXp_MCCl9nPPOSb74XjJhyJwJs6SEbp8S38dFswRUgTY38evzx_xvlQRVWb7UrZmEPWGvUAkgPejccslZoT_ajHtcig\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "na_bjoXbpRlEFD8Bb2shGzT2Xiy6_ju4Gs6YJCPPs1E";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/2";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroq4c6_F5_CIj2KA3dyxojYl4TX3k2jHoGBqchbp9D3ks";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/10";
 
 
-        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoibmFfYmpvWGJwUmxFRkQ4QmIyc2hHelQyWGl5Nl9qdTRHczZZSkNQUHMxRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1vcmRlciJ9\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiaW5sbmVzZXBwd2tmd2V3LmNvbSJ9XX0\",\"signature\":\"Xobxsl_guUz2T3bUMTAwA5A4MzZt4HBzcGPHlcaldvPm8nqh2HZ9BfRBh7pAqGJUxzFJkyPK4BhO8F4ekzEQsEOhhCsV42f9lelVp2lWFbxPdWJVIOIhfLrzMLgTfqkrfL2GIZqsWAT4B94VgbBw1dfB7NwAzujGv6kJo9USA86slStLYDE06q7lL7q0tWe63vKtPhzEJv5odgcLL8vBb9ANiM9ZeSlFprw6nzTGn3M7gVY3IlenkK8XHJjN_9Xw0aeYcOMqB5o14LowDpyKFlgPYeVuu-bhl1YcGMrDvUVj0lnZS-_YoW0vfMKyvWxWhZKbVf8UcH-e_eAVdx2cbA\"}";
+        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InRhcm9xNGM2X0Y1X0NJajJLQTNkeXhvallsNFRYM2syakhvR0JxY2hicDlEM2tzIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LW9yZGVyIn0\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiaW5sbmVzZXBwd2tmd2V3djIuY29tIn1dfQ\",\"signature\":\"Ec9GvU8kMXffSZ2nsXDzNxkZDRwQKJRZrDk4ijg4C-Xsvpk5ggfb9gN7-5LFJzhpxqBSjgZsA6EBG_bRNPN7th5mJWqhOfIGU4UbxOuIdirvprlBbuv_EHucGIncwlFfju5uAnJsnQQrZzsWj6yvaj2vpgvdSpzanmIsDbO4dRN9NDwntORy95Px54FGt9TxBrI1kGXLGwA6SX5qOSeLu-aMqys2kzf5Tnox-rmnvAKVaym3vWSX2wBHmnVGiynIAupW9Znakeqw2lOWWQdG_0ybXphvyAjnMgPgjSd28b02lz9Rs3N25Pg5zT4BnrRDrJY734-tIC5VoY2cm3wb3g\"}";
         final String ORDER_CERT_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:18:11.372756901Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T20:20:42.047150201Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"inlneseppwkfwew.com\"" + System.lineSeparator() +
+                "      \"value\": \"inlneseppwkfwewv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/47\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/2/8\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/10/69\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String ORDER_CERT_REPLAY_NONCE = "RvM3fgI2Z08HTzhbwKA-EnOrJtnGqV81tOlfErZIAK4";
-        final String ORDER_LOCATION = "http://localhost:4001/acme/order/2/8";
+        final String ORDER_CERT_REPLAY_NONCE = "zincTg-qOV-A1AthHGt9XKWZjPyd7459Ab5bFS2Rsb-k2pU";
+        final String ORDER_LOCATION = "http://localhost:4001/acme/order/10/69";
 
-        final String AUTHZ_URL = "/acme/authz/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk";
-        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoiUnZNM2ZnSTJaMDhIVHpoYndLQS1Fbk9ySnRuR3FWODF0T2xmRXJaSUFLNCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2F1dGh6L1l6THF2azdHZWRMSVZmQWtyZUZnTmNydC1LY1Y1TW9LZE1XWmNPbHFKcGsifQ\",\"payload\":\"\",\"signature\":\"C5nBE_22rqq5LsqDGackn_v09Jltf09fg-aPIW_xdL9jKWu2cOlU_ktFTYGI1JEzYyVplzoLLzkXgfmOdQKlm9IrxMWB7FsY_JzfEl2bHGsacE3we-OzPXFMQjPblAyc--7Prk56_mMtVpGaJMJAYOu4Nr3ZkcdWkjTvkNyRFGj2dinKS2aFytngBG26zZbLVTgZpXXHuvSxAd8C0cgc5KxJbk8iI3E9r39k_7RcbMRQ-2_scmoiWMTyipav7kBqEj8LSPqHLNeUo7hbui0Jwh8vQ6VFc1kMURqTGioXfzGQytsm3C2A6wOYGLdPgKldVu1J9ruD_bGw2NjUmMp_kw\"}";
+        final String AUTHZ_URL = "/acme/authz/v2/47";
+        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InppbmNUZy1xT1YtQTFBdGhIR3Q5WEtXWmpQeWQ3NDU5QWI1YkZTMlJzYi1rMnBVIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYXV0aHovdjIvNDcifQ\",\"payload\":\"\",\"signature\":\"F2rVeV76ynMI6nt_4oncsrx4m7-hnraZPz0rUyVHHkaoRUicAFgI0MlXszbFEzMhJ4vztfq5ovhBWfWKKxK2oUZGLqW834-HHKByyAiOUSgOSw0naLxFs96U09OAPQGBTcd1z9bsVmXG8orVIxxoKVDjQzkxfb0L1QC0FdNx-Vl0R6CKDdgLbUPKR2pbagSVKMJ8HPFWuYYnUeQZqmr3i0vkjNQRHO6pFcLPRXSHwywKO73JaGDbynOSu-MAWmkSQ2TaMfNQxrmaSjgRvB1K0wJXjCz3nyO7xYraC10ldbLwEmTu-DDIVJ0zyMgAEp3NGYYx-77qUHp_2UCrrY5KhA\"}";
         final String AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"inlneseppwkfwew.com\"" + System.lineSeparator() +
+                "    \"value\": \"inlneseppwkfwewv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:18:11Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T20:20:42Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/17\"," + System.lineSeparator() +
-                "      \"token\": \"vKGXiPTz4xRD23TLKdFKUflWK6DdEPIWOdChQxWBJTA\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/18\"," + System.lineSeparator() +
-                "      \"token\": \"6BIn9ySZG5m9yweJX1KKkRsJa_B0alX4DrfQF1YtmJc\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/z7sh0A\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/19\"," + System.lineSeparator() +
-                "      \"token\": \"59uoXgFHuyYVwZDxIyXIhFe-OZkFlJhk_3iFiENmRZ4\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/mlvrMA\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"http-01\"," + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/20\"," + System.lineSeparator() +
-                "      \"token\": \"DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/_wf1QQ\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String AUTHZ_REPLAY_NONCE = "KvD4oVF2ahe2w2RtqbjYP9nJH_xzVWeHJIlhDRNn-N4";
+        final String AUTHZ_REPLAY_NONCE = "tarozNXDL3x4apxYH38Mz3y3oDRdMLMp8fujKrf8JtplOww";
 
-        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoiS3ZENG9WRjJhaGUydzJSdHFiallQOW5KSF94elZXZUhKSWxoRFJObi1ONCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NoYWxsZW5nZS9Zekxxdms3R2VkTElWZkFrcmVGZ05jcnQtS2NWNU1vS2RNV1pjT2xxSnBrLzIwIn0\",\"payload\":\"e30\",\"signature\":\"FyKdGn_TlCbEg21RtgXSIZS8Js0YGMFHv5V1SJaefy1LDw_YeSx5_X1g_rEB1BLGuxUoIv96CMDeX-_GAb5PNYSVQfzc_kEIs8YLpVWrWCq_KVNbRx1NWBl5Vc4hYgwWa246wWMD2AjMBOtD46ncuYinJkueHX3sbW_CKBMEo-LG3SdupX-sNckcpuQqlRdNaEwfi1hxEZLjoHvlyzfg9kUH4m39wsoSXELQm2ZeYv8pUOqvXH3M02Ik4CjT_2_lhh0NzU6Kh_WXrHawK-2FPkSYN0xdqh4qK1i_YcUSG9_trtgxcHBVJLfn9jroqpmpy7Y4Li8M4C4J-M90nzPMXQ\"}";
-        final String CHALLENGE_URL = "/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/20";
+        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InRhcm96TlhETDN4NGFweFlIMzhNejN5M29EUmRNTE1wOGZ1aktyZjhKdHBsT3d3IiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvY2hhbGxlbmdlL3YyLzQ3L3o3c2gwQSJ9\",\"payload\":\"e30\",\"signature\":\"V-wYzOrZNxeHBxcVEoGvo5ISccYRSBVRiTajcmSla04f9SCm1nvgeE7u0N0Uc07ATlEqBTSvqN0v3iiLGuMxff-xEePQ15DsEUv8aN231ZiUvGalZYtV8UCM_8yz9Ixc4dgFJEBzY3zhyV3yKiPteF1hh6QMyTmk9erOuWJqIuWuluKo3vbF1K5A7z5E0Uq1uSysMQ5h-c5wqY7eDQzrGZ-PadSzUXXzAMKXqpNizpPRF3PfE0D6R3AiutunSgNCkd4qYgEGqZ1Xx8_caJ_s_2dHuNPbyDHShesAL9vp0SIs0etfzCbAYJFut6erA5hfyJDyIRl4VadC9obNSn_zqA\"}";
+        final String CHALLENGE_URL = "/acme/challenge/v2/47/z7sh0A";
 
         final String CHALLENGE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"http-01\"," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/20\"," + System.lineSeparator() +
-                "  \"token\": \"DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w\"" + System.lineSeparator() +
+                "  \"url\": \"http://localhost:4001/acme/challenge/v2/47/z7sh0A\"," + System.lineSeparator() +
+                "  \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CHALLENGE_REPLAY_NONCE = "A-3-ge_TjcQwoYdlSJX4YtznB5fPVME627MwK-U_GkM";
-        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/20";
-        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/LJRH3-gjUPt5U5v8wH1Ch3eFcxu8UK-uotjutm5NB9s>;rel=\"up\"";
-        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w";
-        final String CHALLENGE_FILE_CONTENTS = "DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w.w2Peh-j-AQnRWPMr_Xjf-IdvQBZYnSj__5h29xxhwkk";
+        final String CHALLENGE_REPLAY_NONCE = "zincdmVABCB6HjsLMqEUskJi720sehqIUtrhyOeUOZ3IrCU";
+        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/v2/47/z7sh0A";
+        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/v2/47>;rel=\"up\"";
+        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc";
+        final String CHALLENGE_FILE_CONTENTS = "215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc.N6GU8Z78VIOWz1qOEJObBvhcmfflldy-TQWkizoonrU";
 
-        final String UPDATED_AUTHZ_REPLAY_NONCE = "jBxAXwYy9_19Bue5Wcij8aiAegiC4nqGTFD_42k3HQQ";
+        final String UPDATED_AUTHZ_REPLAY_NONCE = "taroT16QLPZ628OzZtwZU6yA6-hnbfWexEyGOC-H5ji3hJw";
         final String UPDATED_AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"inlneseppwkfwew.com\"" + System.lineSeparator() +
+                "    \"value\": \"inlneseppwkfwewv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-12-23T22:18:11Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-08-22T20:20:42Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/17\"," + System.lineSeparator() +
-                "      \"token\": \"vKGXiPTz4xRD23TLKdFKUflWK6DdEPIWOdChQxWBJTA\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/18\"," + System.lineSeparator() +
-                "      \"token\": \"6BIn9ySZG5m9yweJX1KKkRsJa_B0alX4DrfQF1YtmJc\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"dns-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/19\"," + System.lineSeparator() +
-                "      \"token\": \"59uoXgFHuyYVwZDxIyXIhFe-OZkFlJhk_3iFiENmRZ4\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"valid\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk/20\"," + System.lineSeparator() +
-                "      \"token\": \"DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/z7sh0A\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"," + System.lineSeparator() +
                 "      \"validationRecord\": [" + System.lineSeparator() +
                 "        {" + System.lineSeparator() +
-                "          \"url\": \"http://172.17.0.1:5002/.well-known/acme-challenge/DGdnia8PWJaVYXnFZOdQGOedbryAWa7AUEk9UjSxA0w\"," + System.lineSeparator() +
-                "          \"hostname\": \"inlneseppwkfwew.com\"," + System.lineSeparator() +
+                "          \"url\": \"http://inlneseppwkfwewv2.com/.well-known/acme-challenge/215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"," + System.lineSeparator() +
+                "          \"hostname\": \"inlneseppwkfwewv2.com\"," + System.lineSeparator() +
                 "          \"port\": \"5002\"," + System.lineSeparator() +
                 "          \"addressesResolved\": [" + System.lineSeparator() +
                 "            \"172.17.0.1\"" + System.lineSeparator() +
@@ -1518,91 +1474,103 @@ public class AcmeClientSpiTest {
                 "          \"addressUsed\": \"172.17.0.1\"" + System.lineSeparator() +
                 "        }" + System.lineSeparator() +
                 "      ]" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"dns-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/mlvrMA\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/47/_wf1QQ\"," + System.lineSeparator() +
+                "      \"token\": \"215ACi-BkIjZ28ynW7kiDco21cv4wxRyByykbgxl9Pc\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoiakJ4QVh3WXk5XzE5QnVlNVdjaWo4YWlBZWdpQzRucUdURkRfNDJrM0hRUSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2ZpbmFsaXplLzIvOCJ9\",\"payload\":\"eyJjc3IiOiJNSUlFc3pDQ0Fwc0NBUUF3SGpFY01Cb0dBMVVFQXd3VGFXNXNibVZ6WlhCd2QydG1kMlYzTG1OdmJUQ0NBaUl3RFFZSktvWklodmNOQVFFQkJRQURnZ0lQQURDQ0Fnb0NnZ0lCQUtaSU15U2NOczM0UHNPTUtXZjE5cy1ORTBMNDVaUGYxdDVVZjhGYllfYkV2UFpiSG1qbS1RalhTQ1dVZmowelVzdHo2N3h2RXZicS01d2h5Zk9tQ2VBOWw4djBrZHBacHRwdUtIdjN6T05URDBCd2N3c01adzhYTm9DQXdQWk1DTUNqMTZPNDIzYjRzbTE0RDBEUGg2bEkwanI3dXB1QVhTWXU4YkNJeUVISllJY2ZDd2pGOXNUeUctV3p6SjdwMWhwV2F1N0s5MmFNekRQTGZBandUSkFqdGNxNEhuNl9GX3NIQXNQM0RhWU5lMnp4QUxaWXRiYzBKSGFELWdreVNILUZ6TU9pWlNJR0FTNFJCV3E4S2pwUkE3YWFTaDNfWDBjNG9kbFVPVjVXYVJWbjF0eWlGaGItMlNFT2IzQW0tb19uanBqUjBTYlVrNlZlZ0xicWVyQ2V1WGdZUzNYcXF5MlU3cTZtY0FFQUF6TzktcFlpM1Fza01hQXB3XzFhUUFSUU5JWFo3NWRpcGlmN295UzdtS0hTM0RaZUtPTDRuUlY1dFRyMjY2NFc4VUxZdjlhRmJGcFp2ak5EYThlYUl4QVdGWnEwYlN1UFhISjBjVjFGOHlaMUItT2Y4bGRhZmFjWGQxTms4S0swamw3MXRoVzhraFdtekJmNTdjR1Q3bUQ0a1dmcXY3YVJ0cVVfVE1RWjM4cDdGbnp0ZFhFTUpMQTZLRVhkV04yMU5hZkxodU1uRVBqSW9Rc2d2UEVsOEJVTDdZMkwtMC1MX2JuMEc5aV9LVG4tWFdteFdDNHk4dmdZMVQ0VVV1RkptT0lYSnl3TVFmMllvWDVIZUZ1bW10S3hHRHhrMjltSURTdHotSWVQd2lUOUE4SGtlVG5hcXN5RG1CQXpyWE5KQWdNQkFBR2dVREJPQmdrcWhraUc5dzBCQ1E0eFFUQV9NQjRHQTFVZEVRUVhNQldDRTJsdWJHNWxjMlZ3Y0hkclpuZGxkeTVqYjIwd0hRWURWUjBPQkJZRUZNRmszanFiXzRQWFZnRzhPa1ZsUXMzSzZPZkRNQTBHQ1NxR1NJYjNEUUVCREFVQUE0SUNBUUFGaXpjQW5sbmYwNUxad0duR3pKZHhQTHNndGhtanp3Uy0xcWJ2dy1kNlpmNGEtSGVBdjZTakNoVXgtVUI5UklpTy1HWERranp5eVpMUFlkbE50SlAteGNCeGs0YXZDc1ZvR0x5TUdMMVE1ejItcURXOXdoakR1M210TndvVFQ5REx3Sk1UUEJLV1ROWU9Za25tQkk1WDF1alpJVkFfSjJmUHA3SzNVMlJJQXdDNE9FX01sMzVYOElJU0hsTmplMUtMOVlNN0F4a0thcm03Wl9ic1lYcFVkQmR1T2VZRGNsbkdrRU1hT0Q4WDAxVUhuS1FmRVRlLUlmb0lXYVBSZWZWNGh4SnU5MndDR3EySnUtWVY3X0k2VVRGU1B1cUZJM0JrWXBXcUVIUUdWV2Qtck1MQ194UVVSbHNxWHhfbG5KQjlPdGFmcHpYblNCU0lRRk1xdm81Z2J3VWVscENpTDA0T280ZTNfS0NfSGtLQ3c0ZTNZdXdnY2FFUVJ3YUVZS1Y0UEc5QmNsbE1Ia19McE5LVXM1SGE1NDh6V1JNQWhRc2c3d0NIZHEzb2xwZWUyWUowbUN4cjdDLUlqT2dmcFhrdUtwYWhITUs2UzlybU9zZjdLaHVLeXpWLVBHalAybXZmTXo1b2RfZVlRV3M1UHVlbDVjMEhnbkRjdlBhVGRwTDdrZ1V5TEpHRWVBUVQ3WkE5cGxscm1hSDA1aDZRREtwNHBCLUJieTBaaHVYWlFxV2hmbmZsak91dklHN0hWUzlXWXlhTl9mdlBJOFJJa1F0MTdXQ094cEZYNDJ5YmRtWC1IVUdqLWYwS3NfOExudUVsMjBhazZ3bjZFRldLOWRRZnBaOXZIcndybTVMV0xaenlhdG1zSmI4QW1KUGhjQ3lOUFVjcFJfZmg3ZyJ9\",\"signature\":\"Cs0G6_pY_ql1INkfziVjpTW2lzlNdnW7HAn1pKwlCcb2h5IFjUA-JAfCxUrWR_uMNnvlk7-KuwtTNN_AXSaocuRlc6uJd7ZsF2xpTrkGFrTDolVjfM8VxSQYZlLhN_TMKyFyH-Dxn0fAptM2Xm3PZBSkkXMuuiSuqjMUV4fGKGEik4WERuUJZsEgdiPUsZu61usfk3kyjZ1MetgU7VzMMXg0e3tTd5t490B4X6fad8sllmee1TpTFhdfNRFcf6GYDcPnkyApvRsI9sc5gB0WM_Q_zrFip5Rk2irA2QQZeVkYmdQ7E5wEucnoxbjoY-m3A4d-4y4mcBSSZ5OA1AOKHQ\"}";
-        final String FINALIZE_URL = "/acme/finalize/2/8";
+        final String FINALIZE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InRhcm9UMTZRTFBaNjI4T3padHdaVTZ5QTYtaG5iZldleEV5R09DLUg1amkzaEp3IiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvZmluYWxpemUvMTAvNjkifQ\",\"payload\":\"eyJjc3IiOiJNSUlFdHpDQ0FwOENBUUF3SURFZU1Cd0dBMVVFQXd3VmFXNXNibVZ6WlhCd2QydG1kMlYzZGpJdVkyOXRNSUlDSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQWc4QU1JSUNDZ0tDQWdFQXBjMDZSYnJSRDF2Y3pCQ3k1ZnhodXNTSTdPLW96MlYzd293NURIdUFlN2h3LTNaWDd1SG1Pb21PUHlSLUQ3NGtONEdpckNTSWlUcE1GRC1GcUxFR3hCbXhPMjY3dUlvTnY2SjVrZHlJT0VjMkl4RldacnRyTExWd2NHeC1ROWRhcWZVMWk4cW5YMWx2RkMydUM4Vlp6OU14U0MwV29jNjN3RTVCRnJVQjFPSTQxZDlINVpwYVhRSGctY1ZraXBWWEN2TWJFVnZ1MFVKNkV5eS1JX2pSSFh3QnFYcXhZa2NtMXJuTkFBUUxKc3U3ZThyU3JIV0dNREktcy1lLUsyYm51VGZnelBJSmZZQ19peHplQ0hXU3lnQmV4d1NUd0VfOC04QWJ2SlotQmVjZl9ndnVSQm42TGtYX1FkUndnRWN5d1pGUldka1VvMG90M2xRbFF5a3g1VjFZZ1k3YXMtaEFDZmpSdXRlSFAzUXkyNE1rSmJwLV9rLThDNFp1aGRUQ1pmNlJoRWR1MGpGNF85blhLUkhGUkVOZFUzZThtaENEdFBkblBVeFFoVmoyVjdmZ1hIV2RMZThzdUpkLTlaRjBKdkpqUVJVNEdtWE5qNkxpd3dDWjBQamZZSV9mai1XTFVKVWstMXVSZk0xUDRqRE5jQ01yNjlMdVhoS0U1b2JRYXVEOUxoOF8ydmtQeG1nSTc4T1E3STZ4T2JOWWg2M0hiUHBpelJZcUwtcW53SHcyck45dXZ5S2xTSnh6NW9LVWJPTzdHa3B4bV9TQWg4ZmduOTNYbTZEZFlMbk1zZFlHdGFKSjRnRHBpUVVLTldWeC04SW4wcXBFWUxtNEdsVVNTNWViUnJWQ0JkSjI4TGNaRF8zYktCMHNMMlRVdXk2eE96LS1KdmZLVnBzQ0F3RUFBYUJTTUZBR0NTcUdTSWIzRFFFSkRqRkRNRUV3SUFZRFZSMFJCQmt3RjRJVmFXNXNibVZ6WlhCd2QydG1kMlYzZGpJdVkyOXRNQjBHQTFVZERnUVdCQlQycUd6RUQyTlVidkxnSGhsVVlDZXREczJ0N1RBTkJna3Foa2lHOXcwQkFRd0ZBQU9DQWdFQW1hcVNwY1EzYlZBbEZuNUROYkhfNEFWaHdBdVV1VzlpUkNNSkt4TS16aEVUT1hOdElVdWFsLUFlTEdkMkFCQkdHLUJQcmtVUkR6a21BbTlKOWJHcEJ5UzFDV1A4d19XcmdvRTdlcmp4NjUwSGRFc05JTk80dzhHck4zb2VCdFVUV01KaC0wdWNULXRBN20yUGstaWpPN0NRYW90cmZuUUxXY0pPV3JYM3FWU09vZ204dVpRWWlKM0tENTdXSTNmenZHUTdaM2pNSXhQdk45b0xkLVY3S1JmRGdmNXdXaDJYYVNTM2RWRkY5TFJKaTR3X1RRWjk0eDhtLXE4Y1gxMU9ybXliNGVUYmZiZDJ2MkptRVJhWE8zeUs5SkFpV2lrTHdwbzk0MFMxVHUyWm10YWNmLVQ2elp3eFdONG5UMEJob3dkc3duNmdmQkdFUE9URUduVHZDZ2RiUHFScTZBbWQ0R2NKOFNVVjhJRmpXTC1zTG92VzlSc2VJaDY4dzJab0t3NTFua2ZGX3RXdkVxY0RILWtOajdHRHZCc0xaYTIyWnptV3lNTjRTQlJjdjZKX19OcnlidWowODhVVmlyc2JWcnMzMmQzMFVfOG1TbXBqaURqcmw1dFlyTVd1NUp6U3RNalczUEgzY0hTcFdXM1V6VEVpN2JjQVE1N2ZmZW1VRjlaa2FTOWltdHl4eXZYeW8yNTA2NzNjdEh4aUNCbHhXVm9VTGtZTmswZ3NfdDhLWkEyMUkyblhKQzNOT2dKMi1BRWFPaFQ5X3lkekpvMzh0UmR0MkkwSy0zZ1ZqSUxiYXhWZEJuWGU4cnYwRllaSmFyWXhfdHhXa1VtcE1GZ3dTSllNS0tUa2FzZzZJb1N6bURDcXFKb3d0RmpIMWtSUHRHMWdSMjFVNUVJIn0\",\"signature\":\"RQ9ONpJ_ZFH7x2d0KKvEiv_enItUtRUS2tpvpt9tQVSihOOj9x-UVbSpb5QAc8MNzqAYA_vLzVYu3vj7TwMtUaVTthsaKh6-cb_0NZYqmch6JqNrUcl9G8A2zLXKzkQDbgdNWSKhg19c56HtmW4I2R3YLYZ-j9_zV7C6b0UGgIabLv6WU2wjE7teeCIRNCabkM9aQr_PLf-muaScL_xLDkfr8q5d0UeO2UoXkxwyQDOfY3y5QTHD9eyW7PG3iXSKCZCex3RLZt3PKbZJX2o2Ia8R6z8ZO3IDG3Nqs6OMzgn3hdqB1zA4TJ98NRP3p5RcQkGy7BhPaZEKjkynEZDzCA\"}";
+        final String FINALIZE_URL = "/acme/finalize/10/69";
 
         final String FINALIZE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:18:11Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T20:20:42Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"inlneseppwkfwew.com\"" + System.lineSeparator() +
+                "      \"value\": \"inlneseppwkfwewv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/47\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/2/8\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/fff0ba7aa54a2ce6597c0fa0dd6f7c8e87a7\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/10/69\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ff4d6960900116d153bd9079b2ef4ceb686e\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_REPLAY_NONCE = "l_OFFmSJQuq27CFQSG6N-2vbNCbyHG7E_RyF3J45wvg";
-        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/2/8";
+        final String FINALIZE_REPLAY_NONCE = "zincMfatmlrYZzGRlf2Lob__5LTX8HmpWUDRDcl7nR6e27Y";
+        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/10/69";
 
-        final String CHECK_ORDER_URL = "/acme/order/2/8";
-        final String CHECK_ORDER_REPLAY_NONCE = "yuXkl473reHRMcaVgTyTZ1AWO8Z_HbiHo9oj3RdoUog";
+        final String CHECK_ORDER_URL = "/acme/order/10/69";
+        final String CHECK_ORDER_REPLAY_NONCE = "taroYphvMFXUwHY9NvweFKTFO2ZEHkqXXAAFIGgwRq1XUk8";
 
-        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoibF9PRkZtU0pRdXEyN0NGUVNHNk4tMnZiTkNieUhHN0VfUnlGM0o0NXd2ZyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL29yZGVyLzIvOCJ9\",\"payload\":\"\",\"signature\":\"drMLY2890JViRe2N8BZB2gfpveieZ0hzOUYHJYz9eUPOhAzYJyS658OAs27oil7LnRVFFVdLu6iIYKmeCjS3tRWNkFQLPba8EDRSaGaJQGshaVhHtvxfv-p3M_0pJ3Mu7lJDzDwzzbZ_cYeeqI0txp1qXNqp68Ac7aT946nRrsLPaefiff0n0tGtlYvnc3TXML3hohhLtz_4xXmWnr3f_-dT17BSAZNDPrp1d7wFaoD1LVEBwTG1X-NFNOPweQ0imAEUQCg8ZPDNSbBBxxO1iLqNjQXITPxBV3hz-fmLDzh82Pgfs4KkSBtUPPkxDAX4Re6LHzkW7J-Vqu_E2NH01Q\"}";
+        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InppbmNNZmF0bWxyWVp6R1JsZjJMb2JfXzVMVFg4SG1wV1VEUkRjbDduUjZlMjdZIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvb3JkZXIvMTAvNjkifQ\",\"payload\":\"\",\"signature\":\"N2BAMYSzcrwWhEjFkwBcKSqwe2z2C0p8rOIyF3K-roYwUMX-pA4pjA1dEgpn28YmcuL-oQ3r1dVGirf6lP7-ge1jVClLvoe0xMJnt8wtL5-RfM4huwxCf8nJHilXGAIjexU-23U1gqORTNseUEjmq5C0qM4VO-jI1gctmmpBhh1ND34C0LqwvbgBuErJu3i2aTOJeVa9zslvRNv54qQIH44NN4jaJP_rOkIf5Ip3ol9lhUNp9aWhF1cPrxy8dRoV8wB-zrSidqZcyrdW5S-kBpTU54xQNyerKWJuSBxYMlWWqwwJTxJIDULf3sOBUMIdHITHnD0NVmXA9Hyt4Qi_hQ\"}";
         final String CHECK_ORDER_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:18:11Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T20:20:42Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"inlneseppwkfwew.com\"" + System.lineSeparator() +
+                "      \"value\": \"inlneseppwkfwewv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/YzLqvk7GedLIVfAkreFgNcrt-KcV5MoKdMWZcOlqJpk\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/47\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/2/8\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/fff0ba7aa54a2ce6597c0fa0dd6f7c8e87a7\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/10/69\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ff4d6960900116d153bd9079b2ef4ceb686e\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CERT_URL = "/acme/cert/fff0ba7aa54a2ce6597c0fa0dd6f7c8e87a7";
-        final String CERT_REPLAY_NONCE = "9Ir87CU21P5mNNGfhBASf2dkD7QpJdZfB9BGMIzQW9Q";
+        final String CERT_URL = "/acme/cert/ff4d6960900116d153bd9079b2ef4ceb686e";
+        final String CERT_REPLAY_NONCE = "zincKaLFWirFsBTqH1JdVRy2kiSYehDe_Jl_POZcX9Oio2o";
 
-        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMiIsIm5vbmNlIjoieXVYa2w0NzNyZUhSTWNhVmdUeVRaMUFXTzhaX0hiaUhvOW9qM1Jkb1VvZyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NlcnQvZmZmMGJhN2FhNTRhMmNlNjU5N2MwZmEwZGQ2ZjdjOGU4N2E3In0\",\"payload\":\"\",\"signature\":\"NyRAnCigeTinK1pdkEhzO1ZKwCzuG70hNBbySxzkoS00SNq-KNA_eYu9Hk5FK7SA8HPWWadgJ4UA2GNEotqaQKzMpinPPonW2hX_SrLOcUTcRAYsggpoQl6jLRCT7O4bJ4Glve_IrAW1F2GEEqWHAhEnTSQDpZul9d5qrORjUxt7qu8A_5nAbssPDErplv2uXJH4BZAyLS2v4g-MG-Yf-Iun8kN7QC4-9uFNlIZMQyclqO1nYEUbVYanZnvxTv0WysabMZlsTmCJtElsfGdraJqBMnFvstd5E5dKqcGibq5uzleJgxYd2e5sFJfKe7cew7pbVTqvjl-nk1EwqUVizw\"}";
+        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTAiLCJub25jZSI6InRhcm9ZcGh2TUZYVXdIWTlOdndlRktURk8yWkVIa3FYWEFBRklHZ3dScTFYVWs4IiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvY2VydC9mZjRkNjk2MDkwMDExNmQxNTNiZDkwNzliMmVmNGNlYjY4NmUifQ\",\"payload\":\"\",\"signature\":\"Ba_xGjJri5ZxNyav1uTH7TPgmzrtCNwwYcVUUn7TX4lhWKPUjYM0QDqUnbDMjt34rY1xe3apIoH4xvLCwaQ-R90ad8sXYr0nBVwRTUPFY0ytDQAFBfwUMLRJ61d8PXZOXp3TNJ6QE-OzgONGDXaw1P2MUvbXbacA5ePsi3_D50fi9RVJGO88Znj-GmgmRm7nP1QlN2Ce-puNt1FoQhM3KFBslnDc5gQPPG1iV7QXyx7o8driUeqY5x87oOXjUfDjzw1LjNEh4ULAGXBeRwZ7jTJSqVYQHh_bnC3nkMxoBRq9sJGoVoNlwhy_d4pavYzUe1oreb1HVeEePicg-PKZ4w\"}";
         final String CERT_RESPONSE_BODY = "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
-                "MIIGRjCCBS6gAwIBAgITAP/wunqlSizmWXwPoN1vfI6HpzANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
-                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xODExMjMyMTE4" + System.lineSeparator() +
-                "MTJaFw0xOTAyMjEyMTE4MTJaMB4xHDAaBgNVBAMTE2lubG5lc2VwcHdrZndldy5j" + System.lineSeparator() +
-                "b20wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCmSDMknDbN+D7DjCln" + System.lineSeparator() +
-                "9fbPjRNC+OWT39beVH/BW2P2xLz2Wx5o5vkI10gllH49M1LLc+u8bxL26vucIcnz" + System.lineSeparator() +
-                "pgngPZfL9JHaWababih798zjUw9AcHMLDGcPFzaAgMD2TAjAo9ejuNt2+LJteA9A" + System.lineSeparator() +
-                "z4epSNI6+7qbgF0mLvGwiMhByWCHHwsIxfbE8hvls8ye6dYaVmruyvdmjMwzy3wI" + System.lineSeparator() +
-                "8EyQI7XKuB5+vxf7BwLD9w2mDXts8QC2WLW3NCR2g/oJMkh/hczDomUiBgEuEQVq" + System.lineSeparator() +
-                "vCo6UQO2mkod/19HOKHZVDleVmkVZ9bcohYW/tkhDm9wJvqP546Y0dEm1JOlXoC2" + System.lineSeparator() +
-                "6nqwnrl4GEt16qstlO6upnABAAMzvfqWIt0LJDGgKcP9WkAEUDSF2e+XYqYn+6Mk" + System.lineSeparator() +
-                "u5ih0tw2Xiji+J0VebU69uuuFvFC2L/WhWxaWb4zQ2vHmiMQFhWatG0rj1xydHFd" + System.lineSeparator() +
-                "RfMmdQfjn/JXWn2nF3dTZPCitI5e9bYVvJIVpswX+e3Bk+5g+JFn6r+2kbalP0zE" + System.lineSeparator() +
-                "Gd/KexZ87XVxDCSwOihF3VjdtTWny4bjJxD4yKELILzxJfAVC+2Ni/tPi/259BvY" + System.lineSeparator() +
-                "vyk5/l1psVguMvL4GNU+FFLhSZjiFycsDEH9mKF+R3hbpprSsRg8ZNvZiA0rc/iH" + System.lineSeparator() +
-                "j8Ik/QPB5Hk52qrMg5gQM61zSQIDAQABo4ICejCCAnYwDgYDVR0PAQH/BAQDAgWg" + System.lineSeparator() +
-                "MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAMBgNVHRMBAf8EAjAAMB0G" + System.lineSeparator() +
-                "A1UdDgQWBBTBZN46m/+D11YBvDpFZULNyujnwzAfBgNVHSMEGDAWgBT7eE8S+WAV" + System.lineSeparator() +
-                "gyyfF380GbMuNupBiTBkBggrBgEFBQcBAQRYMFYwIgYIKwYBBQUHMAGGFmh0dHA6" + System.lineSeparator() +
-                "Ly8xMjcuMC4wLjE6NDAwMi8wMAYIKwYBBQUHMAKGJGh0dHA6Ly9ib3VsZGVyOjQ0" + System.lineSeparator() +
-                "MzAvYWNtZS9pc3N1ZXItY2VydDAeBgNVHREEFzAVghNpbmxuZXNlcHB3a2Z3ZXcu" + System.lineSeparator() +
-                "Y29tMCcGA1UdHwQgMB4wHKAaoBiGFmh0dHA6Ly9leGFtcGxlLmNvbS9jcmwwQAYD" + System.lineSeparator() +
-                "VR0gBDkwNzAIBgZngQwBAgEwKwYDKgMEMCQwIgYIKwYBBQUHAgEWFmh0dHA6Ly9l" + System.lineSeparator() +
-                "eGFtcGxlLmNvbS9jcHMwggEEBgorBgEEAdZ5AgQCBIH1BIHyAPAAdgAodhoYkCf7" + System.lineSeparator() +
-                "7zzQ1hoBjXawUFcpx6dBG8y99gT0XUJhUwAAAWdCpuW/AAAEAwBHMEUCIQDSlIhR" + System.lineSeparator() +
-                "AaD+KnEI3cUBIigDrbXJxXDYUIwoIcYErsHF7gIgXbY/rmJ6LCbYyt8PwZkDVStn" + System.lineSeparator() +
-                "2Khogm0Tk5hK4FynyxYAdgAW6GnB0ZXq18P4lxrj8HYB94zhtp0xqFIYtoN/MagV" + System.lineSeparator() +
-                "CAAAAWdCpuuZAAAEAwBHMEUCIQDmVp+En4lRjkqn23HuzJk2mEkGbuDOQvLcZ+XH" + System.lineSeparator() +
-                "hj4DcgIgBpfHfTG7i3mtCTYz20hP72/9qbEyKI8I/0yt/bMMjlEwDQYJKoZIhvcN" + System.lineSeparator() +
-                "AQELBQADggEBAEMZGO3pbTME1J97CDjpK8SX/0HUyOa8fyLXn8et6R6Q+LfhtZuE" + System.lineSeparator() +
-                "Tb+RsKtx+QcEiqwFTQF5/tIqHh3T8QoXZvSvanUmn+/wAjgmhllRHbVuNe/8QB+f" + System.lineSeparator() +
-                "NE+hhbpB5IPiQjBFPNuTyHSq5HZisrPKXr9hjKc+UhqHu6VC6kgQT7JrAlQ3YXcA" + System.lineSeparator() +
-                "rIUGyi325G8mOUqs+vl24Lu6ll2BP9kHTBatYJyj0b1JnuVpIiCCXSS13v3VYg+b" + System.lineSeparator() +
-                "ejRaEGe9QhHNHEola5ZxYb/Ryacvd/ZGZBAIRCy8zOV4zaOmP6WXk9yajUswhymx" + System.lineSeparator() +
-                "uDS1f3V/hiCjfuDZ7ljN4FQYBF2eIMZT6Ks=" + System.lineSeparator() +
+                "MIIGSjCCBTKgAwIBAgITAP9NaWCQARbRU72QebLvTOtobjANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
+                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xOTA3MTYxOTIw" + System.lineSeparator() +
+                "NDNaFw0xOTEwMTQxOTIwNDNaMCAxHjAcBgNVBAMTFWlubG5lc2VwcHdrZndld3Yy" + System.lineSeparator() +
+                "LmNvbTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAKXNOkW60Q9b3MwQ" + System.lineSeparator() +
+                "suX8YbrEiOzvqM9ld8KMOQx7gHu4cPt2V+7h5jqJjj8kfg++JDeBoqwkiIk6TBQ/" + System.lineSeparator() +
+                "haixBsQZsTtuu7iKDb+ieZHciDhHNiMRVma7ayy1cHBsfkPXWqn1NYvKp19ZbxQt" + System.lineSeparator() +
+                "rgvFWc/TMUgtFqHOt8BOQRa1AdTiONXfR+WaWl0B4PnFZIqVVwrzGxFb7tFCehMs" + System.lineSeparator() +
+                "viP40R18Aal6sWJHJta5zQAECybLu3vK0qx1hjAyPrPnvitm57k34MzyCX2Av4sc" + System.lineSeparator() +
+                "3gh1ksoAXscEk8BP/PvAG7yWfgXnH/4L7kQZ+i5F/0HUcIBHMsGRUVnZFKNKLd5U" + System.lineSeparator() +
+                "JUMpMeVdWIGO2rPoQAn40brXhz90MtuDJCW6fv5PvAuGboXUwmX+kYRHbtIxeP/Z" + System.lineSeparator() +
+                "1ykRxURDXVN3vJoQg7T3Zz1MUIVY9le34Fx1nS3vLLiXfvWRdCbyY0EVOBplzY+i" + System.lineSeparator() +
+                "4sMAmdD432CP34/li1CVJPtbkXzNT+IwzXAjK+vS7l4ShOaG0Grg/S4fP9r5D8Zo" + System.lineSeparator() +
+                "CO/DkOyOsTmzWIetx2z6Ys0WKi/qp8B8Nqzfbr8ipUicc+aClGzjuxpKcZv0gIfH" + System.lineSeparator() +
+                "4J/d15ug3WC5zLHWBrWiSeIA6YkFCjVlcfvCJ9KqRGC5uBpVEkuXm0a1QgXSdvC3" + System.lineSeparator() +
+                "GQ/92ygdLC9k1LsusTs/vib3ylabAgMBAAGjggJ8MIICeDAOBgNVHQ8BAf8EBAMC" + System.lineSeparator() +
+                "BaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAw" + System.lineSeparator() +
+                "HQYDVR0OBBYEFPaobMQPY1Ru8uAeGVRgJ60Oza3tMB8GA1UdIwQYMBaAFPt4TxL5" + System.lineSeparator() +
+                "YBWDLJ8XfzQZsy426kGJMGQGCCsGAQUFBwEBBFgwVjAiBggrBgEFBQcwAYYWaHR0" + System.lineSeparator() +
+                "cDovLzEyNy4wLjAuMTo0MDAyLzAwBggrBgEFBQcwAoYkaHR0cDovL2JvdWxkZXI6" + System.lineSeparator() +
+                "NDQzMC9hY21lL2lzc3Vlci1jZXJ0MCAGA1UdEQQZMBeCFWlubG5lc2VwcHdrZndl" + System.lineSeparator() +
+                "d3YyLmNvbTAnBgNVHR8EIDAeMBygGqAYhhZodHRwOi8vZXhhbXBsZS5jb20vY3Js" + System.lineSeparator() +
+                "MEAGA1UdIAQ5MDcwCAYGZ4EMAQIBMCsGAyoDBDAkMCIGCCsGAQUFBwIBFhZodHRw" + System.lineSeparator() +
+                "Oi8vZXhhbXBsZS5jb20vY3BzMIIBBAYKKwYBBAHWeQIEAgSB9QSB8gDwAHUA3Zk0" + System.lineSeparator() +
+                "/KXnJIDJVmh9gTSZCEmySfe1adjHvKs/XMHzbmQAAAFr/HHFxQAABAMARjBEAiAX" + System.lineSeparator() +
+                "5d7ffdn8ctWiJWoPxYtGOwG5yaiqTpHSaiBagPd2xQIgGi68uA+M6MHf80Ko0rgk" + System.lineSeparator() +
+                "Mtp5dkS7p9C8R11o2WCdnBsAdwAW6GnB0ZXq18P4lxrj8HYB94zhtp0xqFIYtoN/" + System.lineSeparator() +
+                "MagVCAAAAWv8ccXFAAAEAwBIMEYCIQD/+kWwYf5pRIKjg5j2VcvUY9IOsKaem/wX" + System.lineSeparator() +
+                "1C/GFU9+VQIhAOHY9SmknOkqMl8HwEYGeD7uksNwTBMzi19Hqowh4s55MA0GCSqG" + System.lineSeparator() +
+                "SIb3DQEBCwUAA4IBAQAS1xht2BdputK1iEdEPG6357zcv5F65aBSOdqIc5WeEoa1" + System.lineSeparator() +
+                "Jx06Wyc+5dQH65iCRF7qXQGb9gP0Bwi6JrfouQMQwjNjERg20CfqfLZdJqeUR+SO" + System.lineSeparator() +
+                "wTZTqVrTQsdKPGUeGrdusC7gHMyvFagqf4J/gonHZvlI3FdGOEP3MiyHeQlsALRW" + System.lineSeparator() +
+                "6WAX3okXEEm91chmdXuU3TRN/ZRNumU6z1J4RHYCW405qxKQWQB8NUIADBSVfm7x" + System.lineSeparator() +
+                "J8KlZBgRH37R1FbIWHmD5W83cTEYRxPeYfS0HGel0wuPnt/JmbJzMcEeh75tDsRI" + System.lineSeparator() +
+                "w/XRgmIMfizJa4LJLcXnUE+9ccraCB/quPldjjEN" + System.lineSeparator() +
                 "-----END CERTIFICATE-----" + System.lineSeparator() +
                 "" + System.lineSeparator() +
                 "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
@@ -1648,7 +1616,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"Xdaqm0jAr6Q\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"NuqiRM5JoYM\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1663,126 +1631,102 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "3oW0xyzxz_hCTdMgmDjgUb489EVl53vkM9ki9mjL-U0";
+        final String NEW_NONCE_RESPONSE = "zincSXuSpK7AwtV-oYU5T5SJvgPaBqAVOxMjkji64l85_y8";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJpVk5xSnVoM3VvWW5xdkNfZGtYQzRFMDN4R292eTdLUjAwd3M4QUwwcHJWcktzajhnZFdhWjBLZkZ1Q0NUaUtMU1BhNVQ0ZnRWNFdia2l0djFMa0JWU29Wd1hqSDE0bFpIMWFHYkptR1lCX3pSOV9uVzZJTzRVb1RGc2Vqb3paN05kNW8waVFpQWpyRjBmMDhGVC1xYS1TVVZiVk16dkNnQW16SjJFVlhzOXdOQ2pzSVRnNGh3eDdZRzl5eHRhZjFoT0hkV1dKVWtwZ0hnQkVfclpZT1B5YVNlb2JyeE5mMllxVmhFNWM2ZjhrZUhYdnU2dnprODctZVNLWXlndk9hSW1YOUhFbFZhQXRVcnI0S3hFV3VvUDdNRzZCV0s2TDVpam9Db0VMQjBqM0w2UHNuXzM1VnMxQi05OFR6SFZqYU1sU1NGV20xQjdtS0NzNGZMeE1pRXcifSwibm9uY2UiOiIzb1cweHl6eHpfaENUZE1nbURqZ1ViNDg5RVZsNTN2a005a2k5bWpMLVUwIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"PN-H66GQghR3VGBTv_PBoHY3nJlKfKcbzroHfr48AZqsTcLTObf8myVdPpPdkw3vLJPG4hJupxYOhQnluI0932Dfqtc6_uY2uLOVtcVu9iyUABEOJzwr-2fWKHhhW_3O3G_5TPUgM1tCKY4Iac8hw7Qd_W78i5XNMAZ38Sd6SNur2iXdoEg2vadxVU7Onm8OutlQUhdaLdiFXAeSPSixXSpYxu2Xh-8YlnqJw1qBg6UnSxw-jCDgFrD-xL6DCRlXsl2FFpSJZK-DqPzKY07v42WWGQe8_acbpf40K0g6kw4wM0nvSugUIBuypACh8J7QdgFSns_TRZrBrGY57wjx_Q\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJxTjcwc2VsZEVrVTlKV0RMUkNibkp2QWo2WWs3UnV4QktUV0dNLTZaMUxsQlpXV1A1OGthbWU5cDA1THFLa05rdC1Yakc3Wkt5T1FQUXZ4cU5oRURKLTNpck93V0NzWi1BRk5aYU5BMlFoZ0dRYnB2MkRkRDIzMWdqVUZRT3dlS2pLdlhDdUg1TFlxVjVObUx0TFBNbjBsTFpFX21NVlB3dnhLTV9FLTBjRFhqeDZzTU9BbWtvVWkzWGRaOU0tUUNNc1BxTUhnbUt1T2xCUnVXdmRJNVRDaUcyemNXMFo2T0Y5T0lybVhoWTBFeVNDTjc3RkJ2dkJNN2NsYkNiN1gxS0ZGLVNpUDQ3a013VlNyR2h1eER6dVpzaU4wOThxT3IwVG8yd1BzQ2V5SzZwT3ZST3VwQi1ZX01yXy1QRjl5dnE5bXkzLVBXeVAtcnB3T09XVWZYZXcifSwibm9uY2UiOiJ6aW5jU1h1U3BLN0F3dFYtb1lVNVQ1U0p2Z1BhQnFBVk94TWpramk2NGw4NV95OCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"ZMrVBL6EgK0jBPc21fmZWNAIlItMgtMCEkEjiPCu0xsyTpU4Wr2xHVxP1wNzhr4lK7vAxklm5aeN5wfDVWtmjZ-dTqING-llpc06ukw-luO31Tbaal29b38U3FX_6Sx2N7HJkgxHiRzVH3QzhjteB9S_Xab8j-LMUI8f7gi-RUAL2QUzln5bLOBvhII8IJhgdvzz4VBijko3Cgy7W5Lgdq2-HWrFx68Zel1ood0-n5it65RtSLFIN-j4vAvZ2r1XAHrfayxx4BwcRI4BxoXbIeSMZBizl1p7apm8cyWko_y8TJ-0xONax02s4KJjDptcmV4ZrLqcJhL8jUoPdiT_Pg\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "GLc_xR_n3Ytx8bDjmIODHL4tuHWul6phFmFVGASUI-s";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/3";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroTILAcaXhDviw7yl1tHtpd2fv3r4LiBpUDvZ1iNUhLL0";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/18";
 
 
-        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiR0xjX3hSX24zWXR4OGJEam1JT0RITDR0dUhXdWw2cGhGbUZWR0FTVUktcyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1vcmRlciJ9\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoibW5kZWxrZG5iY2lsb2hnLmNvbSJ9XX0\",\"signature\":\"REO9CCtOq19V3T0tKTuwTlZZlRwCoe1Sy_-xYitF4dHADT63cocpyzaML0OAgnuc8BrqTnbLhP3KcsLAVPx3gmFpsYY4iWPL2EsB-tVJzEWGqjHd-X2WkX9i2uO9U615zWgM2k6shzduewV7GlF6yMBl4SAB3lg7wCYtS5-cVGF1SrVqKHuBDC9istsWYLC0AkfgJwO1gdK4fweQJ4WP-0OHHi9SX7WIjwKxgRrMDlWl-UJO9bc4lqMEcIKdMQsg_q_hYwxSUgIAhM_a3a1gEidutlfOgexwvtdFQY2mMPJtHiwwkRmO9Fmre6gdvQwoVVLryLuGRJv5I-W84ZG3bg\"}";
+        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InRhcm9USUxBY2FYaER2aXc3eWwxdEh0cGQyZnYzcjRMaUJwVUR2WjFpTlVoTEwwIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LW9yZGVyIn0\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoibW5kZWxrZG5iY2lsb2hndjIuY29tIn1dfQ\",\"signature\":\"hsEho6EPU1k0mK775bj0oSreG8s38RFm80TO_ltQMOET_7FjkTv1Bm0Z2SFlHmJI1WtKHYB11cile_EJXJOGUP-F0nNIkp-E5FUl-Kq81uR-meGPDAYjJAJq_yqWxm1k6a3UmOvBF9wIsp9et-_yCSl9-7NH7SRJ7mCGnE791hIzPbdvPH-vMTdRfsVKr75UmAj1c5ZWoxqsA8CcTl0ojYD9bJfT2lRvaPcYisMM5I7jdjmrVmuQ_EznEYZyZBY_zmxE8nDK6_exeu4SEeyNoS0hGiU75uEa14jBprlLPtNqcDMsgbHn_sNryzlX1PGQt7fzdU9sWDwwgBhex2zmFA\"}";
 
         final String ORDER_CERT_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:43:32.370907593Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T19:57:55.887357634Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"mndelkdnbcilohg.com\"" + System.lineSeparator() +
+                "      \"value\": \"mndelkdnbcilohgv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/46\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/3/10\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/18/68\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String ORDER_CERT_REPLAY_NONCE = "i4xRyKelZj5ScS7U7TcTU2PxO6Ri41YpDHPamcMbfN0";
-        final String ORDER_LOCATION = "http://localhost:4001/acme/order/3/10";
+        final String ORDER_CERT_REPLAY_NONCE = "zincEh5_TsAbCPq_V2N78rG3_dUxcZnA6ISd3UBdGC3LN2E";
+        final String ORDER_LOCATION = "http://localhost:4001/acme/order/18/68";
 
-        final String AUTHZ_URL = "/acme/authz/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g";
-        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiaTR4UnlLZWxaajVTY1M3VTdUY1RVMlB4TzZSaTQxWXBESFBhbWNNYmZOMCIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2F1dGh6L2c5bWJoaXRWS1lxMGVCWXhuaG00THgyYkNBYTJRVEtfWkJUOFhCeHlQMWcifQ\",\"payload\":\"\",\"signature\":\"YupyN8RQoenfotv3VHLvehnp2LBYtUTGJRQDcFS65kPog_bI7MojREpeIGYOcBCLrGpuLH-_LOowqdfd4aocfAv2Dk-skNg8Ma5FjLFdY51Eo2ULqPwTGXX1TY78B8cWiUpDr8se3NgFTcEDYEk6F_V-kUh8eylEwaQUsmexwTPPUL2fmT4hL-5R3CGCadWYTmsEHqB45BwqDtPvd-81CTbOQ18sTrbV1d-Xf5hQWdZfm_78FrSXjqqRl3dI-WP8K0CE7vqJ6euXJVUMa7K-Gwwkrp6CJ9yQfcOQv-eu-B9o-WIfUgQRioqjgLzOJ4z8dbojNE-gnOtId4uGn1O5xQ\"}";
+        final String AUTHZ_URL = "/acme/authz/v2/46";
+        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InppbmNFaDVfVHNBYkNQcV9WMk43OHJHM19kVXhjWm5BNklTZDNVQmRHQzNMTjJFIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYXV0aHovdjIvNDYifQ\",\"payload\":\"\",\"signature\":\"MAVAt8kSDWcy6rZRLz5ClGgXmLSTCRY5V0dhrDnA-3DMdnQyTnFI8NnmuxVBVpCLN1Sse2YGn1yrHp5I6L83Ob90OvCiWMZCi0or1hqxrmDErVE4q-BOKdV6sbrgejwNsDSkdtDaGSvGR8qSBeqFV6VWvny395qXY6ASzpkXgyeSXFGEQ-tlPW_CTAaHS7Eo_IKHQ8puJeOqxhUkgseQogtkC2ExddOnAiZq9M__SV6jysxJmqn-4vNdBmFJtq2F0aHrbWdf-9zUWnrxtgUPP-WvWCfUtejS5CcjDv8kcnvOumKm64b8eHMoGtPSxuGfZ_K1Qoh605KuiwD5lfaSkQ\"}";
         final String AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"mndelkdnbcilohg.com\"" + System.lineSeparator() +
+                "    \"value\": \"mndelkdnbcilohgv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:43:32Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T19:57:55Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/25\"," + System.lineSeparator() +
-                "      \"token\": \"zjXs_VldJCiubFFW7Vvr1bctw7JAbO0PtIhjQc4Kb4U\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/26\"," + System.lineSeparator() +
-                "      \"token\": \"vdUixEBpiDj0RuJKlJnplaSvpr4C_GfBOVh_zUUUulk\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/1EAfog\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/27\"," + System.lineSeparator() +
-                "      \"token\": \"hGOq4xCmkDe4E7ZzqUbwT6PfjoT5VipE2PpyutL2RxQ\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/OHt9Vw\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"http-01\"," + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/28\"," + System.lineSeparator() +
-                "      \"token\": \"f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/WXhsUg\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String AUTHZ_REPLAY_NONCE = "rqfaFFRiaabH3tAJQoW7R3J-AStDq-MmE7um5NluHSE";
+        final String AUTHZ_REPLAY_NONCE = "taroi1V-ebsk9OogUGWzggfhZzPb_caysV4CnnQ4OdjClZ0";
 
-        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoicnFmYUZGUmlhYWJIM3RBSlFvVzdSM0otQVN0RHEtTW1FN3VtNU5sdUhTRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NoYWxsZW5nZS9nOW1iaGl0VktZcTBlQll4bmhtNEx4MmJDQWEyUVRLX1pCVDhYQnh5UDFnLzI4In0\",\"payload\":\"e30\",\"signature\":\"W777d69Y9TiV8GB2mZrkZd2AUcSvj6AJJtvCvNb7ILOIXpQuEdspA1_aFAhY5Pzilqocsd8RApJYgRyHULCmWeIwG_SOMKFfyMOXnPzUFnecUNJBRQhZzXiotrILhIUkBGU0bZBshemRmGZSdAe9bASVqcEWLqWlSaX3Idd0vJ6m31TuYqz6Po5ClUvrHWL0-1i4gjKHpNXnJ7bzqa6KRe6BCo9bVC_frMWEiSaE6Cq-YXB9pSmAXsJRkLNgbuFe8c8pRMfSFJluVkxE-yP1cTjChJGvHx5tRD6DmOKRIPXfwQ2zMEBxudjxaka8mdeKayOVpqTfXXlSp-aiS03N7w\"}";
-        final String CHALLENGE_URL = "/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/28";
+        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InRhcm9pMVYtZWJzazlPb2dVR1d6Z2dmaFp6UGJfY2F5c1Y0Q25uUTRPZGpDbFowIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvY2hhbGxlbmdlL3YyLzQ2LzFFQWZvZyJ9\",\"payload\":\"e30\",\"signature\":\"XAvtgCZ15XD37k4syk2smvoIoFm-WeXgqnKr74_L8W-AYou4roOQCRAMPE7rmboEFB4ZILxrec__6GN9OS99tdQ9o4T1CLgkwuZUDQFXFBI98tOKF_sjtTrVNQnMitmN2noAWxFBdl-6Mt_FO5tt8l2HG7TGPxriJe2oPDxoMBZszHGzz5GFYEhVcwpTiDWlri3ggXiHQyEWnei-TmO_O5p5a6hJm-TNEziyWDCvmlupRpwDyv9ANJccsrVg6OYVW3jQ1rDscAPqIILQr8EhzA4QyZw9FhrfgGJdn6ru1Wwl86Y8SfTojIq3wKmcac5c3iXBeIKkkq9clGONJpiNwQ\"}";
+        final String CHALLENGE_URL = "/acme/challenge/v2/46/1EAfog";
 
         final String CHALLENGE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"http-01\"," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/28\"," + System.lineSeparator() +
-                "  \"token\": \"f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8\"" + System.lineSeparator() +
+                "  \"url\": \"http://localhost:4001/acme/challenge/v2/46/1EAfog\"," + System.lineSeparator() +
+                "  \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CHALLENGE_REPLAY_NONCE = "Luvt_xmHKnuIQuUWMpI1-HjWMsNuVMK7mSnbgciTNxw";
-        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/28";
-        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g>;rel=\"up\"";
-        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8";
-        final String CHALLENGE_FILE_CONTENTS = "f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8.952Xm_XyluK_IpyAn6NKkgOGuXbeWn8qoo0Bs9I8mFg";
+        final String CHALLENGE_REPLAY_NONCE = "zincA0YMk-y4X0yRFWdOVUMHoGsfBE6qgdMPYPcX9-Q-zY4";
+        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/v2/46/1EAfog";
+        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/v2/46>;rel=\"up\"";
+        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY";
+        final String CHALLENGE_FILE_CONTENTS = "6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY.2NVC_ENUU-TZ83gkUxQvXl7_ixvttxk_dPlNqIyXGKY";
 
         final String UPDATED_AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
-                "    \"value\": \"mndelkdnbcilohg.com\"" + System.lineSeparator() +
+                "    \"value\": \"mndelkdnbcilohgv2.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-12-23T22:43:32Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-08-22T19:57:55Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/25\"," + System.lineSeparator() +
-                "      \"token\": \"zjXs_VldJCiubFFW7Vvr1bctw7JAbO0PtIhjQc4Kb4U\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/26\"," + System.lineSeparator() +
-                "      \"token\": \"vdUixEBpiDj0RuJKlJnplaSvpr4C_GfBOVh_zUUUulk\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"dns-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/27\"," + System.lineSeparator() +
-                "      \"token\": \"hGOq4xCmkDe4E7ZzqUbwT6PfjoT5VipE2PpyutL2RxQ\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"valid\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g/28\"," + System.lineSeparator() +
-                "      \"token\": \"f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/1EAfog\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"," + System.lineSeparator() +
                 "      \"validationRecord\": [" + System.lineSeparator() +
                 "        {" + System.lineSeparator() +
-                "          \"url\": \"http://172.17.0.1:5002/.well-known/acme-challenge/f-0Jro36un-NLfg-kCqPEdvsDWwPbX7-FZY1SSmZ9w8\"," + System.lineSeparator() +
-                "          \"hostname\": \"mndelkdnbcilohg.com\"," + System.lineSeparator() +
+                "          \"url\": \"http://mndelkdnbcilohgv2.com/.well-known/acme-challenge/6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"," + System.lineSeparator() +
+                "          \"hostname\": \"mndelkdnbcilohgv2.com\"," + System.lineSeparator() +
                 "          \"port\": \"5002\"," + System.lineSeparator() +
                 "          \"addressesResolved\": [" + System.lineSeparator() +
                 "            \"172.17.0.1\"" + System.lineSeparator() +
@@ -1790,83 +1734,95 @@ public class AcmeClientSpiTest {
                 "          \"addressUsed\": \"172.17.0.1\"" + System.lineSeparator() +
                 "        }" + System.lineSeparator() +
                 "      ]" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"dns-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/OHt9Vw\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/46/WXhsUg\"," + System.lineSeparator() +
+                "      \"token\": \"6PAmWU2m3sPP7Lqfz2NAlpztc-Qqw3o9rTbQtrFUrdY\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String UPDATED_AUTHZ_REPLAY_NONCE = "z8JyOz3PXdq67aXf3rpXBS5LkAjSibX9xqFW4qaCvB8";
+        final String UPDATED_AUTHZ_REPLAY_NONCE = "taro_CYDgtDCXgc4gmxsCnwXERad3qCJ6bOEG3ZKVdqMKCQ";
 
-        final String FINALIZE_URL = "/acme/finalize/3/10";
+        final String FINALIZE_URL = "/acme/finalize/18/68";
 
         final String FINALIZE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:43:32Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T19:57:55Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"mndelkdnbcilohg.com\"" + System.lineSeparator() +
+                "      \"value\": \"mndelkdnbcilohgv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/46\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/3/10\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/ff87f7830644eb0e60d43bf624d6d028bd89\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/18/68\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ff1093811c2dca68b305c777d1d6b058cb14\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_REPLAY_NONCE = "9jSBsPqFmUC9D5kxAJ6g7XsN6LWGLCLp3Y6pDTWbHHM";
-        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/3/10";
+        final String FINALIZE_REPLAY_NONCE = "zinclJZorHeTFZcnqLLeS1ZgNtVjKLFXeA-sZDk6Od996nI";
+        final String FINALIZE_LOCATION = "http://localhost:4001/acme/order/18/68";
 
-        final String CHECK_ORDER_URL = "/acme/order/3/10";
-        final String CHECK_ORDER_REPLAY_NONCE = "WQ_v5SrNqsA_9v_xCmH3MyQgWqX2PZg59OKWG1EYIQU";
+        final String CHECK_ORDER_URL = "/acme/order/18/68";
+        final String CHECK_ORDER_REPLAY_NONCE = "taroRCnVpN7wg7EQvwrBvKkNUdyXISuSwN1_Y1huVn4IQOo";
 
-        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiOWpTQnNQcUZtVUM5RDVreEFKNmc3WHNONkxXR0xDTHAzWTZwRFRXYkhITSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL29yZGVyLzMvMTAifQ\",\"payload\":\"\",\"signature\":\"HHxbg4kXThDyJrw0lp1VNfTxVi1GsKKO2AUhCUpaxNK61pgv49eRlHZq6vQiG0do5F1JGJTN8gc_NtoMoovlEQl9Rp48G-9ZHdk5_XNaTr7AEW_TDKufX3vlOpElkVDr0pRZWPhgc5RdauxzFoCQDVQQN1ZK4CbuELwp-FHTgoGvvc_vWT9gN0pOTVYPA02N7sN1yy0XF6PrJrHJgZyDvNx2urWkrIgUtemKv9-6eyjLwY315YCTQ-DygeLwkjVw1DeC2O-yMXJ_rZPOS3I3Kvephvj3xleyJ3xLoboYhdIp8_GnK3rcuPrmYHvu097XD0YfWRbfaYGzp3Zhh_0-hA\"}";
+        final String CHECK_ORDER_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InppbmNsSlpvckhlVEZaY25xTExlUzFaZ050VmpLTEZYZUEtc1pEazZPZDk5Nm5JIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvb3JkZXIvMTgvNjgifQ\",\"payload\":\"\",\"signature\":\"arc3WgxoV-CTvgMRboJhSQmNTNNE6NAHGdPkB6Io3j3fqPSqqyYtAKTKa0fTBhNS2uS7Vh5FOYPPG-11T9f-_asncxD0C43MYX-mWHtvCH_SmhXTyB2rm4kiWoRVjYHuffDgOrauPvmk4WbUY64sq7-7TSUpfDD9Ds6ll8ZDysA-7yG4UZjnGLgN4r-14uyWiSS4PQJYFLdzDsTnmLMjKL09uuC3hW3Sc-T3x8yQ9ONY6wstpyHbLVGL9ZikRpDf4ZWUJDXg-apngRHVwF7eUXAD6nNsERdnF7qBHll-51ItH-LKzfgXu7H9q-I8d1y3RNMx-lqvIuAmi5K2_FmkiQ\"}";
         final String CHECK_ORDER_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T22:43:32Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-23T19:57:55Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
-                "      \"value\": \"mndelkdnbcilohg.com\"" + System.lineSeparator() +
+                "      \"value\": \"mndelkdnbcilohgv2.com\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/g9mbhitVKYq0eBYxnhm4Lx2bCAa2QTK_ZBT8XBxyP1g\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/46\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/3/10\"," + System.lineSeparator() +
-                "  \"certificate\": \"http://localhost:4001/acme/cert/ff87f7830644eb0e60d43bf624d6d028bd89\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/18/68\"," + System.lineSeparator() +
+                "  \"certificate\": \"http://localhost:4001/acme/cert/ff1093811c2dca68b305c777d1d6b058cb14\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CERT_URL = "/acme/cert/ff87f7830644eb0e60d43bf624d6d028bd89";
-        final String CERT_REPLAY_NONCE = "by4s6iEQL4-fAf_ku09qljcbhlxL7sAftG8YdJLJfiE";
+        final String CERT_URL = "/acme/cert/ff1093811c2dca68b305c777d1d6b058cb14";
+        final String CERT_REPLAY_NONCE = "zinctQYf_mnOJoVGDbAM1CdUSVnq_1X0yixRU_nAWuCrZkU";
 
-        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiV1FfdjVTck5xc0FfOXZfeENtSDNNeVFnV3FYMlBaZzU5T0tXRzFFWUlRVSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NlcnQvZmY4N2Y3ODMwNjQ0ZWIwZTYwZDQzYmY2MjRkNmQwMjhiZDg5In0\",\"payload\":\"\",\"signature\":\"VfoBhgP5mnEDf2_JeomN2xcDr4AuA58b3g0Q_NgWOvGC1egoyGA4PzaqZRJQC_dg14hFnZWUF6WNUUz0hAyD7pFOiA8YEbi0s42pse4H2X-xUnnhRRGmitxcjZYS-t7BjBYaMyHirT6dhpmpcZIEiROYqUGG3WrycDQDvV3s9WsGjdjOYHCTiLA5WWnm3okB8xLugmHHdsC8XXTnUuZjuNpqYJBIJM0fg60aqmkZOZup6BCQy83T4i-Obz65hndCFVG-zHIGV7V8zPUqkPYTQ3Zzztb0Bj_fvYoB6oxZoMw687NcPV_3Q3HQ34vKfu8K2DEJleTzgwueV-7dC2BJQw\"}";
+        final String CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InRhcm9SQ25WcE43d2c3RVF2d3JCdktrTlVkeVhJU3VTd04xX1kxaHVWbjRJUU9vIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvY2VydC9mZjEwOTM4MTFjMmRjYTY4YjMwNWM3NzdkMWQ2YjA1OGNiMTQifQ\",\"payload\":\"\",\"signature\":\"BY_MtgoIMBOVgh34tkd8qMAWehaC3_II8ghIdkuXVTLqMETipZ97c0uD5zDJGw4BVStxnYvGHgdwk1aOSz8y5-i8IhbFS1dZYOgscaZp5V57VXIvar5t4mKklevafg9Vj3O2fNg5NKdGaJEn7ZgHutGcEyJrqEWqUq4nfYAn5dUZeABrfpxjzR4nksLSQjCdzZcmOHT-OYgb5UiI-IjCJcsZlBcIV_Y9oGKUDJ_BMg7sYS-NIQ7EatToVvY6NasB0gFPJ95vz_oz0cTRU439VCHF7u-YowXO2cXF9M8kak5Oaept8QFQFRBKDODqEIzLjBcP1Um6_ybPO0sLiJG4uw\"}";
         final String CERT_RESPONSE_BODY = "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
-                "MIIEnzCCA4egAwIBAgITAP+H94MGROsOYNQ79iTW0Ci9iTANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
-                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xODExMjMyMTQz" + System.lineSeparator() +
-                "MzJaFw0xOTAyMjEyMTQzMzJaMB4xHDAaBgNVBAMTE21uZGVsa2RuYmNpbG9oZy5j" + System.lineSeparator() +
-                "b20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASkd8KOCVYYS/TzqUunlsoJX57r" + System.lineSeparator() +
-                "iZbr5QuO+4vWHXpRd7kl9soPKttpDMVn6/lWgM8N/z4hyC0RxtJ9y5qJimmoo4IC" + System.lineSeparator() +
-                "njCCApowDgYDVR0PAQH/BAQDAgeAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF" + System.lineSeparator() +
-                "BQcDAjAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBSD8y6uXfvil+pta5vpFb1pO6IF" + System.lineSeparator() +
-                "nDAfBgNVHSMEGDAWgBT7eE8S+WAVgyyfF380GbMuNupBiTBmBggrBgEFBQcBAQRa" + System.lineSeparator() +
-                "MFgwIgYIKwYBBQUHMAGGFmh0dHA6Ly8xMjcuMC4wLjE6NDAwMi8wMgYIKwYBBQUH" + System.lineSeparator() +
-                "MAKGJmh0dHA6Ly8xMjcuMC4wLjE6NDAwMC9hY21lL2lzc3Vlci1jZXJ0MB4GA1Ud" + System.lineSeparator() +
-                "EQQXMBWCE21uZGVsa2RuYmNpbG9oZy5jb20wJwYDVR0fBCAwHjAcoBqgGIYWaHR0" + System.lineSeparator() +
-                "cDovL2V4YW1wbGUuY29tL2NybDBhBgNVHSAEWjBYMAgGBmeBDAECATBMBgMqAwQw" + System.lineSeparator() +
-                "RTAiBggrBgEFBQcCARYWaHR0cDovL2V4YW1wbGUuY29tL2NwczAfBggrBgEFBQcC" + System.lineSeparator() +
-                "AjATDBFEbyBXaGF0IFRob3UgV2lsdDCCAQUGCisGAQQB1nkCBAIEgfYEgfMA8QB2" + System.lineSeparator() +
-                "ABboacHRlerXw/iXGuPwdgH3jOG2nTGoUhi2g38xqBUIAAABZ0K+FRsAAAQDAEcw" + System.lineSeparator() +
-                "RQIgcDtvDgILEVlsLLOkfVFeFbOdUJdCkPaMJp1firJNv2sCIQDs5A9jhOQtsV4C" + System.lineSeparator() +
-                "+v7ep/sK8kgMjiKpkmzw0xcbEgrdIgB3AN2ZNPyl5ySAyVZofYE0mQhJskn3tWnY" + System.lineSeparator() +
-                "x7yrP1zB825kAAABZ0K+FR4AAAQDAEgwRgIhAMsFphjNxqMEpB5HIgZCOdujjsco" + System.lineSeparator() +
-                "fVLRPntCEXoTSpXvAiEAyWf3EdceQS130qTfhboW4lrshoLyVBb5cOHCnI5UkT4w" + System.lineSeparator() +
-                "DQYJKoZIhvcNAQELBQADggEBAGzFBD9ybCDO6KqcD2FCA46uS1TCTedOT2VMozJM" + System.lineSeparator() +
-                "DXmGR3y/deVOc+OyTOqzPpl894EHjYz5CvlosX2Pf3LBi+VhfTM7/UgVDLyYJ+dp" + System.lineSeparator() +
-                "Kh/bt4lyO9903COG/9OVDTWwychZN5vYQdUOFLNZWwd9dDbHNega11uGEoPwq4ON" + System.lineSeparator() +
-                "O3IOBp+DwD1fAHJKzS2S0kroWs64yf0V0m0RJeEguHfmQ2p85UhLY4+3/vKPUuaV" + System.lineSeparator() +
-                "uRAP8L3q8uR0B2RiKZHJ6DZPHC3e/KREXfDEpb6K5Dr0ChShF+YUZMoWNCi0WPn+" + System.lineSeparator() +
-                "i2cGYlqkhtSCg2gFPrKhw9A0ItxKd3M/Hv/jSmX3O/el4e8=" + System.lineSeparator() +
+                "MIIEoTCCA4mgAwIBAgITAP8Qk4EcLcposwXHd9HWsFjLFDANBgkqhkiG9w0BAQsF" + System.lineSeparator() +
+                "ADAfMR0wGwYDVQQDDBRoMnBweSBoMmNrZXIgZmFrZSBDQTAeFw0xOTA3MTYxODU3" + System.lineSeparator() +
+                "NTZaFw0xOTEwMTQxODU3NTZaMCAxHjAcBgNVBAMTFW1uZGVsa2RuYmNpbG9oZ3Yy" + System.lineSeparator() +
+                "LmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNWdSNeeqVApfg5V6xDRpqac" + System.lineSeparator() +
+                "CeW/MR8M8aaMAy37FLeVHewJ9+N/Lk6iov3/lNp6hTuzoljFZTD3/bD3+RVTkAKj" + System.lineSeparator() +
+                "ggKeMIICmjAOBgNVHQ8BAf8EBAMCB4AwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG" + System.lineSeparator() +
+                "AQUFBwMCMAwGA1UdEwEB/wQCMAAwHQYDVR0OBBYEFLUOwBDYB0/t83fH65E9+EhK" + System.lineSeparator() +
+                "c+e4MB8GA1UdIwQYMBaAFPt4TxL5YBWDLJ8XfzQZsy426kGJMGYGCCsGAQUFBwEB" + System.lineSeparator() +
+                "BFowWDAiBggrBgEFBQcwAYYWaHR0cDovLzEyNy4wLjAuMTo0MDAyLzAyBggrBgEF" + System.lineSeparator() +
+                "BQcwAoYmaHR0cDovLzEyNy4wLjAuMTo0MDAwL2FjbWUvaXNzdWVyLWNlcnQwIAYD" + System.lineSeparator() +
+                "VR0RBBkwF4IVbW5kZWxrZG5iY2lsb2hndjIuY29tMCcGA1UdHwQgMB4wHKAaoBiG" + System.lineSeparator() +
+                "Fmh0dHA6Ly9leGFtcGxlLmNvbS9jcmwwYQYDVR0gBFowWDAIBgZngQwBAgEwTAYD" + System.lineSeparator() +
+                "KgMEMEUwIgYIKwYBBQUHAgEWFmh0dHA6Ly9leGFtcGxlLmNvbS9jcHMwHwYIKwYB" + System.lineSeparator() +
+                "BQUHAgIwEwwRRG8gV2hhdCBUaG91IFdpbHQwggEDBgorBgEEAdZ5AgQCBIH0BIHx" + System.lineSeparator() +
+                "AO8AdQDdmTT8peckgMlWaH2BNJkISbJJ97Vp2Me8qz9cwfNuZAAAAWv8XOpXAAAE" + System.lineSeparator() +
+                "AwBGMEQCID2B0PeB+cxwEuSIr0xakdkDi4zStQffSeXwy5Xi2z3XAiA9b2uo0QJu" + System.lineSeparator() +
+                "W/rZoKjPxO53Q7LclMQYnHucagWfy7irXwB2ABboacHRlerXw/iXGuPwdgH3jOG2" + System.lineSeparator() +
+                "nTGoUhi2g38xqBUIAAABa/xc6lYAAAQDAEcwRQIhAOdHz0WsKkHx9La5p6A4nfGP" + System.lineSeparator() +
+                "HpeOvcNss3feW8qXvGKbAiAleyPIvJjZlXGMR/H5doyiG/uuJ3QLpGnzXH7tegx2" + System.lineSeparator() +
+                "hjANBgkqhkiG9w0BAQsFAAOCAQEAJv2VRPTuDr73+G0aWZMgTSIyCfSutstBRf4S" + System.lineSeparator() +
+                "skZy5OBdtvCJ+KZ//4aO8GzBLIK2oO15zb6J0LzGLBN8fh44zBEXyB82xV77xZsU" + System.lineSeparator() +
+                "h3iXHVr/xJryq5vfxKLQdmSOxljZqIUb1ewk6z0lgVSCkSCysRYFFCO6FUVtCQtL" + System.lineSeparator() +
+                "6QvB8fdtnIP0badkB5N2QJzJ7wqxi2J6HPVhEiCTRHzKjK1d5z8daaVQjd1XU4+x" + System.lineSeparator() +
+                "GgpK++cGcpLrkQ8uCXGfIHz78wnnLxco19K6F41D1zGlevAAaHiG++NafW3/kJIN" + System.lineSeparator() +
+                "hk6FdLvhm+dFuaXMBzFr9sSzXQo9tsady2/VwR55xlTaXeD31w==" + System.lineSeparator() +
                 "-----END CERTIFICATE-----" + System.lineSeparator() +
                 "" + System.lineSeparator() +
                 "-----BEGIN CERTIFICATE-----" + System.lineSeparator() +
@@ -1912,7 +1868,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"faxV5ndBJsE\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"Cd6YLrbpxmk\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -1927,21 +1883,21 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "yTHivfhVul8gJCCi0zflLw0NcZm2XCq3D0f2OZKL_9Y";
+        final String NEW_NONCE_RESPONSE = "zincntRzrBcL6fSvrCekkI48w39j89-rUjvGi7QYg9rdnys";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJpVk5xSnVoM3VvWW5xdkNfZGtYQzRFMDN4R292eTdLUjAwd3M4QUwwcHJWcktzajhnZFdhWjBLZkZ1Q0NUaUtMU1BhNVQ0ZnRWNFdia2l0djFMa0JWU29Wd1hqSDE0bFpIMWFHYkptR1lCX3pSOV9uVzZJTzRVb1RGc2Vqb3paN05kNW8waVFpQWpyRjBmMDhGVC1xYS1TVVZiVk16dkNnQW16SjJFVlhzOXdOQ2pzSVRnNGh3eDdZRzl5eHRhZjFoT0hkV1dKVWtwZ0hnQkVfclpZT1B5YVNlb2JyeE5mMllxVmhFNWM2ZjhrZUhYdnU2dnprODctZVNLWXlndk9hSW1YOUhFbFZhQXRVcnI0S3hFV3VvUDdNRzZCV0s2TDVpam9Db0VMQjBqM0w2UHNuXzM1VnMxQi05OFR6SFZqYU1sU1NGV20xQjdtS0NzNGZMeE1pRXcifSwibm9uY2UiOiJ5VEhpdmZoVnVsOGdKQ0NpMHpmbEx3ME5jWm0yWENxM0QwZjJPWktMXzlZIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"Dd24E9F3IAg_r4-YnXk18RbLsfak0scs6xAgfrx04jqowBLT6sUVDH2Gg7K4H7GOJc7mBnMvdVMAdEsEwgvRg3zyFgTdsVvCVRV56G13dCsRszwSCPReocirhTyNeL6LFVzK2xniN6yncR_FUPulCDCytDtOryeinEmOOIl0ABR-PXV0rfGMBRmyZGsFEwix6b5VMsdhXHDxbQoc5HUfKNWW0CV0i_G_3BQFRJ7lgt3JG0a1aw3ml1X1FzCNyarnFkzBQOp3RqN7ODa3TxXSVtMZu9gXyGfJ-YBSxNq83DxcocHPWbBoUZE8tug3-IH600u3FIWulA7rSn98SnUajA\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJxTjcwc2VsZEVrVTlKV0RMUkNibkp2QWo2WWs3UnV4QktUV0dNLTZaMUxsQlpXV1A1OGthbWU5cDA1THFLa05rdC1Yakc3Wkt5T1FQUXZ4cU5oRURKLTNpck93V0NzWi1BRk5aYU5BMlFoZ0dRYnB2MkRkRDIzMWdqVUZRT3dlS2pLdlhDdUg1TFlxVjVObUx0TFBNbjBsTFpFX21NVlB3dnhLTV9FLTBjRFhqeDZzTU9BbWtvVWkzWGRaOU0tUUNNc1BxTUhnbUt1T2xCUnVXdmRJNVRDaUcyemNXMFo2T0Y5T0lybVhoWTBFeVNDTjc3RkJ2dkJNN2NsYkNiN1gxS0ZGLVNpUDQ3a013VlNyR2h1eER6dVpzaU4wOThxT3IwVG8yd1BzQ2V5SzZwT3ZST3VwQi1ZX01yXy1QRjl5dnE5bXkzLVBXeVAtcnB3T09XVWZYZXcifSwibm9uY2UiOiJ6aW5jbnRSenJCY0w2ZlN2ckNla2tJNDh3MzlqODktclVqdkdpN1FZZzlyZG55cyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"TDqm_Jpezttg3kUIskpO18JthPtxzm4Q6-bXhYUiiD409_LLHyWt8gpmdSZ2g1EdnvegpKRfGHe-svggQVwJc5sJZrg_s3KrfpC2LwaxvmK6J5czRakBY1HLDhvB-dfDufp9Hua5wTyCM3VJhBzuwxT04C8mBD6TXVMhwt-ELWTviageuVidWJNw9STAfohS3cfU2kDkbLENn93VdnuGwr5PIuvTB7pBbyy7C0VmIDWlh2E9kXTnv2QPmYiIZOkTfHgN1EbRoWdJx4QKIWazOCfTuMT41YJs460a2CnXAk51eo6XlS5gmSlNGux3Qg2S0bzOY1IIMoFQH0MYDGiSMw\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "PTG0ESBbbcEJlcyrfjCLu8YyJwYJ9lGGgD9Af97Vo4Q";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/3";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroJmBHDyFedEWgCGh75dU3FcP5ubQTK2-WTPz7vZoN3NI";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/18";
 
 
-        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiUFRHMEVTQmJiY0VKbGN5cmZqQ0x1OFl5SndZSjlsR0dnRDlBZjk3Vm80USIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1vcmRlciJ9\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiaXJhY2x6bGNxZ2F5bXJjLmNvbSJ9XX0\",\"signature\":\"OJKxVKwVDKHZF7b9kf8GVUrnfWlpjhS1m2SmHJPTJc-Zpgniv2-x6ZPnNLswYSxHIndywsSLf2BmeNBzZpDiFFJOgZU9GYeSezq6XVH-arfNCkBPa73A33PoOC3Ts_2Pd2P5fuJ2WdsLVRmpIWixPFyjedRfMuv3eVWxKmmgCc1GE-g5n6cULTrdVyEayabwfpHkr7vTOMw9X_dFYuvWvkA6F1BCnoNSxxu8Vh-UWpUS_77OhCJd9QQnL5iewjweRacY9ng2UgtsyOMnnrFILuI7B9fMv3TgaFEtwQufqmAEcP6hS29yLFBfsbUV1FcpT0UDxUlLUPiTTj1BeWjtkQ\"}";
+        final String ORDER_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InRhcm9KbUJIRHlGZWRFV2dDR2g3NWRVM0ZjUDV1YlFUSzItV1RQejd2Wm9OM05JIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LW9yZGVyIn0\",\"payload\":\"eyJpZGVudGlmaWVycyI6W3sidHlwZSI6ImRucyIsInZhbHVlIjoiaXJhY2x6bGNxZ2F5bXJjLmNvbSJ9XX0\",\"signature\":\"GgDQPFBK5AtUwG0100zmtcN0vaqWItG8neHt_UmyWme0zpdcdlDv7Kl_ayTPTRB0dzCEu3mrCbUsk2cHZu80_xkkmuTuGu4RRIpElhVAgkj8h5Gs5nmj1Rx8tY31GIyHgE4WhmQMurDaQUWEVzK8TMNFMuql_gr6b3vT577sTneDVQxRy5yLYzjDw60eQsm687CSHb8JgbUlh3qzz4NvC-bQxMAkHQctLU2WH7xyOyWNTWl49zFDaeaa_xC3FE01goHyToDEMOIuMKvvwXf4XooivWMSMqRlaaGwB81f3wzSNwjNdqsrY-pp2O5WJS2660RfRbWfwjIoQbAV6lNBmw\"}";
 
         final String ORDER_CERT_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T23:06:59.386130633Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-29T16:28:22.889849436Z\"," + System.lineSeparator() +
                 "  \"identifiers\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns\"," + System.lineSeparator() +
@@ -1949,103 +1905,79 @@ public class AcmeClientSpiTest {
                 "    }" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"authorizations\": [" + System.lineSeparator() +
-                "    \"http://localhost:4001/acme/authz/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE\"" + System.lineSeparator() +
+                "    \"http://localhost:4001/acme/authz/v2/67\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"finalize\": \"http://localhost:4001/acme/finalize/3/12\"" + System.lineSeparator() +
+                "  \"finalize\": \"http://localhost:4001/acme/finalize/18/99\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String ORDER_CERT_REPLAY_NONCE = "Xb79RAHpMC0bOQXPPQMhLepRKc2JCrI0OXoz71P7PTQ";
-        final String ORDER_LOCATION = "http://localhost:4001/acme/order/3/12";
+        final String ORDER_CERT_REPLAY_NONCE = "zinc-xZ1copze4zkgzj2cwJVZ0lg2pZtUEZjaYVTpChDbMs";
+        final String ORDER_LOCATION = "http://localhost:4001/acme/order/18/99";
 
-        final String AUTHZ_REPLAY_NONCE = "3y0I9NLsV-UXaNdFRsnv4mYdIzcCDXOzJIgik85XVgg";
-        final String AUTHZ_URL = "/acme/authz/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE";
-        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiWGI3OVJBSHBNQzBiT1FYUFBRTWhMZXBSS2MySkNySTBPWG96NzFQN1BUUSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2F1dGh6L1gzYWJyVkZIWXhPTlNZdTAxTkdGUDhzNDlMdDJyZVNtUk9VOHRKRzcxVEUifQ\",\"payload\":\"\",\"signature\":\"LpeAtFiB2hxRdMRN0QDf016QnZwj2m81Dyb2kVdpipvz7RCMkheoc7I1vkuGbM_2LlenvBHxmHhSkSHSj3lB0IVdqmg4y5d25YgwJEgVDVZdJ0nwkJBOKp1bXDOO2HJsN8do8RT3MB2NvXJVLWyvMbHIFlKpI0ZJALaAor8U6Qo_LhXcJ7tyATsydgim4s9GvMqQbOjXoaTx0X-XIbIpYbAms6D1N7xpt1zCVv6Z7hkFaxTJsG8vmzluNDoNKYIWP8vzA_bZSoQ4yLa_t_TPVzTQ8yKBLCRDeUkJmDaB8qwd1Ykc6tRwiHGID6GE3q1z-H1fSw0na8PbXunem1uZ7g\"}";
+        final String AUTHZ_REPLAY_NONCE = "tarolh01L8-AR79io0VLNh2X_gInZpiTubW0QhHIE2BPKK4";
+        final String AUTHZ_URL = "/acme/authz/v2/67";
+        final String AUTHZ_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InppbmMteFoxY29wemU0emtnemoyY3dKVlowbGcycFp0VUVaamFZVlRwQ2hEYk1zIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYXV0aHovdjIvNjcifQ\",\"payload\":\"\",\"signature\":\"DNpOi-b2YLtBrbIC98LUcovvbYwq0xq5nyc3KOS8e6rl90vf9-ZCLUeWfzjXjXfN4Hgie1zZMySIVb9Blbm9bb2GrhiPdCGv8SixFLEyB5i_ZNDuU15nUrs1dQricv9PH9TTf6YrBJGjQtSH4nkQIRX9K6rzQAX-mPRQtk7TXOxU1cztj0DRpnw9MgqOj3zX54N-2tl9hoeUFyErFGDxRxKHFiEAxuvlaNv30VN9OXyRLxl3qURNhJR1_9T_P5uk1QEraUruAZR5DX1mVYMJLwQKxrkAIEzAJscFj6d8DE01XO2On49x3UKLAdXpyJQeVzP2lJ1uRymwMYzpAu2whA\"}";
         final String AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
                 "    \"value\": \"iraclzlcqgaymrc.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-11-30T23:06:59Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-07-29T16:28:22Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/33\"," + System.lineSeparator() +
-                "      \"token\": \"iE2BAsOSYCgCALb-0nx1M2UDmXBkMhv07ssGmUK4kak\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/34\"," + System.lineSeparator() +
-                "      \"token\": \"1rcnRMNMzxxH1AHQvEcc2tVZw9QDHRBeU3v2euASMDo\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/jabkIQ\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"dns-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/35\"," + System.lineSeparator() +
-                "      \"token\": \"pDWP9Ja1fNgl-GPThTK7UN90ZXt5F1jwY2mG1WjK3I0\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/nOqZzg\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
                 "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
-                "      \"type\": \"http-01\"," + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
                 "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/36\"," + System.lineSeparator() +
-                "      \"token\": \"BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA\"" + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/5jeSaw\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMyIsIm5vbmNlIjoiM3kwSTlOTHNWLVVYYU5kRlJzbnY0bVlkSXpjQ0RYT3pKSWdpazg1WFZnZyIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2NoYWxsZW5nZS9YM2FiclZGSFl4T05TWXUwMU5HRlA4czQ5THQycmVTbVJPVTh0Skc3MVRFLzM2In0\",\"payload\":\"e30\",\"signature\":\"VMZBhgSpGBVvs1rp2ZVCoga1WdbngKBJQ3DjjYak532XZvoGrVPFCIj30s-ZJeowy0gZPxHO3CT1AqhXg85jdtStmd58yveMpgOzLVeyqUtevKL9QSLY_FBj2SEUWQa_CbzNBPI2nKsAVxJQm_guZBcmFVGfadNhi3owP0w_PSagVpYzqU8F2EtJIi4EPKrG5f3o1I8lxXNY80Fc0e3JJpZ-dMxT667VI168XtH_CB47q8T9fMO1VCFBe9Kx-GXH5xc8hkX_S04ThLb52sGHpoFolWaQTvE-91BM1K-tjTXppspDnNzlC-obOi40M34BstdIYx3IOEMC56j3jVUV-A\"}";
-        final String CHALLENGE_URL = "/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/36";
+        final String CHALLENGE_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTgiLCJub25jZSI6InRhcm9saDAxTDgtQVI3OWlvMFZMTmgyWF9nSW5acGlUdWJXMFFoSElFMkJQS0s0IiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvY2hhbGxlbmdlL3YyLzY3L2phYmtJUSJ9\",\"payload\":\"e30\",\"signature\":\"KOQARJFyGIZpsavmvmyjBPgnY4nSdBGlYCf4HukPe1iOLh-gwY6HTbh8SCjlNfEviWglwwUGUKeQGZaGhXu8dUZg7KnzqD5cN5unHXrJVlt3Atv-ysFXYYswTTihk7gRjHaNkFJ88hoomYdOG5jD_ijQUQyheqU_qsRJXNHw8z1dTdys_gwdDmML3PQNJ-5kkSYnIoBLViI1c8OhHWiBBOWzbeGUNc_nE9M_qJyBqcGRofctGcKlrGaajI4Zbf6Rp6Bc3L2oy1cDC_Ys4UJ-1k_wOeFeRLhhtjftKT3RTFTT9YsEGRxWaEwKnUAsWew8HkCfQjLf7phY6ZjMogubAg\"}";
+        final String CHALLENGE_URL = "/acme/challenge/v2/67/jabkIQ";
 
         final String CHALLENGE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"http-01\"," + System.lineSeparator() +
                 "  \"status\": \"pending\"," + System.lineSeparator() +
-                "  \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/36\"," + System.lineSeparator() +
-                "  \"token\": \"BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA\"" + System.lineSeparator() +
+                "  \"url\": \"http://localhost:4001/acme/challenge/v2/67/jabkIQ\"," + System.lineSeparator() +
+                "  \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String CHALLENGE_REPLAY_NONCE = "mQo66pQBT1bIF2vKKEdGcgL0GecJGPk8HWNB8NduV3o";
-        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/36";
-        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE>;rel=\"up\"";
-        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA";
-        final String CHALLENGE_FILE_CONTENTS = "BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA.952Xm_XyluK_IpyAn6NKkgOGuXbeWn8qoo0Bs9I8mFg";
+        final String CHALLENGE_REPLAY_NONCE = "zinc45dbw3ymv3Jy609ZCbK-JFYQ7-bukseiA0C9MCG1RaI";
+        final String CHALLENGE_LOCATION = "http://localhost:4001/acme/challenge/v2/67/jabkIQ";
+        final String CHALLENGE_LINK = "<http://localhost:4001/acme/authz/v2/67>;rel=\"up\"";
+        final String VERIFY_CHALLENGE_URL = "/.well-known/acme-challenge/d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ";
+        final String CHALLENGE_FILE_CONTENTS = "d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ.2NVC_ENUU-TZ83gkUxQvXl7_ixvttxk_dPlNqIyXGKY";
 
-        final String UPDATED_AUTHZ_REPLAY_NONCE = "uP6PqDT0I_vf0OMVncdp-T1zmxxzVhskIrg4Nz191B4";
+        final String UPDATED_AUTHZ_REPLAY_NONCE = "taroU2YGBQVFTtrEh8v1qkH5DxOMYWG0rO4ABhGAzt2A6yc";
         final String UPDATED_AUTHZ_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"identifier\": {" + System.lineSeparator() +
                 "    \"type\": \"dns\"," + System.lineSeparator() +
                 "    \"value\": \"iraclzlcqgaymrc.com\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"status\": \"valid\"," + System.lineSeparator() +
-                "  \"expires\": \"2018-12-23T23:06:59Z\"," + System.lineSeparator() +
+                "  \"expires\": \"2019-08-28T16:28:22Z\"," + System.lineSeparator() +
                 "  \"challenges\": [" + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/33\"," + System.lineSeparator() +
-                "      \"token\": \"iE2BAsOSYCgCALb-0nx1M2UDmXBkMhv07ssGmUK4kak\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"tls-sni-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/34\"," + System.lineSeparator() +
-                "      \"token\": \"1rcnRMNMzxxH1AHQvEcc2tVZw9QDHRBeU3v2euASMDo\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
-                "    {" + System.lineSeparator() +
-                "      \"type\": \"dns-01\"," + System.lineSeparator() +
-                "      \"status\": \"pending\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/35\"," + System.lineSeparator() +
-                "      \"token\": \"pDWP9Ja1fNgl-GPThTK7UN90ZXt5F1jwY2mG1WjK3I0\"" + System.lineSeparator() +
-                "    }," + System.lineSeparator() +
                 "    {" + System.lineSeparator() +
                 "      \"type\": \"http-01\"," + System.lineSeparator() +
                 "      \"status\": \"valid\"," + System.lineSeparator() +
-                "      \"url\": \"http://localhost:4001/acme/challenge/X3abrVFHYxONSYu01NGFP8s49Lt2reSmROU8tJG71TE/36\"," + System.lineSeparator() +
-                "      \"token\": \"BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/jabkIQ\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"," + System.lineSeparator() +
                 "      \"validationRecord\": [" + System.lineSeparator() +
                 "        {" + System.lineSeparator() +
-                "          \"url\": \"http://172.17.0.1:5002/.well-known/acme-challenge/BbXZvuNCX3sbW_MQd-4vvLZzd6llkKP8tG-YNqcVBbA\"," + System.lineSeparator() +
+                "          \"url\": \"http://iraclzlcqgaymrc.com/.well-known/acme-challenge/d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"," + System.lineSeparator() +
                 "          \"hostname\": \"iraclzlcqgaymrc.com\"," + System.lineSeparator() +
                 "          \"port\": \"5002\"," + System.lineSeparator() +
                 "          \"addressesResolved\": [" + System.lineSeparator() +
@@ -2054,11 +1986,23 @@ public class AcmeClientSpiTest {
                 "          \"addressUsed\": \"172.17.0.1\"" + System.lineSeparator() +
                 "        }" + System.lineSeparator() +
                 "      ]" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"dns-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/nOqZzg\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
+                "    }," + System.lineSeparator() +
+                "    {" + System.lineSeparator() +
+                "      \"type\": \"tls-alpn-01\"," + System.lineSeparator() +
+                "      \"status\": \"pending\"," + System.lineSeparator() +
+                "      \"url\": \"http://localhost:4001/acme/challenge/v2/67/5jeSaw\"," + System.lineSeparator() +
+                "      \"token\": \"d2fs_-qypCU68P4jck7U9k1JGdN-SlQbjfWUCIo8SAQ\"" + System.lineSeparator() +
                 "    }" + System.lineSeparator() +
                 "  ]" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_URL = "/acme/finalize/3/12";
+        final String FINALIZE_URL = "/acme/finalize/18/99";
 
         final String FINALIZE_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"type\": \"urn:ietf:params:acme:error:malformed\"," + System.lineSeparator() +
@@ -2066,7 +2010,7 @@ public class AcmeClientSpiTest {
                 "  \"status\": 400" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String FINALIZE_REPLAY_NONCE = "l2LQJWlhk9_JtZNqJ2kfS6X4_9lCQY3KAwiWxIRpp94";
+        final String FINALIZE_REPLAY_NONCE = "zincIG_1w_6ME9wlbC5CmT7FQ9h2LLtLFzONU5qh1bkaDh8";
         final String FINALIZE_LOCATION = "";
 
         return new AcmeMockServerBuilder(server)
@@ -2096,20 +2040,20 @@ public class AcmeClientSpiTest {
                 "  \"newNonce\": \"http://localhost:4001/acme/new-nonce\"," + System.lineSeparator() +
                 "  \"newOrder\": \"http://localhost:4001/acme/new-order\"," + System.lineSeparator() +
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"," + System.lineSeparator() +
-                "  \"yNEulSQUUIA\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"" + System.lineSeparator() +
+                "  \"kgIgyHU3yA0\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "R_4ZVLQ2G3kNzArEuHmve0UvjR1XSxp8B2g6mOBCskE";
+        final String NEW_NONCE_RESPONSE = "taroDvhk2H7ErEkhFCq8zux1hCbY0KzFQDEFGjMaSvvCC_k";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJwdUwtV2NNWVVKMkFqZHkxVXNVZ056am42ZWNEeGlXZDdOR1VHcTI2N1NPTHdoS2pTV1dNd2tvcGZjZzVWTWpQSldFRTM4SUlYeWpXNW5GS0NxRkFJZjNabGloXzFTTGNqZ1ZGYmlibi1vTUdGTFpzOWdncjJialJHSnNic0pRSU9LbWdWczJ5M2w1UmNJeUYyTS1VT3g0R3RBVVFKc1lpdHRjaEJMeHFqczBTQmpXZHRwV3phWDRmd1RDeng0OFJYdVpoa3lfbUtBeUtiaEFZbklHZERoY1ZJWnNmZjZ6ekVNMWJwSkVENk9CWmg2cHlQLU4wa094Y0dtUFBDSE1mME16d2puSzhWckZQRWFJSWZRQWJVQzFyVGF1aXFaWDdnbEVuTjJrWXFPd2w4ZzNuZjVmYlg2c1V1RFUxNWZWMGNtZFV0aHk4X0dIeUUycWR6alBSTHcifSwibm9uY2UiOiJSXzRaVkxRMkcza056QXJFdUhtdmUwVXZqUjFYU3hwOEIyZzZtT0JDc2tFIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"N_86Lf5tGJOHfdAcQWnmO-ha-8Ulu7yHIJWrP2CN3eSpEc2BgjRP00U-SiwJ0vNv0RftbtK-REXSAwRVvsPOULruZPG_3Dd9GUYpYvvVhklXa3d9o0-X-Bg-xJe6QfNeLmcS5KQ9CFEkO_EvOFeE9BgLnDmEpx-1VsJSKwVkyQXl2CZFqap_wsPH1UKnwbWyP6tAnCHh8p6_n8_oqoLeilal0KT3hAPmCj2qT3PF4ABRJVk3gUY-MqLtawPl0VJ9gOUvbp5PKmi31LHAzKU6105Y9O5vccPkL6AJCskbJdoos8VkV_fk_Ip4kyPcM-q9PAx2P5uq9fg-_SufSaE-8g\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJoOE9lZTViZURSZ3hOUGVfZU1FOUg2Vm83NEZ1ZzhIZ3Jpa2ZiZkNhVTNsS0Y2NDhRRzFYMWtHRFpUaEF5OGRhcUo4YnY2YzNQSmRueDJIcjhqT3psNTA5Ym5NNmNDV2Z5d1RwY0lab1V6UVFaTFlfSzhHTURBeWdsc1FySXRnQ2lRYWxJcWJ1SkVrb2MzV1FBSXhKMjN4djliSzV4blZRa1RXNHJWQkFjWU5Rd29CakdZT1dTaXpUR2ZqZ21RcVRYbG9hYW1GWkpuOTdIbmIxcWp5NVZZbTA2YnV5cXdBYUdIczFDTHUzY0xaZ1FwVkhRNGtGc3prOFlPNVVBRWppb2R1Z1dwWlVSdTlUdFJLek4wYmtFZGVRUFlWcGF1cFVxMWNxNDdScDJqcVZVWGRpUUxla3l4clFidDhBMnVHNEx6RFF1LWI0Y1pwcG16YzNobGhTR3cifSwibm9uY2UiOiJ0YXJvRHZoazJIN0VyRWtoRkNxOHp1eDFoQ2JZMEt6RlFERUZHak1hU3Z2Q0NfayIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"WpICzZNwgHJckeO7fn8rytSB23poud38FEg1fwmVvd3rag-KLZ5rOrqmOzr6BIUpaY0DEeZ03QzQFYIoywVNg8Apvbh12RZvkWW_VuIfpnJOz6dWOhV-lM5aH9oVy7mW9nNVqzqlTEyWRXPGo8XSD_vWtxSu-zLbHOTvnURiiCOO3DM96xRZrnvexTI97RRO6cBrI4HzjSBpat03YOkwxEWzrbqdZD7RVgUxTh6ELK7BE1U87IF2iBO_V1VllUZdH9P2EiTtFBwj5xkBXhyeBiTj2BqWzb4-Y5o_W0b5hMX1IQiPa-zb56L-SkcEJMNu-hJSGmPy6uoRJVAwCHcP-w\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "n13g7hLxpXHWocmPsq_Qx-i5nvJF1OzSqPQ7naadMZw";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/384";
+        final String QUERY_ACCT_REPLAY_NONCE = "zincgzgBIqMgfFmkcIQYn6rGST-aEs9SOGlh0b8u4QYFqiA";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/5";
 
-        final String REVOKE_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMzg0Iiwibm9uY2UiOiJuMTNnN2hMeHBYSFdvY21Qc3FfUXgtaTVudkpGMU96U3FQUTduYWFkTVp3IiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvcmV2b2tlLWNlcnQifQ\",\"payload\":\"eyJjZXJ0aWZpY2F0ZSI6Ik1JSUZaekNDQkUtZ0F3SUJBZ0lUQVAtWWVJSDJiVjRkWDZhMXVOb3JxNk5PWVRBTkJna3Foa2lHOXcwQkFRc0ZBREFmTVIwd0d3WURWUVFEREJSb01uQndlU0JvTW1OclpYSWdabUZyWlNCRFFUQWVGdzB4T0RBME16QXhPREEyTkRCYUZ3MHhPREEzTWpreE9EQTJOREJhTUI0eEhEQWFCZ05WQkFNVEUydHNhV3Q2Wld0dGJHcDFkM2hyYlM1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDWlhuRVBXRXlYRDl0RUpyejB5T3hpNTRuNWR0RTBsOEJzRkt2OGk0bXJmdlMtYXhiaF9OUzdMb3Y0anN5Zy0tLVN6am9xQ3pJbkY4OExQVWxGanFPVlVwYkdhWjM1MWlYN1FkN216bXBsdkFSY2RhdnZXVXRrdjRXN2ZQOGF0N3VsODJaanBmc0VrS2pGcXJ1czZkZFNfQkxXeGNxblhoS3NrdUstZ3MzZ2F3SjFuTU93b01VeGJpYm5EamdpQ1JIVm9wRm5WS0NhMUttWG42MkFBTmUySnNSQTZySlJFZFE0TnE4MVRBZFpieGwyTXdjVnFUY1pYX1BBTVB5RlBCM1EtS0o0VlhPR3R2SVNTb2J1cThUaHFvWXJzeGJ6dXcwMnZYdnd4RzZPaUs3UlFobm9wOHNpdWNIZ0RsaUVlQ25BYWNkZFdRalBieTh0ajBEZzlOTTNBZ01CQUFHamdnS2JNSUlDbHpBT0JnTlZIUThCQWY4RUJBTUNCYUF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01Bd0dBMVVkRXdFQl93UUNNQUF3SFFZRFZSME9CQllFRk5xM0VGWmk3dDhYT1Z0aUw4YjBjRGJ3a2szWU1COEdBMVVkSXdRWU1CYUFGUHQ0VHhMNVlCV0RMSjhYZnpRWnN5NDI2a0dKTUdRR0NDc0dBUVVGQndFQkJGZ3dWakFpQmdnckJnRUZCUWN3QVlZV2FIUjBjRG92THpFeU55NHdMakF1TVRvME1EQXlMekF3QmdnckJnRUZCUWN3QW9Za2FIUjBjRG92TDJKdmRXeGtaWEk2TkRRek1DOWhZMjFsTDJsemMzVmxjaTFqWlhKME1CNEdBMVVkRVFRWE1CV0NFMnRzYVd0NlpXdHRiR3AxZDNocmJTNWpiMjB3SndZRFZSMGZCQ0F3SGpBY29CcWdHSVlXYUhSMGNEb3ZMMlY0WVcxd2JHVXVZMjl0TDJOeWJEQmhCZ05WSFNBRVdqQllNQWdHQm1lQkRBRUNBVEJNQmdNcUF3UXdSVEFpQmdnckJnRUZCUWNDQVJZV2FIUjBjRG92TDJWNFlXMXdiR1V1WTI5dEwyTndjekFmQmdnckJnRUZCUWNDQWpBVERCRkVieUJYYUdGMElGUm9iM1VnVjJsc2REQ0NBUVFHQ2lzR0FRUUIxbmtDQkFJRWdmVUVnZklBOEFCM0FCYm9hY0hSbGVyWHdfaVhHdVB3ZGdIM2pPRzJuVEdvVWhpMmczOHhxQlVJQUFBQll4ZnpJLVVBQUFRREFFZ3dSZ0loQUlIMEtzUEJjdTBWSUZuSWswdHc0QVZwbW9vMl9jT2ZyRzdDLXN6OGZNMFRBaUVBa3NKbXF4cXlUWGFXZDc5dVNKQlNBTWJWNGpmdHVqbktCY2RhT1JCWFZMWUFkUURkbVRUOHBlY2tnTWxXYUgyQk5Ka0lTYkpKOTdWcDJNZThxejljd2ZOdVpBQUFBV01YOHlQbEFBQUVBd0JHTUVRQ0lGS2paSFc1YkhTZnF1ZXo4TXlWXzhsRVU4TzExQWczVWVyMEFraVVfT255QWlBSkQ2a3FsbVhfVnhOTi1MZ3o1TEJFalFvc2hReURfMFhOOXdDM2FMMFozREFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBWndQMGMyTjdReTJBV3R2cDRtd25zZ2pWMmMyY3IzMFJCTTRNNkZCblM5QlEwSU13LWRMT3BhcVAxNEM0N1BYa2M4ZmVyRmZZTFVsWW9NWkFIMHlscUFUemFxd3dnZ0V4ZmF3UlhKM2s4Z1BZWHFuSXdtdDFMNkpNZ0RuZjd6MlJxci1sTlZJNUg4REFpbnFDSjJLRmdtVHh2U1JudHdkYkh2X1J6TUFJRWhTOVp2SnpQOHRRWHBjclRHeWxha0VqWndnV1lOQWs4WTdRcnhfMWhoM0E2YWpXWWNhb1FUTzJVOS1pMThaNnB2TzFwRlZSZEo0ZUozamJrVzR0UUNJVDkxeGtsWFlfT1gyZF9qc0Z3TzFBaTNEV19Eb1ViMGtPUmFaMkswZjZJZF9BczREOU5USDVXSDdEX2FrMm42T2l2V2dpTHBqZ0pxRUgzNWtPN0hWdGNnIn0\",\"signature\":\"U6822aPK85QdIwsJH6ekvg-LkmvjBlLmJmk8OViNYr79GNTbu3LBO-x9p2_R3deKotShjYE3WpcmzqcW9xpHg-FRSWgcIFczS_0EAX9d-OhI4LFzQroHyTXcEev0OruiMq_4tZrGjy1CFFfdaaXyRbpDqnP4vC_Tq2KyUHhV6LbhHhg11qaQjov3z-0jMM6eKGybmne6yDrE2lG6uKZscWzYqwGi5gkQ_iBHCb_qzYYphYs8IZLPTt6T8PAIDmRpsRCHXzgDCk0QVhj-Gl7y2H2xEn_BknKT-oPa33zSICovn5cR6utf788FRz9oh8t7tIpOAvVStwVSrb6BV6WOUQ\"}";
-        final String REVOKE_CERT_REPLAY_NONCE = "poBc-xx1Oxnprg_hgWFZI_0Ji-4qgEpAnGrAdxEP6sU";
+        final String REVOKE_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoiemluY2d6Z0JJcU1nZkZta2NJUVluNnJHU1QtYUVzOVNPR2xoMGI4dTRRWUZxaUEiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9yZXZva2UtY2VydCJ9\",\"payload\":\"eyJjZXJ0aWZpY2F0ZSI6Ik1JSUZUVENDQkRXZ0F3SUJBZ0lUQVA4b01Ib3hOS19JbWdkN3lzelh3S2RXd3pBTkJna3Foa2lHOXcwQkFRc0ZBREFmTVIwd0d3WURWUVFEREJSb01uQndlU0JvTW1OclpYSWdabUZyWlNCRFFUQWVGdzB4T1RBM01UWXhOalE0TWpkYUZ3MHhPVEV3TVRReE5qUTRNamRhTUNFeEh6QWRCZ05WQkFNVEZtbHViRzVsYzJWd2NIZHJabmRsZDNaNE1pNWpiMjB3Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRQ1NaQllqclZ0S05jbFVhQV9nZ3hJaGNSVVdrOUVJbXBJMG5heWQwaURsYUdUWkxicTZVNHZvUWxzNkRDZmpzdzIwU2QzdTgzb2RqTDU2QUdOeHBIUzZaYTVjN3RLS1hGUmgwOVFjVEkzdFJwbWF5bFgwZXhWd2tVcllSaUdLSXA3Mjg2YzhWdi1qenk4VkkyLXlnaFpvLThHRDNjVm9XdFhEWnpWNWxnZlFGeGhDc2tUUjhWUXB6b0FOMm5Fai01UVRNdi1HdUhfSDJ5U3FNLWtTN0NwR2JUaDZZSUp2OVZfblFUaC1FTEFnY29ic01UN24tU2dfRTdUQ21nNmxqaWduaGRwdzZGMElMdWlfX3pJYzFEbG0yRC1UVi0tWm4yQnp1b2FkeFJlZ05TcXMyRkkyUDF3MXlSSHFHYmtTOEpabEY0LWg3MVhWV01kazFtWUVaRTVCQWdNQkFBR2pnZ0otTUlJQ2VqQU9CZ05WSFE4QkFmOEVCQU1DQmFBd0hRWURWUjBsQkJZd0ZBWUlLd1lCQlFVSEF3RUdDQ3NHQVFVRkJ3TUNNQXdHQTFVZEV3RUJfd1FDTUFBd0hRWURWUjBPQkJZRUZObThPaFpQbWYweWdhNUR6MHNGaTB3TXZ3cWJNQjhHQTFVZEl3UVlNQmFBRlB0NFR4TDVZQldETEo4WGZ6UVpzeTQyNmtHSk1HUUdDQ3NHQVFVRkJ3RUJCRmd3VmpBaUJnZ3JCZ0VGQlFjd0FZWVdhSFIwY0Rvdkx6RXlOeTR3TGpBdU1UbzBNREF5THpBd0JnZ3JCZ0VGQlFjd0FvWWthSFIwY0RvdkwySnZkV3hrWlhJNk5EUXpNQzloWTIxbEwybHpjM1ZsY2kxalpYSjBNQ0VHQTFVZEVRUWFNQmlDRm1sdWJHNWxjMlZ3Y0hkclpuZGxkM1o0TWk1amIyMHdKd1lEVlIwZkJDQXdIakFjb0JxZ0dJWVdhSFIwY0RvdkwyVjRZVzF3YkdVdVkyOXRMMk55YkRCQUJnTlZIU0FFT1RBM01BZ0dCbWVCREFFQ0FUQXJCZ01xQXdRd0pEQWlCZ2dyQmdFRkJRY0NBUllXYUhSMGNEb3ZMMlY0WVcxd2JHVXVZMjl0TDJOd2N6Q0NBUVVHQ2lzR0FRUUIxbmtDQkFJRWdmWUVnZk1BOFFCM0FCYm9hY0hSbGVyWHdfaVhHdVB3ZGdIM2pPRzJuVEdvVWhpMmczOHhxQlVJQUFBQmFfdm1ZVElBQUFRREFFZ3dSZ0loQUt0b2NobEprQm5idFduQzFLUjlVZ2p0TXZldFFjeUEyaTRvVE9rVjVTUFVBaUVBdEFqeXd6RW11eHRJcmc0US1oWExHTllqbVlFSWROSUxnVDBTZGVkUE5kQUFkZ0FvZGhvWWtDZjc3enpRMWhvQmpYYXdVRmNweDZkQkc4eTk5Z1QwWFVKaFV3QUFBV3Y3NW1FekFBQUVBd0JITUVVQ0lGVVJmVkJfUWVaV3N1dk1LVVpUVDJDaVAzR182OVkzVUNhV0pfNExYbWozQWlFQXBkQXVXMVU1T2Z5TF9ZcGVBRVBBbVpyOVpvNWFDejRsWU0zcTluTGh4V0l3RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQURtODV2cHZFaU9VWWNQRXB3bE9RdlRJYW4ybm1MMWN0ejhUN0xLbmJpQ3pYX2lYcjNUY2FrSEV3NUVNVUk0ZEFEN3ZTRklIclhDem5GZTVlYTVQWGh2bi1KQjFFVnQtVnZmV3lGQXlWLVBuVzc0dDBGa1p5Z1ZQSGdwbktnVWozemFSMHhfRDlZMEEybW16REZCYkpHNmpDR0k1V3lmSnY2c0gyS2xuTDRvaWhGS1VQVm9HY3VNZWhySkd3TWNUMllhRnM3dDhXaHROTkM4ek9HbkxHODdiQUM4SjUxY0VEdjlGeUYyaUtBc0NLY1JNWFRnd0Q2Y2pRVExacnZ1ZnJQN1FTR3pzYWdRYXlPZEVNZkl3N2UydXZoSS1iRWtMdFdxb1BKcmZFV2Y4YU1CY2RLVEhXQXc4NGhDOXR0am52S0xGbFVvNjlHYWhmZm5KV2ZEN1RucyJ9\",\"signature\":\"A14QNG3HbUD341rmJ7ibxiIMlcCuDIUrLWtvcmnH-byrBetX5J5VrXaiHOOPYKK2YCjDJEr2f29Cq3i6Q0IlC2UGAPGOEETYKNDBv3zHrtNe7I0VMXMqfB8ClNydSoNdAL9OB1m9syZT7ijZxq_RldTWLsCIDDdWom1xEgb3RUCpTTMUMhsTQZdf5t3y0CNa5p7wfCT8ejLcQ3aYMUm-chDjn4nC8YBdGVSlpacLdafrsDeoTFSF8yhCL9pBk_hz8FMXFKS3ctCBGVJTIHeWPWvnYJn4owEAjbmVqC_khACM-Zo7N-Gx7--47_qyG4dW2IvYansrMrlIwLlwDtmPig\"}";
+        final String REVOKE_CERT_REPLAY_NONCE = "taroo4s_zllDSu1x5i0l1x595sQJalOjAPXRnz6oc7vMiHc";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
@@ -2123,7 +2067,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"FpVd7yM-nVU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"oBarDLD1zzc\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -2138,17 +2082,17 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "-mlJhcox_6FFuDwNhcmL06FWD6uL7K7lam9Jel-MqqM";
+        final String NEW_NONCE_RESPONSE = "zincwFvSlMEm-Dg4LsDtx1JBKaWnu2qiBYBUG6jSZLiexMY";
 
-        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJwdUwtV2NNWVVKMkFqZHkxVXNVZ056am42ZWNEeGlXZDdOR1VHcTI2N1NPTHdoS2pTV1dNd2tvcGZjZzVWTWpQSldFRTM4SUlYeWpXNW5GS0NxRkFJZjNabGloXzFTTGNqZ1ZGYmlibi1vTUdGTFpzOWdncjJialJHSnNic0pRSU9LbWdWczJ5M2w1UmNJeUYyTS1VT3g0R3RBVVFKc1lpdHRjaEJMeHFqczBTQmpXZHRwV3phWDRmd1RDeng0OFJYdVpoa3lfbUtBeUtiaEFZbklHZERoY1ZJWnNmZjZ6ekVNMWJwSkVENk9CWmg2cHlQLU4wa094Y0dtUFBDSE1mME16d2puSzhWckZQRWFJSWZRQWJVQzFyVGF1aXFaWDdnbEVuTjJrWXFPd2w4ZzNuZjVmYlg2c1V1RFUxNWZWMGNtZFV0aHk4X0dIeUUycWR6alBSTHcifSwibm9uY2UiOiItbWxKaGNveF82RkZ1RHdOaGNtTDA2RldENnVMN0s3bGFtOUplbC1NcXFNIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"lztzTXBmbrxXGMspfEetHDGKdZ2NrpQTioysqHIa9aaL5dy8bPmKZ_Vmz68-xnUJcjK-5FMCn5vtYEKAJlJ7W3wVYzthcVuYlv-b6FNw3IYsdSSHMr5RLm0rSt9EwYd-BI4bCoT7dioYpCMHzTrd-3X8QjDS4fx1o6D-po_Hwkt4PWx5Yoo9ExlykM5cHOQlCQENPk3Pn0M4_8XkfH1QTvVTIm4A4lbo_Eko1aU9PgvWbNsqkEhRzH7rBb5FUlxFgRoSHuTJwn6uJL-H0cfYQUn-J5JyD5C-P8su3M7NoAXCj0vy_84TziHMxe1C8fI-A64M6CtlL9qGm5MwPgv8Gg\"}";
+        final String QUERY_ACCT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJoOE9lZTViZURSZ3hOUGVfZU1FOUg2Vm83NEZ1ZzhIZ3Jpa2ZiZkNhVTNsS0Y2NDhRRzFYMWtHRFpUaEF5OGRhcUo4YnY2YzNQSmRueDJIcjhqT3psNTA5Ym5NNmNDV2Z5d1RwY0lab1V6UVFaTFlfSzhHTURBeWdsc1FySXRnQ2lRYWxJcWJ1SkVrb2MzV1FBSXhKMjN4djliSzV4blZRa1RXNHJWQkFjWU5Rd29CakdZT1dTaXpUR2ZqZ21RcVRYbG9hYW1GWkpuOTdIbmIxcWp5NVZZbTA2YnV5cXdBYUdIczFDTHUzY0xaZ1FwVkhRNGtGc3prOFlPNVVBRWppb2R1Z1dwWlVSdTlUdFJLek4wYmtFZGVRUFlWcGF1cFVxMWNxNDdScDJqcVZVWGRpUUxla3l4clFidDhBMnVHNEx6RFF1LWI0Y1pwcG16YzNobGhTR3cifSwibm9uY2UiOiJ6aW5jd0Z2U2xNRW0tRGc0THNEdHgxSkJLYVdudTJxaUJZQlVHNmpTWkxpZXhNWSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"bFUmpw50SUd29FFzPgpZw-lkSzl8tlO4ZEUkxRNyL3NSfBZvKDUpPA9P4gg7NkKq-kLl09O2_w_9zoDu_AxIpfylnBuQmK3PGA_f61tQHjWG41hX7NaPUqPieFiEMD4EC7-z4oEN2O79hdCLzhtujwkX8kUav7q60VoUDdmLongJkoQJYHqYJisYmmvGBf28qe3jq9KmgeLav33z8xdsg3i-Cc7jZDWdRMtY72PqEMT53WhYBof15HXrrSZf5b6AAEOX8xMfPkMvx0p_TG2RCEiYY-L7yxgE634_-ye146uUL47X7h5ajmuqu3EsOL4456cjpcKGyhpU9aAhCDKHNQ\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY= "";
 
-        final String QUERY_ACCT_REPLAY_NONCE = "zbQR7CL_GSx0oydZ0AVoNEh7omY_XONdWFpYOfeFVQc";
-        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/384";
+        final String QUERY_ACCT_REPLAY_NONCE = "taroaIprXC7Gi1SYzYi8ETK0IooQwJyv-Qsv4ALL-xw8uu0";
+        final String ACCT_LOCATION = "http://localhost:4001/acme/acct/5";
 
-        final String REVOKE_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMzg0Iiwibm9uY2UiOiJ6YlFSN0NMX0dTeDBveWRaMEFWb05FaDdvbVlfWE9OZFdGcFlPZmVGVlFjIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvcmV2b2tlLWNlcnQifQ\",\"payload\":\"eyJjZXJ0aWZpY2F0ZSI6Ik1JSUZaekNDQkUtZ0F3SUJBZ0lUQVBfNDBNVEh3LWw1M3lpOWVOMnptclFkX1RBTkJna3Foa2lHOXcwQkFRc0ZBREFmTVIwd0d3WURWUVFEREJSb01uQndlU0JvTW1OclpYSWdabUZyWlNCRFFUQWVGdzB4T0RBME16QXhPRFF4TURoYUZ3MHhPREEzTWpreE9EUXhNRGhhTUI0eEhEQWFCZ05WQkFNVEUyaHRlSFJ1ZFd0c2JHaDRlR3hpYUM1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDWUpyX3BaQkNTeV9LZHdLd1c0TDdyNnhWYVB1R0dna1JKY3lnTE5EWUhNd2JObm9zM3FnckpEMk0tRW5HOWlrSmlIRzd5VUtfVHRGNWZrVFA3UEROUzNlallkVTl1RTFHeTM1VTcyVGVzbVpzSC1aNy11NHJsc1JxdzVXcURDUjBGeW1PR0xuUEpVa3hGN29PRlFHc1lwZ3h3T1JVV0g5TlBEUzZTT3RTWF9XbUJ0S015VGM5QW9GRjBlRHM3NlBmOWl5eXZONjh4ejF6Y3g5aENnbDB5ZVNXTFhUNHV1SUJibHIxNXZhdzdCVVFNMnBGdE9aNGFIcWRiTDUtQ05TOWVxNUk2WTRpMW1yQVBEWklkN2xMOHAxY2tQLXI0dlh0a0VVdmxEaXFNMzdiRlB3enZDMWVVeGtOanNTdnQ0OGh4TTBtMU82cHZhTVB2Qm1CWGxHOUZBZ01CQUFHamdnS2JNSUlDbHpBT0JnTlZIUThCQWY4RUJBTUNCYUF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01Bd0dBMVVkRXdFQl93UUNNQUF3SFFZRFZSME9CQllFRkl3VXBFcGpUbmhUTl9XN3JlckkwT3V2alVMck1COEdBMVVkSXdRWU1CYUFGUHQ0VHhMNVlCV0RMSjhYZnpRWnN5NDI2a0dKTUdRR0NDc0dBUVVGQndFQkJGZ3dWakFpQmdnckJnRUZCUWN3QVlZV2FIUjBjRG92THpFeU55NHdMakF1TVRvME1EQXlMekF3QmdnckJnRUZCUWN3QW9Za2FIUjBjRG92TDJKdmRXeGtaWEk2TkRRek1DOWhZMjFsTDJsemMzVmxjaTFqWlhKME1CNEdBMVVkRVFRWE1CV0NFMmh0ZUhSdWRXdHNiR2g0ZUd4aWFDNWpiMjB3SndZRFZSMGZCQ0F3SGpBY29CcWdHSVlXYUhSMGNEb3ZMMlY0WVcxd2JHVXVZMjl0TDJOeWJEQmhCZ05WSFNBRVdqQllNQWdHQm1lQkRBRUNBVEJNQmdNcUF3UXdSVEFpQmdnckJnRUZCUWNDQVJZV2FIUjBjRG92TDJWNFlXMXdiR1V1WTI5dEwyTndjekFmQmdnckJnRUZCUWNDQWpBVERCRkVieUJYYUdGMElGUm9iM1VnVjJsc2REQ0NBUVFHQ2lzR0FRUUIxbmtDQkFJRWdmVUVnZklBOEFCMUFOMlpOUHlsNXlTQXlWWm9mWUUwbVFoSnNrbjN0V25ZeDd5clAxekI4MjVrQUFBQll4Z1NzYVFBQUFRREFFWXdSQUlnTUFGb19yNFl0aWNfc1lpVmxpaE10ZGZSZDFnclNYSUl1U2pwQzNZT1NOZ0NJRzdMWTlkMGl2cVV2czJ3Y0Z1Q0tNZkFsdDFNWTNvcjR6cGJlelFsNWpvREFIY0FGdWhwd2RHVjZ0ZkQtSmNhNF9CMkFmZU00YmFkTWFoU0dMYURmekdvRlFnQUFBRmpHQkt4cFFBQUJBTUFTREJHQWlFQTRYSmZVd3JVbkxWUGxRbF9IVVFxakRUVkFRdDJIN29BdXNrWUhiT3EtYTRDSVFEcGZwa3pNbkxudlNxay02QU5ZRWRKb0p5Q0M3M1ZwdHo0WG1MVnJMNHNtekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBc1VEMUJ6M2NWQzA4NXF4a2VkYzJqd3FUSEk0UF9OaERrQVFmSGhrQ0VlaFoyVTVmRE1YWXFwZDh0UUluZUdoZU1ZTkQ4OWRFQXYyXzI5SXNGXzhKNC1uSURrLU1XQkFsQm43VUtES2xDbEdza0RDenJPajF6clJwOUtscTNLaElFSkUzT01nTGIyM3pNbERLeWRIcXA5OGtTc25hQmFoS1VlV3l1WXcxdmNwemZ3TjE0UG9xMW1jRnJWUFAxcWRBNG1NMTVFVHgyV0tZdTFWaWIySVVESmx2STNYbUg5SFR5ODZYRTRMNXFTd20xalJFbzZ5a3FDTmhSMHJMeHhHeXhDRldWVXVLNG9SaFR3YmF0VzEzR3JvSlhGdGNQeVVuRGJkSU9iRzIwLV9DME9ZMk9Rc1pWQTNWTC1IQ2c3ckt6QnZOSTNlaVkzVVNMYVBMM1I0dWhnIiwicmVhc29uIjoxMH0\",\"signature\":\"eP8PR2UEdU-HW7hM0XyeDWuPADRh_XKwmNM8QmowJzn4WLYkp-pHbnpGnID0aRTAjFQsvvPmkWIrNN9TMCgwfr5EqP7xoU1uGS3J6uNydZI4TyjGZaJ9v1I9sqb5Zw_Q5cht-vSMnxznmuEu3K_6jrDLq9x-U22sNFyA_aoqu5odPNJl_l2D2ZHaPbO19NjOfc2-mgBKR4y850oEzz8vKsFcPjtASFMoC3Ulyc2kDHuUeH9HL3W4DqvD0ygVhcbh5R9NRzwefj1h2YSD_8QJj20DprPSReJ_LxZTZzy3-oB3WWibLUaVS6xr0ZbMCPQSp_rTSRWpekWoM7vm_XwdCQ\"}";
-        final String REVOKE_CERT_REPLAY_NONCE = "q4qaFhcWgftkiRaaeEZskz_fp9ue2OJGRDW3mYBGCNk";
+        final String REVOKE_CERT_REQUEST_BODY = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoidGFyb2FJcHJYQzdHaTFTWXpZaThFVEswSW9vUXdKeXYtUXN2NEFMTC14dzh1dTAiLCJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjQwMDEvYWNtZS9yZXZva2UtY2VydCJ9\",\"payload\":\"eyJjZXJ0aWZpY2F0ZSI6Ik1JSUZSVENDQkMyZ0F3SUJBZ0lUQVA4S2RpM2JyejdmaTlHYkpDM2pQRGxUT2pBTkJna3Foa2lHOXcwQkFRc0ZBREFmTVIwd0d3WURWUVFEREJSb01uQndlU0JvTW1OclpYSWdabUZyWlNCRFFUQWVGdzB4T1RBM01UWXhOekV5TURkYUZ3MHhPVEV3TVRReE56RXlNRGRhTUI0eEhEQWFCZ05WQkFNVEUyMXVaR1ZzYTJSdVltTnBiRzlvWnk1amIyMHdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDSXhLNzVXS0dCSzJ4Y0F1QWVfTmJPRnJvcUJaU3hHUFZFOWd0Y0lMRF9HU0hSYzFWbHNmc2x1UXpsdThiSDNnaW91OFdEUU85NDNYaUxWdldJSU1oSGQ4MzJZM0xRdXMwQnlUeEtlUnVubXdhVjdHWkZoQTNrTEFJclpzUUNRNGxMUUtLTHB4N09PcVREZUhSY1Q4UHV1NDNqQXh6NTItZ0ZFc1MzOFM2WS14aGxmdTZSN1ZvMUJnenlNNFV2MkVLQVNwbDh0N2twOFdiRzUwejhSYzd4SjR1VnZEa3dSQmhJWUtPTmttaHFPVkJvNGlIT0ZoU3JFRGhzRXJERHZjdi00dzdLZU43ZDhURmtucjR1R1U2emtrWDFZYi1GX2ZSSEpzMFhXYTFJSTlGcDFmTXNnQ3lPb0R4MERKSFBIVDE0WS10TVc1bHlRTS1MT2ZYMnJ5RzdBZ01CQUFHamdnSjVNSUlDZFRBT0JnTlZIUThCQWY4RUJBTUNCYUF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGQndNQ01Bd0dBMVVkRXdFQl93UUNNQUF3SFFZRFZSME9CQllFRkREdmMwX1JzRG1pTjhrUlFBbmxicWNfUUJ5Mk1COEdBMVVkSXdRWU1CYUFGUHQ0VHhMNVlCV0RMSjhYZnpRWnN5NDI2a0dKTUdRR0NDc0dBUVVGQndFQkJGZ3dWakFpQmdnckJnRUZCUWN3QVlZV2FIUjBjRG92THpFeU55NHdMakF1TVRvME1EQXlMekF3QmdnckJnRUZCUWN3QW9Za2FIUjBjRG92TDJKdmRXeGtaWEk2TkRRek1DOWhZMjFsTDJsemMzVmxjaTFqWlhKME1CNEdBMVVkRVFRWE1CV0NFMjF1WkdWc2EyUnVZbU5wYkc5b1p5NWpiMjB3SndZRFZSMGZCQ0F3SGpBY29CcWdHSVlXYUhSMGNEb3ZMMlY0WVcxd2JHVXVZMjl0TDJOeWJEQkFCZ05WSFNBRU9UQTNNQWdHQm1lQkRBRUNBVEFyQmdNcUF3UXdKREFpQmdnckJnRUZCUWNDQVJZV2FIUjBjRG92TDJWNFlXMXdiR1V1WTI5dEwyTndjekNDQVFNR0Npc0dBUVFCMW5rQ0JBSUVnZlFFZ2ZFQTd3QjJBQmJvYWNIUmxlclh3X2lYR3VQd2RnSDNqT0cyblRHb1VoaTJnMzh4cUJVSUFBQUJhX3Y4QzRFQUFBUURBRWN3UlFJaEFQbC1wWUdvcGZGb0xwSS1VT2pQN2J3YjQ2UmhlYXl6a1VUZDFxV3U4TUhiQWlBa0xFaG5fNllXTm1iWEtxNmtiNk9aQzFSNy1ud1NKNk41X1BQNm9KQlhvZ0IxQU4yWk5QeWw1eVNBeVZab2ZZRTBtUWhKc2tuM3RXbll4N3lyUDF6QjgyNWtBQUFCYV92OERYWUFBQVFEQUVZd1JBSWdXZkRRU2Rfamo1SzV5ZHh6MFU2Z0xpVV9LcGtZek44bG9DTHZNUXVPSDlFQ0lHT0d5eWJNcXA2ZVRtUFZxeXdDcEVEa0xRS0J2NE1DNV9McmtqN3JaMmhxTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFBUjZTLWl6NlUteU41YTNVSmJlVVR1TU9XZUNkZWFPdVBMYy1GUnpSUExxamlvb240U2VOSnp4QXNBVnNrQmtjN3ZfRGpNWFVTR3BYSm1IUVkwM1pJYUNoSWRuVXRyUTdLX0FhaXFLck1IeTV5U29JSUFENzFKU09kT1RRdTBvRDBVZVZBdUVJMlExcVBZcnNoYmZ6UGhraWxBV3BwaGhTc1l1U0g0aFlHQVRyck4zaEE5ckF3UkN4eVFmTUpUQXBiWnc5T0dZOVp5MW12NWU3cDh6WXZsanlRWEFmUmpTaEhjQ1R2UVhXUFNIb2VGVTRMa1ViMHdlXy1uRzNtdDdfTGhYckpNUFZ2T1VNQlB6R2RQSDE3dDFYeWYzVEdaV2x0Wkdjc0MzcmRjdWkxaGJkcHpxNU5zcHV3Qlg4b0F4d0Rnck9CajF4VldfRkFMSXd3NTBCMHkiLCJyZWFzb24iOjF9\",\"signature\":\"bmgU30KFfJ5QLUBFF6b2e1mBV0W3YgKJHHS3goSyxzaANUocAEBYaEAId4EglE8op1HqvVBul5o7hCA6UfkNRE_hv0Y6c5xS_OQPRt0sRk_KRe6rVeVZd2ov5IqXmjdGq7xOnyRFXq1ErPfb3KSoz1IUOagemSZzUgbPNwIIJMSnQuRXW8ScOECssoDTy_R4OL6drkyxN8qXP7dJUQ4T4rTRBXnSEv1fUHFBZLRvVb2jqMc-Iiwp6hjdahBlWqPudiMyD8pinghyns0m5btw_OmOWERMEI4lIsOJjVg2Tu7HALDiLGSk6dyUV1HXyAeWBVr1QJBFeq2Gw3rD-26d1w\"}";
+        final String REVOKE_CERT_REPLAY_NONCE = "zinci0BXolnLRwsa-i7xBiVz4Zy0LDbw7hjIv9UvBDP10CQ";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
@@ -2162,7 +2106,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"DSKtJkFv-s0\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"uBZzMh54N6Q\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -2177,50 +2121,47 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE = "jeV3SxyaRXYWQhLYAFFScyTJSO1FZGPDAnF-1r05QKc";
+        final String NEW_NONCE_RESPONSE = "taroUPFo0aLcaedcnx3SpPDbSr2j84m3qw8rW2tZJnZm2FE";
 
-        final String QUERY_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJoNWlULUY4UzZMczJLZlRMNUZpNV9hRzhpdWNZTl9yajJVXy16ck8yckpxczg2WHVHQnY1SDdMZm9vOWxqM3lsaXlxNVQ2ejdkY3RZOW1rZUZXUEIxaEk0Rjg3em16azFWR05PcnM5TV9KcDlPSVc4QVllNDFsMHBvWVpNQTllQkE0ZnV6YmZDTUdONTdXRjBfMjhRRmJuWTVXblhXR3VPa0N6QS04Uk5IQlRxX3Q1a1BWRV9jNFFVemRJcVoyZG54el9FZ05jdU1hMXVHZEs3YmNybEZIdmNrWjNxMkpsT0NEckxEdEJpYW96ZnlLR0lRUlpheGRYSlE2cl9tZVdHOWhmZUJuMTZKcG5nLTU4TFd6X0VIUVFtLTN1bl85UVl4d2pIY2RDdVBUQ1RXNEFwcFdnZ1FWdE00ZTd6U1ZzMkZYczdpaVZKVzhnMUF1dFFINU53Z1EifSwibm9uY2UiOiJqZVYzU3h5YVJYWVdRaExZQUZGU2N5VEpTTzFGWkdQREFuRi0xcjA1UUtjIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"MZoKMFgb8svDNGhj89bme7AfxPjY-V95X_wtOfFCnSc3VQn07oVbFrfTS7NKOMuY_NcFejshDmqZJ-j-rpjlHShLVM5v4T0H1mkpbv_QGXf3bPKLA37KvlMMZUmnKgKJsqQLAt80wxQIvz3hJAihLFlm0KyyZ8xH8bwcdveK7S4cC875zU11UVg56dYKjjDkZAgD1boZVRgZSSn4lCYvSG0quTby3-s2MV6Pu6-PxaS_BlVbwSee-QUKvDj3Hrtvlb5vryH-rKML4hTSpz8dfS99qS8bgMtBRoBT7C6HgnwIndRkg2Dnd8XXGVsNgLUvXN0kSRlsh_EShds0Wl8Q_A\"}";
+        final String QUERY_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJpcVZkd3laNGl0VlNoOFVWX2Z3NlpnVjh3Mk56SEtGdzZWeWl5cGRLMmlyUkk0T3BMdWhJNEhqQ3pSTHR0WkJPX3ZLRjFZaTB1dVdMaFFzMnVpWlJ5eXFCa0R6SXU3UnIwZWp2T2UtLVc2aWhLanE2WnNCQ2Q3eDhMUl9yYXp1X242V1BkQWJZeWZxdnBuS0V0bGZxdW4yMWJnWk1yT1R4YW0tS0FNS2kyNlJlVi1oVDlYU05kbWpoWnhtSzZzQ0NlTl9JOTVEUXZ1VG55VFctUUJFd2J2MVVOTEEtOXRIR3QyUzQ0a2JvT0JtemV6RGdPSVlfNFpNd3MtWXZucFd5VElsU0k3TmlNMVhKb1NXMHlSLWdjaFlRT1FuSEU2QUhtdk5KbV9zSTlZN0ZhQmJVeVJpS0RnTi1vZlR3cXNzdzZ2ejVucUxUanU3Y2dzWld4S1dESHcifSwibm9uY2UiOiJ0YXJvVVBGbzBhTGNhZWRjbngzU3BQRGJTcjJqODRtM3F3OHJXMnRaSm5abTJGRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"XzrLN-kD_C0TAN7NhxdUJqIeAbUw2WWp5pwnK5tPkF177gUStWbyuCKpK68lMgmQa_EpImAUNQ8wT-oXP4ARZCYcuJZ-Hii1qXYGkXC9DCGuEPffk4c4M6F7JhA4FdlV_0nAV5i5Q6nILtn7nARqSc239jPJasM-ZjGdhfc7UCObpufoZqCChQn5N8MfLnZA8-SZK9M5pm9SM72JjUc3L9FRvFCG8p7iU_A0Lt7g9yD9LyddtONuVrzhmIm43e3pU3CaarhxA7vHlS-Vahnl-8fFCwEnsaC3b_EMfZYxBvvI28n4tn7QgwcOy6kLaNp1TXs0vxP23v_3y5dO79GSig\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY_1 = "";
 
-        final String QUERY_ACCT_REPLAY_NONCE_1 = "oHbba7Qw6BsBKUPDFp00PAP8jhHobchQPy7CAxaic9k";
+        final String QUERY_ACCT_REPLAY_NONCE_1 = "zinchourU8rrtvhVwzICl7mpth8YWPTP-7Z4aU2UNEXVONs";
 
-        final String ACCT_PATH = "/acme/acct/2";
+        final String ACCT_PATH = "/acme/acct/10";
         final String ACCT_LOCATION = "http://localhost:4001" + ACCT_PATH;
 
         final String CHANGE_KEY_RESPONSE_BODY = "{" + System.lineSeparator() +
-                "  \"id\": 2," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"mY95Jb8jON6IUOQns2GNRzdurkFqu3mCibXvjhY20rq9DVY45viorB4VuBS8sZ0VN1bmRC37CmuF_qLd0jQi5sMoBDj_Gzep8espmLTstvBwYqfyiPdVbyYFy1ikf-Q6A3vlRxK657pfW4cuJ9cgzCeZwj4LZpvMucHePMKlLhVG3g9uQqk5Ovq58OxTna-KyJT-5CcZ2oFoh-pWZf7jpMDgtJcmQHVdoP6zjnDxb2NIYtMsfptFOgLF5ixSXqnaZ_fZVFgEQp8Y1KYe6wrVEORlSQlvMzV-bx0kOxApUIISfMibqZsOWDSkIYIL7JfsApGJjpazjoX2et-NVZ4GRw\"," + System.lineSeparator() +
+                "    \"n\": \"iqVdwyZ4itVSh8UV_fw6ZgV8w2NzHKFw6VyiypdK2irRI4OpLuhI4HjCzRLttZBO_vKF1Yi0uuWLhQs2uiZRyyqBkDzIu7Rr0ejvOe--W6ihKjq6ZsBCd7x8LR_razu_n6WPdAbYyfqvpnKEtlfqun21bgZMrOTxam-KAMKi26ReV-hT9XSNdmjhZxmK6sCCeN_I95DQvuTnyTW-QBEwbv1UNLA-9tHGt2S44kboOBmzezDgOIY_4ZMws-YvnpWyTIlSI7NiM1XJoSW0yR-gchYQOQnHE6AHmvNJm_sI9Y7FaBbUyRiKDgN-ofTwqssw6vz5nqLTju7cgsZWxKWDHw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"agreement\": \"https://boulder:4431/terms/v7\"," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-23T22:17:00Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-15T19:53:57Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
-        final String CHANGE_KEY_REPLAY_NONCE = "iVwokbrHWFM6frqDaW0dtI4EcYlhvrY3TL4zIPsk_NA";
+        final String CHANGE_KEY_REPLAY_NONCE = "zinchourU8rrtvhVwzICl7mpth8YWPTP-7Z4aU2UNEXVONs";
 
         final String QUERY_ACCT_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"id\": 2," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"mY95Jb8jON6IUOQns2GNRzdurkFqu3mCibXvjhY20rq9DVY45viorB4VuBS8sZ0VN1bmRC37CmuF_qLd0jQi5sMoBDj_Gzep8espmLTstvBwYqfyiPdVbyYFy1ikf-Q6A3vlRxK657pfW4cuJ9cgzCeZwj4LZpvMucHePMKlLhVG3g9uQqk5Ovq58OxTna-KyJT-5CcZ2oFoh-pWZf7jpMDgtJcmQHVdoP6zjnDxb2NIYtMsfptFOgLF5ixSXqnaZ_fZVFgEQp8Y1KYe6wrVEORlSQlvMzV-bx0kOxApUIISfMibqZsOWDSkIYIL7JfsApGJjpazjoX2et-NVZ4GRw\"," + System.lineSeparator() +
+                "    \"n\": \"rDYXH58ys0MT97z_7gLkNFmQSXR_eb49c_55Wk3eSQpT3sUyq1YuKGWRc92-nBz6twdXa3VixAoXkxWhCxu0A_rbo_eTXe8WlVpCBKr5rM6wAlKENDrSQZD6MdzLLGaA207a_WFG7UPDUKH2_qH98CN5eleDn0TUYa6RYFF6j5D_T1Jg5nhC9I3P4zQ-WDNYvYEkEqPUgzK4cPOBXiMB_XFb2wf8mpm2pN8Fr5XOpQYeY1YXH-HGuYG5StUq__BDForbbQ_R7HSemdMglwujM46LteCvAr-Z5XBa2ue7mRK2RAkk_3-3Tmuj8ewyNGFw_AANvl8nyhZ-BU4VZvw-HQ\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-23T22:17:00Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-15T19:53:57Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String QUERY_ACCT_REPLAY_NONCE_2 = "0By1YoNhtJlVbmwH-N80RwlWVUIXpD3dS-j9Y1GnX9Y";
+        final String QUERY_ACCT_REPLAY_NONCE_2 = "taroG712eL8LB6nca1rdSadsNXQftZ5wOLN8unyyuakUuLE";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
@@ -2235,7 +2176,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY_1 = "{" + System.lineSeparator() +
-                "  \"LSx0inDH8oU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"TYncJ3PO4D4\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -2250,92 +2191,86 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE_1 = "Iq5ow6qZJI9AwCofhfDC6Ny-Z01sDpTx9-z158BTn4Q";
+        final String NEW_NONCE_RESPONSE_1 = "taroB2vNcCe_AiZTt8UrCXGdVZu-QRTyK0xRn4JxvZIMi5A";
 
-        final String QUERY_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiIxYVFHM05QZ3RBLVdsaDdWR1hTcXh4MlZkNEFYVXdqdHprVTF6blBjcGtwMUZ3aGhVajh0dm9sSnVmdmpIUUNNWXV3eERvRFY4RWoyb0E4Tld6YlJaRzd5ZW1YbmozcVUyNmY3c2N3dWN2WFo1MDY3d0lZQVhvY3NOV0Y2RzJvVXdyc1lpc1NVVU1fWmVoUHVrX0twOHU0WmRnVVN6ZDY0eUp4Tno0ZHR3Skh6MUx2ZFpiYW1FNnZVeWhPbHNOd3hrdlR5YWdWX3lQeVdCMnJ0NVdzcTVTeXNCanNsM09fOVRySVdpeXcyeVA0UC1Od2dDVjFxRVBqZmNvQTJJbkY4SHQ0MlIyY25CakNlNVVlMHlJWkFLbTVEWU15QmUtVFBJeDlhbUVjUXppMHZrNGc4bG1STWRmNC1HLURKSVFpU1dnQ2ZraGdGS1M3amRqY3d5ZXI4cXcifSwibm9uY2UiOiJJcTVvdzZxWkpJOUF3Q29maGZEQzZOeS1aMDFzRHBUeDktejE1OEJUbjRRIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"FEO8V6ljSOsHpSCEo7t44mA-EYLj-ZzCNB0LUJzQoB6-34SodGWFrFyP9MYYJoqcdtixccnaP-_3Jgt4-fRhaZHyslvckRCqaZPY1KYYtmk890qUukQtPwvW1wUNEqr6jmXpkX_IKXSt6aY2QjfYXKmqGkex9JPMqLaqzD1seg2ZAd0KCaM-LYN5vIJYySEBtxS6RseE6e8-CkUAX4D7c7gJ2xFhVEBPbFniryBapi4s-WQRakeNSF9mzThBaVPBLWX9TXoEdJC9BswHThS4w5sYa4B0NLMNyhOpLxapN-02D5uHIKaOrrQPO2smTm9cb_YHGQVgT_YyH9LWWlST0w\"}";
+        final String QUERY_ACCT_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJvVVZ6QWlpeEUwelEzeWozUExpenEtcFpuWmZBa29IbXFoOWZneGh6b1FRZ3VGd01OS1Q5TmpZT1hiU3FfWS13dl9nYkstTFdKM2VxYjBNUy1xbkN3Snc0WVJzeHE1ZDVyWGhiSE5yZFhWN01jTWFVSlV5ZkFxWDBCQ2x1OGp6VEFadE5mNzZtbnVLUUlvazFsSGM2R1h4clVuMm15V2JndUJuOUQwTmdvcUdWY0lqdExlaTc5UVZTUk5ZSk5LR29VT05YQ3lRU3B2NllQQ25MWmwtOThyUFhJSU1XNXNOMURZZ19vbU45OHZmOE93YTdZQUV2NmFNT2NjZkVHcVRYQ2RySEhiTU9UbkJQQ3h3WXlfY0pUbm5OTzc0U0lyeVNEVXdSMGtBeVotbGQtVDNHdlQ2cUxyRXI3M2NqT0NkT1hlUzE1d1BnYkx5Njhua2VIQTg4YlEifSwibm9uY2UiOiJ0YXJvQjJ2TmNDZV9BaVpUdDhVckNYR2RWWnUtUVJUeUsweFJuNEp4dlpJTWk1QSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"F6cupngqe1glshhJVgx2MCZphUssWMuLp9oJRQdjLQKIk8XgCG3LABffPY0_lMY6LwWRkWL2NYAvmogiNPMcQY7VVT9DmkxuNdfa0FUR4zyIVnkRP2q-fF3Kh3jq1AP2iZ41iyTCvXnfMZ18V2snefpb8vZW8vc4OLnv5Qo7UQdPCIdinEbPF_PtOr1egvFL9GObKfHQA8fGGOlHQgL_aabaYZKr4IF3K7LzRMYEgfOZw5QflL4K8ealBExod0OZ7wLHanh90l1p99AhpbFw5EG5PWLya97fTTHhZX4HtatqRGO8cDUMiRJXMcsQJiM_GK4WGbU2vbRSgLV4cKvygg\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY_1 = "";
 
-        final String QUERY_ACCT_REPLAY_NONCE_1 = "k30WeqGdhxkrKVQOoLNl1obwrdzf_cNyFCOlsPu227Y";
+        final String QUERY_ACCT_REPLAY_NONCE_1 = "zinclA1oBJ6JeZd9nfhpplP2mTyta5d2skeNcS6RxGmGvL0";
 
-        final String ACCT_PATH = "/acme/acct/5";
+        final String ACCT_PATH = "/acme/acct/15";
         final String ACCT_LOCATION = "http://localhost:4001" + ACCT_PATH;
 
-        final String CHANGE_KEY_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoiazMwV2VxR2RoeGtyS1ZRT29MTmwxb2J3cmR6Zl9jTnlGQ09sc1B1MjI3WSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2tleS1jaGFuZ2UifQ\",\"payload\":\"eyJwcm90ZWN0ZWQiOiJleUpoYkdjaU9pSlNVekkxTmlJc0ltcDNheUk2ZXlKbElqb2lRVkZCUWlJc0ltdDBlU0k2SWxKVFFTSXNJbTRpT2lKdE1WVlRjSGRITkRKRGRFcEVUVk5GU2xCWVJHcFNPVU5mWDFWeVZsTk9hek00YVdGRVpXRnNVRVpYZHpOcVVHOUdNWGRJY2pBdFFUVkJlamRFYW10eFZsaFlVa2hLTW5VMk1tRnJSVVo0ZVVwUmEyTlRRakZHUjIwd05pMXRRMXBITURjNWNVRjVSbU5IYjB3NWNFMTBaV2s1UmxwcmIwbFJRVEpNUlV4WVNUSlBaVWhWVEhKdFZ5MWZNRUZPVUVZM2VIaDBZakUyV0RKa1N6VkdaMGwwYlVNNWMwbGpRMEp3VFd0aGNuRXlRMDFsU2paVWJUWmZMVXRNY2pWWWVWZGxVM0YzUjJKNFl6WlFOalpOY210M05EWmpiR1ptYW5rME5WazNUQzFSWjA1bmVWTjVkRTFITTFSNFdIUm1hMnhtTmpZNVdGcERVbVZxUjJabVUzZE1aVUkzVFd0NlNtUlZORFphZWtGb1JsUjRSbVpTY205cVYwOHlNakl4VDBOZlZXMUVUaloxZGpoTE1VRm5kbGhWT1dFNWMyVXlVRVpXTUcxZlJrRkpTR2N5U21RMFYwOVVOelppWkU5bVNXNXhkbmxtU0ZFaWZTd2lkWEpzSWpvaWFIUjBjRG92TDJ4dlkyRnNhRzl6ZERvME1EQXhMMkZqYldVdmEyVjVMV05vWVc1blpTSjkiLCJwYXlsb2FkIjoiZXlKaFkyTnZkVzUwSWpvaWFIUjBjRG92TDJ4dlkyRnNhRzl6ZERvME1EQXhMMkZqYldVdllXTmpkQzgxSWl3aWIyeGtTMlY1SWpwN0ltVWlPaUpCVVVGQ0lpd2lhM1I1SWpvaVVsTkJJaXdpYmlJNklqRmhVVWN6VGxCbmRFRXRWMnhvTjFaSFdGTnhlSGd5Vm1RMFFWaFZkMnAwZW10Vk1YcHVVR053YTNBeFJuZG9hRlZxT0hSMmIyeEtkV1oyYWtoUlEwMVpkWGQ0Ukc5RVZqaEZhakp2UVRoT1YzcGlVbHBITjNsbGJWaHVhak54VlRJMlpqZHpZM2QxWTNaWVdqVXdOamQzU1ZsQldHOWpjMDVYUmpaSE1tOVZkM0p6V1dselUxVlZUVjlhWldoUWRXdGZTM0E0ZFRSYVpHZFZVM3BrTmpSNVNuaE9lalJrZEhkS1NIb3hUSFprV21KaGJVVTJkbFY1YUU5c2MwNTNlR3QyVkhsaFoxWmZlVkI1VjBJeWNuUTFWM054TlZONWMwSnFjMnd6VDE4NVZISkpWMmw1ZHpKNVVEUlFMVTUzWjBOV01YRkZVR3BtWTI5Qk1rbHVSamhJZERReVVqSmpia0pxUTJVMVZXVXdlVWxhUVV0dE5VUlpUWGxDWlMxVVVFbDRPV0Z0UldOUmVta3dkbXMwWnpoc2JWSk5aR1kwTFVjdFJFcEpVV2xUVjJkRFptdG9aMFpMVXpkcVpHcGpkM2xsY2poeGR5SjlmUSIsInNpZ25hdHVyZSI6IlFuS0RONWJsY2k1OGNESXYyaENkSVlUSHpSNWdZWHRIbXN2LTVnVHd5YXQ1cGJZUHhicVgwZDRUeUNOcWVjYVpsb3djZDRqNlRTSTNTODdZRVN4N2VvN3BkbjVLazktZFRXQVhPS0NuX1BNWmQzNE5uV2ZfamFVZ2tKUFlib044RWd2bURZbDlPaTk0cXliZUkzNTNDR210aHZKbnVSbUV6M3pnVzFVVHJsX0g2RWF3bno3Y1ZRajkxZVdKV3Y2VW9FaTRqTUdBV19OeHpuN2lTT1FSZnJvVHVWR3hNc0lMZ1BFdV9YUnNZZ29NU2Q0S21IZTd2SFhmR2FNekNJbVhka2NKeGVjbmlCbFBBNnNEeHFUOGhKQlZzc1Y5LXh6Q3lYVzNUUWdnbkFaREhYN0hab0tNVEQyYmNJWEYySWhXTEk1S0pxcVNjSmh3a2NTQzdvS3puZyJ9\",\"signature\":\"zd3ZZFH5z-QB7pKLiYzz5rs05WVt2PE3heb7Zo_ok9vCGd9zKS1WccC9DTkl_OmCdSVHibGfBIGvLSwObEZiy361b5oPBus_O_CMxIpywBjdptFkCzizeji8KXuvpD1jMg0IzxPuyXrco2nphQAk_kvGTFDtlKrvc4roBOv5IApDC3KO4yL0odRShQqWVTq-QSdZDH1K9VmVWRnsYTqh2YDrJtl7nDowu10QtIpIEwnvlwg4q4cTTBt5yz7GuKohC3HMUqlCO_UU7KDc6NKyQ708mFgLbYRXC9-gr5qPaal7ebfwiLLHIzlknFGBF6yhKgfXnKiBJ_77is7AE-LSAw\"}";
+        final String CHANGE_KEY_REQUEST_BODY_1 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTUiLCJub25jZSI6InppbmNsQTFvQko2SmVaZDluZmhwcGxQMm1UeXRhNWQyc2tlTmNTNlJ4R21HdkwwIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUva2V5LWNoYW5nZSJ9\",\"payload\":\"eyJwcm90ZWN0ZWQiOiJleUpoYkdjaU9pSlNVekkxTmlJc0ltcDNheUk2ZXlKbElqb2lRVkZCUWlJc0ltdDBlU0k2SWxKVFFTSXNJbTRpT2lKMFkxVmtTRVp3UzBVMFh6RXlMVTV0VG5GSkxUUjZjM1F4WVZSS2MyeHdUVWxCYVdWMWFVdEJlSEJOYVVVNFlYZHBkVnBHTFZSeFRsbGFVM0JoVmxCRGFraE1ORTV3Tm5GbWFrWmxhbXRRTXpOblRqWnNUVWxMTlROUVpXbHJUalZCWVU5MFVGTmxiVzlZTUdWQ1FWaHJTbkZpTXpSWldqQTBSRE5YY0U1SVoxaG1kVzVPWTBGVWVuRXphVGc0U0ZKemJHUnhMVGxSV1ZKQ05rZG1WbE5HTjFCVGQwSkxOa1JLYWs1aFh6UklSRGROZVdFd2R6VkJSMmxSVDBWVU9IRldPRWRyVlVOMk5HVk9WMVZIWDE5V00zSm9SakJvVUdGUExVVXljREJwUzNsaFdYbEpRa2hHTVc1SWF6aFhhVTV4YkZKdk9GbGtabVpuUlVsbFVGaEViMWN0WTFGV1duUkpVbXc1Wm5WT1VucEVRVmcyTjNoSVFtTkZVSEpEVFRaUVNUaFlUbDlVZUdwb05sbDVibmxZYjJwRFdqRXdNbGw2Y3paZlZWZE9jVkY2UTE5V01HZHNXWEZCZVdOVlZVaFNSVlpQU25jaWZTd2lkWEpzSWpvaWFIUjBjRG92TDJ4dlkyRnNhRzl6ZERvME1EQXhMMkZqYldVdmEyVjVMV05vWVc1blpTSjkiLCJwYXlsb2FkIjoiZXlKaFkyTnZkVzUwSWpvaWFIUjBjRG92TDJ4dlkyRnNhRzl6ZERvME1EQXhMMkZqYldVdllXTmpkQzh4TlNJc0ltOXNaRXRsZVNJNmV5SmxJam9pUVZGQlFpSXNJbXQwZVNJNklsSlRRU0lzSW00aU9pSnZWVlo2UVdscGVFVXdlbEV6ZVdvelVFeHBlbkV0Y0ZwdVdtWkJhMjlJYlhGb09XWm5lR2g2YjFGUlozVkdkMDFPUzFRNVRtcFpUMWhpVTNGZldTMTNkbDluWWtzdFRGZEtNMlZ4WWpCTlV5MXhia04zU25jMFdWSnplSEUxWkRWeVdHaGlTRTV5WkZoV04wMWpUV0ZWU2xWNVprRnhXREJDUTJ4MU9HcDZWRUZhZEU1bU56WnRiblZMVVVsdmF6RnNTR00yUjFoNGNsVnVNbTE1VjJKbmRVSnVPVVF3VG1kdmNVZFdZMGxxZEV4bGFUYzVVVlpUVWs1WlNrNUxSMjlWVDA1WVEzbFJVM0IyTmxsUVEyNU1XbXd0T1RoeVVGaEpTVTFYTlhOT01VUlpaMTl2YlU0NU9IWm1PRTkzWVRkWlFVVjJObUZOVDJOalprVkhjVlJZUTJSeVNFaGlUVTlVYmtKUVEzaDNXWGxmWTBwVWJtNU9UemMwVTBseWVWTkVWWGRTTUd0QmVWb3RiR1F0VkROSGRsUTJjVXh5UlhJM00yTnFUME5rVDFobFV6RTFkMUJuWWt4NU5qaHVhMlZJUVRnNFlsRWlmWDAiLCJzaWduYXR1cmUiOiJFOGl5UzI0c0lTTFRhQXFRcTV6V0xCZHM1bG1EbnBRZ19lSUc3T08yR0pJT3FyU0RzeXNzV1MyNy1WTGpTMTB3Wjh6Yjh5UmpRenhUTzN6QkFPVmJtMzM0a0ZNTDBTS1oyMzc3LU93ZnA5cFFnRFVDcm5EODhRNlJLdV9mLUZnWERNaXotTm1DWHBsV2FrOGFKaVNZNGZjRlBWcWN2RWFac3VaU0xNTHNlR3RMVW5YVHY0bU92QWhnVzNTRnNmdGx1b2xreXBva2RiTUlIU3dVQ0VWT3lmdkw4dmFIMkZDelF0UFE0d0E2MkhZdXYxd3FhVTlzeEZIbEc0ZFc2S3FXOEg2R3BvVkRQTFVYZDJYdlA3SUYzVnhFUUZ1UHpGdGRDcDZ5OXZwWmpiSlF5a3MzMHd1bGlXY1BzLUg1Q1dqeWs2ZUpYbElKZl81QktQRUdQcWpOYncifQ\",\"signature\":\"jfpnAAv7TuZmhpiu06Go_RDZUl2CFHCTts-4anHfNtJ915UkCIFnMgZbuhh3GV6zz2aAy3x2k0X34HYTvVZVrX8NgsNM-NSKhelcbQZiFmIBaTOxFerwW-Lbz8LxE7cpwhMsegXLyJ0P9_sY-MTxC3tXy5KoIIuLaYbzTbPdpxFxIszNWwijT1wxB2gTK-5eZBlmrAn3LsihIUWBf3_KXWnA9yKhdSuO84VbZxjeBQBkx4Gi4e9eqfdDiqfNyQOUGiOtt8CpDot5V8mVRNoRHfm_YBvnY2JVTEG9Dla7GiEXJjGWSqqcU59gDbfohLQ_-SluJImjhZVj3fdT4hIZxg\"}";
         final String CHANGE_KEY_RESPONSE_BODY_1 = "{" + System.lineSeparator() +
-                "  \"id\": 5," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"m1USpwG42CtJDMSEJPXDjR9C__UrVSNk38iaDealPFWw3jPoF1wHr0-A5Az7DjkqVXXRHJ2u62akEFxyJQkcSB1FGm06-mCZG079qAyFcGoL9pMtei9FZkoIQA2LELXI2OeHULrmW-_0ANPF7xxtb16X2dK5FgItmC9sIcCBpMkarq2CMeJ6Tm6_-KLr5XyWeSqwGbxc6P66Mrkw46clffjy45Y7L-QgNgySytMG3TxXtfklf669XZCRejGffSwLeB7MkzJdU46ZzAhFTxFfRrojWO2221OC_UmDN6uv8K1AgvXU9a9se2PFV0m_FAIHg2Jd4WOT76bdOfInqvyfHQ\"," + System.lineSeparator() +
+                "    \"n\": \"tcUdHFpKE4_12-NmNqI-4zst1aTJslpMIAieuiKAxpMiE8awiuZF-TqNYZSpaVPCjHL4Np6qfjFejkP33gN6lMIK53PeikN5AaOtPSemoX0eBAXkJqb34YZ04D3WpNHgXfunNcATzq3i88HRsldq-9QYRB6GfVSF7PSwBK6DJjNa_4HD7Mya0w5AGiQOET8qV8GkUCv4eNWUG__V3rhF0hPaO-E2p0iKyaYyIBHF1nHk8WiNqlRo8YdffgEIePXDoW-cQVZtIRl9fuNRzDAX67xHBcEPrCM6PI8XN_Txjh6YynyXojCZ102Yzs6_UWNqQzC_V0glYqAycUUHREVOJw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"agreement\": \"https://boulder:4431/terms/v7\"," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T18:21:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T18:34:15Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
-        final String CHANGE_KEY_REPLAY_NONCE_1 = "GgZctTaTHY3weRky_SYuaUKINDcV8o-28xfbCB7vkyI";
+        final String CHANGE_KEY_REPLAY_NONCE_1 = "taroT_9EWZxd3CTvF_SqM668S0Zen8GMFA6ashC_kNXpV_Q";
 
-        final String QUERY_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSIsIm5vbmNlIjoiR2daY3RUYVRIWTN3ZVJreV9TWXVhVUtJTkRjVjhvLTI4eGZiQ0I3dmt5SSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvNSJ9\",\"payload\":\"\",\"signature\":\"AayOyEhXNLUT0rHnUf3XoCQ4y1UwpgTyjbpZ2DD7C4XvMFMr-Qc8s6akitwVwy54x0mACYxLcwhjT3_cyC16n5wreI8mm30z1vNnuhPLXUVUZxUFJY1KAjucGTe322iLS6YG7aTCXuu84ExzkcE-OFjnYzVjpoGEwLkh1qVerXVQZuhz5sMfPbuYP8hutEzT9RdhN58M9yDrOSLGfYmcid22mWLdOoI-_Oe-KrmCw2-68eqdYLPKsjnWd6inv97enNF741YDTnwZofE3h1MJLC_9Xux9m_XHpu7mhVm0w2tNoEjo8DQ7jA4JFdMxg9gLN63f0cQ-Cz9cdJz8CHhSMA\"}";
+        final String QUERY_ACCT_REQUEST_BODY_2 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL2FjY3QvMTUiLCJub25jZSI6InRhcm9UXzlFV1p4ZDNDVHZGX1NxTTY2OFMwWmVuOEdNRkE2YXNoQ19rTlhwVl9RIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvYWNjdC8xNSJ9\",\"payload\":\"\",\"signature\":\"WD-dG54NEs9xNDOpIdCRkJlXIdxDBd4NxcIhAtlsVyExsCfssOpMfTqzD2V4cFPYY6pchpC-OLb8E4soqhaRChuPPeUPOGyZNNY-NQohAb2mydJ_VC8Aw7oTOJEnP_Md5Aj_tDagG3XiyanA57Y1TdBkjoYBnOaUn0XF957R_yd36Paayi_VNNXIiDW-OgCLlISOhgBplCl9YUfX98a0E8FsdwMJ-rNNOm221jG2HWYqH4FkIBJXnoNQ2wjp-s0yoa7G3dlWaq2lAkapdnRsI461lNFIUUO-RcqWOWkcmzacYz63N21mmmhC5V86fArfYgQQ4m-mG2TnJAcBAr3BVA\"}";
         final String QUERY_ACCT_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"id\": 5," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"RSA\"," + System.lineSeparator() +
-                "    \"n\": \"m1USpwG42CtJDMSEJPXDjR9C__UrVSNk38iaDealPFWw3jPoF1wHr0-A5Az7DjkqVXXRHJ2u62akEFxyJQkcSB1FGm06-mCZG079qAyFcGoL9pMtei9FZkoIQA2LELXI2OeHULrmW-_0ANPF7xxtb16X2dK5FgItmC9sIcCBpMkarq2CMeJ6Tm6_-KLr5XyWeSqwGbxc6P66Mrkw46clffjy45Y7L-QgNgySytMG3TxXtfklf669XZCRejGffSwLeB7MkzJdU46ZzAhFTxFfRrojWO2221OC_UmDN6uv8K1AgvXU9a9se2PFV0m_FAIHg2Jd4WOT76bdOfInqvyfHQ\"," + System.lineSeparator() +
+                "    \"n\": \"tcUdHFpKE4_12-NmNqI-4zst1aTJslpMIAieuiKAxpMiE8awiuZF-TqNYZSpaVPCjHL4Np6qfjFejkP33gN6lMIK53PeikN5AaOtPSemoX0eBAXkJqb34YZ04D3WpNHgXfunNcATzq3i88HRsldq-9QYRB6GfVSF7PSwBK6DJjNa_4HD7Mya0w5AGiQOET8qV8GkUCv4eNWUG__V3rhF0hPaO-E2p0iKyaYyIBHF1nHk8WiNqlRo8YdffgEIePXDoW-cQVZtIRl9fuNRzDAX67xHBcEPrCM6PI8XN_Txjh6YynyXojCZ102Yzs6_UWNqQzC_V0glYqAycUUHREVOJw\"," + System.lineSeparator() +
                 "    \"e\": \"AQAB\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T18:21:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T18:34:15Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String QUERY_ACCT_REPLAY_NONCE_2 = "FcI1Il9OFY6CiO6Dc74UXx4K8s_J9yYjOb8WdjIUxv0";
+        final String QUERY_ACCT_REPLAY_NONCE_2 = "zincUdT4h9977dwelONIhrRAY0y4eNr8Egi4RnxGruD__BM";
 
         final String CHANGE_KEY_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"id\": 5," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"EC\"," + System.lineSeparator() +
                 "    \"crv\": \"P-256\"," + System.lineSeparator() +
-                "    \"x\": \"tQ5PThpaP5fm5fW3x3yL4nXkXWxzOc2Hffzt7kHQ-R8\"," + System.lineSeparator() +
-                "    \"y\": \"KQNlYw-4nn6S3ssFOpMpTWNmg97QFVGb2Ibtef2ojjw\"" + System.lineSeparator() +
+                "    \"x\": \"oFHd02a_U5NKSa2PJ6WINJULW6yf1ulD1E0k4kFaND8\"," + System.lineSeparator() +
+                "    \"y\": \"IuWTLWr2LVgFImwyL4iFWmXnOgnrvAtoQI24zmCVWxQ\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
-                "  \"agreement\": \"https://boulder:4431/terms/v7\"," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T18:21:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T18:34:15Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
-        final String CHANGE_KEY_REPLAY_NONCE_2 = "Z6p2-PomrN5uKZ3vghnse18Kopd9H3xIN7GAIapsyqE";
+        final String CHANGE_KEY_REPLAY_NONCE_2 = "taroHhqe8NYqAP4AbuPA7eJ28zwxVhX1mLJKVmT3GDpRyxk";
 
         final String QUERY_ACCT_RESPONSE_BODY_3 = "{" + System.lineSeparator() +
-                "  \"id\": 5," + System.lineSeparator() +
                 "  \"key\": {" + System.lineSeparator() +
                 "    \"kty\": \"EC\"," + System.lineSeparator() +
                 "    \"crv\": \"P-256\"," + System.lineSeparator() +
-                "    \"x\": \"tQ5PThpaP5fm5fW3x3yL4nXkXWxzOc2Hffzt7kHQ-R8\"," + System.lineSeparator() +
-                "    \"y\": \"KQNlYw-4nn6S3ssFOpMpTWNmg97QFVGb2Ibtef2ojjw\"" + System.lineSeparator() +
+                "    \"x\": \"oFHd02a_U5NKSa2PJ6WINJULW6yf1ulD1E0k4kFaND8\"," + System.lineSeparator() +
+                "    \"y\": \"IuWTLWr2LVgFImwyL4iFWmXnOgnrvAtoQI24zmCVWxQ\"" + System.lineSeparator() +
                 "  }," + System.lineSeparator() +
                 "  \"contact\": [" + System.lineSeparator() +
-                "    \"mailto:admin@myexample.com\"" + System.lineSeparator() +
+                "    \"mailto:admin@anexample.com\"" + System.lineSeparator() +
                 "  ]," + System.lineSeparator() +
                 "  \"initialIp\": \"10.77.77.1\"," + System.lineSeparator() +
-                "  \"createdAt\": \"2018-11-26T18:21:53Z\"," + System.lineSeparator() +
+                "  \"createdAt\": \"2019-07-16T18:34:15Z\"," + System.lineSeparator() +
                 "  \"status\": \"valid\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String QUERY_ACCT_REPLAY_NONCE_3 = "MM5G1fR094N5KCWic_bu6HWT5SJbBbOf_TDxGtzW5G8";
+        final String QUERY_ACCT_REPLAY_NONCE_3 = "zincDJqwmTm91qlWCUF_rZVHkFLmKkwsfC6RIi3v2qDuMpI";
 
 
         final String DIRECTORY_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"jJpTfXFmKDw\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"QITnD3KQgok\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"caaIdentities\": [" + System.lineSeparator() +
@@ -2350,15 +2285,15 @@ public class AcmeClientSpiTest {
                 "  \"revokeCert\": \"http://localhost:4001/acme/revoke-cert\"" + System.lineSeparator() +
                 "}" + System.lineSeparator();
 
-        final String NEW_NONCE_RESPONSE_2 = "UkzxjeLrOYrYiuFn9SoYov7f_So0g9TA_oOFh32S_5I";
+        final String NEW_NONCE_RESPONSE_2 = "taroqEiLet3GDdD7tfNXg31kPXlnghRxH8DH_zb54VceySE";
 
-        final String QUERY_ACCT_REQUEST_BODY_4 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJ6azltdDczT2tSVG5wTXBXeEJJNTZaZl85dEdidkpIclZFazlDZlJNTHVZTnVEZjVTbHhMbnVGNE84NG50T19KV1R6bGR1bkdHVkJfWUtvMWxEV3N0ZUtkWmhseE9Da1JKV3JtTnlla3paanpGZGJDeXNKMXZEb3hxTlA2Si1lUXc0UlYzS0hISVhXUThjblliWkprR2JNNWVlV016cTNsMUd3dnY0UXhZNHRvSEE5cTBENGpsTVBFOEVrXzRSTzVxdFhKWnlZTThuQWVCM3pkM0JwZkhSemxhWWxnb1JtQ3VRXzdWdFFHYm10YkNqcHFUTmVydjY2ZDE2WTFNQlU2dk9jdnFrTERFbFgxa1JVdy1fRWMydVc0emk5bDBvaGdxQWNxMExaY3pydHAzblg0UGZiMzhwSzFJVVppMlQtVzROM1JxbUtCTUE0YjRLRkdFT2xJencifSwibm9uY2UiOiJVa3p4amVMck9ZcllpdUZuOVNvWW92N2ZfU28wZzlUQV9vT0ZoMzJTXzVJIiwidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo0MDAxL2FjbWUvbmV3LWFjY3QifQ\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"XBLjskGqczOHxcq1dfhQHzMPlk-TmwnXEdXcV_Pbdv-KYOASSTT6e-NYStN2S2lTmzpUPZSLSNulnKexx8tGj4CKZTOrDP-0at9ErjS6LEdTZhOQKo3Gwx2mvw_Ki0O6ZyIV-2_j5M5gejRAS9-IaCrGzeS1wT5pPcmffyYPQTynqT1cuBK8poM7Xc4DIiM3skYZupnBEIcl6G7TIG3UHY9CPBFLt6kFgQldox1LigNtrPnKUSkJZgcK8Gi1PDQwzUnuXvcDDtueEaKBGl9OeMUVHpaLrHfnMAT-unFTudpMPFrvWd9tU30XdqLCwmAiiXqy_PyHRNUtMbh8ekYyCQ\"}";
+        final String QUERY_ACCT_REQUEST_BODY_4 = "{\"protected\":\"eyJhbGciOiJSUzI1NiIsImp3ayI6eyJlIjoiQVFBQiIsImt0eSI6IlJTQSIsIm4iOiJ0UnJDWmNjVEZlaVliZ1pHYjhGeXZQcW1PdDhzRVRzOWdOckhmS09JV01HMDNOeU1KdmY5eFFYMnJsR1BRb3F0akdjM2hMY1Y5V1FQVjV4YXYxRmZXMDZhU3I1ZGU3QXVhRDBQai1HLVZzVkl4TWVqQWF4Nkh4ODRvdnVwZXg0WEFOak5YVzk0U1RzaEtDQTVJckRqYzB3VEtiaERYd0x2SmMzdnBBbFIyOHREZkd3Tk9NdzZ2S2ZGTy16ZXI2V3AxMlozdTQ3anI1Zkk1OWhkRnhkRVktVXFNd2xQQ2RjUjlzYnhGcDRocmlFejYwZUk4XzRoM3RBTldwM0FIN2VhM25zWFAtZnNPbmZGcXI4a1lqX0pBNnBDZFVGN2xRYVBqVTljRGU3eEcydk00MlNxam4xLVRCaFdQaVBldVNDdVBxVjlzMTJhLS1VZm5JT1h3aV9ZOFEifSwibm9uY2UiOiJ0YXJvcUVpTGV0M0dEZEQ3dGZOWGczMWtQWGxuZ2hSeEg4REhfemI1NFZjZXlTRSIsInVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDAwMS9hY21lL25ldy1hY2N0In0\",\"payload\":\"eyJvbmx5UmV0dXJuRXhpc3RpbmciOnRydWV9\",\"signature\":\"bzKtJjljhaduL8HBZWRJszXmvFWWRx92FTBOjjTm6N7az2OO1H57JZh3QC91qkXoA9DL1MAFDTGNYdpbaXJjSFLv1pR8cze7WT7YwTbpJR5KkK_8eX9yeqtBVN10LquOW5h9rsjpKltOnqbOMUm5DxlrKGaq3tRAspS_d2nhLSnWusLhWSCZmhIzLWt0RYAe8dHNUQslTRpBgtGJh043oK2ATvacsG6d5odSLydWMAJ0VDXerdAd8OlDf92wFWsktQ5wpJP_akmsyKf25ltfHkCV8aBwNoTaUD-NEHKnkAySEekinSnAkU6p2gBMiBGOLWx29yk4cwNSLY-3Q0HCSg\"}";
 
         final String QUERY_ACCT_RESPONSE_BODY_4 = "";
 
-        final String QUERY_ACCT_REPLAY_NONCE_4 = "rB3tEJTZGzo0KQqA_2fb2hxX9H14N7puc6CRAD2-mz0";
+        final String QUERY_ACCT_REPLAY_NONCE_4 = "zinczbEJm6qqVs5WKmsLutzywkaDZA7OJB4YUPQclWu421o";
 
-        final String ACCT_PATH_2 = "/acme/acct/413";
+        final String ACCT_PATH_2 = "/acme/acct/16";
         final String ACCT_LOCATION_2 = "http://localhost:4001" + ACCT_PATH_2;
 
         final String CHANGE_KEY_RESPONSE_BODY_3 = "{" + System.lineSeparator() +
@@ -2366,7 +2301,7 @@ public class AcmeClientSpiTest {
                 "  \"detail\": \"New key is already in use for a different account\"," + System.lineSeparator() +
                 "  \"status\": 409" + System.lineSeparator() +
                 "}" + System.lineSeparator();
-        final String CHANGE_KEY_REPLAY_NONCE_3 = "rB3tEJTZGzo0KQqA_2fb2hxX9H14N7puc6CRAD2-mz0";
+        final String CHANGE_KEY_REPLAY_NONCE_3 = "taroB0hwHnLlKJUeBu0AnphMWEHyk6NkFsC2VzRNYxUVy2E";
 
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY_1)
@@ -2387,7 +2322,7 @@ public class AcmeClientSpiTest {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY_1 = "{" + System.lineSeparator()  +
-                "  \"TrOIFke5bdM\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
+                "  \"JDkpnLkaC1Q\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator()  +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator()  +
                 "  \"meta\": {" + System.lineSeparator()  +
                 "    \"caaIdentities\": [" + System.lineSeparator()  +
@@ -2405,7 +2340,7 @@ public class AcmeClientSpiTest {
                 "}";
 
         final String DIRECTORY_RESPONSE_BODY_2 = "{" + System.lineSeparator() +
-                "  \"iXia3_B0CrU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"LRkPnZpS4yE\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"meta\": {" + System.lineSeparator() +
                 "    \"termsOfService\": \"https://boulder:4431/terms/v7\"" + System.lineSeparator() +
@@ -2417,7 +2352,7 @@ public class AcmeClientSpiTest {
                 "}" + System.lineSeparator();
 
         final String DIRECTORY_RESPONSE_BODY_3 = "{" + System.lineSeparator() +
-                "  \"iXia3_B0CrU\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
+                "  \"N6HzXUZ-eWI\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
                 "  \"keyChange\": \"http://localhost:4001/acme/key-change\"," + System.lineSeparator() +
                 "  \"newAccount\": \"http://localhost:4001/acme/new-acct\"," + System.lineSeparator() +
                 "  \"newNonce\": \"http://localhost:4001/acme/new-nonce\"," + System.lineSeparator() +
