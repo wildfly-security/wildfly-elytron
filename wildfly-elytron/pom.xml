@@ -299,10 +299,6 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-http-deprecated</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http-digest</artifactId>
         </dependency>
         <dependency>
@@ -613,11 +609,6 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-http-deprecated</artifactId>
-                                    <version>${project.version}</version>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-http-digest</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -903,6 +894,7 @@
                                     <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslClientFactory</exclude>
                                     <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslServer</exclude>
                                     <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslServerFactory</exclude>
+                                    <exclude>org.wildfly.security.http.impl.ServerMechanismFactoryImpl</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
