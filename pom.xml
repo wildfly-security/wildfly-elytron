@@ -292,7 +292,6 @@
                             ${project.basedir}/sasl/anonymous/src/main/java/;
                             ${project.basedir}/sasl/auth/util/src/main/java/;
                             ${project.basedir}/sasl/base/src/main/java/;
-                            ${project.basedir}/sasl/deprecated/src/main/java/;
                             ${project.basedir}/sasl/digest/src/main/java/;
                             ${project.basedir}/sasl/entity/src/main/java/;
                             ${project.basedir}/sasl/external/src/main/java/;
@@ -661,11 +660,6 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-sasl-auth-util</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1262,7 +1256,6 @@
         <module>sasl/anonymous</module>
         <module>sasl/auth/util</module>
         <module>sasl/base</module>
-        <module>sasl/deprecated</module>
         <module>sasl/digest</module>
         <module>sasl/entity</module>
         <module>sasl/external</module>

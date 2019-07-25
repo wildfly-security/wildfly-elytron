@@ -399,10 +399,6 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-sasl-digest</artifactId>
         </dependency>
         <dependency>
@@ -742,11 +738,6 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-sasl-deprecated</artifactId>
-                                    <version>${project.version}</version>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-sasl-digest</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -908,6 +899,10 @@
                                     <exclude>org.wildfly.security.credential.source.FactoryCredentialSource</exclude>
                                     <exclude>org.wildfly.security.credential.source.LocalKerberosCredentialSource</exclude>
                                     <exclude>org.wildfly.security.credential.source.KeyStoreCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslClient</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslClientFactory</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslServer</exclude>
+                                    <exclude>org.wildfly.security.sasl.util.AuthenticationContextSaslServerFactory</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
