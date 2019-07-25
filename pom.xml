@@ -310,7 +310,6 @@
                             ${project.basedir}/x500/cert/acme/src/main/java/;
                             ${project.basedir}/x500/cert/base/src/main/java/;
                             ${project.basedir}/x500/cert/util/src/main/java/;
-                            ${project.basedir}/x500/deprecated/src/main/java/;
                             ${project.basedir}/x500/principal/src/main/java/;
                         </sourcepath>
                         <sourceFileExcludes>
@@ -765,11 +764,6 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-x500-cert-util</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-x500-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1266,7 +1260,6 @@
         <module>x500/cert/acme</module>
         <module>x500/cert/base</module>
         <module>x500/cert/util</module>
-        <module>x500/deprecated</module>
         <module>x500/principal</module>
         <module>tests/base</module>
         <module>tests/common</module>
