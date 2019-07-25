@@ -275,6 +275,7 @@
                             ${project.basedir}/credential/source/deprecated/src/main/java/;
                             ${project.basedir}/credential/store/src/main/java/;
                             ${project.basedir}/digest/src/main/java/;
+                            ${project.basedir}/encryption/src/main/java/;
                             ${project.basedir}/http/base/src/main/java/;
                             ${project.basedir}/http/basic/src/main/java/;
                             ${project.basedir}/http/bearer/src/main/java/;
@@ -516,6 +517,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-encryption</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1298,6 +1304,7 @@
         <module>credential/source/deprecated</module>
         <module>credential/source/impl</module>
         <module>digest</module>
+        <module>encryption</module>
         <module>http/base</module>
         <module>http/basic</module>
         <module>http/bearer</module>
