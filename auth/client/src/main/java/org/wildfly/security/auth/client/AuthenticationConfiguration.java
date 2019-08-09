@@ -166,6 +166,18 @@ public final class AuthenticationConfiguration {
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderFactory.getDefaultProviderSupplier(AuthenticationConfiguration.class.getClassLoader());
 
+    static final String WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY_NAME = "wildfly.elytron.capture.access.control.context";
+    static final boolean WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY;
+
+    static {
+        WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                return Boolean.parseBoolean(System.getProperty(WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY_NAME, "true"));
+            }
+        });
+    }
+
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
      * remapping of any kind, and always uses an anonymous principal.
@@ -314,6 +326,47 @@ public final class AuthenticationConfiguration {
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
+    }
+
+    /**
+     * Copy constructor for mutating three object fields.
+     *
+     * @param original the original configuration (must not be {@code null})
+     * @param what1 the field to mutate
+     * @param value1 the field value to set
+     * @param what2 the field to mutate
+     * @param value2 the field value to set
+     * @param what3 the field to mutate
+     * @param value3 the field value to set
+     */
+    @SuppressWarnings("unchecked")
+    private AuthenticationConfiguration(final AuthenticationConfiguration original, final int what1, final Object value1, final int what2, final Object value2, final int what3, final Object value3) {
+        this.capturedAccessContext = what1 == SET_ACCESS_CTXT ? (AccessControlContext) value1 : what2 == SET_ACCESS_CTXT ? (AccessControlContext) value2 : what3 == SET_ACCESS_CTXT ? (AccessControlContext) value3 : original.capturedAccessContext;
+        this.principal = what1 == SET_PRINCIPAL ? (Principal) value1 : what2 == SET_PRINCIPAL ? (Principal) value2 : what3 == SET_PRINCIPAL ? (Principal) value3 : original.principal;
+        this.setHost = what1 == SET_HOST ? (String) value1 : what2 == SET_HOST ? (String) value2 : what3 == SET_HOST ? (String) value3 :original.setHost;
+        this.setProtocol = what1 == SET_PROTOCOL ? (String) value1 : what2 == SET_PROTOCOL ? (String) value2 : what3 == SET_PROTOCOL ? (String) value3 : original.setProtocol;
+        this.setRealm = what1 == SET_REALM ? (String) value1 : what2 == SET_REALM ? (String) value2 : what3 == SET_REALM ? (String) value3 : original.setRealm;
+        this.setAuthzPrincipal = what1 == SET_AUTHZ_PRINCIPAL ? (Principal) value1 : what2 == SET_AUTHZ_PRINCIPAL ? (Principal) value2 : what3 == SET_AUTHZ_PRINCIPAL ? (Principal) value3 : original.setAuthzPrincipal;
+        this.authenticationNameForwardSecurityDomain = what1 == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value2 : what3 == SET_FWD_AUTH_NAME_DOMAIN ? (SecurityDomain) value3 : original.authenticationNameForwardSecurityDomain;
+        this.authenticationCredentialsForwardSecurityDomain = what1 == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value2 : what3 == SET_FWD_AUTH_CRED_DOMAIN ? (SecurityDomain) value3 : original.authenticationCredentialsForwardSecurityDomain;
+        this.authorizationNameForwardSecurityDomain = what1 == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value1 : what2 == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value2 : what3 == SET_FWD_AUTHZ_NAME_DOMAIN ? (SecurityDomain) value3 : original.authorizationNameForwardSecurityDomain;
+        this.userCallbackHandler = what1 == SET_USER_CBH ? (CallbackHandler) value1 : what2 == SET_USER_CBH ? (CallbackHandler) value2 : what3 == SET_USER_CBH ? (CallbackHandler) value3 : original.userCallbackHandler;
+        this.userCallbackKinds = (what1 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value1 : what2 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value2 : what3 == SET_USER_CB_KINDS ? (EnumSet<CallbackKind>) value3 : original.userCallbackKinds).clone();
+        this.credentialSource = what1 == SET_CRED_SOURCE ? (CredentialSource) value1 : what2 == SET_CRED_SOURCE ? (CredentialSource) value2 : what3 == SET_CRED_SOURCE ? (CredentialSource) value3 : original.credentialSource;
+        this.setPort = original.setPort;
+        this.providerSupplier = what1 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value1 : what2 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value2 : what3 == SET_PROVIDER_SUPPLIER ? (Supplier<Provider[]>) value3 : original.providerSupplier;
+        this.keyManagerFactory = what1 == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value1 : what2 == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value2 : what3 == SET_KEY_MGR_FAC ? (SecurityFactory<X509KeyManager>) value3 : original.keyManagerFactory;
+        this.saslMechanismSelector = what1 == SET_SASL_SELECTOR ? (SaslMechanismSelector) value1 : what2 == SET_SASL_SELECTOR ? (SaslMechanismSelector) value2 : what3 == SET_SASL_SELECTOR ? (SaslMechanismSelector) value3 : original.saslMechanismSelector;
+        this.principalRewriter = what1 == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value1 : what2 == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value2 : what3 == SET_PRINCIPAL_RW ? (Function<Principal, Principal>) value3 : original.principalRewriter;
+        this.saslClientFactorySupplier = what1 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value1 : what2 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value2 : what3 == SET_SASL_FAC_SUP ? (Supplier<SaslClientFactory>) value3 : original.saslClientFactorySupplier;
+        this.parameterSpecs = what1 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value1 : what2 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value2 : what3 == SET_PARAM_SPECS ? (List<AlgorithmParameterSpec>) value3 : original.parameterSpecs;
+        this.trustManagerFactory = what1 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value1 : what2 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value2 : what3 == SET_TRUST_MGR_FAC ? (SecurityFactory<X509TrustManager>) value3 : original.trustManagerFactory;
+        this.saslMechanismProperties = what1 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value2 : what3 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value3 : original.saslMechanismProperties;
+        this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : what3 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value3 : original.callbackIntercept;
+        this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : what3 == SET_SASL_PROTOCOL ? (String) value3 : original.saslProtocol;
+        sanitazeOnMutation(what1);
+        sanitazeOnMutation(what2);
+        sanitazeOnMutation(what3);
     }
 
     /**
@@ -1280,6 +1333,19 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, other);
     }
 
+    /**
+     * Create a new configuration which is the same as this configuration, but which attempts to authorize to the
+     * principal from the current identity from the configured security domain.
+     *
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration captureAuthorizationIdentity() {
+        if (authorizationNameForwardSecurityDomain == null) {
+            return this;
+        }
+        return new AuthenticationConfiguration(this, SET_ACCESS_CTXT, null, SET_FWD_AUTHZ_NAME_DOMAIN, null, SET_AUTHZ_PRINCIPAL, authorizationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal());
+    }
+
     // client methods
 
     CallbackHandler getUserCallbackHandler() {
@@ -1348,7 +1414,8 @@ public final class AuthenticationConfiguration {
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
         final SaslClientFactory finalSaslClientFactory = saslClientFactory;
-        saslClientFactory = doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext);
+        saslClientFactory = WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY ? doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext) :
+                new PrivilegedSaslClientFactory(finalSaslClientFactory);
 
         SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());
