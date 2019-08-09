@@ -165,6 +165,20 @@ public final class AuthenticationConfiguration {
     private static final int SET_SASL_PROTOCOL = 20;
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
 
+
+    static final String WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY_NAME = "wildfly.elytron.capture.access.control.context";
+    static final boolean WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY;
+
+    static {
+        WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            @Override
+            public Boolean run() {
+                return Boolean.parseBoolean(System.getProperty(WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY_NAME, "true"));
+            }
+        });
+    }
+
+
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(
             () -> new Provider[] {
                     WildFlySecurityManager.isChecking() ?
@@ -1358,7 +1372,8 @@ public final class AuthenticationConfiguration {
         }
         saslClientFactory = new LocalPrincipalSaslClientFactory(new FilterMechanismSaslClientFactory(saslClientFactory, filter));
         final SaslClientFactory finalSaslClientFactory = saslClientFactory;
-        saslClientFactory = doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext);
+        saslClientFactory = WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY ? doPrivileged((PrivilegedAction<PrivilegedSaslClientFactory>) () -> new PrivilegedSaslClientFactory(finalSaslClientFactory), capturedAccessContext) :
+                new PrivilegedSaslClientFactory(finalSaslClientFactory);
 
         SaslClient saslClient = saslClientFactory.createSaslClient(serverMechanisms.toArray(NO_STRINGS),
                 authzName, uri.getScheme(), uri.getHost(), Collections.emptyMap(), createCallbackHandler());

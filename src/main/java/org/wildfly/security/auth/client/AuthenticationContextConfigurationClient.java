@@ -190,9 +190,11 @@ public final class AuthenticationContextConfigurationClient {
         if (authorizationNameForwardSecurityDomain != null) {
             configuration = configuration.useForwardedAuthorizationIdentity(null).useAuthorizationPrincipal(authorizationNameForwardSecurityDomain.getCurrentSecurityIdentity().getPrincipal());
         }
-        final AccessControlContext capturedContext = configuration.getCapturedContext();
-        if (capturedContext == null) {
-            configuration = configuration.withCapturedAccessControlContext();
+        if (AuthenticationConfiguration.WILDFLY_ELYTRON_CAPTURE_ACCESS_CONTROL_CONTEXT_PROPERTY) {
+            final AccessControlContext capturedContext = configuration.getCapturedContext();
+            if (capturedContext == null) {
+                configuration = configuration.withCapturedAccessControlContext();
+            }
         }
         return configuration;
     }
