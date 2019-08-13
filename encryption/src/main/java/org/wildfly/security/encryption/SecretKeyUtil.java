@@ -18,6 +18,8 @@ package org.wildfly.security.encryption;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.encryption.ElytronMessages.log;
+
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -39,7 +41,7 @@ public class SecretKeyUtil {
 
     private static final String SECRET_KEY_ALGORITHM = "AES";
 
-    public static SecretKey generateSecretKey(int keySize) {
+    public static SecretKey generateSecretKey(int keySize) throws GeneralSecurityException {
         checkKeySize(keySize);
 
         SecureRandom random = new SecureRandom();
@@ -52,37 +54,39 @@ public class SecretKeyUtil {
         return secretKey;
     }
 
-    public static String exportSecretKey(final SecretKey secretKey) {
+    public static String exportSecretKey(final SecretKey secretKey) throws GeneralSecurityException {
         checkNotNullParam("secretKey", secretKey);
 
         byte[] key = secretKey.getEncoded();
         checkKeySize(key.length * 8);
 
-        byte[] result = new byte[key.length + 4];
+        byte[] result = new byte[key.length + 5];
         // Prefix
         result[0] = 'E';
         result[1] = 'L';
         result[2] = 'Y';
+        result[3] = 'K'; // K for Key
         // Version (Initially only version 1 supported)
-        result[3] = VERSION;
-        System.arraycopy(key, 0, result, 4, key.length);
+        result[4] = VERSION;
+        System.arraycopy(key, 0, result, 5, key.length);
 
         return ByteIterator.ofBytes(result).base64Encode().drainToString();
     }
 
-    public static SecretKey importSecretKey(final char[] rawData, int offset, int length) {
+    public static SecretKey importSecretKey(final char[] rawData, int offset, int length) throws GeneralSecurityException {
         return importSecretKey(CodePointIterator.ofChars(checkNotNullParam("rawData", rawData), offset, length));
     }
 
-    public static SecretKey importSecretKey(final String secretKey) {
+    public static SecretKey importSecretKey(final String secretKey) throws GeneralSecurityException {
         return importSecretKey(CodePointIterator.ofString(checkNotNullParam("secretKey", secretKey)));
     }
 
-    private static SecretKey importSecretKey(CodePointIterator codePointIterator) {
+    private static SecretKey importSecretKey(CodePointIterator codePointIterator) throws GeneralSecurityException {
         ByteIterator byteIterator = codePointIterator.base64Decode();
-        byte[] prefixVersion = byteIterator.drain(4);
+        byte[] prefixVersion = byteIterator.drain(5);
+        // TODO Specific meaningful errors for prefixVersion[3] != 'K' || prefixVersion[4] != VERSION.
         if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' ||
-                prefixVersion[2] != 'Y' || prefixVersion[3] != VERSION) {
+                prefixVersion[2] != 'Y' || prefixVersion[3] != 'K' || prefixVersion[4] != VERSION) {
             throw log.badKeyPrefix();
         }
         byte[] key = byteIterator.drain();
@@ -91,7 +95,7 @@ public class SecretKeyUtil {
         return new SecretKeySpec(key, SECRET_KEY_ALGORITHM);
     }
 
-    private static void checkKeySize(final int keySize) {
+    private static void checkKeySize(final int keySize) throws GeneralSecurityException {
         if (keySize != 128 && keySize != 192 && keySize != 256) {
             throw log.badKeySize();
         }

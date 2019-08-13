@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.GeneralSecurityException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
@@ -163,12 +164,10 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         try (Lock lock = lockForWrite()) {
             assertInitialised();
             save();
-        } catch (IOException e) {
-            throw log.cannotFlushCredentialStore(e);
         }
     }
 
-    private void save() throws IOException {
+    private void save() throws CredentialStoreException {
         try (PrintWriter pw = new PrintWriter(credentialStoreLocation)) {
             pw.println(HEADER);
             for (Entry<String, SecretKey> entry : entries.get().entrySet() ) {
@@ -176,6 +175,8 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
                 pw.print(DELIMITER);
                 pw.println(exportSecretKey(entry.getValue()));
             }
+        } catch (IOException | GeneralSecurityException e) {
+            throw log.cannotFlushCredentialStore(e);
         }
     }
 
@@ -215,7 +216,12 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
 
                 if (start > -1 && delimiter > -1 && end > -1) {
                     String alias = new String(currentLine, start, delimiter - start);
-                    SecretKey secretKey = importSecretKey(currentLine, delimiter + 1, end - delimiter);
+                    SecretKey secretKey;
+                    try {
+                        secretKey = importSecretKey(currentLine, delimiter + 1, end - delimiter);
+                    } catch (GeneralSecurityException e) {
+                        throw log.canNotLoadSecretKey(alias, e);
+                    }
                     entries.put(alias, secretKey);
                 } else {
                     throw log.invalidCredentialStoreProperty(line);

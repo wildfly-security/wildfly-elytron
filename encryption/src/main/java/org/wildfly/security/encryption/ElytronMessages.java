@@ -18,6 +18,8 @@
 
 package org.wildfly.security.encryption;
 
+import java.security.GeneralSecurityException;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Message;
@@ -39,9 +41,9 @@ public interface ElytronMessages extends BasicLogger {
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
     @Message(id = 19000, value = "Invalid size value. Must be one of 128, 192, or 256")
-    IllegalArgumentException badKeySize();
+    GeneralSecurityException badKeySize();
 
     @Message(id = 19001, value = "Invalid prefix importing SecretKey")
-    IllegalArgumentException badKeyPrefix();
+    GeneralSecurityException badKeyPrefix();
 
 }
