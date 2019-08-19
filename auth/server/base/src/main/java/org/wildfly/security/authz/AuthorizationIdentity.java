@@ -18,6 +18,8 @@
 
 package org.wildfly.security.authz;
 
+import java.util.function.Supplier;
+
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
  * authorization decisions.  Since there is no upper bound in the lifespan of instances of this class, they should
@@ -48,15 +50,25 @@ public interface AuthorizationIdentity {
      * @return the authorization identity
      */
     static AuthorizationIdentity basicIdentity(Attributes attributes) {
+        return basicIdentity(() -> attributes, "EMPTY");
+    }
+
+    /**
+     * Create a basic authorization identity implementation.
+     *
+     * @param attributes the identity attributes
+     * @return the authorization identity
+     */
+    static AuthorizationIdentity basicIdentity(Supplier<Attributes> attributes, final String string) {
         return new AuthorizationIdentity() {
 
             public Attributes getAttributes() {
-                return attributes;
+                return attributes.get();
             }
 
             @Override
             public String toString() {
-                return "EMPTY";
+                return string;
             }
 
         };
