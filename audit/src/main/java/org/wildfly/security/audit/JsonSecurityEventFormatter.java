@@ -34,6 +34,7 @@ import org.wildfly.security.auth.server.event.SecurityDefiniteOutcomeEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
+import org.wildfly.security.auth.server.event.SyslogAuditEvent;
 
 /**
  * A formatter for security events that converts events into JSON strings.
@@ -121,6 +122,19 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
         permissionBuilder.add("name", permission.getName());
 
         objectBuilder.add("permission", permissionBuilder);
+    }
+
+    @Override
+    public String handleSyslogAuditEvent(SyslogAuditEvent event, Void param) {
+        checkNotNullParam("event", event);
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
+        handleSyslogAuditEvent(event, objectBuilder);
+        return objectBuilder.build().toString();
+    }
+
+    private void handleSyslogAuditEvent(SyslogAuditEvent event, JsonObjectBuilder objectBuilder) {
+        handleUnknownEvent(event, objectBuilder);
+        objectBuilder.add("syslog-format", event.getFormat().toString());
     }
 
     /**

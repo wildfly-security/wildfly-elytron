@@ -4,6 +4,7 @@
 00012            wildfly-elytron-asn1
 07004 - 07024    wildfly-elytron-asn1
 11001 - 11007    wildfly-elytron-audit
+12000 - 12002    wildfly-elytron-audit
 00003            wildfly-elytron-auth-util
 01065            wildfly-elytron-auth-util
 01121 - 01123    wildfly-elytron-auth-util
