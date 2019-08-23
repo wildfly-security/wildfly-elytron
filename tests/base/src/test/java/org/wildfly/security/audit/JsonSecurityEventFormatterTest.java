@@ -31,6 +31,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.event.Rfc3164SyslogEvent;
+import org.wildfly.security.auth.server.event.Rfc5424SyslogEvent;
 import org.wildfly.security.auth.server.event.SecurityAuthenticationSuccessfulEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
@@ -71,6 +73,22 @@ public class JsonSecurityEventFormatterTest {
         assertNotNull("Creation Time", securityIdentity.getString("creation-time"));
 
         return jsonObject;
+    }
+
+    @Test
+    public void testRfc3164SyslogEvent() {
+        JsonObject jsonObject = baseTest(new Rfc3164SyslogEvent(securityDomain.getCurrentSecurityIdentity()));
+
+        assertEquals("Expected Event", "Rfc3164SyslogEvent", jsonObject.getString("event"));
+        assertEquals("Expected Format", "RFC3164", jsonObject.getString("syslog-format"));
+    }
+
+    @Test
+    public void testRfc5424SyslogEvent() {
+        JsonObject jsonObject = baseTest(new Rfc5424SyslogEvent(securityDomain.getCurrentSecurityIdentity()));
+
+        assertEquals("Expected Event", "Rfc5424SyslogEvent", jsonObject.getString("event"));
+        assertEquals("Expected Format", "RFC5424", jsonObject.getString("syslog-format"));
     }
 
     @Test

@@ -21,14 +21,15 @@ package org.wildfly.security.auth.realm;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 
-import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
-import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
-import org.wildfly.security.auth.server.event.RealmEvent;
-import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
+import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
+import org.wildfly.security.auth.server.event.RealmEvent;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 
@@ -41,7 +42,7 @@ import org.wildfly.security.evidence.Evidence;
  */
 public final class AggregateSecurityRealm implements SecurityRealm {
     private final SecurityRealm authenticationRealm;
-    private final SecurityRealm authorizationRealm;
+    private final SecurityRealm[] authorizationRealms;
 
     /**
      * Construct a new instance.
@@ -51,40 +52,61 @@ public final class AggregateSecurityRealm implements SecurityRealm {
      */
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm authorizationRealm) {
         this.authenticationRealm = authenticationRealm;
-        this.authorizationRealm = authorizationRealm;
+        this.authorizationRealms = new SecurityRealm[] { authorizationRealm };
+    }
+
+    public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm... authorizationRealms) {
+        this.authenticationRealm = authenticationRealm;
+        this.authorizationRealms = authorizationRealms;
     }
 
     public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(evidence);
+        final RealmIdentity[] authorizationIdentities = new RealmIdentity[authorizationRealms.length];
         try {
-            final RealmIdentity authorizationIdentity = authorizationRealm.getRealmIdentity(evidence);
-            try {
-                final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
-                ok = true;
-                return identity;
-            } finally {
-                if (! ok) authorizationIdentity.dispose();
+            for (int i = 0; i < authorizationIdentities.length; i++) {
+                SecurityRealm authorizationRealm = authorizationRealms[i];
+
+                authorizationIdentities[i] = authorizationRealm == authenticationRealm ? authenticationIdentity : authorizationRealm.getRealmIdentity(evidence);
             }
+
+            final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
+            ok = true;
+            return identity;
         } finally {
-            if (! ok) authenticationIdentity.dispose();
+            if (!ok) {
+                authenticationIdentity.dispose();
+                for (RealmIdentity current : authorizationIdentities) {
+                    if (current != null)
+                        current.dispose();
+                }
+            }
         }
     }
 
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(principal);
+        final RealmIdentity[] authorizationIdentities = new RealmIdentity[authorizationRealms.length];
         try {
-            final RealmIdentity authorizationIdentity = authorizationRealm.getRealmIdentity(principal);
-            try {
-                final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
-                ok = true;
-                return identity;
-            } finally {
-                if (! ok) authorizationIdentity.dispose();
+            for (int i = 0; i < authorizationIdentities.length; i++) {
+                SecurityRealm authorizationRealm = authorizationRealms[i];
+
+                authorizationIdentities[i] = authorizationRealm == authenticationRealm ? authenticationIdentity : authorizationRealm.getRealmIdentity(principal);
             }
+
+            final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
+            ok = true;
+            return identity;
         } finally {
-            if (! ok) authenticationIdentity.dispose();
+            if (!ok) {
+                authenticationIdentity.dispose();
+                for (RealmIdentity current : authorizationIdentities) {
+                    if (current != null)
+                        current.dispose();
+                }
+            }
         }
     }
 
@@ -102,22 +124,26 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         if (event instanceof RealmAuthenticationEvent) {
             authenticationRealm.handleRealmEvent(event);
         } else if (event instanceof RealmAuthorizationEvent) {
-            authorizationRealm.handleRealmEvent(event);
+            for (SecurityRealm current : authorizationRealms) {
+                SecurityRealm.safeHandleRealmEvent(current, event);
+            }
         } else {
             // use safe wrapper to ensure both are called
             SecurityRealm.safeHandleRealmEvent(authenticationRealm, event);
-            SecurityRealm.safeHandleRealmEvent(authorizationRealm, event);
+            for (SecurityRealm current : authorizationRealms) {
+                SecurityRealm.safeHandleRealmEvent(current, event);
+            }
         }
     }
 
     static final class Identity implements RealmIdentity {
 
         private final RealmIdentity authenticationIdentity;
-        private final RealmIdentity authorizationIdentity;
+        private final RealmIdentity[] authorizationIdentities;
 
-        Identity(final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
+        Identity(final RealmIdentity authenticationIdentity, final RealmIdentity[] authorizationIdentities) {
             this.authenticationIdentity = authenticationIdentity;
-            this.authorizationIdentity = authorizationIdentity;
+            this.authorizationIdentities = authorizationIdentities;
         }
 
         @Override
@@ -160,12 +186,34 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return authorizationIdentity.getAuthorizationIdentity();
+            if (authorizationIdentities.length == 1) {
+                return authorizationIdentities[0].getAuthorizationIdentity();
+            }
+
+            final AuthorizationIdentity[] authorizationIdentities = new AuthorizationIdentity[this.authorizationIdentities.length];
+            for (int i = 0; i < authorizationIdentities.length; i++) {
+                authorizationIdentities[i] = this.authorizationIdentities[i].getAuthorizationIdentity();
+            }
+
+            // Use a Supplier here so we only load and aggregate the attributes if they are actually used.
+            return AuthorizationIdentity.basicIdentity(() -> combineAttributes(authorizationIdentities), "Aggregated");
+        }
+
+        private Attributes combineAttributes(AuthorizationIdentity[] authorizationIdentities) {
+            Attributes[] attributes = new Attributes[authorizationIdentities.length];
+            for (int i = 0; i < attributes.length; i++) {
+                attributes[i] = authorizationIdentities[i].getAttributes();
+            }
+
+            return AggregateAttributes.aggregateOf(attributes);
         }
 
         public void dispose() {
             authenticationIdentity.dispose();
-            authorizationIdentity.dispose();
+            for (RealmIdentity current : authorizationIdentities) {
+                current.dispose();
+            }
         }
     }
+
 }

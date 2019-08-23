@@ -31,6 +31,7 @@ import org.wildfly.security.auth.server.event.SecurityDefiniteOutcomeEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
+import org.wildfly.security.auth.server.event.SyslogAuditEvent;
 
 /**
  * A formatter for security events that converts events into human-readable strings.
@@ -106,6 +107,19 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
         stringBuilder.append(",permission=[type=").append(permission.getClass().getName());
         stringBuilder.append(",actions=").append(permission.getActions());
         stringBuilder.append(",name=").append(permission.getName()).append(']');
+    }
+
+    @Override
+    public String handleSyslogAuditEvent(SyslogAuditEvent event, Void param) {
+        checkNotNullParam("event", event);
+        StringBuilder stringBuilder = new StringBuilder("{");
+        handleSyslogAuditEvent(event, stringBuilder);
+        return stringBuilder.append('}').toString();
+    }
+
+    private void handleSyslogAuditEvent(SyslogAuditEvent event, StringBuilder stringBuilder) {
+        handleUnknownEvent(event, stringBuilder);
+        stringBuilder.append("syslog-format").append(event.getFormat().toString());
     }
 
     /**

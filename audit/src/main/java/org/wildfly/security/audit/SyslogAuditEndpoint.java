@@ -22,6 +22,8 @@ import static org.wildfly.security.audit.ElytronMessages.audit;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.PortUnreachableException;
+import java.util.logging.ErrorManager;
 import java.util.logging.Level;
 
 import org.jboss.logmanager.ExtLogRecord;
@@ -42,20 +44,28 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     private volatile boolean accepting = true;
 
     private final SyslogHandler syslogHandler;
+    private final TransportErrorManager errorManager;
+    private final SyslogHandler.Protocol protocol;
+    private final int maxReconnectAttempts;
+    private int currentReconnectAttempts = 0;
 
     /**
      * Creates a new audit endpoint that logs to syslog server.
      */
     SyslogAuditEndpoint(Builder builder) throws IOException {
-        SyslogHandler.Protocol protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
+        maxReconnectAttempts = builder.maxReconnectAttempts;
+        protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
         syslogHandler = new SyslogHandler(checkNotNullParam("serverAddress", builder.serverAddress), builder.port, Facility.SECURITY,
-                null, protocol, checkNotNullParam("hostName", builder.hostName));
+                builder.format, protocol, checkNotNullParam("hostName", builder.hostName));
 
         if (builder.tcp && builder.socketFactory != null) {
             syslogHandler.setOutputStream(new TcpOutputStream(builder.socketFactory, builder.serverAddress, builder.port) {
                 // anonymous class to access protected constructor
             });
         }
+        errorManager = new TransportErrorManager(protocol);
+        syslogHandler.setErrorManager(errorManager);
+        accept(EventPriority.INFORMATIONAL, "Elytron audit logging enabled with RFC format: " + builder.format);
     }
 
     @Override
@@ -65,7 +75,30 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         synchronized(this) {
             if (!accepting) return;
 
-            syslogHandler.doPublish(new ExtLogRecord(toLevel(priority), message, SyslogAuditEndpoint.class.getName()));
+            while(true) {
+                // Ensure that the handler stops trying to connect if the thread is interrupted
+                if (Thread.currentThread().isInterrupted()) {
+                    syslogHandler.close();
+                    break;
+                }
+                try {
+                    tryPublish(priority, message);
+                    break;
+                } catch (IOException e) {
+                    // TcpOutputStream has its' own reconnect handler, so just throw the error
+                    if (protocol != Protocol.UDP) {
+                        throw e;
+                    }
+                    if (currentReconnectAttempts == maxReconnectAttempts) {
+                        syslogHandler.close();
+                        throw audit.syslogMaximumReconnectAttemptsReached(currentReconnectAttempts);
+                    } else if (maxReconnectAttempts != -1) {
+                        // Reconnect attempts are less than max so eat the error
+                        currentReconnectAttempts++;
+                    } // Infinite reconnect attempts so just eat the error
+                    audit.trace("Unable to send message, attempting reconnect", e);
+                }
+            }
         }
     }
 
@@ -116,6 +149,8 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         private boolean tcp = true;
         private String hostName;
         private SocketFactory socketFactory = null;
+        private SyslogHandler.SyslogType format = SyslogHandler.SyslogType.RFC5424;
+        private int maxReconnectAttempts = 0;
 
         Builder() {
         }
@@ -193,6 +228,37 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         }
 
         /**
+         * Sets the SyslogFormat that will be used.
+         *
+         * @param format The SyslogFormat that should be used
+         * @return this builder.
+         */
+        public Builder setFormat(SyslogHandler.SyslogType format) {
+            this.format = checkNotNullParam("format", format);
+
+            return this;
+        }
+
+        /**
+         * Sets the amount of reconnect-attempts that will be used.
+         *
+         * @param maxReconnectAttempts The maximum number of reconnect-attempts attempts with:
+         * -1 meaning indefinite attempts
+         * 0 meaning no attempts
+         * Any positive integer meaning that number of attempts
+         * @exception IllegalArgumentException throws an error in the case of a bad reconnect-attempts value of < -1
+         * @return this builder.
+         */
+        public Builder setMaxReconnectAttempts(int maxReconnectAttempts) throws IllegalArgumentException {
+            if (maxReconnectAttempts < -1) {
+                throw audit.badReconnectAttemptsNumber(maxReconnectAttempts);
+            }
+            this.maxReconnectAttempts = maxReconnectAttempts;
+
+            return this;
+        }
+
+        /**
          * Build a new {@link AuditEndpoint} configured to pass all messages using Syslog.
          *
          * @return a new {@link AuditEndpoint} configured to pass all messages using Syslog.
@@ -204,4 +270,44 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
 
     }
 
+    private class TransportErrorManager extends ErrorManager {
+        private volatile Exception error;
+        private Protocol transport;
+
+        public TransportErrorManager(Protocol transport) {
+            this.transport = transport;
+        }
+
+        @Override
+        public synchronized void error(String msg, Exception ex, int code) {
+            error = ex;
+        }
+
+        void getAndThrowError() throws IOException {
+            Exception error = this.error;
+            this.error = null;
+
+            if (error != null) {
+                throwAsIoOrRuntimeException(error);
+            }
+        }
+
+        void throwAsIoOrRuntimeException(Throwable t) throws IOException {
+            if (t instanceof PortUnreachableException && transport == Protocol.UDP) {
+                throw audit.udpPortUnavailable(t.getCause());
+            }
+            if (t instanceof IOException) {
+                throw (IOException)t;
+            }
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException)t;
+            }
+            throw new RuntimeException(t);
+        }
+    }
+
+    private void tryPublish(EventPriority priority, String message) throws IOException {
+        syslogHandler.doPublish(new ExtLogRecord(toLevel(priority), message, SyslogAuditEndpoint.class.getName()));
+        errorManager.getAndThrowError();
+    }
 }
