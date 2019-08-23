@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>1.10.0.CR5-SNAPSHOT</version>
+    <version>1.10.0.CR5</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
