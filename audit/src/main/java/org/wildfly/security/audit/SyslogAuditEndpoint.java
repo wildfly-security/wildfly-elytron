@@ -47,6 +47,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     private final TransportErrorManager errorManager;
     private final SyslogHandler.Protocol protocol;
     private final int maxReconnectAttempts;
+    private final TcpOutputStream tcpOutputStream;
     private int currentReconnectAttempts = 0;
 
     /**
@@ -58,10 +59,20 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
         syslogHandler = new SyslogHandler(checkNotNullParam("serverAddress", builder.serverAddress), builder.port, Facility.SECURITY,
                 builder.format, protocol, checkNotNullParam("hostName", builder.hostName));
 
-        if (builder.tcp && builder.socketFactory != null) {
-            syslogHandler.setOutputStream(new TcpOutputStream(builder.socketFactory, builder.serverAddress, builder.port) {
-                // anonymous class to access protected constructor
-            });
+        if (builder.tcp) {
+            // This is not the ideal way to handle it, but with the current state of the log manager we need to keep an
+            // accurate count of the failures. We'll use our own TcpOutputStream so we can use the
+            // TcpOutputStream.isConnected() method to determine if the stream is connected or not.
+            if (builder.socketFactory != null) {
+                tcpOutputStream = new TcpOutputStream(builder.socketFactory, builder.serverAddress, builder.port) {
+                    // anonymous class to access protected constructor
+                };
+            } else {
+                tcpOutputStream = new TcpOutputStream(builder.serverAddress, builder.port);
+            }
+            syslogHandler.setOutputStream(tcpOutputStream);
+        } else {
+            tcpOutputStream = null;
         }
         errorManager = new TransportErrorManager(protocol);
         syslogHandler.setErrorManager(errorManager);
@@ -72,32 +83,48 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     public void accept(EventPriority priority, String message) throws IOException {
         if (!accepting) return;
 
-        synchronized(this) {
+        synchronized (this) {
             if (!accepting) return;
-
-            while(true) {
-                // Ensure that the handler stops trying to connect if the thread is interrupted
-                if (Thread.currentThread().isInterrupted()) {
-                    syslogHandler.close();
-                    break;
-                }
-                try {
-                    tryPublish(priority, message);
-                    break;
-                } catch (IOException e) {
-                    // TcpOutputStream has its' own reconnect handler, so just throw the error
-                    if (protocol != Protocol.UDP) {
-                        throw e;
+            // Ensure that the handler stops trying to connect if the thread is interrupted
+            if (Thread.currentThread().isInterrupted()) {
+                syslogHandler.close();
+                return;
+            }
+            try {
+                tryPublish(priority, message);
+                if (tcpOutputStream == null) {
+                    // This must be a UDP stream so we can assume a successful message was sent and reset the reconnect
+                    // attempts.
+                    currentReconnectAttempts = 0;
+                } else {
+                    // If the TCP stream is now connected we can reset the reconnect attempts.
+                    if (tcpOutputStream.isConnected()) {
+                        currentReconnectAttempts = 0;
+                    } else {
+                        checkAttempts();
                     }
-                    if (currentReconnectAttempts == maxReconnectAttempts) {
-                        syslogHandler.close();
-                        throw audit.syslogMaximumReconnectAttemptsReached(currentReconnectAttempts);
-                    } else if (maxReconnectAttempts != -1) {
-                        // Reconnect attempts are less than max so eat the error
-                        currentReconnectAttempts++;
-                    } // Infinite reconnect attempts so just eat the error
-                    audit.trace("Unable to send message, attempting reconnect", e);
                 }
+            } catch (IOException e) {
+                checkAttempts();
+                // TcpOutputStream has its' own reconnect handler, so just throw the error
+                if (protocol != Protocol.UDP) {
+                    throw e;
+                }
+
+                // Infinite reconnect attempts so just eat the error
+                audit.trace("Unable to send message, attempting reconnect", e);
+            }
+        }
+    }
+
+    private void checkAttempts() throws IOException {
+        if (accepting) {
+            if (currentReconnectAttempts == maxReconnectAttempts) {
+                close();
+                throw audit.syslogMaximumReconnectAttemptsReached(currentReconnectAttempts);
+            } else if (maxReconnectAttempts != -1) {
+                // Reconnect attempts are less than max so eat the error
+                currentReconnectAttempts++;
             }
         }
     }
