@@ -68,7 +68,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 12000, value = "The reconnect attempts value of %s is invalid. Please use an integer value >= -1.")
     IllegalArgumentException badReconnectAttemptsNumber(int reconnectAttempts);
 
-    @Message(id = 12001, value = "The maximum reconnect attempts value of %s was reached.")
+    @Message(id = 12001, value = "The maximum reconnect attempts value of %s was reached. The syslog endpoint will be shutdown.")
     IOException syslogMaximumReconnectAttemptsReached(int reconnectAttempts);
 
     @Message(id = 12002, value = "The configured UDP port is unavailable.")

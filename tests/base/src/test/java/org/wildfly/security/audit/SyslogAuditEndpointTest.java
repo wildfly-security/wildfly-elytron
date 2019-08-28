@@ -162,6 +162,9 @@ public class SyslogAuditEndpointTest {
         try {
             // Since the endpoint gives a message upon creation there is no need to call .accept()
             AuditEndpoint endpoint = setupEndpointBadUdpReconnectAttempts(RECONNECT_NUMBER);
+            for (int i = 0; i < RECONNECT_NUMBER; i++) {
+                endpoint.accept(EventPriority.INFORMATIONAL, "This is a test message that should fail.");
+            }
             Assert.fail("No error was thrown while attempting to log to a bad IP with UDP.");
         } catch (IOException e) {
             assertCorrectError(e, new String[] {"ELY12001", Integer.toString(RECONNECT_NUMBER)});
