@@ -20,6 +20,7 @@ package org.wildfly.security.auth.realm;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.function.Function;
 
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -43,6 +44,7 @@ import org.wildfly.security.evidence.Evidence;
 public final class AggregateSecurityRealm implements SecurityRealm {
     private final SecurityRealm authenticationRealm;
     private final SecurityRealm[] authorizationRealms;
+    private final Function<Principal, Principal> principalTransformer;
 
     /**
      * Construct a new instance.
@@ -53,11 +55,19 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm authorizationRealm) {
         this.authenticationRealm = authenticationRealm;
         this.authorizationRealms = new SecurityRealm[] { authorizationRealm };
+        this.principalTransformer = null;
     }
 
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm... authorizationRealms) {
         this.authenticationRealm = authenticationRealm;
         this.authorizationRealms = authorizationRealms;
+        this.principalTransformer = null;
+
+    }
+    public AggregateSecurityRealm(final SecurityRealm authenticationRealm, Function<Principal, Principal> principalTransformer, final SecurityRealm... authorizationRealms) {
+        this.authenticationRealm = authenticationRealm;
+        this.authorizationRealms = authorizationRealms;
+        this.principalTransformer = principalTransformer;
     }
 
     public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
@@ -67,8 +77,11 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         try {
             for (int i = 0; i < authorizationIdentities.length; i++) {
                 SecurityRealm authorizationRealm = authorizationRealms[i];
-
-                authorizationIdentities[i] = authorizationRealm == authenticationRealm ? authenticationIdentity : authorizationRealm.getRealmIdentity(evidence);
+                if (principalTransformer == null) {
+                    authorizationIdentities[i] = (authorizationRealm == authenticationRealm) ? authenticationIdentity : authorizationRealm.getRealmIdentity(evidence);
+                } else {
+                    authorizationIdentities[i] = authorizationRealm.getRealmIdentity(evidence, principalTransformer);
+                }
             }
 
             final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
@@ -88,12 +101,18 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(principal);
+
+        Principal authorizationPrincipal = principal;
+        if (principalTransformer != null) {
+            authorizationPrincipal = principalTransformer.apply(authorizationPrincipal);
+            if (authorizationPrincipal == null) throw ElytronMessages.log.transformedPrincipalCannotBeNull();
+        }
+
         final RealmIdentity[] authorizationIdentities = new RealmIdentity[authorizationRealms.length];
         try {
             for (int i = 0; i < authorizationIdentities.length; i++) {
                 SecurityRealm authorizationRealm = authorizationRealms[i];
-
-                authorizationIdentities[i] = authorizationRealm == authenticationRealm ? authenticationIdentity : authorizationRealm.getRealmIdentity(principal);
+                authorizationIdentities[i] = (authorizationRealm == authenticationRealm) && (principalTransformer == null) ? authenticationIdentity : authorizationRealm.getRealmIdentity(authorizationPrincipal);
             }
 
             final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
