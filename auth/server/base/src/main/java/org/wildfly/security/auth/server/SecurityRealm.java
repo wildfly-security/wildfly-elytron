@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.function.Function;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server._private.ElytronMessages;
@@ -62,6 +63,26 @@ public interface SecurityRealm {
     default RealmIdentity getRealmIdentity(Evidence evidence) throws RealmUnavailableException {
         final Principal principal = evidence.getDecodedPrincipal();
         return principal == null ? RealmIdentity.NON_EXISTENT : getRealmIdentity(principal);
+    }
+
+    /**
+     * Get a handle for the identity for the given evidence in the context of this security realm. Any validation / name
+     * mapping is an implementation detail for the realm. The identity may or may not exist. The principal obtained is
+     * transformed prior to obtaining the authorization identity. The returned handle <em>must</em> be cleaned up by a call
+     * to {@link RealmIdentity#dispose()}.
+     *
+     * Where this method is used to obtain a {@link RealmIdentity} prior to evidence verification the method
+     * {@link RealmIdentity#getEvidenceVerifySupport(Class, String)} will be used to verify if the identity is usable.
+     *
+     * @param evidence an evidence instance which identifies the identity within the realm (must not be {@code null})
+     * @param principalTransformer a function which defines how the principal is transformed before the authorization identity
+     *                             is obtained
+     * @return the {@link RealmIdentity} for the provided evidence (not {@code null})
+     */
+    default RealmIdentity getRealmIdentity(Evidence evidence, Function<Principal, Principal> principalTransformer) throws RealmUnavailableException {
+        final Principal principal = evidence.getDecodedPrincipal();
+        Principal transformedPrincipal = principalTransformer.apply(principal);
+        return transformedPrincipal == null ? RealmIdentity.NON_EXISTENT : getRealmIdentity(transformedPrincipal);
     }
 
     /**
