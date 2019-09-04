@@ -131,6 +131,7 @@ public class SSLAuthenticationTest {
     private static final File FIREFLY_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "firefly-revoked.pem");
     private static final File ICA_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ica-revoked.pem");
     private static TestingOcspServer ocspServer = null;
+    private static X509Certificate ocspResponderCertificate;
 
     /**
      * Get the key manager backed by the specified key store.
@@ -259,7 +260,10 @@ public class SSLAuthenticationTest {
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(intermediateIssuerPublicKey)
                 .setSerialNumber(new BigInteger("6"))
-                .addExtension(new BasicConstraintsExtension(false, true, 0))
+                .addExtension(new BasicConstraintsExtension(false, true, -1))
+                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
+                )))
                 .build();
 
         // Generates certificate and keystore for Ladybird
@@ -347,7 +351,7 @@ public class SSLAuthenticationTest {
         PrivateKey ocspResponderSigningKey = ocspResponderKeys.getPrivate();
         PublicKey ocspResponderPublicKey = ocspResponderKeys.getPublic();
 
-        X509Certificate ocspResponderCertificate = new X509CertificateBuilder()
+        ocspResponderCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"))
                 .setSignatureAlgorithmName("SHA1withRSA")
@@ -359,7 +363,7 @@ public class SSLAuthenticationTest {
                 .build();
         KeyStore ocspResponderKeyStore = createKeyStore();
         ocspResponderKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspResponderKeyStore.setKeyEntry("ocspResponder", ocspResponderSigningKey, PASSWORD, new X509Certificate[]{ocspResponderCertificate,issuerCertificate});
+        ocspResponderKeyStore.setKeyEntry("ocspResponder", ocspResponderSigningKey, PASSWORD, new X509Certificate[]{ocspResponderCertificate, issuerCertificate});
         createTemporaryKeyStoreFile(ocspResponderKeyStore, OCSP_RESPONDER_FILE, PASSWORD);
 
         // Generates GOOD certificate referencing the OCSP responder
@@ -368,12 +372,12 @@ public class SSLAuthenticationTest {
         PublicKey ocspCheckedGoodPublicKey = ocspCheckedGoodKeys.getPublic();
 
         X509Certificate ocspCheckedGoodCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
+                .setIssuerDn(intermediateIssuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"))
                 .setSignatureAlgorithmName("SHA1withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setSigningKey(intermediateIssuerSigningKey)
                 .setPublicKey(ocspCheckedGoodPublicKey)
-                .setSerialNumber(new BigInteger("16"))
+                .setSerialNumber(new BigInteger("20"))
                 .addExtension(new BasicConstraintsExtension(false, false, -1))
                 .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
@@ -381,7 +385,8 @@ public class SSLAuthenticationTest {
                 .build();
         KeyStore ocspCheckedGoodKeyStore = createKeyStore();
         ocspCheckedGoodKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspCheckedGoodKeyStore.setKeyEntry("checked", ocspCheckedGoodSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedGoodCertificate,issuerCertificate});
+        ocspCheckedGoodKeyStore.setCertificateEntry("ca2", intermediateIssuerCertificate);
+        ocspCheckedGoodKeyStore.setKeyEntry("checked", ocspCheckedGoodSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedGoodCertificate, intermediateIssuerCertificate, issuerCertificate});
         createTemporaryKeyStoreFile(ocspCheckedGoodKeyStore, OCSP_CHECKED_GOOD_FILE, PASSWORD);
 
         // Generates REVOKED certificate referencing the OCSP responder
@@ -537,9 +542,11 @@ public class SSLAuthenticationTest {
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
         ocspServer.createIssuer(1, issuerCertificate);
-        ocspServer.createCertificate(1, 1, ocspCheckedGoodCertificate);
-        ocspServer.createCertificate(2, 1, ocspCheckedRevokedCertificate);
-        ocspServer.revokeCertificate(2, 4);
+        ocspServer.createIssuer(2, intermediateIssuerCertificate);
+        ocspServer.createCertificate(1, 1, intermediateIssuerCertificate);
+        ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
+        ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
+        ocspServer.revokeCertificate(3, 4);
         ocspServer.start();
 
     }
@@ -659,6 +666,7 @@ public class SSLAuthenticationTest {
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
                         .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setNeedClientAuth(true)
                 .build().create();
@@ -666,6 +674,42 @@ public class SSLAuthenticationTest {
         SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ocspcheckedgood", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testOcspMaxCertPathNeg1() throws Exception {
+        ocspMaxCertPathCommon(-1, false);
+    }
+
+    @Test
+    public void testOcspMaxCertPath0() throws Exception {
+        ocspMaxCertPathCommon(0, false);
+    }
+
+    @Test
+    public void testOcspMaxCertPathTooLong() throws Exception {
+        ocspMaxCertPathCommon(1, false);
+    }
+
+    @Test
+    public void testOcspMaxCertPathOkay() throws Exception {
+        ocspMaxCertPathCommon(2, true);
+    }
+
+    private void ocspMaxCertPathCommon(int maxCertPath, boolean expectValid) throws Exception {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setOcspResponderCert(ocspResponderCertificate)
+                        .setMaxCertPath(maxCertPath)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", expectValid);
     }
 
     @Test
@@ -682,6 +726,7 @@ public class SSLAuthenticationTest {
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
                         .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setClientMode(true)
                 .build().create();

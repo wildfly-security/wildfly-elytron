@@ -25,6 +25,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
+
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.URI;
@@ -32,18 +34,23 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CRL;
 import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
 import java.security.cert.CertStoreParameters;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathChecker;
+import java.security.cert.PKIXReason;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
@@ -94,9 +101,11 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
             rc.setOptions(options);
             rc.setOcspResponder(builder.responderUri);
-
             params.setRevocationEnabled(true);
             params.addCertPathChecker(rc);
+
+            PKIXCertPathChecker maxPathLengthChecker = new MaxPathLengthChecker(builder.maxCertPath);
+            params.addCertPathChecker(maxPathLengthChecker);
             params.setMaxPathLength(builder.maxCertPath);
 
             builder.trustManagerFactory.init(new CertPathTrustManagerParameters(params));
@@ -316,5 +325,75 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+
+    /**
+     * PKIXCertPathChecker to check if a cert path being validated is longer than maxPathLength specified
+     */
+
+    private class MaxPathLengthChecker extends PKIXCertPathChecker {
+        private int maxPathLength;
+        private int i;
+
+        MaxPathLengthChecker(int maxPathLength) {
+            this.maxPathLength = maxPathLength;
+        }
+
+        /*
+         * Initialize checker
+         */
+        public void init(boolean forward) {
+            i = 0;
+        }
+
+        @Override
+        public boolean isForwardCheckingSupported() {
+            return false;
+        }
+
+        @Override
+        public Set<String> getSupportedExtensions() {
+            return null;
+        }
+
+        public void check(Certificate cert, Collection unresolvedCritExts)
+                throws CertPathValidatorException {
+            X509Certificate currCert = (X509Certificate) cert;
+            i++;
+            checkCertPathLength(currCert);
+        }
+
+        private void checkCertPathLength(X509Certificate currCert) throws CertPathValidatorException {
+            X500Principal subject = currCert.getSubjectX500Principal();
+            X500Principal issuer = currCert.getIssuerX500Principal();
+
+            int pathLenConstraint = -1;
+            if (currCert.getVersion() < 3) {    // version 1 or version 2
+                if (i == 1) {
+                    if (subject.equals(issuer)) {
+                        pathLenConstraint = Integer.MAX_VALUE;
+                    }
+                }
+            } else {
+                pathLenConstraint = currCert.getBasicConstraints();
+            }
+
+            if (pathLenConstraint == -1) {
+                pathLenConstraint = maxPathLength;
+            }
+
+            if (!subject.equals(issuer)) {
+                if (pathLenConstraint < i) {
+                    throw new CertPathValidatorException
+                            ("check failed: pathLenConstraint violated - "
+                                    + "this cert must be the last cert in the "
+                                    + "certification path", null, null, -1,
+                                    PKIXReason.PATH_TOO_LONG);
+                }
+            }
+            if (pathLenConstraint < maxPathLength)
+                maxPathLength = pathLenConstraint;
+        }
     }
 }
