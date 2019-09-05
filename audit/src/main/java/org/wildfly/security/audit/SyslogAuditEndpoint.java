@@ -23,6 +23,8 @@ import static org.wildfly.security.audit.ElytronMessages.audit;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.PortUnreachableException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.logging.ErrorManager;
 import java.util.logging.Level;
 
@@ -48,6 +50,15 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
     private final SyslogHandler.Protocol protocol;
     private final int maxReconnectAttempts;
     private final TcpOutputStream tcpOutputStream;
+    private static final int INFINITE_RECONNECT_ATTEMPTS_OVERFLOW_NUMBER;
+    static {
+        INFINITE_RECONNECT_ATTEMPTS_OVERFLOW_NUMBER = AccessController.doPrivileged(new PrivilegedAction<Integer>() {
+            @Override
+            public Integer run() {
+                return Integer.parseInt(System.getProperty("wildfly.elytron.infinite.reconnect.attempts.overflow.number", "10000"));
+            }
+        });
+    }
     private int currentReconnectAttempts = 0;
 
     /**
@@ -112,7 +123,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
                 }
 
                 // Infinite reconnect attempts so just eat the error
-                audit.trace("Unable to send message, attempting reconnect", e);
+                audit.tracef(e, "Unable to send message on %d try.",  currentReconnectAttempts);
             }
         }
     }
@@ -125,7 +136,25 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
             } else if (maxReconnectAttempts != -1) {
                 // Reconnect attempts are less than max so eat the error
                 currentReconnectAttempts++;
+            } else {
+                if (currentReconnectAttempts < INFINITE_RECONNECT_ATTEMPTS_OVERFLOW_NUMBER) {
+                    currentReconnectAttempts++;
+                }
             }
+        }
+    }
+
+    /**
+     * Gets the current amount of reconnect attempts, with -1 signifying that the value for infinite reconnect attempts
+     * case has overflowed the maximum allowed amount
+     *
+     * @return The current reconnect attempts, or -1 if the maximum tracked value for infinite attempts has overflowed
+     */
+    public int getAttempts() {
+        if (maxReconnectAttempts != -1) {
+            return currentReconnectAttempts;
+        } else {
+            return currentReconnectAttempts == INFINITE_RECONNECT_ATTEMPTS_OVERFLOW_NUMBER ? -1 : currentReconnectAttempts;
         }
     }
 
