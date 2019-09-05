@@ -46,7 +46,7 @@ public class SyslogAuditEndpointTest {
     private static final int TCP_PORT = 10857;
     private static final int RECONNECT_NUMBER = 10;
     private static final int BAD_RECONNECT_NUMBER = -2;
-    private static final int RECONNECT_TIMEOUT = 10;
+    private static final int RECONNECT_TIMEOUT = 450;
     private static SocketFactory socketFactory = null;
     private static SimpleSyslogServer udpServer = null;
     private static SimpleSyslogServer tcpServer = null;
@@ -119,7 +119,19 @@ public class SyslogAuditEndpointTest {
         Thread t = new Thread(() -> {
             try {
                 // Since the endpoint gives a message upon creation there is no need to call .accept()
-                AuditEndpoint endpoint = setupEndpointBadUdpReconnectAttempts(-1);
+                SyslogAuditEndpoint endpoint = (SyslogAuditEndpoint) setupEndpointBadUdpReconnectAttempts(-1);
+                int attemptNumber = 1;
+                int currentAttempts = endpoint.getAttempts();
+                while(attemptNumber == currentAttempts || currentAttempts == -1) {
+                    endpoint.accept(EventPriority.INFORMATIONAL, "This is a test message that should fail.");
+                    currentAttempts = endpoint.getAttempts();
+                    if (currentAttempts != -1) {
+                        attemptNumber++;
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                }
                 if (!Thread.currentThread().isInterrupted()) {
                     this.failString = "No error was thrown while attempting to log to a bad IP with UDP.";
                 }
@@ -162,6 +174,9 @@ public class SyslogAuditEndpointTest {
         try {
             // Since the endpoint gives a message upon creation there is no need to call .accept()
             AuditEndpoint endpoint = setupEndpointBadUdpReconnectAttempts(RECONNECT_NUMBER);
+            for (int i = 0; i < RECONNECT_NUMBER; i++) {
+                endpoint.accept(EventPriority.INFORMATIONAL, "This is a test message that should fail.");
+            }
             Assert.fail("No error was thrown while attempting to log to a bad IP with UDP.");
         } catch (IOException e) {
             assertCorrectError(e, new String[] {"ELY12001", Integer.toString(RECONNECT_NUMBER)});

@@ -121,20 +121,29 @@ public class JaccDelegatingPolicy extends Policy {
 
     @Override
     public PermissionCollection getPermissions(ProtectionDomain domain) {
+        final PermissionCollection delegatePermissions = delegate.getPermissions(domain);
         return new PermissionCollection() {
             @Override
             public void add(Permission permission) {
-                throw ElytronMessages.log.readOnlyPermissionCollection();
+                if (isJaccPermission(permission)) {
+                    throw ElytronMessages.log.readOnlyPermissionCollection();
+                } else {
+                    delegatePermissions.add(permission);
+                }
             }
 
             @Override
             public boolean implies(Permission permission) {
+                if (!isJaccPermission(permission) && delegatePermissions.implies(permission)) {
+                    return true;
+                }
+
                 return JaccDelegatingPolicy.this.implies(domain, permission);
             }
 
             @Override
             public Enumeration<Permission> elements() {
-                return delegate.getPermissions(domain).elements();
+                return delegatePermissions.elements();
             }
         };
     }
