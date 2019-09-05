@@ -47,7 +47,7 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 2009, max = 2009),
-    @ValidIdRange(min = 9500, max = 9528),
+    @ValidIdRange(min = 9500, max = 9529),
     @ValidIdRange(min = 11006, max = 11006)
 })
 public interface ElytronMessages extends BasicLogger {
@@ -132,6 +132,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
     CredentialStoreException externalPathMissing(String keyStoreType);
+
+    @Message(id = 9529, value = "The credential store file %s does not exist or cannot be accessed.")
+    CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
 
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
