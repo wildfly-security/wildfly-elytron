@@ -259,6 +259,7 @@
                             ${project.basedir}/auth/base/src/main/java/;
                             ${project.basedir}/auth/client/src/main/java/;
                             ${project.basedir}/auth/jaspi/src/main/java/;
+                            ${project.basedir}/auth/parsing/src/main/java/;
                             ${project.basedir}/auth/realm/base/src/main/java/;
                             ${project.basedir}/auth/realm/jdbc/src/main/java/;
                             ${project.basedir}/auth/realm/ldap/src/main/java/;
@@ -338,6 +339,7 @@
                                     <include>org/wildfly/security/auth/callback/*.java</include>
                                     <include>org/wildfly/security/auth/client/*.java</include>
                                     <include>org/wildfly/security/auth/jaspi/*.java</include>
+                                    <include>org/wildfly/security/auth/parsing/*.java</include>
                                     <include>org/wildfly/security/auth/permission/*.java</include>
                                     <include>org/wildfly/security/auth/principal/*.java</include>
                                     <include>org/wildfly/security/auth/server/*.java</include>
@@ -448,6 +450,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-auth</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-auth-parsing</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1247,6 +1254,7 @@
         <module>auth/util</module>
         <module>auth/client</module>
         <module>auth/jaspi</module>
+        <module>auth/parsing</module>
         <module>base</module>
         <module>credential/base</module>
         <module>credential/store</module>

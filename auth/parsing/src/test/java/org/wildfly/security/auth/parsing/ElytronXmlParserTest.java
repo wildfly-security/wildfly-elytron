@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.client;
+package org.wildfly.security.auth.parsing;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,6 +41,9 @@ import org.junit.Test;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.RuleNode;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;

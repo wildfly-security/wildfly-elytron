@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.auth.parsing;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.auth.client.ElytronMessages.xmlLog;
+import static org.wildfly.security.auth.parsing.ElytronMessages.xmlLog;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
@@ -74,6 +74,7 @@ import javax.xml.stream.Location;
 
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
+import org.kohsuke.MetaInfServices;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -86,9 +87,17 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.asn1.OidsUtil;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.CredentialStoreFactory;
+import org.wildfly.security.auth.client.LegacyConfiguration;
+import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.client.ModuleLoader;
+import org.wildfly.security.auth.client.RuleNode;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;
+import org.wildfly.security.auth.util.ElytronXmlParserService;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.KeyPairCredential;
@@ -127,12 +136,12 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509RevocationTrustManager;
 
 /**
- * A parser for the Elytron XML schema.
+ * A parser for the Elytron XML schema. A provider of the ElytronXmlParserService.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class ElytronXmlParser {
+@MetaInfServices(value = ElytronXmlParserService.class)
+public final class ElytronXmlParser implements ElytronXmlParserService {
 
     private static final Supplier<Provider[]> ELYTRON_PROVIDER_SUPPLIER = ProviderFactory.getElytronProviderSupplier(ElytronXmlParser.class.getClassLoader());
 
@@ -177,11 +186,15 @@ public final class ElytronXmlParser {
         KNOWN_NAMESPACES = Collections.unmodifiableMap(knownNamespaces);
     }
 
-    private ElytronXmlParser() {
+    public ElytronXmlParser() {
     }
 
     // authentication client document
 
+    @Override
+    public SecurityFactory<AuthenticationContext> parseDefaultAuthenticationClientConfiguration() throws ConfigXMLParseException {
+        return parseAuthenticationClientConfiguration();
+    }
     /**
      * Parse an Elytron authentication client configuration from a configuration discovered using the default wildfly-client-config discovery rules.
      *
@@ -1117,8 +1130,8 @@ public final class ElytronXmlParser {
     }
 
     static void parseAuthenticationConfigurationType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<AuthenticationConfiguration, ConfigXMLParseException>> authenticationConfigurationsMap,
-            final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap,
-            final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+           final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap,
+           final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final String name = requireSingleAttribute(reader, "name");
         if (authenticationConfigurationsMap.containsKey(name)) {
             throw xmlLog.xmlDuplicateAuthenticationConfigurationName(name, reader);
@@ -1682,7 +1695,7 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap,
-            final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+           final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
@@ -1889,8 +1902,8 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Version xmlVersion,
-            final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap,
-            final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+           final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap,
+           final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         final XMLLocation location = reader.getLocation();
         String keyStoreName = null;
@@ -2003,7 +2016,7 @@ public final class ElytronXmlParser {
     }
 
     private static char[] keyStoreCredentialToPassword(ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> keyStoreCredential,
-            Supplier<Provider[]> providers) throws GeneralSecurityException, ConfigXMLParseException {
+                                                       Supplier<Provider[]> providers) throws GeneralSecurityException, ConfigXMLParseException {
         final KeyStore.Entry entry = keyStoreCredential == null ? null : keyStoreCredential.get();
         if (entry instanceof PasswordEntry) {
             Password password = ((PasswordEntry) entry).getPassword();

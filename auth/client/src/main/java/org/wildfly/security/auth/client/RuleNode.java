@@ -21,12 +21,12 @@ package org.wildfly.security.auth.client;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class RuleNode<T> {
+public class RuleNode<T> {
     final RuleNode<T> next;
     final MatchRule rule;
     final T configuration;
 
-    RuleNode(final RuleNode<T> next, final MatchRule rule, final T configuration) {
+    public RuleNode(final RuleNode<T> next, final MatchRule rule, final T configuration) {
         this.next = next;
         this.rule = rule;
         this.configuration = configuration;
@@ -40,7 +40,7 @@ class RuleNode<T> {
         return rule;
     }
 
-    T getConfiguration() {
+    public T getConfiguration() {
         return configuration;
     }
 

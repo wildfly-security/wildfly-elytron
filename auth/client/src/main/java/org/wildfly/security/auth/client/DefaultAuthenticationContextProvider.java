@@ -21,6 +21,9 @@ package org.wildfly.security.auth.client;
 import static java.security.AccessController.doPrivileged;
 
 import java.security.PrivilegedAction;
+import java.util.ServiceLoader;
+
+import org.wildfly.security.auth.util.ElytronXmlParserService;
 
 /**
  * A lazily-initialized holder for the default authentication context.  If an error occurs setting up the default identity
@@ -33,9 +36,10 @@ class DefaultAuthenticationContextProvider {
     static final AuthenticationContext DEFAULT;
 
     static {
+        ServiceLoader<ElytronXmlParserService> services = ServiceLoader.load(ElytronXmlParserService.class);
         DEFAULT = doPrivileged((PrivilegedAction<AuthenticationContext>) () -> {
             try {
-                return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
+                return (AuthenticationContext) services.iterator().next().parseDefaultAuthenticationClientConfiguration().create();
             } catch (Throwable t) {
                 throw new InvalidAuthenticationConfigurationException(t);
             }

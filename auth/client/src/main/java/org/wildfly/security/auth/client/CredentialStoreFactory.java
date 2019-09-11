@@ -38,7 +38,7 @@ import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore, ConfigXMLParseException> {
+public final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore, ConfigXMLParseException> {
 
     private final String name;
     private final String type;
@@ -59,7 +59,7 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
      * @param supplier the possibly {@code null} credential source to unlock the store
      * @param providers the possibly {@code null} supplier of provider instances to search and use to create the store
      */
-    CredentialStoreFactory(String name, String type, Map<String, String> attributes, String providerName, XMLLocation location, ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier, Supplier<Provider[]> providers) {
+    public CredentialStoreFactory(String name, String type, Map<String, String> attributes, String providerName, XMLLocation location, ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier, Supplier<Provider[]> providers) {
         this.name = checkNotNullParam("name", name);
         this.attributes = checkNotNullParam("attributes", attributes);
         this.type = type == null ? KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE : type;

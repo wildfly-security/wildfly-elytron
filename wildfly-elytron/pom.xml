@@ -247,6 +247,10 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-auth-parsing</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-server</artifactId>
         </dependency>
         <dependency>
@@ -535,6 +539,11 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-auth</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-auth-parsing</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
@@ -847,6 +856,7 @@
                                     <include>org.wildfly.security.auth.callback</include>
                                     <include>org.wildfly.security.auth.client</include>
                                     <include>org.wildfly.security.auth.jaspi</include>
+                                    <include>org.wildfly.security.auth.parsing</include>
                                     <include>org.wildfly.security.auth.permission</include>
                                     <include>org.wildfly.security.auth.principal</include>
                                     <include>org.wildfly.security.auth.server</include>
@@ -893,6 +903,9 @@
                                     <exclude>org.wildfly.security.x500.ElytronMessages_$logger</exclude>
                                     <exclude>org.wildfly.security.x500.X500AttributePrincipalDecoder</exclude>
                                     <exclude>org.wildfly.security.auth.util.GSSCredentialSecurityFactory</exclude>
+                                    <exclude>org.wildfly.security.x500.cert.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.auth.client.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.auth.client.ElytronXmlParser</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>

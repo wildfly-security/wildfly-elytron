@@ -36,7 +36,7 @@ import org.wildfly.client.config.ConfigXMLParseException;
 
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2017 Red Hat inc.
  */
-class ModuleLoader {
+public class ModuleLoader {
 
     /**
      * Returns the class loader of the given module or throws a {@code ConfigXMLParseException} if the module can not be loaded.
@@ -46,7 +46,7 @@ class ModuleLoader {
      * @throws ConfigXMLParseException if the module can not be loaded
      *
      */
-    static ClassLoader getClassLoaderFromModule(@Param XMLStreamReader reader, String moduleName) throws ConfigXMLParseException {
+    public static ClassLoader getClassLoaderFromModule(@Param XMLStreamReader reader, String moduleName) throws ConfigXMLParseException {
         final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleName);
         try {
             return Module.getModuleFromCallerModuleLoader(identifier).getClassLoader();
