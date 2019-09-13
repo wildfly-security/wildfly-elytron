@@ -164,9 +164,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private static final String KEYSTORETYPE = "keyStoreType";
     private static final String LOCATION = "location";
     private static final String MODIFIABLE = "modifiable";
+    private static final String PROVIDERS_FOR_PASSWORDS = "providersForPasswords";
 
     private static final List<String> validAttribtues = Arrays.asList(CREATE, CRYPTOALG, EXTERNAL, EXTERNALPATH, KEYALIAS,
-            KEYSTORETYPE, LOCATION, MODIFIABLE);
+            KEYSTORETYPE, LOCATION, MODIFIABLE, PROVIDERS_FOR_PASSWORDS);
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final HashMap<String, TopEntry> cache = new HashMap<>();
@@ -181,6 +182,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private boolean useExternalStorage = false;
     private ExternalStorage externalStorage;
     private String cryptographicAlgorithm;
+    private boolean useInitializedProvidersForPasswords = false;
 
     public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, final Provider[] providers) throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
@@ -210,6 +212,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             }
             encryptionKeyAlias = attributes.getOrDefault(KEYALIAS, "cs_key");
             cryptographicAlgorithm = attributes.get(CRYPTOALG);
+            useInitializedProvidersForPasswords = Boolean.parseBoolean(attributes.getOrDefault(PROVIDERS_FOR_PASSWORDS, "false"));
             load(keyStoreType);
             if ( create  && !useExternalStorage && location != null && !Files.exists(location) ){
                 //Only in this case, flush the data to the file allowing the credential store creation independently of modifiable flag
@@ -273,7 +276,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final Password password = credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword);
                 final String algorithm = password.getAlgorithm();
                 final DEREncoder encoder = new DEREncoder();
-                final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                PasswordFactory passwordFactory = null;
+                if (useInitializedProvidersForPasswords && providers != null) {
+                    try {
+                        passwordFactory = PasswordFactory.getInstance(algorithm, () -> providers);
+                    } catch (NoSuchAlgorithmException e) {
+                        // algorithm has no available implementation in providers, ignore
+                    }
+                }
+                if (passwordFactory == null) passwordFactory = PasswordFactory.getInstance(algorithm);
                 switch (algorithm) {
                     case BCryptPassword.ALGORITHM_BCRYPT:
                     case BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES:
@@ -666,7 +677,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         }
                     }
                 }
-                PasswordFactory passwordFactory = PasswordFactory.getInstance(matchedAlgorithm);
+                PasswordFactory passwordFactory = null;
+                if (useInitializedProvidersForPasswords && providers != null) {
+                    try {
+                        passwordFactory = PasswordFactory.getInstance(matchedAlgorithm, () -> providers);
+                    } catch (NoSuchAlgorithmException e) {
+                        // algorithm has no available implementation in providers, ignore
+                    }
+                }
+                if (passwordFactory == null) passwordFactory = PasswordFactory.getInstance(matchedAlgorithm);
                 final Password password = passwordFactory.generatePassword(passwordSpec);
                 return credentialType.cast(new PasswordCredential(password));
             } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
