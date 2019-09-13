@@ -161,9 +161,21 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     @SuppressWarnings("deprecation")
     static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
-            return JDKSpecific.getCallerClass(n + callerOffset);
+            /*
+             * The callerOffset identifies how many calls on the stack by calling
+             * Reflection.getCallerClass.
+             *
+             * An additional 1 is added to take into account the call to.
+             *   WildFlySecurityManager.getCallerClass(int);
+             */
+            return JDKSpecific.getCallerClass(n + callerOffset + 1);
         } else {
-            return getCallStack()[n + callerOffset];
+            /*
+             * Fixed offset of 2 to take into account the following calls on the call stack: -
+             *   WildFlySecurityManager.getCallStack();
+             *   WildFlySecurityManager.getCallerClass(int);
+             */
+            return getCallStack()[n + 2];
         }
     }
 
@@ -814,7 +826,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return action.run();
         } finally {
@@ -844,7 +856,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return action.run();
         } catch (Exception e) {
@@ -872,7 +884,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return AccessController.doPrivileged(action, context);
         } finally {
@@ -899,7 +911,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return AccessController.doPrivileged(action, context);
         } finally {
@@ -926,7 +938,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return action.run(parameter);
         } finally {
@@ -958,7 +970,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return action.run(parameter);
         } catch (Exception e) {
@@ -988,7 +1000,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return doPrivilegedWithParameter(parameter, action, context);
         } finally {
@@ -1017,7 +1029,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), doUncheckedPermission);
+                checkPDPermission(getCallerClass(1), doUncheckedPermission);
             }
             return doPrivilegedWithParameter(parameter, action, context);
         } finally {
@@ -1132,13 +1144,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPropertyReadPermission(getCallerClass(2), name);
+                checkPropertyReadPermission(getCallerClass(1), name);
                 return getProperty(name, def);
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPropertyReadPermission(getCallerClass(2), name);
+            checkPropertyReadPermission(getCallerClass(1), name);
             return doPrivileged(new ReadPropertyAction(name, def));
         }
     }
@@ -1166,13 +1178,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkEnvPropertyReadPermission(getCallerClass(2), name);
+                checkEnvPropertyReadPermission(getCallerClass(1), name);
                 return def(getenv(name), def);
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkEnvPropertyReadPermission(getCallerClass(2), name);
+            checkEnvPropertyReadPermission(getCallerClass(1), name);
             return doPrivileged(new ReadEnvironmentPropertyAction(name, def));
         }
     }
@@ -1196,13 +1208,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPropertyWritePermission(getCallerClass(2), name);
+                checkPropertyWritePermission(getCallerClass(1), name);
                 return setProperty(name, value);
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPropertyWritePermission(getCallerClass(2), name);
+            checkPropertyWritePermission(getCallerClass(1), name);
             return doPrivileged(new WritePropertyAction(name, value));
         }
     }
@@ -1225,13 +1237,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPropertyWritePermission(getCallerClass(2), name);
+                checkPropertyWritePermission(getCallerClass(1), name);
                 return clearProperty(name);
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPropertyWritePermission(getCallerClass(2), name);
+            checkPropertyWritePermission(getCallerClass(1), name);
             return doPrivileged(new ClearPropertyAction(name));
         }
     }
@@ -1254,13 +1266,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPDPermission(getCallerClass(2), GET_CLASS_LOADER_PERMISSION);
+                checkPDPermission(getCallerClass(1), GET_CLASS_LOADER_PERMISSION);
                 return currentThread().getContextClassLoader();
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPDPermission(getCallerClass(2), GET_CLASS_LOADER_PERMISSION);
+            checkPDPermission(getCallerClass(1), GET_CLASS_LOADER_PERMISSION);
             return doPrivileged(GetContextClassLoaderAction.getInstance());
         }
     }
@@ -1290,7 +1302,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             ctx.checking = false;
             // separate try/finally to guarantee proper exception flow
             try {
-                checkPDPermission(getCallerClass(2), SET_CLASS_LOADER_PERMISSION);
+                checkPDPermission(getCallerClass(1), SET_CLASS_LOADER_PERMISSION);
                 try {
                     return thread.getContextClassLoader();
                 } finally {
@@ -1300,7 +1312,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
                 ctx.checking = true;
             }
         } else {
-            checkPDPermission(getCallerClass(2), SET_CLASS_LOADER_PERMISSION);
+            checkPDPermission(getCallerClass(1), SET_CLASS_LOADER_PERMISSION);
             return doPrivileged(new SetContextClassLoaderAction(newClassLoader));
         }
     }
@@ -1330,7 +1342,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             ctx.checking = false;
             // separate try/finally to guarantee proper exception flow
             try {
-                final Class<?> caller = getCallerClass(2);
+                final Class<?> caller = getCallerClass(1);
                 checkPDPermission(caller, SET_CLASS_LOADER_PERMISSION);
                 checkPDPermission(caller, GET_CLASS_LOADER_PERMISSION);
                 try {
@@ -1342,7 +1354,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
                 ctx.checking = true;
             }
         } else {
-            final Class<?> caller = getCallerClass(2);
+            final Class<?> caller = getCallerClass(1);
             checkPDPermission(caller, SET_CLASS_LOADER_PERMISSION);
             checkPDPermission(caller, GET_CLASS_LOADER_PERMISSION);
             return doPrivileged(new SetContextClassLoaderAction(clazz.getClassLoader()));
@@ -1367,13 +1379,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPDPermission(getCallerClass(2), PROPERTIES_PERMISSION);
+                checkPDPermission(getCallerClass(1), PROPERTIES_PERMISSION);
                 return getProperties();
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPDPermission(getCallerClass(2), PROPERTIES_PERMISSION);
+            checkPDPermission(getCallerClass(1), PROPERTIES_PERMISSION);
             return doPrivileged(GetSystemPropertiesAction.getInstance());
         }
     }
@@ -1396,13 +1408,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPDPermission(getCallerClass(2), ENVIRONMENT_PERMISSION);
+                checkPDPermission(getCallerClass(1), ENVIRONMENT_PERMISSION);
                 return getenv();
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPDPermission(getCallerClass(2), ENVIRONMENT_PERMISSION);
+            checkPDPermission(getCallerClass(1), ENVIRONMENT_PERMISSION);
             return doPrivileged(GetEnvironmentAction.getInstance());
         }
     }
@@ -1426,13 +1438,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
             ctx.checking = false;
             try {
-                checkPDPermission(getCallerClass(2), GET_CLASS_LOADER_PERMISSION);
+                checkPDPermission(getCallerClass(1), GET_CLASS_LOADER_PERMISSION);
                 return clazz.getClassLoader();
             } finally {
                 ctx.checking = true;
             }
         } else {
-            checkPDPermission(getCallerClass(2), GET_CLASS_LOADER_PERMISSION);
+            checkPDPermission(getCallerClass(1), GET_CLASS_LOADER_PERMISSION);
             return doPrivileged(new GetClassLoaderAction(clazz));
         }
     }
@@ -1490,7 +1502,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         final Context ctx = CTX.get();
         ctx.action1 = (ParametricPrivilegedAction<Object, Object>) action;
         ctx.parameter = parameter;
-        return (T) doPrivileged(PA_TRAMPOLINE1, ACC_CACHE.get(getCallerClass(2)));
+        return (T) doPrivileged(PA_TRAMPOLINE1, ACC_CACHE.get(getCallerClass(1)));
     }
 
     /**
@@ -1507,7 +1519,7 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         final Context ctx = CTX.get();
         ctx.action2 = (ParametricPrivilegedExceptionAction<Object, Object>) action;
         ctx.parameter = parameter;
-        return (T) doPrivileged(PA_TRAMPOLINE2, ACC_CACHE.get(getCallerClass(2)));
+        return (T) doPrivileged(PA_TRAMPOLINE2, ACC_CACHE.get(getCallerClass(1)));
     }
 
     /**
@@ -1530,10 +1542,10 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             ProtectionDomain[] protectionDomainStack = getProtectionDomainStack(accessControlContext);
             if (protectionDomainStack == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(2));
+                combined = ACC_CACHE.get(getCallerClass(1));
             } else {
                 final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(2).getProtectionDomain();
+                finalDomains[protectionDomainStack.length] = getCallerClass(1).getProtectionDomain();
                 combined = new AccessControlContext(finalDomains);
             }
         } finally {
@@ -1562,10 +1574,10 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
         try {
             ProtectionDomain[] protectionDomainStack = getProtectionDomainStack(accessControlContext);
             if (protectionDomainStack == null || protectionDomainStack.length == 0) {
-                combined = ACC_CACHE.get(getCallerClass(2));
+                combined = ACC_CACHE.get(getCallerClass(1));
             } else {
                 final ProtectionDomain[] finalDomains = Arrays.copyOf(protectionDomainStack, protectionDomainStack.length + 1);
-                finalDomains[protectionDomainStack.length] = getCallerClass(2).getProtectionDomain();
+                finalDomains[protectionDomainStack.length] = getCallerClass(1).getProtectionDomain();
                 combined = new AccessControlContext(finalDomains);
             }
         } finally {
