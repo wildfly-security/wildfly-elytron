@@ -75,6 +75,7 @@ class CredentialStoreCommand extends Command {
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
     public static final String DEBUG_PARAM = "debug";
     public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+    public static final String PROVIDERS_FOR_PASSWORDS_PARAM = "providers-for-passwords";
     private static final List<String> filebasedKeystoreTypes = Collections.unmodifiableList(Arrays.asList("JKS", "JCEKS", "PKCS12"));
 
 
@@ -127,6 +128,7 @@ class CredentialStoreCommand extends Command {
         Option v = new Option("v", ALIASES_PARAM, false, ElytronToolMessages.msg.cmdLineAliasesDesc());
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
+        Option w = new Option("w", PROVIDERS_FOR_PASSWORDS_PARAM, false, ElytronToolMessages.msg.cmdLineProvidersForPasswords());
         og.addOption(a);
         og.addOption(e);
         og.addOption(r);
@@ -134,6 +136,7 @@ class CredentialStoreCommand extends Command {
         options.addOptionGroup(og);
         options.addOption(h);
         options.addOption(d);
+        options.addOption(w);
     }
 
     @Override
@@ -214,6 +217,7 @@ class CredentialStoreCommand extends Command {
                             IdentityCredentials.NONE.withCredential(
                                     new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordCredential))));
         }
+        implProps.put("providersForPasswords", Boolean.valueOf(cmdLine.hasOption(PROVIDERS_FOR_PASSWORDS_PARAM)).toString());
         credentialStore.initialize(implProps,
                 credentialSourceProtectionParameter,
                 getProvidersSupplier(otherProviders).get());
