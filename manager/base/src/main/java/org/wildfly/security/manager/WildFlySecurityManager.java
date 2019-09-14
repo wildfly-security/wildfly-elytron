@@ -104,7 +104,6 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     private static final long pdStackOffset;
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
-    private static final int callerOffset;
 
     static {
         final Field pdField;
@@ -131,16 +130,14 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
             }
         });
         boolean result = false;
-        int offset = 0;
         try {
-            //noinspection deprecation
-            result = JDKSpecific.getCallerClass(1) == WildFlySecurityManager.class || JDKSpecific.getCallerClass(2) == WildFlySecurityManager.class;
-            //noinspection deprecation
-            offset = JDKSpecific.getCallerClass(1) == JDKSpecific.lookUpClass() ? 2 : 1;
-
+            /*
+             * If JDKSpecific.getCallerClass(0) does not return this class assume a fault and fall back to using
+             * SecurityManager.getClassContext().
+             */
+            result = JDKSpecific.getCallerClass(0) == WildFlySecurityManager.class;
         } catch (Throwable ignored) {}
         hasGetCallerClass = result;
-        callerOffset = offset;
         LOG_ONLY = Boolean.parseBoolean(doPrivileged(new ReadPropertyAction("org.wildfly.security.manager.log-only", "false")));
     }
 
@@ -162,13 +159,13 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
     static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
             /*
-             * The callerOffset identifies how many calls on the stack by calling
-             * Reflection.getCallerClass.
-             *
              * An additional 1 is added to take into account the call to.
              *   WildFlySecurityManager.getCallerClass(int);
+             *
+             * The individual JDKSpecific.getCallerClass(int) implementations take care
+             * of any offset they require.
              */
-            return JDKSpecific.getCallerClass(n + callerOffset + 1);
+            return JDKSpecific.getCallerClass(n + 1);
         } else {
             /*
              * Fixed offset of 2 to take into account the following calls on the call stack: -
