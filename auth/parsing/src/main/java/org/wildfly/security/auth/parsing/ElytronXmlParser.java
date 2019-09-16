@@ -108,7 +108,7 @@ import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.source.impl.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.impl.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource;
-import org.wildfly.security.credential.source.OAuth2CredentialSource;
+import org.wildfly.security.credential.source.oauth2.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;

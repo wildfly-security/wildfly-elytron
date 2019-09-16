@@ -915,6 +915,8 @@
                                     <exclude>org.wildfly.security.x500.cert.ElytronMessages_$logger</exclude>
                                     <exclude>org.wildfly.security.auth.client.ElytronMessages_$logger</exclude>
                                     <exclude>org.wildfly.security.auth.client.ElytronXmlParser</exclude>
+                                    <exclude>org.wildfly.security.credential.source.ElytronMessages2_</exclude>
+                                    <exclude>org.wildfly.security.credential.source.OAuth2CredentialSource</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>

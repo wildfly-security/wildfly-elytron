@@ -17,23 +17,12 @@
 05053            wildfly-elytron-client
 05125            wildfly-elytron-client
 09001            wildfly-elytron-client
-01001 - 01002    wildfly-elytron-client
+01001            wildfly-elytron-client
 01028 - 01029    wildfly-elytron-client
 01035 - 01036    wildfly-elytron-client
-01041            wildfly-elytron-client
 01064            wildfly-elytron-client
 01091            wildfly-elytron-client
-01129 - 01144    wildfly-elytron-client
-01159            wildfly-elytron-client
-01162 - 01164    wildfly-elytron-client
-01166            wildfly-elytron-client
-02034            wildfly-elytron-client
-02010            wildfly-elytron-client
-04005            wildfly-elytron-client
-04028            wildfly-elytron-client
-09501 - 09503    wildfly-elytron-client
-09527            wildfly-elytron-client
-09529            wildfly-elytron-client
+01139            wildfly-elytron-client
 00002 - 00004    wildfly-elytron-credential
 01037            wildfly-elytron-credential
 01053 - 01063    wildfly-elytron-credential
@@ -107,7 +96,7 @@
 
 # New Ranges Should Be Allocated In Blocks of 1,000
 12000 - 12999    wildfly-elytron-credential-store
-14000 - 14999    wildfly-elytron-client
+14000 - 14999    wildfly-elytron-parsing
 15000 - 15999    wildfly-elytron-ssl
 16000 - 16999
 17000 - 17999

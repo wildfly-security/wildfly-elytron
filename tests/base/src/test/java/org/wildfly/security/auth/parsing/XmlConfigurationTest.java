@@ -803,7 +803,7 @@ public class XmlConfigurationTest {
             final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(openFile(xmlBytes, "authentication-client.xml"));
             factory.create();
         } catch (XMLStreamException e) {
-            assertTrue("\"" + wrongAlias + "\" must be mentioned in the exception message", e.getMessage().contains("ELY01159: Key store entry for alias \"" + wrongAlias + "\" is missing."));
+            assertTrue("\"" + wrongAlias + "\" must be mentioned in the exception message", e.getMessage().contains("ELY14012: Key store entry for alias \"" + wrongAlias + "\" is missing."));
             return;
         }
         fail("Expected exception");

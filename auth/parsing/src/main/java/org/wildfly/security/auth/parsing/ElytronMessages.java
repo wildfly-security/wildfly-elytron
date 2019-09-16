@@ -34,6 +34,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
@@ -45,96 +47,99 @@ import org.wildfly.client.config.XMLLocation;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+        @ValidIdRange(min = 14000, max = 14999)
+
+})
 interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     ElytronMessages xmlLog = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.xml");
 
-
-    @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
+    @Message(id = 14000, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
-    @Message(id = 1041, value = "Could not obtain credential")
+    @Message(id = 14001, value = "Could not obtain credential")
     RuntimeException couldNotObtainCredential();
 
-    @Message(id = 1129, value = "Unknown SSL context \"%s\" specified")
+    @Message(id = 14002, value = "Unknown SSL context \"%s\" specified")
     ConfigXMLParseException xmlUnknownSslContextSpecified(@Param Location location, String name);
 
-    @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
+    @Message(id = 14003, value = "Duplicate SSL context name \"%s\"")
     ConfigXMLParseException xmlDuplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1132, value = "Unknown authentication configuration \"%s\" specified")
+    @Message(id = 14004, value = "Unknown authentication configuration \"%s\" specified")
     ConfigXMLParseException xmlUnknownAuthenticationConfigurationSpecified(@Param Location location, String name);
 
-    @Message(id = 1133, value = "Failed to create credential")
+    @Message(id = 14005, value = "Failed to create credential")
     ConfigXMLParseException xmlFailedToCreateCredential(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1134, value = "Duplicate authentication configuration name \"%s\"")
+    @Message(id = 14006, value = "Duplicate authentication configuration name \"%s\"")
     ConfigXMLParseException xmlDuplicateAuthenticationConfigurationName(String name,
             @Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1135, value = "Failed to load keystore data")
+    @Message(id = 14007, value = "Failed to load keystore data")
     ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1136, value = "Failed to create keystore")
+    @Message(id = 14008, value = "Failed to create keystore")
     ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
 
-    @Message(id = 1140, value = "Wrong PEM content type; expected %s, actually was %s")
+    @Message(id = 14009, value = "Wrong PEM content type; expected %s, actually was %s")
     ConfigXMLParseException xmlWrongPemType(@Param ConfigurationXMLStreamReader reader, Class<?> expected,
             Class<?> actual);
 
-    @Message(id = 1141, value = "No PEM content found")
+    @Message(id = 14010, value = "No PEM content found")
     ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1143, value = "Invalid URL [%s]")
+    @Message(id = 14011, value = "Invalid URL [%s]")
     ConfigXMLParseException xmlInvalidUrl(String url);
 
-    @Message(id = 1159, value = "Key store entry for alias \"%s\" is missing.")
+    @Message(id = 14012, value = "Key store entry for alias \"%s\" is missing.")
     ConfigXMLParseException keyStoreEntryMissing(@Param Location location, String alias);
 
-    @Message(id = 1162, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
+    @Message(id = 14013, value = "Invalid GSS mechanism name \"%s\" - unable to convert to mechanism OID")
     ConfigXMLParseException xmlInvalidGssMechanismName(@Param XMLStreamReader reader, String mechanismName);
 
-    @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
+    @Message(id = 14014, value = "Mechanism OID conversion from string \"%s\" failed")
     ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid,
             @Cause Throwable cause);
 
-    @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
+    @Message(id = 14015, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
     ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName,
             String serviceType, String algorithm);
 
     @LogMessage(level = WARN)
-    @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
+    @Message(id = 14016, value = "%2$s: Element \"%1$s\" is deprecated")
     void xmlDeprecatedElement(String name, XMLLocation location);
 
-    @Message(id = 2034, value = "Alias must be specified if more than one entry exist in keystore")
+    @Message(id = 14017, value = "Alias must be specified if more than one entry exist in keystore")
     ConfigXMLParseException missingAlias(@Param Location location);
 
-    @Message(id = 2010, value = "Unknown key store specified")
+    @Message(id = 14018, value = "Unknown key store specified")
     ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
 
-    @Message(id = 4005, value = "No default trust manager available")
+    @Message(id = 14019, value = "No default trust manager available")
     NoSuchAlgorithmException noDefaultTrustManager();
 
-    @Message(id = 4028, value = "No default key manager available")
+    @Message(id = 14020, value = "No default key manager available")
     NoSuchAlgorithmException noDefaultKeyManager();
 
-    @Message(id = 9501, value = "Duplicate attribute (\"%s\") found in configuration.")
+    @Message(id = 14021, value = "Duplicate attribute (\"%s\") found in configuration.")
     ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
 
-    @Message(id = 9502, value = "Duplicate credential store name found in configuration \"%s\"")
+    @Message(id = 14022, value = "Duplicate credential store name found in configuration \"%s\"")
     ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
 
-    @Message(id = 9503, value = "Credential store name \"%s\" not defined")
+    @Message(id = 14023, value = "Credential store name \"%s\" not defined")
     ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
 
-    @Message(id = 9527, value = "Invalid credential store reference")
+    @Message(id = 14024, value = "Invalid credential store reference")
     ConfigXMLParseException xmlInvalidCredentialStoreRef(@Param Location location);
 
-    @Message(id = 9529, value = "Unsupported algorithm \"%s\" for %s type")
+    @Message(id = 14025, value = "Unsupported algorithm \"%s\" for %s type")
     ConfigXMLParseException xmlUnsupportedAlgorithmForType(@Param Location location, String algorithm, String type);
 
-    @Message(id = 14000, value = "At least one of the '%s' and '%s' cipher-suite attributes must be provided")
+    @Message(id = 14026, value = "At least one of the '%s' and '%s' cipher-suite attributes must be provided")
     ConfigXMLParseException atLeastOneCipherSuiteAttributeMustBeProvided(String attribute1, String attribute2);
 
 }

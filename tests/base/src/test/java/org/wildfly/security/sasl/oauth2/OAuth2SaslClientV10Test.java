@@ -59,7 +59,7 @@ import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.credential.source.OAuth2CredentialSource;
+import org.wildfly.security.credential.source.oauth2.OAuth2CredentialSource;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
