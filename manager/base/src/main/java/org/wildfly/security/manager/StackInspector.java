@@ -61,7 +61,7 @@ public final class StackInspector {
      * @return the caller class
      */
     public Class<?> getCallerClass(int skipFrames) {
-        return WildFlySecurityManager.getCallerClass(max(0, skipFrames) + 2);
+        return WildFlySecurityManager.getCallerClass(max(0, skipFrames) + 1);
     }
 
     /**

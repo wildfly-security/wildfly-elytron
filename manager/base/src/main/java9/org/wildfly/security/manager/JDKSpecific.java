@@ -18,6 +18,7 @@
 package org.wildfly.security.manager;
 
 import java.lang.StackWalker;
+import java.lang.StackWalker.Option;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,14 +27,18 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jucook@redhat.com">Justin Cook</a>
  */
 final class JDKSpecific {
+
+    /*
+     * Using StackWalker the OFFSET is the minimum number of StackFrames, the first will always be
+     * JDKSpecific,getCallerClass(int), the second will always be the caller of this class.
+     */
+    private static final int OFFSET = 2;
+
     public static Class<?> getCallerClass(int n){
-        List<StackWalker.StackFrame> frames = StackWalker.getInstance().walk(s ->
-                s.limit(n).collect(Collectors.toList())
+        List<StackWalker.StackFrame> frames = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).walk(s ->
+                s.limit(n + OFFSET).collect(Collectors.toList())
         );
-        return frames.get(frames.size() - 1).getClass();
+        return frames.get(frames.size() - 1).getDeclaringClass();
     }
 
-    public static Class<?> lookUpClass(){
-        return StackWalker.StackFrame.class;
-    }
 }

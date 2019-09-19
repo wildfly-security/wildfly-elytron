@@ -24,11 +24,31 @@ import sun.reflect.Reflection;
  * @author <a href="mailto:jucook@redhat.com">Justin Cook</a>
  */
 final class JDKSpecific {
-    public static Class<?> getCallerClass(int n){
-        return Reflection.getCallerClass(n);
+
+    private static boolean active;
+    private static int offset;
+
+    static {
+
+        boolean active = false;
+        int offset = 0;
+        try {
+            // JDK-8014925 - An additional Reflection call may be on the call stack so check the offset needed.
+            active = Reflection.getCallerClass(1) == WildFlySecurityManager.class || Reflection.getCallerClass(2) == WildFlySecurityManager.class;
+            offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
+        } catch (Throwable ignored) {}
+
+        JDKSpecific.active = active;
+        // JDKSpecific.getCallerClass will also add 1 to the stack.
+        JDKSpecific.offset = offset + 1;
     }
 
-    public static Class<?> lookUpClass(){
-        return Reflection.class;
+    public static Class<?> getCallerClass(int n) {
+        if (active) {
+            return Reflection.getCallerClass(n + offset);
+        } else {
+            throw new IllegalStateException("sun.reflect.Reflect.getCallerClass(int) not available.");
+        }
     }
+
 }
