@@ -32,7 +32,7 @@
 
     <artifactId>wildfly-elytron-realm</artifactId>
 
-    <name>WildFly Elytron - Realm JDBC</name>
+    <name>WildFly Elytron - Realm</name>
     <description>WildFly Security Realm Implementation</description>
 
     <dependencies>
