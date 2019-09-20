@@ -533,7 +533,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.10.1.Final</version> <!-- When updating to next release, clear all exclusions. -->
+                                    <version>1.10.2.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
@@ -915,7 +915,6 @@
                                     <include>org.wildfly.security.x500.cert</include>
                                 </includes>
                                 <excludes>
-                                    <exclude>org.wildfly.security.x500.cert.ElytronMessages_$logger</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
