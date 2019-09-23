@@ -17,8 +17,10 @@
  */
 package org.wildfly.security.manager;
 
-import java.lang.StackWalker;
+import static java.security.AccessController.doPrivileged;
+
 import java.lang.StackWalker.Option;
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,10 +37,19 @@ final class JDKSpecific {
     private static final int OFFSET = 2;
 
     public static Class<?> getCallerClass(int n){
-        List<StackWalker.StackFrame> frames = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).walk(s ->
+        // Although we know WildFlySecurityManager is making the call it may not be the actual SecurityManager
+        // so we need to use doPrivileged instead of a doUnchecked unless we can be sure checking has been switched off.
+        final StackWalker stackWalker = WildFlySecurityManager.isChecking() ?
+                doPrivileged((PrivilegedAction<StackWalker>)JDKSpecific::getStackWalker) : getStackWalker();
+
+        List<StackWalker.StackFrame> frames = stackWalker.walk(s ->
                 s.limit(n + OFFSET).collect(Collectors.toList())
         );
         return frames.get(frames.size() - 1).getDeclaringClass();
+    }
+
+    private static StackWalker getStackWalker() {
+        return StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
     }
 
 }
