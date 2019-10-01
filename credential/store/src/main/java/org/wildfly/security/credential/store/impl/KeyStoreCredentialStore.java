@@ -192,21 +192,31 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             this.protectionParameter = protectionParameter;
             modifiable = Boolean.parseBoolean(attributes.getOrDefault(MODIFIABLE, "true"));
             create = Boolean.parseBoolean(attributes.getOrDefault(CREATE, "false"));
-            final String locationName = attributes.get(LOCATION);
-            location = locationName == null ? null : Paths.get(locationName);
             this.providers = providers;
             String keyStoreType = attributes.getOrDefault(KEYSTORETYPE, KeyStore.getDefaultType());
-            useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault(EXTERNAL, "false"));
-            if (useExternalStorage) {
-                final String externalPathName = attributes.get(EXTERNALPATH);
-                if (externalPathName == null) {
-                    throw log.externalPathMissing(keyStoreType);
-                } else {
-                    externalPath = Paths.get(externalPathName);
-                    if (externalPath.equals(location)) {
-                        throw log.locationAndExternalPathAreIdentical(location.toString(), externalPath.toString());
-                    }
-                }
+            final String locationName = attributes.get(LOCATION);
+            final String externalPathName = attributes.get(EXTERNALPATH);
+            try {
+               location = locationName == null ? null : Paths.get(locationName);
+               if (location != null && Files.isSymbolicLink(location)) {
+                  location = location.toRealPath();
+               }
+               useExternalStorage = Boolean.parseBoolean(attributes.getOrDefault(EXTERNAL, "false"));
+               if (useExternalStorage) {
+                   if (externalPathName == null) {
+                       throw log.externalPathMissing(keyStoreType);
+                   } else {
+                       externalPath = Paths.get(externalPathName);
+                       if (Files.isSymbolicLink(externalPath)) {
+                          externalPath = externalPath.toRealPath();
+                       }
+                       if (externalPath.equals(location)) {
+                           throw log.locationAndExternalPathAreIdentical(location.toString(), externalPath.toString());
+                       }
+                   }
+               }
+            } catch (IOException e) {
+               throw log.credentialStoreFileDoesNotExist(useExternalStorage ? externalPathName : locationName);
             }
             encryptionKeyAlias = attributes.getOrDefault(KEYALIAS, "cs_key");
             cryptographicAlgorithm = attributes.get(CRYPTOALG);

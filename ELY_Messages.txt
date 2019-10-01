@@ -90,7 +90,7 @@
 
 
 # New Ranges Should Be Allocated In Blocks of 1,000
-12000 - 12999
+12000 - 12999    wildfly-elytron-credential-store
 14000 - 14999
 15000 - 15999
 16000 - 16999
