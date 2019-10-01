@@ -1893,7 +1893,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9528, value = "The externalPath attribute for key store type %s is missing.")
     CredentialStoreException externalPathMissing(String keyStoreType);
 
-    @Message(id = 9529, value = "The credential store file %s does not exist or cannot be accessed.")
+    @Message(id = 12000, value = "The credential store file %s does not exist or cannot be accessed.")
     CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
 
 
