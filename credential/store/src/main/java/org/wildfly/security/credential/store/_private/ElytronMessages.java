@@ -48,7 +48,8 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 @ValidIdRanges({
     @ValidIdRange(min = 2009, max = 2009),
     @ValidIdRange(min = 9500, max = 9528),
-    @ValidIdRange(min = 11006, max = 11006)
+    @ValidIdRange(min = 11006, max = 11006),
+    @ValidIdRange(min = 12000, max = 12999)
 })
 public interface ElytronMessages extends BasicLogger {
 
@@ -135,4 +136,8 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
+
+    @Message(id = 12000, value = "The credential store file %s does not exist or cannot be accessed.")
+    CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
+
 }

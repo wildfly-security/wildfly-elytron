@@ -22,6 +22,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
@@ -38,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -47,6 +48,7 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStore.CredentialSourceProtectionParameter;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
@@ -141,5 +143,38 @@ public class KeyStoreCredentialStoreTest {
                 ClearPasswordSpec.class);
 
         assertArrayEquals(secretPassword, retrievedPassword.getEncodedPassword());
+    }
+
+    @Test
+    public void symbolicLinkLocation() throws Exception {
+        final KeyStoreCredentialStore originalStore = new KeyStoreCredentialStore();
+
+        final File keyStoreFile = new File(tmp.getRoot(), "keystore");
+
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("location", keyStoreFile.getAbsolutePath());
+        attributes.put("create", Boolean.TRUE.toString());
+        attributes.put("keyStoreType", "JCEKS");
+
+        originalStore.initialize(attributes, storeProtection, null);
+        originalStore.store("key", storedCredential, null);
+        originalStore.flush();
+
+        assertTrue(keyStoreFile.exists());
+
+        final KeyStoreCredentialStore retrievalStore = new KeyStoreCredentialStore();
+
+        final File symbolicLinkFile = new File(tmp.getRoot(), "link");
+        Files.createSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath()), Paths.get(keyStoreFile.getAbsolutePath()));
+
+        final Map<String, String> attributesRetrieval = new HashMap<>();
+        attributesRetrieval.put("location", symbolicLinkFile.getAbsolutePath());
+        attributesRetrieval.put("keyStoreType", "JCEKS");
+
+        retrievalStore.initialize(attributesRetrieval, storeProtection, null);
+        retrievalStore.store("key2", storedCredential, null);
+        retrievalStore.flush();
+
+        assertTrue(Files.isSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath())));
     }
 }
