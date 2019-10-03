@@ -281,6 +281,7 @@
                             ${project.basedir}/http/util/src/main/java/;
                             ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
+                            ${project.basedir}/jwt/src/main/java/;
                             ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
@@ -575,6 +576,12 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jaspi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jwt</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1263,6 +1270,7 @@
         <module>http/util</module>
         <module>jacc</module>
         <module>json-util</module>
+        <module>jwt</module>
         <module>keystore</module>
         <module>manager/base</module>
         <module>manager/action</module>
