@@ -35,7 +35,16 @@
     <description>WildFly Security JWT / SmallRye Integration</description>
 
     <dependencies>
-        
+        <dependency>
+            <artifactId>smallrye-jwt</artifactId>
+            <groupId>io.smallrye</groupId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.jwt</groupId>
+            <artifactId>microprofile-jwt-auth-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
