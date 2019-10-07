@@ -57,7 +57,7 @@
     <properties>
         <jdk.min.version>11</jdk.min.version>
         <version.commons-cli>1.4</version.commons-cli>
-        <version.org.apache.commons>3.8</version.org.apache.commons>
+        <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
         <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
@@ -72,7 +72,7 @@
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
         <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
+        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.1.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.jboss.threads>2.3.3.Final</version.org.jboss.threads>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.12</version.junit.junit>
@@ -84,7 +84,7 @@
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
-        <version.org.wildfly.common>1.5.1.Final</version.org.wildfly.common>
+        <version.org.wildfly.common>1.5.2.Final</version.org.wildfly.common>
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
