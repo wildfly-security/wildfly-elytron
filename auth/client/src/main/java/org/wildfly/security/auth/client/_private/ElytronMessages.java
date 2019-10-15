@@ -192,4 +192,13 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14001, value = "Wrong Key content type; expected OpenSSH private key")
     ConfigXMLParseException xmlInvalidOpenSSHKey(@Param ConfigurationXMLStreamReader reader);
+
+    @Message(id = 14002, value = "Unable to obtain SSLContext")
+    ConfigXMLParseException unableToObtainSslContext();
+
+    @Message(id = 14003, value = "Name callback handling was unsuccessful")
+    ConfigXMLParseException nameCallbackHandlingWasUnsuccessful();
+
+    @Message(id = 14004, value = "Password callback handling was unsuccessful")
+    ConfigXMLParseException passwordCallbackHandlingWasUnsuccessful();
 }
