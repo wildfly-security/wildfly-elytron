@@ -1,5 +1,4 @@
 org.wildfly.security
-org.wildfly.security._private
 org.wildfly.security.asn1
 org.wildfly.security.audit
 org.wildfly.security.auth
@@ -88,6 +87,7 @@ org.wildfly.security.util
 org.wildfly.security.x500
 org.wildfly.security.x500._private
 org.wildfly.security.x500.cert
+org.wildfly.security.x500.cert._private
 org.wildfly.security.x500.cert.acme
 org.wildfly.security.x500.cert.util
 org.wildfly.security.x500.principal
