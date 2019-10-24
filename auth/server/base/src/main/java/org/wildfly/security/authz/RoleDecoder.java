@@ -18,6 +18,8 @@
 
 package org.wildfly.security.authz;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.util.HashSet;
 
 /**
@@ -32,6 +34,12 @@ public interface RoleDecoder {
      * A key whose value is the string "Roles", to provide a standard/default location at which roles may be found.
      */
     String KEY_ROLES = "Roles";
+
+    /**
+     * A key whose value is the string "Source-Address". This is where the IP address of a remote
+     * client may be found.
+     */
+    String KEY_SOURCE_ADDRESS = "Source-Address";
 
     /**
      * Decode the role set from the given authorization identity.
@@ -61,6 +69,24 @@ public interface RoleDecoder {
         return identity -> {
             final Attributes.Entry entry = identity.getAttributes().get(attribute);
             return entry.isEmpty() ? Roles.NONE : entry instanceof Attributes.SetEntry ? Roles.fromSet((Attributes.SetEntry) entry) : Roles.fromSet(new HashSet<>(entry));
+        };
+    }
+
+    /**
+     * Create an aggregate role decoder. Each role decoder is applied in order and the returned value is
+     * a union of the roles returned by each decoder.
+     *
+     * @param decoders the role decoders to apply (must not be {@code null} or contain {@code null} elements)
+     * @return the aggregate role decoder (not {@code null})
+     */
+    static RoleDecoder aggregate(RoleDecoder... decoders) {
+        checkNotNullParam("decoders", decoders);
+        return identity -> {
+            Roles combinedRoles = Roles.NONE;
+            for (RoleDecoder decoder : decoders) {
+                combinedRoles = combinedRoles.or(decoder.decodeRoles(identity));
+            }
+            return combinedRoles;
         };
     }
 }
