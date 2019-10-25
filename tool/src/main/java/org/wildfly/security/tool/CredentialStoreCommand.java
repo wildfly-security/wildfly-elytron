@@ -238,6 +238,14 @@ class CredentialStoreCommand extends Command {
                 }
             }
 
+            // Get the original permissions of the credential store
+            Map<String, Object> locationAttributes;
+
+            if (isWindows()) {
+                locationAttributes = Files.readAttributes(Paths.get(location), "dos:readonly,hidden,archive,system");
+            } else {
+                locationAttributes = Files.readAttributes(Paths.get(location), "posix:permissions");
+            }
 
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
@@ -247,6 +255,16 @@ class CredentialStoreCommand extends Command {
                 System.out.println(ElytronToolMessages.msg.aliasStored(alias));
             }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
+
+            // Restore the original permissions of the credential store
+            for (Map.Entry<String, Object> attribute : locationAttributes.entrySet()) {
+                if (isWindows()) {
+                    Files.setAttribute(Paths.get(location), "dos:" + attribute.getKey(), attribute.getValue());
+                } else {
+                    Files.setAttribute(Paths.get(location), "posix:" + attribute.getKey(), attribute.getValue());
+                }
+            }
+
         } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);
             if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {

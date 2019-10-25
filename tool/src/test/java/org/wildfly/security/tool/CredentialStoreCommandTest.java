@@ -28,6 +28,10 @@ import org.junit.Test;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
 /**
  * Test for "credential-store" command.
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -98,6 +102,27 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
+    }
+
+    @Test
+    public void testKeepFilePermissions() throws Exception {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret2";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
+                aliasValue, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        Map<String, Object> locationPermissionsBeforeFlush = isWindows() ? Files.readAttributes(Paths.get(storageLocation), "dos:readonly,hidden,archive,system") : Files.readAttributes(Paths.get(storageLocation), "posix:permissions");
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName, aliasValue);
+
+        Map<String, Object> locationPermissionsAfterFlush = isWindows() ? Files.readAttributes(Paths.get(storageLocation), "dos:readonly,hidden,archive,system") : Files.readAttributes(Paths.get(storageLocation), "posix:permissions");
+
+        assertEquals(locationPermissionsBeforeFlush, locationPermissionsAfterFlush);
     }
 
     @Test
@@ -356,5 +381,9 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         Assert.assertTrue(output.contains("Option \"add\" specified more than once. Only the first occurrence will be used."));
         Assert.assertTrue(output.contains("Option \"secret\" specified more than once. Only the first occurrence will be used."));
         Assert.assertFalse(output.contains("Option \"create\" specified more than once. Only the first occurrence will be used"));
+    }
+
+    private boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().startsWith("windows");
     }
 }
