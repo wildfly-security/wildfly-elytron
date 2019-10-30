@@ -33,6 +33,21 @@
 
     <name>WildFly Elytron - JWT</name>
     <description>WildFly Security JWT / SmallRye Integration</description>
+    
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.build.sourceDirectory}</directory>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.Extension</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
     <dependencies>
         <dependency>
