@@ -32,6 +32,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 
+import org.jboss.logging.annotations.ValidIdRange;
+import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 
@@ -42,6 +44,13 @@ import org.wildfly.security.authz.AuthorizationFailureException;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @MessageLogger(projectCode = "ELY", length = 5)
+@ValidIdRanges({
+    @ValidIdRange(min = 3, max = 3),
+    @ValidIdRange(min = 8, max = 8),
+    @ValidIdRange(min = 1000, max = 1156),
+    @ValidIdRange(min = 8510, max = 8511),
+    @ValidIdRange(min = 16000, max = 16999)
+})
 public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
@@ -135,4 +144,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 16001, value = "Invalid pattern in regex role mapper.")
     IllegalArgumentException invalidPatternInRegexRoleMapper();
+
+    @Message(id = 16002, value = "Can not handle SecurityEvent with SecurityIdentity from other SecurityDomain")
+    IllegalArgumentException securityEventIdentityWrongDomain();
 }
