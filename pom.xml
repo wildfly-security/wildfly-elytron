@@ -258,7 +258,6 @@
                             ${project.basedir}/auth/realm/ldap/src/main/java/;
                             ${project.basedir}/auth/realm/token/src/main/java/;
                             ${project.basedir}/auth/server/base/src/main/java/;
-                            ${project.basedir}/auth/server/deprecated/src/main/java/;
                             ${project.basedir}/auth/server/http/src/main/java/;
                             ${project.basedir}/auth/server/sasl/src/main/java/;
                             ${project.basedir}/auth/util/src/main/java/;
@@ -451,11 +450,6 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-auth-server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-auth-server-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1237,7 +1231,6 @@
         <module>auth/realm/ldap</module>
         <module>auth/realm/token</module>
         <module>auth/server/base</module>
-        <module>auth/server/deprecated</module>
         <module>auth/server/http</module>
         <module>auth/server/sasl</module>
         <module>auth/util</module>
