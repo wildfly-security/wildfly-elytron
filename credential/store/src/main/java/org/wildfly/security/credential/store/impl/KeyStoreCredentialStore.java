@@ -929,9 +929,14 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
     private KeyStore getKeyStoreInstance(String type) throws CredentialStoreException {
         if (providers != null) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Obtaining KeyStore instance of type %s, providers: %s", type, Arrays.toString(providers));
+            }
             for (Provider p: providers) {
                 try {
-                    return KeyStore.getInstance(type, p);
+                    KeyStore ks = KeyStore.getInstance(type, p);
+                    log.tracef("Obtained KeyStore instance: %s, provider: %s", ks, p.toString());
+                    return ks;
                 } catch (KeyStoreException e) {
                     // no such keystore type in provider, ignore
                 }

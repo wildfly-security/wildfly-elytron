@@ -1339,7 +1339,7 @@ public final class AuthenticationConfiguration {
      * @return the new configuration
      */
     @Deprecated
-    public AuthenticationConfiguration useKerberosSecurityFactory(SecurityFactory<Credential> kerberosSecurityFactory) {
+    public AuthenticationConfiguration useKerberosSecurityFactory(SecurityFactory<? extends Credential> kerberosSecurityFactory) {
         CredentialSource cs = getCredentialSource();
         if (kerberosSecurityFactory != null) {
             return cs != null ? new AuthenticationConfiguration(this, SET_CRED_SOURCE, cs.with(new FactoryCredentialSource(kerberosSecurityFactory))) : new AuthenticationConfiguration(this, SET_CRED_SOURCE, new FactoryCredentialSource(kerberosSecurityFactory));

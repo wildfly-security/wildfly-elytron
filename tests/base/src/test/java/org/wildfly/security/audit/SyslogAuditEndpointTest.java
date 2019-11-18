@@ -30,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -113,6 +114,7 @@ public class SyslogAuditEndpointTest {
      * Tests that the server continuously attempts to resend the message for {@link SyslogAuditEndpointTest#RECONNECT_TIMEOUT} milliseconds
      */
     @Test
+    @Ignore("[ELY-1895] Testing of failures is unreliable.")
     public void testFailureInfiniteReconnectAttempts() throws Exception {
         // Windows Server can have an issue echoing back an error, causing the test to fail by not seeing a failure sending
         Assume.assumeFalse("Test does not run on Windows Server", SystemUtils.OS_NAME.contains("Windows Server"));
@@ -152,6 +154,7 @@ public class SyslogAuditEndpointTest {
      * Tests that the server never reattempts to send the message
      */
     @Test
+    @Ignore("[ELY-1895] Testing of failures is unreliable.")
     public void testFailureZeroReconnectAttempts() throws Exception {
         // Windows Server can have an issue echoing back an error, causing the test to fail by not seeing a failure sending
         Assume.assumeFalse("Test does not run on Windows Server", SystemUtils.OS_NAME.contains("Windows Server"));
@@ -168,6 +171,7 @@ public class SyslogAuditEndpointTest {
      * Tests that the server reattempts to send the message {@link SyslogAuditEndpointTest#RECONNECT_NUMBER} times
      */
     @Test
+    @Ignore("[ELY-1895] Testing of failures is unreliable.")
     public void testFailureNumberedReconnectAttempts() throws Exception {
         // Windows Server can have an issue echoing back an error, causing the test to fail by not seeing a failure sending
         Assume.assumeFalse("Test does not run on Windows Server", SystemUtils.OS_NAME.contains("Windows Server"));

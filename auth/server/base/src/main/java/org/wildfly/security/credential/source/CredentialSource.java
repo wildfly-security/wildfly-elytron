@@ -312,7 +312,7 @@ public interface CredentialSource {
      * @param credentialFactory the credential factory (must not be {@code null})
      * @return the credential source (not {@code null})
      */
-    static CredentialSource fromSecurityFactory(SecurityFactory<Credential> credentialFactory) {
+    static CredentialSource fromSecurityFactory(SecurityFactory<? extends Credential> credentialFactory) {
         Assert.checkNotNullParam("credentialFactory", credentialFactory);
         return new CredentialSource() {
             public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {

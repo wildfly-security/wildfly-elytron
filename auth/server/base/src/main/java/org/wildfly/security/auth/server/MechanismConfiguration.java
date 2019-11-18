@@ -254,7 +254,7 @@ public final class MechanismConfiguration {
          * @param credentialFactory the credential factory to set (must not be {@code null})
          * @return this builder
          */
-        public Builder setServerCredential(SecurityFactory<Credential> credentialFactory) {
+        public Builder setServerCredential(SecurityFactory<? extends Credential> credentialFactory) {
             checkNotNullParam("credential", credentialFactory);
             return setServerCredentialSource(CredentialSource.fromSecurityFactory(credentialFactory));
         }
