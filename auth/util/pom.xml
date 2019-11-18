@@ -39,10 +39,6 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>    
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -55,10 +51,6 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-mechanism-gssapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-security-manager-action</artifactId>
         </dependency>
         
         <dependency>

@@ -888,6 +888,7 @@
                                     <exclude>org.wildfly.security.http.impl.ServerMechanismFactoryImpl</exclude>
                                     <exclude>org.wildfly.security.x500.ElytronMessages_$logger</exclude>
                                     <exclude>org.wildfly.security.x500.X500AttributePrincipalDecoder</exclude>
+                                    <exclude>org.wildfly.security.auth.util.GSSCredentialSecurityFactory</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
