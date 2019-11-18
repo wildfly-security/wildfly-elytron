@@ -263,7 +263,6 @@
                             ${project.basedir}/auth/util/src/main/java/;
                             ${project.basedir}/base/src/main/java/;
                             ${project.basedir}/credential/base/src/main/java/;
-                            ${project.basedir}/credential/source/deprecated/src/main/java/;
                             ${project.basedir}/credential/store/src/main/java/;
                             ${project.basedir}/digest/src/main/java/;
                             ${project.basedir}/http/base/src/main/java/;
@@ -485,11 +484,6 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1239,7 +1233,6 @@
         <module>base</module>
         <module>credential/base</module>
         <module>credential/store</module>
-        <module>credential/source/deprecated</module>
         <module>credential/source/impl</module>
         <module>digest</module>
         <module>http/base</module>

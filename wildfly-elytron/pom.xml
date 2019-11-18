@@ -275,10 +275,6 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential-store</artifactId>
         </dependency>
         <dependency>
@@ -587,11 +583,6 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-client</artifactId>
-                                    <version>${project.version}</version>
-                                </dependency>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron-credential-source-deprecated</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
@@ -910,6 +901,13 @@
                                     <exclude>org.wildfly.security.auth.server.ElytronMessages_$logger</exclude>
                                     <exclude>org.wildfly.security.auth.server.MechanismAuthenticationFactory</exclude>
                                     <exclude>org.wildfly.security.auth.server.SaslAuthenticationFactory</exclude>
+                                    <exclude>org.wildfly.security.credential.source.CallbackHandlerCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.credential.source.CommandCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.credential.source.CredentialStoreCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.credential.source.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.credential.source.FactoryCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.credential.source.LocalKerberosCredentialSource</exclude>
+                                    <exclude>org.wildfly.security.credential.source.KeyStoreCredentialSource</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
