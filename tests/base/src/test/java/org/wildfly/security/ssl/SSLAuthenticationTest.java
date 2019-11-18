@@ -17,12 +17,11 @@
  */
 package org.wildfly.security.ssl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import static org.wildfly.security.x500.X500.OID_AD_OCSP;
 import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
 
@@ -32,7 +31,9 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.math.BigInteger;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketException;
 import java.net.URI;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -49,6 +50,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -56,8 +58,8 @@ import java.util.concurrent.Future;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
@@ -76,12 +78,12 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -104,6 +106,7 @@ public class SSLAuthenticationTest {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final int OCSP_PORT = 4854;
+    private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
     private static final String ICA_JKS_LOCATION = "./target/test-classes/ica/jks";
@@ -591,47 +594,44 @@ public class SSLAuthenticationTest {
         WORKING_DIR_ICACRL.delete();
     }
 
-
     @Test
-    public void testOneWay() throws Exception {
+    public void testOneWay() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way.org", true);
-        assertNull(identity);
+        performConnectionTest(serverContext, "protocol://test-one-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
     }
 
     @Test
-    public void testCrlBlank() throws Exception {
+    public void testCrlBlank() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-crl.org", true);
-        assertNull(identity);
+        performConnectionTest(serverContext, "protocol://test-one-way-crl.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
     }
 
     @Test
-    public void testServerRevoked() throws Exception {
+    public void testServerRevoked() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
                 .build().create();
 
-        performConnectionTest(serverContext, "protocol://test-one-way-firefly-revoked.org", false);
+        performConnectionTest(serverContext, "protocol://test-one-way-firefly-revoked.org", false, null, null, true);
     }
 
     @Test
-    public void testServerIcaRevoked() throws Exception {
+    public void testServerIcaRevoked() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
                 .build().create();
 
-        performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false);
+        performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false, null, null, true);
     }
 
     @Test
-    public void testTwoWay() throws Exception {
+    public void testTwoWay() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
@@ -639,13 +639,12 @@ public class SSLAuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way.org", true);
-        assertNotNull(identity);
-        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+        performConnectionTest(serverContext, "protocol://test-two-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
     }
 
     @Test
-    public void testTwoWayIca() throws Exception {
+    public void testTwoWayIca() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ica/jks/shortwinged.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
@@ -653,13 +652,12 @@ public class SSLAuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-ica.org", true);
-        assertNotNull(identity);
-        assertEquals("Principal Name", "rove", identity.getPrincipal().getName());
+        performConnectionTest(serverContext, "protocol://test-two-way-ica.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", false);
     }
 
     @Test
-    public void testOcspGood() throws Exception {
+    public void testOcspGood() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
@@ -671,32 +669,31 @@ public class SSLAuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", true);
-        assertNotNull(identity);
-        assertEquals("Principal Name", "ocspcheckedgood", identity.getPrincipal().getName());
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedGood", false);
     }
 
     @Test
-    public void testOcspMaxCertPathNeg1() throws Exception {
+    public void testOcspMaxCertPathNeg1() throws Throwable {
         ocspMaxCertPathCommon(-1, false);
     }
 
     @Test
-    public void testOcspMaxCertPath0() throws Exception {
+    public void testOcspMaxCertPath0() throws Throwable {
         ocspMaxCertPathCommon(0, false);
     }
 
     @Test
-    public void testOcspMaxCertPathTooLong() throws Exception {
+    public void testOcspMaxCertPathTooLong() throws Throwable {
         ocspMaxCertPathCommon(1, false);
     }
 
     @Test
-    public void testOcspMaxCertPathOkay() throws Exception {
+    public void testOcspMaxCertPathOkay() throws Throwable {
         ocspMaxCertPathCommon(2, true);
     }
 
-    private void ocspMaxCertPathCommon(int maxCertPath, boolean expectValid) throws Exception {
+    private void ocspMaxCertPathCommon(int maxCertPath, boolean expectValid) throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
@@ -708,12 +705,12 @@ public class SSLAuthenticationTest {
                         .build())
                 .setNeedClientAuth(true)
                 .build().create();
-
-        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", expectValid);
+        performConnectionTest(serverContext, "protocol://test-two-way-ocsp-good.org", expectValid, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedGood", false);
     }
 
     @Test
-    public void testClientSideOcsp() throws Exception {
+    public void testClientSideOcsp() throws Throwable {
         SSLContext serverContextGood = new SSLContextBuilder()
                 .setKeyManager(getKeyManager("/ca/jks/ocsp-checked-good.keystore"))
                 .build().create();
@@ -731,11 +728,17 @@ public class SSLAuthenticationTest {
                 .setClientMode(true)
                 .build().create();
 
-        performConnectionTest(serverContextGood, clientContext, true);
-        performConnectionTest(serverContextRevoked, clientContext, false);
+
+        testCommunication(serverContextGood, clientContext, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=ocspCheckedGood", null, true);
+        try {
+            testCommunication(serverContextRevoked, clientContext, null, null, true);
+            fail("Expected SSLHandshakeException not thrown");
+        } catch (SSLHandshakeException expected) {
+            //expected
+        }
     }
 
-    private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid) throws Exception {
+    private void performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
         System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_1.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
 
@@ -743,48 +746,80 @@ public class SSLAuthenticationTest {
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         SSLContext clientContext = contextConfigurationClient.getSSLContext(URI.create(clientUri), context);
 
-        return performConnectionTest(serverContext, clientContext, expectValid);
+        try {
+            testCommunication(serverContext, clientContext, expectedServerPrincipal, expectedClientPrincipal, oneWay);
+            if (!expectValid) fail("Expected SSLHandshakeException not thrown");
+        } catch (SSLHandshakeException expected) {
+            if (expectValid) throw new IllegalStateException("Unexpected SSLHandshakeException", expected);
+        } catch (SSLException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLException", expected);
+            } else if (expected.getCause() instanceof SocketException){
+                //expected
+            }
+        }
     }
 
-    private SecurityIdentity performConnectionTest(SSLContext serverContext, SSLContext clientContext, boolean expectValid) throws Exception {
-        SSLServerSocketFactory sslServerSocketFactory = serverContext.getServerSocketFactory();
+    private void testCommunication(SSLContext serverContext, SSLContext clientContext, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
+        ServerSocket listeningSocket = serverContext.getServerSocketFactory().createServerSocket();
+        listeningSocket.bind(new InetSocketAddress("localhost", TESTING_PORT));
+        SSLSocket clientSocket = (SSLSocket) clientContext.getSocketFactory().createSocket("localhost", TESTING_PORT);
+        SSLSocket serverSocket = (SSLSocket) listeningSocket.accept();
 
-        SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(1111, 10, InetAddress.getLoopbackAddress());
-
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        Future<SSLSocket> socketFuture = executorService.submit(() -> {
+        ExecutorService serverExecutorService = Executors.newSingleThreadExecutor();
+        Future<byte[]> serverFuture = serverExecutorService.submit(() -> {
             try {
-                System.out.println("About to connect client");
-                SSLSocket sslSocket = (SSLSocket) clientContext.getSocketFactory().createSocket(InetAddress.getLoopbackAddress(), 1111);
-                sslSocket.getSession();
+                byte[] received = new byte[2];
+                serverSocket.getInputStream().read(received);
+                serverSocket.getOutputStream().write(new byte[]{0x56, 0x78});
 
-                return sslSocket;
+                if (expectedClientPrincipal != null) {
+                    assertEquals(expectedClientPrincipal, serverSocket.getSession().getPeerPrincipal().getName());
+                }
+
+                SecurityIdentity identity = (SecurityIdentity) serverSocket.getSession().getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
+                if (oneWay) {
+                    assertNull(identity);
+                } else {
+                    assertNotNull(identity);
+                }
+
+                return received;
             } catch (Exception e) {
-                throw new RuntimeException(e);
-            } finally {
-                System.out.println("Client connected");
+                throw new RuntimeException("Server exception", e);
             }
         });
 
-        SSLSocket serverSocket = (SSLSocket) sslServerSocket.accept();
-        SSLSession serverSession = serverSocket.getSession();
-        SSLSocket clientSocket = socketFuture.get();
-        SSLSession clientSession = clientSocket.getSession();
+        ExecutorService clientExecutorService = Executors.newSingleThreadExecutor();
+        Future<byte[]> clientFuture = clientExecutorService.submit(() -> {
+            try {
+                byte[] received = new byte[2];
+                clientSocket.getOutputStream().write(new byte[]{0x12, 0x34});
+                clientSocket.getInputStream().read(received);
+
+                if (expectedServerPrincipal != null) {
+                    assertEquals(expectedServerPrincipal, clientSocket.getSession().getPeerPrincipal().getName());
+                }
+
+                return received;
+            } catch (Exception e) {
+                throw new RuntimeException("Client exception", e);
+            }
+        });
 
         try {
-            if (expectValid) {
-                assertTrue("Client SSL Session should be Valid", clientSession.isValid());
-                assertTrue("Server SSL Session should be Valid", serverSession.isValid());
-                return (SecurityIdentity) serverSession.getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
+            assertArrayEquals(new byte[]{0x12, 0x34}, serverFuture.get());
+            assertArrayEquals(new byte[]{0x56, 0x78}, clientFuture.get());
+        } catch (ExecutionException e) {
+            if (e.getCause() != null && e.getCause() instanceof RuntimeException && e.getCause().getCause() != null) {
+                throw e.getCause().getCause(); // unpack
             } else {
-                assertFalse("Client SSL Session should be Invalid", clientSession.isValid());
-                assertFalse("Server SSL Session should be Invalid", serverSession.isValid());
-                return null;
+                throw e;
             }
         } finally {
             safeClose(serverSocket);
             safeClose(clientSocket);
-            safeClose(sslServerSocket);
+            safeClose(listeningSocket);
         }
     }
 
