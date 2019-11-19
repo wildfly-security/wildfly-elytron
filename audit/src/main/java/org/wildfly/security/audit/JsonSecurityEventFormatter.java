@@ -34,6 +34,7 @@ import org.wildfly.security.auth.server.event.SecurityDefiniteOutcomeEvent;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.auth.server.event.SecurityEventVisitor;
 import org.wildfly.security.auth.server.event.SecurityPermissionCheckEvent;
+import org.wildfly.security.auth.server.event.SecurityRealmUnavailableEvent;
 import org.wildfly.security.auth.server.event.SyslogAuditEvent;
 
 /**
@@ -135,6 +136,19 @@ public class JsonSecurityEventFormatter extends SecurityEventVisitor<Void, Strin
     private void handleSyslogAuditEvent(SyslogAuditEvent event, JsonObjectBuilder objectBuilder) {
         handleUnknownEvent(event, objectBuilder);
         objectBuilder.add("syslog-format", event.getFormat().toString());
+    }
+
+    @Override
+    public String handleRealmUnavailableEvent(SecurityRealmUnavailableEvent event, Void param) {
+        checkNotNullParam("event", event);
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
+        handleRealmUnavailableEvent(event, objectBuilder);
+        return objectBuilder.build().toString();
+    }
+
+    private void handleRealmUnavailableEvent(SecurityRealmUnavailableEvent event, JsonObjectBuilder objectBuilder) {
+        handleUnknownEvent(event, objectBuilder);
+        objectBuilder.add("realm-name", event.getRealmName());
     }
 
     /**
