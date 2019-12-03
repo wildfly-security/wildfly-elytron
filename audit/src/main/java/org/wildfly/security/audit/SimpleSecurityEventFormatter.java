@@ -119,7 +119,7 @@ public class SimpleSecurityEventFormatter extends SecurityEventVisitor<Void, Str
 
     private void handleSyslogAuditEvent(SyslogAuditEvent event, StringBuilder stringBuilder) {
         handleUnknownEvent(event, stringBuilder);
-        stringBuilder.append("syslog-format").append(event.getFormat().toString());
+        stringBuilder.append(",syslog-format").append(event.getFormat().toString());
     }
 
     /**
