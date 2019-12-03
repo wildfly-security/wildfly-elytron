@@ -4,6 +4,7 @@ org.wildfly.security.audit
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
+org.wildfly.security.auth.client.spi
 org.wildfly.security.auth.jaspi
 org.wildfly.security.auth.jaspi._private
 org.wildfly.security.auth.jaspi.impl
