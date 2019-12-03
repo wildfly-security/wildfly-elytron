@@ -129,4 +129,14 @@ public abstract class SecurityEventVisitor<P, R> {
         return handleUnknownEvent(event, param);
     }
 
+    /**
+     * Handle a security realm unavailable event.
+     *
+     * @param event the security event
+     * @param param the visitor parameter
+     * @return the visitor return value
+     */
+    public R handleRealmUnavailableEvent(final SecurityRealmUnavailableEvent event, final P param) {
+        return handleUnknownEvent(event, param);
+    }
 }

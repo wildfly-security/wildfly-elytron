@@ -73,6 +73,7 @@ import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizati
 import org.wildfly.security.auth.server.event.RealmSuccessfulAuthenticationEvent;
 import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
 import org.wildfly.security.auth.server.event.SecurityAuthenticationSuccessfulEvent;
+import org.wildfly.security.auth.server.event.SecurityRealmUnavailableEvent;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -1180,15 +1181,21 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity;
-        if (exclusive) {
-            if (securityRealm instanceof ModifiableSecurityRealm) {
-                realmIdentity = ((ModifiableSecurityRealm) securityRealm).getRealmIdentityForUpdate(finalPrincipal);
+        try {
+            if (exclusive) {
+                if (securityRealm instanceof ModifiableSecurityRealm) {
+                    realmIdentity = ((ModifiableSecurityRealm) securityRealm).getRealmIdentityForUpdate(finalPrincipal);
+                } else {
+                    throw log.unableToObtainExclusiveAccess();
+                }
             } else {
-                throw log.unableToObtainExclusiveAccess();
+                realmIdentity = securityRealm.getRealmIdentity(finalPrincipal);
             }
-        } else {
-            realmIdentity = securityRealm.getRealmIdentity(finalPrincipal);
+        } catch (RealmUnavailableException e) {
+            SecurityDomain.safeHandleSecurityEvent(domain, new SecurityRealmUnavailableEvent(capturedIdentity, realmName));
+            throw e;
         }
+
 
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, preRealmPrincipal, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
     }
@@ -1671,12 +1678,17 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             RealmIdentity realmIdentity = null;
             RealmInfo realmInfo = null;
             for (RealmInfo info : realmInfos) {
-                realmIdentity = info.getSecurityRealm().getRealmIdentity(evidence);
-                if (realmIdentity.getEvidenceVerifySupport(evidenceType, algorithm).mayBeSupported()) {
-                    realmInfo = info;
-                    break;
-                } else {
-                    realmIdentity.dispose();
+                try {
+                    realmIdentity = info.getSecurityRealm().getRealmIdentity(evidence);
+                    if (realmIdentity.getEvidenceVerifySupport(evidenceType, algorithm).mayBeSupported()) {
+                        realmInfo = info;
+                        break;
+                    } else {
+                        realmIdentity.dispose();
+                    }
+                } catch (RealmUnavailableException e) {
+                    SecurityDomain.safeHandleSecurityEvent(domain, new SecurityRealmUnavailableEvent(domain.getCurrentSecurityIdentity(), info.getName()));
+                    throw e;
                 }
             }
             if (realmInfo == null) {
