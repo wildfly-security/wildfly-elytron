@@ -165,6 +165,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_CALLBACK_INTERCEPT = 19;
     private static final int SET_SASL_PROTOCOL = 20;
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
+    private static final int SET_WEBSERVICES_PROPS = 22;
 
     private static final String JBOSS_LOCAL_USER_QUIET_AUTH = "wildfly.sasl.local-user.quiet-auth";
     private static final String JBOSS_LOCAL_USER_LEGACY_QUIET_AUTH = "jboss.sasl.local-user.quiet-auth";
@@ -227,6 +228,7 @@ public final class AuthenticationConfiguration {
     final Map<String, ?> saslMechanismProperties;
     final Predicate<Callback> callbackIntercept;
     final String saslProtocol;
+    final Map<String, ?> webServicesProperties;
 
     // constructors
 
@@ -257,6 +259,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = Collections.singletonMap(JBOSS_LOCAL_USER_QUIET_AUTH, "true");
         this.callbackIntercept = null;
         this.saslProtocol = null;
+        this.webServicesProperties = null;
     }
 
     /**
@@ -292,6 +295,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = what == SET_SASL_MECH_PROPS ? (Map<String, ?>) value : original.saslMechanismProperties;
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.saslProtocol = what == SET_SASL_PROTOCOL ? (String) value : original.saslProtocol;
+        this.webServicesProperties = what == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value : original.webServicesProperties;
         sanitazeOnMutation(what);
     }
 
@@ -330,6 +334,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = what1 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value2 : original.saslMechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
+        this.webServicesProperties = what1 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value1 : what2 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value2 : original.webServicesProperties;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
     }
@@ -370,6 +375,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = what1 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value1 : what2 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value2 : what3 == SET_SASL_MECH_PROPS ? (Map<String, ?>) value3 : original.saslMechanismProperties;
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : what3 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value3 : original.callbackIntercept;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : what3 == SET_SASL_PROTOCOL ? (String) value3 : original.saslProtocol;
+        this.webServicesProperties = what1 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value1 : what2 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value2 : what3 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value3 : original.webServicesProperties;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
         sanitazeOnMutation(what3);
@@ -405,6 +411,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = original.saslMechanismProperties;
         this.callbackIntercept = original.callbackIntercept;
         this.saslProtocol = original.saslProtocol;
+        this.webServicesProperties = original.webServicesProperties;
     }
 
     private AuthenticationConfiguration(final AuthenticationConfiguration original, final AuthenticationConfiguration other) {
@@ -431,6 +438,7 @@ public final class AuthenticationConfiguration {
         this.saslMechanismProperties = getOrDefault(other.saslMechanismProperties, original.saslMechanismProperties);
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.saslProtocol =  getOrDefault(other.saslProtocol, original.saslProtocol);
+        this.webServicesProperties =  getOrDefault(other.webServicesProperties, original.webServicesProperties);
         sanitazeOnMutation(SET_USER_CBH);
     }
 
@@ -465,6 +473,26 @@ public final class AuthenticationConfiguration {
     @Deprecated
     int getPort() {
         return setPort;
+    }
+
+    String getWsHttpMechanism() {
+        if (webServicesProperties != null) {
+            Object wsHttpMechanism = webServicesProperties.get("http-mechanism");
+            if (wsHttpMechanism != null) {
+                return wsHttpMechanism.toString();
+            }
+        }
+        return null;
+    }
+
+    String getWsSecurityType() {
+        if (webServicesProperties != null) {
+            Object wsSecurityType = webServicesProperties.get("ws-security-type");
+            if (wsSecurityType != null) {
+                return wsSecurityType.toString();
+            }
+        }
+        return null;
     }
 
     // internal actions
@@ -1116,6 +1144,13 @@ public final class AuthenticationConfiguration {
         }
     }
 
+    public AuthenticationConfiguration useWebServices(Map<String, ?> webservicesProperties) {
+        final HashMap<String, Object> newMap = new HashMap<>();
+        newMap.putAll(webservicesProperties);
+        newMap.values().removeIf(Objects::isNull);
+        return new AuthenticationConfiguration(this, SET_WEBSERVICES_PROPS, optimizeMap(newMap));
+    }
+
     /**
      * Create a new configuration which is the same as this configuration, but which connects to a different port.
      *
@@ -1320,6 +1355,20 @@ public final class AuthenticationConfiguration {
         newMap.putAll(mechanismProperties);
         newMap.values().removeIf(Objects::isNull);
         return new AuthenticationConfiguration(this, SET_SASL_MECH_PROPS, optimizeMap(newMap));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which sets the properties that can be used by
+     * WebServices client.
+     *
+     * @param webServicesProperties the properties that can be used by WS client.
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useWebServicesProperties(Map<String, ?> webServicesProperties) {
+        final HashMap<String, Object> newMap = new HashMap<>();
+        newMap.putAll(webServicesProperties);
+        newMap.values().removeIf(Objects::isNull);
+        return new AuthenticationConfiguration(this, SET_WEBSERVICES_PROPS, optimizeMap(newMap));
     }
 
     private static <K, V> Map<K, V> optimizeMap(Map<K, V> orig) {
@@ -1548,7 +1597,8 @@ public final class AuthenticationConfiguration {
             && Objects.equals(parameterSpecs, other.parameterSpecs)
             && Objects.equals(trustManagerFactory, other.trustManagerFactory)
             && Objects.equals(saslMechanismProperties, other.saslMechanismProperties)
-            && Objects.equals(saslProtocol, other.saslProtocol);
+            && Objects.equals(saslProtocol, other.saslProtocol)
+            && Objects.equals(webServicesProperties, other.webServicesProperties);
     }
 
     /**
@@ -1563,7 +1613,7 @@ public final class AuthenticationConfiguration {
                 principal, setHost, setProtocol, setRealm, setAuthzPrincipal, authenticationNameForwardSecurityDomain,
                 authenticationCredentialsForwardSecurityDomain, authorizationNameForwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
-                saslMechanismProperties, saslProtocol) * 19 + setPort;
+                saslMechanismProperties, saslProtocol, webServicesProperties) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
             }
@@ -1601,6 +1651,7 @@ public final class AuthenticationConfiguration {
             if (! parameterSpecs.isEmpty()) b.append("parameter-specifications=").append(parameterSpecs).append(',');
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
             if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
+            if (! webServicesProperties.isEmpty()) b.append("webservices-properties=").append(webServicesProperties).append(',');
             b.setLength(b.length() - 1);
             return this.toString = b.toString();
         }

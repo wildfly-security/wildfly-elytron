@@ -111,6 +111,26 @@
             <!-- scope is compile ELY-1153 -->
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.jboss.spec.javax.xml.ws/jboss-jaxws-api_2.2_spec -->
+        <dependency>
+            <groupId>org.jboss.spec.javax.xml.ws</groupId>
+            <artifactId>jboss-jaxws-api_2.2_spec</artifactId>
+            <version>${version.org.jboss.spec.javax.xml.ws}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.ws</groupId>
+            <artifactId>jbossws-spi</artifactId>
+            <version>${version.org.jboss.ws.jbossws-spi}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!--Test scope-->
         <dependency>
             <groupId>org.wildfly.security</groupId>
