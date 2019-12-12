@@ -182,6 +182,8 @@ public class TLS13AuthenticationTest {
 
         try {
             if (expectedCipherSuite != null) {
+                assertEquals("TLSv1.3", serverSession.getProtocol());
+                assertEquals("TLSv1.3", clientSession.getProtocol());
                 assertEquals("TLS_AES_128_GCM_SHA256", clientSession.getCipherSuite());
                 assertEquals("TLS_AES_128_GCM_SHA256", serverSession.getCipherSuite());
             }
