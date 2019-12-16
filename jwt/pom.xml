@@ -51,6 +51,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <artifactId>smallrye-jwt</artifactId>
             <groupId>io.smallrye</groupId>
             <scope>provided</scope>
