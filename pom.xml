@@ -818,6 +818,12 @@
                  External Modules
             -->
             <dependency>
+                <groupId>jakarta.enterprise</groupId>
+                <artifactId>jakarta.enterprise.cdi-api</artifactId>
+                <version>${version.jakarta.enterprise}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <artifactId>smallrye-jwt</artifactId>
                 <groupId>io.smallrye</groupId>
                 <version>${version.io.smallrye.jwt}</version>
