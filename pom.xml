@@ -57,16 +57,19 @@
     <properties>
         <jdk.min.version>11</jdk.min.version>
         <version.commons-cli>1.4</version.commons-cli>
+        <version.io.smallrye.jwt>2.0.11</version.io.smallrye.jwt>
+        <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
         <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
+        <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.14.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
-        <version.org.jboss.logging.tools>2.2.0.Final</version.org.jboss.logging.tools>
+        <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
@@ -82,7 +85,7 @@
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
         <version.net.minidev.json-smart>2.3</version.net.minidev.json-smart>
-        <version.com.nimbusds.nimbus-jose-jwt>4.39.2</version.com.nimbusds.nimbus-jose-jwt>
+        <version.com.nimbusds.nimbus-jose-jwt>8.2.1</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
@@ -278,6 +281,7 @@
                             ${project.basedir}/http/util/src/main/java/;
                             ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
+                            ${project.basedir}/jwt/src/main/java/;
                             ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
@@ -560,6 +564,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jwt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-keystore</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -778,9 +788,27 @@
                  External Modules
             -->
             <dependency>
+                <groupId>jakarta.enterprise</groupId>
+                <artifactId>jakarta.enterprise.cdi-api</artifactId>
+                <version>${version.jakarta.enterprise}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <artifactId>smallrye-jwt</artifactId>
+                <groupId>io.smallrye</groupId>
+                <version>${version.io.smallrye.jwt}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${version.org.apache.commons}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.microprofile.jwt</groupId>
+                <artifactId>microprofile-jwt-auth-api</artifactId>
+                <version>${version.org.eclipse.microprofile.jwt.api}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
@@ -1230,6 +1258,7 @@
         <module>http/util</module>
         <module>jacc</module>
         <module>json-util</module>
+        <module>jwt</module>
         <module>keystore</module>
         <module>manager/base</module>
         <module>manager/action</module>
