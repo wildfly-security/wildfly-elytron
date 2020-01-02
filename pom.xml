@@ -57,11 +57,14 @@
     <properties>
         <jdk.min.version>11</jdk.min.version>
         <version.commons-cli>1.4</version.commons-cli>
+        <version.io.smallrye.jwt>2.0.11</version.io.smallrye.jwt>
+        <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
         <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
+        <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.14.Final</version.org.jboss.logmanager>
@@ -281,6 +284,7 @@
                             ${project.basedir}/http/util/src/main/java/;
                             ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
+                            ${project.basedir}/jwt/src/main/java/;
                             ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
@@ -580,6 +584,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jwt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-keystore</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -808,9 +818,27 @@
                  External Modules
             -->
             <dependency>
+                <groupId>jakarta.enterprise</groupId>
+                <artifactId>jakarta.enterprise.cdi-api</artifactId>
+                <version>${version.jakarta.enterprise}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <artifactId>smallrye-jwt</artifactId>
+                <groupId>io.smallrye</groupId>
+                <version>${version.io.smallrye.jwt}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${version.org.apache.commons}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.microprofile.jwt</groupId>
+                <artifactId>microprofile-jwt-auth-api</artifactId>
+                <version>${version.org.eclipse.microprofile.jwt.api}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
@@ -1263,6 +1291,7 @@
         <module>http/util</module>
         <module>jacc</module>
         <module>json-util</module>
+        <module>jwt</module>
         <module>keystore</module>
         <module>manager/base</module>
         <module>manager/action</module>
