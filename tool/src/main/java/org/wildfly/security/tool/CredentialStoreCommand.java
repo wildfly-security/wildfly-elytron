@@ -197,7 +197,7 @@ class CredentialStoreCommand extends Command {
         CredentialStore.CredentialSourceProtectionParameter credentialSourceProtectionParameter = null;
         if (csPassword == null) {
             // prompt for password
-            csPassword = prompt(false, ElytronToolMessages.msg.credentialStorePasswordPrompt(), true, ElytronToolMessages.msg.credentialStorePasswordPromptConfirm());
+            csPassword = prompt(false, ElytronToolMessages.msg.credentialStorePasswordPrompt(), createStorage, ElytronToolMessages.msg.credentialStorePasswordPromptConfirm());
             if (csPassword == null) {
                 setStatus(GENERAL_CONFIGURATION_ERROR);
                 throw ElytronToolMessages.msg.optionNotSpecified(CREDENTIAL_STORE_PASSWORD_PARAM);
