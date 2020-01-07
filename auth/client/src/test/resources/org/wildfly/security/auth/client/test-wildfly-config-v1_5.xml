@@ -58,6 +58,24 @@
                     <key-store-masked-password algorithm="masked-HMAC-SHA1-AES-128" key-material="testingKeyMaterial" iteration-count="12" salt="12345678" masked-password="9EQZkSe7w+VHasVXbNxuJA==" initialization-vector="QXRFBhXc7Z8dkQaFn1yRzQ=="/>
                 </key-store-ssl-certificate>
             </ssl-context>
+            <ssl-context name="both-cipher-suite-attributes">
+                <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
+                    <key-store-clear-password password="password"/>
+                </key-store-ssl-certificate>
+                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256" names="TLS_AES_128_CCM_SHA256:TLS_AES_128_CCM_8_SHA256"/>
+            </ssl-context>
+            <ssl-context name="selector-only-cipher-suite-attributes">
+                <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
+                    <key-store-clear-password password="password"/>
+                </key-store-ssl-certificate>
+                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256"/>
+            </ssl-context>
+            <ssl-context name="names-only-cipher-suite-attributes">
+                <key-store-ssl-certificate key-store-name="client-keystore" alias="testclient1">
+                    <key-store-clear-password password="password"/>
+                </key-store-ssl-certificate>
+                <cipher-suite names="TLS_AES_128_CCM_SHA256:TLS_AES_128_CCM_8_SHA256"/>
+            </ssl-context>
         </ssl-contexts>
         <authentication-rules>
             <rule use-configuration="clear-cred">
@@ -79,6 +97,15 @@
             </rule>
             <rule use-ssl-context="client-ssl-context-masked">
                 <match-host name="masked"/>
+            </rule>
+            <rule use-ssl-context="both-cipher-suite-attributes">
+                <match-host name="both.org"/>
+            </rule>
+            <rule use-ssl-context="selector-only-cipher-suite-attributes">
+                <match-host name="selector-only.org"/>
+            </rule>
+            <rule use-ssl-context="names-only-cipher-suite-attributes">
+                <match-host name="names-only.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

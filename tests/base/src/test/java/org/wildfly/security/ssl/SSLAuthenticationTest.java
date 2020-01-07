@@ -19,6 +19,7 @@ package org.wildfly.security.ssl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -801,6 +802,12 @@ public class SSLAuthenticationTest {
                     assertEquals(expectedServerPrincipal, clientSocket.getSession().getPeerPrincipal().getName());
                 }
 
+                if (oneWay) {
+                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default (ELY-1917)
+                } else {
+                    assertFalse(serverSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
+                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
+                }
                 return received;
             } catch (Exception e) {
                 throw new RuntimeException("Client exception", e);

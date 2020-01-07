@@ -25,6 +25,8 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
+
 import org.junit.Test;
 
 /**
@@ -38,7 +40,12 @@ public class CipherSuiteSelectorTest {
         "TLS_RSA_WITH_AES_128_CBC_SHA256",
         "TLS_RSA_WITH_NULL_SHA256",
         "TLS_DH_anon_WITH_AES_128_CBC_SHA256",
-        "TLS_ECDH_anon_WITH_NULL_SHA"};
+        "TLS_ECDH_anon_WITH_NULL_SHA",
+        "TLS_AES_128_GCM_SHA256", // TLS 1.3
+        "TLS_CHACHA20_POLY1305_SHA256", // TLS 1.3
+        "TLS_AES_128_CCM_SHA256", // TLS 1.3
+        "TLS_AES_128_CCM_8_SHA256"}; // TLS 1.3
+
 
     @Test
     public void testAll() {
@@ -47,7 +54,11 @@ public class CipherSuiteSelectorTest {
 
         assertThat(selectedSuites, not(hasItem("TLS_RSA_WITH_NULL_SHA256")));
         assertThat(selectedSuites, not(hasItem("TLS_ECDH_anon_WITH_NULL_SHA")));
-        assertThat("Suites with encryption should be selected", selectedSuites.size() == SUPPORTED_SUITES.length - 2);
+        assertThat(selectedSuites, not(hasItem("TLS_AES_128_GCM_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_CHACHA20_POLY1305_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_AES_128_CCM_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_AES_128_CCM_8_SHA256")));
+        assertThat("Suites with encryption should be selected", selectedSuites.size() == SUPPORTED_SUITES.length - 6);
     }
 
     @Test
@@ -230,7 +241,7 @@ public class CipherSuiteSelectorTest {
         CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL COMPLEMENTOFALL @STRENGTH");
         List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
 
-        assertThat("All supported suites should be selected", selectedSuites.size() == SUPPORTED_SUITES.length);
+        assertThat("All pre TLS 1.3 supported suites should be selected", selectedSuites.size() == 4);
         assertThat("High strength suites should be at the beginning", selectedSuites.get(0), is("TLS_RSA_WITH_AES_128_CBC_SHA256"));
         assertThat("High strength suites should be at the beginning", selectedSuites.get(1), is("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("Low strength suites should be at the end", selectedSuites.get(2), is("TLS_RSA_WITH_NULL_SHA256"));
@@ -242,7 +253,7 @@ public class CipherSuiteSelectorTest {
         CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFALL ALL @STRENGTH");
         List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
 
-        assertThat("All supported suites should be selected", selectedSuites.size() == SUPPORTED_SUITES.length);
+        assertThat("All pre TLS 1.3 supported suites should be selected", selectedSuites.size() == 4);
         assertThat("High strength suites should be at the beginning", selectedSuites.get(0), is("TLS_RSA_WITH_AES_128_CBC_SHA256"));
         assertThat("High strength suites should be at the beginning", selectedSuites.get(1), is("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("Low strength suites should be at the end", selectedSuites.get(2), is("TLS_RSA_WITH_NULL_SHA256"));
@@ -284,4 +295,55 @@ public class CipherSuiteSelectorTest {
         assertThat("Chosen suites should be selected", selectedSuites.size() == 2);
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
     }
+
+    @Test
+    public void testTLS13NameInCipherList() {
+        try {
+            CipherSuiteSelector.fromString("TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_AES_128_CCM_8_SHA256");
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (Exception expected) {
+        }
+    }
+
+    // TLS 1.3 tests
+
+    @Test
+    public void testValidCipherSuites() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromNamesString("TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_CCM_8_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_CCM_SHA256");
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+
+        assertThat("TLS_AES_256_GCM_SHA384 should not be selected", selectedSuites.size() == 3);
+        assertThat(selectedSuites, hasItems("TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_CCM_8_SHA256", "TLS_AES_128_CCM_SHA256"));
+    }
+
+    @Test
+    public void testTLS12NameInCipherSuites() {
+        try {
+            CipherSuiteSelector.fromNamesString("TLS_CHACHA20_POLY1305_SHA256:TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_AES_128_CCM_8_SHA256:TLS_AES_128_CCM_SHA256");
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testInvalidFormatCipherSuites() {
+        try {
+            CipherSuiteSelector.fromNamesString("TLS_CHACHA20_POLY1305_SHA256 !TLS_AES_128_CCM_8_SHA256");
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testCombinedDefaultCipherSuites() {
+        CipherSuiteSelector selector = CipherSuiteSelector.openSslCombinedDefault();
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        assertThat(selectedSuites, not(hasItem("TLS_RSA_WITH_NULL_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_ECDH_anon_WITH_NULL_SHA")));
+        assertThat(selectedSuites, not(hasItem("TLS_AES_128_CCM_SHA256")));
+        assertThat(selectedSuites, not(hasItem("TLS_AES_128_CCM_8_SHA256")));
+        assertThat("Only default pre TLS 1.3 and default TLS 1.3 cipher suites should be selected", selectedSuites.size() == SUPPORTED_SUITES.length - 5);
+    }
+
 }
