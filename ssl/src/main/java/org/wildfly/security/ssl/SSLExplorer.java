@@ -53,8 +53,6 @@ import java.util.Map;
  */
 final class SSLExplorer {
 
-    private static final MechanismDatabase database = MechanismDatabase.getInstance();
-
     // Private constructor prevents construction outside this class.
     private SSLExplorer() {
     }
@@ -265,7 +263,7 @@ final class SSLExplorer {
                 int byte1 = getInt8(input);
                 int byte2 = getInt8(input);
                 if (lead == 0) {
-                    final MechanismDatabase.Entry entry = database.getCipherSuiteById(byte1, byte2);
+                    final MechanismDatabase.Entry entry = getCipherSuiteById(byte1, byte2);
                     if (entry != null) ciphers.add(entry.getName());
                 }
                 // skip any non-TLS cipher suites
@@ -430,7 +428,7 @@ final class SSLExplorer {
         while (csLen > 0) {
             int byte1 = getInt8(input);
             int byte2 = getInt8(input);
-            final MechanismDatabase.Entry entry = database.getCipherSuiteById(byte1, byte2);
+            final MechanismDatabase.Entry entry = getCipherSuiteById(byte1, byte2);
             if (entry != null) ciphers.add(entry.getName());
             csLen -= 2;
         }
@@ -623,6 +621,14 @@ final class SSLExplorer {
             int position = input.position();
             input.position(position + length);
         }
+    }
+
+    private static MechanismDatabase.Entry getCipherSuiteById(int byte1, int byte2) {
+        MechanismDatabase.Entry entry = MechanismDatabase.getTLS13Instance().getCipherSuiteById(byte1, byte2);
+        if (entry == null) {
+            entry = MechanismDatabase.getInstance().getCipherSuiteById(byte1, byte2);
+        }
+        return entry;
     }
 
     static final class UnknownServerName extends SNIServerName {

@@ -60,6 +60,8 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 public final class SSLContextBuilder {
 
     private SecurityDomain securityDomain;
+    // ELY-1917: This should be changed to CipherSuiteSelector.openSslCombinedDefault once we are ready to enable
+    // TLS 1.3 by default
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean useCipherSuitesOrder = true;

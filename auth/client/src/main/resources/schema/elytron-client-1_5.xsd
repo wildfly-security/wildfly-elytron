@@ -75,7 +75,7 @@
             <xsd:element name="key-store-ssl-certificate" type="key-store-ssl-certificate-type" minOccurs="0"/>
             <xsd:element name="trust-store" type="trust-store-ref-type" minOccurs="0"/>
             <xsd:element name="trust-manager" type="trust-manager-type" minOccurs="0"/>
-            <xsd:element name="cipher-suite" type="selector-type" minOccurs="0">
+            <xsd:element name="cipher-suite" type="cipher-suite-selector-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         Configuration to filter the enabled cipher suites. 
@@ -1235,6 +1235,28 @@
                         A Uniform Resource Identifier (URI).
                     </xsd:documentation>
                 </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="cipher-suite-selector-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                Cipher suite selector type.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="selector" type="xsd:string">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The format of the selector is described in Javadoc of org.wildfly.security.ssl.CipherSuiteSelector.fromString(selector).
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="names" type="xsd:string">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The format of the names is described in Javadoc of org.wildfly.security.ssl.CipherSuiteSelector.fromNamesString(names).
+                </xsd:documentation>
+            </xsd:annotation>
         </xsd:attribute>
     </xsd:complexType>
 

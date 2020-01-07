@@ -181,6 +181,22 @@ public class ElytronXmlParserTest {
         Assert.assertNull(wsSecurityType);
     }
 
+    @Test
+    public void testCipherSuites() throws Exception {
+        URL config = getClass().getResource("test-wildfly-config-v1_5.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+        checkSSLContext(authContext, "http://both.org");
+        checkSSLContext(authContext, "http://selector-only.org");
+        checkSSLContext(authContext, "http://names-only.org");
+    }
+
+    private void checkSSLContext(SecurityFactory<AuthenticationContext> authContext, String uri) throws Exception {
+        RuleNode<SecurityFactory<SSLContext>> node = authContext.create().sslRuleMatching(new URI(uri), null, null);
+        Assert.assertNotNull(node);
+        Assert.assertNotNull(node.getConfiguration().create());
+    }
+
     @BeforeClass
     public static void prepareKeyStores() throws Exception {
         Security.addProvider(provider);
