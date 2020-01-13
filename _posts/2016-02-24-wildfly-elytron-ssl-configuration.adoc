@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'WildFly Elytron - SSL Configuration'
+date: 2016-02-24
+tags: elytron management security ssl tls undertow wildfly
+synopsis: An early blog post describing how SSL configuration was being centrally defined within a new subsystem.  Written early 2016 it is potentially due to be reviewed as exact commands may have evolved since it was written.
+author: darranl
+link: https://darranl.blogspot.com/2016/02/wildfly-elytron-ssl-configuration.html
+---

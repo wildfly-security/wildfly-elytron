@@ -1,0 +1,29 @@
+---
+layout: null
+---
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+
+    <channel>
+        <title>{{ site.title }}</title>
+        <link>{{ site.url }}{{ site.baseurl }}</link>
+        <description>{{ site.description }}</description>
+        <lastBuildDate>{{ site.time | date_to_rfc822 }}</lastBuildDate>
+        {% for post in site.posts limit:10 %}
+        <item>
+            <title>{{ post.title }}</title>
+            <link>
+                {% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url | prepend: site.url }}{% endif %}
+            </link>
+            <description>
+                {{ post.content | strip_html | truncatewords: '50' }}
+            </description>
+            <pubDate>{{ post.date | date_to_rfc822 }}</pubDate>
+            <guid>
+                {% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url | prepend: site.url }}{% endif %}
+            </guid>
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

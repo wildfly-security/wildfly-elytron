@@ -1,0 +1,99 @@
+body.post {
+  background: #E7E8EA;
+
+  div.post-page {
+    h1, h2, h3, h4, h5, h6, p, small, strong, em,
+    table tr th, table tr td, li, i, dt, .title, .paragraph, .footnote, b {
+      color: #0D1C2C;
+      @media only screen and (max-width: 768px) {
+        word-wrap: break-word;
+      }
+    }
+    .note, .colist {
+      overflow: auto;
+    }
+  }
+}
+.blog-page {
+  .blog-list-item {
+    margin-bottom: 3rem;
+    p {
+      margin: 0;
+    }
+    p.byline {
+      font-size: 1.3em;
+    }
+
+    .post-title {
+      a {
+        font-size: 1.8rem;
+        text-decoration: none;
+      }
+    }
+  }
+  .fa-rss-square {
+    font-size: 2rem;
+    color: #ee802f;
+    float: right;
+    &:hover {
+      color: darken( #ee802f, 10%);
+    }
+  }
+}
+
+.blog-page, .post-page {
+  .byline-wrapper {
+    display: flex;
+    align-items:center;
+  }
+  .headshot, .byline {
+    display: inline;
+  }
+  .headshot {
+    max-width: 4rem;
+    margin-right: .5rem;
+  }
+  .share-page {
+    text-align: right;
+  }
+  small {
+    font-size: 14px;
+  }
+}
+
+.post-page {
+  * {
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            font-family: "Titillium Web", sans-serif;
+        }
+  }
+}
+
+.post-page .headshot {
+  border: 1px solid #BBB;
+}
+
+.post-page {
+  .byline-wrapper {
+    p {
+      margin: 0;
+    }
+  }
+  .customer-logo {
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: $breakpoint-m) {
+  .blog-list-item .share-page, .post-page .share-page {
+    text-align: left;
+  }
+  .blog-page p.byline {
+    font-size: 1rem;
+    line-height: 1.25rem;
+  }
+  .post-page, .blog-page {
+    padding: 0px 10px;
+  }
+}

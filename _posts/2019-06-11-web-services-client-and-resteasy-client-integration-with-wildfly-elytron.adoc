@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Web Services client and RESTEasy client integration with WildFly Elytron'
+date: 2019-06-11
+tags: elytron
+synopsis: An overview of the upcoming Elytron integration with Web Services and RESTEasy on the client side.
+author: dvilkola
+link: https://dvilkola.wordpress.com/2019/06/11/web-services-client-and-resteasy-client-integration-with-wildfly-elytron/
+---

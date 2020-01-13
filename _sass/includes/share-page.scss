@@ -1,0 +1,16 @@
+.share-page {
+  a {
+    text-decoration: none;
+    img {
+      max-width: 1.5rem;
+      margin-right: .5rem;
+    }
+  }
+
+  .fa-linkedin, .fa-twitter-square, .fa-facebook-square, .fa-reddit-square, .fa-envelope-square {
+      font-size: 2rem;
+      max-width: 1.5rem;
+      margin-right: .5rem;
+      color: $title-colour;
+  }
+}

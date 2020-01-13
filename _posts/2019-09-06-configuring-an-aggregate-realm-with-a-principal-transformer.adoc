@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Configuring an aggregate-realm with a principal-transformer'
+date: 2019-09-06
+tags: elytron
+synopsis: This blog post shows how to use a principal-transformer in an aggregate-realm between authentication and authorization.
+author: aabdelsa
+link: https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer
+---

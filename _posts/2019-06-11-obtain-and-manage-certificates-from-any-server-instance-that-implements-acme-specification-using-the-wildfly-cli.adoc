@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Obtain and manage certificates from any server instance that implements ACME specification using the WildFly CLI'
+date: 2019-06-11
+tags: elytron
+synopsis: This blog post describes the upcoming feature that allows to configure other ACME certificate authorities than Let's Encrypt for obtaining and managing of certificates.
+author: dvilkola
+link: https://dvilkola.wordpress.com/2019/06/11/obtain-and-manage-certificates-from-any-server-instance-that-implements-acme-specification-using-the-wildfly-cli/
+---

@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'How to use an Elytron SASL mechanism that supports channel binding'
+date: 2017-09-28
+tags: ssl sasl tls wildfly elytron
+synopsis: This blog post shows how to set up one-way SSL/TLS for the management interface and how to then use a SASL mechanism that supports channel binding to connect to the CLI.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2017/09/28/how-to-use-an-elytron-sasl-plus-mechanism
+---

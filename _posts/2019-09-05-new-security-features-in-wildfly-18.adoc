@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'New Security Features in WildFly 18'
+date: 2019-09-05
+tags: elytron release wildfly18
+synopsis: An overview of the new security features in WildFly 18.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18
+---

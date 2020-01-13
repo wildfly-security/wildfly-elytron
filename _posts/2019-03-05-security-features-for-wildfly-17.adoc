@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Security Features for WildFly 17'
+date: 2019-03-05
+tags: elytron release security wildfly
+synopsis: This blog post identifies the security features planned for WildFly 17.
+author: darranl
+link: https://darranl.blogspot.com/2019/03/security-features-for-wildfly-17.html
+---

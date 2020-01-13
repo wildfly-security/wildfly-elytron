@@ -1,0 +1,9 @@
+---
+layout: post
+title: "What's new in Elytron in WildFly 16"
+date: 2019-02-28
+tags: elytron release wildfly16
+synopsis: An overview of the new Elytron features in WildFly 16.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/02/28/whats-new-in-elytron-in-wildfly-16
+---

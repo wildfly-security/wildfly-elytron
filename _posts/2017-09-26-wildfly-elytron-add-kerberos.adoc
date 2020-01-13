@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'WildFly Elytron - Add Kerberos Authentication To Existing Web Application'
+date: 2017-09-26
+tags: basic elytron kerberos spnego undertow
+synopsis: A blog post describing how to override the authentication policy of an existing web application and add SPNEGO authentication to it.
+author: darranl
+link: https://darranl.blogspot.com/2017/09/wildfly-elytron-add-kerberos.html
+---

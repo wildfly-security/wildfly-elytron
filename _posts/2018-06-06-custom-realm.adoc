@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Creating custom security realm for WildFly Elytron'
+date: 2018-06-06
+tags: elytron
+synopsis: This blog post describes how to create a custom security realm for Elytron.
+author: hkalina
+link: https://hkalina.github.io/2018/06/06/custom-realm/
+---

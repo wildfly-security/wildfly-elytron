@@ -1,0 +1,23 @@
+---
+layout: default
+---
+
+<div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>{{ page.title }}</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        {% assign author = site.data.authors[page.author] %}
+        {% if author.emailhash %}
+          <img class="headshot" src="https://www.gravatar.com/avatar/{{ author.emailhash }}">
+        {% endif %}
+        <p class="byline">By <a href="{{ author.bio }}">{{ author.name }}</a> | {{ page.date | date: '%B %d, %Y' }}</p>
+      </div>
+      {% capture page_url %}{{ site.url }}{{ page.url | relative_url }}{% endcapture %}
+      <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html url=page_url title=page.title %}</div>
+      <div class="grid__item width-12-12">
+          {{ content }}
+      </div>
+    </div>
+  </div>
+</div>

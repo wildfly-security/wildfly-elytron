@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'OpenSSL support with WildFly'
+date: 2017-10-06
+tags: wildfly openssl ssl elytron
+synopsis: A blog post describing how to use OpenSSL in WildFly.
+author: stuartwdouglas
+link: https://wildfly.org/news/2017/10/06/OpenSSL-Support-In-Wildfly/
+---

@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Using WildFly Elytron with Undertow Standalone'
+date: 2017-09-08
+tags: authentication elytron undertow wildfly
+synopsis: Although developed for use within the WildFly application server the WildFly Elytron project can also be used in isolation, this blog post demonstrates how it can be used to secure an embedded Undertow server.
+author: darranl
+link: https://darranl.blogspot.com/2017/09/using-wildfly-elytron-with-undertow.html
+---

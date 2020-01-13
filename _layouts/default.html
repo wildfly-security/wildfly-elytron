@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: {{ page.title }}</title>
+    <script src="{{ '/assets/javascript/highlight.pack.js' | relative_url }}" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="{{ '/favicon.ico' | prepend: site.baseurl }}">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="{{ '/assets/javascript/hl.js' | relative_url }}" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="{{ '/feed.xml' | prepend: site.baseurl }}" title="{{ site.title }}">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                {% for item in site.data.navigation %}
+                    {% if page.url == item.link %}
+                        {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+                    {% elsif page.url contains 'blog' and item.name == 'Blog' %}
+                        {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+                    {% else %}
+                        {% assign class = 'mdl-navigation__link' %}
+                    {% endif %}
+                    {% if item.name == 'Docs' or item.name == 'GitHub' %}
+                         <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
+                    {% else %}
+                         <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            {% for item in site.data.navigation %}
+            {% if page.url == item.link %}
+            {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+            {% elsif page.url contains 'blog' and item.name == 'Blog' %}
+            {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+            {% else %}
+            {% assign class = 'mdl-navigation__link' %}
+            {% endif %}
+            {% if item.name == 'Docs' or item.name == 'GitHub' %}
+                <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
+            {% else %}
+                <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
+            {% endif %}
+            {% endfor %}
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            {%  if page.url == '/' %}
+                <div class="large-logo">
+                    <h1>Wild<strong>Fly</strong> Elytron</h1>
+                </div>
+            {% endif %}
+            <div class="content">
+                {{ content }}
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

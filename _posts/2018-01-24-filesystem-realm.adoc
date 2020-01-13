@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Filesystem realm in WildFly Elytron'
+date: 2018-01-24
+tags: elytron
+synopsis: What is Filesystem realm and how to manage it.
+author: hkalina
+link: https://hkalina.github.io/2018/01/24/filesystem-realm/
+---

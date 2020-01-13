@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Mapping an X.509 certificate chain to an identity using a subject alternative name'
+date: 2019-06-11
+tags: identity x509 wildfly elytron
+synopsis: An introduction on how we are enhancing the mapping of an X.509 certificate to an underlying identity.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/06/11/mapping-an-x509-cert-to-an-identity-using-a-subject-alt-name
+---

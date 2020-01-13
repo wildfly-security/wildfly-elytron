@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Getting started with EJBs and Elytron Part 1: Securing EJBs and invoking them from remote clients'
+date: 2017-09-08
+tags: wildfly elytron
+synopsis: This blog post describes how to secure EJBs deployed to WildFly 11 using Elytron and how to invoke them from a standalone remote client using the new Naming Client and EJB Client libraries.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2017/09/08/getting-started-with-ejbs-and-elytron-part-1
+---

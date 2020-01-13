@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Upcoming support for TLS 1.3 with WildFly'
+date: 2019-06-11
+tags: ssl wildfly elytron tls1.3
+synopsis: A quick introduction to the upcoming support for TLS 1.3 in WildFly.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/06/11/upcoming-support-for-tls-13-with-wildfly
+---

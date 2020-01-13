@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'WildFly Elytron - Principal Transformers, Realm Mappings, and Principal Decoders'
+date: 2017-07-14
+tags: elytron PrincipalDecoder PrincipalTransformer RealmMapper wildfly
+synopsis: To control the behaviour during authentication and authorization WildFly Elytron supports the use of various transformers, mappers, and decoders - this blog post describes how they fit together in the different stages of authentication.
+author: darranl
+link: https://darranl.blogspot.com/2017/07/wildfly-elytron-principal-transformers.html
+---

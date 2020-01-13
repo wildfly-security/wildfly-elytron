@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Getting started with EJBs and Elytron Part 2: EJB invocations from remote servers'
+date: 2017-09-08
+tags: wildfly elytron
+synopsis: This blog post describes how to invoke EJBs deployed on a WildFly server instance from another WildFly server instance using Elytron.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2017/09/08/getting-started-with-ejbs-and-elytron-part-2
+---
