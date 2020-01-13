@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Using WildFly Elytron JASPI with Standalone Undertow'
+date: 2018-10-18
+tags: authentication elytron http jaspi security undertow
+synopsis: How to make use of JASPI with a standalone Undertow.
+author: darranl
+link: https://darranl.blogspot.com/2018/10/using-wildfly-elytron-jaspi-with.html
+---

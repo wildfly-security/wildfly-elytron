@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Using WildFly Elytron with the Netty HttpServerCodec'
+date: 2019-01-19
+tags: authentication basic elytron http java netty
+synopsis: An introduction as to how WildFly Elytron could be used with Netty.
+author: darranl
+link: https://darranl.blogspot.com/2019/01/using-wildfly-elytron-with-netty.html
+---

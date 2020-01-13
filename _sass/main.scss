@@ -1,0 +1,475 @@
+@import url('https://fonts.googleapis.com/css?family=PT+Mono|Titillium+Web:200,400,700');
+
+$primary-colour: #1d679c!important;
+$white-text: #FFF!important;
+$title-colour: #004153!important;
+$button-highlight-colour: #8EC0D5!important;
+
+$breakpoint-m: 48em;
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body .page-content > .content {
+  padding: 0 13rem;
+  @media screen and (max-width: 1170px) { padding: 0 0rem; }
+  line-height: 1.2;
+  overflow: none;
+
+}
+
+h1 {
+  font-size: 24px;
+}
+h2 {
+  font-size: 2.5rem;
+}
+h3 {
+  font-size: 20px;
+  font-family: "Titillium Web", sans-serif;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+
+
+a:not(.mdl-navigation__link) {
+    color: $title-colour;
+}
+
+.mdl-navigation {
+    padding-top: 0px !important;
+}
+.mdl-layout__drawer {
+    border-right: none !important;
+}
+
+.mdl-layout__header {
+    background-color: $title-colour;
+}
+.side-drawer-logo-container {
+    display: flex;
+    justify-content: center;
+    background-color: $title-colour;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+    color: $white-text;
+
+    h3 {
+        line-height: initial;
+        margin: 10px 0px;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    * {
+          color: $white-text;
+    }
+}
+.large-logo {
+    @media (max-width: $breakpoint-m) {
+         display: none;
+    }
+
+    display: flex;
+    justify-content: center;
+    background-color: $title-colour;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+    color: $white-text;
+
+    img {
+        max-width: 100%
+    }
+
+    * {
+      font-family: "Titillium Web", sans-serif;
+      font-size: 46px;
+      color: $white-text;
+    }
+}
+.component-header {
+  margin-top: 0px;
+  background-color: $title-colour;
+  color: $white-text;
+  font-size: 25px;
+  padding-left: 25px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-family: "Titillium Web", sans-serif;
+}
+* {
+  font-family: "Titillium Web", sans-serif;
+}
+
+.title {
+  color: $title-colour;
+  text-align: center;
+  font-family: "Titillium Web", sans-serif;
+  b {
+      color: $title-colour;
+  }
+}
+
+.logo-toolbar-container {
+   line-height:48px;
+}
+
+.mdl-layout__header-row{
+    padding: 0 40px 0 60px;
+}
+
+.mdl-layout-title {
+   * {
+      color: $white-text;
+   }
+}
+
+.material-icons {
+    color: $white-text;
+}
+
+ .grid-wrapper {
+   display: grid;
+   grid-template-columns: repeat(12, 1fr);
+   grid-gap: 1em;
+   clear: both;
+
+   h1 {
+       font-family: "Titillium Web", sans-serif;
+       font-size: 70px;
+       text-align: center;
+       color: $title-colour;
+       margin: 36px 0px 24px;
+      @media (max-width: $breakpoint-m) {
+        font-size: 30px;
+        margin: 18px 0px 12px;
+      }
+   }
+ }
+
+ .width-2-12 {
+    grid-column: span 2;
+ }
+
+ .width-4-12 {
+   grid-column: span 4;
+ }
+
+ .width-8-12 {
+   grid-column: span 8;
+ }
+
+.width-10-12 {
+    grid-column: span 10;
+ }
+
+ .width-12-12 {
+   grid-column: span 12;
+ }
+
+.width-2-12-m {
+   @media (max-width: $breakpoint-m) {
+     grid-column: span 2;
+   }
+ }
+
+ .width-4-12-m {
+   @media (max-width: $breakpoint-m) {
+     grid-column: span 4;
+   }
+ }
+
+ .width-8-12-m {
+   @media (max-width: $breakpoint-m) {
+     grid-column: span 8;
+   }
+ }
+
+ .width-10-12-m {
+    @media (max-width: $breakpoint-m) {
+      grid-column: span 10;
+    }
+ }
+
+ .width-12-12-m {
+   @media (max-width: $breakpoint-m) {
+     grid-column: span 12;
+   }
+ }
+
+ .callout {
+   padding: 0 1.5rem;
+   text-align: left;
+   margin-bottom: 1.5rem;
+   display:flex;
+   align-items:center;
+   h2 {
+     font-family: "Titillium Web", sans-serif;
+     font-size: 24px;
+     display: block;
+     float: left;
+     width: 35%;
+     margin: 2rem 1rem;
+     text-transform: uppercase;
+   }
+   p {
+     font-size: 18px;
+     width: 65%;
+     display: block;
+     margin: 0 0 0;
+   }
+   &.grey {
+     background-color: #DCDCDC;
+   }
+   &.blue {
+     background-color: #A3DBE8;
+   }
+ }
+
+@media screen and (max-width: 1505px) {
+  .callout {
+    h2, p {
+      width: 50%;
+    }
+  }
+}
+
+
+@media screen and (max-width: 1024px) {
+  .callout {
+    display: block;
+    padding: 1rem 1.5rem;
+    h2, p {
+      display: block;
+      width: 100%;
+      margin: 0 0 1rem 0;
+    }
+  }
+}
+
+.home-section {
+  text-align: center;
+  padding-bottom: 4rem;
+  &:not(:last-of-type){
+    border-bottom: 4px solid white;
+  }
+}
+
+.mdl-navigation__link {
+  font-size: 17px;
+
+  &--current {
+    opacity: 1;
+    font-weight: bold;
+  }
+}
+
+.hide-mobile {
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+}
+
+.paginator-btns a {
+  margin: 1rem 0;
+  @media screen and (max-width: 768px) {
+    display: block;
+  }
+}
+
+a.button-cta {
+  text-align: center;
+  color: $white-text;
+  background-color: $title-colour;
+  border: 2px solid;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 12px 40px;
+  white-space: nowrap;
+  line-height: 3.5;
+  transition: background .2s ease-in 0s;
+  &:hover, &:active, &:focus {
+    background-color: $button-highlight-colour;
+    border-color: $button-highlight-colour;
+    color: $title-colour;
+  }
+  @media screen and (max-width: 768px) {
+    line-height: 1.5;
+  }
+}
+
+a.button-cta.secondary {
+  background: none;
+  border: 2px solid;
+  &:hover, &:active, &:focus {
+    background-color: $button-highlight-colour;
+    border-color: $button-highlight-colour;
+    color: $title-colour;
+  }
+}
+
+
+
+
+pre, pre span {
+  color: #be9100;
+}
+
+code, pre, pre span {
+  background-color: inherit;
+  padding: 0;
+  a {
+    text-decoration: none;
+    color: inherit;
+    font: inherit;
+  }
+  font-family: 'Roboto Mono', monospace;
+  font-size: 16px;
+  white-space: pre-wrap;
+}
+
+pre {
+ background: #282a36;
+ overflow: inherit;
+ padding: 0;
+}
+
+pre.highlight {
+ border: 1px solid #4695EB;
+ padding: 1rem;
+ line-height: 1.2em;
+ overflow-x: auto;
+}
+
+pre > code,
+table code {
+  border: none;
+  background-color: transparent;
+}
+
+
+pre > code,
+table code {
+  border: none;
+  background-color: transparent;
+}
+
+.hljs {
+  display: inline;
+  overflow: inherit;
+  overflow-x: inherit;
+  overflow-y: hidden;
+  background: inherit;
+  padding: 0;
+  line-height: 1.4em;
+}
+
+.hljs-built_in,
+.hljs-selector-tag,
+.hljs-section,
+.hljs-link,
+.hljs-function,
+.hljs-params {
+  color: $white;
+}
+
+.hljs-keyword,
+.hljs-tag, .hljs-tag .hljs-name {
+  color: $link;
+}
+
+.hljs,
+.hljs-subst {
+  color: $gray-0;
+}
+
+.hljs-title,
+.hljs-attr {
+  color: $yellow;
+}
+
+.hljs-string,
+.hljs-meta,
+.hljs-name,
+.hljs-type,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition,
+.hljs-variable,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: $orange;
+}
+
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+  color: $gray-1;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+
+.hljs-literal,
+.hljs-number {
+  color: $yellow;
+}
+
+.blog-page, .post-page, .getting-started-page {
+  padding: 10px 20px;
+  a, p {
+    font-size: 18px;
+  }
+}
+
+.getting-started-page {
+   h1 {
+       color: $title-colour;
+       font-size: 35px;
+       font-weight: 600;
+   }
+   h2 {
+        font-size: 22px;
+        font-weight: 600;
+   }
+   h3 {
+        font-size: 20px;
+        font-weight: 600;
+   }
+   h1, h2, h3, h4, h5 {
+       font-family: "Titillium Web", sans-serif;
+   }
+
+}
+
+.javadoc-page-title {
+   color: $title-colour;
+   font-size: 35px;
+   font-family: "Titillium Web", sans-serif;
+}
+
+* {
+   color: $black;
+   font-family: "Titillium Web", sans-serif;
+}

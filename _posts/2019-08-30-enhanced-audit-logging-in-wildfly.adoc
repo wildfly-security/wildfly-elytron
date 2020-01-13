@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update'
+date: 2019-08-30
+tags: audit-logging auditing elytron logging RFC3164 RFC5424 wildfly
+synopsis: An overview of the new enhancements done to WildFly Elytron's audit logging in WildFly 18.
+author: jucook
+link: https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
+---

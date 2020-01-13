@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Building web app with authorization and account management using Elytron (Part 2)'
+date: 2019-02-25
+tags: elytron
+synopsis: An example of how to implement a web application with Elytron API for user's self service.
+author: dvilkola
+link: https://dvilkola.wordpress.com/2019/02/25/building-web-app-with-authorization-and-account-management-using-elytron-part-2/
+---

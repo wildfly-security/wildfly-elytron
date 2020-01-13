@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Certificate authentication with password fallback in Elytron'
+date: 2018-05-30
+tags: elytron
+synopsis: This tutorial describes configuration of certificate authentication with password (BASIC/PLAIN) fallback authentication for management interface of WildFly using WildFly Elytron.
+author: hkalina
+link: https://hkalina.github.io/2018/05/30/cert-basic/
+---

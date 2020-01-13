@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Securing an embedded Jetty server using Elytron'
+date: 2019-01-07
+tags: jetty elytron
+synopsis: An introduction as to how WildFly Elytron could be used with Jetty.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/01/07/securing-an-embedded-jetty-server-using-elytron
+---

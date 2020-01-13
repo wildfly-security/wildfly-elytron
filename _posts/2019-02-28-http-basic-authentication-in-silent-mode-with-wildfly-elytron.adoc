@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'HTTP Basic Authentication in silent mode with Wildfly Elytron'
+date: 2019-02-28
+tags: elytron
+synopsis: How to set and make use of silent mode for the HTTP BASIC authentication mechanism.
+author: dvilkola
+link: https://dvilkola.wordpress.com/2019/02/28/http-basic-authentication-in-silent-mode-with-wildfly-elytron/
+---

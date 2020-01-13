@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Elytron and Kerberos using gssproxy'
+date: 2018-01-02
+tags: elytron
+synopsis: A blog post describing how configure Kerberos authentication in WildFly using Elytron.
+author: hkalina
+link: https://hkalina.github.io/2018/01/02/gssproxy/
+---

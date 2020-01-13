@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Planned Security Features for WildFly 19'
+date: 2019-10-10
+tags: elytron planning wildfly19
+synopsis: An overview of the new security features that are being planned for WildFly 19.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19
+---

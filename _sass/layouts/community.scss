@@ -1,0 +1,25 @@
+.community-page {
+
+  h1 {
+    strong {
+        color: $title-colour;
+    }
+  }
+
+  .community-block {
+
+    text-align:center;
+
+    p {
+      text-align: left;
+      padding: 0 20px;
+      font-size: 18px;
+    }
+
+    h3 {
+        line-height: initial;
+        margin: 16px 0px 8px 0px;
+        font-weight: 600;
+    }
+  }
+}

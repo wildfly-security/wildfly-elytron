@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Configuring permissions using Elytron in WildFly 13'
+date: 2018-06-01
+tags: permissions wildfly elytron
+synopsis: This blog post gives an overview Elytron permission sets.
+author: fjuma
+link: https://developer.jboss.org/people/fjuma/blog/2018/06/01/configuring-permissions-using-elytron-in-wildfly-13
+---
