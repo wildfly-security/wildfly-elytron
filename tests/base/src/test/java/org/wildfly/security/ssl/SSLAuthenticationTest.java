@@ -571,7 +571,9 @@ public class SSLAuthenticationTest {
 
     @AfterClass
     public static void afterTest() throws Exception {
-        ocspServer.stop();
+        if (ocspServer != null) {
+            ocspServer.stop();
+        }
         LADYBIRD_FILE.delete();
         SCARAB_FILE.delete();
         DUNG_FILE.delete();
