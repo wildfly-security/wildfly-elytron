@@ -18,23 +18,29 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,9 +49,9 @@ import java.util.Random;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;
@@ -55,10 +61,6 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -72,13 +74,18 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
+
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 /**
  * Client and server side tests for the ISO/IEC 9798-3 authentication SASL mechanism.
@@ -123,16 +130,15 @@ public class EntityTest extends BaseTestCase {
 
 
         // Generate Test Authority self signed certificate
-        DN = new X500Principal("CN=Test Authority, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
+        final X500Principal CA_DN = new X500Principal("CN=Test Authority, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
         selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
-                .setDn(DN)
+                .setDn(CA_DN)
                 .setKeyAlgorithmName("RSA")
                 .setSignatureAlgorithmName("SHA1withRSA")
+                .addExtension(new BasicConstraintsExtension(false, true, -1))
                 .build();
-        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
-        clientKeyStore.setKeyEntry("testauthority", selfSignedX509CertificateAndSigningKey.getSigningKey(), KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
-        serverTrustStore.setCertificateEntry("cn=test authority,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", certificate);
-
+        final X509Certificate caCertificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        final PrivateKey caKey = selfSignedX509CertificateAndSigningKey.getSigningKey();
 
         // Generate Test Client 1 self signed certificate
         DN = new X500Principal("CN=Test Client 1, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
@@ -149,29 +155,27 @@ public class EntityTest extends BaseTestCase {
 
         // Generate Signed Test Client certificate signed by Test Authority
         X500Principal subjectDN = new X500Principal("CN=Signed Test Client, OU=JBoss, O=Red Hat, ST=North Carolina, C=US");
-        X500Principal issuerDN = new X500Principal("CN=Test Authority, OU=JBoss, O=Red Hat, L=Raleigh, ST=North Carolina, C=US");
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         KeyPair generatedKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey signingKey = generatedKeys.getPrivate();
+        PrivateKey privateKey = generatedKeys.getPrivate();
         PublicKey publicKey = generatedKeys.getPublic();
 
-        selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
-                .setDn(issuerDN)
-                .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
-                .build();
-        certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
-        serverTrustStore.setCertificateEntry("cn=signed test client,ou=jboss,o=red hat,st=north carolina,c=us", certificate);
+        /*
+         * The CA certificate is added using the alias of the client it is tested with, this is not really how the trust store should
+         * be populated but as the test is also relying on the truststore to back the realm it needs to find an entry for the client
+         * and we do not want to add the clients actual certificate as the test is testing CA signed certs.
+         */
+        serverTrustStore.setCertificateEntry("cn=signed test client,ou=jboss,o=red hat,st=north carolina,c=us", caCertificate);
 
         certificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
+                .setIssuerDn(CA_DN)
                 .setSubjectDn(subjectDN)
                 .setSignatureAlgorithmName("SHA1withRSA")
-                .setSigningKey(selfSignedX509CertificateAndSigningKey.getSigningKey())
+                .setSigningKey(caKey)
                 .setPublicKey(publicKey)
                 .build();
-        clientKeyStore.setKeyEntry("testclientsignedbyca", signingKey, KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
+        clientKeyStore.setKeyEntry("testclientsignedbyca", privateKey, KEYSTORE_PASSWORD, new X509Certificate[]{certificate});
     }
 
     private void createServerKeyStoreClientTrustStore(KeyStore serverKeyStore,KeyStore clientTrustStore) throws Exception {
