@@ -1651,7 +1651,7 @@ public final class AuthenticationConfiguration {
             if (! parameterSpecs.isEmpty()) b.append("parameter-specifications=").append(parameterSpecs).append(',');
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
             if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
-            if (! webServicesProperties.isEmpty()) b.append("webservices-properties=").append(webServicesProperties).append(',');
+            if (webServicesProperties != null && ! webServicesProperties.isEmpty()) b.append("webservices-properties=").append(webServicesProperties).append(',');
             b.setLength(b.length() - 1);
             return this.toString = b.toString();
         }
