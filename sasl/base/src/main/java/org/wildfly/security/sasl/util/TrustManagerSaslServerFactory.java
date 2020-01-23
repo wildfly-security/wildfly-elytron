@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security.sasl._private.ElytronMessages.log;
 import static org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
 
 import java.security.GeneralSecurityException;
@@ -90,6 +91,7 @@ public final class TrustManagerSaslServerFactory extends AbstractDelegatingSaslS
                             trustManager.checkClientTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
                             evidenceVerifyCallback.setVerified(true);
                         } catch (CertificateException e) {
+                            log.trace("Unable to verify certificate chain", e);
                         }
                         iterator.remove();
                     }
