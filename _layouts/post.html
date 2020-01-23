@@ -13,7 +13,8 @@ layout: default
         {% endif %}
         <p class="byline">By <a href="{{ author.bio }}">{{ author.name }}</a> | {{ page.date | date: '%B %d, %Y' }}</p>
       </div>
-      <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html url=page.url title=page.title %}</div>
+      {% capture page_url %}{{ site.url }}{{ page.url | relative_url }}{% endcapture %}
+      <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html url=page_url title=page.title %}</div>
       <div class="grid__item width-12-12">
           {{ content }}
       </div>

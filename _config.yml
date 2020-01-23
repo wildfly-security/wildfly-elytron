@@ -16,11 +16,10 @@
 title: WildFly Elytron
 #description: >- # this means to ignore newlines until "baseurl:"
 #  WildFly Elytron is a set of APIs and SPIs for application server security.
-#baseurl: "" # the subpath of your site, e.g. /blog
 #url: "" # the base hostname & protocol for your site, e.g. http://example.com
-#twitter_username: WildFlyAS
-#github_username:  wildfly-security
+twitter_username: WildFlyAS
 # Build settings
+baseurl: "/wildfly-elytron"
 markdown: kramdown
 theme: minima
 plugins:

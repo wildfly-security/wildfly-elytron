@@ -46,10 +46,10 @@
                     {% else %}
                         {% assign class = 'mdl-navigation__link' %}
                     {% endif %}
-                    {% if item.name == 'Docs' %}
-                         <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
+                    {% if item.name == 'Docs' or item.name == 'GitHub' %}
+                         <a class="{{class}} e {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
                     {% else %}
-                         <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | prepend: site.url }}">{{ item.name }}</a>
+                         <a class="{{class}} f {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
                     {% endif %}
                 {% endfor %}
             </nav>
@@ -66,10 +66,10 @@
             {% else %}
             {% assign class = 'mdl-navigation__link' %}
             {% endif %}
-            {% if item.name == 'Docs' %}
+            {% if item.name == 'Docs' or item.name == 'GitHub' %}
                 <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
             {% else %}
-                <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | prepend: site.url }}">{{ item.name }}</a>
+                <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
             {% endif %}
             {% endfor %}
             <!-- mdl-navigation__link--current -->

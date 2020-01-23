@@ -14,14 +14,14 @@ layout: null
         <item>
             <title>{{ post.title }}</title>
             <link>
-                {{ post.url | prepend: site.url }}
+                {% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}
             </link>
             <description>
                 {{ post.content | strip_html | truncatewords: '50' }}
             </description>
             <pubDate>{{ post.date | date_to_rfc822 }}</pubDate>
             <guid>
-                {{ post.url | prepend: site.url }}
+                {% if post.link %}{{ post.link }}{% else %}{{ post.url | relative_url }}{% endif %}
             </guid>
         </item>
         {% endfor %}
