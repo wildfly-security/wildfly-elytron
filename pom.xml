@@ -270,6 +270,7 @@
                             ${project.basedir}/auth/util/src/main/java/;
                             ${project.basedir}/base/src/main/java/;
                             ${project.basedir}/credential/base/src/main/java/;
+                            ${project.basedir}/credential/source/oauth2/src/main/java/;
                             ${project.basedir}/credential/store/src/main/java/;
                             ${project.basedir}/digest/src/main/java/;
                             ${project.basedir}/http/base/src/main/java/;
@@ -350,6 +351,7 @@
                                     <include>org/wildfly/security/authz/*.java</include>
                                     <include>org/wildfly/security/credential/*.java</include>
                                     <include>org/wildfly/security/credential/source/*.java</include>
+                                    <include>org/wildfly/security/credential/source/oauth2/*.java</include>
                                     <include>org/wildfly/security/credential/store/*.java</include>
                                     <include>org/wildfly/security/evidence/*.java</include>
                                     <include>org/wildfly/security/http/*.java</include>
@@ -500,6 +502,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-credential-source-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-credential-source-oauth2</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1259,6 +1266,7 @@
         <module>credential/base</module>
         <module>credential/store</module>
         <module>credential/source/impl</module>
+        <module>credential/source/oauth2</module>
         <module>digest</module>
         <module>http/base</module>
         <module>http/basic</module>
