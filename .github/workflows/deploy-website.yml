@@ -1,0 +1,22 @@
+name: deploy-website
+# Our workflow will only be triggered when we push to the develop branch
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    name: deploy
+    runs-on: ubuntu-latest
+    # Actions
+    steps:
+      # First, checkout the code.
+      - uses: actions/checkout@v2
+      # Next, execute our custom action to build and deploy the site to the gh-pages branch.
+      - uses: ./.github/actions/build-and-deploy-site
+        env:
+          # Using the default secrets.GITHUB_TOKEN does not work properly
+          # yet. It seems that it can only be used for private repositories
+          # right now. We will use a personal access token to work around this.
+          GITHUB_TOKEN: ${{ secrets.PUSH_GITHUB_TOKEN }}

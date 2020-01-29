@@ -1,0 +1,5 @@
+name: 'Build and deploy website'
+description: 'Builds the latest version of the website and deploys it to gh-pages'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
