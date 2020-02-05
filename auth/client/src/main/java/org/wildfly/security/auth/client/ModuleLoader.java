@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.security.auth.client.ElytronMessages.xmlLog;
+import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 import javax.xml.stream.XMLStreamReader;
 

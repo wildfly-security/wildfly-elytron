@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.client;
 
 import static org.wildfly.common.math.HashMath.multiHashUnordered;
-import static org.wildfly.security.auth.client.ElytronMessages.log;
+import static org.wildfly.security.auth.client._private.ElytronMessages.log;
 
 import java.net.URI;
 import java.util.Locale;
