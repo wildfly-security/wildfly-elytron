@@ -126,7 +126,7 @@ public abstract class SecurityEventVisitor<P, R> {
      * @return the visitor return value
      */
     public R handleSyslogAuditEvent(final SyslogAuditEvent event, final P param) {
-        return handleSyslogAuditEvent(event, param);
+        return handleUnknownEvent(event, param);
     }
 
     /**

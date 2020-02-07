@@ -605,7 +605,7 @@ public class DERDecoder implements ASN1Decoder {
     /**
      * A class used to maintain state information during DER decoding.
      */
-    class DecoderState {
+    static class DecoderState {
         // Tag number for a constructed element
         private final int tag;
 

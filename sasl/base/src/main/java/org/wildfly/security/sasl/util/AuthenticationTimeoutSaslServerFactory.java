@@ -64,15 +64,19 @@ public final class AuthenticationTimeoutSaslServerFactory extends AbstractDelega
 
     @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        final long timeout = getTimeout(props);
+        final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
+        return (delegateSaslServer == null) ? null : new DelegatingTimeoutSaslServer(delegateSaslServer, scheduledExecutorService, timeout);
+    }
+
+    private long getTimeout(final Map<String, ?> props) {
         final long timeout;
         if (props.containsKey(WildFlySasl.AUTHENTICATION_TIMEOUT)) {
             timeout = Long.parseLong((String) props.get(WildFlySasl.AUTHENTICATION_TIMEOUT));
         } else {
             timeout = DEFAULT_TIMEOUT;
         }
-
-        final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
-        return (delegateSaslServer == null) ? null : new DelegatingTimeoutSaslServer(delegateSaslServer, scheduledExecutorService, timeout);
+        return timeout;
     }
 
     private static class DelegatingTimeoutSaslServer extends AbstractDelegatingSaslServer {

@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -102,6 +103,8 @@ public class SaslServerBuilder {
     private SecurityDomain securityDomain;
     private BuilderReference<Closeable> closeableReference;
     private BuilderReference<SecurityDomain> securityDomainReference;
+
+    private ScheduledExecutorService scheduledExecutorService;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;
@@ -252,6 +255,11 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setScheduledExecutorService(final ScheduledExecutorService scheduledExecutorService) {
+        this.scheduledExecutorService = scheduledExecutorService;
+        return this;
+    }
+
     public SaslServerBuilder addRealm(final String realmName, final SecurityRealm securityRealm) {
         Assert.assertNotNull(realmName);
         Assert.assertNotNull(securityRealm);
@@ -317,6 +325,9 @@ public class SaslServerBuilder {
         final SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
         builder.setFactory(factory);
         builder.setSecurityDomain(securityDomain);
+        if (scheduledExecutorService != null) {
+            builder.setScheduledExecutorService(scheduledExecutorService);
+        }
         final MechanismConfiguration.Builder mechBuilder = MechanismConfiguration.builder();
         for (MechanismRealmConfiguration realmConfiguration : mechanismRealms.values()) {
             mechBuilder.addMechanismRealm(realmConfiguration);

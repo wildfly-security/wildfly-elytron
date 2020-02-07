@@ -35,14 +35,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiFunction;
 import org.wildfly.common.function.ExceptionFunction;
@@ -1198,9 +1196,8 @@ public final class SecurityDomain {
     }
 
     private static class ScheduledExecutorServiceProvider {
-        private static final ThreadFactory threadFactory = doPrivileged((PrivilegedAction<JBossThreadFactory>) ()
-                -> new JBossThreadFactory(new ThreadGroup("SecurityDomain ThreadGroup"), Boolean.FALSE, null, "%G - %t", null, null));
-        private static final ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1, threadFactory);
+
+        private static final ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1);
 
         static {
             INSTANCE.setRemoveOnCancelPolicy(true);
