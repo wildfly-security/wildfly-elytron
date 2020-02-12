@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Blog</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/18/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/18/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="blog-page grid-wrapper">
+  <div class="grid__item width-10-12">
+  </div>
+  <div class="grid__item width-2-12 align-self-center">
+    <a href="/wildfly-elytron/feed.xml"><i class="fas fa-rss-square"></i></a>
+  </div>
+
+  <div class="grid__item width-12-12 width-12-12-m">
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19">Planned Security Features for WildFly 19</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          
+          <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a><br/><small>October 10, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19&title=Planned Security Features for WildFly 19" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Planned Security Features for WildFly 19&url=https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Planned Security Features for WildFly 19&amp;body=Planned Security Features for WildFly 19 https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>An overview of the new security features that are being planned for WildFly 19.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer">Configuring an aggregate-realm with a principal-transformer</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/9e5eb1d1c78e5aa6a1eb8365464049c8">
+          
+          <p class="byline">By <a href="https://github.com/ashley-abdelsayed98">Ashley Abdel-Sayed</a><br/><small>September 06, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer&title=Configuring an aggregate-realm with a principal-transformer" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Configuring an aggregate-realm with a principal-transformer&url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Configuring an aggregate-realm with a principal-transformer&amp;body=Configuring an aggregate-realm with a principal-transformer https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>This blog post shows how to use a principal-transformer in an aggregate-realm between authentication and authorization.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration">Support for masked passwords in the client XML configuration</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/9e5eb1d1c78e5aa6a1eb8365464049c8">
+          
+          <p class="byline">By <a href="https://github.com/ashley-abdelsayed98">Ashley Abdel-Sayed</a><br/><small>September 05, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration&title=Support for masked passwords in the client XML configuration" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Support for masked passwords in the client XML configuration&url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Support for masked passwords in the client XML configuration&amp;body=Support for masked passwords in the client XML configuration https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>This blog post shows how to generate a masked password and use it as a credential in the authentication client configuration.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18">New Security Features in WildFly 18</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          
+          <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a><br/><small>September 05, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18&title=New Security Features in WildFly 18" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=New Security Features in WildFly 18&url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=New Security Features in WildFly 18&amp;body=New Security Features in WildFly 18 https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>An overview of the new security features in WildFly 18.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores">Upcoming support for automatic updates of credential stores</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          
+          <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a><br/><small>September 05, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores&title=Upcoming support for automatic updates of credential stores" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Upcoming support for automatic updates of credential stores&url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Upcoming support for automatic updates of credential stores&amp;body=Upcoming support for automatic updates of credential stores https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>An overview of the upcoming support for automatic updates of credential stores.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html">Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+          <p class="byline">By <a href="https://github.com/justinmcook">Justin Cook</a><br/><small>August 30, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html&title=Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update&url=https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update&amp;body=Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>An overview of the new enhancements done to WildFly Elytron's audit logging in WildFly 18.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html">WildFly Elytron Credential Store APIs</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+          <p class="byline">By <a href="https://github.com/darranl">Darran Lofthouse</a><br/><small>June 26, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html&title=WildFly Elytron Credential Store APIs" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=WildFly Elytron Credential Store APIs&url=https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=WildFly Elytron Credential Store APIs&amp;body=WildFly Elytron Credential Store APIs https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>This blog post demonstrates the WildFly Elytron credential store APIs.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization">Using Elytron certificate-based authentication with authorization</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          
+          <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a><br/><small>June 14, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization&title=Using Elytron certificate-based authentication with authorization" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using Elytron certificate-based authentication with authorization&url=https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using Elytron certificate-based authentication with authorization&amp;body=Using Elytron certificate-based authentication with authorization https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>This blog post describes how to secure a web application deployed to WildFly using the CLIENT_CERT HTTP authentication mechanism with two-way SSL and authorization.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html">WildFly Elytron Aggregation of Attributes</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+          <p class="byline">By <a href="https://github.com/darranl">Darran Lofthouse</a><br/><small>June 12, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html&title=WildFly Elytron Aggregation of Attributes" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=WildFly Elytron Aggregation of Attributes&url=https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=WildFly Elytron Aggregation of Attributes&amp;body=WildFly Elytron Aggregation of Attributes https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>This blog describes the upcoming attribute aggregation feature.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html">Read More &rsaquo;</a></div>
+      </div>
+    
+      
+      <div class="blog-list-item grid-wrapper">
+        <div class="post-title grid__item width-12-12">
+          <a href="https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18">Security Features for WildFly 18</a>
+        </div>
+        <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+          
+            <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          
+          <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a><br/><small>June 12, 2019</small></p>
+        </div>
+        
+        <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18&title=Security Features for WildFly 18" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Security Features for WildFly 18&url=https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Security Features for WildFly 18&amp;body=Security Features for WildFly 18 https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+        <div class="grid__item width-12-12">
+          
+            <p>An overview of the new security features that are being planned for WildFly 18.</p>
+          
+        </div>
+        <div class="grid__item width-12-12"><a href="https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18">Read More &rsaquo;</a></div>
+      </div>
+    
+    
+      <div class="paginator-btns">
+        
+        
+          <a href="/wildfly-elytron/blog/page/2/" class="button-cta secondary">Older Posts</a>
+          
+      </div>
+      
+  </div>
+  
+  <div class="grid__item width-2-12"></div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

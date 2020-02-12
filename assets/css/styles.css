@@ -1,0 +1,204 @@
+/**
+This is a partial.
+It lies in <source>/_sass, just waiting to be imported.
+It does not contain the YAML front matter and has no corresponding output file in the built site.
+*/
+@import url("https://fonts.googleapis.com/css?family=PT+Mono|Titillium+Web:200,400,700");
+body { padding: 0; margin: 0; }
+
+body .page-content > .content { padding: 0 13rem; line-height: 1.2; overflow: none; }
+@media screen and (max-width: 1170px) { body .page-content > .content { padding: 0 0rem; } }
+
+h1 { font-size: 24px; }
+
+h2 { font-size: 2.5rem; }
+
+h3 { font-size: 20px; font-family: "Titillium Web", sans-serif; }
+
+h4 { font-size: 18px; }
+
+h5 { font-size: 16px; }
+
+a:not(.mdl-navigation__link) { color: #004153 !important; }
+
+.mdl-navigation { padding-top: 0px !important; }
+
+.mdl-layout__drawer { border-right: none !important; }
+
+.mdl-layout__header { background-color: #004153 !important; }
+
+.side-drawer-logo-container { display: flex; justify-content: center; background-color: #004153 !important; background-position: center; background-repeat: no-repeat; background-size: cover; position: relative; color: #FFF !important; }
+.side-drawer-logo-container h3 { line-height: initial; margin: 10px 0px; }
+.side-drawer-logo-container img { max-width: 100%; }
+.side-drawer-logo-container * { color: #FFF !important; }
+
+.large-logo { display: flex; justify-content: center; background-color: #004153 !important; background-position: center; background-repeat: no-repeat; background-size: cover; position: relative; color: #FFF !important; }
+@media (max-width: 48em) { .large-logo { display: none; } }
+.large-logo img { max-width: 100%; }
+.large-logo * { font-family: "Titillium Web", sans-serif; font-size: 46px; color: #FFF !important; }
+
+.component-header { margin-top: 0px; background-color: #004153 !important; color: #FFF !important; font-size: 25px; padding-left: 25px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; text-align: center; font-family: "Titillium Web", sans-serif; }
+
+* { font-family: "Titillium Web", sans-serif; }
+
+.title { color: #004153 !important; text-align: center; font-family: "Titillium Web", sans-serif; }
+.title b { color: #004153 !important; }
+
+.logo-toolbar-container { line-height: 48px; }
+
+.mdl-layout__header-row { padding: 0 40px 0 60px; }
+
+.mdl-layout-title * { color: #FFF !important; }
+
+.material-icons { color: #FFF !important; }
+
+.grid-wrapper { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 1em; clear: both; }
+.grid-wrapper h1 { font-family: "Titillium Web", sans-serif; font-size: 70px; text-align: center; color: #004153 !important; margin: 36px 0px 24px; }
+@media (max-width: 48em) { .grid-wrapper h1 { font-size: 30px; margin: 18px 0px 12px; } }
+
+.width-2-12 { grid-column: span 2; }
+
+.width-4-12 { grid-column: span 4; }
+
+.width-8-12 { grid-column: span 8; }
+
+.width-10-12 { grid-column: span 10; }
+
+.width-12-12 { grid-column: span 12; }
+
+@media (max-width: 48em) { .width-2-12-m { grid-column: span 2; } }
+
+@media (max-width: 48em) { .width-4-12-m { grid-column: span 4; } }
+
+@media (max-width: 48em) { .width-8-12-m { grid-column: span 8; } }
+
+@media (max-width: 48em) { .width-10-12-m { grid-column: span 10; } }
+
+@media (max-width: 48em) { .width-12-12-m { grid-column: span 12; } }
+
+.callout { padding: 0 1.5rem; text-align: left; margin-bottom: 1.5rem; display: flex; align-items: center; }
+.callout h2 { font-family: "Titillium Web", sans-serif; font-size: 24px; display: block; float: left; width: 35%; margin: 2rem 1rem; text-transform: uppercase; }
+.callout p { font-size: 18px; width: 65%; display: block; margin: 0 0 0; }
+.callout.grey { background-color: #DCDCDC; }
+.callout.blue { background-color: #A3DBE8; }
+
+@media screen and (max-width: 1505px) { .callout h2, .callout p { width: 50%; } }
+@media screen and (max-width: 1024px) { .callout { display: block; padding: 1rem 1.5rem; }
+  .callout h2, .callout p { display: block; width: 100%; margin: 0 0 1rem 0; } }
+.home-section { text-align: center; padding-bottom: 4rem; }
+.home-section:not(:last-of-type) { border-bottom: 4px solid white; }
+
+.mdl-navigation__link { font-size: 17px; }
+.mdl-navigation__link--current { opacity: 1; font-weight: bold; }
+
+@media screen and (max-width: 768px) { .hide-mobile { display: none; } }
+
+.paginator-btns a { margin: 1rem 0; }
+@media screen and (max-width: 768px) { .paginator-btns a { display: block; } }
+
+a.button-cta { text-align: center; color: #FFF !important; background-color: #004153 !important; border: 2px solid; text-transform: uppercase; text-decoration: none; padding: 12px 40px; white-space: nowrap; line-height: 3.5; transition: background .2s ease-in 0s; }
+a.button-cta:hover, a.button-cta:active, a.button-cta:focus { background-color: #8EC0D5 !important; border-color: #8EC0D5 !important; color: #004153 !important; }
+@media screen and (max-width: 768px) { a.button-cta { line-height: 1.5; } }
+
+a.button-cta.secondary { background: none; border: 2px solid; }
+a.button-cta.secondary:hover, a.button-cta.secondary:active, a.button-cta.secondary:focus { background-color: #8EC0D5 !important; border-color: #8EC0D5 !important; color: #004153 !important; }
+
+pre, pre span { color: #be9100; }
+
+code, pre, pre span { background-color: inherit; padding: 0; font-family: 'Roboto Mono', monospace; font-size: 16px; white-space: pre-wrap; }
+code a, pre a, pre span a { text-decoration: none; color: inherit; font: inherit; }
+
+pre { background: #282a36; overflow: inherit; padding: 0; }
+
+pre.highlight { border: 1px solid #4695EB; padding: 1rem; line-height: 1.2em; overflow-x: auto; }
+
+pre > code, table code { border: none; background-color: transparent; }
+
+pre > code, table code { border: none; background-color: transparent; }
+
+.hljs { display: inline; overflow: inherit; overflow-x: inherit; overflow-y: hidden; background: inherit; padding: 0; line-height: 1.4em; }
+
+.hljs-built_in, .hljs-selector-tag, .hljs-section, .hljs-link, .hljs-function, .hljs-params { color: #FFFFFF; }
+
+.hljs-keyword, .hljs-tag, .hljs-tag .hljs-name { color: #9BCAFA; }
+
+.hljs, .hljs-subst { color: #EFEFEF; }
+
+.hljs-title, .hljs-attr { color: #F0CA4D; }
+
+.hljs-string, .hljs-meta, .hljs-name, .hljs-type, .hljs-symbol, .hljs-bullet, .hljs-addition, .hljs-variable, .hljs-template-tag, .hljs-template-variable { color: #E37B40; }
+
+.hljs-comment, .hljs-quote, .hljs-deletion { color: #AAAAAA; }
+
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-title, .hljs-section, .hljs-doctag, .hljs-type, .hljs-name, .hljs-literal, .hljs-number { color: #F0CA4D; }
+
+.blog-page, .post-page, .getting-started-page { padding: 10px 20px; }
+.blog-page a, .blog-page p, .post-page a, .post-page p, .getting-started-page a, .getting-started-page p { font-size: 18px; }
+
+.getting-started-page h1 { color: #004153 !important; font-size: 35px; font-weight: 600; }
+.getting-started-page h2 { font-size: 22px; font-weight: 600; }
+.getting-started-page h3 { font-size: 20px; font-weight: 600; }
+.getting-started-page h1, .getting-started-page h2, .getting-started-page h3, .getting-started-page h4, .getting-started-page h5 { font-family: "Titillium Web", sans-serif; }
+
+.javadoc-page-title { color: #004153 !important; font-size: 35px; font-family: "Titillium Web", sans-serif; }
+
+* { color: #000000; font-family: "Titillium Web", sans-serif; }
+
+.grid-wrapper { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 1em; clear: both; }
+
+.width-2-12 { grid-column: span 2; }
+
+.width-4-12 { grid-column: span 4; }
+
+.width-8-12 { grid-column: span 8; }
+
+.width-12-12 { grid-column: span 12; }
+
+.width-10-12 { grid-column: span 10; }
+
+@media (max-width: 48em) { .width-2-12-m { grid-column: span 2; } }
+
+@media (max-width: 48em) { .width-4-12-m { grid-column: span 4; } }
+
+@media (max-width: 48em) { .width-8-12-m { grid-column: span 8; } }
+
+@media (max-width: 48em) { .width-10-12-m { grid-column: span 10; } }
+
+@media (max-width: 48em) { .width-12-12-m { grid-column: span 12; } }
+
+body.post { background: #E7E8EA; }
+body.post div.post-page h1, body.post div.post-page h2, body.post div.post-page h3, body.post div.post-page h4, body.post div.post-page h5, body.post div.post-page h6, body.post div.post-page p, body.post div.post-page small, body.post div.post-page strong, body.post div.post-page em, body.post div.post-page table tr th, body.post div.post-page table tr td, body.post div.post-page li, body.post div.post-page i, body.post div.post-page dt, body.post div.post-page .title, body.post div.post-page .paragraph, body.post div.post-page .footnote, body.post div.post-page b { color: #0D1C2C; }
+@media only screen and (max-width: 768px) { body.post div.post-page h1, body.post div.post-page h2, body.post div.post-page h3, body.post div.post-page h4, body.post div.post-page h5, body.post div.post-page h6, body.post div.post-page p, body.post div.post-page small, body.post div.post-page strong, body.post div.post-page em, body.post div.post-page table tr th, body.post div.post-page table tr td, body.post div.post-page li, body.post div.post-page i, body.post div.post-page dt, body.post div.post-page .title, body.post div.post-page .paragraph, body.post div.post-page .footnote, body.post div.post-page b { word-wrap: break-word; } }
+body.post div.post-page .note, body.post div.post-page .colist { overflow: auto; }
+
+.blog-page .blog-list-item { margin-bottom: 3rem; }
+.blog-page .blog-list-item p { margin: 0; }
+.blog-page .blog-list-item p.byline { font-size: 1.3em; }
+.blog-page .blog-list-item .post-title a { font-size: 1.8rem; text-decoration: none; }
+.blog-page .fa-rss-square { font-size: 2rem; color: #ee802f; float: right; }
+.blog-page .fa-rss-square:hover { color: #d86612; }
+
+.blog-page .byline-wrapper, .post-page .byline-wrapper { display: flex; align-items: center; }
+.blog-page .headshot, .blog-page .byline, .post-page .headshot, .post-page .byline { display: inline; }
+.blog-page .headshot, .post-page .headshot { max-width: 4rem; margin-right: .5rem; }
+.blog-page .share-page, .post-page .share-page { text-align: right; }
+.blog-page small, .post-page small { font-size: 14px; }
+
+.post-page * h1, .post-page * h2, .post-page * h3, .post-page * h4, .post-page * h5, .post-page * h6 { font-weight: 600; font-family: "Titillium Web", sans-serif; }
+
+.post-page .headshot { border: 1px solid #BBB; }
+
+.post-page .byline-wrapper p { margin: 0; }
+.post-page .customer-logo { text-align: center; }
+
+@media screen and (max-width: 48em) { .blog-list-item .share-page, .post-page .share-page { text-align: left; }
+  .blog-page p.byline { font-size: 1rem; line-height: 1.25rem; }
+  .post-page, .blog-page { padding: 0px 10px; } }
+.community-page h1 strong { color: #004153 !important; }
+.community-page .community-block { text-align: center; }
+.community-page .community-block p { text-align: left; padding: 0 20px; font-size: 18px; }
+.community-page .community-block h3 { line-height: initial; margin: 16px 0px 8px 0px; font-weight: 600; }
+
+.share-page a { text-decoration: none; }
+.share-page a img { max-width: 1.5rem; margin-right: .5rem; }
+.share-page .fa-linkedin, .share-page .fa-twitter-square, .share-page .fa-facebook-square, .share-page .fa-reddit-square, .share-page .fa-envelope-square { font-size: 2rem; max-width: 1.5rem; margin-right: .5rem; color: #004153 !important; }

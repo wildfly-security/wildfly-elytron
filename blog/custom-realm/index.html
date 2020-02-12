@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: Home</title>
+    <title>Elytron: Creating custom security realm for WildFly Elytron</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -41,7 +41,7 @@
                 
                     
                     
-                         <a class="mdl-navigation__link mdl-navigation__link--current Home-menuitem" href="/wildfly-elytron/">Home</a>
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
                     
                 
                     
@@ -56,7 +56,7 @@
                 
                     
                     
-                         <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
                     
                 
                     
@@ -73,7 +73,7 @@
             
             
             
-                <a class="mdl-navigation__link mdl-navigation__link--current Home-menuitem" href="/wildfly-elytron/">Home</a>
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
             
             
             
@@ -88,7 +88,7 @@
             
             
             
-                <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
             
             
             
@@ -102,41 +102,38 @@
     <main class="mdl-layout__content">
         <div class="page-content">
             
-                <div class="large-logo">
-                    <h1>Wild<strong>Fly</strong> Elytron</h1>
-                </div>
-            
             <div class="content">
-                <!--div class="large-title">
-  <h1>WildFly Elytron</h1>
-</div-->
-
-<h1 class="title">
-Wild<b>Fly</b> Elytron is a set of Java APIs and SPIs for application server and client side security.
-</h1>
-
-<div class="grid-wrapper">
-  <div class="grid__item width-12-12 home-section">
-    <div class="callout grey tablet-fullwidth">
-      <h2>Authentication</h2>
-      <p>Provides both HTTP and SASL based authentication mechanisms.</p>
-    </div>
-    <div class="callout blue tablet-fullwidth">
-      <h2>Authorization</h2>
-      <p>Provides a very flexible approach for assigning roles and permissions to a security identity.</p>
-    </div>
-    <div class="callout grey tablet-fullwidth">
-      <h2>SSL/TLS</h2>
-      <p>Allows for centralized SSL/TLS configuration with the ability to configure advanced options such as cipher suites and protocols.</p>
-    </div>
-    <div class="callout blue tablet-fullwidth">
-       <h2>Secure Credential Storage</h2>
-       <p>Allows for secure storage of various credential types.</p>
-    </div>
-    <div class="callout grey tablet-fullwidth">
-        <h2>Standalone Library</h2>
-        <p>Although it was initially developed for the WildFly Application Server, WildFly Elytron is an open-source,
-           standalone library that can be used in other Java server environments.</p>
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Creating custom security realm for WildFly Elytron</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+        <p class="byline">By <a href="https://github.com/hkalina">Honza Kalina</a> | June 06, 2018</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/custom-realm/&title=Creating custom security realm for WildFly Elytron" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Creating custom security realm for WildFly Elytron&url=https://wildfly-security.github.io/wildfly-elytron/blog/custom-realm/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/custom-realm/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/custom-realm/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Creating custom security realm for WildFly Elytron&amp;body=Creating custom security realm for WildFly Elytron https://wildfly-security.github.io/wildfly-elytron/blog/custom-realm/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          
+      </div>
     </div>
   </div>
 </div>

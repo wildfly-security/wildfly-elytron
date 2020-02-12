@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+
+    <channel>
+        <title>WildFly Elytron</title>
+        <link>https://wildfly-security.github.io/wildfly-elytron</link>
+        <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
+        <lastBuildDate>Wed, 12 Feb 2020 18:47:52 +0000</lastBuildDate>
+        
+        <item>
+            <title>Planned Security Features for WildFly 19</title>
+            <link>
+                https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 10 Oct 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/fjuma/blog/2019/10/10/planned-security-features-for-wildfly-19
+            </guid>
+        </item>
+        
+        <item>
+            <title>Configuring an aggregate-realm with a principal-transformer</title>
+            <link>
+                https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Fri, 06 Sep 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer
+            </guid>
+        </item>
+        
+        <item>
+            <title>Support for masked passwords in the client XML configuration</title>
+            <link>
+                https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration
+            </guid>
+        </item>
+        
+        <item>
+            <title>New Security Features in WildFly 18</title>
+            <link>
+                https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming support for automatic updates of credential stores</title>
+            <link>
+                https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores
+            </guid>
+        </item>
+        
+        <item>
+            <title>Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update</title>
+            <link>
+                https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
+            </guid>
+        </item>
+        
+        <item>
+            <title>WildFly Elytron Credential Store APIs</title>
+            <link>
+                https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 26 Jun 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html
+            </guid>
+        </item>
+        
+        <item>
+            <title>Using Elytron certificate-based authentication with authorization</title>
+            <link>
+                https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Fri, 14 Jun 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization
+            </guid>
+        </item>
+        
+        <item>
+            <title>WildFly Elytron Aggregation of Attributes</title>
+            <link>
+                https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 12 Jun 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html
+            </guid>
+        </item>
+        
+        <item>
+            <title>Security Features for WildFly 18</title>
+            <link>
+                https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 12 Jun 2019 00:00:00 +0000</pubDate>
+            <guid>
+                https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18
+            </guid>
+        </item>
+        
+    </channel>
+</rss>

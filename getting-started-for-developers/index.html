@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Getting Started for Developers</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/18/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/18/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="getting-started-page">
+  <h1>Getting Started for Developers</h1>
+  <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#a-quick-introduction-to-the-projects">A Quick Introduction to the Projects</a>
+<ul class="sectlevel2">
+<li><a href="#wildfly-elytron">WildFly Elytron</a></li>
+<li><a href="#wildfly-core">WildFly Core</a></li>
+<li><a href="#wildfly">WildFly</a></li>
+<li><a href="#wildfly-proposals">WildFly Proposals</a></li>
+</ul>
+</li>
+<li><a href="#getting-familiar-with-elytron">Getting Familiar with Elytron</a></li>
+<li><a href="#getting-help">Getting Help</a></li>
+<li><a href="#getting-your-developer-environment-set-up">Getting Your Developer Environment Set Up</a></li>
+<li><a href="#running-the-test-suites">Running the Test Suites</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="a-quick-introduction-to-the-projects"><a class="anchor" href="#a-quick-introduction-to-the-projects"></a>A Quick Introduction to the Projects</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="wildfly-elytron"><a class="anchor" href="#wildfly-elytron"></a>WildFly Elytron</h3>
+<div class="paragraph">
+<p>WildFly Elytron is the main project that contains the security APIs, SPIs, and implementations of various
+components that are used across the WildFly application server. Although Elytron was developed for WildFly,
+it is possible to use Elytron outside of WildFly.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly-security/wildfly-elytron">Git Repository</a><br>
+<a href="https://issues.redhat.com/projects/ELY">Issue Tracker</a><br>
+<a href="https://wildfly-security.github.io/wildfly-elytron/javadoc">Javadoc</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly-core"><a class="anchor" href="#wildfly-core"></a>WildFly Core</h3>
+<div class="paragraph">
+<p>This is the core of the WildFly application server and the initial place where we integrate Elytron with WildFly.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly/wildfly-core">Git Repository</a><br>
+<a href="https://issues.redhat.com/projects/WFCORE">Issue Tracker</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly"><a class="anchor" href="#wildfly"></a>WildFly</h3>
+<div class="paragraph">
+<p>This is the main application server project. Integration related to Elytron can also be found here.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly/wildfly">Git Repository</a><br>
+<a href="https://issues.redhat.com/projects/WFLY">Issue Tracker</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly-proposals"><a class="anchor" href="#wildfly-proposals"></a>WildFly Proposals</h3>
+<div class="paragraph">
+<p>When starting on a new Elytron feature, we prepare an analysis document and submit a PR against the WildFly
+Proposals repository to get feedback on the new feature.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly/wildfly-proposals">Git Repository</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="getting-familiar-with-elytron"><a class="anchor" href="#getting-familiar-with-elytron"></a>Getting Familiar with Elytron</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For an introduction to Elytron, take a look at this <a href="https://sector.ca/sessions/elytron-next-generation-security-for-java-servers/">presentation</a>
+which also includes a few demos.</p>
+</div>
+<div class="paragraph">
+<p>Another great way to learn more about Elytron is to take a look at our
+<a href="http://wildfly-security.github.io/wildfly-elytron/blog">blog posts</a> on various Elytron features.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;d like to get started with some example applications that you can easily deploy to WildFly,
+take a look at some of our <a href="https://github.com/wildfly/quickstart">quickstart applications</a>.
+Search for the ones that mention "Elytron". You&#8217;ll also want to check out our <a href="https://github.com/wildfly-security-incubator/elytron-examples">additional examples</a>
+that demonstrate specific Elytron features.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="getting-help"><a class="anchor" href="#getting-help"></a>Getting Help</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Questions on Elytron are always welcome in WildFly&#8217;s <a href="https://developer.jboss.org/community/wildfly?view=discussions">user forums</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="getting-your-developer-environment-set-up"><a class="anchor" href="#getting-your-developer-environment-set-up"></a>Getting Your Developer Environment Set Up</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>JDK 11</p>
+</li>
+<li>
+<p>Git</p>
+</li>
+<li>
+<p>Maven 3.3.9 or later</p>
+</li>
+<li>
+<p>An <a href="https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java">IDE</a>
+(e.g., <a href="https://www.jetbrains.com/idea/download/">IntelliJ IDEA</a>, <a href="https://www.eclipse.org/downloads/">Eclipse</a>, etc.)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Fork <a href="https://github.com/wildfly-security/wildfly-elytron">wildfly-elytron</a>, <a href="https://github.com/wildfly/wildfly-core">wildfly-core</a>,
+and <a href="https://github.com/wildfly/wildfly">wildfly</a> to your GitHub account and clone your newly forked repositories into
+your local workspace. Then, for each repository, add a remote ref to upstream, for pulling future updates.
+For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">git remote add upstream https://github.com/wildfly-security/wildfly-elytron</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To build <code>wildfly-elytron</code>, <code>wildfly-core</code>, or <code>wildfly</code>, <code>cd</code> to the appropriate directory and then run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To skip the tests, use:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install -DskipTests=true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run only a specific test, use:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install -Dtest=TestClassName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you have made a change in Elytron and need to test out the change in WildFly, the following steps
+can be used to build a version of WildFly that incorporates your Elytron changes:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Build <code>wildfly-elytron</code></p>
+</li>
+<li>
+<p>Update the <code>version.org.wildfly.security.elytron</code> property in the <code>wildfly-core/pom.xml</code> file to
+reference your locally built <code>wildfly-elytron</code> <code>SNAPSHOT</code> version</p>
+</li>
+<li>
+<p>Build <code>wildfly-core</code></p>
+</li>
+<li>
+<p>Update the <code>version.org.wildfly.core</code> property in the <code>wildfly/pom.xml</code> file to reference your locally
+built <code>wildfly-core</code> <code>SNAPSHOT</code> version</p>
+</li>
+<li>
+<p>Build <code>wildfly</code></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="running-the-test-suites"><a class="anchor" href="#running-the-test-suites"></a>Running the Test Suites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before submitting a PR, it is important to make sure the appropriate test suites pass with your changes.</p>
+</div>
+<div class="paragraph">
+<p>For <code>wildfly-elytron</code>, all tests will be run when executing <code>mvn clean install</code>.</p>
+</div>
+<div class="paragraph">
+<p>For both <code>wildfly-core</code> and <code>wildfly</code>, the following command can be used to run the full test suite:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install -DallTests -fae &gt; alltests.txt</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
