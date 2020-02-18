@@ -1728,13 +1728,13 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                 // no verification possible, no identity found
                 return false;
             }
-            final Principal resolvedPrincipal = realmIdentity.getRealmIdentityPrincipal();
-            if (resolvedPrincipal == null) {
-                // we have to have a principal
+            if (! realmIdentity.verifyEvidence(evidence)) {
                 realmIdentity.dispose();
                 return false;
             }
-            if (! realmIdentity.verifyEvidence(evidence)) {
+            final Principal resolvedPrincipal = realmIdentity.getRealmIdentityPrincipal();
+            if (resolvedPrincipal == null) {
+                // we have to have a principal
                 realmIdentity.dispose();
                 return false;
             }
@@ -2032,8 +2032,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             ElytronMessages.log.trace("Authorization succeed");
             return new AuthorizedAuthenticationState(authorizedIdentity, authenticationPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration, mechanismConfiguration);
         }
-
         @Override
+
         boolean authorize(final Principal authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             final AuthorizedAuthenticationState authzState = doAuthorization(true);
             if (authzState == null) {
