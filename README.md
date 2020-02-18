@@ -20,9 +20,9 @@ The following steps are based on the [Jekyll static site generator docs](https:/
   
         cd wildfly-elytron
 
-5. Checkout the [gh-pages](https://github.com/wildfly-security/wildfly-elytron/tree/gh-pages) branch:
+5. Checkout the [develop](https://github.com/wildfly-security/wildfly-elytron/tree/develop) branch:
   
-        git checkout gh-pages
+        git checkout develop
 
 6. Use bundler to fetch all required gems in their respective versions
 
@@ -55,5 +55,5 @@ To write a blog post:
     - The file name should be `yyyy-mm-dd-slug.adoc`
 - Your blog post should be in asciidoc format (take a look at other blogs posts in the _posts directory to see examples)
     - To view your blog post locally, browse to http://localhost:4000/wildfly-elytron/blog and then click on your post
-- Submit a pull request against the gh-pages branch
+- Submit a pull request against the develop branch
 
