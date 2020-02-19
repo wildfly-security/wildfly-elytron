@@ -57,6 +57,7 @@ org.wildfly.security.mechanism.gssapi
 org.wildfly.security.mechanism.http
 org.wildfly.security.mechanism.oauth2
 org.wildfly.security.mechanism.scram
+org.wildfly.security.mp.jwt
 org.wildfly.security.password
 org.wildfly.security.password.impl
 org.wildfly.security.password.interfaces
