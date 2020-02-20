@@ -58,7 +58,7 @@ that demonstrate specific Elytron features.
 
 == Getting Help
 
-Questions on Elytron are always welcome in WildFly's https://developer.jboss.org/community/wildfly?view=discussions[user forums].
+Questions on Elytron are always welcome in WildFly's https://groups.google.com/forum/#!forum/wildfly[user forums].
 
 == Getting Your Developer Environment Set Up
 
