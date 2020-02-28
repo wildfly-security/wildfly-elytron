@@ -1,0 +1,137 @@
+---
+layout: post
+title: 'TLS 1.3 with WildFly'
+date: 2020-03-18
+tags: elytron wildfly19 tls13 ssl
+synopsis: An overview of the new TLS 1.3 support included in WildFly 19.
+author: fjuma
+---
+
+It is now possible to use TLS 1.3 with WildFly when running against JDK 11 or higher. This blog post will give an
+introduction to this new feature.
+
+== Disabled by Default
+
+The use of TLS 1.3 is currently disabled by default with WildFly. This is because if JDK 11 is in use and if there is a
+very large number of TLS 1.3 requests coming in, it is possible that a drop in performance (i.e., throughput and
+response time) will occur compared to when using TLS 1.2 with WildFly. The good news is that simply upgrading to newer
+JDK versions should improve performance. It is recommended to test for performance degradation prior to enabling
+TLS 1.3 in a production environment.
+
+== Enabling TLS 1.3 on the Server Side
+
+TLS 1.3 can be enabled by configuring the new `cipher-suite-names` attribute in the SSL Context resource definition
+in the Elytron subsystem. Let's take a look at a complete example.
+
+=== Pre-requisite Configuration
+
+As a first step, we're going to enable one-way SSL for applications deployed to WildFly using the
+`security enable-ssl-http-server` CLI command:
+
+[source,shell]
+----
+security enable-ssl-http-server --interactive
+Please provide required pieces of information to enable SSL:
+
+Certificate info:
+Key-store file name (default default-server.keystore): server.keystore
+Password (blank generated): secret
+What is your first and last name? [Unknown]: localhost
+What is the name of your organizational unit? [Unknown]:
+What is the name of your organization? [Unknown]:
+What is the name of your City or Locality? [Unknown]:
+What is the name of your State or Province? [Unknown]:
+What is the two-letter country code for this unit? [Unknown]:
+Is CN=localhost, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown correct y/n [y]?y
+Validity (in days, blank default): 30
+Alias (blank generated): localhost
+Enable SSL Mutual Authentication y/n (blank n):n
+
+SSL options:
+key store file: server.keystore
+distinguished name: CN=localhost, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown,
+C=Unknown
+password: secret
+validity: 30
+alias: localhost
+Server keystore file server.keystore, certificate file server.pem and server.csr
+ file will be generated in server configuration directory.
+
+Do you confirm y/n :y
+Server reloaded.
+SSL enabled for default-server
+ssl-context is ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133
+key-manager is key-manager-6881a025-6c31-4bfe-ba4b-d8e7ebdde133
+key-store   is key-store-6881a025-6c31-4bfe-ba4b-d8e7ebdde133
+----
+
+As we can see from the output, the above command automatically generated a self-signed server certificate, added it to a
+newly created keystore, and added a new `ssl-context` resource, `ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133`, to
+the Elytron subsystem in order to enable one-way SSL for applications deployed to WildFly.
+
+Now, let's try to access the WildFly landing page using `curl`:
+
+[source,shell]
+----
+curl -v -k https://localhost:8443
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
+*  start date: Feb 28 19:39:26 2020 GMT
+*  expire date: Mar 29 18:39:26 2020 GMT
+*  issuer: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
+*  SSL certificate verify result: self signed certificate (18), continuing anyway.
+----
+
+Since the `security enable-ssl-http-server` command simply generated a self-signed server certificate for
+testing purposes, this server certificate won't be trusted by `curl`. This is why we specified the `-k` option
+in the `curl` command.
+
+Notice that in the above output, we can see that the TLS 1.2 protocol was used for the connection
+and that the `ECDHE-RSA-AES256-GCM-SHA384` cipher suite was used.
+
+=== Switching to TLS 1.3
+
+To enable TLS 1.3, we just need to update our `ssl-context` configuration in the Elytron subsystem to specify the
+`cipher-suite-names` attribute. The format of this attribute is colon separated list of the TLS 1.3 cipher suites
+that you would like to enable. We're going to set this attribute to `TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256`:
+
+[source,shell]
+----
+# This is only needed when the ssl-context is configured to use specific protocol version(s) other
+# than TLS 1.3. In general, this is not needed when the protocols attribute is simply undefined.
+/subsystem=elytron/server-ssl-context=ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133:write-attribute(name=protocols,value=[TLSv1.3])
+
+/subsystem=elytron/server-ssl-context=ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133:write-attribute(name=cipher-suite-names,value=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256)
+reload
+----
+
+Now, let's try to access the WildFly landing page using `curl` again:
+
+[source,shell]
+----
+curl -v -k https://localhost:8443
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
+*  start date: Feb 28 19:39:26 2020 GMT
+*  expire date: Mar 29 18:39:26 2020 GMT
+*  issuer: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
+*  SSL certificate verify result: self signed certificate (18), continuing anyway.
+----
+
+Notice that this time, we can see that the TLS 1.3 protocol was used for the connection and that the TLS 1.3
+`TLS_AES_256_GCM_SHA384` cipher suite was used.
+
+== Enabling TLS 1.3 on the Client Side
+
+When using the Elytron authentication client, it is now also possible to use TLS 1.3 by configuring the
+`cipher-suite names` attribute in the `ssl-context` configuration. For more details on that, take a look
+at the authentication client https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_client-guide/authentication-client.adoc#ssl-contexts-[documentation].
+
+== Summary
+
+This blog post has given an overview on how TLS 1.3 can be used with WildFly on both the server side and the client
+side. For more details, take a look at the Elytron https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc#configuring-a-server-sslcontext[documentation].
