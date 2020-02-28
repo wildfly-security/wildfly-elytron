@@ -185,6 +185,10 @@ body.post div.post-page .note, body.post div.post-page .colist { overflow: auto;
 .blog-page small, .post-page small { font-size: 14px; }
 
 .post-page * h1, .post-page * h2, .post-page * h3, .post-page * h4, .post-page * h5, .post-page * h6 { font-weight: 600; font-family: "Titillium Web", sans-serif; }
+.post-page * h1 { color: #004153 !important; font-size: 48px; font-weight: 600; }
+.post-page * h2 { font-size: 28px; }
+.post-page * h3 { font-size: 24px; }
+.post-page * h4 { font-size: 18px; }
 
 .post-page .headshot { border: 1px solid #BBB; }
 
