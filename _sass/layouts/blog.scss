@@ -67,7 +67,21 @@ body.post {
             font-weight: 600;
             font-family: "Titillium Web", sans-serif;
         }
-  }
+        h1 {
+            color: $title-colour;
+            font-size: 48px;
+            font-weight: 600;
+        }
+        h2 {
+            font-size: 28px;
+        }
+        h3 {
+            font-size: 24px;
+        }
+        h4 {
+            font-size: 18px;
+        }
+    }
 }
 
 .post-page .headshot {
