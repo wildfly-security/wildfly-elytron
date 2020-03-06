@@ -49,11 +49,16 @@ The following steps are based on the [Jekyll static site generator docs](https:/
 
 To write a blog post:
 
-- Add an author entry in [_data/authors.yaml](https://github.com/wildfly-security/wildfly-elytron/tree/gh-pages/_data/authors.yaml)
+- Add an author entry in [_data/authors.yaml](https://github.com/wildfly-security/wildfly-elytron/tree/develop/_data/authors.yaml)
     - `emailhash` is used to fetch your picture from the Gravatar service
-- Create a blog post entry under [_posts](https://github.com/wildfly-security/wildfly-elytron/tree/gh-pages/_posts)
+- Create a blog post entry under [_posts](https://github.com/wildfly-security/wildfly-elytron/tree/develop/_posts)
     - The file name should be `yyyy-mm-dd-slug.adoc`
 - Your blog post should be in asciidoc format (take a look at other blogs posts in the _posts directory to see examples)
-    - To view your blog post locally, browse to http://localhost:4000/wildfly-elytron/blog and then click on your post
-- Submit a pull request against the develop branch
+    - To view your blog post without needing to build locally, simply push your changes to the `develop` branch on your
+    `wildfly-elytron` fork. This will trigger a website build that will get pushed to the `gh-pages` branch on your fork.
+    Then browse to http://<YOUR_GITHUB_USERNAME>/wildfly-elytron/blog and click on your post.
+    - To view your blog post locally, first follow the instructions
+    [above](https://github.com/wildfly-security/wildfly-elytron/tree/develop#installation) to build the Elytron website
+    locally. Then browse to http://localhost:4000/wildfly-elytron/blog and click on your post.
+- Submit a pull request against the `wildfly-elytron` `develop` branch
 
