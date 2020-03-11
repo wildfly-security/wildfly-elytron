@@ -56,7 +56,7 @@ To write a blog post:
 - Your blog post should be in asciidoc format (take a look at other blogs posts in the _posts directory to see examples)
     - To view your blog post without needing to build locally, simply push your changes to the `develop` branch on your
     `wildfly-elytron` fork. This will trigger a website build that will get pushed to the `gh-pages` branch on your fork.
-    Then browse to http://<YOUR_GITHUB_USERNAME>/wildfly-elytron/blog and click on your post.
+    Then browse to http://<YOUR_GITHUB_USERNAME>.github.io/wildfly-elytron/blog and click on your post.
     - To view your blog post locally, first follow the instructions
     [above](https://github.com/wildfly-security/wildfly-elytron/tree/develop#installation) to build the Elytron website
     locally. Then browse to http://localhost:4000/wildfly-elytron/blog and click on your post.
