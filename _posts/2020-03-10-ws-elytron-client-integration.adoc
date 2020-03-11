@@ -1,0 +1,90 @@
+---
+layout: post
+title: 'Web Services client integration with Elytron'
+date: 2020-03-10
+tags: elytron wildfly19 webservices client configuration integration
+synopsis: An overview of the new integration with Web Services client included in WildFly 19.
+author: dvilkola
+---
+
+It is now possible for Web Services client to automatically load and use authentication configuration from Elytron client to connect to a secured server. This blog post will give an introduction to this new feature.
+
+== Scope of the integration
+
+Elytron client must be on classpath during link:https://docs.jboss.org/author/display/JBWS/Predefined+client+and+endpoint+configurations[assigning of configurations] for WS client in order for this integration to take place.
+
+WS client will automatically use `username`, `password` and `SSL context` configured in Elytron client. Credentials will be used for `HTTP BASIC authentication` or `Username Token Profile` authentication. Elytron client configuration was extended to include option that specifies which of these mechanisms should be used.
+
+Any existing configuration a client already had configured will not be re-written. Configuration specified by user in default WS client descriptor within the application (`jaxws-client-config.xml`) has precedence.
+
+== Configure Elytron client
+
+Elytron client allows for both use of an `Elytron API` and pre-defined configurations in the xml file (`wildfly-config.xml`) to enable remote clients to authenticate using Elytron. For more information please see https://docs.jboss.org/author/display/WFLY/Client+Authentication+with+Elytron+Client[the documentation]. SSL context configuration did not change and WS client will use it automatically.
+
+Below is an example of `wildfly-config.xml` that contains configuration of mechanisms that WS client should use with Elytron client credentials:
+
+[source,xml]
+----
+
+<authentication-configurations>
+    ...
+    <configuration>
+        ...
+        <webservices>
+            <ws-security type="UsernameToken">
+            <set-http-mechanism name="BASIC"/>
+        </webservices>
+        ...
+    </configuration>
+</authentication-configurations>
+----
+
+The _<webservices />_ element can optionally contain the following child elements:
+
+* `<set-http-mechanism name="BASIC"/>` This element is used to specify an HTTP mechanism that WS client should use to authenticate. Currently only the HTTP Basic authentication is supported and used as default.
+* `<set-ws-security-type name="UsernameToken"/>` This element is used to specify WS-Security type that WS client will use to authenticate with the server. Currently only Username Token Profile can be configured.
+
+It is also possible to configure these mechanisms programmatically:
+
+[source,xml]
+----
+
+AuthenticationConfiguration ac = AuthenticationConfiguration.empty().useWebServices(
+                Map.ofEntries(
+                        entry("http-mechanism", "BASIC"),
+                        entry("ws-security-type", "UsernameToken")
+                ));
+----
+
+The mechanisms will take effect only if both username and password are configured in Elytron client.
+
+
+== Use Web Services client
+
+JBossWS API comes with facility classes that can be used for assigning of configurations when building a client. For more information, you can take a look at the documentation https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_developer-guide/jax-ws/Predefined_client_and_endpoint_configurations.adoc#explicit-setup-through-API[here].
+
+For integration to work it is necessary to use `jbossws-cxf` client, specifically `CXFClientConfigurer` class and its method `setConfigProperties`. Whenever this method is called, with or without other WS config files, Elytron client credentials and SSLContext will be used if present. Below are possible uses of this method:
+
+[source,java]
+----
+Service service = Service.create(wsdlURL, serviceName);
+Endpoint port = service.getPort(Endpoint.class);
+CXFClientConfigurer configurer = new CXFClientConfigurer();
+configurer.setConfigProperties(port, null, null);   // use null value if there is no other WS configuration
+port.echo("Kermit");
+...
+configurer.setConfigProperties(port, "META-INF/my-client-config.xml", "Custom Client Config 3");
+port.echo("Kermit");
+...
+configurer.setConfigProperties(port, null, "Container Custom Client Config");
+port.echo("Kermit");
+----
+
+== Example
+
+Working example demonstrating this integration can be found https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ws-client-integration[here]. In this example, two-way SSL is configured on the server. Additionally, HTTP BASIC authentication is required to connect to the server as well. Web Services client uses SSLContext and credentials from Elytron client to successfully connect to the server.
+
+== Summary
+
+This blog post has given an overview on how Web Services client can use Elytron client configuration when connecting to a secured server. For more information you can take a look at https://docs.jboss.org/author/display/WFLY/Client+Authentication+with+Elytron+Client[Elytron client documentation] and
+https://docs.jboss.org/author/display/WFLY10/Webservices+reference+guide[Web Services reference guide].

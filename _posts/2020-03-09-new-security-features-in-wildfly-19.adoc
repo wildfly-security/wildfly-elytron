@@ -31,7 +31,9 @@ to learn how to enable TLS 1.3.
 == Web Services Integration with Elytron
 
 Elytron already provides an API and a configuration file that can be used to configure client side security for outgoing
-calls. It is now possible to use this Elytron client configuration with Web Services deployments.
+calls. It is now possible to use this Elytron client configuration with Web Services deployments. Take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/ws-elytron-client-integration/[blog post] to see how WS client
+can make use of Elytron client configuration.
 
 == Resolution of System Properties in Permission Files
 
