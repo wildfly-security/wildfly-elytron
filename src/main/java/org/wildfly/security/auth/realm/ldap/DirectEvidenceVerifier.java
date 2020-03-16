@@ -99,7 +99,7 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
                         }
                         return true;
                     } catch (AuthenticationException e) {
-                        log.debugf("Credential direct evidence verification failed. DN: [%s]", distinguishedName, e);
+                        log.debugf(e, "Credential direct evidence verification failed. DN: [%s]", distinguishedName);
                     } catch (NamingException | URISyntaxException e) {
                         throw log.directLdapVerificationFailed(distinguishedName, url, e);
                     } finally {
