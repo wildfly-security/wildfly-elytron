@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.util;
 
 import static org.wildfly.security.sasl._private.ElytronMessages.log;
-import static org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
 
 import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
@@ -43,8 +42,9 @@ import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.x500.TrustedAuthority;
+import org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
 
 /**
  * A {@link SaslServerFactory} which sets the trust manager that should be used for trust verification.
