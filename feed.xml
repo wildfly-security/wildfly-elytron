@@ -5,7 +5,49 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Tue, 17 Mar 2020 15:35:36 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 18 Mar 2020 18:56:34 +0000</lastBuildDate>
+        
+        <item>
+            <title>Web Services client integration with Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ws-elytron-client-integration/
+            </link>
+            <description>
+                It is now possible for Web Services client to automatically load and use authentication configuration from Elytron client to connect to a secured server. This blog post will give an introduction to this new feature. Scope of the integration Elytron client must be on classpath during assigning of configurations for...
+            </description>
+            <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ws-elytron-client-integration/
+            </guid>
+        </item>
+        
+        <item>
+            <title>TLS 1.3 with WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/
+            </link>
+            <description>
+                It is now possible to use TLS 1.3 with WildFly when running against JDK 11 or higher. This blog post will give an introduction to this new feature. Disabled by Default The use of TLS 1.3 is currently disabled by default with WildFly. This is because if JDK 11 is...
+            </description>
+            <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/
+            </guid>
+        </item>
+        
+        <item>
+            <title>New Security Features in WildFly 19</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-19/
+            </link>
+            <description>
+                This blog post highlights the new security features that have been included in WildFly 19. Support for MicroProfile JWT 1.1 Support has been added for the Eclipse MicroProfile JWT RBAC 1.1.1 specification with the addition of a new microprofile-jwt-smallrye subsystem. Traditionally, security for deployments would depend on resources defined within...
+            </description>
+            <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-19/
+            </guid>
+        </item>
         
         <item>
             <title>Planned Security Features for WildFly 19</title>
@@ -102,48 +144,6 @@
             <pubDate>Wed, 26 Jun 2019 00:00:00 +0000</pubDate>
             <guid>
                 https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using Elytron certificate-based authentication with authorization</title>
-            <link>
-                https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Fri, 14 Jun 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://developer.jboss.org/people/fjuma/blog/2019/06/14/using-elytron-certificate-based-authentication-with-authorization
-            </guid>
-        </item>
-        
-        <item>
-            <title>WildFly Elytron Aggregation of Attributes</title>
-            <link>
-                https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 12 Jun 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html
-            </guid>
-        </item>
-        
-        <item>
-            <title>Security Features for WildFly 18</title>
-            <link>
-                https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 12 Jun 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://developer.jboss.org/people/fjuma/blog/2019/06/12/security-features-for-wildfly-18
             </guid>
         </item>
         
