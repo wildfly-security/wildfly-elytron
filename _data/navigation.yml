@@ -1,7 +1,7 @@
 - name: Home
   link: /
 - name: Docs
-  link: https://docs.wildfly.org/18/WildFly_Elytron_Security.html
+  link: https://docs.wildfly.org/19/WildFly_Elytron_Security.html
 - name: Community
   link: /community/
 - name: Blog
