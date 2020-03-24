@@ -341,10 +341,11 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-json-util</artifactId>
         </dependency>
-        <dependency>
+        <!-- Do not include JWT as it defines a CDI Extension -->
+        <!--<dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-jwt</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-keystore</artifactId>
