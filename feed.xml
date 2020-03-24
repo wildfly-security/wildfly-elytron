@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Wed, 18 Mar 2020 18:56:34 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 24 Mar 2020 16:23:05 +0000</lastBuildDate>
         
         <item>
             <title>Web Services client integration with Elytron</title>
