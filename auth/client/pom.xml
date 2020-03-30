@@ -76,7 +76,6 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-ssh-util</artifactId>
         </dependency>
-                                
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
