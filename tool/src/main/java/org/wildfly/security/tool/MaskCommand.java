@@ -147,7 +147,7 @@ class MaskCommand extends Command {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), MASK_COMMAND),
-                ElytronToolMessages.msg.cmdMaskHelpHeader(),
+                ElytronToolMessages.msg.cmdMaskHelpHeader().concat(ElytronToolMessages.msg.cmdLineActionsHelpHeader()),
                 options,
                 "",
                 true);

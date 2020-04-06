@@ -243,7 +243,7 @@ public class VaultCommand extends Command {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), VAULT_COMMAND),
-                ElytronToolMessages.msg.cmdVaultHelpHeader(),
+                ElytronToolMessages.msg.cmdVaultHelpHeader().concat(ElytronToolMessages.msg.cmdLineActionsHelpHeader()),
                 options,
                 "",
                 true);

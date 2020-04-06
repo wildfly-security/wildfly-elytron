@@ -300,7 +300,7 @@ class FileSystemRealmCommand extends Command {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), FILE_SYSTEM_REALM_COMMAND),
-                ElytronToolMessages.msg.cmdFileSystemRealmHelpHeader(),
+                ElytronToolMessages.msg.cmdFileSystemRealmHelpHeader().concat(ElytronToolMessages.msg.cmdLineActionsHelpHeader()),
                 options,
                 "",
                 true);
