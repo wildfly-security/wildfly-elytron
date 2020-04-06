@@ -147,7 +147,8 @@ public final class ElytronXmlParser {
         VERSION_1_2("urn:elytron:client:1.2", VERSION_1_1),
         VERSION_1_3("urn:elytron:client:1.3", VERSION_1_2),
         VERSION_1_4("urn:elytron:client:1.4", VERSION_1_3),
-        VERSION_1_5("urn:elytron:client:1.5", VERSION_1_4);
+        VERSION_1_5("urn:elytron:client:1.5", VERSION_1_4),
+        VERSION_1_6("urn:elytron:client:1.6", VERSION_1_5);
 
         final String namespace;
 

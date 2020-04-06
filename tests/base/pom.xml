@@ -129,6 +129,13 @@
                             </includes>
                             <systemId>src/test/resources/schema/wrapped-elytron-client-1_5.xsd</systemId>
                         </validationSet>
+                        <validationSet>
+                            <dir>${project.parent.basedir}/auth/client/src/test/resources/</dir>
+                            <includes>
+                                <include>**/*-v1_6.xml</include>
+                            </includes>
+                            <systemId>src/test/resources/schema/wrapped-elytron-client-1_6.xsd</systemId>
+                        </validationSet>
                     </validationSets>
                 </configuration>
                 <executions>
