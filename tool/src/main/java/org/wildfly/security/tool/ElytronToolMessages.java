@@ -29,6 +29,8 @@ import org.jboss.logging.annotations.MessageLogger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Messages for Elytron tool.
@@ -113,6 +115,36 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Display all aliases (Action)")
     String cmdLineAliasesDesc();
 
+    @Message(id = NONE, value = "Generate private and public key pair and store them as a KeyPairCredential")
+    String cmdLineGenerateKeyPairDesc();
+
+    @Message(id = NONE, value = "Size (number of bytes) of the keys when generating a KeyPairCredential.")
+    String cmdLineKeySizeDesc();
+
+    @Message(id = NONE, value = "Encryption algorithm to be used when generating a KeyPairCredential: RSA, DSA, or EC. Default RSA")
+    String cmdLineKeyAlgorithmDesc();
+
+    @Message(id = NONE, value = "Prints the public key stored under a KeyPairCredential as Base64 encoded String, in OpenSSH format.")
+    String cmdLineExportPublicKeyDesc();
+
+    @Message(id = NONE, value = "Import a KeyPairCredential into the credential store.")
+    String cmdLineImportKeyPairDesc();
+
+    @Message(id = NONE, value = "The location of a file containing a private key.")
+    String cmdLinePrivateKeyLocationDesc();
+
+    @Message(id = NONE, value = "The location of a file containing a public key.")
+    String cmdLinePublicKeyLocationDesc();
+
+    @Message(id = NONE, value = "The passphrase used to decrypt the private key.")
+    String cmdLineKeyPassphraseDesc();
+
+    @Message(id = NONE, value = "A private key specified as a String.")
+    String cmdLinePrivateKeyStringDesc();
+
+    @Message(id = NONE, value = "A public key specified as a String.")
+    String cmdLinePublicKeyStringDesc();
+
     @Message(id = NONE, value = "Print summary, especially command how to create this credential store")
     String cmdLinePrintSummary();
 
@@ -157,6 +189,12 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm credential store password: ")
     String credentialStorePasswordPromptConfirm();
+
+    @Message(id = NONE, value = "Passphrase to be used to decrypt private key (can be nothing if no passphrase was used to encrypt the key): ")
+    String keyPassphrasePrompt();
+
+    @Message(id = NONE, value = "Confirm passphrase to be used to decrypt private key (can be nothing if no passphrase was used to encrypt the key): ")
+    String keyPassphrasePromptConfirm();
 
     @Message(id = NONE, value = "Secret to store: ")
     String secretToStorePrompt();
@@ -331,6 +369,24 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = 28, value = "Location parameter is not specified for filebased keystore type '%s'")
     MissingArgumentException filebasedKeystoreLocationMissing(String type);
+
+    @Message(id = 29, value = "Key Pair Algorithm: '%s' is not supported.")
+    NoSuchAlgorithmException unknownKeyPairAlgorithm(String algorithm);
+
+    @Message(id = 30, value = "Key file '%s' does not exist.")
+    IllegalArgumentException keyFileDoesNotExist(String location);
+
+    @Message(id = 31, value = "No private key specified for importing.")
+    MissingArgumentException noPrivateKeySpecified();
+
+    @Message(id = 32, value = "No public key specified for importing.")
+    MissingArgumentException noPublicKeySpecified();
+
+    @Message(id = 33, value = "No PEM content found")
+    MissingArgumentException xmlNoPemContent();
+
+    @Message(id = 34, value = "Invalid keysize provided: %s")
+    InvalidParameterException invalidKeySize(String reason);
 
     @Message(id = NONE, value = "In the message below, option '%s' refers to long option '%s'.")
     String longOptionDescription(String option, String longOption);

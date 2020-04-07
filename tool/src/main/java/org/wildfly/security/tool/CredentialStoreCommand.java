@@ -18,10 +18,19 @@
 package org.wildfly.security.tool;
 
 import java.io.IOException;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,12 +48,19 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
+
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.config.keys.PublicKeyEntry;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.auth.util.ElytronFilePasswordProvider;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.KeyPairCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.pem.Pem;
 
 /**
  * Credential Store Command
@@ -56,6 +72,10 @@ class CredentialStoreCommand extends Command {
     public static int ACTION_NOT_DEFINED = 5;
     public static int ALIAS_NOT_FOUND = 6;
     public static int GENERAL_CONFIGURATION_ERROR = 7;
+
+    public static final String RSA_ALGORITHM = "RSA";
+    public static final String DSA_ALGORITHM = "DSA";
+    public static final String EC_ALGORITHM = "EC";
 
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
 
@@ -77,6 +97,17 @@ class CredentialStoreCommand extends Command {
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
     public static final String DEBUG_PARAM = "debug";
     public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+    public static final String GENERATE_KEY_PAIR_PARAM = "generate-key-pair";
+    public static final String ALGORITHM_PARAM = "algorithm";
+    public static final String SIZE_PARAM = "size";
+    public static final String EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM = "export-key-pair-public-key";
+    public static final String IMPORT_KEY_PAIR_PARAM = "import-key-pair";
+    public static final String PRIVATE_KEY_LOCATION_PARAM = "private-key-location";
+    public static final String PUBLIC_KEY_LOCATION_PARAM = "public-key-location";
+    public static final String PRIVATE_KEY_STRING_PARAM = "private-key-string";
+    public static final String PUBLIC_KEY_STRING_PARAM = "public-key-string";
+    public static final String KEY_PASSPHRASE_PARAM = "key-passphrase";
+
     private static final List<String> filebasedKeystoreTypes = Collections.unmodifiableList(Arrays.asList("JKS", "JCEKS", "PKCS12"));
 
 
@@ -119,6 +150,24 @@ class CredentialStoreCommand extends Command {
         options.addOption(opt);
         options.addOption("f", PRINT_SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLinePrintSummary());
 
+        options.addOption("j", SIZE_PARAM, true, ElytronToolMessages.msg.cmdLineKeySizeDesc());
+        options.addOption("k", ALGORITHM_PARAM, true, ElytronToolMessages.msg.cmdLineKeyAlgorithmDesc());
+        options.addOption("kp", KEY_PASSPHRASE_PARAM, true, ElytronToolMessages.msg.cmdLineKeyPassphraseDesc());
+
+        OptionGroup privateKP = new OptionGroup();
+        Option privateString = new Option("pvk", PRIVATE_KEY_STRING_PARAM, true, ElytronToolMessages.msg.cmdLinePrivateKeyStringDesc());
+        Option privateLocation = new Option("pvl", PRIVATE_KEY_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLinePrivateKeyLocationDesc());
+        privateKP.addOption(privateString);
+        privateKP.addOption(privateLocation);
+        options.addOptionGroup(privateKP);
+
+        OptionGroup publicKP = new OptionGroup();
+        Option publicString = new Option("pbk", PUBLIC_KEY_STRING_PARAM, true, ElytronToolMessages.msg.cmdLinePublicKeyStringDesc());
+        Option publicLocation = new Option("pbl", PUBLIC_KEY_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLinePublicKeyLocationDesc());
+        publicKP.addOption(publicString);
+        publicKP.addOption(publicLocation);
+        options.addOptionGroup(publicKP);
+
         OptionGroup og = new OptionGroup();
         Option a = new Option("a", ADD_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdLineAddAliasDesc());
         a.setArgName("alias");
@@ -129,10 +178,22 @@ class CredentialStoreCommand extends Command {
         Option v = new Option("v", ALIASES_PARAM, false, ElytronToolMessages.msg.cmdLineAliasesDesc());
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
+        Option g = new Option("g", GENERATE_KEY_PAIR_PARAM, true, ElytronToolMessages.msg.cmdLineGenerateKeyPairDesc());
+        g.setOptionalArg(false);
+        g.setArgName("alias");
+        Option xp = new Option("xp", EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM, true, ElytronToolMessages.msg.cmdLineExportPublicKeyDesc());
+        xp.setOptionalArg(false);
+        xp.setArgName("alias");
+        Option ikp = new Option("ikp", IMPORT_KEY_PAIR_PARAM, true, ElytronToolMessages.msg.cmdLineImportKeyPairDesc());
+        ikp.setOptionalArg(false);
+        ikp.setArgName("alias");
         og.addOption(a);
         og.addOption(e);
         og.addOption(r);
         og.addOption(v);
+        og.addOption(g);
+        og.addOption(xp);
+        og.addOption(ikp);
         options.addOptionGroup(og);
         options.addOption(h);
         options.addOption(d);
@@ -357,6 +418,108 @@ class CredentialStoreCommand extends Command {
                 System.out.println(ElytronToolMessages.msg.noAliases());
             }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
+        } else if (cmdLine.hasOption(GENERATE_KEY_PAIR_PARAM)) {
+            String alias = cmdLine.getOptionValue(GENERATE_KEY_PAIR_PARAM);
+            if (alias == null || alias.isEmpty()) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(GENERATE_KEY_PAIR_PARAM);
+            }
+            int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE_PARAM));
+            String algorithm = cmdLine.getOptionValue(ALGORITHM_PARAM);
+            if (algorithm == null) algorithm = RSA_ALGORITHM;
+            credentialStore.store(alias, createKeyPairCredential(algorithm, size));
+            credentialStore.flush();
+            System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
+            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+        } else if (cmdLine.hasOption(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM)) {
+            String alias = cmdLine.getOptionValue(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
+            if (alias == null || alias.isEmpty()) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
+            }
+            if (credentialStore.exists(alias, KeyPairCredential.class)) {
+                KeyPairCredential credential = credentialStore.retrieve(alias, KeyPairCredential.class);
+                System.out.println(PublicKeyEntry.toString(credential.getKeyPair().getPublic()));
+                setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            } else {
+                setStatus(ALIAS_NOT_FOUND);
+                if (entryType != null) {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+                } else {
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                }
+            }
+        } else if (cmdLine.hasOption(IMPORT_KEY_PAIR_PARAM)) {
+            String alias = cmdLine.getOptionValue(IMPORT_KEY_PAIR_PARAM);
+            if (alias == null || alias.isEmpty()) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(IMPORT_KEY_PAIR_PARAM);
+            }
+
+            String passphrase = cmdLine.getOptionValue(KEY_PASSPHRASE_PARAM);
+            if (passphrase == null || passphrase.isEmpty()) {
+                // prompt for passphrase
+                passphrase = prompt(false, ElytronToolMessages.msg.keyPassphrasePrompt(), true, ElytronToolMessages.msg.keyPassphrasePromptConfirm());
+            }
+            ElytronFilePasswordProvider passwordProvider = new ElytronFilePasswordProvider(createCredential(passphrase, PasswordCredential.class.getName()));
+
+            KeyPairCredential keyPairCredential;
+            String privateKeyContent;
+            String publicKeyContent = null;
+            String privateKeyString = cmdLine.getOptionValue(PRIVATE_KEY_STRING_PARAM);
+            String publicKeyString = cmdLine.getOptionValue(PUBLIC_KEY_STRING_PARAM);
+            String privateKeyFile = cmdLine.getOptionValue(PRIVATE_KEY_LOCATION_PARAM);
+            String publicKeyFile = cmdLine.getOptionValue(PUBLIC_KEY_LOCATION_PARAM);
+
+            if (privateKeyFile != null) {
+                if (!Files.exists(Paths.get(privateKeyFile))) {
+                    setStatus(GENERAL_CONFIGURATION_ERROR);
+                    throw ElytronToolMessages.msg.keyFileDoesNotExist(privateKeyFile);
+                }
+                File keyFile = new File(privateKeyFile);
+                FileInputStream stream = new FileInputStream(keyFile);
+                byte[] keyData = new byte[stream.available()];
+                try {
+                    stream.read(keyData, 0, stream.available());
+                } finally {
+                    safeClose(stream);
+                }
+                privateKeyContent = new String(keyData);
+            } else if (privateKeyString != null) {
+                privateKeyContent = privateKeyString;
+            } else {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.noPrivateKeySpecified();
+            }
+
+            if (privateKeyContent.isEmpty()) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.noPrivateKeySpecified();
+            }
+
+            if (publicKeyFile != null) {
+                if (!Files.exists(Paths.get(publicKeyFile))) {
+                    setStatus(GENERAL_CONFIGURATION_ERROR);
+                    throw ElytronToolMessages.msg.keyFileDoesNotExist(publicKeyFile);
+                }
+                File keyFile = new File(publicKeyFile);
+                FileInputStream stream = new FileInputStream(keyFile);
+                byte[] keyData = new byte[stream.available()];
+                try {
+                    stream.read(keyData, 0, stream.available());
+                } finally {
+                    safeClose(stream);
+                }
+                publicKeyContent = new String(keyData);
+            } else if (publicKeyString != null) {
+                publicKeyContent = publicKeyString;
+            }
+
+            keyPairCredential = parseKeyPairCredential(privateKeyContent, publicKeyContent, passwordProvider);
+            credentialStore.store(alias, keyPairCredential);
+            credentialStore.flush();
+            System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
+            setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)) {
             //this must be always the last available option.
             credentialStore.flush();
@@ -408,9 +571,76 @@ class CredentialStoreCommand extends Command {
         }
     }
 
+    private KeyPairCredential createKeyPairCredential(String algorithm, int size) throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator;
+
+        switch (algorithm) {
+            case RSA_ALGORITHM: {
+                /* Size must range from 512 to 16384. Default size: 2048
+                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-7093246A-31A3-4304-AC5F-5FB6400405E2
+                 */
+                size = (512 <= size && size <= 16384) ? size : 2048;
+                break;
+            }
+            case DSA_ALGORITHM: {
+                /* Size must be multiple of 64 ranging from 512 to 1024, plus 2048 and 3072. Default size: 2048
+                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-3A80CC46-91E1-4E47-AC51-CB7B782CEA7D
+                 */
+                size = (512 <= size && size <= 1024 && (size % 64) == 0) || size == 2048  || size == 3072 ? size : 2048;
+                break;
+            }
+            case EC_ALGORITHM: {
+                /* Size must range from 112 to 571. Default size: 256
+                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-091BF58C-82AB-4C9C-850F-1660824D5254
+                 */
+                size = (112 <= size && size <= 571) ? size : 256;
+                break;
+            }
+            default: {
+                algorithm = RSA_ALGORITHM;
+                size = 2048;
+                break;
+            }
+        }
+
+        try {
+             keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            throw ElytronToolMessages.msg.unknownKeyPairAlgorithm(algorithm);
+        }
+        try {
+            keyPairGenerator.initialize(size, new SecureRandom());
+        } catch (InvalidParameterException e) {
+            throw ElytronToolMessages.msg.invalidKeySize(e.getMessage());
+        }
+        KeyPairCredential keyPairCredential = new KeyPairCredential(keyPairGenerator.generateKeyPair());
+        return keyPairCredential;
+    }
+
+    private KeyPairCredential parseKeyPairCredential(String privateKeyContent, String publicKeyContent, FilePasswordProvider passwordProvider) throws Exception {
+        KeyPair keyPair;
+        try {
+            keyPair = Pem.parsePemOpenSSHContent(CodePointIterator.ofString(privateKeyContent), passwordProvider).next().tryCast(KeyPair.class);
+            if (keyPair == null) throw ElytronToolMessages.msg.xmlNoPemContent();
+        } catch (IllegalArgumentException e) {
+            if (publicKeyContent.isEmpty()) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.noPublicKeySpecified();
+            }
+            PrivateKey privateKey = Pem.parsePemContent(CodePointIterator.ofString(privateKeyContent)).next().tryCast(PrivateKey.class);
+            if (privateKey == null) throw ElytronToolMessages.msg.xmlNoPemContent();
+            PublicKey publicKey = Pem.parsePemContent(CodePointIterator.ofString(publicKeyContent)).next().tryCast(PublicKey.class);
+            if (publicKey == null) throw ElytronToolMessages.msg.xmlNoPemContent();
+            keyPair = new KeyPair(publicKey, privateKey);
+        }
+        return new KeyPairCredential(keyPair);
+    }
+
     private Class<? extends Credential> entryTypeToCredential(String entryType) {
         if (entryType == null || PasswordCredential.class.getName().equals(entryType)) {
             return PasswordCredential.class;
+        } else if (KeyPairCredential.class.getName().equals(entryType)) {
+          return KeyPairCredential.class;
         } else {
             throw ElytronToolMessages.msg.unknownEntryType(entryType);
         }
@@ -512,5 +742,11 @@ class CredentialStoreCommand extends Command {
         com.append("clear-text=\"");
         com.append(password);
         com.append("\"})");
+    }
+
+    private static void safeClose(Closeable c) {
+        if (c != null) try {
+            c.close();
+        } catch (Throwable ignored) {}
     }
 }

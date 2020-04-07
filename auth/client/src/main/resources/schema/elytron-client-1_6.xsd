@@ -307,6 +307,7 @@
             <xsd:element name="masked-password" type="masked-password-type"/>
             <xsd:element name="key-pair" type="key-pair-type"/>
             <xsd:element name="certificate" type="certificate-type"/>
+            <xsd:element name="ssh-credential" type="ssh-credential-type"/>
             <xsd:element name="public-key-pem" type="xsd:string">
                 <xsd:annotation>
                     <xsd:documentation>
@@ -324,6 +325,41 @@
                 </xsd:annotation>
             </xsd:element>
         </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="ssh-credential-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                The location of a private ssh key to be used as credentials.
+            </xsd:documentation>
+        </xsd:annotation>
+        <!-- The Passphrase used to decrypt the private key file if needed -->
+        <xsd:choice minOccurs="0" maxOccurs="1">
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
+            <xsd:element name="clear-password" type="clear-password-type"/>
+            <xsd:element name="masked-password" type="masked-password-type"/>
+        </xsd:choice>
+        <xsd:attribute name="ssh-directory" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The directory containing the SSH key file. Set to "[user.home]/.ssh" by default
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="private-key-file" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The name of the private key file. Set to "id_rsa", "id_dsa, and "id_ecdsa" by default.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="known-hosts-file" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The name of the file containing the known SSH hosts. Set to "known_hosts" by default.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
     <xsd:complexType name="key-pair-type">
@@ -347,7 +383,35 @@
                     </xsd:documentation>
                 </xsd:annotation>
             </xsd:element>
+            <xsd:element name="openssh-private-key" type="openssh-private-key-type">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        A PEM encoded private key in OpenSSH format. The public key to be used will be obtained from the encoded private key
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
         </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="openssh-private-key-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                A PEM encoded private key in OpenSSH format. The public key to be used will be obtained from the encoded private key
+            </xsd:documentation>
+        </xsd:annotation>
+        <!-- The Passphrase used to decrypt the private key if needed -->
+        <xsd:choice minOccurs="0" maxOccurs="1">
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
+            <xsd:element name="clear-password" type="clear-password-type"/>
+            <xsd:element name="masked-password" type="masked-password-type"/>
+        </xsd:choice>
+        <xsd:attribute name="pem" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The PEM encoded private key in OpenSSH format.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
     <xsd:complexType name="certificate-type">

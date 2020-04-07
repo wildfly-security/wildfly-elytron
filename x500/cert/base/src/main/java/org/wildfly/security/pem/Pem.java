@@ -20,7 +20,10 @@ package org.wildfly.security.pem;
 
 import static org.wildfly.security.x500.cert._private.ElytronMessages.log;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
@@ -34,6 +37,9 @@ import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHKeyPairResourceParser;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.bytes.ByteStringBuilder;
@@ -55,6 +61,7 @@ public final class Pem {
     private static final String CERTIFICATE_FORMAT = "CERTIFICATE";
     private static final String PRIVATE_KEY_FORMAT = "PRIVATE KEY";
     private static final String CERTIFICATE_REQUEST_FORMAT = "CERTIFICATE REQUEST";
+    public static final String OPENSSH_PRIVATE_KEY_FORMAT = "OPENSSH PRIVATE KEY";
 
     /**
      * Parse arbitrary PEM content.  The given function is used to parse the content of the PEM representation and produce
@@ -183,6 +190,54 @@ public final class Pem {
     }
 
     /**
+     * Iterate over the contents of a key file in OpenSSH format, returning each entry in sequence.
+     *
+     * @param pemContent the code point iterator over the content (must not be {@code null})
+     * @param passphraseProvider provides the passphrase used to decrypt the private key(may be {@code null})
+     * @return the iterator (not {@code null})
+     * @throws IllegalArgumentException if there is a problem with the data or the key
+     */
+    public static Iterator<PemEntry<?>> parsePemOpenSSHContent(CodePointIterator pemContent, FilePasswordProvider passphraseProvider) throws IllegalArgumentException {
+        return new Iterator<PemEntry<?>>() {
+            private PemEntry<?> next;
+
+            public boolean hasNext() {
+                if (next == null) {
+                    if (! pemContent.hasNext()) {
+                        return false;
+                    }
+                    next = parsePemContent(pemContent, (type, byteIterator) -> {
+                        switch (type) {
+                            case OPENSSH_PRIVATE_KEY_FORMAT: {
+                                final KeyPair keyPair = parseOpenSSHKeys(byteIterator, passphraseProvider);
+                                return new PemEntry<>(keyPair);
+                            }
+                            default: {
+                                throw log.malformedPemContent(pemContent.getIndex());
+                            }
+                        }
+                    });
+                    if (next == null) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            public PemEntry<?> next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+        };
+    }
+
+    /**
      * Generate PEM content to the given byte string builder.  The appropriate header and footer surrounds the base-64
      * encoded value.
      *
@@ -276,6 +331,20 @@ public final class Pem {
             throw log.asnUnrecognisedAlgorithm(algorithm);
         } catch (Exception cause) {
             throw log.privateKeyParseError(cause);
+        }
+    }
+
+    private static KeyPair parseOpenSSHKeys(ByteIterator byteIterator, FilePasswordProvider passphraseProvider) throws IllegalArgumentException {
+        OpenSSHKeyPairResourceParser resourceParser = new OpenSSHKeyPairResourceParser();
+        byte[] stream = byteIterator.drain();
+        try {
+            return  resourceParser.extractKeyPairs(null, null,
+                    OpenSSHKeyPairResourceParser.BEGIN_MARKER, OpenSSHKeyPairResourceParser.END_MARKER,
+                    passphraseProvider, stream, null).iterator().next();
+        } catch (IOException e) {
+            throw log.openSshParseError(e.getMessage());
+        } catch (GeneralSecurityException e) {
+            throw log.openSshGeneratingError(e.getMessage());
         }
     }
 
