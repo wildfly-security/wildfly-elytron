@@ -104,7 +104,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         }
 
         // Is current request an authentication attempt?
-        if (POST.equals(request.getRequestMethod()) && request.getRequestURI().getPath().endsWith(postLocation)) {
+        if (POST.equals(request.getRequestMethod()) && isAuthenticationRequest(request.getRequestURI().getPath())) {
             attemptAuthentication(request);
             return;
         }
@@ -113,6 +113,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         if (loginPage != null) {
             request.noAuthenticationInProgress((response) -> sendLogin(request, response));
         }
+    }
+
+    private boolean isAuthenticationRequest(final String path) {
+        int lastSlash = path.lastIndexOf('/');
+        int pathParam = path.indexOf(';', lastSlash > 0 ? lastSlash : 0);
+        String target = path.substring(lastSlash >= 0 ? lastSlash + 1 : 0, pathParam > 0 ? pathParam : path.length());
+
+        return target.equals(postLocation);
     }
 
     private IdentityCache createIdentityCache(HttpServerRequest request) {
