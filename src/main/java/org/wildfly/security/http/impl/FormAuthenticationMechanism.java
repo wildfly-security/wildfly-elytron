@@ -133,6 +133,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                     return;
                 }
 
+                /*
+                 * If we are associating an identity with the session for the first time we need to
+                 * change the ID of the session, in other cases we can continue with the same ID.
+                 */
+                if (session.supportsChangeID() && session.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                    session.changeID();
+                }
+
                 session.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), identity));
             }
 
