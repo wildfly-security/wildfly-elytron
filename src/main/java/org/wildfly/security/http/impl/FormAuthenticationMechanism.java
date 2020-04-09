@@ -138,7 +138,10 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                  * change the ID of the session, in other cases we can continue with the same ID.
                  */
                 if (session.supportsChangeID() && session.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                    String originalSessionID = session.getID();
                     session.changeID();
+                    String newSessionID = session.getID();
+                    fixCachedLocation(session, originalSessionID, newSessionID);
                 }
 
                 session.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), identity));
@@ -170,6 +173,14 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                 return cachedIdentity;
             }
         };
+    }
+
+    private void fixCachedLocation(HttpScope scope, String originalSessionID, String newSessionID) {
+        String originalPath = scope.getAttachment(LOCATION_KEY, String.class);
+        if (originalPath != null && originalPath.contains(originalSessionID) && !originalSessionID.equals(newSessionID)) {
+            String newPath = originalPath.replace(originalSessionID, newSessionID);
+            scope.setAttachment(LOCATION_KEY, newPath);
+        }
     }
 
     private void error(String message, HttpServerRequest request) {
