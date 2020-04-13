@@ -38,10 +38,10 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     /**
      * Construct a new instance in server mode.
      *
-     * @param protocolSelector the protocol selector (must not be {@code null})
+     * @param protocolSelector    the protocol selector (must not be {@code null})
      * @param cipherSuiteSelector the cipher suite selector (must not be {@code null})
-     * @param wantClientAuth {@code true} to request client authentication
-     * @param needClientAuth {@code true} to require client authentication
+     * @param wantClientAuth      {@code true} to request client authentication
+     * @param needClientAuth      {@code true} to require client authentication
      */
     SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean wantClientAuth, final boolean needClientAuth, final boolean useCipherSuitesOrder) {
         this.protocolSelector = protocolSelector;
@@ -55,7 +55,7 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     /**
      * Construct a new instance in client mode.
      *
-     * @param protocolSelector the protocol selector (must not be {@code null})
+     * @param protocolSelector    the protocol selector (must not be {@code null})
      * @param cipherSuiteSelector the cipher suite selector (must not be {@code null})
      */
     SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean useCipherSuitesOrder) {
@@ -156,27 +156,23 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
         // ignored
     }
 
-    private SSLParameters redefine(SSLParameters original, String[] supportedCipherSuites, String[] supportedProtocols) {
-        final SSLParameters params = new SSLParameters();
-        configure(params, protocolSelector.evaluate(supportedProtocols), cipherSuiteSelector.evaluate(supportedCipherSuites));
-        // copy all other parameters over
-        params.setServerNames(original.getServerNames());
-        params.setSNIMatchers(original.getSNIMatchers());
-        params.setAlgorithmConstraints(original.getAlgorithmConstraints());
-        params.setEndpointIdentificationAlgorithm(original.getEndpointIdentificationAlgorithm());
+    private SSLParameters redefine(SSLParameters original) {
+        SSLParameters params = JDKSpecific.setSSLParameters(original);
+        params.setProtocols(protocolSelector.evaluate(params.getProtocols()));
+        params.setCipherSuites(cipherSuiteSelector.evaluate(params.getCipherSuites()));
         return params;
     }
 
     public void setSSLParameters(final SSLContext sslContext, final SSLSocket sslSocket, final SSLParameters parameters) {
-        sslSocket.setSSLParameters(redefine(parameters, sslSocket.getSupportedCipherSuites(), sslSocket.getSupportedProtocols()));
+        sslSocket.setSSLParameters(redefine(parameters));
     }
 
     public void setSSLParameters(final SSLContext sslContext, final SSLEngine sslEngine, final SSLParameters parameters) {
-        sslEngine.setSSLParameters(redefine(parameters, sslEngine.getSupportedCipherSuites(), sslEngine.getSupportedProtocols()));
+        sslEngine.setSSLParameters(redefine(parameters));
     }
 
     public void setSSLParameters(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final SSLParameters parameters) {
-        sslServerSocket.setSSLParameters(redefine(parameters, sslServerSocket.getSupportedCipherSuites(), sslServerSocket.getSupportedProtocols()));
+        sslServerSocket.setSSLParameters(redefine(parameters));
     }
 
     public void setUseClientMode(final SSLContext sslContext, final SSLSocket sslSocket, final boolean mode) {
