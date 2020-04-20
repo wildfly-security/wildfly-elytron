@@ -189,6 +189,15 @@ public interface HttpServerRequest extends HttpServerScopes {
     String getRequestPath();
 
     /**
+     * Returns a remotely authenticated user
+     *
+     * @return the remote user principal or {@code null} if no remote user was authenticated.
+     */
+    default String getRemoteUser() {
+        return null;
+    }
+
+    /**
      * Returns the parameters received in the current request.
      *
      * These parameters will be from both the query string and the form data when available.
