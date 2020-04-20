@@ -281,6 +281,7 @@
                             ${project.basedir}/http/cert/src/main/java/;
                             ${project.basedir}/http/deprecated/src/main/java/;
                             ${project.basedir}/http/digest/src/main/java/;
+                            ${project.basedir}/http/external/src/main/java/;
                             ${project.basedir}/http/form/src/main/java/;
                             ${project.basedir}/http/spnego/src/main/java/;
                             ${project.basedir}/http/sso/src/main/java/;
@@ -545,6 +546,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-external</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1298,6 +1304,7 @@
         <module>http/cert</module>
         <module>http/deprecated</module>
         <module>http/digest</module>
+        <module>http/external</module>
         <module>http/form</module>
         <module>http/spnego</module>
         <module>http/sso</module>

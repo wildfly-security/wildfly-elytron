@@ -66,6 +66,7 @@ public interface ElytronMessages extends BasicLogger {
     ElytronMessages httpSpnego = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.spnego");
     ElytronMessages httpClientCert = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.cert");
     ElytronMessages httpDigest = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.digest");
+    ElytronMessages httpExternal = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.external");
     ElytronMessages httpUserPass = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.password");
     ElytronMessages httpForm = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.form");
     ElytronMessages httpBearer = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.http.bearer");

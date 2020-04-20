@@ -151,6 +151,7 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "DIGEST-SHA-512-256", "org.wildfly.security.http.digest.DigestMechanismFactory", emptyList, emptyMap, true, true));
+        putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "EXTERNAL", "org.wildfly.security.http.external.ExternalMechanismFactory", emptyList, emptyMap, true, true));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "FORM", "org.wildfly.security.http.form.FormMechanismFactory", emptyList, emptyMap, true, true));
         putService(new ProviderService(this, HTTP_SERVER_FACTORY_TYPE, "SPNEGO", "org.wildfly.security.http.spnego.SpnegoMechanismFactory", emptyList, emptyMap, true, true));
 

@@ -141,6 +141,7 @@ public class HttpConstants {
     public static final String DIGEST_NAME = "DIGEST";
     public static final String DIGEST_SHA256_NAME = "DIGEST-SHA-256";
     public static final String DIGEST_SHA512_256_NAME = "DIGEST-SHA-512-256";
+    public static final String EXTERNAL_NAME = "EXTERNAL";
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
     public static final String BEARER_TOKEN = "BEARER_TOKEN";

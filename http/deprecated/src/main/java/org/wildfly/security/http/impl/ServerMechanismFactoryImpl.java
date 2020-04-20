@@ -29,6 +29,7 @@ import org.wildfly.security.http.basic.BasicMechanismFactory;
 import org.wildfly.security.http.bearer.BearerMechanismFactory;
 import org.wildfly.security.http.cert.ClientCertMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
+import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.http.form.FormMechanismFactory;
 import org.wildfly.security.http.spnego.SpnegoMechanismFactory;
 import org.wildfly.security.http.util.AggregateServerMechanismFactory;
@@ -45,8 +46,8 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
 
     public ServerMechanismFactoryImpl() {
         delegate = new AggregateServerMechanismFactory(new BasicMechanismFactory(), new BearerMechanismFactory(),
-                new ClientCertMechanismFactory(), new DigestMechanismFactory(), new FormMechanismFactory(),
-                new SpnegoMechanismFactory());
+                new ClientCertMechanismFactory(), new DigestMechanismFactory(), new ExternalMechanismFactory(),
+                new FormMechanismFactory(), new SpnegoMechanismFactory());
     }
 
     @Override
