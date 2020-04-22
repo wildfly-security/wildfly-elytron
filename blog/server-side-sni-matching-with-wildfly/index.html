@@ -221,8 +221,11 @@ going to generate and make use of self-signed certificates as shown in the follo
 <p>Notice that we now have three different certificates: one that we want to use for <code>app1.com</code>, one that we want to use for
 <code>app2.com</code>, and one that we want to use for <code>localhost</code>.</p>
 </div>
-<div class="sect2">
-<h3 id="sni-matching-configuration"><a class="anchor" href="#sni-matching-configuration"></a>SNI Matching Configuration</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="sni-matching-configuration"><a class="anchor" href="#sni-matching-configuration"></a>SNI Matching Configuration</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Now that we have configured our server keystore, our next step is to generate a few key managers that will be used
 to select each of the above certificates:</p>
@@ -280,8 +283,10 @@ reload</code></pre>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="access-app1-com-and-app2-com-via-https"><a class="anchor" href="#access-app1-com-and-app2-com-via-https"></a>Access app1.com and app2.com via HTTPS</h3>
+</div>
+<div class="sect1">
+<h2 id="access-app1-com-and-app2-com-via-https"><a class="anchor" href="#access-app1-com-and-app2-com-via-https"></a>Access app1.com and app2.com via HTTPS</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Now that we&#8217;ve enabled server side SNI matching, we can use our browser to access <code>app1.com</code> and <code>app2.com</code>
 via HTTPS. Let&#8217;s first try to access <a href="https://app1.com:8443" class="bare">https://app1.com:8443</a>. Note that the browser is going to add the SNI
@@ -297,7 +302,6 @@ that this time, it&#8217;s the certificate for <code>app2.com</code>.</p>
 <div class="paragraph">
 <p>Finally, try accessing <a href="https://localhost:8443" class="bare">https://localhost:8443</a>. This time, the certificate presented by the server will be
 the certificate for <code>localhost</code>.</p>
-</div>
 </div>
 </div>
 </div>
