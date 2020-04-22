@@ -78,7 +78,7 @@ going to generate and make use of self-signed certificates as shown in the follo
 Notice that we now have three different certificates: one that we want to use for `app1.com`, one that we want to use for
 `app2.com`, and one that we want to use for `localhost`.
 
-=== SNI Matching Configuration
+== SNI Matching Configuration
 
 Now that we have configured our server keystore, our next step is to generate a few key managers that will be used
 to select each of the above certificates:
@@ -129,7 +129,7 @@ run-batch
 reload
 ----
 
-=== Access app1.com and app2.com via HTTPS
+== Access app1.com and app2.com via HTTPS
 
 Now that we've enabled server side SNI matching, we can use our browser to access `app1.com` and `app2.com`
 via HTTPS. Let's first try to access https://app1.com:8443. Note that the browser is going to add the SNI
