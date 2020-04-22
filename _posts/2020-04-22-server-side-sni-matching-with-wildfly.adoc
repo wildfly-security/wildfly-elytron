@@ -1,0 +1,150 @@
+---
+layout: post
+title: 'Server Side SNI Matching with WildFly'
+date: 2020-04-22
+tags: elytron wildfly ssl sni
+synopsis: An overview on how to use server side SNI matching with WildFly.
+author: fjuma
+---
+
+For quite some time now, WildFly has provided support for server side Server Name Indication (SNI) matching.
+This allows a WildFly instance with multiple virtual hosts that share a single IP address to present the
+correct certificate depending on the server name specified by the client via the SNI extension. This blog
+post is going to go through a complete example to show how to configure this.
+
+== Example Project
+
+First, clone the `elytron-examples` repo locally:
+
+[source,shell]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+
+A WildFly CLI script that contains all of the commands used in this example can be found in the
+https://github.com/wildfly-security-incubator/elytron-examples/tree/master/server-ssl-sni-context[server-ssl-sni-context]
+project in the `elytron-examples` git repository.
+
+== Virtual Host Configuration
+
+We're going to configure a WildFly instance with two virtual hosts: `app1.com` and `app2.com`. The first thing
+we're going to do is add a couple aliases for localhost in our `/etc/hosts/` file:
+
+[source,shell]
+----
+127.0.0.1 app1.com
+127.0.0.1 app2.com
+----
+
+Next, we're going to add the following virtual host configuration to the Undertow subsystem:
+
+[source,shell]
+----
+/subsystem=undertow/server=default-server/host=app1:add(alias=["app1.com"],default-web-module=app1.war)
+/subsystem=undertow/server=default-server/host=app2:add(alias=["app2.com"],default-web-module=app2.war)
+----
+
+We're now going to deploy the two web applications from our `server-ssl-sni-context` example project:
+
+[source,shell]
+----
+cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app1
+mvn wildfly:deploy
+----
+
+[source,shell]
+----
+cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app2
+mvn wildfly:deploy
+----
+
+We can now access our two virtual hosts using http://app1.com:8080 and http://app2.com:8080. In the next few sections,
+we're going to go through the steps needed to configure one-way SSL and provide support for SNI matching.
+
+== Certificate Generation
+
+We need a certificate for each virtual host that we have configured. Normally, you would obtain a signed
+certificate from a trusted certificate authority for each virtual host. For this example, we're simply
+going to generate and make use of self-signed certificates as shown in the following commands:
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app1,distinguished-name="CN=app1.com",algorithm=RSA)
+/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app2,distinguished-name="CN=app2.com",algorithm=RSA)
+/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=localhost,distinguished-name="CN=localhost",algorithm=RSA)
+----
+
+Notice that we now have three different certificates: one that we want to use for `app1.com`, one that we want to use for
+`app2.com`, and one that we want to use for `localhost`.
+
+=== SNI Matching Configuration
+
+Now that we have configured our server keystore, our next step is to generate a few key managers that will be used
+to select each of the above certificates:
+
+[source,shell]
+----
+/subsystem=elytron/key-manager=app1KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app1)
+/subsystem=elytron/key-manager=app2KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app2)
+/subsystem=elytron/key-manager=localhostKM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=localhost)
+----
+
+Notice that `app1KM` will always select the certificate we want to use for `app1.com`. Similarly, `app2KM` will always
+select the certificate we want to use for `app2.com`. Finally, `localhostKM` will always select the certificate we want to use
+for `localhost`.
+
+Next, we're going to configure some server SSL contexts that make use of each of the above key managers:
+
+[source,shell]
+----
+/subsystem=elytron/server-ssl-context=app1SSC:add(key-manager=app1KM)
+/subsystem=elytron/server-ssl-context=app2SSC:add(key-manager=app2KM)
+/subsystem=elytron/server-ssl-context=localhostSSC:add(key-manager=localhostKM)
+----
+
+As an example, if `app1SSC` is in use, it will make use of the `app1KM` key manager which means that it will
+select the certificate we want to use for `app1.com`.
+
+Finally, we can now configure a server SSL SNI context that makes use of our server SSL contexts:
+
+[source,shell]
+----
+/subsystem=elytron/server-ssl-sni-context=sniSSC:add(default-ssl-context=localhostSSC, host-context-map={app1\\.com=app1SSC,app2\\.com=app2SSC})
+----
+
+The above server SSL SNI context will ensure the correct certificate is presented to the client based on the SNI
+extension provided by the client. If the client does not specify this extension or if the value does not match
+any of the hostnames from our `host-context-map`, then the `default-ssl-context` will be used.
+
+We're now going to update our HTTPS listener configuration in the Undertow subsystem so that it references
+our server SSL SNI context:
+
+[source,shell]
+----
+batch
+/subsystem=undertow/server=default-server/https-listener=https:undefine-attribute(name=security-realm)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=sniSSC)
+run-batch
+reload
+----
+
+=== Access app1.com and app2.com via HTTPS
+
+Now that we've enabled server side SNI matching, we can use our browser to access `app1.com` and `app2.com`
+via HTTPS. Let's first try to access https://app1.com:8443. Note that the browser is going to add the SNI
+extension with value `app1.com` in the ClientHello message it sends to the server at the beginning of the
+TLS handshake. Now, since the server's certificate is self-signed, it won't be trusted by your browser.
+You'll need to manually confirm that this certificate is trusted or configure your browser to trust it.
+Inspect the certificate that was presented by the server. Notice that it's the certificate for `app1.com`.
+
+Next, try accessing https://app2.com:8443. Inspect the certificate that was presented by the server. Notice
+that this time, it's the certificate for `app2.com`.
+
+Finally, try accessing https://localhost:8443. This time, the certificate presented by the server will be
+the certificate for `localhost`.
+
+== Summary
+
+This blog post has shown how to configure server side SNI matching for WildFly. For more details, take a look
+at the Elytron https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc#configuring-sni[documentation].
