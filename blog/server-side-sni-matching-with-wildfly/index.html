@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Server Side SNI Matching with WildFly</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/19/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/19/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Server Side SNI Matching with WildFly</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | April 22, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/&title=Server Side SNI Matching with WildFly" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Server Side SNI Matching with WildFly&url=https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Server Side SNI Matching with WildFly&amp;body=Server Side SNI Matching with WildFly https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>For quite some time now, WildFly has provided support for server side Server Name Indication (SNI) matching.
+This allows a WildFly instance with multiple virtual hosts that share a single IP address to present the
+correct certificate depending on the server name specified by the client via the SNI extension. This blog
+post is going to go through a complete example to show how to configure this.</p>
+</div>
+<div class="sect1">
+<h2 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A WildFly CLI script that contains all of the commands used in this example can be found in the
+<a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/server-ssl-sni-context">server-ssl-sni-context</a>
+project in the <code>elytron-examples</code> git repository.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="virtual-host-configuration"><a class="anchor" href="#virtual-host-configuration"></a>Virtual Host Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We&#8217;re going to configure a WildFly instance with two virtual hosts: <code>app1.com</code> and <code>app2.com</code>. The first thing
+we&#8217;re going to do is add a couple aliases for localhost in our <code>/etc/hosts/</code> file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">127.0.0.1 app1.com
+127.0.0.1 app2.com</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;re going to add the following virtual host configuration to the Undertow subsystem:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=undertow/server=default-server/host=app1:add(alias=["app1.com"],default-web-module=app1.war)
+/subsystem=undertow/server=default-server/host=app2:add(alias=["app2.com"],default-web-module=app2.war)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;re now going to deploy the two web applications from our <code>server-ssl-sni-context</code> example project:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app1
+mvn wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app2
+mvn wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can now access our two virtual hosts using <a href="http://app1.com:8080" class="bare">http://app1.com:8080</a> and <a href="http://app2.com:8080" class="bare">http://app2.com:8080</a>. In the next few sections,
+we&#8217;re going to go through the steps needed to configure one-way SSL and provide support for SNI matching.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="certificate-generation"><a class="anchor" href="#certificate-generation"></a>Certificate Generation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We need a certificate for each virtual host that we have configured. Normally, you would obtain a signed
+certificate from a trusted certificate authority for each virtual host. For this example, we&#8217;re simply
+going to generate and make use of self-signed certificates as shown in the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app1,distinguished-name="CN=app1.com",algorithm=RSA)
+/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app2,distinguished-name="CN=app2.com",algorithm=RSA)
+/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=localhost,distinguished-name="CN=localhost",algorithm=RSA)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that we now have three different certificates: one that we want to use for <code>app1.com</code>, one that we want to use for
+<code>app2.com</code>, and one that we want to use for <code>localhost</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="sni-matching-configuration"><a class="anchor" href="#sni-matching-configuration"></a>SNI Matching Configuration</h3>
+<div class="paragraph">
+<p>Now that we have configured our server keystore, our next step is to generate a few key managers that will be used
+to select each of the above certificates:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-manager=app1KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app1)
+/subsystem=elytron/key-manager=app2KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app2)
+/subsystem=elytron/key-manager=localhostKM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=localhost)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that <code>app1KM</code> will always select the certificate we want to use for <code>app1.com</code>. Similarly, <code>app2KM</code> will always
+select the certificate we want to use for <code>app2.com</code>. Finally, <code>localhostKM</code> will always select the certificate we want to use
+for <code>localhost</code>.</p>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;re going to configure some server SSL contexts that make use of each of the above key managers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/server-ssl-context=app1SSC:add(key-manager=app1KM)
+/subsystem=elytron/server-ssl-context=app2SSC:add(key-manager=app2KM)
+/subsystem=elytron/server-ssl-context=localhostSSC:add(key-manager=localhostKM)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As an example, if <code>app1SSC</code> is in use, it will make use of the <code>app1KM</code> key manager which means that it will
+select the certificate we want to use for <code>app1.com</code>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, we can now configure a server SSL SNI context that makes use of our server SSL contexts:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/server-ssl-sni-context=sniSSC:add(default-ssl-context=localhostSSC, host-context-map={app1\\.com=app1SSC,app2\\.com=app2SSC})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above server SSL SNI context will ensure the correct certificate is presented to the client based on the SNI
+extension provided by the client. If the client does not specify this extension or if the value does not match
+any of the hostnames from our <code>host-context-map</code>, then the <code>default-ssl-context</code> will be used.</p>
+</div>
+<div class="paragraph">
+<p>We&#8217;re now going to update our HTTPS listener configuration in the Undertow subsystem so that it references
+our server SSL SNI context:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">batch
+/subsystem=undertow/server=default-server/https-listener=https:undefine-attribute(name=security-realm)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=sniSSC)
+run-batch
+reload</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="access-app1-com-and-app2-com-via-https"><a class="anchor" href="#access-app1-com-and-app2-com-via-https"></a>Access app1.com and app2.com via HTTPS</h3>
+<div class="paragraph">
+<p>Now that we&#8217;ve enabled server side SNI matching, we can use our browser to access <code>app1.com</code> and <code>app2.com</code>
+via HTTPS. Let&#8217;s first try to access <a href="https://app1.com:8443" class="bare">https://app1.com:8443</a>. Note that the browser is going to add the SNI
+extension with value <code>app1.com</code> in the ClientHello message it sends to the server at the beginning of the
+TLS handshake. Now, since the server&#8217;s certificate is self-signed, it won&#8217;t be trusted by your browser.
+You&#8217;ll need to manually confirm that this certificate is trusted or configure your browser to trust it.
+Inspect the certificate that was presented by the server. Notice that it&#8217;s the certificate for <code>app1.com</code>.</p>
+</div>
+<div class="paragraph">
+<p>Next, try accessing <a href="https://app2.com:8443" class="bare">https://app2.com:8443</a>. Inspect the certificate that was presented by the server. Notice
+that this time, it&#8217;s the certificate for <code>app2.com</code>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, try accessing <a href="https://localhost:8443" class="bare">https://localhost:8443</a>. This time, the certificate presented by the server will be
+the certificate for <code>localhost</code>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has shown how to configure server side SNI matching for WildFly. For more details, take a look
+at the Elytron <a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc#configuring-sni">documentation</a>.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

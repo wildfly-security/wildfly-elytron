@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Wed, 25 Mar 2020 14:09:34 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 22 Apr 2020 20:45:19 +0000</lastBuildDate>
+        
+        <item>
+            <title>Server Side SNI Matching with WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/
+            </link>
+            <description>
+                For quite some time now, WildFly has provided support for server side Server Name Indication (SNI) matching. This allows a WildFly instance with multiple virtual hosts that share a single IP address to present the correct certificate depending on the server name specified by the client via the SNI extension....
+            </description>
+            <pubDate>Wed, 22 Apr 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/server-side-sni-matching-with-wildfly/
+            </guid>
+        </item>
         
         <item>
             <title>Web Services client integration with Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
             <guid>
                 https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
-            </guid>
-        </item>
-        
-        <item>
-            <title>WildFly Elytron Credential Store APIs</title>
-            <link>
-                https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 26 Jun 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://darranl.blogspot.com/2019/06/wildfly-elytron-credential-store-apis.html
             </guid>
         </item>
         
