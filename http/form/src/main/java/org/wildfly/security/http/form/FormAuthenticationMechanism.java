@@ -182,6 +182,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                     HttpScope session = getSessionScope(request, true);
                     HttpServerMechanismsResponder responder = null;
                     if (session != null && session.exists()) {
+                        session.changeSessionId();  // Avoid session fixation attacks.
                         String postAuthenticationPath;
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
