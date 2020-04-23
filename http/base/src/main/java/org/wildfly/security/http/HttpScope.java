@@ -163,4 +163,10 @@ public interface HttpScope {
     default void registerForNotification(Consumer<HttpScopeNotification> notificationConsumer) {
     }
 
+    /**
+     * Change the session id of the current session
+     */
+    default void changeSessionId() {
+    }
+
 }
