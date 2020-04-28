@@ -17,15 +17,15 @@
 'UTF-8'
 -Xdoclint:none
 -doctitle
-'WildFly Elytron Parent 1.11.3.Final API'
+'WildFly Elytron Parent 1.11.4.Final API'
 -footer
-'<b>WildFly Elytron Parent 1.11.3.Final</b>'
+'<b>WildFly Elytron Parent 1.11.4.Final</b>'
 -header
-'<b>WildFly Elytron Parent 1.11.3.Final</b>'
+'<b>WildFly Elytron Parent 1.11.4.Final</b>'
 -linkoffline
 'https://docs.oracle.com/javase/8/docs/api' '/home/darranl/src/community/wildfly-elytron/target/javadoc-bundle-options'
 -notimestamp
 -use
 -version
 -windowtitle
-'WildFly Elytron Parent 1.11.3.Final API'
+'WildFly Elytron Parent 1.11.4.Final API'
