@@ -39,6 +39,15 @@ public interface AuthorizationIdentity {
     }
 
     /**
+     * Get the runtime attributes which pertain to this identity.  By default, an empty attribute collection is returned.
+     *
+     * @return the runtime attributes (must not be {@code null})
+     */
+    default Attributes getRuntimeAttributes() {
+        return Attributes.EMPTY;
+    }
+
+    /**
      * The empty authorization identity.
      */
     AuthorizationIdentity EMPTY = basicIdentity(Attributes.EMPTY);
@@ -73,4 +82,45 @@ public interface AuthorizationIdentity {
 
         };
     }
+
+    /**
+     * Create a basic authorization identity implementation using the given attributes and runtime attributes.
+     *
+     * @param attributes the attributes
+     * @param runtimeAttributes the runtime attributes
+     * @return the authorization identity
+     */
+    static AuthorizationIdentity basicIdentity(Supplier<Attributes> attributes, Supplier<Attributes> runtimeAttributes, final String string) {
+        return new AuthorizationIdentity() {
+
+            public Attributes getAttributes() {
+                return attributes.get();
+            }
+
+            public Attributes getRuntimeAttributes() {
+                return runtimeAttributes.get();
+            }
+
+            @Override
+            public String toString() {
+                return string;
+            }
+
+        };
+    }
+
+    /**
+     * Create a basic authorization identity implementation using the given authorization
+     * identity and runtime attributes.
+     *
+     * @param authorizationIdentity the authorization identity
+     * @param runtimeAttributes the identity runtime attributes
+     * @return the authorization identity
+     */
+    static AuthorizationIdentity basicIdentity(AuthorizationIdentity authorizationIdentity, Attributes runtimeAttributes) {
+        Attributes attributes = authorizationIdentity.getAttributes();
+        Attributes combinedRuntimeAttributes = AggregateAttributes.aggregateOf(authorizationIdentity.getRuntimeAttributes(), runtimeAttributes);
+        return basicIdentity(() -> attributes, () -> combinedRuntimeAttributes, "EMPTY");
+    }
+
 }
