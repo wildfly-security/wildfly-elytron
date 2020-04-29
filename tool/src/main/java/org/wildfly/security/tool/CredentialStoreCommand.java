@@ -382,7 +382,7 @@ class CredentialStoreCommand extends Command {
         HelpFormatter help = new HelpFormatter();
         help.setWidth(WIDTH);
         help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), CREDENTIAL_STORE_COMMAND),
-                ElytronToolMessages.msg.cmdLineCredentialStoreHelpHeader(),
+                ElytronToolMessages.msg.cmdLineCredentialStoreHelpHeader().concat(ElytronToolMessages.msg.cmdLineActionsHelpHeader()),
                 options,
                 "",
                 true);
