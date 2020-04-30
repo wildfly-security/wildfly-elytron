@@ -86,8 +86,8 @@ public final class NameConstraintsExtension extends X509CertificateExtension {
          * Construct a new instance.
          *
          * @param base the base name (must not be {@code null})
-         * @param minimumDistance the minimum distance (must be >= 0)
-         * @param maximumDistance the maximum distance (must be -1 indicating "not specified" or >= {@code minimumDistance})
+         * @param minimumDistance the minimum distance (must be &gt;= 0)
+         * @param maximumDistance the maximum distance (must be -1 indicating "not specified" or &gt;= {@code minimumDistance})
          */
         public GeneralSubtree(final GeneralName base, final int minimumDistance, final int maximumDistance) {
             this.base = base;

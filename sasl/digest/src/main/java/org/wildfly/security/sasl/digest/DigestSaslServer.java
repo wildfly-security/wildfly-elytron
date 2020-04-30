@@ -84,11 +84,11 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
      *    1#( realm | nonce | qop-options | stale | maxbuf | charset
      *          algorithm | cipher-opts | auth-param )
      *
-     *   realm             = "realm" "=" <"> realm-value <">
+     *   realm             = "realm" "=" &lt;"&gt; realm-value &lt;"&gt;
      *   realm-value       = qdstr-val
-     *   nonce             = "nonce" "=" <"> nonce-value <">
+     *   nonce             = "nonce" "=" &lt;"&gt; nonce-value &lt;"&gt;
      *   nonce-value       = qdstr-val
-     *   qop-options       = "qop" "=" <"> qop-list <">
+     *   qop-options       = "qop" "=" &lt;"&gt; qop-list &lt;"&gt;
      *   qop-list          = 1#qop-value
      *   qop-value         = "auth" | "auth-int" | "auth-conf" |
      *                        token
@@ -97,7 +97,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
      *   maxbuf-value      = 1*DIGIT
      *   charset           = "charset" "=" "utf-8"
      *   algorithm         = "algorithm" "=" "md5-sess"
-     *   cipher-opts       = "cipher" "=" <"> 1#cipher-value <">
+     *   cipher-opts       = "cipher" "=" &lt;"&gt; 1#cipher-value &lt;"&gt;
      *   cipher-value      = "3des" | "des" | "rc4-40" | "rc4" |
      *                       "rc4-56" | token
      *   auth-param        = token "=" ( token | quoted-string )

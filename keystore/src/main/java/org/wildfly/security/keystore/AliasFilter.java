@@ -91,7 +91,7 @@ public abstract class AliasFilter implements Predicate<String> {
      * Create an AliasFilter based on a filterString in one of the following formats: -
      *
      * <ul>
-     *   <li> alias1,alais2,alias3         - Only the aliases listed are accepted></li>
+     *   <li> alias1,alais2,alias3         - Only the aliases listed are accepted</li>
      *   <li> ALL:-alias1:-alias2:-alias3  - All aliases allowed except those listed.</li>
      *   <li> NONE:+alias1:+alias2:+alais3 - Only the aliases listed are accepted</li>
      * </ul>

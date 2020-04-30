@@ -154,14 +154,14 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
      *                     maxbuf | charset | cipher | authzid |
      *                     auth-param )
      *
-     *  username         = "username" "=" <"> username-value <">
+     *  username         = "username" "=" &lt;"&gt; username-value &lt;"&gt;
      *  username-value   = qdstr-val
-     *  cnonce           = "cnonce" "=" <"> cnonce-value <">
+     *  cnonce           = "cnonce" "=" &lt;"&gt; cnonce-value &lt;"&gt;
      *  cnonce-value     = qdstr-val
      *  nonce-count      = "nc" "=" nc-value
      *  nc-value         = 8LHEX
      *  qop              = "qop" "=" qop-value
-     *  digest-uri       = "digest-uri" "=" <"> digest-uri-value <">
+     *  digest-uri       = "digest-uri" "=" &lt;"&gt; digest-uri-value &lt;"&gt;
      *  digest-uri-value  = serv-type "/" host [ "/" serv-name ]
      *  serv-type        = 1*ALPHA
      *  host             = 1*( ALPHA | DIGIT | "-" | "." )
@@ -173,7 +173,7 @@ final class DigestSaslClient extends AbstractDigestMechanism implements SaslClie
      *                     "8" | "9" | "a" | "b" |
      *                     "c" | "d" | "e" | "f"
      *  cipher           = "cipher" "=" cipher-value
-     *  authzid          = "authzid" "=" <"> authzid-value <">
+     *  authzid          = "authzid" "=" &lt;"&gt; authzid-value &lt;"&gt;
      *  authzid-value    = qdstr-val
      *
      * @param parsedChallenge

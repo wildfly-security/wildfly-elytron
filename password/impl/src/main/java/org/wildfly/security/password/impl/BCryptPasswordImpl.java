@@ -302,10 +302,10 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      *
      * <pre>
      *     bcrypt(cost, salt, pwd)
-     *         state <- eksBlowfishSetup(cost, salt, pwd)
-     *         ctext <- "OrpheanBeholderScryDoubt"
+     *         state &lt;- eksBlowfishSetup(cost, salt, pwd)
+     *         ctext &lt;- "OrpheanBeholderScryDoubt"
      *         repeat(64)
-     *             ctext <- EncryptECB(state, ctext)
+     *             ctext &lt;- EncryptECB(state, ctext)
      *         return Concatenate(cost, salt, ctext)
      * </pre>
      * </p>
@@ -377,11 +377,11 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      *
      * <pre>
      *     eksBlowfishSetup(cost, salt, key)
-     *         state <- InitState();
-     *         state <- expandKey(state, salt, key)
+     *         state &lt;- InitState();
+     *         state &lt;- expandKey(state, salt, key)
      *         repeat(2^cost)
-     *             state <- expandKey(state, 0, key)
-     *             state <- expandKey(state, 0, salt)
+     *             state &lt;- expandKey(state, 0, key)
+     *             state &lt;- expandKey(state, 0, salt)
      *         return state
      * </pre>
      * </p>
@@ -413,19 +413,19 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      * <pre>
      *     expandKey(state, salt, key)
      *         for(n = 1..18)
-     *             P[n] <- key[32(n-1)..32n-1] ^ P[n] // treat key as cyclic.
-     *         ctext <- encrypt(salt[0..63])
-     *         P[0] <- ctext[0..31]
-     *         P[1] <- ctext[32..63]
+     *             P[n] &lt;- key[32(n-1)..32n-1] ^ P[n] // treat key as cyclic.
+     *         ctext &lt;- encrypt(salt[0..63])
+     *         P[0] &lt;- ctext[0..31]
+     *         P[1] &lt;- ctext[32..63]
      *         for(n = 1..8)
-     *             ctext <- encrypt(ctext ^ salt[64(n-1)..64n-1]) // encrypt using the current key schedule and treat the salt as cyclic.
-     *             P[2n] <- ctext[0..31]
-     *             P[2n+1] <- ctext[32..63]
+     *             ctext &lt;- encrypt(ctext ^ salt[64(n-1)..64n-1]) // encrypt using the current key schedule and treat the salt as cyclic.
+     *             P[2n] &lt;- ctext[0..31]
+     *             P[2n+1] &lt;- ctext[32..63]
      *         for(i = 1..4]
      *             for(n = 0..127]
-     *                 ctext <- encrypt(ctext ^ salt[64(n-1)..64n-1]) // as above
-     *                 Si[2n] <- ctext[0..31]
-     *                 Si[2n+1] <- ctext[32..63]
+     *                 ctext &lt;- encrypt(ctext ^ salt[64(n-1)..64n-1]) // as above
+     *                 Si[2n] &lt;- ctext[0..31]
+     *                 Si[2n+1] &lt;- ctext[32..63]
      *         return state;
      * </pre>
      * </p>
@@ -468,20 +468,20 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      * with the least significant half (right). The halves are then swapped and the process repeats for a total of 16 times:
      *
      * <pre>
-     *     L0 <- block[0..31]
-     *     R0 <- block[32..63]
+     *     L0 &lt;- block[0..31]
+     *     R0 &lt;- block[32..63]
      *
      *     for(i = 1..16)
-     *         Ri <- Li-1 ^ P[i-1]
-     *         Li <- Ri-1 ^ F(Ri)
+     *         Ri &lt;- Li-1 ^ P[i-1]
+     *         Li &lt;- Ri-1 ^ F(Ri)
      * </pre>
      * </p>
      * <p>
      * After 16 rounds the halves are swapped again and xored with the final two subkeys:
      *
      * <pre>
-     *     R17 <- L16 ^ P[16]
-     *     L17 <- R16 ^ P[17]
+     *     R17 &lt;- L16 ^ P[16]
+     *     L17 &lt;- R16 ^ P[17]
      * </pre>
      * </p>
      * <p>

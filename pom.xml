@@ -253,6 +253,7 @@
                         <notimestamp>true</notimestamp>
                         <doclint>none</doclint>
                         <show>protected</show>
+                        <source>8</source> <!-- See https://bugs.openjdk.java.net/browse/JDK-8212233 -->
                         <sourcepath>
                             ${project.basedir}/asn1/src/main/java/;
                             ${project.basedir}/audit/src/main/java/;
@@ -335,7 +336,7 @@
                                 <goal>aggregate</goal>
                             </goals>
                             <configuration>
-                                <destDir>api-javadoc</destDir>
+                                <destDir>api-javadoc</destDir>                                
                                 <sourceFileIncludes>
                                     <include>org/wildfly/security/*.java</include>
                                     <include>org/wildfly/security/asn1/*.java</include>
