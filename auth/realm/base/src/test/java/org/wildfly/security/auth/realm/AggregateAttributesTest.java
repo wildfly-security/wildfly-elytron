@@ -18,6 +18,7 @@ package org.wildfly.security.auth.realm;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import org.wildfly.security.authz.AggregateAttributes;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.Attributes.Entry;
 import org.wildfly.security.authz.MapAttributes;

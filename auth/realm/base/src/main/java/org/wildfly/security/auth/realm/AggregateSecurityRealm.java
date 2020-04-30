@@ -29,6 +29,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmEvent;
+import org.wildfly.security.authz.AggregateAttributes;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;

@@ -207,6 +207,21 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.withIdentities = old.withIdentities;
     }
 
+    SecurityIdentity(final SecurityIdentity old, final Attributes runtimeAttributes) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = AuthorizationIdentity.basicIdentity(old.authorizationIdentity, runtimeAttributes);
+        this.defaultRoles = old.defaultRoles;
+        this.roleMappers = old.roleMappers;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = null;
+        this.withIdentities = old.withIdentities;
+    }
+
     SecurityDomain getSecurityDomain() {
         return securityDomain;
     }
@@ -889,6 +904,17 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     public SecurityIdentity withPrivateCredentials(final IdentityCredentials credentials) {
         Assert.checkNotNullParam("credentials", credentials);
         return credentials == IdentityCredentials.NONE ? this : new SecurityIdentity(this, credentials, true);
+    }
+
+    /**
+     * Create a new security identity which is the same as this one, but which includes the given runtime attributes.
+     *
+     * @param runtimeAttributes the runtime attributes (must not be {@code null})
+     * @return the new identity
+     */
+    public SecurityIdentity withRuntimeAttributes(final Attributes runtimeAttributes) {
+        Assert.checkNotNullParam("runtimeAttributes", runtimeAttributes);
+        return runtimeAttributes == Attributes.EMPTY ? this : new SecurityIdentity(this, runtimeAttributes);
     }
 
     /**

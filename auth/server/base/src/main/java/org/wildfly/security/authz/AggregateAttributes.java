@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.realm;
+package org.wildfly.security.authz;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.authz.SimpleAttributesEntry;
 
 /**
  * An implementation of {@link Attributes} aggregating multiple instances.
@@ -30,7 +28,7 @@ import org.wildfly.security.authz.SimpleAttributesEntry;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class AggregateAttributes implements Attributes {
+public class AggregateAttributes implements Attributes {
 
     private final Map<String, Entry> aggregatedEntries;
 
@@ -47,7 +45,7 @@ class AggregateAttributes implements Attributes {
         this.aggregatedEntries = aggregatedEntries;
     }
 
-    static Attributes aggregateOf(Attributes... aggrgatedAttributes) {
+    public static Attributes aggregateOf(Attributes... aggrgatedAttributes) {
         return new AggregateAttributes(aggrgatedAttributes)
                 .asReadOnly();
     }
