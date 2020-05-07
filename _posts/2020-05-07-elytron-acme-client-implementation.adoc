@@ -1,0 +1,263 @@
+---
+layout: post
+title: "Elytron's ACME Client Implementation"
+date: 2020-05-07
+tags: elytron acme client spi java wildfly certificates
+synopsis: An overview of the ACME client SPI provided by Elytron.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+The Automated Certificate Management Environment (ACME) protocol became an
+https://letsencrypt.org/2019/03/11/acme-protocol-ietf-standard.html[IETF standard] a little over
+a year ago. This protocol makes it possible to automate the process of obtaining signed
+certificates from a certificate authority without the need for human intervention. The WildFly Elytron
+project provides a Java ACME client SPI that has been integrated in WildFly for quite some time now,
+making it possible to
+https://developer.jboss.org/people/fjuma/blog/2018/08/31/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli[automatically obtain and manage] signed certificates from any certificate
+authority that implements the ACME protocol using WildFly CLI commands. It is also possible to integrate Elytron's
+ACME client SPI in other web server environments. In this blog post, we're
+going to take a closer look at this SPI and how to make use of it.
+
+Note: A https://groups.google.com/d/msg/smallrye/5rmW3KCvyf0/Wm0sSgXsAgAJ[discussion] has been started
+on possibly moving Elytron's ACME Client SPI to a new https://github.com/smallrye[SmallRye project] in
+case other projects find it easier to consume SmallRye components instead of WildFly Elytron components.
+Keep an eye on the discussion there for updates and feel free to add your thoughts there as well.
+
+toc::[]
+
+== An Overview of the ACME Protocol
+
+Let's Encrypt is an example of a certificate authority that implements the ACME protocol.
+To obtain signed certificates from Let's Encrypt, or any certificate authority that implements the
+ACME protocol, an ACME client is needed. An ACME client requests signed certificates by sending
+JSON messages to the desired certificate authority over HTTPS. The certificate authority issues
+challenges to the ACME client to prove ownership of the requested domain name(s). The
+challenges usually require having the ACME client set up resources at specific paths with specific
+content to prove control of the domain name(s) being requested. If the ACME client is able to
+complete these challenges successfully, the certificate authority will issue a signed certificate.
+
+== Elytron's ACME Client SPI
+
+Let's take a look now at Elytron's
+https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html[AcmeClientSpi].
+This abstract class contains methods for creating and managing an account with a certificate authority as well
+as methods for obtaining and revoking certificates from a certificate authority. These methods have already been
+implemented as specified in https://tools.ietf.org/html/rfc8555[RFC 8555].
+
+=== Creating an implementation of AcmeClientSpi
+
+Notice that there are two
+abstract methods in `AcmeClientSpi`, https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#proveIdentifierControl(org.wildfly.security.x500.cert.acme.AcmeAccount,java.util.List)[proveIdentifierControl]
+and https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#cleanupAfterChallenge(org.wildfly.security.x500.cert.acme.AcmeAccount,org.wildfly.security.x500.cert.acme.AcmeChallenge)[cleanupAfterChallenge].
+These are the only two methods that a class that extends `AcmeClientSpi` is required to implement. This means that to
+make use of Elytron's `AcmeClientSpi` in your web server environment, the main step is to create a class that extends
+`AcmeClientSpi` and implements `proveIdentifierControl` and `cleanupAfterChallenge`. We'll see how your `proveIdentifierControl`
+and `cleanUpAfterChallenge` method implementations will get used in the section on
+<<#obtaining-a-certificate-from-a-certificate-authority,obtaining a certificate from a certificate authority>>.
+
+==== Implementing proveIdentifierControl
+
+[source,java]
+----
+public abstract AcmeChallenge proveIdentifierControl​(AcmeAccount account, java.util.List<AcmeChallenge> challenges) throws AcmeException
+----
+
+This method is used to prove control of the identifier (i.e., domain name) associated with the given
+list of challenges. In particular, this method should select one challenge from the given list of
+challenges from the certificate authority and then this method should take the steps necessary to
+respond to the challenge in order to prove that your ACME client does indeed control the domain name
+that is being requested. This method should return the challenge that was selected.
+An `AcmeException` should be thrown if an error occurs while attempting to prove control of the
+identifier associated with the challenges or if none of the challenge types are supported.
+
+As an example, take a look at the https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/_private/WildFlyAcmeClient.java#L45-L70[proveIdentifierControl]
+method implementation in our `WildFlyAcmeClient`. This class extends `AcmeClientSpi` and is the ACME client
+implementation that is used by WildFly. Notice that this `proveIdentifierControl` implementation selects the https://tools.ietf.org/html/rfc8555#section-8.3[HTTP challenge] type
+and it then responds to this challenge by provisioning an HTTP resource under the domain name. In particular,
+it provisions a new file that contains the key authorization and makes this file available
+using the `DOMAIN_NAME/.well-known/acme-challenge/TOKEN` URL. The `TOKEN` value and the key authorization
+are obtained using the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeChallenge.html#getToken()[AcmeChallenge#getToken]
+and https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeChallenge.html#getKeyAuthorization(org.wildfly.security.x500.cert.acme.AcmeAccount)[AcmeChallenge#getKeyAuthorization] methods.
+
+==== Implementing cleanupAfterChallenge
+
+[source,java]
+----
+public abstract void cleanupAfterChallenge​(AcmeAccount account, AcmeChallenge challenge) throws AcmeException
+----
+
+This method is used to undo the actions that were taken to prove control of the identifier associated with
+the given challenge. In particular, once your ACME client has successfully responded to the given challenge via
+the `proveIdentifierControl` method, any resources that were provisioned there can be cleaned up. An
+`AcmeException` should be thrown if an error occurs while attempting to undo the actions that were taken to
+prove control of the identifier associated with the given challenge.
+
+As an example, take a look at the https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/_private/WildFlyAcmeClient.java#L72-L87[cleanupAfterChallenge]
+method implementation in our `WildFlyAcmeClient`. Notice that this `cleanupAfterChallenge` implementation
+simply deletes the file that was created to prove control of the identifier associated with the challenge.
+
+=== Using your ACME client implementation
+
+Once you have a created a class that extends `AcmeClientSpi` and implements the two methods that have
+been described above, you are ready to start using your ACME client to obtain certificates for your
+web server:
+
+[source,java]
+----
+AcmeClientSpi acmeClient = // Your ACME client implementation should be loaded here
+----
+
+A https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html[java.util.ServiceLoader]
+can be used to load your `AcmeClientSpi` implementation. As an example, https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/AdvancedModifiableKeyStoreDecorator.java#L155-L159[take a look] at how this
+is done in WildFly. The corresponding `META-INF/services` descriptor can be seen https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/resources/META-INF/services/org.wildfly.security.x500.cert.acme.AcmeClientSpi[here].
+
+=== Creating a certificate authority account
+
+Before obtaining your first certificate from a certificate authority that implements the ACME protocol,
+you need to create an account with that certificate authority. This can be done using https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#createAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)[AcmeClientSpi#createAccount].
+First, we're going to create an `AcmeAccount` instance that contains information about the account we want to create. We're
+going to do this using an https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.Builder.html[AcmeAccount.Builder]:
+
+[source,java]
+----
+AcmeAccount acmeAccount = AcmeAccount.builder()
+    .setTermsOfServiceAgreed(true)
+    .setServerUrl("https://acme-v02.api.letsencrypt.org/directory")
+    .setStagingServerUrl("https://acme-staging-v02.api.letsencrypt.org/directory")
+    .setContactUrls(new String[] { "mailto:admin@example.com" })
+    .build();
+----
+
+In the example above, we're creating an `AcmeAccount` instance to be used with the Let's Encrypt certificate authority.
+Notice that we're indicating that we agree to this certificate authority's terms of service. The server URL is Let's Encrypt's
+ACME server endpoint URL. The staging server URL that we've specified is optional and meant to be used
+when obtaining certificates in a staging environment for testing purposes. Finally, we've also specified a contact URL.
+This is an optional list of contact URLs that the certificate authority can use to notify you about any issues with
+your account. The `AcmeAccount.build()` method will generate an account key for you that will be used by your ACME client
+when communicating with the certificate authority. The generated account key pair can be obtained using
+https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getPublicKey()[AcmeAccount#getPublicKey] and https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getPrivateKey()[AcmeAccount#getPrivateKey].
+You can store this key pair in a Java key store. Instead of generating an account key, if you have an existing account key
+that you want to use, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.Builder.html#setKey(java.security.cert.X509Certificate,java.security.PrivateKey)[AcmeAccount.Builder#setKey]
+method can be used.
+
+Now we can use our ACME client's `createAccount` method to create an account with the certificate authority using the
+information from our `AcmeAccount` instance:
+
+[source,java]
+----
+acmeClient.createAccount(acmeAccount, false)
+----
+
+Notice that the second parameter indicates whether or not the staging server URL should be used when communicating
+with the certificate authority. We are setting this to `false` since we don't want to using the staging URL, i.e., going
+back to our example, we want to use https://acme-v02.api.letsencrypt.org/directory when communicating with Let's Encrypt.
+
+The `createAccount` method will return `true` if the account was created or `false` if the account already existed.
+In both cases, https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getAccountUrl()[acmeAccount#getAccountUrl] can then be used to obtain the new or existing account URL that was provided
+by the certificate authority.
+
+=== Updating the contact URLs associated with a certificate authority account
+
+To update the contact URLs associated with an existing account, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#updateAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String%5B%5D)[AcmeClientSpi#updateAccount] method can be used:
+
+[source,java]
+----
+acmeClient.updateAccount(acmeAccount, false, new String[] { "mailto:admin@example.com", "mailto:anotheradmin@example.com"});
+----
+
+The first parameter is our `AcmeAccount` instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The last parameter includes our updated contact URLs.
+
+=== Obtaining a certificate from a certificate authority
+
+To obtain a certifcate from a certificate authority, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#obtainCertificateChain(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String...)[AcmeClientSpi#obtainCertificate] method can be used.
+This method will prove ownership of the requested domain name(s) using your `proveIdentifierControl` implementation. This method
+will also generate a key pair, generate a certificate signing request (CSR) using the generated key pair and the requested
+domain names, and it will submit this CSR to the certificate authority. If successful, this method will retrieve the
+resulting certificate chain from the certificate authority. Finally, this method uses your `cleanupAfterChallenge` implementation
+to undo any actions that were taken to prove control of your requested domain name(s). The following example shows how
+to obtain a certificate for www.example.com using our `AcmeAccount` instance:
+
+[source,java]
+----
+X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "www.example.com");
+----
+
+The first parameter is our `AcmeAccount` instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The last parameter(s) is the domain name(s) that we want to request a certificate for.
+
+If you want, you can also specify the key algorithm and the key size that the ACME client should use when
+generating the certificate signing request that will be sent to the certificate authority:
+
+[source,java]
+----
+X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "EC", 256, "www.example.com");
+----
+
+Notice that the `obtainCertificateChain` method returns an https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html[X509CertificateChainAndSigningKey],
+which consists of the X.509 certificate chain that was obtained from the certificate authority as well as the private key for your
+web server that the ACME client generated for you. These can be obtained using the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html#getCertificateChain()[X509CertificateChainAndSigningKey#getCertificateChain] method and
+the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html#getSigningKey()[X509CertificateChainAndSigningKey#getSigningKey] method. You can store this key pair in a Java key store.
+
+=== Automating certificate renewals
+
+Some certificate authorities, like Let's Encrypt, recommend renewing your web server's certificate every 60 days. Renewals
+can be easily automated by creating a script that checks if your web server's certificate is due for renewal in the next 30 days and if
+so, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#obtainCertificateChain(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String%E2%80%A6%E2%80%8B)[AcmeClientSpi#obtainCertificateChain] method can simply be used to obtain a new certificate. To see an example
+of how this can be done using WildFly, take a look https://developer.jboss.org/people/fjuma/blog/2018/08/31/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli#jive_content_id_Using_a_CLI_script_to_automate_certificate_renewal[here].
+
+=== Revoking a certificate
+
+If you need to revoke a certificate that was issued by a certificate authority, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#revokeCertificate(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.security.cert.X509Certificate,java.security.cert.CRLReason)[AcmeClientSpi#revokeCertificate] method can be used.
+For example, to revoke a certificate due to a key compromise, the following can be used:
+
+[source,java]
+----
+acmeClient.revokeCertificate(acmeAccount, false, certificateToRevoke, CRLReason.KEY_COMPROMISE);
+----
+
+The first parameter is our `AcmeAccount` instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The third parameter is the `X509Certificate` that you want to revoke. The fourth parameter
+is optional and indicates the reason for revoking the certificate. Take a look at https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/security/cert/CRLReason.html[CRLReason]
+to see the values that can be specified here.
+
+=== Updating a certificate authority account key
+
+If you ever need to change the key that is associated with your certificate authority account, the
+https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#changeAccountKey(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)[AcmeClientSpi#changeAccountKey]
+method can be used:
+
+[source,java]
+----
+acmeClient.changeAccountKey(acmeAccount, false);
+----
+
+The first parameter is our `AcmeAccount` instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority.
+
+=== Deactivating an account
+
+If you need to deactivate a certificate authority account, the https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#deactivateAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)[AcmeClientSpi#deactivateAccount]
+method can be used.
+
+[source,java]
+----
+acmeClient.deactivateAccount(acmeAccount, false);
+----
+
+The first parameter is our `AcmeAccount` instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority.
+
+== Summary
+
+In this blog post, we've taken a detailed look at Elytron's ACME client SPI. This SPI has already been integrated in WildFly,
+making it possible to automatically obtain and manage signed certificates using WildFly's CLI. This blog post has described
+how Elytron's ACME client SPI can also be used in other web server environments.
