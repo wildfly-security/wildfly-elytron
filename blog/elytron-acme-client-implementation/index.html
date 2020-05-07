@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Elytron's ACME Client Implementation</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/19/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/19/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Elytron's ACME Client Implementation</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | May 07, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/&title=Elytron's ACME Client Implementation" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Elytron's ACME Client Implementation&url=https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Elytron's ACME Client Implementation&amp;body=Elytron's ACME Client Implementation https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>The Automated Certificate Management Environment (ACME) protocol became an
+<a href="https://letsencrypt.org/2019/03/11/acme-protocol-ietf-standard.html">IETF standard</a> a little over
+a year ago. This protocol makes it possible to automate the process of obtaining signed
+certificates from a certificate authority without the need for human intervention. The WildFly Elytron
+project provides a Java ACME client SPI that has been integrated in WildFly for quite some time now,
+making it possible to
+<a href="https://developer.jboss.org/people/fjuma/blog/2018/08/31/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli">automatically obtain and manage</a> signed certificates from any certificate
+authority that implements the ACME protocol using WildFly CLI commands. It is also possible to integrate Elytron&#8217;s
+ACME client SPI in other web server environments. In this blog post, we&#8217;re
+going to take a closer look at this SPI and how to make use of it.</p>
+</div>
+<div class="paragraph">
+<p>Note: A <a href="https://groups.google.com/d/msg/smallrye/5rmW3KCvyf0/Wm0sSgXsAgAJ">discussion</a> has been started
+on possibly moving Elytron&#8217;s ACME Client SPI to a new <a href="https://github.com/smallrye">SmallRye project</a> in
+case other projects find it easier to consume SmallRye components instead of WildFly Elytron components.
+Keep an eye on the discussion there for updates and feel free to add your thoughts there as well.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#an-overview-of-the-acme-protocol">An Overview of the ACME Protocol</a></li>
+<li><a href="#elytrons-acme-client-spi">Elytron&#8217;s ACME Client SPI</a>
+<ul class="sectlevel2">
+<li><a href="#creating-an-implementation-of-acmeclientspi">Creating an implementation of AcmeClientSpi</a></li>
+<li><a href="#using-your-acme-client-implementation">Using your ACME client implementation</a></li>
+<li><a href="#creating-a-certificate-authority-account">Creating a certificate authority account</a></li>
+<li><a href="#updating-the-contact-urls-associated-with-a-certificate-authority-account">Updating the contact URLs associated with a certificate authority account</a></li>
+<li><a href="#obtaining-a-certificate-from-a-certificate-authority">Obtaining a certificate from a certificate authority</a></li>
+<li><a href="#automating-certificate-renewals">Automating certificate renewals</a></li>
+<li><a href="#revoking-a-certificate">Revoking a certificate</a></li>
+<li><a href="#updating-a-certificate-authority-account-key">Updating a certificate authority account key</a></li>
+<li><a href="#deactivating-an-account">Deactivating an account</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-the-acme-protocol"><a class="anchor" href="#an-overview-of-the-acme-protocol"></a>An Overview of the ACME Protocol</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s Encrypt is an example of a certificate authority that implements the ACME protocol.
+To obtain signed certificates from Let&#8217;s Encrypt, or any certificate authority that implements the
+ACME protocol, an ACME client is needed. An ACME client requests signed certificates by sending
+JSON messages to the desired certificate authority over HTTPS. The certificate authority issues
+challenges to the ACME client to prove ownership of the requested domain name(s). The
+challenges usually require having the ACME client set up resources at specific paths with specific
+content to prove control of the domain name(s) being requested. If the ACME client is able to
+complete these challenges successfully, the certificate authority will issue a signed certificate.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="elytrons-acme-client-spi"><a class="anchor" href="#elytrons-acme-client-spi"></a>Elytron&#8217;s ACME Client SPI</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s take a look now at Elytron&#8217;s
+<a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html">AcmeClientSpi</a>.
+This abstract class contains methods for creating and managing an account with a certificate authority as well
+as methods for obtaining and revoking certificates from a certificate authority. These methods have already been
+implemented as specified in <a href="https://tools.ietf.org/html/rfc8555">RFC 8555</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="creating-an-implementation-of-acmeclientspi"><a class="anchor" href="#creating-an-implementation-of-acmeclientspi"></a>Creating an implementation of AcmeClientSpi</h3>
+<div class="paragraph">
+<p>Notice that there are two
+abstract methods in <code>AcmeClientSpi</code>, <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#proveIdentifierControl(org.wildfly.security.x500.cert.acme.AcmeAccount,java.util.List)">proveIdentifierControl</a>
+and <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#cleanupAfterChallenge(org.wildfly.security.x500.cert.acme.AcmeAccount,org.wildfly.security.x500.cert.acme.AcmeChallenge)">cleanupAfterChallenge</a>.
+These are the only two methods that a class that extends <code>AcmeClientSpi</code> is required to implement. This means that to
+make use of Elytron&#8217;s <code>AcmeClientSpi</code> in your web server environment, the main step is to create a class that extends
+<code>AcmeClientSpi</code> and implements <code>proveIdentifierControl</code> and <code>cleanupAfterChallenge</code>. We&#8217;ll see how your <code>proveIdentifierControl</code>
+and <code>cleanUpAfterChallenge</code> method implementations will get used in the section on
+<a href="#obtaining-a-certificate-from-a-certificate-authority">obtaining a certificate from a certificate authority</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="implementing-proveidentifiercontrol"><a class="anchor" href="#implementing-proveidentifiercontrol"></a>Implementing proveIdentifierControl</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">public abstract AcmeChallenge proveIdentifierControl​(AcmeAccount account, java.util.List&lt;AcmeChallenge&gt; challenges) throws AcmeException</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This method is used to prove control of the identifier (i.e., domain name) associated with the given
+list of challenges. In particular, this method should select one challenge from the given list of
+challenges from the certificate authority and then this method should take the steps necessary to
+respond to the challenge in order to prove that your ACME client does indeed control the domain name
+that is being requested. This method should return the challenge that was selected.
+An <code>AcmeException</code> should be thrown if an error occurs while attempting to prove control of the
+identifier associated with the challenges or if none of the challenge types are supported.</p>
+</div>
+<div class="paragraph">
+<p>As an example, take a look at the <a href="https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/_private/WildFlyAcmeClient.java#L45-L70">proveIdentifierControl</a>
+method implementation in our <code>WildFlyAcmeClient</code>. This class extends <code>AcmeClientSpi</code> and is the ACME client
+implementation that is used by WildFly. Notice that this <code>proveIdentifierControl</code> implementation selects the <a href="https://tools.ietf.org/html/rfc8555#section-8.3">HTTP challenge</a> type
+and it then responds to this challenge by provisioning an HTTP resource under the domain name. In particular,
+it provisions a new file that contains the key authorization and makes this file available
+using the <code>DOMAIN_NAME/.well-known/acme-challenge/TOKEN</code> URL. The <code>TOKEN</code> value and the key authorization
+are obtained using the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeChallenge.html#getToken()">AcmeChallenge#getToken</a>
+and <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeChallenge.html#getKeyAuthorization(org.wildfly.security.x500.cert.acme.AcmeAccount)">AcmeChallenge#getKeyAuthorization</a> methods.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="implementing-cleanupafterchallenge"><a class="anchor" href="#implementing-cleanupafterchallenge"></a>Implementing cleanupAfterChallenge</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">public abstract void cleanupAfterChallenge​(AcmeAccount account, AcmeChallenge challenge) throws AcmeException</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This method is used to undo the actions that were taken to prove control of the identifier associated with
+the given challenge. In particular, once your ACME client has successfully responded to the given challenge via
+the <code>proveIdentifierControl</code> method, any resources that were provisioned there can be cleaned up. An
+<code>AcmeException</code> should be thrown if an error occurs while attempting to undo the actions that were taken to
+prove control of the identifier associated with the given challenge.</p>
+</div>
+<div class="paragraph">
+<p>As an example, take a look at the <a href="https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/_private/WildFlyAcmeClient.java#L72-L87">cleanupAfterChallenge</a>
+method implementation in our <code>WildFlyAcmeClient</code>. Notice that this <code>cleanupAfterChallenge</code> implementation
+simply deletes the file that was created to prove control of the identifier associated with the challenge.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-your-acme-client-implementation"><a class="anchor" href="#using-your-acme-client-implementation"></a>Using your ACME client implementation</h3>
+<div class="paragraph">
+<p>Once you have a created a class that extends <code>AcmeClientSpi</code> and implements the two methods that have
+been described above, you are ready to start using your ACME client to obtain certificates for your
+web server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">AcmeClientSpi acmeClient = // Your ACME client implementation should be loaded here</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html">java.util.ServiceLoader</a>
+can be used to load your <code>AcmeClientSpi</code> implementation. As an example, <a href="https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/java/org/wildfly/extension/elytron/AdvancedModifiableKeyStoreDecorator.java#L155-L159">take a look</a> at how this
+is done in WildFly. The corresponding <code>META-INF/services</code> descriptor can be seen <a href="https://github.com/wildfly/wildfly-core/blob/master/elytron/src/main/resources/META-INF/services/org.wildfly.security.x500.cert.acme.AcmeClientSpi">here</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="creating-a-certificate-authority-account"><a class="anchor" href="#creating-a-certificate-authority-account"></a>Creating a certificate authority account</h3>
+<div class="paragraph">
+<p>Before obtaining your first certificate from a certificate authority that implements the ACME protocol,
+you need to create an account with that certificate authority. This can be done using <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#createAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)">AcmeClientSpi#createAccount</a>.
+First, we&#8217;re going to create an <code>AcmeAccount</code> instance that contains information about the account we want to create. We&#8217;re
+going to do this using an <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.Builder.html">AcmeAccount.Builder</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">AcmeAccount acmeAccount = AcmeAccount.builder()
+    .setTermsOfServiceAgreed(true)
+    .setServerUrl("https://acme-v02.api.letsencrypt.org/directory")
+    .setStagingServerUrl("https://acme-staging-v02.api.letsencrypt.org/directory")
+    .setContactUrls(new String[] { "mailto:admin@example.com" })
+    .build();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the example above, we&#8217;re creating an <code>AcmeAccount</code> instance to be used with the Let&#8217;s Encrypt certificate authority.
+Notice that we&#8217;re indicating that we agree to this certificate authority&#8217;s terms of service. The server URL is Let&#8217;s Encrypt&#8217;s
+ACME server endpoint URL. The staging server URL that we&#8217;ve specified is optional and meant to be used
+when obtaining certificates in a staging environment for testing purposes. Finally, we&#8217;ve also specified a contact URL.
+This is an optional list of contact URLs that the certificate authority can use to notify you about any issues with
+your account. The <code>AcmeAccount.build()</code> method will generate an account key for you that will be used by your ACME client
+when communicating with the certificate authority. The generated account key pair can be obtained using
+<a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getPublicKey()">AcmeAccount#getPublicKey</a> and <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getPrivateKey()">AcmeAccount#getPrivateKey</a>.
+You can store this key pair in a Java key store. Instead of generating an account key, if you have an existing account key
+that you want to use, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.Builder.html#setKey(java.security.cert.X509Certificate,java.security.PrivateKey)">AcmeAccount.Builder#setKey</a>
+method can be used.</p>
+</div>
+<div class="paragraph">
+<p>Now we can use our ACME client&#8217;s <code>createAccount</code> method to create an account with the certificate authority using the
+information from our <code>AcmeAccount</code> instance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.createAccount(acmeAccount, false)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that the second parameter indicates whether or not the staging server URL should be used when communicating
+with the certificate authority. We are setting this to <code>false</code> since we don&#8217;t want to using the staging URL, i.e., going
+back to our example, we want to use <a href="https://acme-v02.api.letsencrypt.org/directory" class="bare">https://acme-v02.api.letsencrypt.org/directory</a> when communicating with Let&#8217;s Encrypt.</p>
+</div>
+<div class="paragraph">
+<p>The <code>createAccount</code> method will return <code>true</code> if the account was created or <code>false</code> if the account already existed.
+In both cases, <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeAccount.html#getAccountUrl()">acmeAccount#getAccountUrl</a> can then be used to obtain the new or existing account URL that was provided
+by the certificate authority.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="updating-the-contact-urls-associated-with-a-certificate-authority-account"><a class="anchor" href="#updating-the-contact-urls-associated-with-a-certificate-authority-account"></a>Updating the contact URLs associated with a certificate authority account</h3>
+<div class="paragraph">
+<p>To update the contact URLs associated with an existing account, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#updateAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String%5B%5D)">AcmeClientSpi#updateAccount</a> method can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.updateAccount(acmeAccount, false, new String[] { "mailto:admin@example.com", "mailto:anotheradmin@example.com"});</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first parameter is our <code>AcmeAccount</code> instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The last parameter includes our updated contact URLs.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="obtaining-a-certificate-from-a-certificate-authority"><a class="anchor" href="#obtaining-a-certificate-from-a-certificate-authority"></a>Obtaining a certificate from a certificate authority</h3>
+<div class="paragraph">
+<p>To obtain a certifcate from a certificate authority, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#obtainCertificateChain(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String&#8230;&#8203;)">AcmeClientSpi#obtainCertificate</a> method can be used.
+This method will prove ownership of the requested domain name(s) using your <code>proveIdentifierControl</code> implementation. This method
+will also generate a key pair, generate a certificate signing request (CSR) using the generated key pair and the requested
+domain names, and it will submit this CSR to the certificate authority. If successful, this method will retrieve the
+resulting certificate chain from the certificate authority. Finally, this method uses your <code>cleanupAfterChallenge</code> implementation
+to undo any actions that were taken to prove control of your requested domain name(s). The following example shows how
+to obtain a certificate for www.example.com using our <code>AcmeAccount</code> instance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "www.example.com");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first parameter is our <code>AcmeAccount</code> instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The last parameter(s) is the domain name(s) that we want to request a certificate for.</p>
+</div>
+<div class="paragraph">
+<p>If you want, you can also specify the key algorithm and the key size that the ACME client should use when
+generating the certificate signing request that will be sent to the certificate authority:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "EC", 256, "www.example.com");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that the <code>obtainCertificateChain</code> method returns an <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html">X509CertificateChainAndSigningKey</a>,
+which consists of the X.509 certificate chain that was obtained from the certificate authority as well as the private key for your
+web server that the ACME client generated for you. These can be obtained using the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html#getCertificateChain()">X509CertificateChainAndSigningKey#getCertificateChain</a> method and
+the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/X509CertificateChainAndSigningKey.html#getSigningKey()">X509CertificateChainAndSigningKey#getSigningKey</a> method. You can store this key pair in a Java key store.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="automating-certificate-renewals"><a class="anchor" href="#automating-certificate-renewals"></a>Automating certificate renewals</h3>
+<div class="paragraph">
+<p>Some certificate authorities, like Let&#8217;s Encrypt, recommend renewing your web server&#8217;s certificate every 60 days. Renewals
+can be easily automated by creating a script that checks if your web server&#8217;s certificate is due for renewal in the next 30 days and if
+so, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#obtainCertificateChain(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.lang.String%E2%80%A6%E2%80%8B)">AcmeClientSpi#obtainCertificateChain</a> method can simply be used to obtain a new certificate. To see an example
+of how this can be done using WildFly, take a look <a href="https://developer.jboss.org/people/fjuma/blog/2018/08/31/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli#jive_content_id_Using_a_CLI_script_to_automate_certificate_renewal">here</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="revoking-a-certificate"><a class="anchor" href="#revoking-a-certificate"></a>Revoking a certificate</h3>
+<div class="paragraph">
+<p>If you need to revoke a certificate that was issued by a certificate authority, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#revokeCertificate(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean,java.security.cert.X509Certificate,java.security.cert.CRLReason)">AcmeClientSpi#revokeCertificate</a> method can be used.
+For example, to revoke a certificate due to a key compromise, the following can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.revokeCertificate(acmeAccount, false, certificateToRevoke, CRLReason.KEY_COMPROMISE);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first parameter is our <code>AcmeAccount</code> instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority. The third parameter is the <code>X509Certificate</code> that you want to revoke. The fourth parameter
+is optional and indicates the reason for revoking the certificate. Take a look at <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/security/cert/CRLReason.html">CRLReason</a>
+to see the values that can be specified here.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="updating-a-certificate-authority-account-key"><a class="anchor" href="#updating-a-certificate-authority-account-key"></a>Updating a certificate authority account key</h3>
+<div class="paragraph">
+<p>If you ever need to change the key that is associated with your certificate authority account, the
+<a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#changeAccountKey(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)">AcmeClientSpi#changeAccountKey</a>
+method can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.changeAccountKey(acmeAccount, false);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first parameter is our <code>AcmeAccount</code> instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deactivating-an-account"><a class="anchor" href="#deactivating-an-account"></a>Deactivating an account</h3>
+<div class="paragraph">
+<p>If you need to deactivate a certificate authority account, the <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-javadoc/org/wildfly/security/x500/cert/acme/AcmeClientSpi.html#deactivateAccount(org.wildfly.security.x500.cert.acme.AcmeAccount,boolean)">AcmeClientSpi#deactivateAccount</a>
+method can be used.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.deactivateAccount(acmeAccount, false);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first parameter is our <code>AcmeAccount</code> instance that contains the information associated with our account.
+The second parameter indicates whether or not the staging server URL should be used when communicating with the
+certificate authority.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this blog post, we&#8217;ve taken a detailed look at Elytron&#8217;s ACME client SPI. This SPI has already been integrated in WildFly,
+making it possible to automatically obtain and manage signed certificates using WildFly&#8217;s CLI. This blog post has described
+how Elytron&#8217;s ACME client SPI can also be used in other web server environments.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

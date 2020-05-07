@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 30 Apr 2020 13:11:44 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 07 May 2020 17:06:07 +0000</lastBuildDate>
+        
+        <item>
+            <title>Elytron's ACME Client Implementation</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/
+            </link>
+            <description>
+                The Automated Certificate Management Environment (ACME) protocol became an IETF standard a little over a year ago. This protocol makes it possible to automate the process of obtaining signed certificates from a certificate authority without the need for human intervention. The WildFly Elytron project provides a Java ACME client SPI...
+            </description>
+            <pubDate>Thu, 07 May 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/elytron-acme-client-implementation/
+            </guid>
+        </item>
         
         <item>
             <title>Server Side SNI Matching with WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
             <guid>
                 https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores
-            </guid>
-        </item>
-        
-        <item>
-            <title>Enhanced Audit Logging - Additional RFC Support and Reliability vs Speed Customization Update</title>
-            <link>
-                https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://justinwildfly.blogspot.com/2019/08/enhanced-audit-logging-in-wildfly.html
             </guid>
         </item>
         
