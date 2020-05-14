@@ -33,7 +33,7 @@ public final class InhibitAnyPolicyExtension extends X509CertificateExtension {
     /**
      * Construct a new instance.
      *
-     * @param skipCerts the number of additional non-self-issued certificates that may appear in the path before {@code anyPolicy} is no longer permitted (must be >= 0)
+     * @param skipCerts the number of additional non-self-issued certificates that may appear in the path before {@code anyPolicy} is no longer permitted (must be &gt;= 0)
      */
     public InhibitAnyPolicyExtension(final int skipCerts) {
         super(true);

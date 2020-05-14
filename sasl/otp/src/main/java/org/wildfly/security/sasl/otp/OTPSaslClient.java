@@ -190,9 +190,9 @@ final class OTPSaslClient extends AbstractSaslClient {
      *
      *      hex response = hex:<hexadecimal number>
      *      word response = word:<six dictionary words>
-     *      init-hex response = init-hex:<current-OTP><new-params>:<new-OTP>
-     *      init-word response = init-word:<current-OTP><new-params>:<new-OTP>
-     *      new-params = <algorithm identifier> <sequence integer> <seed>
+     *      init-hex response = init-hex:&lt;current-OTP&gt;&lt;new-params&gt;:&lt;new-OTP&gt;
+     *      init-word response = init-word:&lt;current-OTP&gt;&lt;new-params&gt;:&lt;new-OTP&gt;
+     *      new-params = &lt;algorithm identifier&gt; &lt;sequence integer&gt; &lt;seed&gt;
      *
      * @param algorithm the OTP algorithm, must be either "otp-md5" or "otp-sha1"
      * @param seed the seed
@@ -288,9 +288,9 @@ final class OTPSaslClient extends AbstractSaslClient {
     /**
      * Create an init response, excluding the response type specifier and current OTP, where:
      *
-     *      init-hex response = init-hex:<current-OTP>:<new-params>:<new-OTP>
-     *      init-word response = init-word:<current-OTP>:<new-params>:<new-OTP>
-     *      new-params = <algorithm identifier> <sequence integer> <seed>
+     *      init-hex response = init-hex:&lt;current-OTP&gt;:&lt;new-params&gt;:&lt;new-OTP&gt;
+     *      init-word response = init-word:&lt;current-OTP&gt;:&lt;new-params&gt;:&lt;new-OTP&gt;
+     *      new-params = &lt;algorithm identifier&gt; &lt;sequence integer&gt; <seed>
      *
      * @param newAlgorithm the new OTP algorithm, must be either "otp-md5" or "otp-sha1"
      * @param newSeed the new seed

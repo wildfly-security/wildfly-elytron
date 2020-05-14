@@ -182,9 +182,9 @@ final class Gs2SaslClient extends AbstractSaslClient {
      *    gs2-header = [gs2-nonstd-flag "," ] gs2-cb-flag "," [gs2-authzid] ","
      *
      *  UTF8-1-safe    = %x01-2B / %x2D-3C / %x3E-7F
-     *  UTF8-2         = <as defined in RFC 3629 (STD 63)>
-     *  UTF8-3         = <as defined in RFC 3629 (STD 63)>
-     *  UTF8-4         = <as defined in RFC 3629 (STD 63)>
+     *  UTF8-2         = &lt;as defined in RFC 3629 (STD 63)&gt;
+     *  UTF8-3         = &lt;as defined in RFC 3629 (STD 63)&gt;
+     *  UTF8-4         = &lt;as defined in RFC 3629 (STD 63)&gt;
      *  UTF8-char-safe = UTF8-1-safe / UTF8-2 / UTF8-3 / UTF8-4
      *  saslname       = 1*(UTF8-char-safe / "=2C" / "=3D")
      *  gs2-authzid    = "a=" saslname

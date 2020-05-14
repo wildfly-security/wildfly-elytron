@@ -17,7 +17,9 @@
  */
 package org.wildfly.security.tool;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -136,6 +138,63 @@ class CredentialStoreCommand extends Command {
         options.addOption(d);
     }
 
+    private static void readAttributesForView(Path path, String prefix, String attributes, Map<String, Object> attrs) {
+        try {
+            Map<String, Object> newAttrs = Files.readAttributes(path, attributes);
+            if (newAttrs != null) {
+                for (Map.Entry<String, Object> e : newAttrs.entrySet()) {
+                    attrs.put(prefix + e.getKey(), e.getValue());
+                }
+            }
+        } catch (IOException e) {
+            // A view can be supported but the operation is later reported
+            // as not supported, so just add the attributes if possible.
+        }
+    }
+
+    /**
+     * Reads the attributes that are required to be preserved in the file.
+     * The attributes are posix, dos and acl ones that are interested to
+     * maintain.
+     *
+     * @param path The path to get the attributes from
+     * @return The map of attributes (not null) with keys prefixed with the type (e.g. "posix:permissions")
+     * @throws IOException Some error reading the file attributes
+     */
+    public static Map<String, Object> readAttributesForPreservation(Path path) throws IOException {
+        Map<String, Object> attrs = new HashMap<>();
+        if (Files.exists(path)) {
+            // copy all the permissions that are going to be maintained (posix, dos and acl)
+            Set<String> supportedViews = path.getFileSystem().supportedFileAttributeViews();
+            if (supportedViews.contains("posix")) {
+                readAttributesForView(path, "posix:", "posix:permissions", attrs);
+            }
+            if (supportedViews.contains("dos")) {
+                readAttributesForView(path, "dos:", "dos:readonly,hidden,archive,system", attrs);
+            }
+            if (supportedViews.contains("acl")) {
+                readAttributesForView(path, "acl:", "acl:acl", attrs);
+            }
+        }
+        return attrs;
+    }
+
+    /**
+     * Applies over a file all the attributes previously read by the
+     * <em>readAttributesForPreservation</em> method.
+     *
+     * @param path The path to set the attributes to
+     * @param attrs The attributes to apply (key should be prefixed with the type of attr, e.g. "posix:permissions")
+     * @throws IOException Some error applying the attributes
+     */
+    public static void setAttributesForPreservation(Path path, Map<String, Object> attrs) throws IOException {
+        if (attrs != null && Files.exists(path)) {
+            for (Map.Entry<String, Object> attribute : attrs.entrySet()) {
+                Files.setAttribute(path, attribute.getKey(), attribute.getValue());
+            }
+        }
+    }
+
     @Override
     public void execute(String[] args) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
@@ -238,14 +297,8 @@ class CredentialStoreCommand extends Command {
                 }
             }
 
-            // Get the original permissions of the credential store
-            Map<String, Object> locationAttributes;
-
-            if (isWindows()) {
-                locationAttributes = Files.readAttributes(Paths.get(location), "dos:readonly,hidden,archive,system");
-            } else {
-                locationAttributes = Files.readAttributes(Paths.get(location), "posix:permissions");
-            }
+            // Get the original attributes of the credential store
+            Map<String, Object> locationAttributes = readAttributesForPreservation(Paths.get(location));
 
             credentialStore.store(alias, createCredential(secret, entryType));
             credentialStore.flush();
@@ -256,14 +309,8 @@ class CredentialStoreCommand extends Command {
             }
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
 
-            // Restore the original permissions of the credential store
-            for (Map.Entry<String, Object> attribute : locationAttributes.entrySet()) {
-                if (isWindows()) {
-                    Files.setAttribute(Paths.get(location), "dos:" + attribute.getKey(), attribute.getValue());
-                } else {
-                    Files.setAttribute(Paths.get(location), "posix:" + attribute.getKey(), attribute.getValue());
-                }
-            }
+            // Restore the original attributes of the credential store
+            setAttributesForPreservation(Paths.get(location), locationAttributes);
 
         } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
             String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);

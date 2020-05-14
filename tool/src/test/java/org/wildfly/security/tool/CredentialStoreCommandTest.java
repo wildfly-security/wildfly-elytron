@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.tool;
 
+import java.io.IOException;
+import java.io.InputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -29,8 +31,18 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import org.junit.Assume;
 
 /**
  * Test for "credential-store" command.
@@ -104,25 +116,102 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         checkAliasSecretValue(store, aliasName, aliasValue);
     }
 
+    private void changeExecutable(Path path) throws IOException {
+        boolean canExecute = Files.isExecutable(path);
+        if (path.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(path);
+            if (canExecute) {
+                perms.remove(PosixFilePermission.OWNER_EXECUTE);
+            } else {
+                perms.add(PosixFilePermission.OWNER_EXECUTE);
+            }
+            Files.setPosixFilePermissions(path, perms);
+        } else {
+            AclFileAttributeView view = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            AclEntry entry = AclEntry.newBuilder()
+                    .setType(canExecute? AclEntryType.DENY : AclEntryType.ALLOW)
+                    .setPrincipal(view.getOwner())
+                    .setPermissions(AclEntryPermission.EXECUTE)
+                    .build();
+            List<AclEntry> acl = view.getAcl();
+            acl.add(0, entry);
+            view.setAcl(acl);
+        }
+    }
+
     @Test
     public void testKeepFilePermissions() throws Exception {
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
-        String aliasValue = "secret2";
+        String aliasValue = "secret";
+        String aliasName2 = "testalias2";
+        String aliasValue2 = "secret2";
+        Path storagePath = Paths.get(storageLocation);
+        Assume.assumeTrue(storagePath.getFileSystem().supportedFileAttributeViews().contains("posix") ||
+                storagePath.getFileSystem().supportedFileAttributeViews().contains("acl"));
 
         String[] args = { "--location=" + storageLocation, "--create", "--add", aliasName, "--secret",
                 aliasValue, "--summary", "--password", storagePassword };
         executeCommandAndCheckStatus(args);
-
-        Map<String, Object> locationPermissionsBeforeFlush = isWindows() ? Files.readAttributes(Paths.get(storageLocation), "dos:readonly,hidden,archive,system") : Files.readAttributes(Paths.get(storageLocation), "posix:permissions");
-
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
 
-        Map<String, Object> locationPermissionsAfterFlush = isWindows() ? Files.readAttributes(Paths.get(storageLocation), "dos:readonly,hidden,archive,system") : Files.readAttributes(Paths.get(storageLocation), "posix:permissions");
+        // change execute permission of the file to make it different to a new created one
+        assertTrue("Credetial store location is created", Files.exists(storagePath));
+        Map<String, Object> originalPermissions = CredentialStoreCommand.readAttributesForPreservation(storagePath);
+        changeExecutable(storagePath);
+        Map<String, Object> locationPermissionsBeforeFlush = CredentialStoreCommand.readAttributesForPreservation(storagePath);
+        Assert.assertNotEquals("Attributes are different to the original file", originalPermissions, locationPermissionsBeforeFlush);
 
-        assertEquals(locationPermissionsBeforeFlush, locationPermissionsAfterFlush);
+        // add a second alias to change the file
+        String[] args2 = { "--location=" + storageLocation, "--create", "--add", aliasName2, "--secret",
+                aliasValue2, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args2);
+        store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        checkAliasSecretValue(store, aliasName2, aliasValue2);
+
+        // check attributes are maintained and the executable perm remains modified
+        Map<String, Object> locationPermissionsAfterFlush = CredentialStoreCommand.readAttributesForPreservation(storagePath);
+        assertEquals("Attributes to preserve are the same", locationPermissionsBeforeFlush, locationPermissionsAfterFlush);
+    }
+
+    @Test
+    public void testAddAliasCustomWithoutFlush() throws Exception {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret";
+
+        String[] argsCreate = {
+            "--create",
+            "--credential-store-provider=" + CustomPropertiesProvider.CUSTOM_PROPERTIES_PROVIDER,
+            "--type=" + CustomPropertiesCredentialStore.CUSTOM_PROPERTIES_CREDENTIAL_STORE,
+            "--location=" + storageLocation,
+            "--add", aliasName,
+            "--secret", aliasValue,
+            "--summary",
+            "--password", storagePassword};
+        executeCommandAndCheckStatus(argsCreate);
+
+       // check the alias is there
+       String[] argsAliases = {
+            "--aliases", "--summary",
+            "--credential-store-provider=" + CustomPropertiesProvider.CUSTOM_PROPERTIES_PROVIDER,
+            "--type=" + CustomPropertiesCredentialStore.CUSTOM_PROPERTIES_CREDENTIAL_STORE,
+            "--location=" + storageLocation,
+            "--password", storagePassword};
+        String output = executeCommandAndCheckStatusAndGetOutput(argsAliases);
+        assertTrue(output.startsWith("Credential store contains following aliases: " + aliasName));
+
+        // load the properties file directly and check the password is OK
+        assertTrue("Properties file is created", Files.exists(Paths.get(storageLocation)));
+        Properties props = new Properties();
+        try (InputStream in = Files.newInputStream(Paths.get(storageLocation))) {
+            props.load(in);
+        }
+        assertEquals("The properties file contains 1 entry", 1, props.size());
+        assertEquals("The properties file contains the secret", aliasValue, props.getProperty(aliasName));
     }
 
     @Test

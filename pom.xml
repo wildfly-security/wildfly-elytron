@@ -68,7 +68,7 @@
         <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.1.14.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logmanager>2.1.15.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
@@ -78,7 +78,7 @@
         <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
         <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.1.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
-        <version.org.jboss.threads>2.3.3.Final</version.org.jboss.threads>
+        <version.org.jboss.threads>2.3.4.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.12</version.junit.junit>
@@ -253,6 +253,7 @@
                         <notimestamp>true</notimestamp>
                         <doclint>none</doclint>
                         <show>protected</show>
+                        <source>8</source> <!-- See https://bugs.openjdk.java.net/browse/JDK-8212233 -->
                         <sourcepath>
                             ${project.basedir}/asn1/src/main/java/;
                             ${project.basedir}/audit/src/main/java/;
@@ -330,7 +331,7 @@
                                 <goal>aggregate</goal>
                             </goals>
                             <configuration>
-                                <destDir>api-javadoc</destDir>
+                                <destDir>api-javadoc</destDir>                                
                                 <sourceFileIncludes>
                                     <include>org/wildfly/security/*.java</include>
                                     <include>org/wildfly/security/asn1/*.java</include>

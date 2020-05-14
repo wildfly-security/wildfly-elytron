@@ -302,7 +302,7 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
          * -1 meaning indefinite attempts
          * 0 meaning no attempts
          * Any positive integer meaning that number of attempts
-         * @exception IllegalArgumentException throws an error in the case of a bad reconnect-attempts value of < -1
+         * @exception IllegalArgumentException throws an error in the case of a bad reconnect-attempts value of &lt; -1
          * @return this builder.
          */
         public Builder setMaxReconnectAttempts(int maxReconnectAttempts) throws IllegalArgumentException {

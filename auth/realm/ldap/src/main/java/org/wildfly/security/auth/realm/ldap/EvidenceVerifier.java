@@ -66,7 +66,7 @@ interface EvidenceVerifier {
 
     /**
      * Construct set of LDAP attributes, which should be loaded as binary data.
-     * Should be subset of {@link #addRequiredIdentityAttributes(Collection<String>)} output.
+     * Should be subset of {@link #addRequiredIdentityAttributes(Collection)} output.
      * @param attributes output collection of attributes names, into which should be added
      */
     default void addBinaryIdentityAttributes(Collection<String> attributes) {}

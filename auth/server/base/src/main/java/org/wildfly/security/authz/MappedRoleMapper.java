@@ -39,7 +39,7 @@ public class MappedRoleMapper implements RoleMapper {
     /**
      * Construct a new instance.
      * Called from WildFly core when using this as a custom component. You should not use this constructor and use {@link MappedRoleMapper.Builder} instead.
-     * You must call {@link #initialize(Map<String, String>)} to configure mapping map before usage.
+     * You must call {@link #initialize(Map)} to configure mapping map before usage.
      *
      * @see MappedRoleMapper.Builder
      */

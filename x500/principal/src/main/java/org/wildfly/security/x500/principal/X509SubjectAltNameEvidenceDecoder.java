@@ -49,7 +49,7 @@ public final class X509SubjectAltNameEvidenceDecoder implements EvidenceDecoder 
      *                        <li>{@code GeneralName.RFC_822_NAME}</li>
      *                        <li>{@code GeneralName.DNS_NAME}</li>
      *                        <li>{@code GeneralName.DIRECTORY_NAME}</li>
-     *                        <li>{@code GeneralName.URI_NAME}</.li>
+     *                        <li>{@code GeneralName.URI_NAME}</li>
      *                        <li>{@code GeneralName.IP_ADDRESS}</li>
      *                        <li>{@code GeneralName.REGISTERED_ID}</li>
      *                    </ul>
@@ -66,7 +66,7 @@ public final class X509SubjectAltNameEvidenceDecoder implements EvidenceDecoder 
      *                        <li>{@code GeneralName.RFC_822_NAME}</li>
      *                        <li>{@code GeneralName.DNS_NAME}</li>
      *                        <li>{@code GeneralName.DIRECTORY_NAME}</li>
-     *                        <li>{@code GeneralName.URI_NAME}</.li>
+     *                        <li>{@code GeneralName.URI_NAME}</li>
      *                        <li>{@code GeneralName.IP_ADDRESS}</li>
      *                        <li>{@code GeneralName.REGISTERED_ID}</li>
      *                    </ul>

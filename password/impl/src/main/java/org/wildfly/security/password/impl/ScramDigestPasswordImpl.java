@@ -214,12 +214,12 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
      *
      * <pre>
      *     Hi(str, salt, i)
-     *         U1 <- HMAC(str, salt + INT(1))
-     *         U2 <- HMAC(str, U1)
+     *         U1 &lt;- HMAC(str, salt + INT(1))
+     *         U2 &lt;- HMAC(str, U1)
      *         ...
-     *         Ui-1 <- HMAC(str, Ui-2)
-     *         Ui <- HMAC(str, Ui-1)
-     *         Hi <- U1 XOR U2 XOR ... XOR Ui
+     *         Ui-1 &lt;- HMAC(str, Ui-2)
+     *         Ui &lt;- HMAC(str, Ui-1)
+     *         Hi &lt;- U1 XOR U2 XOR ... XOR Ui
      *         return Hi
      * </pre>
      *

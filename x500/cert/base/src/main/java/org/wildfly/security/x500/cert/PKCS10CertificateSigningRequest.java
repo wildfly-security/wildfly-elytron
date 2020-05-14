@@ -65,13 +65,13 @@ import org.wildfly.security.pem.Pem;
  *      Attributes { ATTRIBUTE:IOSet } ::= SET OF Attribute{{ IOSet }}
  *
  *      Attribute { ATTRIBUTE:IOSet } ::= SEQUENCE {
- *          type        ATTRIBUTE.&id({IOSet}),
- *          values      SET SIZE(1..MAX) OF ATTRIBUTE.&Type({IOSet}{\@type})
+ *          type        ATTRIBUTE.&amp;id({IOSet}),
+ *          values      SET SIZE(1..MAX) OF ATTRIBUTE.&amp;Type({IOSet}{\@type})
  *      }
  *
  *      AlgorithmIdentifier {ALGORITHM:IOSet } ::= SEQUENCE {
- *          algorithm       ALGORITHM.&id({IOSet}),
- *          parameters      ALGORITHM.&Type({IOSet}{{@literal @}algorithm}) OPTIONAL
+ *          algorithm       ALGORITHM.&amp;id({IOSet}),
+ *          parameters      ALGORITHM.&amp;Type({IOSet}{{@literal @}algorithm}) OPTIONAL
  *      }
  * </pre>
  *
@@ -422,8 +422,8 @@ public final class PKCS10CertificateSigningRequest {
          *
          * <pre>
          *      AlgorithmIdentifier {ALGORITHM:IOSet } ::= SEQUENCE {
-         *          algorithm       ALGORITHM.&id({IOSet}),
-         *          parameters      ALGORITHM.&Type({IOSet}{{@literal @}algorithm}) OPTIONAL
+         *          algorithm       ALGORITHM.&amp;id({IOSet}),
+         *          parameters      ALGORITHM.&amp;Type({IOSet}{{@literal @}algorithm}) OPTIONAL
          *      }
          * </pre>
          *

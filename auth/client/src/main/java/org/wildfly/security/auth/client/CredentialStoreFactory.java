@@ -52,7 +52,7 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
      * Creates a factory using parameters.
      *
      * @param name the non {@code null} name of the {@link CredentialStore}
-     * @param type the possibly {@code null} type of the {@link CredentialStore)
+     * @param type the possibly {@code null} type of the {@link CredentialStore}
      * @param attributes the non {@code null} attributes to initialise the {@code CredentialStore}
      * @param providerName the possibly {@code null} name of the provider to use
      * @param location the non {@code null} current parse location
