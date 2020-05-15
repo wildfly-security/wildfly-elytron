@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 14 May 2020 10:58:49 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 15 May 2020 16:46:02 +0000</lastBuildDate>
         
         <item>
             <title>Elytron's ACME Client Implementation</title>
