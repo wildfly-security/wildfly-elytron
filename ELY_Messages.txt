@@ -110,7 +110,7 @@
 12000 - 12999    wildfly-elytron-credential-store
 14000 - 14999    wildfly-elytron-client
 15000 - 15999    wildfly-elytron-ssl
-16000 - 16999
+16000 - 16999    wildfly-elytron-auth-server
 17000 - 17999
 18000 - 18999
 19000 - 19999

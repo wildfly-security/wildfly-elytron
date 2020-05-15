@@ -130,4 +130,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8511, value = "Role mapper hasn't been initialized yet.")
     IllegalStateException roleMappedNotInitialized();
 
+    @Message(id = 16000, value = "Invalid replacement in regex role mapper.")
+    IllegalArgumentException invalidReplacementInRegexRoleMapper();
+
+    @Message(id = 16001, value = "Invalid pattern in regex role mapper.")
+    IllegalArgumentException invalidPatternInRegexRoleMapper();
 }
