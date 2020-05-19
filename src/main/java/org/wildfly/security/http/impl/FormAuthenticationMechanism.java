@@ -287,6 +287,11 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
     }
 
     private void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+        if (request.getRequestPath().isEmpty() && !contextPath.isEmpty()) {
+            sendRedirect(response, getCompleteRedirectLocation(request, "/"));
+            return;
+        }
+
         // Save the current request.
         URI requestURI = request.getRequestURI();
         HttpScope session = getSessionScope(request, true);
@@ -343,6 +348,10 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
             }
         }
 
+        sendRedirect(response, getCompleteRedirectLocation(request, page));
+    }
+
+    private String getCompleteRedirectLocation(HttpServerRequest request, String location) {
         URI requestURI = request.getRequestURI();
         StringBuilder sb = new StringBuilder();
         String scheme = requestURI.getScheme();
@@ -354,8 +363,9 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
             sb.append(':').append(port);
         }
         sb.append(contextPath);
-        sb.append(page);
-        sendRedirect(response, sb.toString());
+        sb.append(location);
+
+        return sb.toString();
     }
 
     private void sendRedirect(HttpServerResponse response, String location) {
