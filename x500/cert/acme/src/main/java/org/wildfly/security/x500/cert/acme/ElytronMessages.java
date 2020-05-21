@@ -67,8 +67,8 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 10034, value = "No nonce provided by ACME server")
     AcmeException noNonceProvidedByAcmeServer();
 
-    @Message(id = 10035, value = "No account location URL provided by ACME server")
-    AcmeException noAccountLocationUrlProvidedByAcmeServer();
+    @Message(id = 10035, value = "No %s location URL provided by ACME server")
+    AcmeException noLocationUrlProvidedByAcmeServer(String urlType);
 
     @Message(id = 10036, value = "Unable to obtain new nonce from ACME server")
     AcmeException unableToObtainNewNonceFromAcmeServer();
