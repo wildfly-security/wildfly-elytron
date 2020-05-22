@@ -42,6 +42,7 @@ public final class Acme {
 
     public static final String ACCOUNT = "account";
     public static final String ALG = "alg";
+    public static final String AUTHORIZATION = "authorization";
     public static final String AUTHORIZATIONS = "authorizations";
     public static final String CAA_IDENTITIES = "caaIdentities";
     public static final String CERTIFICATE = "certificate";
@@ -68,6 +69,7 @@ public final class Acme {
     public static final String NONCE = "nonce";
     public static final String OLD_KEY = "oldKey";
     public static final String ONLY_RETURN_EXISTING = "onlyReturnExisting";
+    public static final String ORDER = "order";
     public static final String PAYLOAD = "payload";
     public static final String PENDING = "pending";
     public static final String PROTECTED = "protected";
