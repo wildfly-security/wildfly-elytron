@@ -453,6 +453,7 @@ public abstract class AcmeClientSpi {
         JsonObjectBuilder payloadBuilder = Json.createObjectBuilder()
                 .add(IDENTIFIERS, identifiersBuilder.build());
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newOrderUrl, false, getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_CREATED);
+        final String orderUrl = getLocation(connection, ORDER);
         JsonObject jsonResponse = getJsonResponse(connection);
         final String finalizeOrderUrl = jsonResponse.getString(FINALIZE);
         final JsonArray authorizationsArray = jsonResponse.getJsonArray(AUTHORIZATIONS);
@@ -514,7 +515,6 @@ public abstract class AcmeClientSpi {
             payloadBuilder = Json.createObjectBuilder()
                     .add(CSR, base64UrlEncode(csrBuilder.build().getEncoded()));
             connection = sendPostRequestWithRetries(account, staging, finalizeOrderUrl, false, getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_OK);
-            final String orderUrl = getLocation(connection, ORDER);
 
             // poll the order resource until the server has made the certificate chain available
             jsonResponse = pollResourceUntilFinalized(account, staging, orderUrl);
