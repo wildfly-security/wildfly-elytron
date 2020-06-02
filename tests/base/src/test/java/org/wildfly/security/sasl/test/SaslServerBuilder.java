@@ -26,12 +26,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Permissions;
+import java.security.Provider;
 import java.security.spec.KeySpec;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -66,6 +68,7 @@ import org.wildfly.security.sasl.util.CredentialSaslServerFactory;
 import org.wildfly.security.sasl.util.KeyManagerCredentialSaslServerFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslServerFactory;
+import org.wildfly.security.sasl.util.SecurityProviderSaslServerFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
@@ -105,6 +108,7 @@ public class SaslServerBuilder {
     private BuilderReference<SecurityDomain> securityDomainReference;
 
     private ScheduledExecutorService scheduledExecutorService;
+    private Supplier<Provider[]> providerSupplier;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;
@@ -152,7 +156,7 @@ public class SaslServerBuilder {
     public SaslServerBuilder setPassword(final String algorithm, final KeySpec keySpec) throws Exception {
         Assert.assertNotNull(algorithm);
         Assert.assertNotNull(password);
-        final PasswordFactory factory = PasswordFactory.getInstance(algorithm);
+        final PasswordFactory factory = providerSupplier != null ? PasswordFactory.getInstance(algorithm, providerSupplier) : PasswordFactory.getInstance(algorithm);
         return setPassword(factory.generatePassword(keySpec));
     }
 
@@ -290,6 +294,12 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setProviderSupplier(Supplier<Provider[]> providerSupplier) {
+        Assert.assertNotNull("providerSupplier", providerSupplier);
+        this.providerSupplier = providerSupplier;
+        return this;
+    }
+
     public SaslServer build() throws IOException {
         if (securityDomain == null) {
             securityDomain = createSecurityDomain();
@@ -298,6 +308,9 @@ public class SaslServerBuilder {
             securityDomainReference.setReference(securityDomain);
         }
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
+        if (factory == null && providerSupplier != null) {
+            factory = new SecurityProviderSaslServerFactory(providerSupplier);
+        }
         if (properties != null && properties.size() > 0) {
             if (properties.containsKey(WildFlySasl.REALM_LIST)) {
                 factory = new AvailableRealmsSaslServerFactory(factory);
@@ -343,7 +356,7 @@ public class SaslServerBuilder {
     private SecurityDomain createSecurityDomain() throws IOException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         if (! modifiableRealm) {
-            final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
+            final SimpleMapBackedSecurityRealm mainRealm = providerSupplier != null ? new SimpleMapBackedSecurityRealm(providerSupplier) : new SimpleMapBackedSecurityRealm();
             realms.put(realmName, mainRealm);
             realms.forEach((name, securityRealm) -> {
                 domainBuilder.addRealm(name, securityRealm).build();
