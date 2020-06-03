@@ -82,6 +82,17 @@ abstract class AbstractDelegatingSSLParameters extends SSLParameters {
         delegate.setEndpointIdentificationAlgorithm(algorithm);
     }
 
+    /*===== since Java 8u251 JEP-244 =====*/
+
+    public String[] getApplicationProtocols() {
+        return delegate.getApplicationProtocols();
+    }
+
+    @Override
+    public void setApplicationProtocols(String[] protocols) {
+        delegate.setApplicationProtocols(protocols);
+    }
+
     /*==== 1.8 special ====*/
 
     protected void copyJdk8FinalParameters() {
@@ -89,4 +100,5 @@ abstract class AbstractDelegatingSSLParameters extends SSLParameters {
         setSNIMatchers(delegate.getSNIMatchers());
         setUseCipherSuitesOrder(delegate.getUseCipherSuitesOrder());
     }
+
 }
