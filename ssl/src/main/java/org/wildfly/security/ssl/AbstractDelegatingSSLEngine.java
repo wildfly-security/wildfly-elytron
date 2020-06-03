@@ -19,6 +19,8 @@
 package org.wildfly.security.ssl;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -158,6 +160,22 @@ abstract class AbstractDelegatingSSLEngine extends SSLEngine {
 
     public void setSSLParameters(final SSLParameters params) {
         delegate.setSSLParameters(params);
+    }
+
+    public String getApplicationProtocol() {
+        return delegate.getApplicationProtocol();
+    }
+
+    public String getHandshakeApplicationProtocol() {
+        return delegate.getHandshakeApplicationProtocol();
+    }
+
+    public void setHandshakeApplicationProtocolSelector(BiFunction<SSLEngine, List<String>, String> selector) {
+        delegate.setHandshakeApplicationProtocolSelector(selector);
+    }
+
+    public BiFunction<SSLEngine, List<String>, String> getHandshakeApplicationProtocolSelector() {
+        return delegate.getHandshakeApplicationProtocolSelector();
     }
 
     protected SSLEngine getDelegate() {

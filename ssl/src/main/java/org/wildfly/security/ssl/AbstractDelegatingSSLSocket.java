@@ -25,6 +25,8 @@ import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLParameters;
@@ -42,8 +44,20 @@ abstract class AbstractDelegatingSSLSocket extends SSLSocket {
         this.delegate = delegate;
     }
 
-    public String getApplicationProtocol​() { //Java 9 hack for webmockserver ssl
-        return null;
+    public String getApplicationProtocol() {
+        return delegate.getApplicationProtocol();
+    }
+
+    public String getHandshakeApplicationProtocol() {
+        return delegate.getHandshakeApplicationProtocol();
+    }
+
+    public void setHandshakeApplicationProtocolSelector(BiFunction<SSLSocket, List<String>, String> selector) {
+        delegate.setHandshakeApplicationProtocolSelector(selector);
+    }
+
+    public BiFunction<SSLSocket, List<String>, String> getHandshakeApplicationProtocolSelector() {
+        return delegate.getHandshakeApplicationProtocolSelector();
     }
 
     public String[] getSupportedCipherSuites() {
