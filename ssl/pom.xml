@@ -94,36 +94,4 @@
                
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0-jboss-1</version>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration combine.self="override">
-                            <!-- ELY-1979 We need to temporarily relax the API check due to the need to reference
-                                 methods added after Java 8 was released, this however does leave this module at
-                                 risk of accidentially using later API despite being compiled to Java 8 byte code.
-                                  -->
-                            <target>8</target>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>
