@@ -190,19 +190,19 @@ class SelectingServerSSLEngine extends SSLEngine {
     }
 
     public String getApplicationProtocol() {
-        return currentRef.get().getApplicationProtocol();
+        return JDKSpecific.getApplicationProtocol(currentRef.get());
     }
 
     public String getHandshakeApplicationProtocol() {
-        return currentRef.get().getHandshakeApplicationProtocol();
+        return JDKSpecific.getHandshakeApplicationProtocol(currentRef.get());
     }
 
     public void setHandshakeApplicationProtocolSelector(BiFunction<SSLEngine, List<String>, String> selector) {
-        currentRef.get().setHandshakeApplicationProtocolSelector(selector);
+        JDKSpecific.setHandshakeApplicationProtocolSelector(currentRef.get(), selector);
     }
 
     public BiFunction<SSLEngine, List<String>, String> getHandshakeApplicationProtocolSelector() {
-        return currentRef.get().getHandshakeApplicationProtocolSelector();
+        return JDKSpecific.getHandshakeApplicationProtocolSelector(currentRef.get());
     }
 
     static final int FL_WANT_C_AUTH = 1 << 0;
