@@ -18,9 +18,46 @@
 
 package org.wildfly.security.ssl;
 
-import javax.net.ssl.SSLParameters;
+import java.util.List;
+import java.util.function.BiFunction;
 
-class JDKSpecific {
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+
+final class JDKSpecific {
+
+    /*
+     * SSLEngine
+     */
+
+    static String getApplicationProtocol(SSLEngine sslEngine) {
+        throw new UnsupportedOperationException();
+    }
+
+    static String getHandshakeApplicationProtocol(SSLEngine sslEngine) {
+        throw new UnsupportedOperationException();
+    }
+
+    static void setHandshakeApplicationProtocolSelector(SSLEngine sslEngine, BiFunction<SSLEngine, List<String>, String> selector) {
+        throw new UnsupportedOperationException();
+    }
+
+    static BiFunction<SSLEngine, List<String>, String> getHandshakeApplicationProtocolSelector(SSLEngine sslEngine) {
+        throw new UnsupportedOperationException();
+    }
+
+    /*
+     * SSLParameters
+     */
+
+    static String[] getApplicationProtocols(SSLParameters parameters) {
+        throw new UnsupportedOperationException();
+    }
+
+    static void setApplicationProtocols(SSLParameters parameters, String[] protocols) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Copies SSLParameters' fields available in java 8.
@@ -44,4 +81,25 @@ class JDKSpecific {
         }
         return params;
     }
+
+    /*
+     * SSLSocket
+     */
+
+    static String getApplicationProtocol(SSLSocket socket) {
+        throw new UnsupportedOperationException();
+    }
+
+    static String getHandshakeApplicationProtocol(SSLSocket socket) {
+        throw new UnsupportedOperationException();
+    }
+
+    static void setHandshakeApplicationProtocolSelector(SSLSocket socket, BiFunction<SSLSocket, List<String>, String> selector) {
+        throw new UnsupportedOperationException();
+    }
+
+    static BiFunction<SSLSocket, List<String>, String> getHandshakeApplicationProtocolSelector(SSLSocket socket) {
+        throw new UnsupportedOperationException();
+    }
+
 }

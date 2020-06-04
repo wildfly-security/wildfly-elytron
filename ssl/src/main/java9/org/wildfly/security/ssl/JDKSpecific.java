@@ -18,16 +18,54 @@
 
 package org.wildfly.security.ssl;
 
-import javax.net.ssl.SSLParameters;
+import java.util.List;
+import java.util.function.BiFunction;
 
-/**
- * Copies SSLParameters' fields available in java 8 and java 9.
- *
- * @param original SSLParameters that should be applied to new instance
- * @return instance of SSLParameters with fields copied from original
- */
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+
+
 final class JDKSpecific {
 
+    /*
+     * SSLEngine
+     */
+
+    static String getApplicationProtocol(SSLEngine sslEngine) {
+        return sslEngine.getApplicationProtocol();
+    }
+
+    static String getHandshakeApplicationProtocol(SSLEngine sslEngine) {
+        return sslEngine.getHandshakeApplicationProtocol();
+    }
+
+    static void setHandshakeApplicationProtocolSelector(SSLEngine sslEngine, BiFunction<SSLEngine, List<String>, String> selector) {
+        sslEngine.setHandshakeApplicationProtocolSelector(selector);
+    }
+
+    static BiFunction<SSLEngine, List<String>, String> getHandshakeApplicationProtocolSelector(SSLEngine sslEngine) {
+        return sslEngine.getHandshakeApplicationProtocolSelector();
+    }
+
+    /*
+     * SSLParameters
+     */
+
+    static String[] getApplicationProtocols(SSLParameters parameters) {
+        return parameters.getApplicationProtocols();
+    }
+
+    static void setApplicationProtocols(SSLParameters parameters, String[] protocols) {
+        parameters.setApplicationProtocols(protocols);
+    }
+
+    /**
+     * Copies SSLParameters' fields available in java 8 and java 9.
+     *
+     * @param original SSLParameters that should be applied to new instance
+     * @return instance of SSLParameters with fields copied from original
+     */
     static SSLParameters setSSLParameters(SSLParameters original) {
         SSLParameters params = new SSLParameters();
         params.setProtocols(original.getProtocols());
@@ -49,4 +87,23 @@ final class JDKSpecific {
         return params;
     }
 
+    /*
+     * SSLSocket
+     */
+
+    static String getApplicationProtocol(SSLSocket socket) {
+        return socket.getApplicationProtocol();
+    }
+
+    static String getHandshakeApplicationProtocol(SSLSocket socket) {
+        return socket.getHandshakeApplicationProtocol();
+    }
+
+    static void setHandshakeApplicationProtocolSelector(SSLSocket socket, BiFunction<SSLSocket, List<String>, String> selector) {
+        socket.setHandshakeApplicationProtocolSelector(selector);
+    }
+
+    static BiFunction<SSLSocket, List<String>, String> getHandshakeApplicationProtocolSelector(SSLSocket socket) {
+        return socket.getHandshakeApplicationProtocolSelector();
+    }
 }
