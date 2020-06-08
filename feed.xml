@@ -5,7 +5,35 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 04 Jun 2020 15:42:39 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 08 Jun 2020 22:40:50 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using the IP Address of a Remote Client for Authorization Decisions</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/
+            </link>
+            <description>
+                WildFly 20 adds the ability to make use of the IP address of a remote client when making authorization decisions. This blog post will give an overview of this new feature. Authorization Decisions Roles and permissions can be assigned to a security identity based on attributes that are loaded from...
+            </description>
+            <pubDate>Mon, 08 Jun 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Automatic Credential Store Updates</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/
+            </link>
+            <description>
+                WildFly 20 adds support for automatic credential store updates. This blog post will give an overview of this new feature. Credential Stores Credential stores allow credentials to be stored securely. When adding a credential to a store, it is associated with an alias. This alias is then subsequently used to...
+            </description>
+            <pubDate>Mon, 08 Jun 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/
+            </guid>
+        </item>
         
         <item>
             <title>Elytron's ACME Client Implementation</title>
@@ -116,34 +144,6 @@
             <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
             <guid>
                 https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly 18</title>
-            <link>
-                https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://developer.jboss.org/people/fjuma/blog/2019/09/05/new-security-features-in-wildfly-18
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming support for automatic updates of credential stores</title>
-            <link>
-                https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://developer.jboss.org/people/fjuma/blog/2019/09/05/automatic-updates-of-credential-stores
             </guid>
         </item>
         

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Automatic Credential Store Updates</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Automatic Credential Store Updates</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | June 08, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/&title=Automatic Credential Store Updates" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Automatic Credential Store Updates&url=https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Automatic Credential Store Updates&amp;body=Automatic Credential Store Updates https://wildfly-security.github.io/wildfly-elytron/blog/automatic-credential-store-updates/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly 20 adds support for automatic credential store updates. This blog post will give an overview of this
+new feature.</p>
+</div>
+<div class="sect1">
+<h2 id="credential-stores"><a class="anchor" href="#credential-stores"></a>Credential Stores</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Credential stores allow credentials to be stored securely. When adding a credential to a store, it is associated
+with an alias. This alias is then subsequently used to reference the credential from the store instead of
+needing to specify the credential directly. As an example, when configuring a <code>key-store</code> in the Elytron
+subsystem, we need to specify the keystore password. Instead of specifying the password in clear text, we
+can first add the keystore password to a credential store and then reference the alias that we associated with
+that password, as shown below.</p>
+</div>
+<div class="paragraph">
+<p>First, let&#8217;s create a credential store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:add(location=mycredstore.cs, relative-to=jboss.server.config.dir, credential-reference={clear-text=StorePassword}, create=true)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;ll add our keystore password to this store and associate it with the alias <code>example</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:add-alias(alias=example, secret-value=mySecretPassword)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, we&#8217;ll reference our credential store and alias when configuring our key-store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=myKS:add(relative-to=jboss.server.config.dir, path=my.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=example})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>credential-reference</code> attribute above is used to reference a credential from a credential store. Notice that the
+<code>credential-reference</code> has two attributes, <code>store</code> and <code>alias</code>. The <code>store</code> attribute indicates the credential store.
+The <code>alias</code> attribute indicates the entry in the credential store that holds our credential. Besides the <code>key-store</code>
+resource, there are many other resources in the WildFly management model that allow a <code>credential-reference</code> to be
+specified.</p>
+</div>
+<div class="paragraph">
+<p>Notice that in the above example, we first had to add our credential to the store before being able to reference it
+from a <code>credential-reference</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="automatic-credential-store-updates"><a class="anchor" href="#automatic-credential-store-updates"></a>Automatic Credential Store Updates</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Instead of needing to first add a credential to a credential store, WildFly 20 adds the ability to automatically
+add a credential to a previously defined credential store by specifying both the <code>store</code> and <code>clear-text</code> attributes
+for a <code>credential-reference</code>. In particular, when configuring a new <code>credential-reference</code> with both the <code>store</code> and
+<code>clear-text</code> attributes specified, the following will happen:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If the alias attribute is also specified, one of the following will occur:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If the configured credential store does not contain an entry for the given <code>alias</code>, a new entry will be added to the
+credential store to hold the clear text password that was specified. The <code>clear-text</code> attribute will then be removed
+from the management model.</p>
+</li>
+<li>
+<p>If the credential store does contain an entry for the given <code>alias</code>, the existing credential will be replaced with
+the clear text password that was specified. The <code>clear-text</code> attribute will then be removed from the management model.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If the <code>alias</code> attribute is not specified, an alias will be generated and a new entry will be added to the credential
+store to hold the clear text password that was specified. The <code>clear-text</code> attribute will then be removed from the
+management model.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We&#8217;re going to take a look at some examples in the next sections.</p>
+</div>
+<div class="sect2">
+<h3 id="automatically-adding-a-credential-to-a-store"><a class="anchor" href="#automatically-adding-a-credential-to-a-store"></a>Automatically Adding a Credential to a Store</h3>
+<div class="paragraph">
+<p>We&#8217;re first going to configure another <code>key-store</code> in the Elytron subsystem but this time we&#8217;re not going to add the
+keystore password to the credential store ourselves:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=myNewAlias, clear-text=myNewPassword})
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {"credential-store-update" =&gt; {
+        "status" =&gt; "new-entry-added",
+        "new-alias" =&gt; "myNewAlias"
+    }}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that the <code>credential-reference</code> attribute for the new <code>key-store</code> we are configuring specifies the <code>store</code>, <code>alias</code>,
+and <code>clear-text</code> attributes. The <code>store</code> attribute references the credential store that we already created. The <code>alias</code>
+attribute specified is <code>myNewAlias</code> and the <code>clear-text</code> attribute specified is <code>myNewPassword</code>. Since our credential store
+does not already contain the specified alias, the above command will result in a new entry being automatically added to
+our credential store, <code>myCredStore</code>, with alias <code>myNewAlias</code> and credential <code>myNewPassword</code>.</p>
+</div>
+<div class="paragraph">
+<p>We can check the aliases that are in the credential store to confirm that we see the new alias there:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:read-aliases()
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; [
+        "mynewalias",
+        "example"
+    ],
+    "response-headers" =&gt; {"process-state" =&gt; "reload-required"}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we take a look at our newly configured <code>key-store</code>, we can see that its <code>credential-reference</code> attribute only
+references the credential store and the alias, it does not reference the clear text password:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:read-attribute(name=credential-reference)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "store" =&gt; "myCredStore",
+        "alias" =&gt; "myNewAlias",
+        "clear-text" =&gt; undefined
+    },
+    "response-headers" =&gt; {"process-state" =&gt; "reload-required"}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we hadn&#8217;t specified the <code>alias</code> attribute in our <code>credential-reference</code> when configuring our <code>key-store</code>, a new alias
+would have been generated automatically for us:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS2:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, clear-text=myNewPassword})
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {"credential-store-update" =&gt; {
+        "status" =&gt; "new-entry-added",
+        "new-alias" =&gt; "kgoxia900g"
+    }},
+    "response-headers" =&gt; {"process-state" =&gt; "reload-required"}
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above command will result in a new entry being automatically added to our credential store, <code>myCredStore</code>, with
+the generated alias, <code>kgoxia900g</code>, and credential <code>myNewPassword</code>. If we take a look at our newly configured <code>key-store</code>,
+we can see that its <code>credential-reference</code> attribute references the credential store and the newly generated alias only:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS2:read-attribute(name=credential-reference)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "store" =&gt; "myCredStore",
+        "clear-text" =&gt; undefined,
+        "alias" =&gt; "kgoxia900g"
+    },
+    "response-headers" =&gt; {"process-state" =&gt; "reload-required"}
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="automatically-updating-an-existing-credential-in-a-store"><a class="anchor" href="#automatically-updating-an-existing-credential-in-a-store"></a>Automatically Updating an Existing Credential in a Store</h3>
+<div class="paragraph">
+<p>If we update an existing <code>credential-reference</code> attribute that contains both the <code>alias</code> and <code>store</code> attributes to also
+specify the <code>clear-text</code> attribute, the existing credential in the configured credential store will be replaced with the
+clear text password that was specified. The <code>clear-text</code> attribute will then be removed from the management model. As an
+example, the following command will result in updating the credential for the <code>myNewAlias</code> entry from our previous example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:write-attribute(name=credential-reference.clear-text, value=myUpdatedPassword)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {"credential-store-update" =&gt; {"status" =&gt; "existing-entry-updated"}},
+    "response-headers" =&gt; {
+        "operation-requires-reload" =&gt; true,
+        "process-state" =&gt; "reload-required"
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of how credentials can be automatically added to a credential store and how
+existing credentials in a credential store can be automatically updated. This means that users no longer need to
+add credentials to a credential store or update existing credentials in a store before being able to reference them
+from a <code>credential-reference</code>. Take a look at the Elytron <a href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html#referencing-credentials">documentation</a>
+for more details.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

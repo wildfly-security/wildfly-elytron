@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using the IP Address of a Remote Client for Authorization Decisions</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using the IP Address of a Remote Client for Authorization Decisions</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | June 08, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/&title=Using the IP Address of a Remote Client for Authorization Decisions" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using the IP Address of a Remote Client for Authorization Decisions&url=https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using the IP Address of a Remote Client for Authorization Decisions&amp;body=Using the IP Address of a Remote Client for Authorization Decisions https://wildfly-security.github.io/wildfly-elytron/blog/using-remote-client-ip-for-authorization/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly 20 adds the ability to make use of the IP address of a remote client when making
+authorization decisions. This blog post will give an overview of this new feature.</p>
+</div>
+<div class="sect1">
+<h2 id="authorization-decisions"><a class="anchor" href="#authorization-decisions"></a>Authorization Decisions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Roles and permissions can be assigned to a security identity based on attributes that are
+loaded from the identity&#8217;s security realm. Sometimes it might be necessary to also take
+into account the IP address of a remote client when making authorization decisions. As an
+example, we might want to make use of the IP address of a remote client in order to assign
+a user a particular role when establishing a connection to the server from a corporate
+network and a different role when establishing a connection to the server from a different
+network. This can now be done using a new role decoder in the Elytron subsystem.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="source-address-role-decoder"><a class="anchor" href="#source-address-role-decoder"></a>Source Address Role Decoder</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A role decoder that assigns roles to an identity based on the IP address of the remote client
+can be configured using a new <code>source-address-role-decoder</code> resource in the Elytron subsystem.
+For example, a <code>source-address-role-decoder</code> can be added as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=myRoleDecoder:add(source-address="10.10.10.10", roles=[admin])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>source-address</code> attribute in the above command specifies the IP address. Instead of
+specifying the IP address directly, it&#8217;s also possible to use the <code>pattern</code>
+attribute instead to configure a regular expression that specifies the IP address to match.
+Only one of <code>source-address</code> and <code>pattern</code> should be specified. The <code>roles</code> attribute indicates
+the list of roles to assign to the identity if the IP address of the remote client matches the
+configured <code>source-address</code> or <code>pattern</code>. The above example command specifies that an identity
+should be assigned the <code>admin</code> role when establishing a connection to the server from the
+<code>10.10.10.10</code> IP address.</p>
+</div>
+<div class="paragraph">
+<p>Once a <code>source-address-role-decoder</code> has been configured, it can be referenced from a
+<code>security-domain</code>. In the rest of this post, we&#8217;re going to go through a complete example that
+shows how to make use of this new resource. We&#8217;re going to be using the EJB Client
+to attempt to invoke a secured EJB that has been deployed to WildFly. We&#8217;re going to try
+connecting to the server from different IP addresses.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;re going to be looking at the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder">source-address-role-decoder</a> project.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="server-configuration"><a class="anchor" href="#server-configuration"></a>Server Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A WildFly CLI script that contains all of the commands used in this example can be found in the
+<a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder">source-address-role-decoder</a>
+project.</p>
+</div>
+<div class="sect2">
+<h3 id="prerequisite-configuration"><a class="anchor" href="#prerequisite-configuration"></a>Prerequisite Configuration</h3>
+<div class="paragraph">
+<p>Let’s first add a user - this is the user that we’re going to use later on when attempting to invoke the EJB.
+For this example, we’re going to create a filesystem-based identity store and add a user named <code>alice</code> with password <code>alice123+</code> using
+the following CLI commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/filesystem-realm=exampleRealm:add(path=fs-realm-users,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity(identity=alice)
+/subsystem=elytron/filesystem-realm=exampleRealm:set-password(identity=alice,clear={password=alice123+})
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity-attribute(identity=alice,name=Roles,value=[employee])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we’re going to add the <code>filesystem-realm</code> that we just created to the <code>ApplicationDomain</code> security domain that is already
+defined in the default Elytron subsystem configuration and we’re going to make this the default security realm for this security domain:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/security-domain=ApplicationDomain:list-add(name=realms, value={realm=exampleRealm})
+/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=default-realm, value=exampleRealm)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, we&#8217;ll add an <code>application-security-domain</code> mapping in the EJB3 subsystem to indicate that security for EJBs should
+be handled by Elytron. We&#8217;ll also update the <code>http-remoting-connector</code> in the Remoting subsystem to reference the SASL authentication
+factory that is backed by our Elytron security domain.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, let&#8217;s reload the server using the <code>:reload</code> command.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configuring-a-source-address-role-decoder"><a class="anchor" href="#configuring-a-source-address-role-decoder"></a>Configuring a Source Address Role Decoder</h3>
+<div class="paragraph">
+<p>Notice that in the prerequisite configuration above, the filesystem-based identity store only assigns <code>alice</code> the
+<code>employee</code> role. Let&#8217;s say that we want to assign a user an additional role, <code>admin</code>, if she is connecting from
+the <code>127.0.0.2</code> IP address. We can configure this as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To make use of this new role decoder, we can update our security domain to reference it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=role-decoder,value=ipRoleDecoder1)
+reload</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-the-ejb"><a class="anchor" href="#deploying-the-ejb"></a>Deploying the EJB</h3>
+<div class="paragraph">
+<p>Now that we&#8217;ve finished configuring our server, let&#8217;s deploy our EJB. From the <code>$PATH_TO_ELYTRON_EXAMPLES/source-address-role-decoder</code>
+directory, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install wildfly:deploy</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-configuration"><a class="anchor" href="#client-configuration"></a>Client Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The client configuration that we will be using for this example can be found in <code>$PATH_TO_ELYTRON_EXAMPLES/src/main/resources/wildfly-config.xml</code>.
+Notice that this file contains all of the information that&#8217;s needed to connect to the server. In particular, it specifies that
+we want to use <code>alice</code> as the username and it also specifies her password. (It also specifies that we want to use
+"127.0.0.2" as the IP address for our EJB Client. We are using this for demonstration purposes here since our server
+and client are both running locally.)</p>
+</div>
+<div class="paragraph">
+<p>Our <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder/src/main/java/org/wildfly/security/examples/RemoteClient.java">RemoteClient</a>
+is going to look up the EJB that&#8217;s deployed on the server and it&#8217;s going to invoke two methods using that
+EJB. The first method it invokes requires the <code>employee</code> role. This method simply returns the principal name. The second
+method our client invokes requires <code>admin</code> role.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s run the client:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn exec:exec</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s take a closer look at the output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Successfully called secured bean, caller principal alice
+
+Principal has admin permission: true
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can see that we were able to successfully invoke both EJB methods. This is because our filesystem-based
+identity store assigns <code>alice</code> the <code>employee</code> role that&#8217;s required to invoke the first method. Our
+<code>source-address-role-decoder</code> assigns <code>alice</code> the <code>admin</code> role since the IP address of our remote
+client is 127.0.0.2.</p>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s update our <code>$PATH_TO_ELYTRON_EXAMPLES/src/main/resources/wildfly-config.xml</code> file so that a different IP address will be used for our remote client.
+To do this, we&#8217;re going to update the <code>bind-address</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">&lt;bind-address bind-address="127.0.0.3" bind-port="61111" match="0.0.0.0/0"/&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, try running the client and inspecting the output again:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install exec:exec</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Successfully called secured bean, caller principal alice
+
+Principal has admin permission: false
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that this time, only one of the two EJB methods can be successfully invoked. In particular,
+since <code>alice</code> is now connecting from 127.0.0.3 (instead of from 127.0.0.2), our <code>source-address-role-decoder</code>
+no longer assigns <code>alice</code> the <code>admin</code> role. Thus, she is unable to invoke the method that requires <code>admin</code> role.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="aggregate-role-decoders"><a class="anchor" href="#aggregate-role-decoders"></a>Aggregate Role Decoders</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Note that it&#8217;s also possible to configure an <code>aggregate-role-decoder</code> that is made up of two or more role decoders, as shown in the
+following example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])
+/subsystem=elytron/source-address-role-decoder=ipRoleDecoder2:add(source-address="127.0.0.3", roles=[guest])
+/subsystem=elytron/aggregate-role-decoder=myAggregateRoleDecoder:add(role-decoders=[ipRoleDecoder1,ipRoleDecoder2])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each role decoder will be attempted and the returned roles will be a union of the roles returned by each decoder.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of how to make use of an IP address of a remote client for authorization
+decisions. For more information, be sure to take a look at the Elytron <a href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html#creating-elytron-subsystem-components">documentation</a>.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
