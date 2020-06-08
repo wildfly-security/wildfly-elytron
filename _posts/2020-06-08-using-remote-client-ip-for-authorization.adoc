@@ -1,0 +1,213 @@
+---
+layout: post
+title: 'Using the IP Address of a Remote Client for Authorization Decisions'
+date: 2020-06-08
+tags: elytron wildfly remote client ip authorization
+synopsis: An overview of how to make use of a remote client's IP address for authorization decisions.
+author: fjuma
+---
+
+WildFly 20 adds the ability to make use of the IP address of a remote client when making
+authorization decisions. This blog post will give an overview of this new feature.
+
+== Authorization Decisions
+
+Roles and permissions can be assigned to a security identity based on attributes that are
+loaded from the identity's security realm. Sometimes it might be necessary to also take
+into account the IP address of a remote client when making authorization decisions. As an
+example, we might want to make use of the IP address of a remote client in order to assign
+a user a particular role when establishing a connection to the server from a corporate
+network and a different role when establishing a connection to the server from a different
+network. This can now be done using a new role decoder in the Elytron subsystem.
+
+== Source Address Role Decoder
+
+A role decoder that assigns roles to an identity based on the IP address of the remote client
+can be configured using a new `source-address-role-decoder` resource in the Elytron subsystem.
+For example, a `source-address-role-decoder` can be added as follows:
+
+[source,shell]
+----
+/subsystem=elytron/source-address-role-decoder=myRoleDecoder:add(source-address="10.10.10.10", roles=[admin])
+----
+
+The `source-address` attribute in the above command specifies the IP address. Instead of
+specifying the IP address directly, it's also possible to use the `pattern`
+attribute instead to configure a regular expression that specifies the IP address to match.
+Only one of `source-address` and `pattern` should be specified. The `roles` attribute indicates
+the list of roles to assign to the identity if the IP address of the remote client matches the
+configured `source-address` or `pattern`. The above example command specifies that an identity
+should be assigned the `admin` role when establishing a connection to the server from the
+`10.10.10.10` IP address.
+
+Once a `source-address-role-decoder` has been configured, it can be referenced from a
+`security-domain`. In the rest of this post, we're going to go through a complete example that
+shows how to make use of this new resource. We're going to be using the EJB Client
+to attempt to invoke a secured EJB that has been deployed to WildFly. We're going to try
+connecting to the server from different IP addresses.
+
+== Example Project
+
+First, clone the `elytron-examples` repo locally:
+
+[source,shell]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+
+We're going to be looking at the https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder[source-address-role-decoder] project.
+
+== Server Configuration
+
+A WildFly CLI script that contains all of the commands used in this example can be found in the
+https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder[source-address-role-decoder]
+project.
+
+=== Prerequisite Configuration
+
+Let’s first add a user - this is the user that we’re going to use later on when attempting to invoke the EJB.
+For this example, we’re going to create a filesystem-based identity store and add a user named `alice` with password `alice123+` using
+the following CLI commands:
+
+[source,shell]
+----
+/subsystem=elytron/filesystem-realm=exampleRealm:add(path=fs-realm-users,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity(identity=alice)
+/subsystem=elytron/filesystem-realm=exampleRealm:set-password(identity=alice,clear={password=alice123+})
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity-attribute(identity=alice,name=Roles,value=[employee])
+----
+
+Next, we’re going to add the `filesystem-realm` that we just created to the `ApplicationDomain` security domain that is already
+defined in the default Elytron subsystem configuration and we’re going to make this the default security realm for this security domain:
+
+[source,shell]
+----
+/subsystem=elytron/security-domain=ApplicationDomain:list-add(name=realms, value={realm=exampleRealm})
+/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=default-realm, value=exampleRealm)
+----
+
+Finally, we'll add an `application-security-domain` mapping in the EJB3 subsystem to indicate that security for EJBs should
+be handled by Elytron. We'll also update the `http-remoting-connector` in the Remoting subsystem to reference the SASL authentication
+factory that is backed by our Elytron security domain.
+
+[source,shell]
+----
+/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)
+----
+
+Finally, let's reload the server using the `:reload` command.
+
+=== Configuring a Source Address Role Decoder
+
+Notice that in the prerequisite configuration above, the filesystem-based identity store only assigns `alice` the
+`employee` role. Let's say that we want to assign a user an additional role, `admin`, if she is connecting from
+the `127.0.0.2` IP address. We can configure this as follows:
+
+[source,shell]
+----
+/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])
+----
+
+To make use of this new role decoder, we can update our security domain to reference it:
+
+[source,shell]
+----
+/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=role-decoder,value=ipRoleDecoder1)
+reload
+----
+
+=== Deploying the EJB
+
+Now that we've finished configuring our server, let's deploy our EJB. From the `$PATH_TO_ELYTRON_EXAMPLES/source-address-role-decoder`
+directory, run the following command:
+
+[source,shell]
+----
+mvn clean install wildfly:deploy
+----
+
+== Client Configuration
+
+The client configuration that we will be using for this example can be found in `$PATH_TO_ELYTRON_EXAMPLES/src/main/resources/wildfly-config.xml`.
+Notice that this file contains all of the information that's needed to connect to the server. In particular, it specifies that
+we want to use `alice` as the username and it also specifies her password. (It also specifies that we want to use
+"127.0.0.2" as the IP address for our EJB Client. We are using this for demonstration purposes here since our server
+and client are both running locally.)
+
+Our https://github.com/wildfly-security-incubator/elytron-examples/tree/master/source-address-role-decoder/src/main/java/org/wildfly/security/examples/RemoteClient.java[RemoteClient]
+is going to look up the EJB that's deployed on the server and it's going to invoke two methods using that
+EJB. The first method it invokes requires the `employee` role. This method simply returns the principal name. The second
+method our client invokes requires `admin` role.
+
+Let's run the client:
+
+[source,shell]
+----
+mvn exec:exec
+----
+
+Now, let's take a closer look at the output:
+
+[source,shell]
+----
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Successfully called secured bean, caller principal alice
+
+Principal has admin permission: true
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+----
+
+We can see that we were able to successfully invoke both EJB methods. This is because our filesystem-based
+identity store assigns `alice` the `employee` role that's required to invoke the first method. Our
+`source-address-role-decoder` assigns `alice` the `admin` role since the IP address of our remote
+client is 127.0.0.2.
+
+Now, let's update our `$PATH_TO_ELYTRON_EXAMPLES/src/main/resources/wildfly-config.xml` file so that a different IP address will be used for our remote client.
+To do this, we're going to update the `bind-address` as follows:
+
+[source,shell]
+----
+<bind-address bind-address="127.0.0.3" bind-port="61111" match="0.0.0.0/0"/>
+----
+
+Now, try running the client and inspecting the output again:
+
+[source,shell]
+----
+mvn clean install exec:exec
+----
+
+[source,shell]
+----
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Successfully called secured bean, caller principal alice
+
+Principal has admin permission: false
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+----
+
+Notice that this time, only one of the two EJB methods can be successfully invoked. In particular,
+since `alice` is now connecting from 127.0.0.3 (instead of from 127.0.0.2), our `source-address-role-decoder`
+no longer assigns `alice` the `admin` role. Thus, she is unable to invoke the method that requires `admin` role.
+
+== Aggregate Role Decoders
+
+Note that it's also possible to configure an `aggregate-role-decoder` that is made up of two or more role decoders, as shown in the
+following example:
+
+[source,shell]
+----
+/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])
+/subsystem=elytron/source-address-role-decoder=ipRoleDecoder2:add(source-address="127.0.0.3", roles=[guest])
+/subsystem=elytron/aggregate-role-decoder=myAggregateRoleDecoder:add(role-decoders=[ipRoleDecoder1,ipRoleDecoder2])
+----
+
+Each role decoder will be attempted and the returned roles will be a union of the roles returned by each decoder.
+
+## Summary
+
+This blog post has given an overview of how to make use of an IP address of a remote client for authorization
+decisions. For more information, be sure to take a look at the Elytron https://docs.wildfly.org/20/WildFly_Elytron_Security.html#creating-elytron-subsystem-components[documentation].
