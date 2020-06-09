@@ -21,8 +21,10 @@ package org.wildfly.security.ssl;
 import java.nio.ByteBuffer;
 import java.security.Principal;
 import java.security.cert.Certificate;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
@@ -185,6 +187,22 @@ class SelectingServerSSLEngine extends SSLEngine {
 
     public boolean getEnableSessionCreation() {
         return currentRef.get().getEnableSessionCreation();
+    }
+
+    public String getApplicationProtocol() {
+        return JDKSpecific.getApplicationProtocol(currentRef.get());
+    }
+
+    public String getHandshakeApplicationProtocol() {
+        return JDKSpecific.getHandshakeApplicationProtocol(currentRef.get());
+    }
+
+    public void setHandshakeApplicationProtocolSelector(BiFunction<SSLEngine, List<String>, String> selector) {
+        JDKSpecific.setHandshakeApplicationProtocolSelector(currentRef.get(), selector);
+    }
+
+    public BiFunction<SSLEngine, List<String>, String> getHandshakeApplicationProtocolSelector() {
+        return JDKSpecific.getHandshakeApplicationProtocolSelector(currentRef.get());
     }
 
     static final int FL_WANT_C_AUTH = 1 << 0;
