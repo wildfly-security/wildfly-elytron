@@ -52,4 +52,8 @@ final class JDKSpecific {
         return StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
     }
 
+    public static boolean usingStackWalker() {
+        return true;
+    }
+
 }

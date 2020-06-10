@@ -142,6 +142,13 @@ public class HttpAuthenticator {
                     HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
                     if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
                         log.tracef("Caching identity for '%s' against session scope.", username);
+                        /*
+                         * If we are associating an identity with the session for the first time we need to
+                         * change the ID of the session, in other cases we can continue with the same ID.
+                         */
+                        if (sessionScope.supportsChangeID() && sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY) == null) {
+                            sessionScope.changeID();
+                        }
                         sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, authorizedIdentity));
                     } else {
                         log.tracef("Unable to cache identity for '%s'.", username);

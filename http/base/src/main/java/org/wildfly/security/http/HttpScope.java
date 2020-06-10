@@ -128,6 +128,24 @@ public interface HttpScope {
     }
 
     /**
+     * Is changing the ID of the scope supported?
+     *
+     * @return {@code true} if this scope supports changing the ID, {@code false} otherwise.
+     */
+    default boolean supportsChangeID() {
+        return false;
+    }
+
+    /**
+     * Change the ID of this scope.
+     *
+     * @return {@code true} if the change was successful, {@code false} otherwise.
+     */
+    default boolean changeID() {
+        return false;
+    }
+
+    /**
      * Tests whether this scope support access to scope specific resources.
      *
      * @return {@code true} if this scope supports access to scope specific resources, {@code false} otherwise.

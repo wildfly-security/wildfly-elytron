@@ -342,6 +342,14 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
 
             @Override
             public void put(SecurityIdentity identity) {
+                /*
+                 * If we are associating an identity with the session for the first time we need to
+                 * change the ID of the session, in other cases we can continue with the same ID.
+                 */
+                if (httpScope.supportsChangeID() && httpScope.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                    httpScope.changeID();
+                }
+
                 httpScope.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(SPNEGO_NAME, identity));
             }
 
