@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Planned Security Features for WildFly</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Planned Security Features for WildFly</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | June 11, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/&title=Planned Security Features for WildFly" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Planned Security Features for WildFly&url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Planned Security Features for WildFly&amp;body=Planned Security Features for WildFly https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Since the feature development phase for WildFly 21 has now started, we wanted to highlight the
+new security features that we will be working on.</p>
+</div>
+<div class="sect1">
+<h2 id="planned-features"><a class="anchor" href="#planned-features"></a>Planned Features</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="security-realm-enhancements"><a class="anchor" href="#security-realm-enhancements"></a>Security Realm Enhancements</h3>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFCORE-4485">WFCORE-4485</a> <strong>Support for multiple security realms - Distributed Identities</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>This new feature will make it possible to use multiple security realms by sequentially invoking the each of the configured
+realms until a realm that contains the identity is found. More details can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/291">here</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFCORE-4486">WFCORE-4486</a> <strong>Support for multiple security realms - Failover</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If a security realm becomes unavailable for some reason, it will be possible to failover to an alternate realm. More details
+can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/261">here</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="client-integration"><a class="anchor" href="#client-integration"></a>Client Integration</h3>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/ELY-1891">ELY-1891</a> <strong>Revisit Rest integration with WildFly Elytron - AuthenticationClient for Authentication / SSL</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>This feature looks at security integration for RESTEasy clients. More information about this feature can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/189">here</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="expression-resolution"><a class="anchor" href="#expression-resolution"></a>Expression Resolution</h3>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFCORE-4360">WFC0RE-4360</a> <strong>Support expression resolution backed by a credential store</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Currently, credential store references can be used anywhere in the model where a credential needs to be specified.
+This feature will make it possible to encrypt other attribute values stored in the management model. More details can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/213">here</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="additional-authentication-mechanisms"><a class="anchor" href="#additional-authentication-mechanisms"></a>Additional Authentication Mechanisms</h3>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFC0RE-4484">WFC0RE-4484</a> <strong>Support SSH authentication for Git persistence</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>It will be possible to use SSH authentication via Elytron when using Git to manage and persist your WildFly configuration file.
+More details are available <a href="https://github.com/wildfly/wildfly-proposals/pull/249">here</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFCORE-4853">WFC0RE-4853</a> <strong>Support for HTTP External authentication mechanism</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>This feature adds support for the HTTP External authentication mechanism with Elytron, making it possible to
+authenticate a user based on credentials established externally. More details can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/282">here</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WEJBHTTP-43">WEJBHTTP-43</a> <strong>Ability to use BEARER/JWT authentication when using EJB over HTTP</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>This feature looks at adding support for BEARER/JWT authentication for EJB invocations over HTTP. More details can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/314">here</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="ssltls-enhancements"><a class="anchor" href="#ssltls-enhancements"></a>SSL/TLS Enhancements</h3>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/WFCORE-4842">WFCORE-4842</a> <strong>Add support for TLSv1.3 using the OpenSSL TLS provider</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>We recently added support for TLS 1.3 for WildFly when using the JSSE TLS provider with Elytron. This feature will also
+add support for TLS 1.3 when using the OpenSSL TLS provider with Elytron. More information can be found <a href="https://github.com/wildfly/wildfly-proposals/pull/288">here</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="https://issues.redhat.com/browse/ELY-1996">ELY-1996</a> <strong>SSLContext to support delegation to alternate instances based on peer information</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>As an <code>SSLEngine</code> is created, the host and port information is available at the time the engine is requested. This feature
+looks at making use of this information to dynamically select alternative configurations.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As usual, please keep in mind that this blog post is a summary of our general plans and not a guarantee
+that each of these features will be merged for WildFly 21. However, this blog post does give an indication
+of our team’s current priorities. If any of these features are a priority for you, please let us know.
+Please also let us know if there are any security features that are missing that you would like to see
+prioritized as we can take this kind of feedback into account for future releases.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

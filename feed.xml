@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Wed, 10 Jun 2020 21:59:54 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 11 Jun 2020 16:51:41 +0000</lastBuildDate>
+        
+        <item>
+            <title>Planned Security Features for WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/
+            </link>
+            <description>
+                Since the feature development phase for WildFly 21 has now started, we wanted to highlight the new security features that we will be working on. Planned Features Security Realm Enhancements WFCORE-4485 Support for multiple security realms - Distributed Identities This new feature will make it possible to use multiple security...
+            </description>
+            <pubDate>Thu, 11 Jun 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-21/
+            </guid>
+        </item>
         
         <item>
             <title>Using the IP Address of a Remote Client for Authorization Decisions</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 06 Sep 2019 00:00:00 +0000</pubDate>
             <guid>
                 https://developer.jboss.org/people/aabdelsa/blog/2019/09/06/configuring-an-aggregate-realm-with-a-principal-transformer
-            </guid>
-        </item>
-        
-        <item>
-            <title>Support for masked passwords in the client XML configuration</title>
-            <link>
-                https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Thu, 05 Sep 2019 00:00:00 +0000</pubDate>
-            <guid>
-                https://developer.jboss.org/people/aabdelsa/blog/2019/09/05/support-for-masked-passwords-in-the-client-xml-configuration
             </guid>
         </item>
         
