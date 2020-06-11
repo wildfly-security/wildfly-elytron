@@ -1,0 +1,179 @@
+---
+layout: post
+title: "Advanced EJB: Securing EJBs using a FileSystem realm and invoking them from a remote client using a credential store"
+date: 2020-06-11
+tags: wildfly elytron
+synopsis: This blog post describes how to secure EJBs deployed to WildFly using Elytron's FileSystem realm, SASL authentication, and how to invoke them from a standalone remote client using EJB Client libraries.
+author: szaldana
+link:
+---
+
+
+The *https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ejb-security[ejb-security]* quickstart demonstrates an advanced example on how to secure EJBs using a FileSystem realm with
+SCRAM-SHA-512 SASL authentication along with a client credential store. The focus is on the Elytron
+configuration, so if you wish to learn more about using Jakarta EE declarative security to control access to EJBs please
+refer to this https://developer.jboss.org/people/fjuma/blog/2017/09/08/getting-started-with-ejbs-and-elytron-part-1[blog].
+
+
+== An Overview of the FileSystem Realm
+
+By default, when using the Elytron security subsystem, our application uses a properties file-based identity store.
+In this example, we wish to use a FileSystem realm which stores the identity information on a FileSystem by paging each identity in an XML
+along with its credentials and roles.
+
+
+== Configuring a FileSystem Realm
+
+We start our configuration by connecting to the server using the following command:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+===== Note: Use of WILDFLY_HOME
+In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+We then create a FileSystem realm under the Elytron subsystem by specifying a directory where to store these identities. Notice
+in this case, we are storing the identities in a directory called ``fs-realm-users`` relative to ``jboss.server.config.dir``:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm-users, relative-to=jboss.server.config.dir)
+----
+
+We can then add an identity, along with its password and role. For the implementation of this example, we need an identity
+``quickstartUser``, whose password is ``quickstartPwd1!`` and whose Role is ``guest``:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(clear={password=quickstartPwd1!}, identity=quickstartUser)
+
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=[guest])
+
+----
+
+We then add a role decoder which will convert attributes from the identity provided by the security realm into roles:
+
+[source]
+----
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+----
+
+For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the https://docs.wildfly.org/20/WildFly_Elytron_Security.html[Elytron documentation].
+
+== Configuring the Security Domain
+
+We first configure an Elytron security domain called ``fsSD`` to use the FileSystem realm and role decoder we specified
+as follows:
+
+[source]
+----
+/subsystem=elytron/security-domain=fsSD:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+----
+
+Note that creating an additional security domain (``fsSD`` in this case) is not necessary. We could alternatively take the default ``ApplicationDomain`` and add the
+FileSystem realm, role-decoder and permission-mapper to it.
+
+We configure a security domain ``other`` in our EJB (as demonstrated by the ``@SecurityDomain``
+annotation). Since security for EJBs is handled by legacy security subsystems when deploying with WildFly,
+we need to configure the security subsystem to be handled by Elytron by adding our security domain mapping in the
+EJB subsystem as follows:
+
+[source]
+----
+/subsystem=ejb3/application-security-domain=other:add(security-domain=fsSD)
+----
+
+
+== Enabling SCRAM-SHA-512
+
+Multiple authentication mechanisms can be configured for different protocols. Elytron provides support for two types of
+authentication: ``HTTP authentication`` and ``SASL  authentication``. We want our SASL authentication factory to make
+use of the FileSystem security domain we configured. Therefore, we add said security domain as follows:
+[source]
+----
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:write-attribute(name=security-domain, value=fsSD)
+----
+
+By default, our authentication factory has enabled ``JBOSS-LOCAL-USER`` and ``DIGEST-MD5``. Therefore, we enable ``SCRAM-SHA-512``
+as an additional SASL authentication mechanism by updating the
+``sasl-authentication-factory`` as follows:
+
+[source]
+----
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:list-add(name=mechanism-configurations, value={mechanism-name=SCRAM-SHA-512})
+----
+
+Finally, we update the http-remoting-connector to use our updated ``application-sasl-authentication-factory`` as follows:
+
+[source]
+----
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory,value=application-sasl-authentication).
+----
+
+== Configuring the Credential Store
+For the purpose of this example, we aim to provide a more secure setup than specifying the client's password in
+clear-text in the ``wildfly-config.xml`` file. As a result, we create a credential store locally as follows:
+
+[source, shell]
+----
+ $ WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/mycredstore.cs" --password StorePassword
+----
+
+Note this creates a credential store ``mycredstore.cs`` locally with a corresponding password ``StorePassword``. We then
+add an alias (``quickstartUser``) storing the password (``quickstartPwd1!``) to be used for the authentication configuration as follows:
+
+[source, shell]
+----
+ $ WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/mycredstore.cs" --password StorePassword --add quickstartUser --secret quickstartPwd1!
+----
+
+== Configuring the Client (wildfly-config.xml)
+
+Upon inspecting our ``wildfly-config.xml``, notice how the credential store to be used by the authentication client is
+specified:
+
+[source]
+----
+<credential-stores>
+    <credential-store name="mycredstore">
+        <attributes>
+            <attribute name="keyStoreType" value="JCEKS"/>
+            <attribute name="location" value="PATH/TO/mycredstore.cs"></attribute>
+        </attributes>
+            <protection-parameter-credentials>
+                <clear-password password="StorePassword"/>
+        </protection-parameter-credentials>
+    </credential-store>
+</credential-stores>
+----
+
+Note you would need to replace ``"PATH/TO/mycredstore.cs"`` with the actual path to your credential store.
+
+Then, notice the reference to our credential store along with the alias to extract the password from, and the
+specification of the desired authentication mechanism under the ``<authentication-configurations>`` tag:
+
+[source]
+----
+<authentication-configurations>
+    <configuration name="default-config">
+        <set-user-name name="quickstartUser"/>
+        <credentials>
+            <credential-store-reference store="mycredstore" alias="quickstartUser"/>
+        </credentials>
+        <sasl-mechanism-selector selector="SCRAM-SHA-512"/>
+        <providers>
+            <use-service-loader />
+        </providers>
+    </configuration>
+</authentication-configurations>
+----
+
+Also, note the ``<providers>`` tag which will result in the Elytron providers being registered.
+
+== Summary
+In this blog post, we have taken a look at FileSystem realms, SCRAM-SHA-512 authentication and client credential
+stores. This post described how to configure these components in relation to EJB security.
