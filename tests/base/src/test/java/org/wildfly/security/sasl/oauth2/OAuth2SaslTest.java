@@ -28,9 +28,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.permission.LoginPermission;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.AggregateSecurityRealm;
+import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -52,13 +59,23 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.Permissions;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -189,6 +206,63 @@ public class OAuth2SaslTest extends BaseTestCase {
         assertTrue(saslClient.isComplete());
     }
 
+    @Test
+    public void testSuccessfulAuthorizationWithAggregateRealmWithoutPrincipalTransformer() throws Exception {
+        testSuccessfulAuthorizationWithAggregateRealm(false);
+    }
+
+    @Test
+    public void testSuccessfulAuthorizationWithAggregateRealmWithPrincipalTransformer() throws Exception {
+        testSuccessfulAuthorizationWithAggregateRealm(true);
+    }
+
+    private void testSuccessfulAuthorizationWithAggregateRealm(boolean usePrincipalTransformer) throws Exception {
+        SaslClientFactory saslClientFactory = obtainSaslClientFactory(OAuth2SaslClientFactory.class);
+
+        assertNotNull("OAuth2SaslClientFactory not found", saslClientFactory);
+
+        SaslClient saslClient = saslClientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OAUTHBEARER}, null, "imap", "resourceserver.com", Collections.emptyMap(), new CallbackHandler() {
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof CredentialCallback) {
+                        CredentialCallback credentialCallback = (CredentialCallback) callback;
+                        JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
+
+                        tokenBuilder.add("active", true);
+                        tokenBuilder.add("username", "elytron@jboss.org");
+
+                        credentialCallback.setCredential(new BearerTokenCredential(tokenBuilder.build().toString()));
+                    }
+                }
+            }
+        });
+
+        assertNotNull("OAuth2SaslClient is null", saslClient);
+
+        Permissions permissions = new Permissions();
+        permissions.add(new LoginPermission());
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.com")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createAggregateSecurityRealmMock(usePrincipalTransformer))
+                .setDefaultRealmName("oauth-realm")
+                .setPermissionsMap(Collections.singletonMap("admin", permissions))
+                .build();
+
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        do {
+            message = saslClient.evaluateChallenge(message);
+            if (message == null) break;
+            message = saslServer.evaluateResponse(message);
+        } while (message != null);
+
+        assertTrue(saslServer.isComplete());
+        assertTrue(saslClient.isComplete());
+    }
+
+
     /**
      * Tests error messages from server, usually after an usuccessful authentication. Where in this case, the server must
      * return a JSON with details about what it failed.
@@ -253,6 +327,52 @@ public class OAuth2SaslTest extends BaseTestCase {
                 .clientId("wildfly-elytron")
                 .clientSecret("dont_tell_me")
                 .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build()).build();
+    }
+
+    private SecurityRealm createAggregateSecurityRealmMock(boolean usePrincipalTransformer) throws Exception {
+        configureReplayTokenIntrospectionEndpoint();
+        SecurityRealm authenticationRealm =  TokenSecurityRealm.builder().validator(OAuth2IntrospectValidator.builder()
+                .clientId("wildfly-elytron")
+                .clientSecret("dont_tell_me")
+                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build()).build();
+
+
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        ModifiableRealmIdentity newIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal(usePrincipalTransformer ? "elytron" : "elytron@jboss.org"));
+        newIdentity.create();
+        MapAttributes newAttributes = new MapAttributes();
+        newAttributes.addAll("roles", Arrays.asList("admin"));
+        newIdentity.setAttributes(newAttributes);
+        newIdentity.dispose();
+        SecurityRealm authorizationRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
+        return usePrincipalTransformer ? new AggregateSecurityRealm(authenticationRealm, new RegexNameRewriter(Pattern.compile("(.*)@jboss\\.org"), "$1", true).asPrincipalRewriter(), authorizationRealm)
+                : new AggregateSecurityRealm(authenticationRealm, authorizationRealm);
+    }
+
+    private Path getRootPath(boolean deleteIfExists) throws Exception {
+        Path rootPath = Paths.get(getClass().getResource(File.separator).toURI())
+                .resolve("filesystem-realm");
+
+        if (rootPath.toFile().exists() && !deleteIfExists) {
+            return rootPath;
+        }
+
+        return Files.walkFileTree(Files.createDirectories(rootPath), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    private Path getRootPath() throws Exception {
+        return getRootPath(true);
     }
 
     private void configureReplayTokenIntrospectionEndpoint() {

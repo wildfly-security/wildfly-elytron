@@ -77,11 +77,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         try {
             for (int i = 0; i < authorizationIdentities.length; i++) {
                 SecurityRealm authorizationRealm = authorizationRealms[i];
-                if (principalTransformer == null) {
-                    authorizationIdentities[i] = (authorizationRealm == authenticationRealm) ? authenticationIdentity : authorizationRealm.getRealmIdentity(evidence);
-                } else {
-                    authorizationIdentities[i] = authorizationRealm.getRealmIdentity(evidence, principalTransformer);
-                }
+                authorizationIdentities[i] = (authorizationRealm == authenticationRealm) ? authenticationIdentity
+                        : getAuthorizationIdentity(authorizationRealm, evidence, principalTransformer, authenticationIdentity);
             }
 
             final Identity identity = new Identity(authenticationIdentity, authorizationIdentities);
@@ -137,6 +134,26 @@ public final class AggregateSecurityRealm implements SecurityRealm {
     @Override
     public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
         return authenticationRealm.getEvidenceVerifySupport(evidenceType, algorithmName);
+    }
+
+    private RealmIdentity getAuthorizationIdentity(SecurityRealm authorizationRealm, Evidence evidence, Function<Principal, Principal> principalTransformer,
+                                                   RealmIdentity authenticationIdentity) throws RealmUnavailableException {
+        if (principalTransformer == null) {
+            if (evidence.getPrincipal() == null) {
+                return authorizationRealm.getRealmIdentity(authenticationIdentity.getRealmIdentityPrincipal());
+            } else {
+                return authorizationRealm.getRealmIdentity(evidence);
+            }
+        } else {
+            if (evidence.getPrincipal() == null) {
+                Principal authorizationPrincipal = authenticationIdentity.getRealmIdentityPrincipal();
+                authorizationPrincipal = principalTransformer.apply(authorizationPrincipal);
+                if (authorizationPrincipal == null) throw ElytronMessages.log.transformedPrincipalCannotBeNull();
+                return authorizationRealm.getRealmIdentity(authorizationPrincipal);
+            } else {
+                return authorizationRealm.getRealmIdentity(evidence, principalTransformer);
+            }
+        }
     }
 
     public void handleRealmEvent(final RealmEvent event) {
