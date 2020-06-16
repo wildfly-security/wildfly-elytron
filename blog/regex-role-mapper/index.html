@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using regex role mapper in Elytron</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using regex role mapper in Elytron</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/4336bee4b72f539ef5f8cc0d2c6026f5">
+        
+        <p class="byline">By <a href="https://github.com/Skyllarr">Diana Vilkolakova</a> | June 16, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/&title=Using regex role mapper in Elytron" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using regex role mapper in Elytron&url=https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using regex role mapper in Elytron&amp;body=Using regex role mapper in Elytron https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Elytron subsystem configuration was enhanced to allow possibility to define a regex based security roles mapping mechanism. With this functionality it is possible to easily translate list of roles, eg. <code>app-admin, abc-user</code>, to simpler roles , eg. <code>admin</code>, <code>user</code>.</p>
+</div>
+<div class="sect1">
+<h2 id="add-a-regex-role-mapper"><a class="anchor" href="#add-a-regex-role-mapper"></a>Add a regex role mapper</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can add a <code>regex-role-mapper</code> to the Elytron subsystem by specifying:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>pattern</code> string that will be tested by a regex in order to identify which of the input roles are matching</p>
+</li>
+<li>
+<p><code>replacement</code> string that the resulting security roles should be mapped to</p>
+</li>
+<li>
+<p><code>keep-non-mapped</code> attribute that specifies whether to keep the roles that did not match the pattern or discard them from resulting roles</p>
+</li>
+<li>
+<p><code>replace-all</code> attribute that specifies whether to replace all of the occurrences or only the first occurrence of the pattern in the resulting security role.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Default value of <code>keep-non-mapped</code> is true and of <code>replace-all</code> is false.</p>
+</div>
+<div class="paragraph">
+<p>Regex role mapper in the example below will extract the domain part from input roles that are in form of an email address in order to convert them to the {extracted_domain}-role format. E.g.: <a href="mailto:user@gmail.com">user@gmail.com</a> and <a href="mailto:user@customApp.com">user@customApp.com</a> input roles would result in gmail-role and customerApp-role security roles. Attribute keep-non-mapped="true" is used to keep the roles that do not match the regex (those that were not in form of an email).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;mappers&gt;
+...
+	&lt;regex-role-mapper name="my-rrm" pattern=".*@([a-z]*)\..*" replacement="$1-role" keep-non-mapped="true"/&gt;
+...
+&lt;/mappers&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example"><a class="anchor" href="#example"></a>Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Connect to the WildFly CLI and add security domain to the Elytron subsystem with identity that contains roles 123-user, 123-admin.
+Also add regex-role-mapper and apply it to this security domain. This regex-role-mapper will map roles that match <code>.*-([a-z]*)</code> to the role $1:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=myFsRealm:add(path=my-fs-realm-users,relative-to=jboss.server.config.dir)
+
+/subsystem=elytron/filesystem-realm=myFsRealm:add-identity(identity=joe)
+
+/subsystem=elytron/filesystem-realm=myFsRealm:add-identity-attribute(identity=joe, name=Roles, value=["123-user","123-admin"])
+
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+
+/subsystem=elytron/regex-role-mapper=rrm:add(pattern=".*-([a-z]*)", replacement="$1", keep-non-mapped="false", replace-all="false")
+
+/subsystem=elytron/security-domain=mySD:add(realms=[{realm=myFsRealm,role-decoder=from-roles-attribute}],role-mapper=rrm,default-realm=myFsRealm,permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check that when asked for roles of the identity from given security domain, the regex will be used and resulted roles will be correctly mapped from <code>123-user</code>, <code>123-admin</code> to <code>user</code> and <code>admin</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=mySD:read-identity(name=joe)
+
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "name" =&gt; "joe",
+        "attributes" =&gt; {"Roles" =&gt; [
+            "123-user",
+            "123-admin"
+        ]},
+        "roles" =&gt; [
+            "admin",
+            "user"
+        ]
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how to use regex-role-mapper in Elytron subsystem.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
