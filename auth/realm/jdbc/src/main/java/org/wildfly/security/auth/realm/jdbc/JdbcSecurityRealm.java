@@ -193,7 +193,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
             return AuthorizationIdentity.basicIdentity(this.identity.attributes);
         }
 
-        private JdbcIdentity getIdentity() {
+        private JdbcIdentity getIdentity() throws RealmUnavailableException {
             if (!loaded && this.identity == null) {
                 MapAttributes attributes = new MapAttributes();
                 IdentityCredentials credentials = IdentityCredentials.NONE;
@@ -247,7 +247,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
             return this.identity;
         }
 
-        private Connection getConnection(QueryConfiguration configuration) {
+        private Connection getConnection(QueryConfiguration configuration) throws RealmUnavailableException {
             try {
                 DataSource dataSource = configuration.getDataSource();
                 return dataSource.getConnection();
