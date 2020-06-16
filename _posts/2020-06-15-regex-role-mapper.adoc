@@ -1,0 +1,79 @@
+---
+layout: post
+title: 'Using regex role mapper in Elytron'
+date: 2020-06-16
+tags: elytron wildfly20 regex role mapper
+synopsis: An overview of the new regex role mapper included in WildFly 20.
+author: dvilkola
+---
+
+Elytron subsystem configuration was enhanced to allow possibility to define a regex based security roles mapping mechanism. With this functionality it is possible to easily translate list of roles, eg. `app-admin, abc-user`, to simpler roles , eg. `admin`, `user`.
+
+== Add a regex role mapper
+
+You can add a `regex-role-mapper` to the Elytron subsystem by specifying:
+
+ * `pattern` string that will be tested by a regex in order to identify which of the input roles are matching
+ * `replacement` string that the resulting security roles should be mapped to
+ * `keep-non-mapped` attribute that specifies whether to keep the roles that did not match the pattern or discard them from resulting roles
+ * `replace-all` attribute that specifies whether to replace all of the occurrences or only the first occurrence of the pattern in the resulting security role.
+
+Default value of `keep-non-mapped` is true and of `replace-all` is false.
+
+Regex role mapper in the example below will extract the domain part from input roles that are in form of an email address in order to convert them to the {extracted_domain}-role format. E.g.: user@gmail.com and user@customApp.com input roles would result in gmail-role and customerApp-role security roles. Attribute keep-non-mapped="true" is used to keep the roles that do not match the regex (those that were not in form of an email).
+
+[source,xml]
+----
+
+<mappers>
+...
+	<regex-role-mapper name="my-rrm" pattern=".*@([a-z]*)\..*" replacement="$1-role" keep-non-mapped="true"/>
+...
+</mappers>
+----
+
+== Example
+
+Connect to the WildFly CLI and add security domain to the Elytron subsystem with identity that contains roles 123-user, 123-admin.
+Also add regex-role-mapper and apply it to this security domain. This regex-role-mapper will map roles that match `.\*-([a-z]*)` to the role $1:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=myFsRealm:add(path=my-fs-realm-users,relative-to=jboss.server.config.dir)
+
+/subsystem=elytron/filesystem-realm=myFsRealm:add-identity(identity=joe)
+
+/subsystem=elytron/filesystem-realm=myFsRealm:add-identity-attribute(identity=joe, name=Roles, value=["123-user","123-admin"])
+
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+
+/subsystem=elytron/regex-role-mapper=rrm:add(pattern=".*-([a-z]*)", replacement="$1", keep-non-mapped="false", replace-all="false")
+
+/subsystem=elytron/security-domain=mySD:add(realms=[{realm=myFsRealm,role-decoder=from-roles-attribute}],role-mapper=rrm,default-realm=myFsRealm,permission-mapper=default-permission-mapper)
+----
+
+Check that when asked for roles of the identity from given security domain, the regex will be used and resulted roles will be correctly mapped from `123-user`, `123-admin` to `user` and `admin`:
+
+[source]
+----
+/subsystem=elytron/security-domain=mySD:read-identity(name=joe)
+
+{
+    "outcome" => "success",
+    "result" => {
+        "name" => "joe",
+        "attributes" => {"Roles" => [
+            "123-user",
+            "123-admin"
+        ]},
+        "roles" => [
+            "admin",
+            "user"
+        ]
+    }
+}
+----
+
+== Summary
+
+This blog post has given an overview on how to use regex-role-mapper in Elytron subsystem.
