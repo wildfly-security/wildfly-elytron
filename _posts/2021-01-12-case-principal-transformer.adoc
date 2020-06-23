@@ -1,0 +1,176 @@
+---
+layout: post
+title: "Using case principal transformers in Elytron"
+date: 2021-01-12
+tags: wildfly elytron
+synopsis: An overview of the new case principal transformer included in WildFly 22.
+author: szaldana
+link:
+---
+
+The *https://github.com/wildfly-security-incubator/elytron-examples/tree/master/case-principal-transformer[case-principal-transformer]*
+quickstart demonstrates how to use a ``case-principal-transformer`` to adjust a principal to upper case
+when securing  EJBs. Note, the quickstart is building from this *https://wildfly-security.github.io/wildfly-elytron/blog/advanced-ejb-security/[post]* which more closely explains how to configure filesystem realms and SASL authentication to secure EJBs.
+
+
+== An Overview of the Case Principal Transformer
+
+Principal transformers take a name and map it to another representation of the name or perform some
+normalisation. The new ``case-principal-transformer`` in the Elytron subsystem allows converting a principal to upper or lower case.
+Previously, a custom transformer was required to adjust a principal's username to
+upper/lower case.
+
+In particular, this new principal transformer has the following optional attribute:
+
+* ``upper-case`` - A boolean value which adjusts the principal to upper case when set to ``true`` and
+adjusts the principal to lower case when set to ``false``. Note: If omitted, this value is set to ``true`` by default.
+
+== Reviewing the Elytron Configuration
+
+In the following section, we will review the configuration available in the script for the quickstart
+*https://github.com/wildfly-security-incubator/elytron-examples/blob/master/case-principal-transformer/configure-elytron.cli[configure-elytron.cli]*. We start our configuration by connecting to the server using the following command:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+==== Note: Use of WILDFLY_HOME
+In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+We then create a filesystem realm under the Elytron subsystem, followed by adding an identity in upper case
+(``QUICKSTARTUSER``), and a simple role decoder as follows:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=exampleRealm:add(path=fs-realm-users, relative-to=jboss.server.config.dir)
+
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity(identity=QUICKSTARTUSER)
+
+/subsystem=elytron/filesystem-realm=exampleRealm:set-password(clear={password="quickstartPwd1!"}, identity=QUICKSTARTUSER)
+
+/subsystem=elytron/filesystem-realm=exampleRealm:add-identity-attribute(identity=QUICKSTARTUSER, name=Roles, value=["Admin", "Guest"])
+
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+
+----
+
+For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the https://docs.wildfly.org/22/WildFly_Elytron_Security.html[Elytron documentation].
+
+== Configuring a Case Principal Transformer
+
+Adding a ``case-principal-transformer`` that converts a principal to upper/lower case takes the general form:
+
+[source]
+----
+/subsystem=elytron/case-principal-transformer=transformerName:add(upper-case="...")
+----
+
+In our example, the ``case-principal-transformer`` is configured to specify that a principal should
+be transformed to upper case as follows:
+
+[source]
+----
+/subsystem=elytron/case-principal-transformer=myTransformer:add(upper-case=true)
+----
+
+Note, the ``upper-case`` attribute can be omitted as it will be set to ``true`` by default.
+
+We then configure a new security domain ``caseDomain`` to use our filesystem realm, role decoder
+and the case principal transformer as a ``pre-realm-principal-transformer``:
+
+
+[source]
+----
+/subsystem=elytron/security-domain=caseDomain:add(realms=[{realm=exampleRealm}], \
+default-realm=exampleRealm,permission-mapper=default-permission-mapper, pre-realm-principal-transformer=myTransformer)
+----
+
+Note that creating an additional security domain (``caseDomain``in this case) is not necessary.
+We could alternatively take the default ``ApplicationDomain`` and add the
+FileSystem realm, role-decoder, principal transformer and permission-mapper to it.
+
+We then add our security domain mapping to the EJB3 subsystem, update the ``sasl-authentication-factory`` to use
+our security domain and update the ``http-remoting-connector`` to use our ``sasl-authentication-factory``:
+
+[source]
+----
+/subsystem=ejb3/application-security-domain=other:add(security-domain=caseDomain)
+
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:write-attribute(name=security-domain, value=caseDomain)
+
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory,value=application-sasl-authentication)
+----
+
+For more information on the above snippet, please refer to the quickstart this example is based on
+*https://wildfly-security.github.io/wildfly-elytron/blog/advanced-ejb-security/[here]*.
+
+== Configuring the Client (wildfly-config.xml)
+
+The username and credentials to establish the connection to the application server are configured in the
+``wildfly-config.xml`` file. Notice the username provided by the client is ``quickstartuser`` and the username we added to the
+identity store is ``QUICKSTARUSER``.
+
+[source,xml]
+----
+ <authentication-configurations>
+            <configuration name="default-config">
+                <set-user-name name="quickstartuser"/>
+                <credentials>
+                    <clear-password password="quickstartPwd1!"/>
+                </credentials>
+
+                ...
+
+            </configuration>
+</authentication-configurations>
+----
+
+Since we configured our ``case-principal-transformer`` to be used prior to accessing the security realm,
+the principal provided by the client will  be adjusted to upper case resulting in successful authentication.
+
+== Build and Deploy the Quickstart
+1. Make sure you start the WildFly server.
+2. Open a terminal and navigate to the root directory of this quickstart.
+3. Type the following command to build the artifacts.
+
+[source]
+----
+    $ mvn clean install wildfly:deploy
+----
+You should see a message in the server log indicating that the archive deployed successfully.
+
+== Run the Client
+Before you run the client, make sure you have successfully deployed the EJBs to the server in the previous step and that your
+terminal is still in the root directory of this quickstart.
+
+Run this command to execute the client:
+[source]
+----
+$ mvn exec:exec
+----
+
+== Investigate the Console Output
+When you run the ```mvn exec:exec``` command, you should see the following output.
+
+[source]
+----
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+Successfully called secured bean, caller principal QUICKSTARTUSER
+
+Principal has admin permission: true
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+----
+
+The username and credentials to establish the connection to the application server are configured in the
+`wildfly-config.xml`. Notice the username provided in the `wildfly-config.xml` file is `quickstartuser`
+and the username stored in the identity store is `QUICKSTARTUSER`.
+
+As expected, the `quickstartuser` was adjusted to `QUICKSTARTUSER` by the `case-principal-transformer` prior to accessing
+the security realm and the principal was able to invoke the  method available for the `admin` role.
+
+== Summary
+This blog post has given an overview on how to use a ``case-principal-transformer`` in the
+Elytron subsystem.
