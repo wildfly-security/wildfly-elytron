@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Tue, 16 Jun 2020 13:39:31 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 30 Jun 2020 21:45:27 +0000</lastBuildDate>
+        
+        <item>
+            <title>An Introduction to Intrusion Detection System using Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/
+            </link>
+            <description>
+                Intrusion Detection is the art of sensing when a system or network is being used inappropriately or without authorization. Without intrusion detection, an attacker can attempt attacks many times until an attack is finally successful. Intrusion detection allows for these attacks to be identified before a successful attack is likely...
+            </description>
+            <pubDate>Tue, 30 Jun 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/
+            </guid>
+        </item>
         
         <item>
             <title>Using regex role mapper in Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly 19</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-19/
-            </link>
-            <description>
-                This blog post highlights the new security features that have been included in WildFly 19. Support for MicroProfile JWT 1.1 Support has been added for the Eclipse MicroProfile JWT RBAC 1.1.1 specification with the addition of a new microprofile-jwt-smallrye subsystem. Traditionally, security for deployments would depend on resources defined within...
-            </description>
-            <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-19/
             </guid>
         </item>
         

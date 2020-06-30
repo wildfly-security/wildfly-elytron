@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: An Introduction to Intrusion Detection System using Elytron</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>An Introduction to Intrusion Detection System using Elytron</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/1fe80158e423117f4c183179e0c32cb1">
+        
+        <p class="byline">By <a href="https://github.com/piyush-palta">Piyush Palta</a> | June 30, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/&title=An Introduction to Intrusion Detection System using Elytron" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=An Introduction to Intrusion Detection System using Elytron&url=https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=An Introduction to Intrusion Detection System using Elytron&amp;body=An Introduction to Intrusion Detection System using Elytron https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p><em>Intrusion Detection</em> is the art of sensing when a system or network is being used inappropriately or without authorization. Without intrusion detection, an attacker can attempt attacks many times until an attack is finally successful. Intrusion detection allows for these attacks to be identified before a successful attack is likely to occur.<br>
+In this blog, we’ll talk about an architectural overview of a system that uses Elytron’s security events for intrusion detection &amp; prevention and discuss briefly about each component and their interactions within the system as a whole. Later, we’ll understand the implementation &amp; how the system’s architecture has been realised.</p>
+</div>
+<div class="paragraph">
+<p>Elyton’s core concepts comprises Authentication &amp; Authorization and is based on a Security Policy that utilises several smaller components together to work. In addition to that it provides support for security events which can indicate things like a failed authentication attempt for a particular user. These security events can be used to detect various attacks such as Brute force, Dictionary attack etc. So the high level idea is to log the security events in a data store system, and harness information provided to make predictions on a possible network breach.<br></p>
+</div>
+<hr>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://lh4.googleusercontent.com/bMXnpJs10co0hM9fbgDNzkjMLkhBc54WgxuW1eEkHqJ0ivRierdezl4QwaKZ1SKiMCOa6kCFshPXkBT-0ooCenPwyFbPH_rgbh4MWoVZI_Eux3REogTLJfFZTq-ijUa_HqWq1MIk" alt="IDS Architecture">
+</div>
+<div class="title">Figure 1. Architecture of Intrusion Detection System</div>
+</div>
+<hr>
+<div class="paragraph">
+<p>The proposed architecture is as depicted in Figure 1.  The idea here is to evaluate the risk posed by an authentication &amp; authorization event based on its attributes &amp; forfeit the event auth if the posed risk is above set threshold limits.
+<code>NOTE:</code> A general IDS like any other auditing systems, consists of three parts: an agent, a director, and a notifier.
+The agent corresponds to the logger. It acquires information from the target. The director corresponds to the analyzer.
+It analyzes the data from the agents to determine if an attack is in progress or has occurred. The director then passes
+this information to the notifier, which determines whether and how to notify the requisite entity.</p>
+</div>
+<div class="paragraph">
+<p><em>The various components of our Intrusion Detection System (IDS) are :</em></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Elytron’s Query System (Trigger)</p>
+</li>
+<li>
+<p>Risk Analyzer (Director &amp; Notifier)</p>
+</li>
+<li>
+<p>Syslog Server (Passive Agent)</p>
+</li>
+<li>
+<p>Elytron’s Syslogger (Agent)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In this architecture, Elytron’s Query System acts as a trigger, it resides inside of Elytron &amp; queries the IDS for risk analysis of an event. Risk Analyzer has two submodules &amp; acts as a Director i.e. it receives the query &amp; analyses it for threats; as well as Notifier i.e. it provides the system with risk analysis. Elytron’s Syslogger resides inside Elytron and acts as Agent by logging every security event to an external Syslog server, which is a part of IDS &amp; acts as a passive agent. Let’s discuss each component in greater detail.</p>
+</div>
+<div class="sect1">
+<h2 id="elytrons-query-system-risk-role-decoder"><a class="anchor" href="#elytrons-query-system-risk-role-decoder"></a>Elytron’s Query System (Risk Role Decoder)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Elytron’s Query System resides in Elytron &amp; implemented as a RoleDecoder. An Elytron <code>RoleDecoder</code> takes the raw <code>AuthorizationIdentity</code> return from <code>SecurityRealm</code> and converts its attributes into roles. <code>RiskRoleDecoder</code> makes use of runtime attributes to get hold of remote client’s IP addresses &amp; provides a way to query the Risk Analyzer via Sockets to receive a risk score.
+<code>RiskRoleDecoder</code> is provided with a threshold risk score, exceeding which leads to assigning empty roles to the auth event, which ultimately leads to authorization failure and further access is denied. In case an event is deemed safe, roles are assigned accordingly.<br>
+<em>RiskRoleDecoder&#8217;s implementation can be found</em> <a href="https://github.com/piyush-palta/wildfly-elytron/blob/ca675a791ee5084ca5ca3a9edd84a95ab15c38d0/auth/server/base/src/main/java/org/wildfly/security/authz/RiskRoleDecoder.java">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="risk-analyzer"><a class="anchor" href="#risk-analyzer"></a>Risk Analyzer</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Risk Analyzer is a server module that acts as Director as well as Notifier in IDS. It takes in an IP address &amp; returns a risk score in the range of 0 to 100. The risk score is used to make the authorization decisions based on a set threshold risk. Risk Analyzer comprises several different components : Risk Server Socket, Main Analyzer &amp; Risk Calculator.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Risk Server Socket :
+Risk Server Socket is used to declare a socket server instance, required to open connection to the client. Once the socket has been set up, it will listen for connection until terminated. Current maximum connection limit has been set at 5. While introducing socket threading in future, a more versatile approach will be taken.</p>
+</li>
+<li>
+<p>Risk Calculator :
+When Risk Analyzer receives a query, it sends the IP Address to Risk Calculator, which is backed by Blacklist IP dump, Rule Engine &amp; a Learning Module. Results from all these will be aggregated &amp; returned to the client.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Risk Analyzer is implemented in Python &amp; communicates directly with Elytron via <code>RiskRoleDecoder</code>, which makes use of runtime attributes to access remote client’s IP address, &amp; communicate via a temporary socket. <br>
+<em>Implementation available at</em> : <a href="https://github.com/piyush-palta/risk-analyzer" class="bare">https://github.com/piyush-palta/risk-analyzer</a></p>
+</div>
+<hr>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://lh3.googleusercontent.com/H-WnFK8GQji_VO6tk95HhoXFlqD8ZFn54HHuUmadJXu1FWEJW_khRU5xZr66QN7c69AH8EV0y_FQzcK5af76rd_l22bZYmvKiymC4WEbHwFY8e96RhRLsOcp0cxCXv8-UOxdbnrj" alt="H WnFK8GQji VO6tk95HhoXFlqD8ZFn54HHuUmadJXu1FWEJW khRU5xZr66QN7c69AH8EV0y FQzcK5af76rd l22bZYmvKiymC4WEbHwFY8e96RhRLsOcp0cxCXv8 UOxdbnrj">
+</div>
+<div class="title">Figure 2. Architecture of Risk Analyzer</div>
+</div>
+<hr>
+</div>
+</div>
+<div class="sect1">
+<h2 id="syslog-server"><a class="anchor" href="#syslog-server"></a>Syslog Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Syslog server is a python based external server for syslogging of Elytron security events and acts as a Passive Agent. These events are logged using the inherent syslogging capabilities of the wildfly or undertow server. For now we’re using an undertow server, due to its sheer versatility. Both TCP &amp; UDP syslogging is possible &amp; with connections served as threads, it will easily scale for practical applications.<br>
+<em>Implementation available at</em> : <a href="https://github.com/piyush-palta/syslog-server" class="bare">https://github.com/piyush-palta/syslog-server</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="elytrons-syslogger-inbuilt-syslog-auditing"><a class="anchor" href="#elytrons-syslogger-inbuilt-syslog-auditing"></a>Elytron’s Syslogger (Inbuilt Syslog Auditing)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Elytron’s Syslogger acts as an agent and logs security events directly to the Syslog server. We are using inbuilt syslog auditing capabilities of the server. Undertow Standalone is a servlet implementation, which uses Wildfly Elytron. We are using this implementation to emit the security events.<br>
+<em>Implementation available at</em> : <a href="https://github.com/piyush-palta/undertow-standalone" class="bare">https://github.com/piyush-palta/undertow-standalone</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary:</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this blog, we introduced the new Intrusion Detection System using Elytron&#8217;s security events &amp; discussed an overview of its architecture.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
