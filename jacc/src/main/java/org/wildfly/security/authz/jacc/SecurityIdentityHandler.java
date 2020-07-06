@@ -17,19 +17,18 @@
  */
 package org.wildfly.security.authz.jacc;
 
+import static org.wildfly.security.authz.jacc.SecurityActions.doPrivileged;
+
+import java.security.PrivilegedAction;
+
+import javax.security.jacc.PolicyContextException;
+import javax.security.jacc.PolicyContextHandler;
+
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
-import javax.security.jacc.PolicyConfiguration;
-import javax.security.jacc.PolicyContextException;
-import javax.security.jacc.PolicyContextHandler;
-import java.util.Map;
-
-import static org.wildfly.common.Assert.checkNotNullParam;
-
 /**
- * <p>A {@link PolicyContextHandler} that holds the relationship between a {@link SecurityDomain} and its corresponding
- * context identifier in JACC.
+ * <p>A {@link PolicyContextHandler} that obtains the {@code SecurityIdentity} from the current {@code SecurityDomain}.
  *
  * <p>This handler should be installed wherever is necessary to perform permission checks based on the permissions associated
  * with the {@link SecurityIdentity} instances obtained and associated with a given {@link SecurityDomain}. In this case,
@@ -41,18 +40,10 @@ public class SecurityIdentityHandler implements PolicyContextHandler {
 
     static final String KEY = SecurityIdentity.class.getName();
 
-    private final Map<String, SecurityDomain> securityDomains;
-
-    public SecurityIdentityHandler(Map<String, SecurityDomain> securityDomains) {
-        checkNotNullParam("securityDomains", securityDomains);
-        this.securityDomains = securityDomains;
-    }
-
     @Override
     public Object getContext(String key, Object data) throws PolicyContextException {
         if (supports(key)) {
-            PolicyConfiguration policyConfiguration = ElytronPolicyConfigurationFactory.getCurrentPolicyConfiguration();
-            SecurityDomain securityDomain = this.securityDomains.get(policyConfiguration.getContextID());
+            SecurityDomain securityDomain = doPrivileged((PrivilegedAction<SecurityDomain>) SecurityDomain::getCurrent);
 
             if (securityDomain != null) {
                 return securityDomain.getCurrentSecurityIdentity();
