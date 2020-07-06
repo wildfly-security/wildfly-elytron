@@ -77,7 +77,6 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
     }
 
     private static final String CONTEXT_ID = "third-party-app";
-    private HashMap<String, SecurityDomain> securityDomains;
 
     @Override
     protected SecurityDomain createSecurityDomain() {
@@ -121,12 +120,12 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
         });
 
         SecurityDomain securityDomain = builder.build();
-
-        this.securityDomains = new HashMap<>();
-        this.securityDomains.computeIfAbsent(CONTEXT_ID, s -> securityDomain);
+        ClassLoader classLoader = ElytronPolicyEnforcementTest.class.getClassLoader();
+        SecurityDomain.unregisterClassLoader(classLoader);
+        securityDomain.registerWithClassLoader(classLoader);
 
         try {
-            PolicyContext.registerHandler(SecurityIdentityHandler.KEY, new SecurityIdentityHandler(this.securityDomains), true);
+            PolicyContext.registerHandler(SecurityIdentityHandler.KEY, new SecurityIdentityHandler(), true);
         } catch (PolicyContextException e) {
             e.printStackTrace();
             fail("Could not register [" + SecurityIdentityHandler.class + "].");
