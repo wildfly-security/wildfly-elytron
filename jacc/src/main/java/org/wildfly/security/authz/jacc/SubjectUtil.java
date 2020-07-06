@@ -16,20 +16,14 @@
 
 package org.wildfly.security.authz.jacc;
 
+import static org.wildfly.security.authz.jacc.ElytronMessages.log;
 import static org.wildfly.security.authz.jacc.SecurityActions.doPrivileged;
 
-import java.security.Principal;
 import java.security.PrivilegedAction;
-import java.security.acl.Group;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.security.auth.Subject;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.credential.Credential;
@@ -47,6 +41,23 @@ import org.wildfly.security.credential.X509CertificateChainPublicCredential;
  */
 final class SubjectUtil {
 
+    private static final boolean CONVERT_ROLES_TO_GROUP;
+
+    static {
+        /*
+         * TODO - Once we can build the project using Java 17 we can likely
+         * address this in a multi-release jar.
+         */
+        boolean convertRolesToGroup = false;
+        try {
+            Class.forName("java.security.acl.Group");
+            convertRolesToGroup = true;
+        } catch (ClassNotFoundException e) {
+            log.trace("Class 'java.security.acl.Group' is not available, role to group mapping disabled.");
+        }
+        CONVERT_ROLES_TO_GROUP = convertRolesToGroup;
+    }
+
     /**
      * Converts the supplied {@link SecurityIdentity} into a {@link Subject}.
      *
@@ -58,17 +69,9 @@ final class SubjectUtil {
         Subject subject = new Subject();
         subject.getPrincipals().add(securityIdentity.getPrincipal());
 
-        // add the 'Roles' group to the subject containing the identity's mapped roles.
-        Group rolesGroup = new SimpleGroup("Roles");
-        for (String role : securityIdentity.getRoles()) {
-            rolesGroup.addMember(new NamePrincipal(role));
+        if (CONVERT_ROLES_TO_GROUP) {
+            subject.getPrincipals().addAll(RoleToGroupMapper.convert(securityIdentity.getPrincipal(), securityIdentity.getRoles()));
         }
-        subject.getPrincipals().add(rolesGroup);
-
-        // add a 'CallerPrincipal' group containing the identity's principal.
-        Group callerPrincipalGroup = new SimpleGroup("CallerPrincipal");
-        callerPrincipalGroup.addMember(securityIdentity.getPrincipal());
-        subject.getPrincipals().add(callerPrincipalGroup);
 
         // process the identity's public and private credentials.
         for (Credential credential : securityIdentity.getPublicCredentials()) {
@@ -114,41 +117,4 @@ final class SubjectUtil {
         });
     }
 
-
-    private static class SimpleGroup implements Group {
-
-        private final String name;
-
-        private final Set<Principal> principals;
-
-        SimpleGroup(final String name) {
-            this.name = name;
-            this.principals = new HashSet<>();
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public boolean addMember(Principal principal) {
-            return this.principals.add(principal);
-        }
-
-        @Override
-        public boolean removeMember(Principal principal) {
-            return this.principals.remove(principal);
-        }
-
-        @Override
-        public Enumeration<? extends Principal> members() {
-            return Collections.enumeration(this.principals);
-        }
-
-        @Override
-        public boolean isMember(Principal principal) {
-            return this.principals.contains(principal);
-        }
-    }
 }
