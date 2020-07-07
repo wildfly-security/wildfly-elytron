@@ -16,6 +16,7 @@
 
 package org.wildfly.security.authz.jacc;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.authz.jacc.SecurityActions.doPrivileged;
 
 import java.security.PrivilegedAction;
@@ -34,12 +35,14 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  */
 public class DelegatingPolicyContextHandler implements PolicyContextHandler {
 
+    private final String key;
     private final PolicyContextHandler preferred;
     private final PolicyContextHandler fallBack;
 
-    DelegatingPolicyContextHandler(PolicyContextHandler preferred, PolicyContextHandler fallBack) {
-        this.preferred = preferred;
-        this.fallBack = fallBack;
+    public DelegatingPolicyContextHandler(String key, PolicyContextHandler preferred, PolicyContextHandler fallBack) {
+        this.key = checkNotNullParam("key", key);
+        this.preferred = checkNotNullParam("preferred", preferred);
+        this.fallBack = checkNotNullParam("fallBack", fallBack);
     }
 
     @Override
@@ -49,7 +52,7 @@ public class DelegatingPolicyContextHandler implements PolicyContextHandler {
 
     @Override
     public String[] getKeys() throws PolicyContextException {
-        return preferred.getKeys();
+        return new String[] { key };
     }
 
     @Override
