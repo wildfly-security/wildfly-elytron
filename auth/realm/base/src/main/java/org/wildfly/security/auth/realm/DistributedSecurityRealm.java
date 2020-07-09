@@ -28,7 +28,6 @@ import org.wildfly.security.evidence.Evidence;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.LinkedList;
 
 /**
  * A realm for authentication and authorization of identities distributed between multiple realms.
@@ -166,13 +165,11 @@ public class DistributedSecurityRealm implements SecurityRealm {
     final class PrincipalDistributedIdentity implements RealmIdentity {
 
         private final Principal principal;
-        private LinkedList<RealmIdentity> loadedIdentities;
         private RealmIdentity currentIdentity = RealmIdentity.NON_EXISTENT;
         private int nextRealm = 0;
 
         PrincipalDistributedIdentity(Principal principal) throws RealmUnavailableException {
             this.principal = principal;
-            loadedIdentities = new LinkedList<>();
             nextIdentity();
         }
 
@@ -258,9 +255,7 @@ public class DistributedSecurityRealm implements SecurityRealm {
 
         @Override
         public void dispose() {
-            for (RealmIdentity identity : loadedIdentities) {
-                identity.dispose();
-            }
+            currentIdentity.dispose();
         }
     }
 
