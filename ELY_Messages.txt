@@ -111,8 +111,8 @@
 14000 - 14999    wildfly-elytron-client
 15000 - 15999    wildfly-elytron-ssl
 16000 - 16999    wildfly-elytron-auth-server
-17000 - 17999
-18000 - 18999
+17000 - 17999    wildfly-elytron-auth-util
+18000 - 18999    wildfly-elytron-x500-cert (2)
 19000 - 19999
 20000 - 20999
 21000 - 21999

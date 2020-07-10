@@ -22,24 +22,27 @@ import java.io.InputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.security.KeyPair;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.wildfly.security.credential.KeyPairCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclEntryPermission;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.junit.Assume;
@@ -50,6 +53,10 @@ import org.junit.Assume;
  * @author Hynek Švábek <hsvabek@redhat.com>
  */
 public class CredentialStoreCommandTest extends AbstractCommandTest {
+
+    public static final String RSA_ALGORITHM = "RSA";
+    public static final String DSA_ALGORITHM = "DSA";
+    public static final String EC_ALGORITHM = "EC";
 
     @Override
     protected String getCommandType() {
@@ -243,6 +250,211 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
                     aliasName, output));
             }
         }
+    }
+
+    @Test
+    public void testGenerateKeyPairDefault() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--generate-key-pair", aliasName, "--summary",
+                "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPairCredential credential = store.retrieve(aliasName, KeyPairCredential.class);
+        KeyPair keyPair = credential.getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(RSA_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(RSA_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateKeyPairRSA() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String algorithm = RSA_ALGORITHM;
+        String size = "3072";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--generate-key-pair", aliasName, "--algorithm",
+                algorithm, "--size", size, "--summary", "--password", storagePassword};
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPairCredential credential = store.retrieve(aliasName, KeyPairCredential.class);
+        KeyPair keyPair = credential.getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(RSA_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(RSA_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateKeyPairDSA() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String algorithm = DSA_ALGORITHM;
+        String size = "2048";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--generate-key-pair", aliasName, "--algorithm",
+                algorithm, "--size", size, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPair keyPair = store.retrieve(aliasName, KeyPairCredential.class).getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(DSA_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(DSA_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testGenerateKeyPairECDSA() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String algorithm = EC_ALGORITHM;
+        String size = "521";
+
+        String[] args = { "--location=" + storageLocation, "--create", "--generate-key-pair", aliasName, "--algorithm",
+                algorithm, "--size", size, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPair keyPair = store.retrieve(aliasName, KeyPairCredential.class).getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testExportPublicKey() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+
+        String[] createArgs = { "--location=" + storageLocation, "--create", "--generate-key-pair", aliasName, "--summary",
+                "--password", storagePassword };
+        executeCommandAndCheckStatus(createArgs);
+
+        String[] exportArgs  = { "--location=" + storageLocation, "--export-key-pair-public-key", aliasName, "--summary",
+                "--password", storagePassword };
+        String output = executeCommandAndCheckStatusAndGetOutput(exportArgs);
+        Assert.assertTrue(output.contains("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ"));
+    }
+
+    @Test
+    public void testImportOpenSSHKeyPairFromFile() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String passphrase = "secret";
+        String keyLocation = "src/test/resources/ssh-keys/id_ecdsa";
+
+        String[] importArgs = { "--location=" + storageLocation, "--create", "--import-key-pair", aliasName, "--key-passphrase",
+                passphrase, "--private-key-location", keyLocation, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(importArgs);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPairCredential credential = store.retrieve(aliasName, KeyPairCredential.class);
+        KeyPair keyPair = credential.getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testImportPKCSKeyPairFromFile() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String passphrase = "secret";
+        String privatekeyLocation = "src/test/resources/ssh-keys/id_ecdsa_pkcs";
+        String publickeyLocation = "src/test/resources/ssh-keys/id_ecdsa_pkcs.pub";
+
+        String[] importArgs = { "--location=" + storageLocation, "--create", "--import-key-pair", aliasName, "--key-passphrase",
+                passphrase, "--private-key-location", privatekeyLocation, "--public-key-location", publickeyLocation,
+                "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(importArgs);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPairCredential credential = store.retrieve(aliasName, KeyPairCredential.class);
+        KeyPair keyPair = credential.getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testImportOpenSSHKeyPairFromString() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String passphrase = "secret";
+        String key = "-----BEGIN OPENSSH PRIVATE KEY-----\n" +
+                "b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABCdRswttV\n" +
+                "UNQ6nKb6ojozTGAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz\n" +
+                "dHAyNTYAAABBBAKxnsRT7n6qJLKoD3mFfAvcH5ZFUyTzJVW8t60pNgNaXO4q5S4qL9yCCZ\n" +
+                "cKyg6QtVgRuVxkUSseuR3fiubyTnkAAADQq3vrkvuSfm4n345STr/i/29FZEFUd0qD++B2\n" +
+                "ZoWGPKU/xzvxH7S2GxREb5oXcIYO889jY6mdZT8LZm6ZZig3rqoEAqdPyllHmEadb7hY+y\n" +
+                "jwcQ4Wr1ekGgVwNHCNu2in3cYXxbrYGMHc33WmdNrbGRDUzK+EEUM2cwUiM7Pkrw5s88Ff\n" +
+                "IWI0V+567Ob9LxxIUO/QvSbKMJGbMM4jZ1V9V2Ti/GziGJ107CBudZr/7wNwxIK86BBAEg\n" +
+                "hfnrhYBIaOLrtP8R+96i8iu4iZAvcIbQ==\n" +
+                "-----END OPENSSH PRIVATE KEY-----";
+
+        String[] importArgs = { "--location=" + storageLocation, "--create", "--import-key-pair", aliasName, "--key-passphrase",
+                passphrase, "--private-key-string", key, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(importArgs);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPair keyPair = store.retrieve(aliasName, KeyPairCredential.class).getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
+    }
+
+    @Test
+    public void testImportPKCSKeyPairFromString() throws CredentialStoreException {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String passphrase = "secret";
+        String privateKey = "-----BEGIN PRIVATE KEY-----\n" +
+                "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgj+ToYNaHz/pISg/Z\n" +
+                "I9BjdhcTre/SJpIxASY19XtOV1ehRANCAASngcxUTBf2atGC5lQWCupsQGRNwwnK\n" +
+                "6Ww9Xt37SmaHv0bX5n1KnsAal0ykJVKZsD0Z09jVF95jL6udwaKpWQwb\n" +
+                "-----END PRIVATE KEY-----";
+        String publicKey = "-----BEGIN PUBLIC KEY-----\n" +
+                "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEp4HMVEwX9mrRguZUFgrqbEBkTcMJ\n" +
+                "yulsPV7d+0pmh79G1+Z9Sp7AGpdMpCVSmbA9GdPY1RfeYy+rncGiqVkMGw==\n" +
+                "-----END PUBLIC KEY-----\n";
+
+        String[] importArgs = { "--location=" + storageLocation, "--create", "--import-key-pair", aliasName, "--key-passphrase",
+                passphrase, "--private-key-string", privateKey, "--public-key-string", publicKey, "--summary", "--password", storagePassword };
+        executeCommandAndCheckStatus(importArgs);
+
+        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
+        KeyPair keyPair = store.retrieve(aliasName, KeyPairCredential.class).getKeyPair();
+        Assert.assertNotNull(keyPair);
+        Assert.assertNotNull(keyPair.getPrivate());
+        Assert.assertNotNull(keyPair.getPublic());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
+        Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
     }
 
     @Test

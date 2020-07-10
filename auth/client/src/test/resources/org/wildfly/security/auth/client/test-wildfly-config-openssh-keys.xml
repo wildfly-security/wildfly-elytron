@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    JBoss, Home of Professional Open Source
+    Copyright 2019, Red Hat, Inc. and/or its affiliates, and individual
+    contributors by the @authors tag. See the copyright.txt in the
+    distribution for a full listing of individual contributors.
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.6">
+
+        <credential-stores>
+            <credential-store name="store1">
+                <protection-parameter-credentials>
+                    <clear-password password="Elytron"/>
+                </protection-parameter-credentials>
+                <attributes>
+                    <attribute name="keyStoreType" value="JCEKS"/>
+                    <attribute name="create" value="true"/>
+                    <attribute name="location" value="target/ks-cred-stores/openssh-keys-test.jceks"/>
+                </attributes>
+            </credential-store>
+        </credential-stores>
+
+        <authentication-rules>
+
+            <rule use-configuration="test-rsa">
+                <match-host name="rsa"/>
+            </rule>
+
+            <rule use-configuration="test-dsa">
+                <match-host name="dsa"/>
+            </rule>
+
+            <rule use-configuration="test-ecdsa">
+                <match-host name="ecdsa"/>
+            </rule>
+
+            <rule use-configuration="test-ecdsa-masked-pwd">
+                <match-host name="ecdsa-masked-pwd"/>
+            </rule>
+
+            <rule use-configuration="test-ecdsa-cred-store-ref">
+                <match-host name="ecdsa-cred-store-ref"/>
+            </rule>
+
+            <rule use-configuration="test-ssh-credential-default-parsing">
+                <match-host name="ssh-credential-default"/>
+            </rule>
+
+            <rule use-configuration="test-ssh-credential-parsing">
+                <match-host name="ssh-credential"/>
+            </rule>
+
+        </authentication-rules>
+
+        <authentication-configurations>
+
+            <configuration name="test-rsa">
+                <credentials>
+                    <key-pair>
+                        <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+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
+LmNvbQ==
+-----END OPENSSH PRIVATE KEY-----">
+                        </openssh-private-key>
+                    </key-pair>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-dsa">
+                <credentials>
+                    <key-pair>
+                        <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABAZXAgPUm
+gY2XiY9QUBpfL4AAAAEAAAAAEAAAGyAAAAB3NzaC1kc3MAAACBAOJXoIJyoPIZAEsmbgAl
+5KZFnQUBvyS5CXuN9gjzyO8Ft315ltgJl0u7Z5BWEBDS76fmclHRaOITdJBbhni5uX+k2p
+aDd0KyCeeWx9G6L8uiMeElCNN8woRbqNPC+fUFvFT4mF2B7+KYvupVI57ewxv8P/RdfOFk
+lh6KpY2cgm4RAAAAFQC4FLkZgRqXEcdKQjTcsY3Y5L72PwAAAIAWFf8JCvVBzSpgrBAg2T
+6gxLf5et61MWmd97tOWwzvkRbxT4NHt2gfWp9K1KrxPm/1ZvM3ZE43lYt73w2ZGPgavYHZ
+NqeMXR1ztLZBsyr/Fy8J85+ROC8TTWY4dZhfOKUfjjwFULBEd1KlaN6DlFRbl2a3XVgi57
+LSZh4ChZXCdgAAAIEAju+o70Z7sGwDFC9/7MxTalHZGandN/IfhGQ5TS54+kcZChfRJU3V
+9hIuwBtRvNHwc7szZqYZsCpSEaiuMaBIyPq7+VBjssvvuAaNgrhdZbvSG1zV5fbftVFdNx
+dW1gushvN7FCXRgZ+rALlSc+Q1sVcAiCJzdZt4B2FeZ5ZAz+4AAAIQpEn02mZctZ81LyYR
+tB0Lx8ww534GRToeUj7ynUm1zUVhsKmVMKvFIR0e4VtXcrjAU899DdhBZHEHT5OhVvkIXW
+2ODUOgfD7sxs+39Q31VrSLCxVDNiYj83EYa7ulIWl/smINEqIAHiV0pBU7n/2HvM2mX+8p
+3ZjXQrwZ6zS4I8DNz0L4ejG6WpLMQj8Yi+Dr/2ppLgsw9kGl+M+fYxlcOCBrjdwqCbijKN
+dRTYzmC5iuioctKGRpzZzdavb0VGoDC40Idkr+ntbHJ38zM/2uym8JYC0PCWhtrllGyhfM
+8aX8dkQoAtY88pY9MFng4G0X9QIAzdTm2GhWASLrNlJKq25avXDJt85k105Jvw1mYu+PwH
+N95fGizYNZwCvyfY+a6R3fcVMMZ5HK3wFAVJqkUdhjqQGgykn2olIb2YE1WlF7C9aoqLTS
+MyyiCorwwRwATS+UzMFd86Xq2kfWTLAEQ/odJAOKgcgktMBVoc42QRH5MvSXsIbTLWuvpe
+pQJN9orp8Tof9UUmb1H6WOl5ArYDugh0StqPmxPy4jWkSaexLN7j16xQK62fnr+R7ydH8f
+PflhpgksXvaJouUswPPtilHDNxk0Gzpf0f63vjcSBKnezyIyTjmtUyzSyURRRVFEhiDGKQ
+xNT9ZW0OoIViI3xU2pHQ6J3guQtfbJiQ3jZlYzlVdqlhHn4oM4uk+DyO9w
+-----END OPENSSH PRIVATE KEY-----">
+                            <clear-password password="secret"/>
+                        </openssh-private-key>
+                    </key-pair>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-ecdsa">
+                <credentials>
+                    <key-pair>
+                        <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABCdRswttV
+UNQ6nKb6ojozTGAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz
+dHAyNTYAAABBBAKxnsRT7n6qJLKoD3mFfAvcH5ZFUyTzJVW8t60pNgNaXO4q5S4qL9yCCZ
+cKyg6QtVgRuVxkUSseuR3fiubyTnkAAADQq3vrkvuSfm4n345STr/i/29FZEFUd0qD++B2
+ZoWGPKU/xzvxH7S2GxREb5oXcIYO889jY6mdZT8LZm6ZZig3rqoEAqdPyllHmEadb7hY+y
+jwcQ4Wr1ekGgVwNHCNu2in3cYXxbrYGMHc33WmdNrbGRDUzK+EEUM2cwUiM7Pkrw5s88Ff
+IWI0V+567Ob9LxxIUO/QvSbKMJGbMM4jZ1V9V2Ti/GziGJ107CBudZr/7wNwxIK86BBAEg
+hfnrhYBIaOLrtP8R+96i8iu4iZAvcIbQ==
+-----END OPENSSH PRIVATE KEY-----">
+                            <clear-password password="secret"/>
+                        </openssh-private-key>
+                    </key-pair>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-ecdsa-masked-pwd">
+                <credentials>
+                    <key-pair>
+                        <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABCdRswttV
+UNQ6nKb6ojozTGAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz
+dHAyNTYAAABBBAKxnsRT7n6qJLKoD3mFfAvcH5ZFUyTzJVW8t60pNgNaXO4q5S4qL9yCCZ
+cKyg6QtVgRuVxkUSseuR3fiubyTnkAAADQq3vrkvuSfm4n345STr/i/29FZEFUd0qD++B2
+ZoWGPKU/xzvxH7S2GxREb5oXcIYO889jY6mdZT8LZm6ZZig3rqoEAqdPyllHmEadb7hY+y
+jwcQ4Wr1ekGgVwNHCNu2in3cYXxbrYGMHc33WmdNrbGRDUzK+EEUM2cwUiM7Pkrw5s88Ff
+IWI0V+567Ob9LxxIUO/QvSbKMJGbMM4jZ1V9V2Ti/GziGJ107CBudZr/7wNwxIK86BBAEg
+hfnrhYBIaOLrtP8R+96i8iu4iZAvcIbQ==
+-----END OPENSSH PRIVATE KEY-----">
+                            <masked-password iteration-count="100" salt="12345678" masked-password="mSGaLjrw4LM="/>
+                        </openssh-private-key>
+                    </key-pair>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-ecdsa-cred-store-ref">
+                <credentials>
+                    <key-pair>
+                        <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABCdRswttV
+UNQ6nKb6ojozTGAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz
+dHAyNTYAAABBBAKxnsRT7n6qJLKoD3mFfAvcH5ZFUyTzJVW8t60pNgNaXO4q5S4qL9yCCZ
+cKyg6QtVgRuVxkUSseuR3fiubyTnkAAADQq3vrkvuSfm4n345STr/i/29FZEFUd0qD++B2
+ZoWGPKU/xzvxH7S2GxREb5oXcIYO889jY6mdZT8LZm6ZZig3rqoEAqdPyllHmEadb7hY+y
+jwcQ4Wr1ekGgVwNHCNu2in3cYXxbrYGMHc33WmdNrbGRDUzK+EEUM2cwUiM7Pkrw5s88Ff
+IWI0V+567Ob9LxxIUO/QvSbKMJGbMM4jZ1V9V2Ti/GziGJ107CBudZr/7wNwxIK86BBAEg
+hfnrhYBIaOLrtP8R+96i8iu4iZAvcIbQ==
+-----END OPENSSH PRIVATE KEY-----">
+                            <credential-store-reference store="store1" alias="alias" clear-text="Elytron"/>
+                        </openssh-private-key>
+                    </key-pair>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-ssh-credential-default-parsing">
+                <credentials>
+                    <ssh-credential>
+                        <credential-store-reference store="store1" alias="alias" clear-text="Elytron"/>
+                    </ssh-credential>
+                </credentials>
+            </configuration>
+
+            <configuration name="test-ssh-credential-parsing">
+                <credentials>
+                    <ssh-credential ssh-directory="/user/home/test/.ssh" private-key-file="id_test_ecdsa" known-hosts-file="known_hosts_test">
+                        <credential-store-reference store="store1" alias="alias" clear-text="Elytron"/>
+                    </ssh-credential>
+                </credentials>
+            </configuration>
+
+        </authentication-configurations>
+    </authentication-client>
+</configuration>

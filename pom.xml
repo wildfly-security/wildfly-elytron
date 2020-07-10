@@ -66,6 +66,7 @@
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.64</version.org.bouncycastle>
         <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
+        <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.17.Final</version.org.jboss.logmanager>
@@ -819,6 +820,7 @@
             <!--
                  External Modules
             -->
+
             <dependency>
                 <groupId>jakarta.enterprise</groupId>
                 <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -841,6 +843,11 @@
                 <artifactId>microprofile-jwt-auth-api</artifactId>
                 <version>${version.org.eclipse.microprofile.jwt.api}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-common</artifactId>
+                <version>${version.org.apache.sshd.common}</version>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
