@@ -17,6 +17,16 @@
  */
 package org.wildfly.security.authz.jacc;
 
+import java.io.IOException;
+import java.security.Policy;
+import java.security.Principal;
+import java.security.ProtectionDomain;
+import java.util.HashSet;
+
+import javax.security.jacc.PolicyConfiguration;
+import javax.security.jacc.PolicyConfigurationFactory;
+import javax.security.jacc.PolicyContextException;
+
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
@@ -25,15 +35,6 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.permission.PermissionVerifier;
-
-import javax.security.jacc.PolicyConfiguration;
-import javax.security.jacc.PolicyConfigurationFactory;
-import javax.security.jacc.PolicyContextException;
-import java.io.IOException;
-import java.security.Policy;
-import java.security.Principal;
-import java.security.ProtectionDomain;
-import java.util.HashSet;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

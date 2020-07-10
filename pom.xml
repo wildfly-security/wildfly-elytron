@@ -66,9 +66,10 @@
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.64</version.org.bouncycastle>
         <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
+        <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
-        <version.org.jboss.logmanager>2.1.15.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logmanager>2.1.17.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
@@ -78,7 +79,7 @@
         <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
         <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.1.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
-        <version.org.jboss.threads>2.3.4.Final</version.org.jboss.threads>
+        <version.org.jboss.threads>2.3.5.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.12</version.junit.junit>
@@ -789,6 +790,7 @@
             <!--
                  External Modules
             -->
+
             <dependency>
                 <groupId>jakarta.enterprise</groupId>
                 <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -811,6 +813,11 @@
                 <artifactId>microprofile-jwt-auth-api</artifactId>
                 <version>${version.org.eclipse.microprofile.jwt.api}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-common</artifactId>
+                <version>${version.org.apache.sshd.common}</version>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>

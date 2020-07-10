@@ -190,4 +190,6 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 14000, value = "At least one of the '%s' and '%s' cipher-suite attributes must be provided")
     ConfigXMLParseException atLeastOneCipherSuiteAttributeMustBeProvided(String attribute1, String attribute2);
 
+    @Message(id = 14001, value = "Wrong Key content type; expected OpenSSH private key")
+    ConfigXMLParseException xmlInvalidOpenSSHKey(@Param ConfigurationXMLStreamReader reader);
 }

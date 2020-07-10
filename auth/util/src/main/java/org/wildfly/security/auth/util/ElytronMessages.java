@@ -44,7 +44,8 @@ import org.jboss.logging.annotations.ValidIdRanges;
     @ValidIdRange(min = 1065, max = 1065),
     @ValidIdRange(min = 1121, max = 1123),
     @ValidIdRange(min = 1160, max = 1165),
-    @ValidIdRange(min = 3031, max = 3031)
+    @ValidIdRange(min = 3031, max = 3031),
+    @ValidIdRange(min = 17000, max = 17999)
 })
 interface ElytronMessages extends BasicLogger {
 
@@ -76,4 +77,8 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
     GeneralSecurityException tooManyKerberosTicketsFound();
+
+    @Message(id = 17000, value = "Failed to create credential")
+    IOException xmlFailedToCreateCredential(@Cause Throwable cause);
+
 }

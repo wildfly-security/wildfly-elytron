@@ -100,7 +100,10 @@ final class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
                 GSSKerberosCredential kerberosCredential = callback.getCredential(GSSKerberosCredential.class);
                 if (kerberosCredential != null) {
+                    saslGssapi.tracef("GSSCredential obtained from CredentialCallback.");
                     credential = kerberosCredential.getGssCredential();
+                } else {
+                    saslGssapi.trace("No GSSCredential obtained from CredentialCallback.");
                 }
             } catch (UnsupportedCallbackException e) {
                 saslGssapi.trace("CallbackHandler does not support CredentialCallback", e);

@@ -249,25 +249,6 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
             }
 
             if (gssContext.isEstablished()) { // no more tokens are needed from the peer
-                final GSSCredential gssCredential;
-
-                try {
-                    gssCredential = gssContext.getCredDelegState() ? gssContext.getDelegCred() : null;
-                } catch (GSSException e) {
-                    httpSpnego.trace("Unable to access delegated credential despite being delegated.", e);
-                    handleCallback(AuthenticationCompleteCallback.FAILED);
-                    clearAttachments(storageScope);
-                    request.authenticationFailed(httpSpnego.authenticationFailed());
-                    return;
-                }
-
-                if (gssCredential != null) {
-                    httpSpnego.trace("Associating delegated GSSCredential with identity.");
-                    handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
-                } else {
-                    httpSpnego.trace("No GSSCredential delegated from client.");
-                }
-
                 httpSpnego.trace("GSSContext established, authorizing...");
 
                 identityCache = createIdentityCache(identityCache, storageScope, true);

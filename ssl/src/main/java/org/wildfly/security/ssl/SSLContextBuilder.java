@@ -339,11 +339,6 @@ public final class SSLContextBuilder {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier, providerName);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
-            SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
-            if (sessionContext != null) {
-                if (sessionCacheSize >= 0) sessionContext.setSessionCacheSize(sessionCacheSize);
-                if (sessionTimeout >= 0) sessionContext.setSessionTimeout(sessionTimeout);
-            }
             final X509KeyManager x509KeyManager = keyManagerSecurityFactory == null ? null : keyManagerSecurityFactory.create();
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
@@ -377,6 +372,12 @@ public final class SSLContextBuilder {
                             new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional, mechanismConfigurationSelector) :
                             x509TrustManager
             }, null);
+
+            SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
+            if (sessionContext != null) {
+                if (sessionCacheSize >= 0) sessionContext.setSessionCacheSize(sessionCacheSize);
+                if (sessionTimeout >= 0) sessionContext.setSessionTimeout(sessionTimeout);
+            }
 
             // now, set up the wrapping configuration
             final SSLConfigurator sslConfigurator = clientMode ?
