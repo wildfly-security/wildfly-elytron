@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.auth.client._private;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -68,7 +68,7 @@ import org.wildfly.client.config.XMLLocation;
         @ValidIdRange(min = 9529, max = 9529),
         @ValidIdRange(min = 14000, max = 14999)
 })
-interface ElytronMessages extends BasicLogger {
+public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
     ElytronMessages xmlLog = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.xml");
@@ -192,4 +192,13 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14001, value = "Wrong Key content type; expected OpenSSH private key")
     ConfigXMLParseException xmlInvalidOpenSSHKey(@Param ConfigurationXMLStreamReader reader);
+
+    @Message(id = 14002, value = "Unable to obtain SSLContext")
+    ConfigXMLParseException unableToObtainSslContext();
+
+    @Message(id = 14003, value = "Name callback handling was unsuccessful")
+    ConfigXMLParseException nameCallbackHandlingWasUnsuccessful();
+
+    @Message(id = 14004, value = "Password callback handling was unsuccessful")
+    ConfigXMLParseException passwordCallbackHandlingWasUnsuccessful();
 }
