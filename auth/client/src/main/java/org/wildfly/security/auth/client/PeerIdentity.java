@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.auth.client._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 
 /**
