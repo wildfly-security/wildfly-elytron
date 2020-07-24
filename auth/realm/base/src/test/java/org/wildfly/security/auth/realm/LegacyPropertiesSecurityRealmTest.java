@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.Provider;
 import java.security.Security;
 
@@ -43,6 +44,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.spec.Encoding;
 
 /**
  * A test case for the {@link LegacyPropertiesSecurityRealm}.
@@ -53,13 +55,16 @@ public class LegacyPropertiesSecurityRealmTest {
 
     private static final String PROPERTIES_CLEAR_CREDENTIAL_NAME = "the-clear-one-it-is";
     private static final String PROPERTIES_DIGEST_CREDENTIAL_NAME = "the-digested-one-it-is";
-    private static final String ELYTRON_PASSWORD_HASH = "c588863654f886d1caae4d8af47107b7";
+    private static final String ELYTRON_USERNAME = "elytron";
+    private static final String ELYTRON_PASSWORD_HEX_HASH = "c588863654f886d1caae4d8af47107b7";
+    private static final String ELYTRON_PASSWORD_BASE64_HASH = "xYiGNlT4htHKrk2K9HEHtw==";
     private static final String ELYTRON_PASSWORD_CLEAR = "passwd12#$";
     private static final String ELYTRON_SIMPLE_PASSWORD = "password";
 
     private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
 
     private static SecurityRealm specialCharsRealm;
+
 
     @BeforeClass
     public static void add() throws IOException {
@@ -102,7 +107,7 @@ public class LegacyPropertiesSecurityRealmTest {
 
         PasswordGuessEvidence goodGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_CLEAR.toCharArray());
         PasswordGuessEvidence badGuess = new PasswordGuessEvidence("I will hack you".toCharArray());
-        PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_HASH.toCharArray());
+        PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_HEX_HASH.toCharArray());
 
         assertEquals("ClearPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5, null));
@@ -120,7 +125,7 @@ public class LegacyPropertiesSecurityRealmTest {
         DigestPassword elytronDigest = elytronIdentity.getCredential(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5).getPassword(DigestPassword.class);
         assertNotNull(elytronDigest);
         String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
-        assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
+        assertEquals(ELYTRON_PASSWORD_HEX_HASH, actualHex);
 
         assertTrue(elytronIdentity.verifyEvidence(goodGuess));
         assertFalse(elytronIdentity.verifyEvidence(badGuess));
@@ -143,10 +148,11 @@ public class LegacyPropertiesSecurityRealmTest {
 
     /**
      * Test that the realm can handle the properties file where the passwords are stored pre-hashed.
+     * Uses default configuration assuming passwords are hex encoded and the character set is UTF-8.
      */
     @Test
-    public void testHashedFile() throws Exception {
-        performHashedFileTest("users.properties", null);
+    public void testHashedFileHexEncoded() throws Exception {
+        performHashedFileTest("users.properties", ELYTRON_USERNAME, Encoding.HEX,ELYTRON_PASSWORD_CLEAR, ELYTRON_PASSWORD_HEX_HASH);
     }
 
     /**
@@ -157,22 +163,70 @@ public class LegacyPropertiesSecurityRealmTest {
         performHashedFileTest("users-no-realm.properties", "ManagementRealm");
     }
 
+    /**
+     * Test that the realm can handle the properties file where the passwords are stored pre-hashed encoded using
+     * base64 and the default character set: UTF-8.
+     */
+    @Test
+    public void testHashedFileBase64() throws Exception {
+        performHashedFileTest("base64hashed.properties", ELYTRON_USERNAME, Encoding.BASE64, ELYTRON_PASSWORD_CLEAR, ELYTRON_PASSWORD_BASE64_HASH);
+    }
+
+    /**
+     * Test that the realm can handle different character sets and encoding combinations
+     */
+    @Test
+    public void testHashedFilePasswordWithSpecialCharacters() throws Exception {
+
+        // testing only character sets (hex encoding is the default)
+        performHashedFileTest("charset.properties", null, ELYTRON_USERNAME, Encoding.HEX, Charset.forName("gb2312"), "password密码", "23b26a3eadf3c67991ba52eb5a70cf94");
+        performHashedFileTest("charset.properties", null, "elytron2", Encoding.HEX, Charset.forName("ISO-8859-1"), "passwordHyväää", "fdef58eb9474ba9542903c6d20042606");
+        performHashedFileTest("charset.properties", null, "elytron3", Encoding.HEX, Charset.forName("KOI8-R"), "пароль", "098561bf1364444a43468a9e4a0941b9");
+
+        // testing hash encoding and character sets together
+        performHashedFileTest("charset.properties", null, "elytron4", Encoding.BASE64, Charset.forName("gb2312"), "password密码", "FhTiDAL0ah2hRAafF4IJoQ==");
+        performHashedFileTest("charset.properties", null, "elytron5", Encoding.BASE64, Charset.forName("ISO-8859-1"), "passwordHyväää", "zAgzBlREjzYZn4qHYQGGvg==");
+        performHashedFileTest("charset.properties", null, "elytron6", Encoding.BASE64, Charset.forName("KOI8-R"), "пароль", "j1/XeG0Jvqc8ZXOc/jwpaw==");
+
+    }
+
+    private SecurityRealm createRealm(String fileName, String defaultRealm, Encoding hashEncoding, Charset charset) throws IOException {
+        LegacyPropertiesSecurityRealm.Builder builder = new LegacyPropertiesSecurityRealm.Builder()
+                .setUsersStream(this.getClass().getResourceAsStream(fileName))
+                .setDefaultRealm(defaultRealm);
+
+        if (hashEncoding != null) {
+            builder.setHashEncoding(hashEncoding);
+        }
+
+        if (charset != null) {
+            builder.setHashCharset(charset);
+        }
+
+        return builder.build();
+    }
 
     private void performHashedFileTest(final String fileName, final String defaultRealm) throws Exception {
-        SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setUsersStream(this.getClass().getResourceAsStream(fileName))
-                .setDefaultRealm(defaultRealm)
-                .build();
+        performHashedFileTest(fileName, defaultRealm, ELYTRON_USERNAME, Encoding.HEX, null, ELYTRON_PASSWORD_CLEAR, ELYTRON_PASSWORD_HEX_HASH);
+    }
 
-        PasswordGuessEvidence goodGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_CLEAR.toCharArray());
+    private void performHashedFileTest(final String fileName, String username, Encoding hashEncoding, String clearPassword, String hashPassword) throws Exception {
+        performHashedFileTest(fileName, null, username, hashEncoding, null, clearPassword, hashPassword);
+    }
+
+    private void performHashedFileTest(final String fileName, final String defaultRealm, String username, Encoding hashEncoding, Charset charset, String clearPassword, String hashPassword) throws Exception {
+
+        SecurityRealm realm = createRealm(fileName, defaultRealm, hashEncoding, charset);
+
+        PasswordGuessEvidence goodGuess = new PasswordGuessEvidence(clearPassword.toCharArray());
         PasswordGuessEvidence badGuess = new PasswordGuessEvidence("I will hack you".toCharArray());
-        PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_HASH.toCharArray());
+        PasswordGuessEvidence hashGuess = new PasswordGuessEvidence(hashPassword.toCharArray());
 
         assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5, null));
         assertEquals("Verify", SupportLevel.SUPPORTED, realm.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
 
-        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal(username));
         assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null));
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5, null));
         assertEquals("Verify", SupportLevel.SUPPORTED, elytronIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
@@ -181,8 +235,14 @@ public class LegacyPropertiesSecurityRealmTest {
 
         DigestPassword elytronDigest = elytronIdentity.getCredential(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5).getPassword(DigestPassword.class);
         assertNotNull(elytronDigest);
-        String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
-        assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
+
+        String encoded = "";
+        if (hashEncoding == null || hashEncoding.equals(Encoding.HEX)) {
+            encoded = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
+        } else if (hashEncoding.equals(Encoding.BASE64)) {
+            encoded = ByteIterator.ofBytes(elytronDigest.getDigest()).base64Encode().drainToString();
+        }
+        assertEquals(hashPassword, encoded);
 
         assertTrue(elytronIdentity.verifyEvidence(goodGuess));
         assertFalse(elytronIdentity.verifyEvidence(badGuess));

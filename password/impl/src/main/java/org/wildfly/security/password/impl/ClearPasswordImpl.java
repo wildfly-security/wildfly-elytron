@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
+import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -75,6 +77,11 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
 
     boolean verify(final char[] guess) {
         return Arrays.equals(getPassword(), guess);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        return verify(guess);
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

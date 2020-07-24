@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -130,25 +131,25 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
         this.hash = sunMD5Crypt(algorithm, getNormalizedPasswordBytes(spec.getEncodedPassword()), salt, iterationCount);
     }
 
-    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
-    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, password, spec.getSalt().clone(), spec.getIterationCount());
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, password, spec.getSalt().clone(), spec.getIterationCount(), hashCharset);
     }
 
-    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, password, spec.getSalt().clone(), DEFAULT_ITERATION_COUNT);
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, password, spec.getSalt().clone(), DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
-    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount());
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount(), hashCharset);
     }
 
-    private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final byte[] clonedSalt, final int iterationCount)
+    private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final byte[] clonedSalt, final int iterationCount, final Charset hashCharset)
             throws NoSuchAlgorithmException {
-        this(algorithm, sunMD5Crypt(algorithm, getNormalizedPasswordBytes(password), clonedSalt, iterationCount), clonedSalt, iterationCount);
+        this(algorithm, sunMD5Crypt(algorithm, getNormalizedPasswordBytes(password, hashCharset), clonedSalt, iterationCount), clonedSalt, iterationCount);
     }
 
     @Override
@@ -181,9 +182,14 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
 
     @Override
     boolean verify(final char[] guess) throws InvalidKeyException {
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         byte[] test;
         try {
-            test = sunMD5Crypt(getAlgorithm(), getNormalizedPasswordBytes(guess), getSalt(), getIterationCount());
+            test = sunMD5Crypt(getAlgorithm(), getNormalizedPasswordBytes(guess, hashCharset), getSalt(), getIterationCount());
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyCannotVerifyPassword(e);
         }

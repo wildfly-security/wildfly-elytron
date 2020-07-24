@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.ldap;
 import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -91,6 +92,7 @@ import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.password.spec.Encoding;
 
 /**
  * Security realm implementation backed by LDAP.
@@ -107,6 +109,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     private final NameRewriter nameRewriter;
     private final IdentityMapping identityMapping;
     private final int pageSize;
+    private final Charset hashCharset;
+    private final Encoding hashEncoding;
 
     private final List<CredentialLoader> credentialLoaders;
     private final List<CredentialPersister> credentialPersisters;
@@ -123,13 +127,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                       final List<CredentialLoader> credentialLoaders,
                       final List<CredentialPersister> credentialPersisters,
                       final List<EvidenceVerifier> evidenceVerifiers,
-                      final int pageSize) {
+                      final int pageSize,
+                      final Charset hashCharset,
+                      final Encoding hashEncoding) {
 
         this.providers = providers;
         this.dirContextSupplier = dirContextSupplier;
         this.nameRewriter = nameRewriter;
         this.identityMapping = identityMapping;
         this.pageSize = pageSize;
+        this.hashCharset = hashCharset;
+        this.hashEncoding = hashEncoding;
 
         this.credentialLoaders = credentialLoaders;
         this.credentialPersisters = credentialPersisters;
@@ -194,7 +202,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             lock = realmIdentityLock.lockShared();
         }
         log.debugf("Obtained lock for identity [%s].", name);
-        return new LdapRealmIdentity(name, lock);
+        return new LdapRealmIdentity(name, lock, hashCharset, hashEncoding);
     }
 
     private DirContext obtainContext() throws RealmUnavailableException {
@@ -318,14 +326,22 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         private final String name;
         private IdentityLock lock;
+        private final Charset hashCharset;
+        private final Encoding hashEncoding;
 
-        LdapRealmIdentity(final String name, final IdentityLock lock) {
+        LdapRealmIdentity(final String name, final IdentityLock lock, final Charset hashCharset, final Encoding hashEncoding) {
             this.name = name;
             this.lock = lock;
+            this.hashCharset = hashCharset;
+            this.hashEncoding = hashEncoding;
         }
 
         public Principal getRealmIdentityPrincipal() {
             return new NamePrincipal(name);
+        }
+
+        public Charset getHashCharset() {
+            return this.hashCharset;
         }
 
         @Override
@@ -353,7 +369,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 SupportLevel support = SupportLevel.UNSUPPORTED;
                 for (CredentialLoader loader : credentialLoaders) {
                     if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
-                        IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
+                        IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes(), hashEncoding);
 
                         SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec, providers);
                         if (temp != null && temp.isDefinitelySupported()) {
@@ -406,7 +422,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
                 for (CredentialLoader loader : credentialLoaders) {
                     if (loader.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec).mayBeSupported()) {
-                        IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
+                        IdentityCredentialLoader icl = loader.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes(), hashEncoding);
 
                         Credential credential = icl.getCredential(credentialType, algorithmName, parameterSpec, providers);
                         if (credentialType.isInstance(credential)) {
@@ -556,7 +572,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 SupportLevel response = SupportLevel.UNSUPPORTED;
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        final IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes());
+                        final IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes(), hashEncoding);
 
                         final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName, providers);
                         if (support != null && support.isDefinitelySupported()) {
@@ -603,9 +619,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes());
+                        IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getUrl(), identity.getEntry().getAttributes(), hashEncoding);
 
-                        if (iev.verifyEvidence(evidence, providers)) {
+                        if (iev.verifyEvidence(evidence, providers, hashCharset)) {
                             return true;
                         }
                     }

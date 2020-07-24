@@ -24,6 +24,8 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
@@ -57,8 +59,8 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         this(saltFromBytes(saltBytes), hash);
     }
 
-    UnixDESCryptPasswordImpl(final byte[] saltBytes, final char[] passwordChars) throws InvalidParameterSpecException, InvalidKeyException {
-        this(saltFromBytes(saltBytes), passwordChars);
+    UnixDESCryptPasswordImpl(final byte[] saltBytes, final char[] passwordChars, final Charset hashCharset) throws InvalidParameterSpecException, InvalidKeyException {
+        this(saltFromBytes(saltBytes), passwordChars, hashCharset);
     }
 
     UnixDESCryptPasswordImpl(final SaltedHashPasswordSpec spec) throws InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
@@ -69,12 +71,12 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), spec.getEncodedPassword());
     }
 
-    UnixDESCryptPasswordImpl(final char[] passwordChars) throws InvalidKeyException {
-        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), passwordChars);
+    UnixDESCryptPasswordImpl(final char[] passwordChars, final Charset hashCharset) throws InvalidKeyException {
+        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), passwordChars, hashCharset);
     }
 
-    UnixDESCryptPasswordImpl(final char[] passwordChars, SaltedPasswordAlgorithmSpec algorithmSpec) throws InvalidParameterSpecException, InvalidKeyException {
-        this(algorithmSpec.getSalt(), passwordChars);
+    UnixDESCryptPasswordImpl(final char[] passwordChars, SaltedPasswordAlgorithmSpec algorithmSpec, final Charset hashCharset) throws InvalidParameterSpecException, InvalidKeyException {
+        this(algorithmSpec.getSalt(), passwordChars, hashCharset);
     }
 
     UnixDESCryptPasswordImpl(final UnixDESCryptPassword password) throws InvalidKeyException {
@@ -83,6 +85,10 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
 
     UnixDESCryptPasswordImpl(final short salt, final char[] passwordChars) throws InvalidKeyException {
         this(salt, generateHash(salt, passwordChars));
+    }
+
+    UnixDESCryptPasswordImpl(final short salt, final char[] passwordChars, final Charset hashCharset) throws InvalidKeyException {
+        this(salt, generateHash(salt, passwordChars, hashCharset));
     }
 
     private static short saltFromBytes(final byte[] saltBytes) throws InvalidParameterSpecException {
@@ -100,7 +106,12 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     boolean verify(final char[] guess) throws InvalidKeyException {
-        return Arrays.equals(hash, generateHash(salt, guess));
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        return Arrays.equals(hash, generateHash(salt, guess, hashCharset));
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
@@ -120,8 +131,12 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     private static byte[] generateHash(final short salt, final char[] password) {
+        return generateHash(salt, password, StandardCharsets.UTF_8);
+    }
+
+    private static byte[] generateHash(final short salt, final char[] password, final Charset hashCharset) {
         // get bytes
-        final byte[] bytes1 = getNormalizedPasswordBytes(password);
+        final byte[] bytes1 = getNormalizedPasswordBytes(password, hashCharset);
         return crypt(bytes1, salt);
     }
 

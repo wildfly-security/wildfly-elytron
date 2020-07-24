@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -55,6 +56,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         this.salt = salt;
     }
 
+
     SaltedSimpleDigestPasswordImpl(final String algorithm, final SaltedHashPasswordSpec spec) {
         this(algorithm, spec.getSalt().clone(), spec.getHash().clone());
     }
@@ -67,26 +69,26 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         this.algorithm = algorithm;
         this.salt = PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE);
         try {
-            this.digest = digestOf(algorithm, salt, spec.getEncodedPassword());
+            this.digest = digestOf(algorithm, salt, spec.getEncodedPassword(), StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
-    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getSalt().clone(), password);
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException {
+        this(algorithm, spec.getSalt().clone(), password, hashCharset);
     }
 
-    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password) throws InvalidKeySpecException {
-        this(algorithm, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), password);
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final Charset hashCharset) throws InvalidKeySpecException {
+        this(algorithm, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), password, hashCharset);
     }
 
-    private SaltedSimpleDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password)
+    private SaltedSimpleDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password, final Charset hashCharset)
             throws InvalidKeySpecException {
         this.algorithm = algorithm;
         this.salt = salt;
         try {
-            this.digest = digestOf(algorithm, salt, password);
+            this.digest = digestOf(algorithm, salt, password, hashCharset);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -117,8 +119,13 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
 
     @Override
     boolean verify(char[] guess) throws InvalidKeyException {
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         try {
-            return Arrays.equals(digest, digestOf(algorithm, salt, guess));
+            return Arrays.equals(digest, digestOf(algorithm, salt, guess, hashCharset));
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -129,11 +136,11 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         return keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class);
     }
 
-    private static byte[] digestOf(final String algorithm, final byte[] salt, final char[] password)
+    private static byte[] digestOf(final String algorithm, final byte[] salt, final char[] password, final Charset hashCharset)
             throws NoSuchAlgorithmException {
         boolean saltFirst = isSaltFirst(algorithm);
         MessageDigest md = getMessageDigest(algorithm);
-        byte[] passwordBytes = new String(password).getBytes(StandardCharsets.UTF_8);
+        byte[] passwordBytes = new String(password).getBytes(hashCharset);
         if (saltFirst) {
             md.update(salt);
             md.update(passwordBytes);

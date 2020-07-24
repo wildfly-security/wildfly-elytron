@@ -33,6 +33,10 @@ import org.wildfly.common.bytes.ByteStringBuilder;
 class DigestUtil {
 
     public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password) {
+        return userRealmPasswordDigest(messageDigest, username, realm, password, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password, Charset chosenCharset) {
         CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
         latin1Encoder.reset();
         boolean bothLatin1 = latin1Encoder.canEncode(username);
@@ -42,8 +46,6 @@ class DigestUtil {
                 bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
             }
         }
-
-        Charset chosenCharset = StandardCharsets.UTF_8; // bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
 
         ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
         urp.append(username.getBytes(chosenCharset));

@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -59,11 +60,12 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     }
 
     SimpleDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, getDigestOfKS(algorithm, spec.getEncodedPassword()));
+        this(algorithm, spec.getEncodedPassword(), StandardCharsets.UTF_8);
     }
 
-    SimpleDigestPasswordImpl(final String algorithm, final char[] chars) throws InvalidKeySpecException {
-        this(algorithm, getDigestOfKS(algorithm, chars));
+    SimpleDigestPasswordImpl(final String algorithm, final char[] chars, final Charset hashCharset) throws InvalidKeySpecException {
+        this.algorithm = algorithm;
+        this.digest = getDigestOfKS(algorithm, chars, hashCharset);
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
@@ -73,17 +75,17 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         throw new InvalidKeySpecException();
     }
 
-    static byte[] getDigestOfKS(String algorithm, char[] chars) throws InvalidKeySpecException {
+    static byte[] getDigestOfKS(String algorithm, char[] chars, Charset hashCharset) throws InvalidKeySpecException {
         try {
-            return getDigestOf(algorithm, chars);
+            return getDigestOf(algorithm, chars, hashCharset);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
-    static byte[] getDigestOf(String algorithm, char[] chars) throws NoSuchAlgorithmException {
+    static byte[] getDigestOf(String algorithm, char[] chars, Charset hashCharset) throws NoSuchAlgorithmException {
         final MessageDigest md = getMessageDigest(algorithm);
-        md.update(new String(chars).getBytes(StandardCharsets.UTF_8));
+        md.update(new String(chars).getBytes(hashCharset));
         return md.digest();
     }
 
@@ -100,8 +102,13 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     }
 
     boolean verify(final char[] guess) throws InvalidKeyException {
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         try {
-            return Arrays.equals(digest, getDigestOf(algorithm, guess));
+            return Arrays.equals(digest, getDigestOf(algorithm, guess, hashCharset));
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -142,5 +149,4 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     public SimpleDigestPasswordImpl clone() {
         return this;
     }
-
 }

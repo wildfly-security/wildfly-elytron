@@ -20,6 +20,8 @@ package org.wildfly.security.password.spec;
 
 import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
@@ -34,6 +36,7 @@ import org.wildfly.common.Assert;
 public final class EncryptablePasswordSpec implements PasswordSpec {
     private final char[] password;
     private final AlgorithmParameterSpec algorithmParameterSpec;
+    private final Charset hashCharset;
 
     /**
      * Construct a new instance.
@@ -42,9 +45,21 @@ public final class EncryptablePasswordSpec implements PasswordSpec {
      * @param algorithmParameterSpec the parameters of the algorithm to be used for encryption or hashing
      */
     public EncryptablePasswordSpec(final char[] password, final AlgorithmParameterSpec algorithmParameterSpec) {
+        this(password, algorithmParameterSpec, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param password the password to be encrypted or hashed
+     * @param algorithmParameterSpec the parameters of the algorithm to be used for encryption or hashing
+     * @param hashCharset the character set used in the password representation. Uses UTF-8 by default.
+     */
+    public EncryptablePasswordSpec(char[] password, AlgorithmParameterSpec algorithmParameterSpec, Charset hashCharset) {
         Assert.checkNotNullParam("password", password);
         this.password = password;
         this.algorithmParameterSpec = algorithmParameterSpec;
+        this.hashCharset = hashCharset == null ? StandardCharsets.UTF_8 : hashCharset;
     }
 
     /**
@@ -63,6 +78,15 @@ public final class EncryptablePasswordSpec implements PasswordSpec {
      */
     public AlgorithmParameterSpec getAlgorithmParameterSpec() {
         return algorithmParameterSpec;
+    }
+
+    /**
+     * Get the character set used in the password representation
+     *
+     * @return the character set
+     */
+    public Charset getHashCharset() {
+        return hashCharset;
     }
 
     @Override

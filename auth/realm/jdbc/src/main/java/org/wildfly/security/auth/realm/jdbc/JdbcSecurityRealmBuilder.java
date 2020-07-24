@@ -19,6 +19,8 @@ package org.wildfly.security.auth.realm.jdbc;
 
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class JdbcSecurityRealmBuilder {
 
     private Supplier<Provider[]> providers = INSTALLED_PROVIDERS;
     private List<QueryBuilder> queries = new ArrayList<>();
+    private Charset hashCharset;
 
     JdbcSecurityRealmBuilder() {
     }
@@ -51,7 +54,10 @@ public class JdbcSecurityRealmBuilder {
             configuration.add(query.buildQuery());
         }
 
-        return new JdbcSecurityRealm(configuration, providers);
+        if (hashCharset == null) {
+            hashCharset = StandardCharsets.UTF_8;
+        }
+        return new JdbcSecurityRealm(configuration, providers, hashCharset);
     }
 
     /**
@@ -62,6 +68,18 @@ public class JdbcSecurityRealmBuilder {
      */
     public JdbcSecurityRealmBuilder setProviders(Supplier<Provider[]> providers) {
         this.providers = providers;
+
+        return this;
+    }
+
+    /**
+     * Set the character set to use when converting the password string to a byte array.
+     * Uses UTF-8 by default.
+     * @param hashCharset the name of the character set (must not be {@code null})
+     * @return this builder
+     */
+    public JdbcSecurityRealmBuilder setHashCharset(Charset hashCharset) {
+        this.hashCharset = hashCharset;
 
         return this;
     }

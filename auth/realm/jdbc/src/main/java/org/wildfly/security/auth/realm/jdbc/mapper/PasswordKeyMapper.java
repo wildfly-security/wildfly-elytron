@@ -42,6 +42,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
@@ -65,11 +66,6 @@ public class PasswordKeyMapper implements KeyMapper {
     private final String defaultAlgorithm;
     private final Encoding hashEncoding;
     private final Encoding saltEncoding;
-
-    public enum Encoding {
-        BASE64,
-        HEX
-    }
 
     PasswordKeyMapper(Builder builder) {
         final int hashColumn = builder.hashColumn;
