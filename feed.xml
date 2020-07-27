@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Mon, 20 Jul 2020 19:33:38 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 27 Jul 2020 17:19:12 +0000</lastBuildDate>
+        
+        <item>
+            <title>Introduction to Rule Engine & Blacklist IP Dump of Intrusion Detection System</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/introduction-rule-engine-and-blacklist-dump/
+            </link>
+            <description>
+                Earlier we introduced Intrusion Detection System using Elytron&#8217;s security events and discussed its architecture. In this blog we&#8217;ll discuss the implementation of Rule Engine &amp; Blacklist IP Dump. Rule Engine Rule Engine comprises of a set of pre-defined rules, which are used to score the event on a scale of...
+            </description>
+            <pubDate>Mon, 27 Jul 2020 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/introduction-rule-engine-and-blacklist-dump/
+            </guid>
+        </item>
         
         <item>
             <title>An Introduction to Intrusion Detection System using Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ws-elytron-client-integration/
-            </guid>
-        </item>
-        
-        <item>
-            <title>TLS 1.3 with WildFly</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/
-            </link>
-            <description>
-                It is now possible to use TLS 1.3 with WildFly when running against JDK 11 or higher. This blog post will give an introduction to this new feature. Disabled by Default The use of TLS 1.3 is currently disabled by default with WildFly. This is because if JDK 11 is...
-            </description>
-            <pubDate>Wed, 18 Mar 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/
             </guid>
         </item>
         
