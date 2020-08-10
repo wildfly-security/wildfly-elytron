@@ -51,4 +51,8 @@ final class JDKSpecific {
         }
     }
 
+    public static boolean usingStackWalker() {
+        return false;
+    }
+
 }
