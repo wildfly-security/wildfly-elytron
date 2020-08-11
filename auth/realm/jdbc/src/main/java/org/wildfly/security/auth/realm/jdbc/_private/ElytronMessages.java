@@ -24,6 +24,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -45,11 +46,11 @@ public interface ElytronMessages extends BasicLogger {
     RuntimeException couldNotObtainPasswordFactoryForAlgorithm(String algorithm, @Cause Throwable cause);
 
     @Message(id = 1049, value = "Could not open connection")
-    RuntimeException couldNotOpenConnection(@Cause Throwable cause);
+    RealmUnavailableException couldNotOpenConnection(@Cause Throwable cause);
 
     @Message(id = 1050, value = "Could not execute query \"%s\"")
-    RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
+    RealmUnavailableException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
     @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
-    RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
+    RealmUnavailableException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
 }

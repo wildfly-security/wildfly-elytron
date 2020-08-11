@@ -40,6 +40,7 @@ import org.wildfly.security.util.StringMapping;
  *     <li>{@code getIdentityForUpdate}</li>
  *     <li>{@code createAdHocIdentity}</li>
  *     <li>{@code withDefaultRoleMapper}</li>
+ *     <li>{@code handleSecurityEvent}</li>
  * </ul>
  * The {@code actions} are not used and should be empty or {@code null}.
  *
@@ -64,7 +65,8 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
         "getIdentity",
         "getIdentityForUpdate",
         "createAdHocIdentity",
-        "withDefaultRoleMapper"
+        "withDefaultRoleMapper",
+        "handleSecurityEvent"
     );
 
     static final StringMapping<ElytronPermission> mapping = new StringMapping<>(strings, ElytronPermission::new);

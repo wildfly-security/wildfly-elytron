@@ -128,4 +128,9 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 11005, value = "Invalid unicode endoding, offending sequence: %s.")
     IOException invalidUnicodeSequence(String s, @Cause NoSuchElementException nsee);
+
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 13001, value = "Realm is failing over.")
+    void realmFailover(@Cause RealmUnavailableException rue);
+
 }
