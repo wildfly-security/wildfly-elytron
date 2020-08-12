@@ -1,0 +1,207 @@
+---
+layout: post
+title: 'SSH Authentication with Git Persistence'
+date: 2020-08-12
+tags: elytron wildfly client ssh git-persistence
+synopsis: An overview on how to use SSH credentials with the Elytron client to connect to a git repository that manages the WildFly server configuration file history.
+author: aabdelsa
+---
+
+:toc: macro
+:toc-title:
+
+When using a standalone WildFly server, it is currently possible to manage your configuration file history using a git
+repository. While previously it was only possible to connect to HTTP git servers, it is now possible to establish a connection
+with SSH servers as well.
+
+In order to connect to the SSH git repository, you will have to use an Elytron configuration file to set up SSH credentials.
+This blog will describe how to generate SSH keys and add them as credentials in a `wildfly-config.xml` file and how to
+start the standalone server with an SSH git repository to manage your configuration file history.
+
+toc::[]
+
+== Generating SSH keys using the Elytron Tool
+Elytron offers a way to generate and store private keys securely in a credential store. We can use the Elytron tool scripts
+found in your JBOSS home to do so. For this example, we will be creating a new credential store and generating an RSA key.
+
+First, we must create the credential store:
+
+[source,shell]
+----
+[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --create --location=cs_example.cs --password Elytron
+----
+This command creates a credential store in the file `cs_example.cs` and secures the credential store with the password
+`Elytron`. Note the file `cs_example.cs` does not need to exist before running this command to create the credential store.
+
+Next, we generate a key pair to store in the credential store:
+[source,shell]
+----
+[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --generate-key-pair example --algorithm RSA --size 3072
+----
+This command generates an RSA key pair credential of size 3072 bytes and stores it under the alias `example` in the credential
+store we created.
+
+Finally, we can print our public key with the following command:
+[source,shell]
+----
+[JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --export-key-pair-public-key example
+ssh-rsa
+AAAAB3NzaC1yc2EAAAADAQABAAABgwo8etzxo2JiERvv07/Cvkb6eIqodZrdWWAI11cp0VYgnEvd5dGoYGSHmDWO5EqXdOLROifr+CmOGUEWRIwSy+W13QywZbnrmDPJbx4e/KckVvhpEtq3AZc2w7Zunob+yxGlX9PyeYI4HEsKmwOi+brqeBD7fo923U9FUyqs47pu088tpuoYo2kcxX7BJP+uxfEIkZECWkQcolL8qMl4PkUvzWnTv+KjRzUXYAHEefdqpMa+th58KmB7W8An8weJ85/nerbOkVxN6dAbDO82at77LvaRRDh+65ur1JfTWf1iS+fH2TwTv5e/RGNOnV4sdpNcKVfZ3AWVKp5kmt+x0EQsCalFiDwGyciIjQ1jA8NRr83/LQgdzHsDZ7Amudc25IEwRdXS9BYxTqAMeBLoxHqDKAZ6uiZoPH4QfaVYSXeF3GrYUC2Fzg5P1VKa1OJQOb3itztXsor2vFVtQeUjQ3lv63FN8YE6HnS2PRhbqn9Ep0oh/QqbhlK4vtY+WtY5UWBf7Q==
+----
+
+If you already have an SSH key pair, it is possible to import the key into a credential store. See the
+https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Credential_Store.adoc[Credential Store Documentation]
+for more information
+
+=== The `wildfly-config.xml` configuration
+
+Once we have our key pair credential in a credential store, we can reference it from our `wildfly-config.xml` file as follows:
+[source,xml]
+----
+<configuration>
+  <authentication-client xmlns="urn:elytron:client:1.6">
+
+     <credential-stores>
+        <credential-store name="store1">
+           <protection-parameter-credentials>
+              <clear-password password="Elytron"/>
+           </protection-parameter-credentials>
+           <attributes>
+              <attribute name="keyStoreType" value="JCEKS"/>
+                <attribute name="location" value="cs_example.cs"/>
+           </attributes>
+        </credential-store>
+     </credential-stores>
+
+     <authentication-rules>
+        <rule use-configuration="example-config"/>
+     </authentication-rules>
+
+     <authentication-configurations>
+        <configuration name="example-config">
+           <credentials>
+              <credential-store-reference store="store1" alias="example" clear-text="Elytron"/>
+           </credentials>
+        </configuration>
+     </authentication-configurations>
+
+  </authentication-client>
+</configuration>
+----
+
+This configuration defines a new credential store from the file we created. It then references the alias `example` (which
+stores the RSA key pair we generated) to be used as credentials.
+
+== Generating SSH keys using the OpenSSH command line tool
+Alternatively, one may use the OpenSSH command line tool to generate their SSH keys. The algorithms supported by Elytron
+are: RSA, DSA, and ECDSA. For example, we can generate an ECDSA key of size 256 and encrypted with the passphrase “secret”
+as follows:
+[source,shell]
+----
+[~/.ssh]$ ssh-keygen -t ecdsa -b 256
+Generating public/private ecdsa key pair.
+Enter file in which to save the key (/home/user/.ssh/id_ecdsa):
+Enter passphrase (empty for no passphrase): secret
+Enter same passphrase again: secret
+Your identification has been saved in /home/user/.ssh/id_ecdsa.
+Your public key has been saved in /home/user/.ssh/id_ecdsa.pub.
+----
+For more information on how to generate OpenSSH keys see: https://man.openbsd.org/ssh-keygen[OpenSSH Documentation]
+
+=== The `wildfly-config.xml` configuration
+If you already have SSH keys generated, you can add them as credentials a couple of ways:
+
+==== Key Pair Credential
+One way is to specify your keys directly in the `wildfly-config.xml` using a `key-pair` credential as follows:
+[source,xml]
+----
+<configuration>
+  <authentication-client xmlns="urn:elytron:client:1.6">
+
+     <authentication-rules>
+        <rule use-configuration="example"/>
+     </authentication-rules>
+
+     <authentication-configurations>
+        <configuration name="example">
+           <credentials>
+              <key-pair>
+                 <openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABDaZzGpGV
+922xmrL+bMHioPAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz
+dHAyNTYAAABBBIMTU1m6pmpnSTZ2k/cbKnxXkRpXUmWwqN1SSNLpRswGsUhmLG2H21br1Z
+lEHRiRn6zQmA4YCtCw2hLuz8M8WVoAAADAQk+bMNWFfaI4Ej1AQdlLl6v4RDa2HGjDS3V4
+39h0pOx4Ix7YZKydTN4SPkYRt78CNK0AhhtKsWo2lVNwyfh8/6SeqowhgCG9MJYW8yRR1R
+3DX/eQTx6MV/gSSRLDTpcVWUY0jrBGpMaEvylKoNcabiEo44flkIYlG6E/YtFXsmXsoBsj
+nFcjvmfE7Lzyin5Fowwpbqj9f0XOARu9wsUzeyJVAwT7+YCU3mWJ3dnO1bOxK4TuLsxD6j
+RB7bJemsfr
+-----END OPENSSH PRIVATE KEY-----">
+                    <clear-password password="secret"/>
+                 </openssh-private-key>
+              </key-pair>
+           </credentials>
+        </configuration>
+     </authentication-configurations>
+  </authentication-client>
+</configuration>
+----
+This configuration shows how to specify keys which are in OpenSSH format. In this example, we specify the passphrase `secret`
+that is required to decrypt the key as a `clear-password` type, but we could have also used a `masked-password` or a
+`credential-store-reference`.
+
+Elytron also supports keys in PKCS8 format, but they must not be encrypted with a passphrase.
+
+==== SSH credential
+The other way to add existing keys as credentials is to specify the location and file name containing your private keys
+using a `ssh-credential` as follows:
+
+[source,xml]
+----
+<configuration>
+  <authentication-client xmlns="urn:elytron:client:1.6">
+
+     <authentication-rules>
+        <rule use-configuration="example"/>
+     </authentication-rules>
+
+     <authentication-configurations>
+        <configuration name="example">
+           <credentials>
+              <ssh-credential ssh-directory="/user/home/example/.ssh" private-key-file="id_test_ecdsa" known-hosts-file="known_hosts_test">
+                 <clear-password password="secret"/>
+              </ssh-credential>
+           </credentials>
+        </configuration>
+     </authentication-configurations>
+  </authentication-client>
+</configuration>
+----
+* The `ssh-directory` attribute specifies the location of the key and the known hosts file.
+* The `private-key-file` attribute specifies the name of the file containing your private key.
+* The `known-hosts-file` attribute specifies the name of the file containing the known SSH hosts.
+
+This key was encrypted with the passphrase `secret` and so we specify a `clear-password` to be able to decrypt it, but
+again we could have also used a `masked-password` or a `credential-store-reference`.
+
+It is also possible to specify both a `key-pair` credential and `ssh-credential` at the same time if you would
+like to specify your private key using a `key-pair` but your `known_hosts` file is not in the default `[user.home]/.ssh` location and you need
+to use the `ssh-credential` to specify its location.
+
+For more information on the `key-pair` credential and `ssh-credential` check out the
+https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_client-guide/authentication-client.adoc[Elytron Authentication Client Documentation]
+
+== Connecting to a git repo
+
+Once we have added our credentials in a `wildfly-config.xml` file, we can connect to the remote SSH git repo.
+To connect, we use the SSH url of this repo and specify the following options when starting the standalone WildFly server:
+[source,xml]
+----
+[JBOSS_HOME]$ ./bin/standalone.sh --git-repo=ssh:giturl.com/repo --git-auth=file:///path/to/wildfly-config.xml
+----
+* The `--git-repo` option specifies the uri of the git repo we would like to connect to.
+* The `--git-auth` option specifies the location of the `wildfly-config` file containing your credentials.
+
+And all done! We should be able to successfully start up our standalone server and your configuration file history will be
+managed by the repository we connected to. For more information on git persistence, check out:
+
+https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/management-tasks/Configuration_file_git_history.adoc[Git Configuration file history]
