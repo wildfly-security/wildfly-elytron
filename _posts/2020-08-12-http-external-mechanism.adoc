@@ -1,0 +1,22 @@
+---
+layout: post
+title: HTTP External Mechanism
+date: 2020-08-12
+tags: elytron http external
+synopsis: Overview of Elytron support for the HTTP External Mechanism
+author: aabdelsa
+---
+
+WildFly Elytron now supports authenticating users with the External HTTP mechanism. The External mechanism allows users to
+be authenticated with credentials established outside the server via the AJP protocol. This means if you have users authenticated
+by an Apache httpd server, these users can be forwarded to WildFly. This can be done by setting up
+Elytron to secure a WildFly deployment and specifying for the External HTTP mechanism to be used. This is done by specifying
+the `EXTERNAL` mechanism as one of the mechanism configurations to be used by the `http-authentication-factory`:
+[source, shell]
+----
+/subsystem=elytron/http-authentication-factory=web-tests:add(security-domain=example-domain, http-server-mechanism-factory=example-factory,
+mechanism-configurations=[{mechanism-name=EXTERNAL}])
+----
+If your application is secured using this `http-authentication-factory` and a remote server forwards an authenticated
+user using the `REMOTE_USER` attribute via the AJP protocol, Elytron will accept the externally authenticated user and
+use the specified security domain to perform role mapping to complete authorization.
