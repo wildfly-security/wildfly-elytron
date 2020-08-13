@@ -84,6 +84,7 @@ public final class SecurityDomain {
     static final ElytronPermission GET_IDENTITY = ElytronPermission.forName("getIdentity");
     static final ElytronPermission GET_IDENTITY_FOR_UPDATE = ElytronPermission.forName("getIdentityForUpdate");
     static final ElytronPermission CREATE_AD_HOC_IDENTITY = ElytronPermission.forName("createAdHocIdentity");
+    static final ElytronPermission HANDLE_SECURITY_EVENT = ElytronPermission.forName("handleSecurityEvent");
 
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
@@ -774,9 +775,22 @@ public final class SecurityDomain {
         return this == domain || trustedSecurityDomain.test(domain);
     }
 
-    void handleSecurityEvent(final SecurityEvent securityEvent) {
-        // If visibility of this method is increased double check the
-        // event does relate to this security domain.
+    /**
+     * Handle a {@link SecurityEvent}.
+     *
+     * Calling with enabled security manager requires {@code handleSecurityEvent} {@link ElytronPermission}.
+     *
+     * @param securityEvent {@link SecurityEvent} to be handled
+     * @see Builder#setSecurityEventListener(Consumer)
+     */
+    public void handleSecurityEvent(final SecurityEvent securityEvent) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(HANDLE_SECURITY_EVENT);
+        }
+        if (!securityEvent.getSecurityIdentity().getSecurityDomain().equals(this)) {
+            log.securityEventIdentityWrongDomain();
+        }
         this.securityEventListener.accept(securityEvent);
     }
 
