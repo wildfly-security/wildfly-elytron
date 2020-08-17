@@ -21,6 +21,7 @@ package org.wildfly.security.x500.cert.acme;
 import static org.wildfly.security.x500.cert.acme.Acme.ACCEPT_LANGUAGE;
 import static org.wildfly.security.x500.cert.acme.Acme.ACCOUNT;
 import static org.wildfly.security.x500.cert.acme.Acme.ALG;
+import static org.wildfly.security.x500.cert.acme.Acme.AUTHORIZATION;
 import static org.wildfly.security.x500.cert.acme.Acme.AUTHORIZATIONS;
 import static org.wildfly.security.x500.cert.acme.Acme.BAD_NONCE;
 import static org.wildfly.security.x500.cert.acme.Acme.BASE64_URL;
@@ -50,6 +51,7 @@ import static org.wildfly.security.x500.cert.acme.Acme.META;
 import static org.wildfly.security.x500.cert.acme.Acme.NONCE;
 import static org.wildfly.security.x500.cert.acme.Acme.OLD_KEY;
 import static org.wildfly.security.x500.cert.acme.Acme.ONLY_RETURN_EXISTING;
+import static org.wildfly.security.x500.cert.acme.Acme.ORDER;
 import static org.wildfly.security.x500.cert.acme.Acme.PAYLOAD;
 import static org.wildfly.security.x500.cert.acme.Acme.PEM_CERTIFICATE_CHAIN_CONTENT_TYPE;
 import static org.wildfly.security.x500.cert.acme.Acme.PENDING;
@@ -286,7 +288,7 @@ public abstract class AcmeClientSpi {
 
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newAccountUrl, true,
                 getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_CREATED, HttpURLConnection.HTTP_OK);
-        account.setAccountUrl(getLocation(connection));
+        account.setAccountUrl(getLocation(connection, ACCOUNT));
         try {
             return connection.getResponseCode() == HttpURLConnection.HTTP_CREATED;
         } catch (IOException e) {
@@ -451,6 +453,7 @@ public abstract class AcmeClientSpi {
         JsonObjectBuilder payloadBuilder = Json.createObjectBuilder()
                 .add(IDENTIFIERS, identifiersBuilder.build());
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newOrderUrl, false, getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_CREATED);
+        final String orderUrl = getLocation(connection, ORDER);
         JsonObject jsonResponse = getJsonResponse(connection);
         final String finalizeOrderUrl = jsonResponse.getString(FINALIZE);
         final JsonArray authorizationsArray = jsonResponse.getJsonArray(AUTHORIZATIONS);
@@ -512,7 +515,6 @@ public abstract class AcmeClientSpi {
             payloadBuilder = Json.createObjectBuilder()
                     .add(CSR, base64UrlEncode(csrBuilder.build().getEncoded()));
             connection = sendPostRequestWithRetries(account, staging, finalizeOrderUrl, false, getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_OK);
-            final String orderUrl = getLocation(connection);
 
             // poll the order resource until the server has made the certificate chain available
             jsonResponse = pollResourceUntilFinalized(account, staging, orderUrl);
@@ -562,7 +564,7 @@ public abstract class AcmeClientSpi {
 
         HttpURLConnection connection = sendPostRequestWithRetries(account, staging, newAuthzUrl, false,
                 getEncodedJson(payloadBuilder.build()), HttpURLConnection.HTTP_CREATED);
-        String authorizationUrl = getLocation(connection);
+        String authorizationUrl = getLocation(connection, AUTHORIZATION);
         JsonObject jsonResponse = getJsonResponse(connection);
         AcmeChallenge selectedChallenge = respondToChallenges(account, staging, jsonResponse);
         try {
@@ -894,10 +896,10 @@ public abstract class AcmeClientSpi {
         return CodePointIterator.ofString(nonce).base64Decode(BASE64_URL, false).drain();
     }
 
-    private static String getLocation(HttpURLConnection connection) throws AcmeException {
+    private static String getLocation(HttpURLConnection connection, String urlType) throws AcmeException {
         String location = connection.getHeaderField(LOCATION);
         if (location == null) {
-            throw acme.noAccountLocationUrlProvidedByAcmeServer();
+            throw acme.noLocationUrlProvidedByAcmeServer(urlType);
         }
         return location;
     }

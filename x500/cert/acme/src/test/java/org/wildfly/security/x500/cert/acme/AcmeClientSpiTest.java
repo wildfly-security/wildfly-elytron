@@ -27,7 +27,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.wildfly.security.x500.cert.acme.Acme.ACCOUNT;
 import static org.wildfly.security.x500.cert.acme.Acme.BASE64_URL;
+import static org.wildfly.security.x500.cert.acme.Acme.ORDER;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
@@ -178,6 +180,20 @@ public class AcmeClientSpiTest {
     }
 
     @Test
+    public void testCreateAccountMissingLocationURL() throws Exception {
+        server = setupTestCreateAccount(true);
+        AcmeAccount account = populateBasicAccount(ACCOUNT_1_V2);
+        assertNull(account.getAccountUrl());
+
+        try {
+            acmeClient.createAccount(account, false);
+            fail("Expected AcmeException not thrown");
+        } catch(AcmeException e) {
+            assertTrue(e.getMessage().contains(ACCOUNT));
+        }
+    }
+
+    @Test
     public void testCreateAccountOnlyReturnExisting() throws Exception {
         final String NEW_ACCT_LOCATION_1 = "http://localhost:4001/acme/acct/387";
         server = setupTestCreateAccountOnlyReturnExisting();
@@ -264,6 +280,19 @@ public class AcmeClientSpiTest {
         AcmeAccount account = populateAccount(ACCOUNT_3_V2);
         String domainName = "fjsljghasldfjgkv2.com"; // randomly generated domain name
         obtainCertificateChain(null, -1, account, domainName);
+    }
+
+    @Test
+    public void testObtainCertificateChainMissingLocationURL() throws Exception {
+        server = setupTestObtainCertificate(true);
+        AcmeAccount account = populateAccount(ACCOUNT_3_V2);
+        String domainName = "fjsljghasldfjgkv2.com"; // randomly generated domain name
+        try {
+            obtainCertificateChain(null, -1, account, domainName);
+            fail("Expected AcmeException not thrown");
+        } catch(AcmeException e) {
+            assertTrue(e.getMessage().contains(ORDER));
+        }
     }
 
     @Test
@@ -659,7 +688,7 @@ public class AcmeClientSpiTest {
             if (! link.isEmpty()) {
                 response = response.withHeader("Link", link);
             }
-            if (! location.isEmpty()) {
+            if (location != null && ! location.isEmpty()) {
                 response = response.withHeader("Location", location);
             }
             HttpRequest request = request()
@@ -682,8 +711,7 @@ public class AcmeClientSpiTest {
     }
 
     /* -- Helper methods used to set up the messages that should be sent from the mock Let's Encrypt server to our ACME client. -- */
-
-    private ClientAndServer setupTestCreateAccount() {
+    private ClientAndServer setupTestCreateAccount(boolean missingLocationURL) {
 
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator()  +
@@ -726,8 +754,12 @@ public class AcmeClientSpiTest {
         return new AcmeMockServerBuilder(server)
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
                 .addNewNonceResponse(NEW_NONCE_RESPONSE)
-                .addNewAccountRequestAndResponse(NEW_ACCT_REQUEST_BODY, NEW_ACCT_RESPONSE_BODY, NEW_ACCT_REPLAY_NONCE, NEW_ACCT_LOCATION, 201)
+                .addNewAccountRequestAndResponse(NEW_ACCT_REQUEST_BODY, NEW_ACCT_RESPONSE_BODY, NEW_ACCT_REPLAY_NONCE, missingLocationURL ? null : NEW_ACCT_LOCATION, 201)
                 .build();
+    }
+
+    private ClientAndServer setupTestCreateAccount() {
+        return setupTestCreateAccount(false);
     }
 
     private ClientAndServer setupTestCreateAccountOnlyReturnExisting() {
@@ -1098,7 +1130,7 @@ public class AcmeClientSpiTest {
                 .build();
     }
 
-    private ClientAndServer setupTestObtainCertificate() {
+    private ClientAndServer setupTestObtainCertificate(boolean missingLocationURL) {
         // set up a mock Let's Encrypt server
         final String DIRECTORY_RESPONSE_BODY = "{" + System.lineSeparator() +
                 "  \"UZT0cQcZznY\": \"https://community.letsencrypt.org/t/adding-random-entries-to-the-directory/33417\"," + System.lineSeparator() +
@@ -1343,13 +1375,17 @@ public class AcmeClientSpiTest {
                 .addDirectoryResponseBody(DIRECTORY_RESPONSE_BODY)
                 .addNewNonceResponse(NEW_NONCE_RESPONSE)
                 .addNewAccountRequestAndResponse(QUERY_ACCT_REQUEST_BODY, QUERY_ACCT_RESPONSE_BODY, QUERY_ACCT_REPLAY_NONCE, ACCT_LOCATION, 200)
-                .orderCertificateRequestAndResponse(ORDER_CERT_REQUEST_BODY, ORDER_CERT_RESPONSE_BODY, ORDER_CERT_REPLAY_NONCE, ORDER_LOCATION, 201, false)
+                .orderCertificateRequestAndResponse(ORDER_CERT_REQUEST_BODY, ORDER_CERT_RESPONSE_BODY, ORDER_CERT_REPLAY_NONCE, missingLocationURL ? null : ORDER_LOCATION, 201, false)
                 .addAuthorizationResponseBody(AUTHZ_URL, AUTHZ_REQUEST_BODY, AUTHZ_RESPONSE_BODY, AUTHZ_REPLAY_NONCE)
                 .addChallengeRequestAndResponse(CHALLENGE_REQUEST_BODY, CHALLENGE_URL, CHALLENGE_RESPONSE_BODY, CHALLENGE_REPLAY_NONCE, CHALLENGE_LOCATION, CHALLENGE_LINK, 200, false, VERIFY_CHALLENGE_URL, CHALLENGE_FILE_CONTENTS, AUTHZ_URL, UPDATED_AUTHZ_RESPONSE_BODY, UPDATED_AUTHZ_REPLAY_NONCE)
                 .addFinalizeRequestAndResponse(FINALIZE_RESPONSE_BODY, FINALIZE_REPLAY_NONCE, FINALIZE_URL, FINALIZE_LOCATION, 200)
                 .addCheckOrderRequestAndResponse(CHECK_ORDER_URL, CHECK_ORDER_REQUEST_BODY, CHECK_ORDER_RESPONSE_BODY, CHECK_ORDER_REPLAY_NONCE, 200)
                 .addCertificateRequestAndResponse(CERT_URL, CERT_REQUEST_BODY, CERT_RESPONSE_BODY, CERT_REPLAY_NONCE, 200)
                 .build();
+    }
+
+    private ClientAndServer setupTestObtainCertificate() {
+        return setupTestObtainCertificate(false);
     }
 
     private ClientAndServer setupTestObtainCertificateWithKeySize() {
