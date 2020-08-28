@@ -67,9 +67,9 @@ public class SizeRotatingFileAuditEndpoint extends FileAuditEndpoint {
     }
 
     @Override
-    protected void write(byte[] bytes) throws IOException {
-        super.write(bytes);
-        currentSize += bytes.length;
+    protected void write(String toWrite) throws IOException {
+        super.write(toWrite);
+        currentSize += toWrite.getBytes().length;
     }
 
     @Override
