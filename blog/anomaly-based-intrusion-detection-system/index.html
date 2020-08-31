@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Anomaly based Intrusion Detection System</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Anomaly based Intrusion Detection System</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/1fe80158e423117f4c183179e0c32cb1">
+        
+        <p class="byline">By <a href="https://github.com/piyush-palta">Piyush Palta</a> | August 29, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/&title=Anomaly based Intrusion Detection System" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Anomaly based Intrusion Detection System&url=https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Anomaly based Intrusion Detection System&amp;body=Anomaly based Intrusion Detection System https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p><em>Intrusion Detection</em> is the art of sensing when a system or network is being used inappropriately or without authorization. Without intrusion detection, an attacker can attempt attacks many times until an attack is finally successful. Intrusion detection allows for these attacks to be identified before a successful attack is likely to occur.<br>
+In this blog, we’ll talk about an Anomaly detection based approach for Intrusion Detection System. First of all, let’s discuss what the whole concept of anomaly based intrusion detection is.<br></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Anomaly based intrusion detection uses statistics to form a baseline usage of the networks at different time intervals. This system uses machine learning to create a model simulating regular activity and then compares new behaviour with the existing model.</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p><em>Before we continue with defining anomaly based IDS, here are a few things you should know:</em></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Machine Learning is the field of study that gives computers the capability to learn and improve from experience without being programmed to do so explicitly.</p>
+</li>
+<li>
+<p>The process of learning begins with observations or data to look for patterns in data and make better predictions based on the dataset provided. The primary objective is to allow computers to learn without human assistance and adjust its actions accordingly.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><em>Machine Learning Algorithms can be broadly classified into:</em></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Supervised machine learning algorithms</strong>: It is called supervised learning because the process of an algorithm learning from the training dataset can be thought of as a teacher supervising the learning process. We know the correct answers, the algorithm iteratively makes predictions on the training data and is corrected by the teacher. Learning stops when the algorithm achieves an acceptable level of performance. The teacher here is the labelled dataset, that provides us with information &amp; facilitates learning.</p>
+</li>
+<li>
+<p><strong>Unsupervised machine learning algorithms</strong>: are used when the information used to train is neither labelled nor classified. Unattended learning studies how systems can infer a function to describe a hidden structure from unlabeled data.</p>
+</li>
+<li>
+<p><strong>Semi-supervised machine learning algorithms</strong>: makes use of unlabeled data for training — with a blend of less labelled data and a lot of unlabeled data. Semi-supervised learning falls between unsupervised learning and supervised learning</p>
+</li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="evaluation-of-different-machine-learning-models-for-ids"><a class="anchor" href="#evaluation-of-different-machine-learning-models-for-ids"></a>Evaluation of different Machine Learning Models for IDS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Unsupervised learning algorithms can <strong>learn</strong> the typical pattern of the network and can report outliers without labelling the dataset. It can detect new types of intrusions but is extremely prone to false positives. To reduce the false positives, we can introduce a labelled dataset and build a supervised machine learning model by teaching it the difference between a normal and an attack packet in the network, basically we will be labelling the normal &amp; malicious traffic. The supervised model can handle the known attacks deftly and can also recognise variations of those attacks. Standard supervised algorithms such as <strong>Naive Bayes, Random Forest Classifier, MLP and Deep Neural Network</strong> are discussed below.<br></p>
+</div>
+<div class="paragraph">
+<p>Apart from the algorithm used, one of the most important things while writing a Machine model and training it, is the dataset used. And the quality and extensiveness of the dataset determines the quality of the model &amp; how well it will perform generally.
+For many years, <strong>KDD99 Dataset</strong> has been a benchmark for IDS model training &amp; evaluations. But to fully customise your model as per your network server and to train your model to handle anomalies in your network, it is important for it to train a model specifically for your network, and let the model learn what normal traffic looks like for your network i.e. normal and anomalous traffic for each network is different. One can use both supervised and unsupervised learning for this purpose.<br></p>
+</div>
+<div class="paragraph">
+<p>To solve this problem &amp; generate customisable dataset, we have implemented Network Intrusion Dataset Generator that lets you capture your network traffic using scapy and generates a csv file that can readily be used for training your model after preprocessing the dataset. The best part is, it is fully customizable and one can choose to keep whatever features they want. You can find the implementation <a href="https://github.com/piyush-palta/network-intrusion-dataset-generator">here</a> <br></p>
+</div>
+<div class="paragraph">
+<p><em>Code presented here is an implementation to generate csv file from packets captured on the network. One can also convert already captured packets in a pcap file to csv. The current implementation hasn&#8217;t applied many filters on capturing of packets &amp; can be extended according to one&#8217;s own need.</em><br></p>
+</div>
+<div class="paragraph">
+<p>Coming back to different models, let’s evaluate how each model fares on KDD99 Dataset (for testing we’ve used KDD99 Dataset). We have used <strong>scikit-learn</strong> models for the evaluation, implementation of all the models can be found in this colab notebook <a href="https://colab.research.google.com/drive/1Xc3f1ts_rtL3wsC30StQw1-ER3KxMot8?usp=sharing">here</a>.</p>
+</div>
+<div class="paragraph">
+<p>Let’s talk in brief about what each model does (we won’t discuss which model is the best here since each model will serve good for different purposes &amp; different datasets, so for now we’ll skip discussing the metrics. Although, if one wishes they can look at the accuracy we are getting for the KDD99 dataset for each model by running the cells in the colab notebook.</p>
+</div>
+<div class="sect2">
+<h3 id="random-forest-classifier"><a class="anchor" href="#random-forest-classifier"></a>Random Forest Classifier :</h3>
+<div class="paragraph">
+<p>Random forest, like its name implies, consists of a large number of individual decision trees that operate as an ensemble. Each individual tree in the random forest spits out a class prediction and the class with the most votes becomes our model’s prediction
+It basically is like an election where uncorrelated models votes to choose a class, and the rule is majority wins.</p>
+</div>
+<hr>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://miro.medium.com/max/750/1*VHDtVaDPNepRglIAv72BFg.jpeg" alt="Random Forest Classifier">
+</div>
+<div class="title">Figure 1. Visualization of how Random Forest Classifier works</div>
+</div>
+<hr>
+</div>
+<div class="sect2">
+<h3 id="naive-bayes-classifier"><a class="anchor" href="#naive-bayes-classifier"></a>Naive Bayes Classifier :</h3>
+<div class="paragraph">
+<p>Naive Bayes classifiers are a collection of classification algorithms based on Bayes’ Theorem. It is not a single algorithm but a family of algorithms where all of them share a common principle, i.e. every pair of features being classified is independent of each other.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="mlp-multi-layered-perceptron"><a class="anchor" href="#mlp-multi-layered-perceptron"></a>MLP (Multi-layered Perceptron) :</h3>
+<div class="paragraph">
+<p>A multi-layered perceptron consists of interconnected neurons transferring information to each other, much like the human brain. Each neuron is assigned a value. The network can be divided into three main layers :</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Input Layer</p>
+</li>
+<li>
+<p>Hidden Layer(s)</p>
+</li>
+<li>
+<p>Output Layer</p>
+</li>
+</ul>
+</div>
+<hr>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://lh6.googleusercontent.com/l-LGvAczEySMbPeddHfA_AYxCb-jGWQTGcdndksrhoCYSO3udPxh15Nw6BoyTmnFXTNznDl7schzDTnjQ1JRnYo0h4ysFMGyNkjIBrKDvKJ6V521V7Z5jGn4DlOKAJ6Nj0dDqUkf" alt="l LGvAczEySMbPeddHfA AYxCb jGWQTGcdndksrhoCYSO3udPxh15Nw6BoyTmnFXTNznDl7schzDTnjQ1JRnYo0h4ysFMGyNkjIBrKDvKJ6V521V7Z5jGn4DlOKAJ6Nj0dDqUkf">
+</div>
+<div class="title">Figure 2. Representation of Multi-layered Perceptron</div>
+</div>
+<hr>
+<div class="paragraph">
+<p>The MLP is a feedforward neural network, which means that the data is transmitted from the input layer to the output layer in the forward direction. The connections between the layers are assigned weights. These weights are calculated by a mathematical function and adjusted based on the provided dataset to minimize the cost function.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deep-neural-network"><a class="anchor" href="#deep-neural-network"></a>Deep Neural Network</h3>
+<div class="paragraph">
+<p>Deep Neural Network is similar to MLP, it’s just that it supports backpropagation.
+Backpropagation is a technique used to optimize the weights of a neural net using the outputs as inputs. Conventionally, random weights are assigned to all the connections. These random weights propagate values through the network to produce the output. Naturally, this output would differ from the expected output. The difference between the two values is called the error.<br>
+Backpropagation refers to the process of sending this error back through the network, readjusting the weights automatically so that eventually, the error between the actual and expected output is minimized.<br></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="feature-analysis"><a class="anchor" href="#feature-analysis"></a>Feature Analysis</h3>
+<div class="paragraph">
+<p>Enough on briefing each separate model, let’s have a look at the <strong>feature analysis of KDD dataset</strong>. This brief discussion below is based on <a href="https://www.sciencedirect.com/science/article/pii/S1877050915020190">research paper</a>.<br></p>
+</div>
+<div class="paragraph">
+<p>The KDD data set has 42 attributes. The attribute labeled 42 in the data set is the ‘class’ attribute which indicates whether a given instance is a normal connection instance or an attack. Out of these 42 attributes, 41 attributes can be classified into four different classes as discussed below:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Basic, B</strong> Features are the attributes of individual TCP connections</p>
+</li>
+<li>
+<p><strong>Content ,C</strong> features are the attributes within a connection suggested by the domain knowledge</p>
+</li>
+<li>
+<p><strong>Traffic, T</strong> features are the attributes computed using a two-second time window</p>
+</li>
+<li>
+<p><strong>Host, H</strong> features are the attributes designed to assess attacks which last for more than two seconds</p>
+</li>
+</ul>
+</div>
+<hr>
+<div class="imageblock text-center">
+<div class="content">
+<img src="https://lh6.googleusercontent.com/DotI1Z4AkeXaZ15xwzG9UODf4kKf1gYdaj4lhnKckS9D2voxfR77w3PuTQJUmoL6eovYnIg0hntYYfIrwORcHOvzJzOrMuJSFCVVbTuHRuw5P7ZrtgTyop5O-eF8ks6vyec88TJh" alt="DotI1Z4AkeXaZ15xwzG9UODf4kKf1gYdaj4lhnKckS9D2voxfR77w3PuTQJUmoL6eovYnIg0hntYYfIrwORcHOvzJzOrMuJSFCVVbTuHRuw5P7ZrtgTyop5O eF8ks6vyec88TJh">
+</div>
+<div class="title">Figure 3. Attributes in KDD99 Dataset</div>
+</div>
+<hr>
+<div class="paragraph">
+<p>The conclusion of the result is that Basic features alone results in highest accuracy. One can find more details and all the metrics in the research paper provided above.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary:</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this blog, we introduced an anomaly based Intrusion Detection System &amp; discussed various machine learning models &amp; its implementation.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
