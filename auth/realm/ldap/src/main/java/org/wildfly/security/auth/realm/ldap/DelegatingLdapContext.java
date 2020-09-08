@@ -306,42 +306,82 @@ class DelegatingLdapContext implements LdapContext {
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes, String[] attributesToReturn) throws NamingException {
-        return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes, String[] attributesToReturn) throws NamingException {
-        return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes) throws NamingException {
-        return wrap(delegating.search(name, matchingAttributes));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, matchingAttributes));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes) throws NamingException {
-        return wrap(delegating.search(name, matchingAttributes));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, matchingAttributes));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, String filter, SearchControls cons) throws NamingException {
-        return wrap(delegating.search(name, filter, cons));
+        ClassLoader previous = setSocketFactory();
+        try{
+            return wrap(delegating.search(name, filter, cons));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, String filter, SearchControls cons) throws NamingException {
-        return wrap(delegating.search(name, filter, cons));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, filter, cons));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, String filterExpr, Object[] filterArgs, SearchControls cons) throws NamingException {
-        return wrap(delegating.search(name, filterExpr, filterArgs, cons));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, filterExpr, filterArgs, cons));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, String filterExpr, Object[] filterArgs, SearchControls cons) throws NamingException {
-        return wrap(delegating.search(name, filterExpr, filterArgs, cons));
+        ClassLoader previous = setSocketFactory();
+        try {
+            return wrap(delegating.search(name, filterExpr, filterArgs, cons));
+        } finally {
+            unsetSocketFactory(previous);
+        }
     }
 
     @Override
