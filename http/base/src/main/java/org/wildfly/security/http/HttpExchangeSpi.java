@@ -253,12 +253,21 @@ public interface HttpExchangeSpi extends HttpServerScopes {
          return -1;
      }
 
-     /**
-      * Suspend the current request so that it can be subsequently resumed.
-      *
-      * The server may use any strategy it deems appropriate to suspend the current request and store the state ready for a subsequent request.
-      *
-      * @return {@code true} if suspension is supported, {@code false} otherwise.
+    /**
+     * Returns a remotely authenticated user
+     *
+     * @return the remote user principal or {@code null} if no remote user was authenticated.
+     */
+    default String getRemoteUser() {
+        return null;
+    }
+
+    /**
+     * Suspend the current request so that it can be subsequently resumed.
+     *
+     * The server may use any strategy it deems appropriate to suspend the current request and store the state ready for a subsequent request.
+     *
+     * @return {@code true} if suspension is supported, {@code false} otherwise.
       */
      default boolean suspendRequest() {
          return false;

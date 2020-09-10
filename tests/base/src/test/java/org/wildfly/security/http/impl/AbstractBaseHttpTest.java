@@ -38,6 +38,7 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
+import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -78,6 +79,7 @@ public class AbstractBaseHttpTest extends BaseTestCase {
 
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();
+    protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory();
 
     protected void mockDigestNonce(final String nonce){
         new MockUp<NonceManager>(){
@@ -105,9 +107,11 @@ public class AbstractBaseHttpTest extends BaseTestCase {
         private String[] authorization;
         private Status result;
         private HttpServerMechanismsResponder responder;
+        private String remoteUser;
 
         public TestingHttpServerRequest(String[] authorization) {
             this.authorization = authorization;
+            this.remoteUser = null;
         }
 
         public Status getResult() {
@@ -226,6 +230,15 @@ public class AbstractBaseHttpTest extends BaseTestCase {
         public HttpScope getScope(Scope scope, String id) {
             throw new IllegalStateException();
         }
+
+        public void setRemoteUser (String remoteUser) {
+            this.remoteUser = remoteUser;
+        }
+
+        @Override
+        public String getRemoteUser() {
+            return remoteUser;
+        }
     }
 
     protected class TestingHttpServerResponse implements HttpServerResponse {
@@ -294,9 +307,12 @@ public class AbstractBaseHttpTest extends BaseTestCase {
                 } else if (callback instanceof IdentityCredentialCallback) {
                     // NO-OP
                 } else if (callback instanceof AuthorizeCallback) {
-                    Assert.assertEquals(username, ((AuthorizeCallback) callback).getAuthenticationID());
-                    Assert.assertEquals(username, ((AuthorizeCallback) callback).getAuthorizationID());
-                    ((AuthorizeCallback) callback).setAuthorized(true);
+                    if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                       username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                        ((AuthorizeCallback) callback).setAuthorized(true);
+                    } else {
+                        ((AuthorizeCallback) callback).setAuthorized(false);
+                    }
                 } else {
                     throw new UnsupportedCallbackException(callback);
                 }
