@@ -41,6 +41,7 @@ org.wildfly.security.http.basic
 org.wildfly.security.http.bearer
 org.wildfly.security.http.cert
 org.wildfly.security.http.digest
+org.wildfly.security.http.external
 org.wildfly.security.http.form
 org.wildfly.security.http.impl
 org.wildfly.security.http.spnego
