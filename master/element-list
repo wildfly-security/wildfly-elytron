@@ -4,6 +4,7 @@ org.wildfly.security.audit
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
+org.wildfly.security.auth.client._private
 org.wildfly.security.auth.client.spi
 org.wildfly.security.auth.jaspi
 org.wildfly.security.auth.jaspi._private
@@ -40,6 +41,7 @@ org.wildfly.security.http.basic
 org.wildfly.security.http.bearer
 org.wildfly.security.http.cert
 org.wildfly.security.http.digest
+org.wildfly.security.http.external
 org.wildfly.security.http.form
 org.wildfly.security.http.spnego
 org.wildfly.security.http.util
