@@ -56,6 +56,7 @@ import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.ExclusiveNameCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
@@ -1114,6 +1115,15 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     } else {
                         addPublicCredential(credential);
                     }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof PrincipalAuthorizeCallback) {
+                    PrincipalAuthorizeCallback authorizeCallback = (PrincipalAuthorizeCallback) callback;
+                    Principal principal = authorizeCallback.getPrincipal();
+                    // always re-set the principal to ensure it hasn't changed.
+                    setAuthenticationPrincipal(principal);
+                    boolean authorized = authorize();
+                    log.tracef("Handling PrincipalAuthorizeCallback: principal = %s  authorized = %b", principal, authorized);
+                    authorizeCallback.setAuthorized(authorized);
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
