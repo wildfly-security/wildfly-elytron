@@ -236,6 +236,7 @@
         </pluginManagement>
     </build>
 
+
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -485,6 +486,10 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-security-manager-action</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-ssl-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -874,6 +879,11 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-ssl-common</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-ssl</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -965,6 +975,7 @@
                                 </includes>
                                 <excludes>
                                     <exclude>org.wildfly.security.auth.client.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.ssl.ElytronMessages_$logger</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>

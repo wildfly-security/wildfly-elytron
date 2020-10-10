@@ -25,11 +25,12 @@
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
         <version>1.19.1.CR1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-ssl</artifactId>
+    <artifactId>wildfly-elytron-ssl-common</artifactId>
 
     <name>WildFly Elytron - SSL</name>
     <description>WildFly Security SSL</description>
@@ -95,20 +96,12 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
-        </dependency>    
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-base</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-credential</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>        
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-util</artifactId>

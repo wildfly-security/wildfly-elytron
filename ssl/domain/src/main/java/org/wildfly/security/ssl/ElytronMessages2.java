@@ -18,16 +18,6 @@
 
 package org.wildfly.security.ssl;
 
-import static org.jboss.logging.Logger.Level.WARN;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
-import java.security.cert.CertificateException;
-
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLProtocolException;
-
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -37,6 +27,15 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.cert.CertificateException;
+
+import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -51,10 +50,10 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
     @ValidIdRange(min = 5015, max = 5017),
     @ValidIdRange(min = 15000, max = 15999)
 })
-interface ElytronMessages extends BasicLogger {
+interface ElytronMessages2 extends BasicLogger {
 
-    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
-    ElytronMessages tls = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.tls");
+    ElytronMessages2 log = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security");
+    ElytronMessages2 tls = Logger.getMessageLogger(ElytronMessages2.class, "org.wildfly.security.tls");
 
     @LogMessage(level = WARN)
     @Message(id = 1066, value = "Invalid string count for mechanism database entry \"%s\"")
@@ -188,9 +187,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
 
-    @Message(id = 15000, value = "Unknown cipher suite name '%s' in names string '%s'")
+    @Message(id = 15000, value = "Uknown cipher suite name '%s' in names string '%s'")
     IllegalArgumentException unknownCipherSuiteName(String name, String string);
 
-    @Message(id = 15001, value = "No '%s' provided by the configured providers")
-    NoSuchAlgorithmException noSslContextProvided(String type);
 }

@@ -327,7 +327,8 @@
                             ${project.basedir}/sasl/otp/src/main/java/;
                             ${project.basedir}/sasl/plain/src/main/java/;
                             ${project.basedir}/sasl/scram/src/main/java/;
-                            ${project.basedir}/ssl/src/main/java/;
+                            ${project.basedir}/ssl/base/src/main/java/;
+                            ${project.basedir}/ssl/domain/src/main/java/;
                             ${project.basedir}/tests/base/src/main/java/;
                             ${project.basedir}/tests/common/src/main/java/;
                             ${project.basedir}/tool/src/main/java/;
@@ -385,7 +386,8 @@
                                     <include>org/wildfly/security/permission/*.java</include>
                                     <include>org/wildfly/security/sasl/util/*.java</include>
                                     <include>org/wildfly/security/sasl/auth/util/*.java</include>
-                                    <include>org/wildfly/security/ssl/*.java</include>
+                                    <include>org/wildfly/security/ssl/base/*.java</include>
+                                    <include>org/wildfly/security/ssl/domain/*.java</include>
                                     <include>org/wildfly/security/ssl/_private/*.java</include>
                                     <include>org/wildfly/security/ssl/*.java</include>
                                     <include>org/wildfly/security/x500/*.java</include>
@@ -808,6 +810,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-security-manager-action</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-ssl-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1480,7 +1487,8 @@
         <module>sasl/otp</module>
         <module>sasl/plain</module>
         <module>sasl/scram</module>
-        <module>ssl</module>
+        <module>ssl/base</module>
+        <module>ssl/domain</module>
         <module>tool</module>
         <module>util</module>
         <module>x500/base</module>

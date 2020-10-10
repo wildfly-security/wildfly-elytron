@@ -50,7 +50,6 @@ import javax.net.ssl.X509TrustManager;
 import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.server.SecurityIdentity;
 
 import static org.wildfly.security.ssl.ElytronMessages.log;
 
@@ -68,7 +67,7 @@ public final class SSLUtils {
     private static final String SERVICE_TYPE = SSLContext.class.getSimpleName();
 
     /**
-     * The key used to store the authenticated {@link SecurityIdentity} onto the {@link SSLSession}.
+     * The key used to store the authenticated SecurityIdentity onto the {@link SSLSession}.
      */
     public static final String SSL_SESSION_IDENTITY_KEY = "org.wildfly.security.ssl.identity";
 

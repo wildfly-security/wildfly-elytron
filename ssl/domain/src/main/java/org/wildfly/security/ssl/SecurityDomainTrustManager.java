@@ -80,66 +80,66 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         Assert.checkNotNullParam("chain", chain);
         Assert.checkNotNullParam("authType", authType);
         if (chain.length == 0) {
-            throw ElytronMessages.log.emptyChainNotTrusted();
+            throw ElytronMessages2.log.emptyChainNotTrusted();
         }
         Principal principal = X500PrincipalUtil.asX500Principal(chain[0].getSubjectX500Principal());
         if (principal == null) {
-            throw ElytronMessages.log.notTrusted(null);
+            throw ElytronMessages2.log.notTrusted(null);
         }
         try (final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext(mechanismConfigurationSelector)) {
             authenticationContext.setAuthenticationPrincipal(principal);
             if (! authenticationContext.exists()) {
                 if (authenticationOptional) {
-                    ElytronMessages.log.tracef("Credential validation failed: no identity found for principal [%s], ignoring as authentication is optional", principal);
+                    ElytronMessages2.log.tracef("Credential validation failed: no identity found for principal [%s], ignoring as authentication is optional", principal);
                     return;
                 } else {
-                    throw ElytronMessages.log.notTrusted(principal);
+                    throw ElytronMessages2.log.notTrusted(principal);
                 }
             }
             if (authenticationContext.getCredentialAcquireSupport(X509CertificateChainCredential.class).mayBeSupported()) {
                 X509CertificateChainCredential credential = authenticationContext.getCredential(X509CertificateChainCredential.class);
                 if (credential == null) {
                     if (authenticationOptional) {
-                        ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
+                        ElytronMessages2.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
                         return;
                     } else {
-                        throw ElytronMessages.log.notTrusted(principal);
+                        throw ElytronMessages2.log.notTrusted(principal);
                     }
                 }
                 if (! credential.getFirstCertificate().equals(chain[0])) {
                     if (authenticationOptional) {
-                        ElytronMessages.log.tracef("Credential validation failed: certificate does not match for principal [%s], ignoring as authentication is optional", principal);
+                        ElytronMessages2.log.tracef("Credential validation failed: certificate does not match for principal [%s], ignoring as authentication is optional", principal);
                         return;
                     } else {
-                        throw ElytronMessages.log.notTrusted(principal);
+                        throw ElytronMessages2.log.notTrusted(principal);
                     }
                 }
             } else if (authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported()) {
                 final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
                 if (! authenticationContext.verifyEvidence(evidence)) {
                     if (authenticationOptional) {
-                        ElytronMessages.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
+                        ElytronMessages2.log.tracef("Credential validation failed: no trusted certificate found for principal [%s], ignoring as authentication is optional", principal);
                         return;
                     } else {
-                        throw ElytronMessages.log.notTrusted(principal);
+                        throw ElytronMessages2.log.notTrusted(principal);
                     }
                 }
             }
             if (! authenticationContext.authorize()) {
                 if (authenticationOptional) {
-                    ElytronMessages.log.tracef("Credential validation failed: identity is not authorized principal [%s], ignoring as authentication is optional", principal);
+                    ElytronMessages2.log.tracef("Credential validation failed: identity is not authorized principal [%s], ignoring as authentication is optional", principal);
                     return;
                 } else {
-                    throw ElytronMessages.log.notTrusted(principal);
+                    throw ElytronMessages2.log.notTrusted(principal);
                 }
             }
-            ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
+            ElytronMessages2.log.tracef("Authentication succeed for principal [%s]", principal);
             authenticationContext.succeed();
             if (handshakeSession != null) {
                 handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
             }
         } catch (RealmUnavailableException e) {
-            throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
+            throw ElytronMessages2.log.notTrustedRealmProblem(e, principal);
         }
     }
 

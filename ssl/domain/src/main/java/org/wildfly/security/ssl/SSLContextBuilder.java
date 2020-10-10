@@ -18,11 +18,16 @@
 
 package org.wildfly.security.ssl;
 
-import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
-
-import java.security.Provider;
-import java.security.Security;
-import java.util.function.Supplier;
+import org.wildfly.common.Assert;
+import org.wildfly.security.FixedSecurityFactory;
+import org.wildfly.security.OneTimeSecurityFactory;
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.server.MechanismConfiguration;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
+import org.wildfly.security.auth.server.PrincipalDecoder;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -31,17 +36,11 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import java.security.Provider;
+import java.security.Security;
+import java.util.function.Supplier;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security.FixedSecurityFactory;
-import org.wildfly.security.OneTimeSecurityFactory;
-import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.server.MechanismConfiguration;
-import org.wildfly.security.auth.server.MechanismConfigurationSelector;
-import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.auth.server.PrincipalDecoder;
-import org.wildfly.security.auth.server.ServerAuthenticationContext;
-import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 /**
  * A class which allows building and configuration of a single client- or server-side SSL context.  The builder requires, at a
@@ -87,7 +86,7 @@ public final class SSLContextBuilder {
     public SSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
 
         if (securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).isNotSupported()) {
-            throw ElytronMessages.tls.securityDomainOfSSLContextDoesNotSupportX509();
+            throw ElytronMessages2.tls.securityDomainOfSSLContextDoesNotSupportX509();
         }
 
         this.securityDomain = securityDomain;
@@ -343,8 +342,8 @@ public final class SSLContextBuilder {
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
 
-            if (ElytronMessages.tls.isTraceEnabled()) {
-                ElytronMessages.tls.tracef("SSLContext initialization:%n" +
+            if (ElytronMessages2.tls.isTraceEnabled()) {
+                ElytronMessages2.tls.tracef("SSLContext initialization:%n" +
                                 "    securityDomain = %s%n" +
                                 "    canAuthPeers = %s%n" +
                                 "    cipherSuiteSelector = %s%n" +

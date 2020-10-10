@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2018 Red Hat, Inc., and individual contributors
+  ~ Copyright 2020 Red Hat, Inc., and individual contributors
   ~ as indicated by the @author tags.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,23 +30,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-sasl</artifactId>
+    <artifactId>wildfly-elytron-ssl</artifactId>
 
-    <name>WildFly Elytron - SASL</name>
-    <description>WildFly Security SASL</description>
+    <name>WildFly Elytron - SSL Domain</name>
+    <description>WildFly Security SSL Domain</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
-        </dependency>    
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential</artifactId>
+            <artifactId>wildfly-elytron-ssl-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -54,21 +46,9 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-mechanism</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-ssl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-util</artifactId>
+            <artifactId>wildfly-elytron-auth</artifactId>
         </dependency>        
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500</artifactId>
-        </dependency>
-                        
+
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
@@ -85,13 +65,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <!-- scope is compile ELY-1153 -->
-        </dependency>
-
-        <!--Test scope-->
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -101,8 +74,7 @@
             <artifactId>jmockit</artifactId>
             <scope>test</scope>
         </dependency>
-
-
+               
     </dependencies>
 
 </project>
