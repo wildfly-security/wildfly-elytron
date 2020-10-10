@@ -1,0 +1,75 @@
+---
+layout: post
+title: 'An overview of new security realm implementations'
+date: 2020-10-10
+tags: elytron wildfly21 securityrealm realm identity distributed database
+synopsis: An overview of the new realm implementations in WildFly Elytron and WildFly 21.
+author: mmazanek
+---
+
+We have added a new functionality to WildFly Elytron
+
+It is now possible to configure security realms that delegate authentication and authorization to multiple realms.
+
+== Distributed realm
+
+First added realm is the `distributed-realm`, which can be used to join multiple realms into one, for example if you
+have user data on two databases. Unlike `aggregate-realm`, which uses one realm for authentication and multiple realms
+or authorization, `distributed-realm` uses multiple realms for both authentication and authorization.
+
+
+Lets say we have two realms called `realm1` and `realm2`, which we want to use as one. We can do so in CLI using following command:
+
+[source]
+----
+/subsystem=elytron/distributed-realm=newrealm:add(realms=[realm1, realm2])
+----
+
+which results in following configuration:
+
+[source,xml]
+----
+<security-realms>
+...
+    <distributed-realm name="newrealm" realms="realm1 realm2"/>
+...
+</security-realms>
+----
+
+The new distributed-realm `newrealm` will use both `realm1` and `realm2` for authentication and authorization.
+
+
+== Failover realm
+
+The other added realm is the `failover-realm`, which enables you to configure a backup realm in case another realm is
+unavailable. For example, we can have a file based as a backup for database realm,
+so we can still access the deployed application using backup identity stored in the file based realm,
+even if we lose network connection to the `jdbc-realm` database.
+
+Lets say we have user data in jdbc-realm called `realm1` and we want to use filesystem-realm called `realm2` as a backup.
+We can do this in CLI using following command:
+
+[source]
+----
+/subsystem=elytron/failover-realm=newrealm:add(delegate-realm=realm1, failover-realm=realm2)
+----
+
+which results in following configuration:
+
+[source,xml]
+----
+<security-realms>
+...
+    <failover-realm name="newrealm" delegate-realm="realm1" failover-realm="realm2"/>
+...
+</security-realms>
+----
+
+The new failover-realm `newrealm` will use `realm1` as a primary realm for authentication and authorization, but if the
+realm becomes unavailable, it will switch to using `realm2`. The failover happens per authentication, so if the `realm1` becomes
+unavailable for a short time, you will be able to authenticate using it as soon as it comes back up without any reloads.
+
+
+== Summary
+
+This blog post has given an overview of WildFly Elytron distributed-realm and failover-realm.
