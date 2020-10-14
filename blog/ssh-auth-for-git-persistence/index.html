@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: SSH Authentication with Git Persistence</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/21/WildFly_Elytron_Security.html">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/21/WildFly_Elytron_Security.html">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>SSH Authentication with Git Persistence</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/9e5eb1d1c78e5aa6a1eb8365464049c8">
+        
+        <p class="byline">By <a href="https://github.com/ashley-abdelsayed98">Ashley Abdel-Sayed</a> | October 14, 2020</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/&title=SSH Authentication with Git Persistence" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=SSH Authentication with Git Persistence&url=https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=SSH Authentication with Git Persistence&amp;body=SSH Authentication with Git Persistence https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>When using a standalone WildFly server, it is currently possible to manage your configuration file history using a git
+repository. While previously it was only possible to connect to HTTP git servers, it is now possible to establish a connection
+with SSH servers as well.</p>
+</div>
+<div class="paragraph">
+<p>In order to connect to the SSH git repository, you will have to use an Elytron configuration file to set up SSH credentials.
+This blog will describe how to generate SSH keys and add them as credentials in a <code>wildfly-config.xml</code> file and how to
+start the standalone server with an SSH git repository to manage your configuration file history.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#generating-ssh-keys-using-the-elytron-tool">Generating SSH keys using the Elytron Tool</a>
+<ul class="sectlevel2">
+<li><a href="#the-wildfly-config-xml-configuration">The <code>wildfly-config.xml</code> configuration</a></li>
+</ul>
+</li>
+<li><a href="#generating-ssh-keys-using-the-openssh-command-line-tool">Generating SSH keys using the OpenSSH command line tool</a>
+<ul class="sectlevel2">
+<li><a href="#the-wildfly-config-xml-configuration-2">The <code>wildfly-config.xml</code> configuration</a></li>
+</ul>
+</li>
+<li><a href="#connecting-to-a-git-repo">Connecting to a git repo</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="generating-ssh-keys-using-the-elytron-tool"><a class="anchor" href="#generating-ssh-keys-using-the-elytron-tool"></a>Generating SSH keys using the Elytron Tool</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Elytron offers a way to generate and store private keys securely in a credential store. We can use the Elytron tool scripts
+found in your JBOSS home to do so. For this example, we will be creating a new credential store and generating an RSA key.</p>
+</div>
+<div class="paragraph">
+<p>First, we must create the credential store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --create --location=cs_example.cs --password Elytron</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This command creates a credential store in the file <code>cs_example.cs</code> and secures the credential store with the password
+<code>Elytron</code>. Note the file <code>cs_example.cs</code> does not need to exist before running this command to create the credential store.</p>
+</div>
+<div class="paragraph">
+<p>Next, we generate a key pair to store in the credential store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --generate-key-pair example --algorithm RSA --size 3072</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This command generates an RSA key pair credential of size 3072 bytes and stores it under the alias <code>example</code> in the credential
+store we created.</p>
+</div>
+<div class="paragraph">
+<p>Finally, we can print our public key with the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --export-key-pair-public-key example
+ssh-rsa
+AAAAB3NzaC1yc2EAAAADAQABAAABgwo8etzxo2JiERvv07/Cvkb6eIqodZrdWWAI11cp0VYgnEvd5dGoYGSHmDWO5EqXdOLROifr+CmOGUEWRIwSy+W13QywZbnrmDPJbx4e/KckVvhpEtq3AZc2w7Zunob+yxGlX9PyeYI4HEsKmwOi+brqeBD7fo923U9FUyqs47pu088tpuoYo2kcxX7BJP+uxfEIkZECWkQcolL8qMl4PkUvzWnTv+KjRzUXYAHEefdqpMa+th58KmB7W8An8weJ85/nerbOkVxN6dAbDO82at77LvaRRDh+65ur1JfTWf1iS+fH2TwTv5e/RGNOnV4sdpNcKVfZ3AWVKp5kmt+x0EQsCalFiDwGyciIjQ1jA8NRr83/LQgdzHsDZ7Amudc25IEwRdXS9BYxTqAMeBLoxHqDKAZ6uiZoPH4QfaVYSXeF3GrYUC2Fzg5P1VKa1OJQOb3itztXsor2vFVtQeUjQ3lv63FN8YE6HnS2PRhbqn9Ep0oh/QqbhlK4vtY+WtY5UWBf7Q==</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you already have an SSH key pair, it is possible to import the key into a credential store. See the
+<a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Credential_Store.adoc">Credential Store Documentation</a>
+for more information</p>
+</div>
+<div class="sect2">
+<h3 id="the-wildfly-config-xml-configuration"><a class="anchor" href="#the-wildfly-config-xml-configuration"></a>The <code>wildfly-config.xml</code> configuration</h3>
+<div class="paragraph">
+<p>Once we have our key pair credential in a credential store, we can reference it from our <code>wildfly-config.xml</code> file as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+  &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
+
+     &lt;credential-stores&gt;
+        &lt;credential-store name="store1"&gt;
+           &lt;protection-parameter-credentials&gt;
+              &lt;clear-password password="Elytron"/&gt;
+           &lt;/protection-parameter-credentials&gt;
+           &lt;attributes&gt;
+              &lt;attribute name="keyStoreType" value="JCEKS"/&gt;
+                &lt;attribute name="location" value="cs_example.cs"/&gt;
+           &lt;/attributes&gt;
+        &lt;/credential-store&gt;
+     &lt;/credential-stores&gt;
+
+     &lt;authentication-rules&gt;
+        &lt;rule use-configuration="example-config"/&gt;
+     &lt;/authentication-rules&gt;
+
+     &lt;authentication-configurations&gt;
+        &lt;configuration name="example-config"&gt;
+           &lt;credentials&gt;
+              &lt;credential-store-reference store="store1" alias="example" clear-text="Elytron"/&gt;
+           &lt;/credentials&gt;
+        &lt;/configuration&gt;
+     &lt;/authentication-configurations&gt;
+
+  &lt;/authentication-client&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This configuration defines a new credential store from the file we created. It then references the alias <code>example</code> (which
+stores the RSA key pair we generated) to be used as credentials.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="generating-ssh-keys-using-the-openssh-command-line-tool"><a class="anchor" href="#generating-ssh-keys-using-the-openssh-command-line-tool"></a>Generating SSH keys using the OpenSSH command line tool</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alternatively, one may use the OpenSSH command line tool to generate their SSH keys. The algorithms supported by Elytron
+are: RSA, DSA, and ECDSA. For example, we can generate an ECDSA key of size 256 and encrypted with the passphrase “secret”
+as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[~/.ssh]$ ssh-keygen -t ecdsa -b 256
+Generating public/private ecdsa key pair.
+Enter file in which to save the key (/home/user/.ssh/id_ecdsa):
+Enter passphrase (empty for no passphrase): secret
+Enter same passphrase again: secret
+Your identification has been saved in /home/user/.ssh/id_ecdsa.
+Your public key has been saved in /home/user/.ssh/id_ecdsa.pub.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For more information on how to generate OpenSSH keys see: <a href="https://man.openbsd.org/ssh-keygen">OpenSSH Documentation</a></p>
+</div>
+<div class="sect2">
+<h3 id="the-wildfly-config-xml-configuration-2"><a class="anchor" href="#the-wildfly-config-xml-configuration-2"></a>The <code>wildfly-config.xml</code> configuration</h3>
+<div class="paragraph">
+<p>If you already have SSH keys generated, you can add them as credentials a couple of ways:</p>
+</div>
+<div class="sect3">
+<h4 id="key-pair-credential"><a class="anchor" href="#key-pair-credential"></a>Key Pair Credential</h4>
+<div class="paragraph">
+<p>One way is to specify your keys directly in the <code>wildfly-config.xml</code> using a <code>key-pair</code> credential as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+  &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
+
+     &lt;authentication-rules&gt;
+        &lt;rule use-configuration="example"/&gt;
+     &lt;/authentication-rules&gt;
+
+     &lt;authentication-configurations&gt;
+        &lt;configuration name="example"&gt;
+           &lt;credentials&gt;
+              &lt;key-pair&gt;
+                 &lt;openssh-private-key pem="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABDaZzGpGV
+922xmrL+bMHioPAAAAEAAAAAEAAABoAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz
+dHAyNTYAAABBBIMTU1m6pmpnSTZ2k/cbKnxXkRpXUmWwqN1SSNLpRswGsUhmLG2H21br1Z
+lEHRiRn6zQmA4YCtCw2hLuz8M8WVoAAADAQk+bMNWFfaI4Ej1AQdlLl6v4RDa2HGjDS3V4
+39h0pOx4Ix7YZKydTN4SPkYRt78CNK0AhhtKsWo2lVNwyfh8/6SeqowhgCG9MJYW8yRR1R
+3DX/eQTx6MV/gSSRLDTpcVWUY0jrBGpMaEvylKoNcabiEo44flkIYlG6E/YtFXsmXsoBsj
+nFcjvmfE7Lzyin5Fowwpbqj9f0XOARu9wsUzeyJVAwT7+YCU3mWJ3dnO1bOxK4TuLsxD6j
+RB7bJemsfr
+-----END OPENSSH PRIVATE KEY-----"&gt;
+                    &lt;clear-password password="secret"/&gt;
+                 &lt;/openssh-private-key&gt;
+              &lt;/key-pair&gt;
+           &lt;/credentials&gt;
+        &lt;/configuration&gt;
+     &lt;/authentication-configurations&gt;
+  &lt;/authentication-client&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This configuration shows how to specify keys which are in OpenSSH format. In this example, we specify the passphrase <code>secret</code>
+that is required to decrypt the key as a <code>clear-password</code> type, but we could have also used a <code>masked-password</code> or a
+<code>credential-store-reference</code>.</p>
+</div>
+<div class="paragraph">
+<p>Elytron also supports keys in PKCS8 format, but they must not be encrypted with a passphrase.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="ssh-credential"><a class="anchor" href="#ssh-credential"></a>SSH credential</h4>
+<div class="paragraph">
+<p>The other way to add existing keys as credentials is to specify the location and file name containing your private keys
+using a <code>ssh-credential</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+  &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
+
+     &lt;authentication-rules&gt;
+        &lt;rule use-configuration="example"/&gt;
+     &lt;/authentication-rules&gt;
+
+     &lt;authentication-configurations&gt;
+        &lt;configuration name="example"&gt;
+           &lt;credentials&gt;
+              &lt;ssh-credential ssh-directory="/user/home/example/.ssh" private-key-file="id_test_ecdsa" known-hosts-file="known_hosts_test"&gt;
+                 &lt;clear-password password="secret"/&gt;
+              &lt;/ssh-credential&gt;
+           &lt;/credentials&gt;
+        &lt;/configuration&gt;
+     &lt;/authentication-configurations&gt;
+  &lt;/authentication-client&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>ssh-directory</code> attribute specifies the location of the key and the known hosts file.</p>
+</li>
+<li>
+<p>The <code>private-key-file</code> attribute specifies the name of the file containing your private key.</p>
+</li>
+<li>
+<p>The <code>known-hosts-file</code> attribute specifies the name of the file containing the known SSH hosts.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This key was encrypted with the passphrase <code>secret</code> and so we specify a <code>clear-password</code> to be able to decrypt it, but
+again we could have also used a <code>masked-password</code> or a <code>credential-store-reference</code>.</p>
+</div>
+<div class="paragraph">
+<p>It is also possible to specify both a <code>key-pair</code> credential and <code>ssh-credential</code> at the same time if you would
+like to specify your private key using a <code>key-pair</code> but your <code>known_hosts</code> file is not in the default <code>[user.home]/.ssh</code> location and you need
+to use the <code>ssh-credential</code> to specify its location.</p>
+</div>
+<div class="paragraph">
+<p>For more information on the <code>key-pair</code> credential and <code>ssh-credential</code> check out the
+<a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_client-guide/authentication-client.adoc">Elytron Authentication Client Documentation</a></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="connecting-to-a-git-repo"><a class="anchor" href="#connecting-to-a-git-repo"></a>Connecting to a git repo</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once we have added our credentials in a <code>wildfly-config.xml</code> file, we can connect to the remote SSH git repo.
+To connect, we use the SSH url of this repo and specify the following options when starting the standalone WildFly server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">[JBOSS_HOME]$ ./bin/standalone.sh --git-repo=ssh:giturl.com/repo --git-auth=file:///path/to/wildfly-config.xml</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>--git-repo</code> option specifies the uri of the git repo we would like to connect to.</p>
+</li>
+<li>
+<p>The <code>--git-auth</code> option specifies the location of the <code>wildfly-config</code> file containing your credentials.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>And all done! We should be able to successfully start up our standalone server and your configuration file history will be
+managed by the repository we connected to. For more information on git persistence, check out:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/management-tasks/Configuration_file_git_history.adoc">Git Configuration file history</a></p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

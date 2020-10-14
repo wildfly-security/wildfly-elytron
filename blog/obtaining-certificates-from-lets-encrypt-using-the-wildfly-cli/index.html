@@ -46,7 +46,7 @@
                 
                     
                     
-                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                         <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/21/WildFly_Elytron_Security.html">Docs</a>
                     
                 
                     
@@ -78,7 +78,7 @@
             
             
             
-                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Docs</a>
+                <a class="mdl-navigation__link Docs-menuitem" href="https://docs.wildfly.org/21/WildFly_Elytron_Security.html">Docs</a>
             
             
             
@@ -134,7 +134,439 @@
 </div>
 </div>
       <div class="grid__item width-12-12">
-          
+          <div class="paragraph">
+<p>It is possible to obtain and manage certificates from the Let&#8217;s Encrypt certificate authority using the WildFly CLI.
+In particular, it is possible to get a certificate from Let&#8217;s Encrypt, revoke it if necessary, and check if it’s due for renewal.
+This blog post is going to give an overview of these new operations.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#obtaining-a-certificate-from-lets-encrypt">Obtaining a certificate from Let&#8217;s Encrypt</a>
+<ul class="sectlevel2">
+<li><a href="#using-the-security-command">Using the <code>security</code> command</a></li>
+<li><a href="#using-elytron-subsystem-commands">Using Elytron subsystem commands</a></li>
+</ul>
+</li>
+<li><a href="#revoking-a-certificate-from-lets-encrypt">Revoking a certificate from Let&#8217;s Encrypt</a></li>
+<li><a href="#checking-if-a-certificate-is-due-for-renewal">Checking if a certificate is due for renewal</a></li>
+<li><a href="#using-a-cli-script-to-automate-certificate-renewal">Using a CLI script to automate certificate renewal</a></li>
+<li><a href="#updating-the-contact-urls-associated-with-your-lets-encrypt-account">Updating the contact URLs associated with your Let&#8217;s Encrypt account</a></li>
+<li><a href="#changing-your-lets-encrypt-account-key">Changing your Let&#8217;s Encrypt account key</a></li>
+<li><a href="#deactivating-your-lets-encrypt-account">Deactivating your Let&#8217;s Encrypt account</a></li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="obtaining-a-certificate-from-lets-encrypt"><a class="anchor" href="#obtaining-a-certificate-from-lets-encrypt"></a>Obtaining a certificate from Let&#8217;s Encrypt</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First, make sure your WildFly server instance is publicly accessible using the domain name(s) you will be obtaining
+a certificate for from Let&#8217;s Encrypt. For example, if you are requesting a certificate for the domain name
+"www.example.org", then "www.example.org" needs to be publicly accessible. This is because Let&#8217;s Encrypt will attempt
+to access this URL when attempting to validate that you really do own this domain name. WildFly itself will handle
+proving that you really do own this domain name.</p>
+</div>
+<div class="paragraph">
+<p>There are a couple ways to obtain a certificate from Let&#8217;s Encrypt using WildFly CLI commands.</p>
+</div>
+<div class="sect2">
+<h3 id="using-the-security-command"><a class="anchor" href="#using-the-security-command"></a>Using the <code>security</code> command</h3>
+<div class="paragraph">
+<p>The simplest way to obtain and make use of a certificate from Let&#8217;s Encrypt is by using one of the <code>security</code>
+<a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/CLI_Recipes.adoc#security-commands">wrapper commands</a> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">security enable-ssl-http-server --interactive --lets-encrypt
+security enable-ssl-management --interactive --lets-encrypt</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These commands allow you to easily enable either one-way or two-way SSL for applications or management
+interfaces, respectively, using a certificate that will be obtained automatically from Let&#8217;s Encrypt.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s take a look at the <code>security enable-ssl-http-server --interactive --lets-encrypt</code> command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[standalone@localhost:9990 /] security enable-ssl-http-server --interactive --lets-encrypt
+Please provide required pieces of information to enable SSL:
+
+Let's Encrypt account key-store:
+File name (default accounts.keystore.jks):
+Password (blank generated):
+
+Let's Encrypt certificate authority account:
+Account name (default CertAuthorityAccount):
+Contact email(s) [admin@example.com,info@example.com]:
+Password (blank generated):
+Alias (blank generated):
+Certificate authority URL (default https://acme-v02.api.letsencrypt.org/directory):
+
+Let's Encrypt TOS (https://community.letsencrypt.org/tos)
+Do you agree to Let's Encrypt terms of service? y/n:y
+
+Certificate info:
+Key-store file name (default default-server.keystore):
+Password (blank generated):
+Your domain name(s) (must be accessible by the Let's Encrypt server at 80 &amp; 443 ports) [example.com,second.example.com]: www.example.org
+Alias (blank generated):
+Enable SSL Mutual Authentication y/n (blank n):
+
+Let's Encrypt options:
+account key store name: account-key-store-b1f62709-d679-4e19-acf4-f5d286d481b8
+password: OAaMa6aI
+account keystore file accounts.keystore.jks will be generated in server configuration directory.
+Let's Encrypt certificate authority account name: CertAuthorityAccount
+contact urls: []
+password: lSgY0ZoS
+alias: account-key-store-alias-b1f62709-d679-4e19-acf4-f5d286d481b8
+certificate authority URL: https://acme-v02.api.letsencrypt.org/directory
+You provided agreement to Let's Encrypt terms of service.
+
+
+SSL options:
+key store file: default-server.keystore
+domain name: [www.mydomainname.com]
+password: iuApeaDH
+validity: 90
+alias: alias-b1f62709-d679-4e19-acf4-f5d286d481b8
+Certificate will be obtained from Let's Encrypt server and will be valid for 90 days.
+Server keystore file will be generated in server configuration directory.
+
+Do you confirm y/n :y</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As we can see from the output, this command will first prompt you to specify the information needed
+to configure your Let&#8217;s Encrypt account. It will then ask for information related to the certificate
+that you would like to obtain from Let&#8217;s Encrypt. This command will then automatically create your Let&#8217;s
+Encrypt account (if it doesn&#8217;t already exist), it will obtain a certificate from Let&#8217;s Encrypt
+using the domain name that you specified, and it will configure one-way SSL using this certificate.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-elytron-subsystem-commands"><a class="anchor" href="#using-elytron-subsystem-commands"></a>Using Elytron subsystem commands</h3>
+<div class="paragraph">
+<p>It is also possible to obtain a certificate from Let&#8217;s Encrypt using Elytron subsystem commands
+directly.</p>
+</div>
+<div class="sect3">
+<h4 id="prerequisite-configuration"><a class="anchor" href="#prerequisite-configuration"></a>Prerequisite configuration</h4>
+<div class="paragraph">
+<p>First, configure a <code>key-store</code> in the Elytron subsystem that will be used to hold your server certificates.
+Note that the path to the keystore file doesn&#8217;t need to exist yet.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:add(path=server.keystore.jks, relative-to=jboss.server.config.dir, credential-reference={clear-text=secret}, type=JKS)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="show-me-the-commands-first"><a class="anchor" href="#show-me-the-commands-first"></a>Show me the commands first</h4>
+<div class="paragraph">
+<p>Obtaining certificates from Let&#8217;s Encrypt using Elytron subsystem commands requires a couple one-time
+configuration steps. These commands are shown below. We&#8217;re going to go through each of these commands in more detail in the following sections.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">### One-time configuration
+
+# Configure a Let’s Encrypt account
+/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])
+
+### Now you’re ready to start obtaining and managing certificates
+
+# Obtain a certificate from Let’s Encrypt
+/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+
+# Revoke a certificate that was issued by Let’s Encrypt
+/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)
+
+# Check if a certificate is due for renewal in less than 30 days
+/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="configuring-a-lets-encrypt-account"><a class="anchor" href="#configuring-a-lets-encrypt-account"></a>Configuring a Let’s Encrypt account</h4>
+<div class="paragraph">
+<p>Before obtaining your first certificate from Let&#8217;s Encrypt, a Let&#8217;s Encrypt account needs to be configured.</p>
+</div>
+<div class="paragraph">
+<p>First, configure a <code>key-store</code> in the Elytron subsystem that will be used to hold your Let&#8217;s Encrypt account key.
+The path to the keystore file doesn’t need to exist yet.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can configure a Let&#8217;s Encrypt account that we will reference when obtaining certificates:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above command results in the following configuration in the Elytron subsystem:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;subsystem xmlns="urn:wildfly:elytron:4.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto"&gt;
+...
+    &lt;tls&gt;
+    ...
+        &lt;certificate-authority-accounts&gt;
+            &lt;certificate-authority-account name="myLetsEncryptAccount" contact-urls="mailto:admin@admin.org"&gt;
+                &lt;account-key key-store="accountsKS" alias="letsEncrypt"/&gt;
+            &lt;/certificate-authority-account&gt;
+        &lt;/certificate-authority-accounts&gt;
+    ...
+    &lt;/tls&gt;
+...
+&lt;/subsystem&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that a <code>certificate-authority-account</code> has the following attributes and element:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>name</code> - The name of the certificate authority account.</p>
+</li>
+<li>
+<p><code>contact-urls</code> - An optional list of contact URLs that Let&#8217;s Encrypt can use to notify you about any issues with your account.</p>
+</li>
+<li>
+<p><code>account-key</code> - Information about the account key that will be used when communicating with Let&#8217;s Encrypt.</p>
+</li>
+<li>
+<p><code>key-store</code> - A reference to the Elytron <code>key-store</code> that will hold your Let&#8217;s Encrypt account key.</p>
+</li>
+<li>
+<p><code>alias</code> - The alias in the referenced <code>key-store</code> that will contain your Let&#8217;s Encrypt account key.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="obtaining-a-certificate-from-lets-encrypt-2"><a class="anchor" href="#obtaining-a-certificate-from-lets-encrypt-2"></a>Obtaining a certificate from Let&#8217;s Encrypt</h4>
+<div class="paragraph">
+<p>To obtain a certificate from Let&#8217;s Encrypt, the <code>key-store</code> <code>obtain-certificate</code> command can be used. Its syntax is as follows:</p>
+</div>
+<div class="paragraph">
+<p><code>obtain-certificate --alias= --domain-names= --certificate-authority-account= [--agree-to-terms-of-service=&lt;true,false&gt;] [--staging=&lt;true,false&gt;] [--algorithm=] [--key-size=] [--credential-reference=]</code></p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s take a closer look at the <code>obtain-certificate</code> operation&#8217;s parameters:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>alias</code> - The alias in the key-store that will be used to store the certificate obtained from Let&#8217;s Encrypt.</p>
+</li>
+<li>
+<p><code>domain-names</code> - The list of domain names to request a certificate for.</p>
+</li>
+<li>
+<p><code>certificate-authority-account</code> - A reference to the certificate authority account information that should be used to obtain the certificate.</p>
+</li>
+<li>
+<p><code>agree-to-terms-of-service</code> - Whether or not you agree to Let&#8217;s Encrypt&#8217;s terms of service (this only needs to be specified the first time you obtain a certificate from Let&#8217;s Encrypt with your <code>certificate-authority-account</code>).</p>
+</li>
+<li>
+<p><code>staging</code> - Optional. Indicates whether or not Let&#8217;s Encrypt&#8217;s staging environment should be used to obtain the certificate. The default value is false. This should only be set to true for testing purposes. This should never be set to true in a production environment.</p>
+</li>
+<li>
+<p><code>algorithm</code> - Optional. Indicates the key algorithm that should be used (RSA or EC). The default value is RSA.</p>
+</li>
+<li>
+<p><code>key-size</code> - Optional. Indicates the key size that should be used. The default value is 2048.</p>
+</li>
+<li>
+<p><code>credential-reference</code> - Optional. The <code>credential-reference</code> that should be used to protect the generated private key. The default value is the <code>key-store</code> password.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <code>obtain-certificate</code> command will use the referenced <code>certificate-authority-account</code> to create an account with
+Let&#8217;s Encrypt if one does not already exist. It will then request a certificate from Let&#8217;s Encrypt for the specified <code>domain-names</code>.
+In particular, the <code>obtain-certificate</code> operation will prove ownership of the requested domain names, generate a key pair,
+generate a certificate signing request (CSR) using the generated key pair and the requested domain names, and submit this
+CSR to Let&#8217;s Encrypt. If successful, the <code>obtain-certificate</code> operation will retrieve the resulting
+certificate chain from Let&#8217;s Encrypt and store it along with the generated PrivateKey under the given alias in the <code>key-store</code>.
+These changes will also be persisted to the file that backs the <code>key-store</code>.</p>
+</div>
+<div class="paragraph">
+<p>For example, to request a certificate from Let&#8217;s Encrypt for the domain name "www.example.org" using the "myLetsEncryptAccount"
+<code>certificate-authority-account</code>, the following command could be used. The resulting certificate will be stored in the file that backs
+the "serverKS" <code>key-store</code> under the alias "server".</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can now check the alias names in the <code>key-store</code> and confirm the new alias, "server", is listed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:read-aliases()
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; ["server"]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To make use of this server certificate that&#8217;s been issued by Let&#8217;s Encrypt for one-way or two-way SSL, this server <code>key-store</code>
+can be used to create a <code>key-manager</code> in the Elytron subsystem and an <code>ssl-context</code> that references this <code>key-manager</code> can
+then be created. More details about setting up one-way and two-way SSL can be found in the Elytron <a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc">documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>Now that we&#8217;ve seen the two main ways that certificates can be obtained from Let&#8217;s Encrypt using WildFly CLI commands, the
+next sections will describe how to manage these certificates.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="revoking-a-certificate-from-lets-encrypt"><a class="anchor" href="#revoking-a-certificate-from-lets-encrypt"></a>Revoking a certificate from Let&#8217;s Encrypt</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you need to revoke a certificate that was issued by Let&#8217;s Encrypt, the <code>revoke-certificate</code> command can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above example, alias identifies the certificate that should be revoked. The <code>certificate-authority-account</code> is a
+reference to the certificate authority account information that should be used to revoke the certificate. The reason is
+optional and indicates the reason for revocation. If provided, it must be a valid revocation string.</p>
+</div>
+<div class="paragraph">
+<p>Once the certificate has been successfully revoked, it will be deleted from the <code>key-store</code>. This change will also be
+persisted to the file that backs the <code>key-store</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="checking-if-a-certificate-is-due-for-renewal"><a class="anchor" href="#checking-if-a-certificate-is-due-for-renewal"></a>Checking if a certificate is due for renewal</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>should-renew-certificate</code> command can be used to check if a certificate is due for renewal. It returns true if the
+certificate expires in less than the given number of days and false otherwise. Its output also indicates the number of
+days to expiry. In the following example, should-renew-certificate checks if the certificate stored under the alias
+"server" expires in less than 15 days.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server,expiration=15)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "should-renew-certificate" =&gt; false,
+        "days-to-expiry" =&gt; 89L
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the expiration parameter is not provided, it will default to 30 days, i.e., <code>should-renew-certificate</code> will return
+true if the certificate expires in less than 30 days and false otherwise.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="using-a-cli-script-to-automate-certificate-renewal"><a class="anchor" href="#using-a-cli-script-to-automate-certificate-renewal"></a>Using a CLI script to automate certificate renewal</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Certificates issued by Let&#8217;s Encrypt are valid for 90 days. Let&#8217;s Encrypt recommends renewing certificates every 60 days.
+You can automate renewal by first creating a CLI script that checks if a certificate is due for renewal and if so, uses
+the obtain-certificate command to renew it. You could then create a cron job that runs say, twice daily, and executes
+the CLI script. A simple example of such a CLI script can be found below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">if (result.should-renew-certificate == true) of /subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)
+
+    # certificate is due for renewal in less than 30 days, obtain a new certificate to replace the existing one in the key-store
+    /subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+
+    # re-initialize your key-manager to ensure your new certificate will be used without needing to restart the server
+    /subsystem=elytron/key-manager=httpsKM:init()
+
+end-if</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that in the above script, after renewing the certificate, we can simply execute the key-manager init command in
+order to ensure that the new certificate will be used by the key-manager from now on without needing to restart WildFly.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="updating-the-contact-urls-associated-with-your-lets-encrypt-account"><a class="anchor" href="#updating-the-contact-urls-associated-with-your-lets-encrypt-account"></a>Updating the contact URLs associated with your Let&#8217;s Encrypt account</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To update the contact URLs that are associated with your Let&#8217;s Encrypt, the following commands can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:write-attribute(name=contact-urls,value=[mailto:newadmin@admin.org])
+reload
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:update-account()</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="changing-your-lets-encrypt-account-key"><a class="anchor" href="#changing-your-lets-encrypt-account-key"></a>Changing your Let&#8217;s Encrypt account key</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you ever want to change the key that is associated with your Let&#8217;s Encrypt account (e.g., in the event of a key
+compromise), the <code>change-account-key</code> command can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:change-account-key()</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deactivating-your-lets-encrypt-account"><a class="anchor" href="#deactivating-your-lets-encrypt-account"></a>Deactivating your Let&#8217;s Encrypt account</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you ever need to deactivate your Let&#8217;s Encrypt account, the <code>deactivate-account</code> command can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:deactivate-account()</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how to obtain and manage certificates from the Let&#8217;s Encrypt certificate authority using the WildFly CLI.</p>
+</div>
+</div>
+</div>
       </div>
     </div>
   </div>

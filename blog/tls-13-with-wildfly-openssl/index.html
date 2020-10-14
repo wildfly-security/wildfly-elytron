@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: TLS 1.3 with WildFly</title>
+    <title>Elytron: TLS 1.3 support for WildFly with OpenSSL</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -105,48 +105,48 @@
             <div class="content">
                 <div class="post-page grid-wrapper">
   <div class="grid__item width-12-12 width-12-12-m doc-content">
-    <h1>TLS 1.3 with WildFly</h1>
+    <h1>TLS 1.3 support for WildFly with OpenSSL</h1>
     <div class="grid-wrapper">
       <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
         
         
           <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
         
-        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | March 18, 2020</p>
+        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | October 14, 2020</p>
       </div>
       
       <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
-  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/&title=TLS 1.3 with WildFly" rel="nofollow" target="_blank" title="Share on LinkedIn">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/&title=TLS 1.3 support for WildFly with OpenSSL" rel="nofollow" target="_blank" title="Share on LinkedIn">
     <i class="fab fa-linkedin"></i>
   </a>
-  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=TLS 1.3 with WildFly&url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=TLS 1.3 support for WildFly with OpenSSL&url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
     <i class="fab fa-twitter-square"></i>
   </a>
-  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/" rel="nofollow" target="_blank" title="Share on Facebook">
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/" rel="nofollow" target="_blank" title="Share on Facebook">
     <i class="fab fa-facebook-square"></i>
   </a>
-  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
     <i class="fab fa-reddit-square"></i>
   </a>
-  <a class="share-email" href="mailto:?subject=TLS 1.3 with WildFly&amp;body=TLS 1.3 with WildFly https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/" title="Share via Email" >
+  <a class="share-email" href="mailto:?subject=TLS 1.3 support for WildFly with OpenSSL&amp;body=TLS 1.3 support for WildFly with OpenSSL https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/" title="Share via Email" >
     <i class="fas fa-envelope-square"></i>
   </a>
 </div>
 </div>
       <div class="grid__item width-12-12">
           <div class="paragraph">
-<p>It is now possible to use TLS 1.3 with WildFly when running against JDK 11 or higher. This blog post will give an
-introduction to this new feature.</p>
+<p>WildFly 21 adds the ability to use TLS 1.3 with WildFly when using the OpenSSL TLS provider.
+This blog post will give an introduction to this new feature.</p>
 </div>
 <div class="sect1">
 <h2 id="disabled-by-default"><a class="anchor" href="#disabled-by-default"></a>Disabled by Default</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The use of TLS 1.3 is currently disabled by default with WildFly. This is because if JDK 11 is in use and if there is a
-very large number of TLS 1.3 requests coming in, it is possible that a drop in performance (i.e., throughput and
-response time) will occur compared to when using TLS 1.2 with WildFly. The good news is that simply upgrading to newer
-JDK versions should improve performance. It is recommended to test for performance degradation prior to enabling
-TLS 1.3 in a production environment.</p>
+<p>The use of TLS 1.3 is currently disabled by default when using the OpenSSL TLS provider. This is because if
+JDK 11 is in use and if there is a very large number of TLS 1.3 requests coming in, it is possible that a drop
+in performance (i.e., throughput and response time) will occur compared to when using TLS 1.2 with the OpenSSL
+TLS provider. It is recommended to test for performance degradation prior to enabling TLS 1.3 in a production
+environment.</p>
 </div>
 </div>
 </div>
@@ -154,7 +154,7 @@ TLS 1.3 in a production environment.</p>
 <h2 id="enabling-tls-1-3-on-the-server-side"><a class="anchor" href="#enabling-tls-1-3-on-the-server-side"></a>Enabling TLS 1.3 on the Server Side</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>TLS 1.3 can be enabled by configuring the new <code>cipher-suite-names</code> attribute in the SSL Context resource definition
+<p>TLS 1.3 can be enabled by configuring the <code>cipher-suite-names</code> attribute in the SSL Context resource definition
 in the Elytron subsystem. Let&#8217;s take a look at a complete example.</p>
 </div>
 <div class="sect2">
@@ -163,6 +163,8 @@ in the Elytron subsystem. Let&#8217;s take a look at a complete example.</p>
 <p>As a first step, we&#8217;re going to enable one-way SSL for applications deployed to WildFly using the
 <code>security enable-ssl-http-server</code> CLI command:</p>
 </div>
+<div class="sect3">
+<h4 id="enabling-one-way-ssl"><a class="anchor" href="#enabling-one-way-ssl"></a>Enabling one-way SSL</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">security enable-ssl-http-server --interactive
@@ -195,15 +197,48 @@ Server keystore file server.keystore, certificate file server.pem and server.csr
 Do you confirm y/n :y
 Server reloaded.
 SSL enabled for default-server
-ssl-context is ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133
-key-manager is key-manager-6881a025-6c31-4bfe-ba4b-d8e7ebdde133
-key-store   is key-store-6881a025-6c31-4bfe-ba4b-d8e7ebdde133</code></pre>
+ssl-context is ssl-context-b0110cb7-595b-4de9-942b-e616690bb350
+key-manager is key-manager-b0110cb7-595b-4de9-942b-e616690bb350
+key-store   is key-store-b0110cb7-595b-4de9-942b-e616690bb350</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>As we can see from the output, the above command automatically generated a self-signed server certificate, added it to a
-newly created keystore, and added a new <code>ssl-context</code> resource, <code>ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133</code>, to
+newly created keystore, and added a new <code>ssl-context</code> resource, <code>ssl-context-b0110cb7-595b-4de9-942b-e616690bb350</code>, to
 the Elytron subsystem in order to enable one-way SSL for applications deployed to WildFly.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="configuring-wildfly-to-use-the-openssl-tls-provider"><a class="anchor" href="#configuring-wildfly-to-use-the-openssl-tls-provider"></a>Configuring WildFly to use the OpenSSL TLS provider</h4>
+<div class="paragraph">
+<p>There are two ways to configure WildFly to make use of the OpenSSL TLS provider.</p>
+</div>
+<div class="sect4">
+<h5 id="using-the-openssl-tls-provider-by-default"><a class="anchor" href="#using-the-openssl-tls-provider-by-default"></a>Using the OpenSSL TLS provider by default</h5>
+<div class="paragraph">
+<p>To configure the Elytron subsystem so that the OpenSSL TLS provider is used by default, the following commands can be used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron:write-attribute(name=initial-providers, value=combined-providers)
+/subsystem=elytron:undefine-attribute(name=final-providers)
+reload</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="configuring-an-ssl-context-to-use-the-openssl-tls-provider"><a class="anchor" href="#configuring-an-ssl-context-to-use-the-openssl-tls-provider"></a>Configuring an SSL context to use the OpenSSL TLS provider</h5>
+<div class="paragraph">
+<p>Instead of configuring the Elytron subsystem to use the OpenSSL TLS provider by default, it is also possible
+to specify that the OpenSSL TLS provider should be used for a specific SSL context by configuring the <code>providers</code>
+attribute for a <code>server-ssl-context</code>. Let&#8217;s update our <code>server-ssl-context</code> to specify that we want to use the
+OpenSSL TLS provider:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/server-ssl-context=ssl-context-b0110cb7-595b-4de9-942b-e616690bb350:write-attribute(name=providers,value=openssl)
+reload</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Now, let&#8217;s try to access the WildFly landing page using <code>curl</code>:</p>
@@ -215,8 +250,8 @@ the Elytron subsystem in order to enable one-way SSL for applications deployed t
 * ALPN, server accepted to use h2
 * Server certificate:
 *  subject: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
-*  start date: Feb 28 19:39:26 2020 GMT
-*  expire date: Mar 29 18:39:26 2020 GMT
+*  start date: Oct  6 14:58:16 2020 GMT
+*  expire date: Nov  5 15:58:16 2020 GMT
 *  issuer: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
 *  SSL certificate verify result: self signed certificate (18), continuing anyway.</code></pre>
 </div>
@@ -231,6 +266,8 @@ in the <code>curl</code> command.</p>
 and that the <code>ECDHE-RSA-AES256-GCM-SHA384</code> cipher suite was used.</p>
 </div>
 </div>
+</div>
+</div>
 <div class="sect2">
 <h3 id="switching-to-tls-1-3"><a class="anchor" href="#switching-to-tls-1-3"></a>Switching to TLS 1.3</h3>
 <div class="paragraph">
@@ -242,9 +279,9 @@ that you would like to enable. We&#8217;re going to set this attribute to <code>
 <div class="content">
 <pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs"># This is only needed when the ssl-context is configured to use specific protocol version(s) other
 # than TLS 1.3. In general, this is not needed when the protocols attribute is simply undefined.
-/subsystem=elytron/server-ssl-context=ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133:write-attribute(name=protocols,value=[TLSv1.3])
+/subsystem=elytron/server-ssl-context=ssl-context-b0110cb7-595b-4de9-942b-e616690bb350:write-attribute(name=protocols,value=[TLSv1.3])
 
-/subsystem=elytron/server-ssl-context=ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133:write-attribute(name=cipher-suite-names,value=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256)
+/subsystem=elytron/server-ssl-context=ssl-context-b0110cb7-595b-4de9-942b-e616690bb350:write-attribute(name=cipher-suite-names,value=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256)
 reload</code></pre>
 </div>
 </div>
@@ -253,13 +290,12 @@ reload</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">curl -v -k https://localhost:8443
-* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
 * ALPN, server accepted to use h2
 * Server certificate:
 *  subject: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
-*  start date: Feb 28 19:39:26 2020 GMT
-*  expire date: Mar 29 18:39:26 2020 GMT
+*  start date: Oct  6 14:58:16 2020 GMT
+*  expire date: Nov  5 15:58:16 2020 GMT
 *  issuer: C=Unknown; ST=Unknown; L=Unknown; O=Unknown; OU=Unknown; CN=localhost
 *  SSL certificate verify result: self signed certificate (18), continuing anyway.</code></pre>
 </div>
@@ -272,21 +308,11 @@ reload</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="enabling-tls-1-3-on-the-client-side"><a class="anchor" href="#enabling-tls-1-3-on-the-client-side"></a>Enabling TLS 1.3 on the Client Side</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>When using the Elytron authentication client, it is now also possible to use TLS 1.3 by configuring the
-<code>cipher-suite names</code> attribute in the <code>ssl-context</code> configuration. For more details on that, take a look
-at the authentication client <a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_client-guide/authentication-client.adoc#ssl-contexts-">documentation</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This blog post has given an overview on how TLS 1.3 can be used with WildFly on both the server side and the client
-side. For more details, take a look at the Elytron <a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc#configuring-a-server-sslcontext">documentation</a>.</p>
+<p>This blog post has given an overview on how TLS 1.3 can be used with WildFly with the OpenSSL TLS provider.
+For more details, take a look at the <a href="https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/OpenSSL.adoc">documentation</a>.</p>
 </div>
 </div>
 </div>

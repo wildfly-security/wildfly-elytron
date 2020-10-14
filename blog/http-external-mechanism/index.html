@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: Security Feature Development for WildFly 17</title>
+    <title>Elytron: HTTP External Mechanism</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -105,34 +105,53 @@
             <div class="content">
                 <div class="post-page grid-wrapper">
   <div class="grid__item width-12-12 width-12-12-m doc-content">
-    <h1>Security Feature Development for WildFly 17</h1>
+    <h1>HTTP External Mechanism</h1>
     <div class="grid-wrapper">
       <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
         
         
-        <p class="byline">By <a href="https://github.com/darranl">Darran Lofthouse</a> | June 12, 2019</p>
+          <img class="headshot" src="https://www.gravatar.com/avatar/9e5eb1d1c78e5aa6a1eb8365464049c8">
+        
+        <p class="byline">By <a href="https://github.com/ashley-abdelsayed98">Ashley Abdel-Sayed</a> | October 14, 2020</p>
       </div>
       
       <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
-  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/security-feature-development-for/&title=Security Feature Development for WildFly 17" rel="nofollow" target="_blank" title="Share on LinkedIn">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/&title=HTTP External Mechanism" rel="nofollow" target="_blank" title="Share on LinkedIn">
     <i class="fab fa-linkedin"></i>
   </a>
-  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Security Feature Development for WildFly 17&url=https://wildfly-security.github.io/wildfly-elytron/blog/security-feature-development-for/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=HTTP External Mechanism&url=https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
     <i class="fab fa-twitter-square"></i>
   </a>
-  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/security-feature-development-for/" rel="nofollow" target="_blank" title="Share on Facebook">
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/" rel="nofollow" target="_blank" title="Share on Facebook">
     <i class="fab fa-facebook-square"></i>
   </a>
-  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/security-feature-development-for/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
     <i class="fab fa-reddit-square"></i>
   </a>
-  <a class="share-email" href="mailto:?subject=Security Feature Development for WildFly 17&amp;body=Security Feature Development for WildFly 17 https://wildfly-security.github.io/wildfly-elytron/blog/security-feature-development-for/" title="Share via Email" >
+  <a class="share-email" href="mailto:?subject=HTTP External Mechanism&amp;body=HTTP External Mechanism https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/" title="Share via Email" >
     <i class="fas fa-envelope-square"></i>
   </a>
 </div>
 </div>
       <div class="grid__item width-12-12">
-          
+          <div class="paragraph">
+<p>WildFly Elytron now supports authenticating users with the External HTTP mechanism. The External mechanism allows users to
+be authenticated with credentials established outside the server via the AJP protocol. This means if you have users authenticated
+by an Apache httpd server, these users can be forwarded to WildFly. This can be done by setting up
+Elytron to secure a WildFly deployment and specifying for the External HTTP mechanism to be used. This is done by specifying
+the <code>EXTERNAL</code> mechanism as one of the mechanism configurations to be used by the <code>http-authentication-factory</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/http-authentication-factory=web-tests:add(security-domain=example-domain, http-server-mechanism-factory=example-factory,
+mechanism-configurations=[{mechanism-name=EXTERNAL}])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If your application is secured using this <code>http-authentication-factory</code> and a remote server forwards an authenticated
+user using the <code>REMOTE_USER</code> attribute via the AJP protocol, Elytron will accept the externally authenticated user and
+use the specified security domain to perform role mapping to complete authorization.</p>
+</div>
       </div>
     </div>
   </div>
