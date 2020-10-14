@@ -1,0 +1,57 @@
+---
+layout: post
+title: 'New Security Features in WildFly 21'
+date: 2020-10-14
+tags: elytron release wildfly21
+synopsis: An overview of the new security features in WildFly 21.
+author: fjuma
+---
+
+This blog post highlights the new security features that are in WildFly 21.
+
+== Security Realm Enhancements
+
+If a security realm becomes unavailable for some reason, it is now possible to fail over to an alternate security
+realm.
+
+WildFly 21 also adds support for distributed security realms, where identities can be stored in multiple security
+realms. When retrieving an identity from a distributed security realm, each of the configired realms is invoked
+sequentially until a realm containing the identity is found.
+
+For an overview of these two new realm implementations, check out this https://wildfly-security.github.io/wildfly-elytron/blog/distributed-and-failover-realms/[blog post].
+
+== Client Integration
+
+It's now possible for RESTEasy clients to make use of authentication information like credentials and SSL configuration
+from an Elytron client configuration file. Check out this https://wildfly-security.github.io/wildfly-elytron/blog/resteasy-elytron-client-integration/[blog post]
+to see an example of how to make use of this new feature.
+
+== Additional Authentication Mechanisms
+
+When using a remote Git repository to manage your WildFly configuration file history, it's now possible to
+connect to your Git repository using SSH authentication. For details on how to specify the SSH
+credentials that are needed to connect to your Git repository, take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/[blog post].
+
+Support for the HTTP External authentication mechanism has now been added to WildFly. This means that
+it is now possible for WildFly to authenticate a user based on credentials established externally.
+More details can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/[blog post].
+
+== TLS 1.3 Support with OpenSSL
+
+A little while ago, we added support for TLS 1.3 for WildFly when using the JSSE TLS provider. WildFly 21 now
+adds support for TLS 1.3 when using the OpenSSL TLS provider. As with the JSSE TLS provider, there is an important
+caveat to be aware of when using the OpenSSL TLS provider with TLS 1.3. If JDK 11 is in use and if there is a very
+large number of TLS 1.3 requests being made, it is possible that a drop in performance (throughput and response time)
+will occur compared to when using TLS 1.2 with WildFly. It is recommended to test for performance degradation prior
+to enabling TLS 1.3 in a production environment. Take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/[blog post]
+to learn how to enable TLS 1.3 when using the OpenSSL TLS provider.
+
+== Where to Find More Information
+
+Be sure to check out our https://wildfly-security.github.io/wildfly-elytron/blog/[blog posts] page, where we have all our
+blog posts on Elytron features. If there is an Elytron topic you’d like to see a blog post on, feel free to let us know
+on WildFly’s https://groups.google.com/forum/#!forum/wildfly[user forums].
+
+To learn more about Elytron, check out our https://wildfly-security.github.io/wildfly-elytron/[site].

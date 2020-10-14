@@ -5,5 +5,328 @@ date: 2018-08-31
 tags: ssl wildfly elytron LetsEncrypt
 synopsis: An overview on how to obtain and manage certificates from the Let’s Encrypt certificate authority using the WildFly CLI.
 author: fjuma
-link: https://developer.jboss.org/people/fjuma/blog/2018/08/31/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli
 ---
+
+:toc: macro
+:toc-title:
+
+It is possible to obtain and manage certificates from the Let's Encrypt certificate authority using the WildFly CLI.
+In particular, it is possible to get a certificate from Let's Encrypt, revoke it if necessary, and check if it’s due for renewal.
+This blog post is going to give an overview of these new operations.
+
+toc::[]
+
+== Obtaining a certificate from Let's Encrypt
+
+First, make sure your WildFly server instance is publicly accessible using the domain name(s) you will be obtaining
+a certificate for from Let's Encrypt. For example, if you are requesting a certificate for the domain name
+"www.example.org", then "www.example.org" needs to be publicly accessible. This is because Let's Encrypt will attempt
+to access this URL when attempting to validate that you really do own this domain name. WildFly itself will handle
+proving that you really do own this domain name.
+
+There are a couple ways to obtain a certificate from Let's Encrypt using WildFly CLI commands.
+
+=== Using the `security` command
+
+The simplest way to obtain and make use of a certificate from Let's Encrypt is by using one of the `security`
+https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_admin-guide/CLI_Recipes.adoc#security-commands[wrapper commands] as follows:
+
+[source,shell]
+----
+security enable-ssl-http-server --interactive --lets-encrypt
+security enable-ssl-management --interactive --lets-encrypt
+----
+
+These commands allow you to easily enable either one-way or two-way SSL for applications or management
+interfaces, respectively, using a certificate that will be obtained automatically from Let's Encrypt.
+
+Let's take a look at the `security enable-ssl-http-server --interactive --lets-encrypt` command:
+
+[source,shell]
+----
+[standalone@localhost:9990 /] security enable-ssl-http-server --interactive --lets-encrypt
+Please provide required pieces of information to enable SSL:
+
+Let's Encrypt account key-store:
+File name (default accounts.keystore.jks):
+Password (blank generated):
+
+Let's Encrypt certificate authority account:
+Account name (default CertAuthorityAccount):
+Contact email(s) [admin@example.com,info@example.com]:
+Password (blank generated):
+Alias (blank generated):
+Certificate authority URL (default https://acme-v02.api.letsencrypt.org/directory):
+
+Let's Encrypt TOS (https://community.letsencrypt.org/tos)
+Do you agree to Let's Encrypt terms of service? y/n:y
+
+Certificate info:
+Key-store file name (default default-server.keystore):
+Password (blank generated):
+Your domain name(s) (must be accessible by the Let's Encrypt server at 80 & 443 ports) [example.com,second.example.com]: www.example.org
+Alias (blank generated):
+Enable SSL Mutual Authentication y/n (blank n):
+
+Let's Encrypt options:
+account key store name: account-key-store-b1f62709-d679-4e19-acf4-f5d286d481b8
+password: OAaMa6aI
+account keystore file accounts.keystore.jks will be generated in server configuration directory.
+Let's Encrypt certificate authority account name: CertAuthorityAccount
+contact urls: []
+password: lSgY0ZoS
+alias: account-key-store-alias-b1f62709-d679-4e19-acf4-f5d286d481b8
+certificate authority URL: https://acme-v02.api.letsencrypt.org/directory
+You provided agreement to Let's Encrypt terms of service.
+
+
+SSL options:
+key store file: default-server.keystore
+domain name: [www.mydomainname.com]
+password: iuApeaDH
+validity: 90
+alias: alias-b1f62709-d679-4e19-acf4-f5d286d481b8
+Certificate will be obtained from Let's Encrypt server and will be valid for 90 days.
+Server keystore file will be generated in server configuration directory.
+
+Do you confirm y/n :y
+----
+
+As we can see from the output, this command will first prompt you to specify the information needed
+to configure your Let's Encrypt account. It will then ask for information related to the certificate
+that you would like to obtain from Let's Encrypt. This command will then automatically create your Let's
+Encrypt account (if it doesn't already exist), it will obtain a certificate from Let's Encrypt
+using the domain name that you specified, and it will configure one-way SSL using this certificate.
+
+=== Using Elytron subsystem commands
+
+It is also possible to obtain a certificate from Let's Encrypt using Elytron subsystem commands
+directly.
+
+==== Prerequisite configuration
+
+First, configure a `key-store` in the Elytron subsystem that will be used to hold your server certificates.
+Note that the path to the keystore file doesn't need to exist yet.
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:add(path=server.keystore.jks, relative-to=jboss.server.config.dir, credential-reference={clear-text=secret}, type=JKS)
+----
+
+==== Show me the commands first
+
+Obtaining certificates from Let's Encrypt using Elytron subsystem commands requires a couple one-time
+configuration steps. These commands are shown below. We're going to go through each of these commands in more detail in the following sections.
+
+[source,shell]
+----
+### One-time configuration
+
+# Configure a Let’s Encrypt account
+/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])
+
+### Now you’re ready to start obtaining and managing certificates
+
+# Obtain a certificate from Let’s Encrypt
+/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+
+# Revoke a certificate that was issued by Let’s Encrypt
+/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)
+
+# Check if a certificate is due for renewal in less than 30 days
+/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)
+----
+
+==== Configuring a Let’s Encrypt account
+
+Before obtaining your first certificate from Let's Encrypt, a Let's Encrypt account needs to be configured.
+
+First, configure a `key-store` in the Elytron subsystem that will be used to hold your Let's Encrypt account key.
+The path to the keystore file doesn’t need to exist yet.
+
+[source,shell]
+----
+/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)
+----
+
+Now we can configure a Let's Encrypt account that we will reference when obtaining certificates:
+
+[source,shell]
+----
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])
+----
+
+The above command results in the following configuration in the Elytron subsystem:
+
+[source,xml]
+----
+<subsystem xmlns="urn:wildfly:elytron:4.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto">
+...
+    <tls>
+    ...
+        <certificate-authority-accounts>
+            <certificate-authority-account name="myLetsEncryptAccount" contact-urls="mailto:admin@admin.org">
+                <account-key key-store="accountsKS" alias="letsEncrypt"/>
+            </certificate-authority-account>
+        </certificate-authority-accounts>
+    ...
+    </tls>
+...
+</subsystem>
+----
+
+Notice that a `certificate-authority-account` has the following attributes and element:
+
+* `name` - The name of the certificate authority account.
+* `contact-urls` - An optional list of contact URLs that Let's Encrypt can use to notify you about any issues with your account.
+* `account-key` - Information about the account key that will be used when communicating with Let's Encrypt.
+* `key-store` - A reference to the Elytron `key-store` that will hold your Let's Encrypt account key.
+* `alias` - The alias in the referenced `key-store` that will contain your Let's Encrypt account key.
+
+==== Obtaining a certificate from Let's Encrypt
+
+To obtain a certificate from Let's Encrypt, the `key-store` `obtain-certificate` command can be used. Its syntax is as follows:
+
+`obtain-certificate --alias= --domain-names= --certificate-authority-account= [--agree-to-terms-of-service=<true,false>] [--staging=<true,false>] [--algorithm=] [--key-size=] [--credential-reference=]`
+
+Let's take a closer look at the `obtain-certificate` operation's parameters:
+
+* `alias` - The alias in the key-store that will be used to store the certificate obtained from Let's Encrypt.
+* `domain-names` - The list of domain names to request a certificate for.
+* `certificate-authority-account` - A reference to the certificate authority account information that should be used to obtain the certificate.
+* `agree-to-terms-of-service` - Whether or not you agree to Let's Encrypt's terms of service (this only needs to be specified the first time you obtain a certificate from Let's Encrypt with your `certificate-authority-account`).
+* `staging` - Optional. Indicates whether or not Let's Encrypt's staging environment should be used to obtain the certificate. The default value is false. This should only be set to true for testing purposes. This should never be set to true in a production environment.
+* `algorithm` - Optional. Indicates the key algorithm that should be used (RSA or EC). The default value is RSA.
+* `key-size` - Optional. Indicates the key size that should be used. The default value is 2048.
+* `credential-reference` - Optional. The `credential-reference` that should be used to protect the generated private key. The default value is the `key-store` password.
+
+The `obtain-certificate` command will use the referenced `certificate-authority-account` to create an account with
+Let's Encrypt if one does not already exist. It will then request a certificate from Let's Encrypt for the specified `domain-names`.
+In particular, the `obtain-certificate` operation will prove ownership of the requested domain names, generate a key pair,
+generate a certificate signing request (CSR) using the generated key pair and the requested domain names, and submit this
+CSR to Let's Encrypt. If successful, the `obtain-certificate` operation will retrieve the resulting
+certificate chain from Let's Encrypt and store it along with the generated PrivateKey under the given alias in the `key-store`.
+These changes will also be persisted to the file that backs the `key-store`.
+
+For example, to request a certificate from Let's Encrypt for the domain name "www.example.org" using the "myLetsEncryptAccount"
+`certificate-authority-account`, the following command could be used. The resulting certificate will be stored in the file that backs
+the "serverKS" `key-store` under the alias "server".
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+----
+
+You can now check the alias names in the `key-store` and confirm the new alias, "server", is listed:
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:read-aliases()
+{
+    "outcome" => "success",
+    "result" => ["server"]
+}
+----
+
+To make use of this server certificate that's been issued by Let's Encrypt for one-way or two-way SSL, this server `key-store`
+can be used to create a `key-manager` in the Elytron subsystem and an `ssl-context` that references this `key-manager` can
+then be created. More details about setting up one-way and two-way SSL can be found in the Elytron https://github.com/wildfly/wildfly/blob/master/docs/src/main/asciidoc/_elytron/Using_the_Elytron_Subsystem.adoc[documentation].
+
+Now that we've seen the two main ways that certificates can be obtained from Let's Encrypt using WildFly CLI commands, the
+next sections will describe how to manage these certificates.
+
+== Revoking a certificate from Let's Encrypt
+
+If you need to revoke a certificate that was issued by Let's Encrypt, the `revoke-certificate` command can be used:
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)
+----
+
+In the above example, alias identifies the certificate that should be revoked. The `certificate-authority-account` is a
+reference to the certificate authority account information that should be used to revoke the certificate. The reason is
+optional and indicates the reason for revocation. If provided, it must be a valid revocation string.
+
+Once the certificate has been successfully revoked, it will be deleted from the `key-store`. This change will also be
+persisted to the file that backs the `key-store`.
+
+== Checking if a certificate is due for renewal
+
+The `should-renew-certificate` command can be used to check if a certificate is due for renewal. It returns true if the
+certificate expires in less than the given number of days and false otherwise. Its output also indicates the number of
+days to expiry. In the following example, should-renew-certificate checks if the certificate stored under the alias
+"server" expires in less than 15 days.
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server,expiration=15)
+{
+    "outcome" => "success",
+    "result" => {
+        "should-renew-certificate" => false,
+        "days-to-expiry" => 89L
+    }
+}
+----
+
+If the expiration parameter is not provided, it will default to 30 days, i.e., `should-renew-certificate` will return
+true if the certificate expires in less than 30 days and false otherwise.
+
+== Using a CLI script to automate certificate renewal
+
+Certificates issued by Let's Encrypt are valid for 90 days. Let's Encrypt recommends renewing certificates every 60 days.
+You can automate renewal by first creating a CLI script that checks if a certificate is due for renewal and if so, uses
+the obtain-certificate command to renew it. You could then create a cron job that runs say, twice daily, and executes
+the CLI script. A simple example of such a CLI script can be found below:
+
+[source,shell]
+----
+if (result.should-renew-certificate == true) of /subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)
+
+    # certificate is due for renewal in less than 30 days, obtain a new certificate to replace the existing one in the key-store
+    /subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+
+    # re-initialize your key-manager to ensure your new certificate will be used without needing to restart the server
+    /subsystem=elytron/key-manager=httpsKM:init()
+
+end-if
+----
+
+Notice that in the above script, after renewing the certificate, we can simply execute the key-manager init command in
+order to ensure that the new certificate will be used by the key-manager from now on without needing to restart WildFly.
+
+== Updating the contact URLs associated with your Let's Encrypt account
+
+To update the contact URLs that are associated with your Let's Encrypt, the following commands can be used:
+
+[source,shell]
+----
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:write-attribute(name=contact-urls,value=[mailto:newadmin@admin.org])
+reload
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:update-account()
+----
+
+== Changing your Let's Encrypt account key
+
+If you ever want to change the key that is associated with your Let's Encrypt account (e.g., in the event of a key
+compromise), the `change-account-key` command can be used:
+
+[source,shell]
+----
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:change-account-key()
+----
+
+== Deactivating your Let's Encrypt account
+
+If you ever need to deactivate your Let's Encrypt account, the `deactivate-account` command can be used:
+
+[source,shell]
+----
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:deactivate-account()
+----
+
+== Summary
+
+This blog post has given an overview on how to obtain and manage certificates from the Let's Encrypt certificate authority using the WildFly CLI.
