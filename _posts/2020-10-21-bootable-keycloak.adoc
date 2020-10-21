@@ -1,0 +1,208 @@
+---
+layout: post
+title: 'Creating a bootable jar secured using Keycloak'
+date: 2020-10-21
+tags: elytron wildfly21 keycloak oidc
+synopsis: How to create a bootable jar secured using the Keycloak client adapter for WildFly
+author: darranl
+---
+
+Starting from WildFly 21 a new Maven plugin has been made available which if added to a Maven project which is creating a valid
+deployment will also dynamically provision a WildFly server using Galleon and bundle this all up in a jar containing the server
+and the deployment defined in the project.
+
+Starting from Keycloak 12 a Galleon feature pack is also made available to make it possible to install the Keycloak client adapters
+for WildFly using Galleon.
+
+This blog post is to demonstrate an example project illustrating how both of these features can be brought together to create a 
+WildFly bootable with a simple servlet based deployment secured using the Keycloak client adater for WildFly.
+
+== Keycloak Environment
+
+This blog post assumes you are already familiar with Keycloak and have a Keycloak environment already available, if you need more
+information on Keycloak itself start with the https://www.keycloak.org/getting-started[Getting Started] documentation.
+
+Within my Keycloak installation I have defined a new realm `WildFly` which I will be using with this deployment.
+
+My Keycloak server is installed locally and it using the default ports so is using port 8080, I will also be running the bootable 
+jar project locally so will run that with a port offset of 10 which means it wil be accessed over port 8090.
+
+Within the `WildFly` realm I have also defined a public client called `simple-webapp` which has a root URL 
+of `http://localhost:8090/simple-webapp/`.
+
+Finally the deployment will be configured to require the authenticated identity to have been granted the `Users` role so I added this
+role to the `WildFly` realm in Keycloak and ensured it is granted to my test user account.
+
+== Example Project
+
+An example project can be found at https://github.com/wildfly-security-incubator/elytron-examples/tree/master/bootable-keycloak[bootable-keycloak]
+which illustrates how a bootable jar for a web application secured using Keycloak can be prepared.
+
+Firstly the application contains a very simple servlet which is annotated to indicate that access to the servlet via the `/secured` path requires
+the `Users` role.
+
+[source,java]
+----
+@WebServlet("/secured")
+@ServletSecurity(httpMethodConstraints = { @HttpMethodConstraint(value = "GET", 
+    rolesAllowed = { "Users" }) })
+public class SecuredServlet extends HttpServlet {
+----
+
+The majority of the remaining changes are in the `pom.xml`.
+
+Firstly the `pom.xml` is configured to say this is packaging a war, this is important as before packaging as a bootable jar the project needs to be
+creating a valid deployment.
+
+[source,xml]
+----
+<packaging>war</packaging>
+----
+
+The plugin is defined as:
+
+[source,xml]
+----
+<plugin>
+    <groupId>org.wildfly.plugins</groupId>
+    <artifactId>wildfly-jar-maven-plugin</artifactId>
+    <version>${version.wildfly.jar.maven.plugin}</version>
+    <configuration>
+        <feature-packs>
+            <feature-pack>
+                <location>wildfly@maven(org.jboss.universe:community-universe):current</location>
+            </feature-pack>
+            <feature-pack>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-adapter-galleon-pack</artifactId>
+                <version>${version.keycloak}</version>
+            </feature-pack>
+        </feature-packs>
+        <layers>
+            <layer>web-server</layer>
+            <layer>keycloak-client-oidc</layer>
+        </layers>
+        <context-root>simple-webapp</context-root>
+        <cli-sessions>
+            <cli-session>
+                <script-files>
+                    <script>configure-oidc.cli</script>
+                </script-files>
+            </cli-session>
+        </cli-sessions>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>package</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+Generally this follows the pattern of a Maven plugin definition but there are a few areas specifically relevent to this example.
+
+Firstly two feature packs are defined, one is defined to access the WildFly feature pack and a second is defined to access the Keycloak
+adapter feature pack.
+
+[source,xml]
+----
+<feature-packs>
+    <feature-pack>
+        <location>wildfly@maven(org.jboss.universe:community-universe):current</location>
+    </feature-pack>
+    <feature-pack>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-adapter-galleon-pack</artifactId>
+        <version>${version.keycloak}</version>
+    </feature-pack>
+</feature-packs>
+----
+
+It is worth noting that the WildFly feature pack definition is using the latest release of WildFly, as later releases become available they will 
+automatically be used.  The Keycloak feature pack on the other hand makes use of a fully qualified `groupId`, `atrifactId`, and `version`.
+
+The plugin configuration then specifies which layers should be provisioned in the WildFly server which will be bundled into the bootable jar.
+
+[source,xml]
+----
+<layers>
+    <layer>web-server</layer>
+    <layer>keycloak-client-oidc</layer>
+</layers>
+----
+
+The `web-server` layer comes from the WildFly feature pack and provisions the subsystems and modules needed to deploy servlet based web applications, the `keycloak-client-oidc` layer then pulls in the `keycloak` subsystem and any additional dependencies as needed to activate support for the Keycloak authentication mechanism.
+
+As the bootable jar will be deploying a web application the context root of the deployment can be specified:
+
+[source,xml]
+----
+<context-root>simple-webapp</context-root>
+----
+
+Then finally as a new server is dynamically provisioned management operations can be executed against the server to customise the configuration further.
+
+[source,xml]
+----
+<cli-sessions>
+    <cli-session>
+        <script-files>
+            <script>configure-oidc.cli</script>
+        </script-files>
+    </cli-session>
+</cli-sessions>
+----
+
+In this case the following operation is executed.
+
+[source]
+----
+/subsystem=keycloak/secure-deployment=simple-webapp.war:add( \
+    realm=WildFly, \
+    resource=simple-webapp, \
+    public-client=true, \
+    auth-server-url=http://localhost:8080/auth/, \
+    ssl-required=EXTERNAL)
+----
+
+It is possible for deployments to contain their own Keycloak configuration, however for this example instead the `secure-deployment=simple-webapp.war`
+resource defined on the Keycloak subsystem automatically intercepts the deployment as it is being deployed and applies the defined Keycloak configuration 
+to the deployment.
+
+The values specified here map back to the Keycloak configuration described earlier in this post.
+
+ * `realm` - Maps to the `WildFly` realm defined in Keycloak.
+ * `resource` - Maps to the `simple-webapp` client added to the `WildFly` realm.
+ * `auth-server` - Is the URL to redirect to for authentication to be performed against the Keycloak server.
+
+== Build and Run
+
+The project can now be built using Maven:
+
+[source,console]
+----
+mvn clean package
+----
+
+Once the project has been built the server can be easily started.
+
+[source,console]
+----
+java -jar target/simple-webapp-bootable.jar -Djboss.socket.binding.port-offset=10
+----
+
+As described earlier this is using a port offset of 10 to avoid port conflicts with the Keycloak server which is also running locally.
+
+Once started the application can be accessed by navigating to http://localhost:8090/simple-webapp, if you click on the `Access Secured Servlet` you should
+be redirected to Keycloak to authenticate before being redirected back to the web application.
+
+== Further Reading
+
+This blog post has focussed on the steps needed to get a bootable jar for a web application secured using Keycloak, for more information about bootable
+jar support in general have a look at the https://docs.wildfly.org/21/Bootable_Guide.html[Bootable Jar Guide].
+
+Also this blog post has focussed on the minimal steps to get the web application secured using Keycloak, for further information about Keycloak refer to the https://www.keycloak.org/documentation[Keycloak documentation].
+
+
