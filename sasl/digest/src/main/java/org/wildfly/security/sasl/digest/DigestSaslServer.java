@@ -317,10 +317,24 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
     @Override
     public Object getNegotiatedProperty(final String propName) {
         assertComplete();
-        if (Sasl.BOUND_SERVER_NAME.equals(propName)) {
-            return boundServerName;
+        switch (propName) {
+            case Sasl.BOUND_SERVER_NAME:
+                return boundServerName;
+            case Sasl.MAX_BUFFER:
+                return Integer.toString(receivingMaxBuffSize);
+            case Sasl.QOP:
+                return qop;
+            case Sasl.STRENGTH:
+                if ("3des".equals(cipher)|| "rc4".equals(cipher)) {
+                    return "high";
+                } else if ("des".equals(cipher)|| "rc4-56".equals(cipher)) {
+                    return "medium";
+                } else {
+                    return "low";
+                }
+            default:
+                return null;
         }
-        return null;
     }
 
     /* (non-Javadoc)
