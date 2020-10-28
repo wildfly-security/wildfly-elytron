@@ -388,6 +388,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         wrapCipher = createCipher(true);
         unwrapCipher = createCipher(false);
+
     }
 
     protected byte[] createIntegrityKey(boolean wrap){
