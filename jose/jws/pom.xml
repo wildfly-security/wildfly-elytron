@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2018 Red Hat, Inc., and individual contributors
+  ~ Copyright 2020 Red Hat, Inc., and individual contributors
   ~ as indicated by the @author tags.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,27 +24,26 @@
     <parent>
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
-        <version>1.15.7.CR1-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <version>1.17.0.CR1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-http</artifactId>
+    <artifactId>wildfly-elytron-jose-jws</artifactId>
 
-    <name>WildFly Elytron - HTTP </name>
-    <description>WildFly Security HTTP Framework</description>
+    <name>WildFly Elytron - JWS</name>
+    <description>WildFly Security JWS Classes</description>
 
     <dependencies>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
+            <artifactId>wildfly-elytron-json-util</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-credential</artifactId>
+            <artifactId>wildfly-elytron-x500-cert</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -54,20 +53,26 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <scope>provided</scope>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+               
     </dependencies>
 
 </project>

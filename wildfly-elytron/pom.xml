@@ -331,6 +331,10 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-http-oidc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-http-spnego</artifactId>
         </dependency>
         <dependency>
@@ -352,6 +356,10 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-json-util</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-jose-jwk</artifactId>
         </dependency>
         <!-- Do not include JWT as it defines a CDI Extension -->
         <!--<dependency>
@@ -672,6 +680,11 @@
                                 </dependency>
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-http-oidc</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-http-spnego</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -693,6 +706,11 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron-json-util</artifactId>
+                                    <version>${project.version}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.wildfly.security</groupId>
+                                    <artifactId>wildfly-elytron-jose-jwk</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
                                 <dependency>
