@@ -511,9 +511,10 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "certificate-revocation-list": {
-                        if (isSet(foundBits, 6)) throw reader.unexpectedElement();
+                        // rejects attribute if certificate-revocation-lists has been set
+                        if (isSet(foundBits, 6) || isSet(foundBits, 9)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 6);
-                        parseCertificateRevocationList(reader, trustManagerBuilder, xmlVersion);
+                        parseCertificateRevocationList(reader, trustManagerBuilder, xmlVersion, false);
                         break;
                     }
                     case "trust-manager": {
@@ -526,6 +527,13 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 8) || !xmlVersion.isAtLeast(Version.VERSION_1_4)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 8);
                         parseOcsp(reader, trustManagerBuilder, keyStoresMap);
+                        break;
+                    }
+                    case "certificate-revocation-lists" : {
+                        // rejects attribute if certificate-revocation-list has been set
+                        if (isSet(foundBits, 9) || isSet(foundBits, 6) || !xmlVersion.isAtLeast(Version.VERSION_1_7)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 9);
+                        parseCertificateRevocationLists(reader, trustManagerBuilder, xmlVersion);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -581,7 +589,7 @@ public final class ElytronXmlParser {
         String algorithm = null;
         KeyStore trustStore;
         boolean crl = false;
-        InputStream crlStream = null;
+        List<InputStream> crlStreams = new ArrayList<>();
         int maxCertPath = 5;
         boolean ocsp = false;
         boolean preferCrls = false;
@@ -613,8 +621,8 @@ public final class ElytronXmlParser {
             this.crl = true;
         }
 
-        void setCrlStream(InputStream crlStream) {
-            this.crlStream = crlStream;
+        void addCrlStream(InputStream crlStream) {
+            this.crlStreams.add(crlStream);
         }
 
         void setMaxCertPath(int maxCertPath) {
@@ -665,7 +673,7 @@ public final class ElytronXmlParser {
             final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm, provider);
             if (crl || ocsp) {
                 X509RevocationTrustManager.Builder revocationBuilder = X509RevocationTrustManager.builder();
-                revocationBuilder.setCrlStream(crlStream);
+                revocationBuilder.setCrlStreams(crlStreams);
                 revocationBuilder.setResponderURI(ocspResponder);
                 revocationBuilder.setTrustManagerFactory(trustManagerFactory);
                 revocationBuilder.setTrustStore(trustStore);
@@ -745,7 +753,28 @@ public final class ElytronXmlParser {
         }
     }
 
-    private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion) throws ConfigXMLParseException {
+    private static void parseCertificateRevocationLists(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion) throws ConfigXMLParseException {
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                switch (reader.getLocalName()) {
+                    case "certificate-revocation-list": {
+                        parseCertificateRevocationList(reader, builder, xmlVersion, true);
+                        break;
+                    }
+                    default:
+                        throw reader.unexpectedElement();
+                }
+            } else if (tag != END_ELEMENT) {
+                throw reader.unexpectedContent();
+            } else if (tag == END_ELEMENT) {
+                return;
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static void parseCertificateRevocationList(ConfigurationXMLStreamReader reader, TrustManagerBuilder builder, final Version xmlVersion, boolean multipleCrls) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String path = null;
         ExceptionSupplier<InputStream, IOException> resourceSource = null;
@@ -762,8 +791,9 @@ public final class ElytronXmlParser {
                     break;
                 }
                 case "maximum-cert-path": { //Deprecated
-                    if (builder.isMaxCertPathSet()) throw reader.unexpectedAttribute(i);
+                    if (builder.isMaxCertPathSet() || multipleCrls) throw reader.unexpectedAttribute(i);
                     xmlLog.xmlDeprecatedElement("maximum-cert-path", reader.getLocation());
+                    // only set the maximum-cert-path inside a CRL if it's a single CRL.
                     builder.setMaxCertPath(reader.getIntAttributeValueResolved(i, 1, Integer.MAX_VALUE));
                     break;
                 }
@@ -797,9 +827,9 @@ public final class ElytronXmlParser {
                 builder.setCrl();
                 if (gotSource) {
                     try {
-                        if (path != null) builder.setCrlStream(new FileInputStream(path));
-                        else if (resourceSource != null) builder.setCrlStream(resourceSource.get());
-                        else if (uriSource != null) builder.setCrlStream(uriSource.toURL().openStream());
+                        if (path != null) builder.addCrlStream(new FileInputStream(path));
+                        else if (resourceSource != null) builder.addCrlStream(resourceSource.get());
+                        else if (uriSource != null) builder.addCrlStream(uriSource.toURL().openStream());
                     } catch (IOException e) {
                         throw new ConfigXMLParseException(e);
                     }

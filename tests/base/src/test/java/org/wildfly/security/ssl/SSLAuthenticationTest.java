@@ -44,9 +44,11 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -119,6 +121,7 @@ public class SSLAuthenticationTest {
     private static final File ICA_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ica-revoked.pem");
     private static final File ROVE_REVOKED_PEM_CRL = new File(WORKING_DIR_ICACRL, "rove-revoked.pem");
     private static CAGenerationTool caGenerationTool = null;
+    private static final File LADYBUG_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ladybug-revoked.pem");
     private static TestingOcspServer ocspServer = null;
     private static X509Certificate ocspResponderCertificate;
 
@@ -239,11 +242,14 @@ public class SSLAuthenticationTest {
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
                 )));
 
+        X509Certificate greenJuneCertificate = caGenerationTool.getCertificate(Identity.GREENJUNE);
+
         KeyStore beetlesKeyStore = createKeyStore("/jks/beetles.keystore");
         beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedGood", ocspCheckedGoodCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedRevoked", ocspCheckedRevokedCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedUnknown", ocspCheckedUnknownCertificate);
+        beetlesKeyStore.setCertificateEntry("green june", greenJuneCertificate);
         createTemporaryKeyStoreFile(beetlesKeyStore, new File(JKS_LOCATION, "beetles.keystore"), PASSWORD);
 
         // Adds trusted cert for shortwinged
@@ -299,6 +305,25 @@ public class SSLAuthenticationTest {
                         .build(caGenerationTool.getPrivateKey(Identity.CA))
         );
 
+        // Creates the CRL for ladybug-revoked.pem
+        X509v2CRLBuilder ladybugRevokedCrlBuilder = new X509v2CRLBuilder(
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.SECOND_CA).getSubjectDN()),
+                currentDate
+        );
+
+        // revokes the certificate with serial number #2
+        ladybugRevokedCrlBuilder.addCRLEntry(
+                caGenerationTool.getCertificate(Identity.LADYBUG).getSerialNumber(),
+                revokeDate,
+                CRLReason.unspecified
+        );
+
+        X509CRLHolder ladybugRevokedCrlHolder = ladybugRevokedCrlBuilder.setNextUpdate(nextYear).build(
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
+                .setProvider("BC")
+                .build(caGenerationTool.getPrivateKey(Identity.SECOND_CA))
+        );
+
         // Creates the CRL for ica-revoked.pem
         X509v2CRLBuilder icaRevokedCrlBuilder = new X509v2CRLBuilder(
                 convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
@@ -332,6 +357,7 @@ public class SSLAuthenticationTest {
         PemWriter blankBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(BLANK_BLANK_PEM_CRL)));
         PemWriter fireflyRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(FIREFLY_REVOKED_PEM_CRL)));
         PemWriter icaRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ICA_REVOKED_PEM_CRL)));
+        PemWriter ladybugRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(LADYBUG_REVOKED_PEM_CRL)));
         PemWriter roveRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ROVE_REVOKED_PEM_CRL)));
 
         caBlankCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
@@ -343,12 +369,14 @@ public class SSLAuthenticationTest {
         roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(roveRevokedCrlHolder));
         roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(icaBlankCrlHolder));
         roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
+        ladybugRevokedCrlOutput.writeObject(new MiscPEMGenerator(ladybugRevokedCrlHolder));
 
         caBlankCrlOutput.close();
         icaBlankCrlOutput.close();
         blankBlankCrlOutput.close();
         fireflyRevokedCrlOutput.close();
         icaRevokedCrlOutput.close();
+        ladybugRevokedCrlOutput.close();
         roveRevokedCrlOutput.close();
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
@@ -388,6 +416,7 @@ public class SSLAuthenticationTest {
         BLANK_BLANK_PEM_CRL.delete();
         FIREFLY_REVOKED_PEM_CRL.delete();
         ICA_REVOKED_PEM_CRL.delete();
+        LADYBUG_REVOKED_PEM_CRL.delete();
         ROVE_REVOKED_PEM_CRL.delete();
         WORKING_DIR_CACRL.delete();
         WORKING_DIR_ICACRL.delete();
@@ -429,6 +458,50 @@ public class SSLAuthenticationTest {
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false, null, null, true);
+    }
+
+    /**
+     * One way SSL test where a client configures a single CRL under the certificate-revocation-lists
+     * attribute. A server is configured to send a certificate which is present in the CRL configured
+     * by the client. The communication is expected to fail.
+     */
+    @Test
+    public void testOneWayServerRejectedWithSingleCRL() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-one-crl.org", false, null, null, true);
+    }
+
+    /**
+     * One way SSL test where a client configures multiple CRLs under the certificate-revocation-lists
+     * attribute. A server is configured to send a certificate which is present in one of the CRLs
+     * configured by the client. Communication is expected to fail.
+     */
+    @Test
+    public void testOneWayServerRejectedWithMultipleCRL() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-multiple-crls-failure.org", false,
+                null, null, true);
+    }
+
+    /**
+     * One way SSL test where a client configures multiple CRLs under the certificate-revocation-lists
+     * attribute. A server is configured to send a certificate *not* present in any of the CRLs
+     * configured by the client. Communication is expected to succeed.
+     */
+    @Test
+    public void testOneWayServerAcceptedWithMultipleCRL() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/jks/greenjune.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-multiple-crls-success.org", true,
+                "OU=Wildfly,O=Wildfly,C=CA,ST=Wildfly,CN=Green June", null, true);
     }
 
     /**
@@ -501,6 +574,122 @@ public class SSLAuthenticationTest {
                 .build();
 
         Assert.assertTrue(trustManager.getAcceptedIssuers().length > 0);
+    }
+
+    /**
+     * Two way SSL test where a server configures a list of CRLs containing a single CRL.
+     * The client configures no CRLs, but it sends
+     * a certificate present in the CRL configured by the server. Communication is expected to fail.
+     */
+    @Test
+    public void testTwoWayClientRejectedWithSingleCRL() throws Throwable {
+
+        List<InputStream> crlStreams = new ArrayList<>();
+        // this CRL contains the certificate with the alias "ladybug" which is being sent by the client
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setCrlStreams(crlStreams)
+                        .setPreferCrls(true)
+                        .setNoFallback(true)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-no-crl-failure.org", false,
+                null, null, false);
+    }
+
+    /**
+     * Two way SSL test where a server configures a list of CRLs containing a single CRL.
+     * The client configures no CRLs, and it sends
+     * a certificate *not* present in the CRL configured by the server. Communication is expected to succeed.
+     */
+    @Test
+    public void testTwoWayClientAcceptedWithSingleCRL() throws Throwable {
+        List<InputStream> crlStreams = new ArrayList<>();
+        // CRL contains "ladybug" certificate but client sends "green june" certificate
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setCrlStreams(crlStreams)
+                        .setPreferCrls(true)
+                        .setNoFallback(true)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-no-crl-success.org", true,
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly",
+                "OU=Wildfly,O=Wildfly,C=CA,ST=Wildfly,CN=Green June", false);
+    }
+
+    /**
+     * Two way SSL test where a server configures a list of CRLs containing two CRLs.
+     * The client configures no CRLs, but it sends a certificate present in one of the CRLs configured by the server.
+     * Communication is expected to fail.
+     */
+    @Test
+    public void testTwoWayClientRejectedWithMultipleCRL() throws Throwable {
+
+        List<InputStream> crlStreams = new ArrayList<>();
+        // CRLs contain the "ladybug" and "firefly" certificates. The client sends "ladybug".
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/firefly-revoked.pem"));
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setCrlStreams(crlStreams)
+                        .setPreferCrls(true)
+                        .setNoFallback(true)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-no-crl-failure.org", false,
+                null, null, false);
+    }
+
+    /**
+     * Two way SSL test where a server configures a list of CRLs containing two CRLs.
+     * The client configures no CRLs, and it sends a certificate *not* present in any of the CRLs configured by the server.
+     * Communication is expected to succeed.
+     */
+    @Test
+    public void testTwoWayClientAcceptedWithMultipleCRL() throws Throwable {
+        List<InputStream> crlStreams = new ArrayList<>();
+        // CRLs contain the "ladybug" and "firefly" certificates, but the client sends "green june"
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/ladybug-revoked.pem"));
+        crlStreams.add(new FileInputStream("target/test-classes/ca/crl/firefly-revoked.pem"));
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
+                .setTrustManager(X509RevocationTrustManager.builder()
+                        .setTrustManagerFactory(getTrustManagerFactory())
+                        .setTrustStore(createKeyStore("/jks/ca.truststore2"))
+                        .setCrlStreams(crlStreams)
+                        .setPreferCrls(true)
+                        .setNoFallback(true)
+                        .build())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way-no-crl-success.org", true,
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly",
+                "OU=Wildfly,O=Wildfly,C=CA,ST=Wildfly,CN=Green June", false);
     }
 
     @Test
@@ -586,7 +775,7 @@ public class SSLAuthenticationTest {
     }
 
     private void performConnectionTest(SSLContext serverContext, String clientUri, boolean expectValid, String expectedServerPrincipal, String expectedClientPrincipal, boolean oneWay) throws Throwable {
-        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_1.xml").toExternalForm());
+        System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource("wildfly-ssl-test-config-v1_7.xml").toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(WildFlyElytronPasswordProvider.getInstance(), 1));
 
         AuthenticationContext context = AuthenticationContext.getContextManager().get();

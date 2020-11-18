@@ -305,7 +305,13 @@ public class CAGenerationTool implements Closeable {
         INTERMEDIATE("CN=Elytron ICA, ST=Elytron, C=UK, O=Intermediate Certificate Authority",
                 CA, true, null),
         ROVE("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Rove",
-                INTERMEDIATE, false, "rove.keystore");
+                INTERMEDIATE, false, "rove.keystore"),
+        SECOND_CA("CN=Wildfly CA, ST=Wildfly, C=CA, EMAILADDRESS=admin@wildfly.org O=Another Root Certificate Authority",
+                null, true, "ca.truststore2"),
+        LADYBUG("OU=Wildfly, O=Wildfly, C=CA, ST=Wildfly, CN=Ladybug", SECOND_CA, false,
+                "ladybug.keystore"),
+        GREENJUNE("OU=Wildfly, O=Wildfly, C=CA, ST=Wildfly, CN=Green June", SECOND_CA, false,
+                "greenjune.keystore");
 
         private final X500Principal principal;
         private final Identity signedBy;

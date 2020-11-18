@@ -97,7 +97,8 @@
                 </xsd:annotation>
             </xsd:element>
             <xsd:element name="providers" type="providers-type" minOccurs="0"/>
-            <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-type" minOccurs="0"/>
+            <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-type" minOccurs="0" />
+            <xsd:element name="certificate-revocation-lists" type="certificate-revocation-lists-type" minOccurs="0" />
             <xsd:element name="ocsp" type="ocsp-type" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required">
@@ -548,6 +549,48 @@
             </xsd:documentation>
         </xsd:annotation>
     </xsd:element>
+
+    <xsd:complexType name="certificate-revocation-lists-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                The presence of this element enables checking the peer's certificate against multiple certificate revocation lists.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:all>
+            <xsd:element name="certificate-revocation-list" type="certificate-revocation-list-no-max-cert-path-type" minOccurs="0"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="certificate-revocation-list-no-max-cert-path-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                The presence of this element enables checking the peer's certificate against a certificate revocation list.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:all>
+            <xsd:element name="uri" type="uri-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        URI of certificate revocation list file. Alternative to "path" and "resource".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="resource" type="resource-type" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The module resource to use as certificate revocation list. Alternative to "path" and "uri".
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:all>
+        <xsd:attribute name="path" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Path to the certificate revocation list. Alternative to "resource" and "uri".
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
 
     <xsd:complexType name="certificate-revocation-list-type">
         <xsd:annotation>
