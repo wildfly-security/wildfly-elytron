@@ -51,6 +51,14 @@
             <ssl-context name="one-way-ssl">
                 <trust-store key-store-name="scarab"/>
             </ssl-context>
+            <ssl-context name="one-way-max-cert-path" >
+                <trust-store key-store-name="ca" />
+                <certificate-revocation-list path="target/test-classes/ica/crl/rove-revoked.pem"/>
+            </ssl-context>
+            <ssl-context name="one-way-max-cert-path-failure" >
+                <trust-store key-store-name="ca" />
+                <certificate-revocation-list path="target/test-classes/ica/crl/rove-revoked.pem" maximum-cert-path="1"/>
+            </ssl-context>
             <ssl-context name="one-way-crl-ssl">
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ica/crl/blank-blank.pem"/>
@@ -112,6 +120,12 @@
             </rule>
             <rule use-ssl-context="one-way-ica-revoked-ssl">
                 <match-host name="test-one-way-ica-revoked.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-max-cert-path">
+                <match-host name="test-one-way-max-cert-path.org" />
+            </rule>
+            <rule use-ssl-context="one-way-max-cert-path-failure">
+                <match-host name="test-one-way-max-cert-path-failure.org" />
             </rule>
             <rule use-ssl-context="two-way-ssl">
                 <match-host name="test-two-way.org"/>
