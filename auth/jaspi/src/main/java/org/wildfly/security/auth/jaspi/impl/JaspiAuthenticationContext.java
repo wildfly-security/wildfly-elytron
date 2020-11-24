@@ -155,6 +155,7 @@ public class JaspiAuthenticationContext {
                             sac.importIdentity(securityIdentity);
                             sac.authorize();
                             authorizedIdentity = sac.getAuthorizedIdentity();
+                            sac.close();
                         } else {
                             authorizedIdentity = securityIdentity;
                         }
@@ -170,6 +171,7 @@ public class JaspiAuthenticationContext {
                                 if (sac.authorize()) {
                                     authorizedIdentity = sac.getAuthorizedIdentity();
                                 }
+                                sac.close();
                             } else {
                                 authorizedIdentity = securityDomain.createAdHocIdentity(callerPrincipal);
                             }
