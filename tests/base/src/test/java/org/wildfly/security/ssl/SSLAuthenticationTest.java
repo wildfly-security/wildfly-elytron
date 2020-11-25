@@ -242,7 +242,7 @@ public class SSLAuthenticationTest {
         SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(issuerDN)
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
                 .build();
         X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
@@ -260,7 +260,7 @@ public class SSLAuthenticationTest {
         X509Certificate intermediateIssuerCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(intermediateIssuerDN)
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(intermediateIssuerPublicKey)
                 .setSerialNumber(new BigInteger("6"))
@@ -278,7 +278,7 @@ public class SSLAuthenticationTest {
         X509Certificate ladybirdCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(ladybirdPublicKey)
                 .setSerialNumber(new BigInteger("3"))
@@ -294,7 +294,7 @@ public class SSLAuthenticationTest {
         X509Certificate scarabCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(scarabPublicKey)
                 .setSerialNumber(new BigInteger("4"))
@@ -310,7 +310,7 @@ public class SSLAuthenticationTest {
         X509Certificate dungCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Dung"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(dungPublicKey)
                 .setSerialNumber(new BigInteger("2"))
@@ -326,7 +326,7 @@ public class SSLAuthenticationTest {
         X509Certificate fireflyCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Firefly"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(fireflyPublicKey)
                 .setSerialNumber(new BigInteger("1"))
@@ -358,7 +358,7 @@ public class SSLAuthenticationTest {
         ocspResponderCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(ocspResponderPublicKey)
                 .setSerialNumber(new BigInteger("15"))
@@ -378,7 +378,7 @@ public class SSLAuthenticationTest {
         X509Certificate ocspCheckedGoodCertificate = new X509CertificateBuilder()
                 .setIssuerDn(intermediateIssuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(intermediateIssuerSigningKey)
                 .setPublicKey(ocspCheckedGoodPublicKey)
                 .setSerialNumber(new BigInteger("20"))
@@ -401,7 +401,7 @@ public class SSLAuthenticationTest {
         X509Certificate ocspCheckedRevokedCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(ocspCheckedRevokedPublicKey)
                 .setSerialNumber(new BigInteger("17"))
@@ -423,7 +423,7 @@ public class SSLAuthenticationTest {
         X509Certificate ocspCheckedUnknownCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"))
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
                 .setPublicKey(ocspCheckedUnknownPublicKey)
                 .setSerialNumber(new BigInteger("18"))
@@ -466,7 +466,7 @@ public class SSLAuthenticationTest {
                 currentDate
         );
         X509CRLHolder caBlankCrlHolder = caBlankCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA1withRSA")
+                new JcaContentSignerBuilder("SHA256withRSA")
                         .setProvider("BC")
                         .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
         );
@@ -493,7 +493,7 @@ public class SSLAuthenticationTest {
                 CRLReason.unspecified
         );
         X509CRLHolder fireflyRevokedCrlHolder = fireflyRevokedCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA1withRSA")
+                new JcaContentSignerBuilder("SHA256withRSA")
                         .setProvider("BC")
                         .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
         );
@@ -509,7 +509,7 @@ public class SSLAuthenticationTest {
                 CRLReason.unspecified
         );
         X509CRLHolder icaRevokedCrlHolder = icaRevokedCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA1withRSA")
+                new JcaContentSignerBuilder("SHA256withRSA")
                         .setProvider("BC")
                         .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
         );
