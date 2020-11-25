@@ -134,7 +134,7 @@ public class EntityTest extends BaseTestCase {
         selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(CA_DN)
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(new BasicConstraintsExtension(false, true, -1))
                 .build();
         final X509Certificate caCertificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
@@ -145,7 +145,7 @@ public class EntityTest extends BaseTestCase {
         selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(DN)
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(false, "SubjectAlternativeName", "DNS:testclient1.example.com")
                 .build();
         certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
@@ -171,7 +171,7 @@ public class EntityTest extends BaseTestCase {
         certificate = new X509CertificateBuilder()
                 .setIssuerDn(CA_DN)
                 .setSubjectDn(subjectDN)
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(caKey)
                 .setPublicKey(publicKey)
                 .build();
@@ -197,7 +197,7 @@ public class EntityTest extends BaseTestCase {
         selfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(DN)
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(false, "SubjectAlternativeName", "DNS:testserver1.example.com")
                 .build();
         certificate = selfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();

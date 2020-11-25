@@ -49,7 +49,7 @@ public class PemTest {
         SelfSignedX509CertificateAndSigningKey certificate = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(DN)
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
                 .build();
 
@@ -67,7 +67,7 @@ public class PemTest {
         X509Certificate subjectCertificate = new X509CertificateBuilder()
                 .setIssuerDn(issuerDN)
                 .setSubjectDn(subjectDN)
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .setSigningKey(issuerCertificate.getSigningKey())
                 .setPublicKey(publicKey)
                 .build();
