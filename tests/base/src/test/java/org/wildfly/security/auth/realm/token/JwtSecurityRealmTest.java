@@ -165,7 +165,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
         SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(new X500Principal("CN=localhost, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority"))
                 .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA1withRSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
                 .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
                 .build();
 
