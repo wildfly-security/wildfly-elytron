@@ -648,7 +648,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         Many(final Credential c1, final Many subsequent) {
             LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(subsequent.map.size() + 1);
-            map.put(Key.of(c1), c1);
+            addCredential(c1, map);
             map.putAll(subsequent.map);
             this.map = map;
             int hc = 0;
@@ -661,8 +661,8 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         Many(final Credential c1, final Credential c2, final Many subsequent) {
             LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(subsequent.map.size() + 2);
-            map.put(Key.of(c1), c1);
-            map.put(Key.of(c2), c2);
+            addCredential(c1, map);
+            addCredential(c2, map);
             map.putAll(subsequent.map);
             this.map = map;
             int hc = 0;
@@ -685,9 +685,9 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         Many(final Credential credential1, final Credential credential2, final Credential credential3) {
             LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(3);
-            map.put(Key.of(credential1), credential1);
-            map.put(Key.of(credential2), credential2);
-            map.put(Key.of(credential3), credential3);
+            addCredential(credential1, map);
+            addCredential(credential2, map);
+            addCredential(credential3, map);
             this.map = map;
             int hc = 0;
             for (Credential credential : map.values()) {
@@ -731,21 +731,35 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         public IdentityCredentials withCredential(final Credential credential) {
             final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
-            final Key key = Key.of(credential);
-            // do this as two steps so it's added to the end
-            clone.remove(key);
-            clone.put(key, credential);
+            addCredential(credential, clone);
             return new Many(clone);
         }
 
         public IdentityCredentials with(final IdentityCredentials other) {
             final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
             for (Credential credential : other) {
-                final Key key = Key.of(credential);
-                clone.remove(key);
-                clone.put(key, credential);
+                addCredential(credential, clone);
             }
             return new Many(clone);
+        }
+
+        private void addCredential(Credential credential, LinkedHashMap<Key, Credential> map) {
+            final Key key = Key.of(credential);
+            // do this as two steps so it's added to the end
+            map.remove(key);
+            map.put(key, credential);
+            // add an alternate entry without algorithm and parameter spec to allow for loose matches
+            if (key.getAlgorithm() != null) {
+                Key altKey = new Key(key.getClazz(), null, null);
+                map.remove(altKey);
+                map.put(altKey, credential);
+            }
+            // add an alternate entry without parameter spec to allow for loose matches
+            if (key.getParameterSpec() != null) {
+                Key altKey = new Key(key.getClazz(), key.getAlgorithm(), null);
+                map.remove(altKey);
+                map.put(altKey, credential);
+            }
         }
 
         public CredentialSource with(final CredentialSource other) {

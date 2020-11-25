@@ -31,12 +31,12 @@ import java.util.function.Function;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.EvidenceDecodePrincipalCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
@@ -141,10 +141,9 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
                 authorizedFunction = cacheCallback::isAuthorized;
                 authorizeCallBack = cacheCallback;
             } else {
-                String name = evidence.getDecodedPrincipal().getName();
-                AuthorizeCallback plainCallback = new AuthorizeCallback(name, name);
-                authorizedFunction = plainCallback::isAuthorized;
-                authorizeCallBack = plainCallback;
+                PrincipalAuthorizeCallback principalCallback = new PrincipalAuthorizeCallback(evidence.getDecodedPrincipal());
+                authorizedFunction = principalCallback::isAuthorized;
+                authorizeCallBack = principalCallback;
             }
 
             try {

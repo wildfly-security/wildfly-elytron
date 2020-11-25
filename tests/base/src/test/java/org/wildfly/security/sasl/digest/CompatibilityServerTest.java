@@ -29,6 +29,7 @@ import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
@@ -285,6 +286,8 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=a804fda66588e2d911bbacd1b1163bc1", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
+        assertEquals("auth-conf", server.getNegotiatedProperty(Sasl.QOP));
+        assertEquals("high", server.getNegotiatedProperty(Sasl.STRENGTH));
 
         byte[] incoming1 = CodePointIterator.ofString("13f7644f8c783501177522c1a455cb1f000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
