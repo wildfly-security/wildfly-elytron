@@ -133,27 +133,27 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     }
 
     public void setEnabledCipherSuites(final SSLContext sslContext, final SSLSocket sslSocket, final String[] cipherSuites) {
-        // ignored
+        sslSocket.setEnabledCipherSuites(cipherSuiteSelector.evaluate(cipherSuites));
     }
 
     public void setEnabledCipherSuites(final SSLContext sslContext, final SSLEngine sslEngine, final String[] cipherSuites) {
-        // ignored
+        sslEngine.setEnabledCipherSuites(cipherSuiteSelector.evaluate(cipherSuites));
     }
 
-    public void setEnabledCipherSuites(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final String[] suites) {
-        // ignored
+    public void setEnabledCipherSuites(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final String[] cipherSuites) {
+        sslServerSocket.setEnabledCipherSuites(cipherSuiteSelector.evaluate(cipherSuites));
     }
 
     public void setEnabledProtocols(final SSLContext sslContext, final SSLSocket sslSocket, final String[] protocols) {
-        // ignored
+        sslSocket.setEnabledProtocols(protocolSelector.evaluate(protocols));
     }
 
     public void setEnabledProtocols(final SSLContext sslContext, final SSLEngine sslEngine, final String[] protocols) {
-        // ignored
+        sslEngine.setEnabledProtocols(protocolSelector.evaluate(protocols));
     }
 
     public void setEnabledProtocols(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final String[] protocols) {
-        // ignored
+        sslServerSocket.setEnabledProtocols(protocolSelector.evaluate(protocols));
     }
 
     private SSLParameters redefine(SSLParameters original) {
