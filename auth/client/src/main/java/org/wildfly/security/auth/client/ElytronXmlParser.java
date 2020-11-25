@@ -26,6 +26,7 @@ import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
+import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -3578,8 +3579,8 @@ public final class ElytronXmlParser {
         @Override
         public KeyStore get() throws ConfigXMLParseException {
             KeyStore keyStore = null;
+            FileInputStream fin = null;
             try {
-                FileInputStream fin = null;
                 if (fileName != null) {
                     fin = new FileInputStream(fileName);
                 } else if (resourceSupplier != null) {
@@ -3592,9 +3593,18 @@ public final class ElytronXmlParser {
                 }
                 keyStore = KeyStoreUtil.loadKeyStore(providers, providerName, fin, fileName, passwordFactory.get());
             } catch (Exception e) {
+                safeClose(fin);
                 throw xmlLog.xmlFailedToCreateKeyStore(location, e);
             }
             return keyStore;
+        }
+
+        private static void safeClose(Closeable c) {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (Throwable ignored) {}
+            }
         }
     }
 

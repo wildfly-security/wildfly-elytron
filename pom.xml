@@ -82,7 +82,7 @@
         <version.org.jboss.threads>2.4.0.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
-        <version.junit.junit>4.12</version.junit.junit>
+        <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.33</version.jmockit>
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>

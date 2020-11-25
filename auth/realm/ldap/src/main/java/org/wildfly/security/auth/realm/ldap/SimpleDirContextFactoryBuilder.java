@@ -421,7 +421,7 @@ public class SimpleDirContextFactoryBuilder {
                 if (log.isDebugEnabled()) {
                     log.debugf("Creating [" + InitialDirContext.class + "] with environment:");
                     env.forEach((key, value) -> log.debugf("    Property [%s] with value [%s]", key,
-                            key != InitialDirContext.SECURITY_CREDENTIALS ? Arrays2.objectToString(value) : "******"));
+                            key.equals(InitialDirContext.SECURITY_CREDENTIALS) ? "******" : Arrays2.objectToString(value)));
                 }
 
                 InitialLdapContext initialContext;
