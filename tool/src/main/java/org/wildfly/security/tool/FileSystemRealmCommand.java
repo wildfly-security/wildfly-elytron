@@ -670,7 +670,7 @@ class FileSystemRealmCommand extends Command {
                 String.format("/subsystem=elytron/security-domain=%1$s:add(realms=[{realm=%2$s}],default-realm=%2$s,permission-mapper=default-permission-mapper)", securityDomainName, fileSystemRealmName)
             );
 
-            if (!createScriptCheck.equals("y") && !createScriptCheck.equals("yes")) {
+            if (!"y".equals(createScriptCheck) && !"yes".equals(createScriptCheck)) {
                 Files.write(Paths.get(String.format("%s/%s.sh", outputLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
                 Files.write(Paths.get(String.format("%s/%s.sh", outputLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.APPEND);
