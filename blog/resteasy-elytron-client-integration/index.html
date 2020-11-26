@@ -159,7 +159,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">import javax.ws.rs.client.ClientBuilder;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import javax.ws.rs.client.ClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 
 ...
@@ -172,7 +172,7 @@ ResteasyClient client = new ResteasyClientBuilder().build();</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">ResteasyClient client = (ResteasyClient) ClientBuilder.newBuilder().build();</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">ResteasyClient client = (ResteasyClient) ClientBuilder.newBuilder().build();</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -180,7 +180,7 @@ ResteasyClient client = new ResteasyClientBuilder().build();</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
     &lt;groupId&gt;org.wildfly&lt;/groupId&gt;
     &lt;artifactId&gt;wildfly-client-all&lt;/artifactId&gt;
     &lt;version&gt;21.0.0.Final&lt;/version&gt;
@@ -192,7 +192,7 @@ ResteasyClient client = new ResteasyClientBuilder().build();</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">AuthenticationConfiguration context = AuthenticationConfiguration.empty().useName("name").usePassword("pass");
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">AuthenticationConfiguration context = AuthenticationConfiguration.empty().useName("name").usePassword("pass");
 AuthenticationContext.empty().with(MatchRule.ALL, context).run(() -&gt; {
     ResteasyClient client = new ResteasyClientBuilder().build();
     ...

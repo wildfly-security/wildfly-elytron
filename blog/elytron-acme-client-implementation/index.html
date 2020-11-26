@@ -213,7 +213,7 @@ and <code>cleanUpAfterChallenge</code> method implementations will get used in t
 <h4 id="implementing-proveidentifiercontrol"><a class="anchor" href="#implementing-proveidentifiercontrol"></a>Implementing proveIdentifierControl</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">public abstract AcmeChallenge proveIdentifierControl​(AcmeAccount account, java.util.List&lt;AcmeChallenge&gt; challenges) throws AcmeException</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public abstract AcmeChallenge proveIdentifierControl​(AcmeAccount account, java.util.List&lt;AcmeChallenge&gt; challenges) throws AcmeException</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -240,7 +240,7 @@ and <a href="https://wildfly-security.github.io/wildfly-elytron/1.12.x/full-java
 <h4 id="implementing-cleanupafterchallenge"><a class="anchor" href="#implementing-cleanupafterchallenge"></a>Implementing cleanupAfterChallenge</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">public abstract void cleanupAfterChallenge​(AcmeAccount account, AcmeChallenge challenge) throws AcmeException</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public abstract void cleanupAfterChallenge​(AcmeAccount account, AcmeChallenge challenge) throws AcmeException</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -266,7 +266,7 @@ web server:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">AcmeClientSpi acmeClient = // Your ACME client implementation should be loaded here</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">AcmeClientSpi acmeClient = // Your ACME client implementation should be loaded here</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -285,7 +285,7 @@ going to do this using an <a href="https://wildfly-security.github.io/wildfly-el
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">AcmeAccount acmeAccount = AcmeAccount.builder()
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">AcmeAccount acmeAccount = AcmeAccount.builder()
     .setTermsOfServiceAgreed(true)
     .setServerUrl("https://acme-v02.api.letsencrypt.org/directory")
     .setStagingServerUrl("https://acme-staging-v02.api.letsencrypt.org/directory")
@@ -312,7 +312,7 @@ information from our <code>AcmeAccount</code> instance:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.createAccount(acmeAccount, false)</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">acmeClient.createAccount(acmeAccount, false)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -333,7 +333,7 @@ by the certificate authority.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.updateAccount(acmeAccount, false, new String[] { "mailto:admin@example.com", "mailto:anotheradmin@example.com"});</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">acmeClient.updateAccount(acmeAccount, false, new String[] { "mailto:admin@example.com", "mailto:anotheradmin@example.com"});</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -355,7 +355,7 @@ to obtain a certificate for www.example.com using our <code>AcmeAccount</code> i
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "www.example.com");</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "www.example.com");</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -369,7 +369,7 @@ generating the certificate signing request that will be sent to the certificate 
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "EC", 256, "www.example.com");</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">X509CertificateChainAndSigningKey certChainAndPrivateKey = acmeClient.obtainCertificateChain(acmeAccount, false, "EC", 256, "www.example.com");</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -396,7 +396,7 @@ For example, to revoke a certificate due to a key compromise, the following can 
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.revokeCertificate(acmeAccount, false, certificateToRevoke, CRLReason.KEY_COMPROMISE);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">acmeClient.revokeCertificate(acmeAccount, false, certificateToRevoke, CRLReason.KEY_COMPROMISE);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -416,7 +416,7 @@ method can be used:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.changeAccountKey(acmeAccount, false);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">acmeClient.changeAccountKey(acmeAccount, false);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -433,7 +433,7 @@ method can be used.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">acmeClient.deactivateAccount(acmeAccount, false);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">acmeClient.deactivateAccount(acmeAccount, false);</code></pre>
 </div>
 </div>
 <div class="paragraph">

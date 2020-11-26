@@ -165,7 +165,7 @@ in the Elytron subsystem. Let&#8217;s take a look at a complete example.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">security enable-ssl-http-server --interactive
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">security enable-ssl-http-server --interactive
 Please provide required pieces of information to enable SSL:
 
 Certificate info:
@@ -210,7 +210,7 @@ the Elytron subsystem in order to enable one-way SSL for applications deployed t
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">curl -v -k https://localhost:8443
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">curl -v -k https://localhost:8443
 * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
 * ALPN, server accepted to use h2
 * Server certificate:
@@ -240,7 +240,7 @@ that you would like to enable. We&#8217;re going to set this attribute to <code>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs"># This is only needed when the ssl-context is configured to use specific protocol version(s) other
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell"># This is only needed when the ssl-context is configured to use specific protocol version(s) other
 # than TLS 1.3. In general, this is not needed when the protocols attribute is simply undefined.
 /subsystem=elytron/server-ssl-context=ssl-context-6881a025-6c31-4bfe-ba4b-d8e7ebdde133:write-attribute(name=protocols,value=[TLSv1.3])
 
@@ -253,7 +253,7 @@ reload</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">curl -v -k https://localhost:8443
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">curl -v -k https://localhost:8443
 * SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
 * ALPN, server accepted to use h2
 * Server certificate:

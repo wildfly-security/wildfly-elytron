@@ -154,7 +154,7 @@ that password, as shown below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:add(location=mycredstore.cs, relative-to=jboss.server.config.dir, credential-reference={clear-text=StorePassword}, create=true)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/credential-store=myCredStore:add(location=mycredstore.cs, relative-to=jboss.server.config.dir, credential-reference={clear-text=StorePassword}, create=true)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -162,7 +162,7 @@ that password, as shown below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:add-alias(alias=example, secret-value=mySecretPassword)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/credential-store=myCredStore:add-alias(alias=example, secret-value=mySecretPassword)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -170,7 +170,7 @@ that password, as shown below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=myKS:add(relative-to=jboss.server.config.dir, path=my.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=example})</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=myKS:add(relative-to=jboss.server.config.dir, path=my.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=example})</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -231,7 +231,7 @@ keystore password to the credential store ourselves:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=myNewAlias, clear-text=myNewPassword})
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=newKS1:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, alias=myNewAlias, clear-text=myNewPassword})
 {
     "outcome" =&gt; "success",
     "result" =&gt; {"credential-store-update" =&gt; {
@@ -253,7 +253,7 @@ our credential store, <code>myCredStore</code>, with alias <code>myNewAlias</cod
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/credential-store=myCredStore:read-aliases()
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/credential-store=myCredStore:read-aliases()
 {
     "outcome" =&gt; "success",
     "result" =&gt; [
@@ -270,7 +270,7 @@ references the credential store and the alias, it does not reference the clear t
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:read-attribute(name=credential-reference)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=newKS1:read-attribute(name=credential-reference)
 {
     "outcome" =&gt; "success",
     "result" =&gt; {
@@ -288,7 +288,7 @@ would have been generated automatically for us:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS2:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, clear-text=myNewPassword})
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=newKS2:add(relative-to=jboss.server.config.dir, path=new.keystore, type=JCEKS, credential-reference={store=myCredStore, clear-text=myNewPassword})
 {
     "outcome" =&gt; "success",
     "result" =&gt; {"credential-store-update" =&gt; {
@@ -306,7 +306,7 @@ we can see that its <code>credential-reference</code> attribute references the c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS2:read-attribute(name=credential-reference)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=newKS2:read-attribute(name=credential-reference)
 {
     "outcome" =&gt; "success",
     "result" =&gt; {
@@ -329,7 +329,7 @@ example, the following command will result in updating the credential for the <c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=newKS1:write-attribute(name=credential-reference.clear-text, value=myUpdatedPassword)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=newKS1:write-attribute(name=credential-reference.clear-text, value=myUpdatedPassword)
 {
     "outcome" =&gt; "success",
     "result" =&gt; {"credential-store-update" =&gt; {"status" =&gt; "existing-entry-updated"}},

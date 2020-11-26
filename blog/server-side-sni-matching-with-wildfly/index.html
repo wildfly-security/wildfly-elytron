@@ -148,7 +148,7 @@ post is going to go through a complete example to show how to configure this.</p
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">git clone https://github.com/wildfly-security-incubator/elytron-examples
 cd elytron-examples</code></pre>
 </div>
 </div>
@@ -168,7 +168,7 @@ we&#8217;re going to do is add a couple aliases for localhost in our <code>/etc/
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">127.0.0.1 app1.com
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">127.0.0.1 app1.com
 127.0.0.1 app2.com</code></pre>
 </div>
 </div>
@@ -177,7 +177,7 @@ we&#8217;re going to do is add a couple aliases for localhost in our <code>/etc/
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=undertow/server=default-server/host=app1:add(alias=["app1.com"],default-web-module=app1.war)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=undertow/server=default-server/host=app1:add(alias=["app1.com"],default-web-module=app1.war)
 /subsystem=undertow/server=default-server/host=app2:add(alias=["app2.com"],default-web-module=app2.war)</code></pre>
 </div>
 </div>
@@ -186,13 +186,13 @@ we&#8217;re going to do is add a couple aliases for localhost in our <code>/etc/
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app1
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app1
 mvn wildfly:deploy</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app2
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd $PATH_TO_ELYTRON_EXAMPLES/server-ssl-sni-context/app2
 mvn wildfly:deploy</code></pre>
 </div>
 </div>
@@ -212,7 +212,7 @@ going to generate and make use of self-signed certificates as shown in the follo
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app1,distinguished-name="CN=app1.com",algorithm=RSA)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app1,distinguished-name="CN=app1.com",algorithm=RSA)
 /subsystem=elytron/key-store=serverKS:generate-key-pair(alias=app2,distinguished-name="CN=app2.com",algorithm=RSA)
 /subsystem=elytron/key-store=serverKS:generate-key-pair(alias=localhost,distinguished-name="CN=localhost",algorithm=RSA)</code></pre>
 </div>
@@ -232,7 +232,7 @@ to select each of the above certificates:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-manager=app1KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app1)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-manager=app1KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app1)
 /subsystem=elytron/key-manager=app2KM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=app2)
 /subsystem=elytron/key-manager=localhostKM:add(key-store=serverKS,credential-reference={clear-text=secret},alias-filter=localhost)</code></pre>
 </div>
@@ -247,7 +247,7 @@ for <code>localhost</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/server-ssl-context=app1SSC:add(key-manager=app1KM)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/server-ssl-context=app1SSC:add(key-manager=app1KM)
 /subsystem=elytron/server-ssl-context=app2SSC:add(key-manager=app2KM)
 /subsystem=elytron/server-ssl-context=localhostSSC:add(key-manager=localhostKM)</code></pre>
 </div>
@@ -261,7 +261,7 @@ select the certificate we want to use for <code>app1.com</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/server-ssl-sni-context=sniSSC:add(default-ssl-context=localhostSSC, host-context-map={app1\\.com=app1SSC,app2\\.com=app2SSC})</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/server-ssl-sni-context=sniSSC:add(default-ssl-context=localhostSSC, host-context-map={app1\\.com=app1SSC,app2\\.com=app2SSC})</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -275,7 +275,7 @@ our server SSL SNI context:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">batch
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">batch
 /subsystem=undertow/server=default-server/https-listener=https:undefine-attribute(name=security-realm)
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=sniSSC)
 run-batch

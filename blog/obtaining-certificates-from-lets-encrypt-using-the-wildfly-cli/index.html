@@ -178,7 +178,7 @@ proving that you really do own this domain name.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">security enable-ssl-http-server --interactive --lets-encrypt
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">security enable-ssl-http-server --interactive --lets-encrypt
 security enable-ssl-management --interactive --lets-encrypt</code></pre>
 </div>
 </div>
@@ -191,7 +191,7 @@ interfaces, respectively, using a certificate that will be obtained automaticall
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[standalone@localhost:9990 /] security enable-ssl-http-server --interactive --lets-encrypt
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">[standalone@localhost:9990 /] security enable-ssl-http-server --interactive --lets-encrypt
 Please provide required pieces of information to enable SSL:
 
 Let's Encrypt account key-store:
@@ -261,7 +261,7 @@ Note that the path to the keystore file doesn&#8217;t need to exist yet.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:add(path=server.keystore.jks, relative-to=jboss.server.config.dir, credential-reference={clear-text=secret}, type=JKS)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:add(path=server.keystore.jks, relative-to=jboss.server.config.dir, credential-reference={clear-text=secret}, type=JKS)</code></pre>
 </div>
 </div>
 </div>
@@ -273,7 +273,7 @@ configuration steps. These commands are shown below. We&#8217;re going to go thr
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">### One-time configuration
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">### One-time configuration
 
 # Configure a Let’s Encrypt account
 /subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)
@@ -303,7 +303,7 @@ The path to the keystore file doesn’t need to exist yet.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -311,7 +311,7 @@ The path to the keystore file doesn’t need to exist yet.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -319,7 +319,7 @@ The path to the keystore file doesn’t need to exist yet.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;subsystem xmlns="urn:wildfly:elytron:4.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto"&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;subsystem xmlns="urn:wildfly:elytron:4.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto"&gt;
 ...
     &lt;tls&gt;
     ...
@@ -412,7 +412,7 @@ the "serverKS" <code>key-store</code> under the alias "server".</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -420,7 +420,7 @@ the "serverKS" <code>key-store</code> under the alias "server".</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:read-aliases()
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:read-aliases()
 {
     "outcome" =&gt; "success",
     "result" =&gt; ["server"]
@@ -448,7 +448,7 @@ next sections will describe how to manage these certificates.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:revoke-certificate(alias=server,reason=keyCompromise,certificate-authority-account=myLetsEncryptAccount)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -473,7 +473,7 @@ days to expiry. In the following example, should-renew-certificate checks if the
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server,expiration=15)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server,expiration=15)
 {
     "outcome" =&gt; "success",
     "result" =&gt; {
@@ -500,7 +500,7 @@ the CLI script. A simple example of such a CLI script can be found below:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">if (result.should-renew-certificate == true) of /subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">if (result.should-renew-certificate == true) of /subsystem=elytron/key-store=serverKS:should-renew-certificate(alias=server)
 
     # certificate is due for renewal in less than 30 days, obtain a new certificate to replace the existing one in the key-store
     /subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
@@ -525,7 +525,7 @@ order to ensure that the new certificate will be used by the key-manager from no
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:write-attribute(name=contact-urls,value=[mailto:newadmin@admin.org])
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:write-attribute(name=contact-urls,value=[mailto:newadmin@admin.org])
 reload
 /subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:update-account()</code></pre>
 </div>
@@ -541,7 +541,7 @@ compromise), the <code>change-account-key</code> command can be used:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:change-account-key()</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:change-account-key()</code></pre>
 </div>
 </div>
 </div>
@@ -554,7 +554,7 @@ compromise), the <code>change-account-key</code> command can be used:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:deactivate-account()</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:deactivate-account()</code></pre>
 </div>
 </div>
 </div>

@@ -162,7 +162,7 @@ For example, a <code>source-address-role-decoder</code> can be added as follows:
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=myRoleDecoder:add(source-address="10.10.10.10", roles=[admin])</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/source-address-role-decoder=myRoleDecoder:add(source-address="10.10.10.10", roles=[admin])</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -192,7 +192,7 @@ connecting to the server from different IP addresses.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">git clone https://github.com/wildfly-security-incubator/elytron-examples
 cd elytron-examples</code></pre>
 </div>
 </div>
@@ -218,7 +218,7 @@ the following CLI commands:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/filesystem-realm=exampleRealm:add(path=fs-realm-users,relative-to=jboss.server.config.dir)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/filesystem-realm=exampleRealm:add(path=fs-realm-users,relative-to=jboss.server.config.dir)
 /subsystem=elytron/filesystem-realm=exampleRealm:add-identity(identity=alice)
 /subsystem=elytron/filesystem-realm=exampleRealm:set-password(identity=alice,clear={password=alice123+})
 /subsystem=elytron/filesystem-realm=exampleRealm:add-identity-attribute(identity=alice,name=Roles,value=[employee])</code></pre>
@@ -230,7 +230,7 @@ defined in the default Elytron subsystem configuration and we’re going to make
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/security-domain=ApplicationDomain:list-add(name=realms, value={realm=exampleRealm})
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/security-domain=ApplicationDomain:list-add(name=realms, value={realm=exampleRealm})
 /subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=default-realm, value=exampleRealm)</code></pre>
 </div>
 </div>
@@ -241,7 +241,7 @@ factory that is backed by our Elytron security domain.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
 /subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
 /subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)</code></pre>
 </div>
@@ -259,7 +259,7 @@ the <code>127.0.0.2</code> IP address. We can configure this as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -267,7 +267,7 @@ the <code>127.0.0.2</code> IP address. We can configure this as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=role-decoder,value=ipRoleDecoder1)
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=role-decoder,value=ipRoleDecoder1)
 reload</code></pre>
 </div>
 </div>
@@ -280,7 +280,7 @@ directory, run the following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install wildfly:deploy</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">mvn clean install wildfly:deploy</code></pre>
 </div>
 </div>
 </div>
@@ -307,7 +307,7 @@ method our client invokes requires <code>admin</code> role.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn exec:exec</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">mvn exec:exec</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -315,7 +315,7 @@ method our client invokes requires <code>admin</code> role.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 Successfully called secured bean, caller principal alice
 
 Principal has admin permission: true
@@ -334,7 +334,7 @@ To do this, we&#8217;re going to update the <code>bind-address</code> as follows
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">&lt;bind-address bind-address="127.0.0.3" bind-port="61111" match="0.0.0.0/0"/&gt;</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">&lt;bind-address bind-address="127.0.0.3" bind-port="61111" match="0.0.0.0/0"/&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -342,12 +342,12 @@ To do this, we&#8217;re going to update the <code>bind-address</code> as follows
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">mvn clean install exec:exec</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">mvn clean install exec:exec</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 Successfully called secured bean, caller principal alice
 
 Principal has admin permission: false
@@ -370,7 +370,7 @@ following example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/source-address-role-decoder=ipRoleDecoder1:add(source-address="127.0.0.2", roles=[admin])
 /subsystem=elytron/source-address-role-decoder=ipRoleDecoder2:add(source-address="127.0.0.3", roles=[guest])
 /subsystem=elytron/aggregate-role-decoder=myAggregateRoleDecoder:add(role-decoders=[ipRoleDecoder1,ipRoleDecoder2])</code></pre>
 </div>

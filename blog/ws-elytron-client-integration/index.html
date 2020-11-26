@@ -162,7 +162,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;authentication-configurations&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;authentication-configurations&gt;
     ...
     &lt;configuration&gt;
         ...
@@ -193,7 +193,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">AuthenticationConfiguration ac = AuthenticationConfiguration.empty().useWebServices(
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">AuthenticationConfiguration ac = AuthenticationConfiguration.empty().useWebServices(
                 Map.ofEntries(
                         entry("http-mechanism", "BASIC"),
                         entry("ws-security-type", "UsernameToken")
@@ -216,7 +216,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="java" class="language-java hljs">Service service = Service.create(wsdlURL, serviceName);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Service service = Service.create(wsdlURL, serviceName);
 Endpoint port = service.getPort(Endpoint.class);
 CXFClientConfigurer configurer = new CXFClientConfigurer();
 configurer.setConfigProperties(port, null, null);   // use null value if there is no other WS configuration

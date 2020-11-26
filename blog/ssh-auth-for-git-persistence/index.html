@@ -172,7 +172,7 @@ found in your JBOSS home to do so. For this example, we will be creating a new c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --create --location=cs_example.cs --password Elytron</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --create --location=cs_example.cs --password Elytron</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -184,7 +184,7 @@ found in your JBOSS home to do so. For this example, we will be creating a new c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --generate-key-pair example --algorithm RSA --size 3072</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">[$JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --generate-key-pair example --algorithm RSA --size 3072</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -196,7 +196,7 @@ store we created.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --export-key-pair-public-key example
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">[JBOSS_HOME]$ ./bin/elytron-tool.sh credential-store --location=cs_example.cs --password Elytron --export-key-pair-public-key example
 ssh-rsa
 AAAAB3NzaC1yc2EAAAADAQABAAABgwo8etzxo2JiERvv07/Cvkb6eIqodZrdWWAI11cp0VYgnEvd5dGoYGSHmDWO5EqXdOLROifr+CmOGUEWRIwSy+W13QywZbnrmDPJbx4e/KckVvhpEtq3AZc2w7Zunob+yxGlX9PyeYI4HEsKmwOi+brqeBD7fo923U9FUyqs47pu088tpuoYo2kcxX7BJP+uxfEIkZECWkQcolL8qMl4PkUvzWnTv+KjRzUXYAHEefdqpMa+th58KmB7W8An8weJ85/nerbOkVxN6dAbDO82at77LvaRRDh+65ur1JfTWf1iS+fH2TwTv5e/RGNOnV4sdpNcKVfZ3AWVKp5kmt+x0EQsCalFiDwGyciIjQ1jA8NRr83/LQgdzHsDZ7Amudc25IEwRdXS9BYxTqAMeBLoxHqDKAZ6uiZoPH4QfaVYSXeF3GrYUC2Fzg5P1VKa1OJQOb3itztXsor2vFVtQeUjQ3lv63FN8YE6HnS2PRhbqn9Ep0oh/QqbhlK4vtY+WtY5UWBf7Q==</code></pre>
 </div>
@@ -213,7 +213,7 @@ for more information</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
   &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
 
      &lt;credential-stores&gt;
@@ -261,7 +261,7 @@ as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="shell" class="language-shell hljs">[~/.ssh]$ ssh-keygen -t ecdsa -b 256
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">[~/.ssh]$ ssh-keygen -t ecdsa -b 256
 Generating public/private ecdsa key pair.
 Enter file in which to save the key (/home/user/.ssh/id_ecdsa):
 Enter passphrase (empty for no passphrase): secret
@@ -285,7 +285,7 @@ Your public key has been saved in /home/user/.ssh/id_ecdsa.pub.</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
   &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
 
      &lt;authentication-rules&gt;
@@ -333,7 +333,7 @@ using a <code>ssh-credential</code> as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
   &lt;authentication-client xmlns="urn:elytron:client:1.6"&gt;
 
      &lt;authentication-rules&gt;
@@ -392,7 +392,7 @@ To connect, we use the SSH url of this repo and specify the following options wh
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">[JBOSS_HOME]$ ./bin/standalone.sh --git-repo=ssh:giturl.com/repo --git-auth=file:///path/to/wildfly-config.xml</code></pre>
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">[JBOSS_HOME]$ ./bin/standalone.sh --git-repo=ssh:giturl.com/repo --git-auth=file:///path/to/wildfly-config.xml</code></pre>
 </div>
 </div>
 <div class="ulist">
