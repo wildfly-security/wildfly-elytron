@@ -236,6 +236,9 @@ public final class WildFlySecurityManager extends SecurityManager implements Per
                 } else {
                     access.accessCheckFailed(permission, codeSource, classLoader, Arrays.toString(principals));
                 }
+                if (access.isTraceEnabled()) {
+                    access.accessCheckFailedTrace(permission, domain, new RuntimeException("Exception not thrown, analysis only."));
+                }
                 if (deniedDomain == null && ! LOG_ONLY) {
                     deniedDomain = domain;
                 }
