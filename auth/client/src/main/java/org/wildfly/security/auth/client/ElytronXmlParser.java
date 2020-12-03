@@ -670,6 +670,7 @@ public final class ElytronXmlParser {
                 revocationBuilder.setTrustStore(trustStore);
                 revocationBuilder.setOnlyEndEntity(onlyLeafCert);
                 revocationBuilder.setSoftFail(softFail);
+                revocationBuilder.setMaxCertPath(maxCertPath);
 
                 if (crl && ocsp) {
                     revocationBuilder.setPreferCrls(preferCrls);
