@@ -134,6 +134,7 @@ public class SSLAuthenticationTest {
     private static final File BLANK_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank-blank.pem");
     private static final File FIREFLY_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "firefly-revoked.pem");
     private static final File ICA_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ica-revoked.pem");
+    private static final File ROVE_REVOKED_PEM_CRL = new File(WORKING_DIR_ICACRL, "rove-revoked.pem");
     private static TestingOcspServer ocspServer = null;
     private static X509Certificate ocspResponderCertificate;
 
@@ -514,6 +515,17 @@ public class SSLAuthenticationTest {
                         .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
         );
 
+        // Creates the CRL for rove-revoked.pem
+        X509v2CRLBuilder roveRevokedCrlBuilder = new X509v2CRLBuilder(
+                convertSunStyleToBCStyle(intermediateIssuerCertificate.getSubjectDN()),
+                currentDate
+        );
+
+        X509CRLHolder roveRevokedCrlHolder = roveRevokedCrlBuilder.setNextUpdate(nextYear).build(
+                new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(intermediateIssuerSigningKey)
+        );
 
         // Create the temporary files
         createTemporaryKeyStoreFile(ladybirdKeyStore, LADYBIRD_FILE, PASSWORD);
@@ -530,6 +542,7 @@ public class SSLAuthenticationTest {
         PemWriter blankBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(BLANK_BLANK_PEM_CRL)));
         PemWriter fireflyRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(FIREFLY_REVOKED_PEM_CRL)));
         PemWriter icaRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ICA_REVOKED_PEM_CRL)));
+        PemWriter roveRevokedCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ROVE_REVOKED_PEM_CRL)));
 
         caBlankCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
         icaBlankCrlOutput.writeObject(new MiscPEMGenerator(icaBlankCrlHolder));
@@ -537,12 +550,16 @@ public class SSLAuthenticationTest {
         blankBlankCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
         fireflyRevokedCrlOutput.writeObject(new MiscPEMGenerator(fireflyRevokedCrlHolder));
         icaRevokedCrlOutput.writeObject(new MiscPEMGenerator(icaRevokedCrlHolder));
+        roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(roveRevokedCrlHolder));
+        roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(icaBlankCrlHolder));
+        roveRevokedCrlOutput.writeObject(new MiscPEMGenerator(caBlankCrlHolder));
 
         caBlankCrlOutput.close();
         icaBlankCrlOutput.close();
         blankBlankCrlOutput.close();
         fireflyRevokedCrlOutput.close();
         icaRevokedCrlOutput.close();
+        roveRevokedCrlOutput.close();
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
         ocspServer.createIssuer(1, issuerCertificate);
@@ -591,6 +608,7 @@ public class SSLAuthenticationTest {
         BLANK_BLANK_PEM_CRL.delete();
         FIREFLY_REVOKED_PEM_CRL.delete();
         ICA_REVOKED_PEM_CRL.delete();
+        ROVE_REVOKED_PEM_CRL.delete();
         WORKING_DIR_CA.delete();
         WORKING_DIR_ICA.delete();
         WORKING_DIR_CACRL.delete();
@@ -631,6 +649,33 @@ public class SSLAuthenticationTest {
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false, null, null, true);
+    }
+
+    /**
+     * This test verifies communication succeds when the certification path length does not exceed
+     * the default value 5. The length of this Rove's certification path is 2.
+     */
+    @Test
+    public void testCRLMaxCertPathSucceeds() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", null, true);
+    }
+
+    /**
+     * This test verifies communication fails when the certification path length exceeds the
+     * maximum certificate path length. The length of this Rove's certification path is 2,
+     * and the maximum length specified is 1.
+     */
+    @Test
+    public void testCRLMaxCertPathFails() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path-failure.org", false, null, null, true);
     }
 
     @Test
