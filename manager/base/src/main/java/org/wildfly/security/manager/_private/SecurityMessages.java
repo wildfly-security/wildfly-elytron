@@ -21,17 +21,14 @@ package org.wildfly.security.manager._private;
 import java.security.AccessControlException;
 import java.security.CodeSource;
 import java.security.Permission;
-import java.security.ProtectionDomain;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 
-import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.DEBUG;
 
 /**
@@ -49,10 +46,6 @@ public interface SecurityMessages extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(value = "Permission check failed (permission \"%s\" in code source \"%s\" of \"%s\")")
     void accessCheckFailed(Permission permission, CodeSource codeSource, ClassLoader classLoader);
-
-    @LogMessage(level = TRACE)
-    @Message(value = "Permission check failed (permission \"%s\" in protection domain \"%s\").")
-    void accessCheckFailedTrace(Permission permission, ProtectionDomain protectionDomain, @Cause Exception e);
 
     @Message(id = 1, value = "Permission check failed (permission \"%s\" in code source \"%s\" of \"%s\")")
     AccessControlException accessControlException(@Param Permission permission, Permission permission_, CodeSource codeSource, ClassLoader classLoader);
