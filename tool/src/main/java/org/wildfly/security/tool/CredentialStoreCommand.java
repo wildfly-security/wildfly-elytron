@@ -344,187 +344,22 @@ class CredentialStoreCommand extends Command {
         }
 
         if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
-            String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
-            if (alias.length() == 0) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.optionNotSpecified(ADD_ALIAS_PARAM);
-            }
-            if (secret == null) {
-                // prompt for secret
-                secret = prompt(false, ElytronToolMessages.msg.secretToStorePrompt(), true, ElytronToolMessages.msg.secretToStorePromptConfirm());
-                if (secret == null) {
-                    setStatus(GENERAL_CONFIGURATION_ERROR);
-                    throw ElytronToolMessages.msg.optionNotSpecified(PASSWORD_CREDENTIAL_VALUE_PARAM);
-                }
-            }
-
-            // Get the original attributes of the credential store
-            Map<String, Object> locationAttributes = readAttributesForPreservation(Paths.get(location));
-
-            credentialStore.store(alias, createCredential(secret, entryType));
-            credentialStore.flush();
-            if (entryType != null) {
-                System.out.println(ElytronToolMessages.msg.aliasStored(alias, entryType));
-            } else {
-                System.out.println(ElytronToolMessages.msg.aliasStored(alias));
-            }
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
-
-            // Restore the original attributes of the credential store
-            setAttributesForPreservation(Paths.get(location), locationAttributes);
-
+            addAlias(secret, credentialStore, entryType, location);
         } else if (cmdLine.hasOption(REMOVE_ALIAS_PARAM)) {
-            String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);
-            if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
-                credentialStore.remove(alias, entryTypeToCredential(entryType));
-                credentialStore.flush();
-                if (entryType != null) {
-                    System.out.println(ElytronToolMessages.msg.aliasRemoved(alias, entryType));
-                } else {
-                    System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
-                }
-                setStatus(ElytronTool.ElytronToolExitStatus_OK);
-            } else {
-                if (entryType != null) {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
-                } else {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
-                }
-                setStatus(ALIAS_NOT_FOUND);
-            }
-
+            removeAlias(credentialStore, entryType);
         } else if (cmdLine.hasOption(CHECK_ALIAS_PARAM)) {
-            String alias = cmdLine.getOptionValue(CHECK_ALIAS_PARAM);
-            if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
-                setStatus(ElytronTool.ElytronToolExitStatus_OK);
-                System.out.println(ElytronToolMessages.msg.aliasExists(alias));
-            } else {
-                setStatus(ALIAS_NOT_FOUND);
-                if (entryType != null) {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
-                } else {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
-                }
-            }
+            checkAlias(credentialStore, entryType);
         } else if (cmdLine.hasOption(ALIASES_PARAM)) {
-            Set<String> aliases = credentialStore.getAliases();
-            if (aliases.size() != 0) {
-                StringBuilder list = new StringBuilder();
-                for (String alias: aliases) {
-                    list.append(alias).append(" ");
-                }
-                System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
-            } else {
-                System.out.println(ElytronToolMessages.msg.noAliases());
-            }
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            aliases(credentialStore);
         } else if (cmdLine.hasOption(GENERATE_KEY_PAIR_PARAM)) {
-            String alias = cmdLine.getOptionValue(GENERATE_KEY_PAIR_PARAM);
-            if (alias == null || alias.isEmpty()) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.optionNotSpecified(GENERATE_KEY_PAIR_PARAM);
-            }
-            int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE_PARAM));
-            String algorithm = cmdLine.getOptionValue(ALGORITHM_PARAM);
-            if (algorithm == null) algorithm = RSA_ALGORITHM;
-            credentialStore.store(alias, createKeyPairCredential(algorithm, size));
-            credentialStore.flush();
-            System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            generateKeyPair(credentialStore);
         } else if (cmdLine.hasOption(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM)) {
-            String alias = cmdLine.getOptionValue(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
-            if (alias == null || alias.isEmpty()) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.optionNotSpecified(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
-            }
-            if (credentialStore.exists(alias, KeyPairCredential.class)) {
-                KeyPairCredential credential = credentialStore.retrieve(alias, KeyPairCredential.class);
-                System.out.println(PublicKeyEntry.toString(credential.getKeyPair().getPublic()));
-                setStatus(ElytronTool.ElytronToolExitStatus_OK);
-            } else {
-                setStatus(ALIAS_NOT_FOUND);
-                if (entryType != null) {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
-                } else {
-                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
-                }
-            }
+            exportKeyPairPublicKey(credentialStore, entryType);
         } else if (cmdLine.hasOption(IMPORT_KEY_PAIR_PARAM)) {
-            String alias = cmdLine.getOptionValue(IMPORT_KEY_PAIR_PARAM);
-            if (alias == null || alias.isEmpty()) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.optionNotSpecified(IMPORT_KEY_PAIR_PARAM);
-            }
-
-            String passphrase = cmdLine.getOptionValue(KEY_PASSPHRASE_PARAM);
-            if (passphrase == null || passphrase.isEmpty()) {
-                // prompt for passphrase
-                passphrase = prompt(false, ElytronToolMessages.msg.keyPassphrasePrompt(), true, ElytronToolMessages.msg.keyPassphrasePromptConfirm());
-            }
-            ElytronFilePasswordProvider passwordProvider = new ElytronFilePasswordProvider(createCredential(passphrase, PasswordCredential.class.getName()));
-
-            KeyPairCredential keyPairCredential;
-            String privateKeyContent;
-            String publicKeyContent = null;
-            String privateKeyString = cmdLine.getOptionValue(PRIVATE_KEY_STRING_PARAM);
-            String publicKeyString = cmdLine.getOptionValue(PUBLIC_KEY_STRING_PARAM);
-            String privateKeyFile = cmdLine.getOptionValue(PRIVATE_KEY_LOCATION_PARAM);
-            String publicKeyFile = cmdLine.getOptionValue(PUBLIC_KEY_LOCATION_PARAM);
-
-            if (privateKeyFile != null) {
-                if (!Files.exists(Paths.get(privateKeyFile))) {
-                    setStatus(GENERAL_CONFIGURATION_ERROR);
-                    throw ElytronToolMessages.msg.keyFileDoesNotExist(privateKeyFile);
-                }
-                File keyFile = new File(privateKeyFile);
-                FileInputStream stream = new FileInputStream(keyFile);
-                byte[] keyData = new byte[stream.available()];
-                try {
-                    stream.read(keyData, 0, stream.available());
-                } finally {
-                    safeClose(stream);
-                }
-                privateKeyContent = new String(keyData);
-            } else if (privateKeyString != null) {
-                privateKeyContent = privateKeyString;
-            } else {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.noPrivateKeySpecified();
-            }
-
-            if (privateKeyContent.isEmpty()) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.noPrivateKeySpecified();
-            }
-
-            if (publicKeyFile != null) {
-                if (!Files.exists(Paths.get(publicKeyFile))) {
-                    setStatus(GENERAL_CONFIGURATION_ERROR);
-                    throw ElytronToolMessages.msg.keyFileDoesNotExist(publicKeyFile);
-                }
-                File keyFile = new File(publicKeyFile);
-                FileInputStream stream = new FileInputStream(keyFile);
-                byte[] keyData = new byte[stream.available()];
-                try {
-                    stream.read(keyData, 0, stream.available());
-                } finally {
-                    safeClose(stream);
-                }
-                publicKeyContent = new String(keyData);
-            } else if (publicKeyString != null) {
-                publicKeyContent = publicKeyString;
-            }
-
-            keyPairCredential = parseKeyPairCredential(privateKeyContent, publicKeyContent, passwordProvider);
-            credentialStore.store(alias, keyPairCredential);
-            credentialStore.flush();
-            System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            importKeyPair(credentialStore);
         } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)) {
             //this must be always the last available option.
-            credentialStore.flush();
-            System.out.println(ElytronToolMessages.msg.credentialStoreCreated());
-            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            createCredentialStore(credentialStore);
         } else {
             setStatus(ACTION_NOT_DEFINED);
             throw ElytronToolMessages.msg.actionToPerformNotDefined();
@@ -561,6 +396,201 @@ class CredentialStoreCommand extends Command {
 
             System.out.println(ElytronToolMessages.msg.commandSummary(com.toString()));
         }
+    }
+
+    private void addAlias(String secret, CredentialStore credentialStore, String entryType, String location) throws Exception {
+        String alias = cmdLine.getOptionValue(ADD_ALIAS_PARAM);
+        if (alias.length() == 0) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.optionNotSpecified(ADD_ALIAS_PARAM);
+        }
+        if (secret == null) {
+            // prompt for secret
+            secret = prompt(false, ElytronToolMessages.msg.secretToStorePrompt(), true, ElytronToolMessages.msg.secretToStorePromptConfirm());
+            if (secret == null) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.optionNotSpecified(PASSWORD_CREDENTIAL_VALUE_PARAM);
+            }
+        }
+
+        // Get the original attributes of the credential store
+        Map<String, Object> locationAttributes = readAttributesForPreservation(Paths.get(location));
+
+        credentialStore.store(alias, createCredential(secret, entryType));
+        credentialStore.flush();
+        if (entryType != null) {
+            System.out.println(ElytronToolMessages.msg.aliasStored(alias, entryType));
+        } else {
+            System.out.println(ElytronToolMessages.msg.aliasStored(alias));
+        }
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+
+        // Restore the original attributes of the credential store
+        setAttributesForPreservation(Paths.get(location), locationAttributes);
+    }
+
+    private void removeAlias(CredentialStore credentialStore, String entryType) throws Exception {
+        String alias = cmdLine.getOptionValue(REMOVE_ALIAS_PARAM);
+        if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
+            credentialStore.remove(alias, entryTypeToCredential(entryType));
+            credentialStore.flush();
+            if (entryType != null) {
+                System.out.println(ElytronToolMessages.msg.aliasRemoved(alias, entryType));
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasRemoved(alias));
+            }
+            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+        } else {
+            if (entryType != null) {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+            }
+            setStatus(ALIAS_NOT_FOUND);
+        }
+    }
+
+    private void checkAlias(CredentialStore credentialStore, String entryType) throws Exception {
+        String alias = cmdLine.getOptionValue(CHECK_ALIAS_PARAM);
+        if (credentialStore.exists(alias, entryTypeToCredential(entryType))) {
+            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+            System.out.println(ElytronToolMessages.msg.aliasExists(alias));
+        } else {
+            setStatus(ALIAS_NOT_FOUND);
+            if (entryType != null) {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+            }
+        }
+    }
+
+    private void aliases(CredentialStore credentialStore) throws Exception {
+        Set<String> aliases = credentialStore.getAliases();
+        if (aliases.size() != 0) {
+            StringBuilder list = new StringBuilder();
+            for (String alias: aliases) {
+                list.append(alias).append(" ");
+            }
+            System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
+        } else {
+            System.out.println(ElytronToolMessages.msg.noAliases());
+        }
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    private void generateKeyPair(CredentialStore credentialStore) throws Exception {
+        String alias = cmdLine.getOptionValue(GENERATE_KEY_PAIR_PARAM);
+        if (alias == null || alias.isEmpty()) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.optionNotSpecified(GENERATE_KEY_PAIR_PARAM);
+        }
+        int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE_PARAM));
+        String algorithm = cmdLine.getOptionValue(ALGORITHM_PARAM);
+        if (algorithm == null) algorithm = RSA_ALGORITHM;
+        credentialStore.store(alias, createKeyPairCredential(algorithm, size));
+        credentialStore.flush();
+        System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    private void exportKeyPairPublicKey(CredentialStore credentialStore, String entryType) throws Exception {
+        String alias = cmdLine.getOptionValue(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
+        if (alias == null || alias.isEmpty()) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.optionNotSpecified(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM);
+        }
+        if (credentialStore.exists(alias, KeyPairCredential.class)) {
+            KeyPairCredential credential = credentialStore.retrieve(alias, KeyPairCredential.class);
+            System.out.println(PublicKeyEntry.toString(credential.getKeyPair().getPublic()));
+            setStatus(ElytronTool.ElytronToolExitStatus_OK);
+        } else {
+            setStatus(ALIAS_NOT_FOUND);
+            if (entryType != null) {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias, entryType));
+            } else {
+                System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+            }
+        }
+    }
+
+    private void importKeyPair(CredentialStore credentialStore) throws Exception {
+        String alias = cmdLine.getOptionValue(IMPORT_KEY_PAIR_PARAM);
+        if (alias == null || alias.isEmpty()) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.optionNotSpecified(IMPORT_KEY_PAIR_PARAM);
+        }
+
+        String passphrase = cmdLine.getOptionValue(KEY_PASSPHRASE_PARAM);
+        if (passphrase == null || passphrase.isEmpty()) {
+            // prompt for passphrase
+            passphrase = prompt(false, ElytronToolMessages.msg.keyPassphrasePrompt(), true, ElytronToolMessages.msg.keyPassphrasePromptConfirm());
+        }
+        ElytronFilePasswordProvider passwordProvider = new ElytronFilePasswordProvider(createCredential(passphrase, PasswordCredential.class.getName()));
+
+        KeyPairCredential keyPairCredential;
+        String privateKeyContent;
+        String publicKeyContent = null;
+        String privateKeyString = cmdLine.getOptionValue(PRIVATE_KEY_STRING_PARAM);
+        String publicKeyString = cmdLine.getOptionValue(PUBLIC_KEY_STRING_PARAM);
+        String privateKeyFile = cmdLine.getOptionValue(PRIVATE_KEY_LOCATION_PARAM);
+        String publicKeyFile = cmdLine.getOptionValue(PUBLIC_KEY_LOCATION_PARAM);
+
+        if (privateKeyFile != null) {
+            if (!Files.exists(Paths.get(privateKeyFile))) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.keyFileDoesNotExist(privateKeyFile);
+            }
+            File keyFile = new File(privateKeyFile);
+            FileInputStream stream = new FileInputStream(keyFile);
+            byte[] keyData = new byte[stream.available()];
+            try {
+                stream.read(keyData, 0, stream.available());
+            } finally {
+                safeClose(stream);
+            }
+            privateKeyContent = new String(keyData);
+        } else if (privateKeyString != null) {
+            privateKeyContent = privateKeyString;
+        } else {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.noPrivateKeySpecified();
+        }
+
+        if (privateKeyContent.isEmpty()) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.noPrivateKeySpecified();
+        }
+
+        if (publicKeyFile != null) {
+            if (!Files.exists(Paths.get(publicKeyFile))) {
+                setStatus(GENERAL_CONFIGURATION_ERROR);
+                throw ElytronToolMessages.msg.keyFileDoesNotExist(publicKeyFile);
+            }
+            File keyFile = new File(publicKeyFile);
+            FileInputStream stream = new FileInputStream(keyFile);
+            byte[] keyData = new byte[stream.available()];
+            try {
+                stream.read(keyData, 0, stream.available());
+            } finally {
+                safeClose(stream);
+            }
+            publicKeyContent = new String(keyData);
+        } else if (publicKeyString != null) {
+            publicKeyContent = publicKeyString;
+        }
+
+        keyPairCredential = parseKeyPairCredential(privateKeyContent, publicKeyContent, passwordProvider);
+        credentialStore.store(alias, keyPairCredential);
+        credentialStore.flush();
+        System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    private void createCredentialStore(CredentialStore credentialStore) throws Exception {
+        credentialStore.flush();
+        System.out.println(ElytronToolMessages.msg.credentialStoreCreated());
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
     }
 
     private Credential createCredential(final String secret, String entryType) {
