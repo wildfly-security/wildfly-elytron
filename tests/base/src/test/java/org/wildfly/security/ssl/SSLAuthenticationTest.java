@@ -28,6 +28,7 @@ import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -79,6 +80,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -702,6 +704,25 @@ public class SSLAuthenticationTest {
 
         performConnectionTest(serverContext, "protocol://test-two-way-ica.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
                 "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", false);
+    }
+
+    /**
+     * Verifies ELY-2057 (No acceptedIssuers sent when CRLs are configured) is resolved.
+     * Test verifies a X509RevocationTrustManager configures accepted issuers.
+     */
+    @Test
+    public void testAcceptedIssuersConfiguredWithCRL() throws Throwable {
+        InputStream crl = new FileInputStream("./target/test-classes/ica/crl/blank-blank.pem");
+
+        X509RevocationTrustManager trustManager = X509RevocationTrustManager.builder()
+                .setTrustManagerFactory(getTrustManagerFactory())
+                .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                .setCrlStream(crl)
+                .setPreferCrls(true)
+                .setNoFallback(true)
+                .build();
+
+        Assert.assertTrue(trustManager.getAcceptedIssuers().length > 0);
     }
 
     @Test
