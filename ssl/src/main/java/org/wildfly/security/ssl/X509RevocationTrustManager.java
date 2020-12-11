@@ -196,7 +196,9 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
          *
          * @param acceptedIssuers array of accepted issuers
          * @return this Builder for subsequent changes
+         * @deprecated accepted issuers are automatically set when creating the trust manager
          */
+        @Deprecated
         public Builder setAcceptedIssuers(X509Certificate[] acceptedIssuers) {
             this.acceptedIssuers = acceptedIssuers;
             return this;
