@@ -49,59 +49,95 @@
         </key-stores>
         <ssl-contexts>
             <ssl-context name="one-way-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="scarab"/>
             </ssl-context>
             <ssl-context name="one-way-max-cert-path" >
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca" />
                 <certificate-revocation-list path="target/test-classes/ica/crl/rove-revoked.pem"/>
             </ssl-context>
             <ssl-context name="one-way-max-cert-path-failure" >
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca" />
                 <certificate-revocation-list path="target/test-classes/ica/crl/rove-revoked.pem" maximum-cert-path="1"/>
             </ssl-context>
             <ssl-context name="one-way-crl-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ica/crl/blank-blank.pem"/>
             </ssl-context>
             <ssl-context name="one-way-firefly-revoked-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ca/crl/firefly-revoked.pem"/>
             </ssl-context>
             <ssl-context name="one-way-ica-revoked-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ca/crl/ica-revoked.pem"/>
             </ssl-context>
             <ssl-context name="one-way-resource-revocation-list">
+                <providers>
+                    <global/>
+                </providers>
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list maximum-cert-path="2">
                     <resource name="ca/crl/ica-revoked.pem"/>
                 </certificate-revocation-list>
             </ssl-context>
             <ssl-context name="two-way-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="scarab"/>
             </ssl-context>
             <ssl-context name="two-way-ica-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <key-store-ssl-certificate key-store-name="rove" alias="rove">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="ca"/>
             </ssl-context>
             <ssl-context name="two-way-ocsp-good-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <key-store-ssl-certificate key-store-name="ocsp-checked-good" alias="checked">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="ca"/>
             </ssl-context>
             <ssl-context name="two-way-ocsp-revoked-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <key-store-ssl-certificate key-store-name="ocsp-checked-revoked" alias="checked">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="ca"/>
             </ssl-context>
             <ssl-context name="two-way-ocsp-unknown-ssl">
+                <providers>
+                    <global/>
+                </providers>
                 <key-store-ssl-certificate key-store-name="ocsp-checked-unknown" alias="checked">
                     <key-store-clear-password password="Elytron"/>
                 </key-store-ssl-certificate>
