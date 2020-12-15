@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
@@ -46,7 +47,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 
 /**
@@ -55,7 +55,7 @@ import org.wildfly.security.sasl.util.AbstractSaslParticipant;
  *
  * @author Josef Cacek
  */
-public class ExternalSaslServerTest extends BaseTestCase {
+public class ExternalSaslServerTest {
 
     private static final String ADMIN = "admin";
     private static final String EXTERNAL = "EXTERNAL";

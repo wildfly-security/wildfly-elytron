@@ -80,7 +80,6 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.pem.Pem;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 
@@ -94,7 +93,7 @@ import static org.junit.Assert.assertTrue;
  */
 // dependent on wildfly-security-ssl
 @RunWith(JMockit.class)
-public class JwtSecurityRealmTest extends BaseTestCase {
+public class JwtSecurityRealmTest {
 
     private static final MockWebServer server = new MockWebServer();
     private static final MockWebServer nonTlsServer = new MockWebServer();

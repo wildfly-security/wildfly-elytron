@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.wildfly.security.sasl.scram.ScramCallbackHandlerUtils.createClientCallbackHandler;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
@@ -44,7 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
 
@@ -61,7 +61,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 @RunWith(JMockit.class)
-public class ScramClientCompatibilityTest extends BaseTestCase {
+public class ScramClientCompatibilityTest {
 
     private static final Provider provider = WildFlyElytronSaslScramProvider.getInstance();
 
