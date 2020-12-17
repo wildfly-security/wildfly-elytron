@@ -21,29 +21,29 @@
     <authentication-client xmlns="urn:elytron:client:1.1">
         <key-stores>
             <key-store name="ca" type="JKS">
-                <file name="target/test-classes/ca/jks/ca.truststore"/>
+                <file name="target/test-classes/jks/ca.truststore"/>
             </key-store>
             <key-store name="scarab" type="JKS">
-                <file name="target/test-classes/ca/jks/scarab.keystore"/>
+                <file name="target/test-classes/jks/scarab.keystore"/>
             </key-store>
             <key-store name="ladybird" type="JKS">
-                <file name="target/test-classes/ca/jks/ladybird.keystore"/>
+                <file name="target/test-classes/jks/ladybird.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
             <key-store name="rove" type="JKS">
-                <file name="target/test-classes/ica/jks/rove.keystore"/>
+                <file name="target/test-classes/jks/rove.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
             <key-store name="ocsp-checked-good" type="JKS">
-                <file name="target/test-classes/ca/jks/ocsp-checked-good.keystore"/>
+                <file name="target/test-classes/jks/ocsp-checked-good.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
             <key-store name="ocsp-checked-revoked" type="JKS">
-                <file name="target/test-classes/ca/jks/ocsp-checked-revoked.keystore"/>
+                <file name="target/test-classes/jks/ocsp-checked-revoked.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
             <key-store name="ocsp-checked-unknown" type="JKS">
-                <file name="target/test-classes/ca/jks/ocsp-checked-unknown.keystore"/>
+                <file name="target/test-classes/jks/ocsp-checked-unknown.keystore"/>
                 <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>

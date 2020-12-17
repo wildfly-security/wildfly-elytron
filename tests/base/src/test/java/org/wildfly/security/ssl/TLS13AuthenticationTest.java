@@ -21,22 +21,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PublicKey;
-import java.security.PrivateKey;
+import java.security.AccessController;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Security;
-import java.security.cert.X509Certificate;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,7 +46,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
-import javax.security.auth.x500.X500Principal;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -67,10 +59,9 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
+import org.wildfly.security.ssl.test.util.CAGenerationTool;
+import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
-import org.wildfly.security.x500.cert.BasicConstraintsExtension;
-import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * Simple test case to test two-way SSL using TLSv1.3.
@@ -81,41 +72,21 @@ public class TLS13AuthenticationTest {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final char[] PASSWORD = "Elytron".toCharArray();
-    private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
-    private static File ladybirdFile = null;
-    private static File scarabFile = null;
-    private static File beetlesFile = null;
-    private static File trustFile = null;
-    private static File workingDirCA = null;
+    private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
+
+    private static CAGenerationTool caGenerationTool = null;
 
     @BeforeClass
     public static void setUp() throws Exception{
-        workingDirCA = new File(CA_JKS_LOCATION);
-        if (workingDirCA.exists() == false) {
-            workingDirCA.mkdirs();
-        }
-
-        ladybirdFile = new File(workingDirCA,"ladybird.keystore");
-        scarabFile = new File(workingDirCA,"scarab.keystore");
-        beetlesFile = new File(workingDirCA,"beetles.keystore");
-        trustFile = new File(workingDirCA,"ca.truststore");
-
-        createKeyStores(ladybirdFile, scarabFile, beetlesFile, trustFile);
+        caGenerationTool = CAGenerationTool.builder()
+                .setBaseDir(CA_JKS_LOCATION)
+                .setRequestIdentities(Identity.LADYBIRD, Identity.SCARAB)
+                .build();
     }
 
-
     @AfterClass
-    public static void cleanUp(){
-        ladybirdFile.delete();
-        ladybirdFile = null;
-        scarabFile.delete();
-        scarabFile = null;
-        beetlesFile.delete();
-        beetlesFile = null;
-        trustFile.delete();
-        trustFile = null;
-        workingDirCA.delete();
-        workingDirCA = null;
+    public static void cleanUp() throws IOException {
+        caGenerationTool.close();
     }
 
     @Test
@@ -124,7 +95,7 @@ public class TLS13AuthenticationTest {
                 System.getProperty("java.specification.version").equals("11"));
 
         final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/jks/beetles.keystore"));
 
         SecurityDomain securityDomain = SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
@@ -138,7 +109,7 @@ public class TLS13AuthenticationTest {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(CIPHER_SUITE))
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
@@ -222,7 +193,7 @@ public class TLS13AuthenticationTest {
      */
     private static X509TrustManager getCATrustManager() throws Exception {
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
-        trustManagerFactory.init(loadKeyStore("/ca/jks/ca.truststore"));
+        trustManagerFactory.init(loadKeyStore("/jks/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
             if (current instanceof X509TrustManager) {
@@ -233,12 +204,6 @@ public class TLS13AuthenticationTest {
         throw new IllegalStateException("Unable to obtain X509TrustManager.");
     }
 
-    private static KeyStore loadKeyStore() throws Exception{
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(null,null);
-        return ks;
-    }
-
     private static KeyStore loadKeyStore(final String path) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("jks");
         try (InputStream caTrustStoreFile = SSLAuthenticationTest.class.getResourceAsStream(path)) {
@@ -246,96 +211,6 @@ public class TLS13AuthenticationTest {
         }
 
         return keyStore;
-    }
-
-    private static void createTemporaryKeyStoreFile(KeyStore keyStore, File outputFile, char[] password) throws Exception {
-        try (FileOutputStream fos = new FileOutputStream(outputFile)){
-            keyStore.store(fos, password);
-        }
-    }
-
-    private static void createKeyStores(File ladybirdFile, File scarabFile, File beetlesFile, File trustFile) throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-
-        X500Principal issuerDN = new X500Principal("CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority");
-        X500Principal intermediateIssuerDN = new X500Principal("CN=Elytron ICA, ST=Elytron, C=UK, O=Intermediate Certificate Authority");
-        X500Principal ladybirdDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird");
-        X500Principal scarabDN = new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab");
-
-        KeyStore ladybirdKeyStore = loadKeyStore();
-        KeyStore scarabKeyStore = loadKeyStore();
-        KeyStore beetlesKeyStore = loadKeyStore();
-        KeyStore trustStore = loadKeyStore();
-
-        // Generates the issuer certificate and adds it to the keystores
-        SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
-                .setDn(issuerDN)
-                .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
-                .build();
-        X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
-        ladybirdKeyStore.setCertificateEntry("ca", issuerCertificate);
-        scarabKeyStore.setCertificateEntry("ca", issuerCertificate);
-        trustStore.setCertificateEntry("mykey",issuerCertificate);
-
-        // Generates the intermediate issuer certificate
-        KeyPair intermediateIssuerKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey intermediateIssuerSigningKey = intermediateIssuerKeys.getPrivate();
-        PublicKey intermediateIssuerPublicKey = intermediateIssuerKeys.getPublic();
-
-        X509Certificate intermediateIssuerCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(intermediateIssuerDN)
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(intermediateIssuerPublicKey)
-                .setSerialNumber(new BigInteger("6"))
-                .addExtension(new BasicConstraintsExtension(false, true, 0))
-                .build();
-
-        // Generates certificate and keystore for Ladybird
-        KeyPair ladybirdKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ladybirdSigningKey = ladybirdKeys.getPrivate();
-        PublicKey ladybirdPublicKey = ladybirdKeys.getPublic();
-
-        X509Certificate ladybirdCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(ladybirdDN)
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(ladybirdPublicKey)
-                .setSerialNumber(new BigInteger("3"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        ladybirdKeyStore.setKeyEntry("ladybird", ladybirdSigningKey, PASSWORD, new X509Certificate[]{ladybirdCertificate,issuerCertificate});
-
-        // Generates certificate and keystore for Scarab
-        KeyPair scarabKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey scarabSigningKey = scarabKeys.getPrivate();
-        PublicKey scarabPublicKey = scarabKeys.getPublic();
-
-        X509Certificate scarabCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(scarabDN)
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(scarabPublicKey)
-                .setSerialNumber(new BigInteger("4"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        scarabKeyStore.setKeyEntry("scarab", scarabSigningKey, PASSWORD, new X509Certificate[]{scarabCertificate,issuerCertificate});
-
-        // Adds trusted certs for beetles
-        beetlesKeyStore.setCertificateEntry("ladybird", ladybirdCertificate);
-        beetlesKeyStore.setCertificateEntry("scarab", scarabCertificate);
-
-        // Create the temporary files
-        createTemporaryKeyStoreFile(ladybirdKeyStore, ladybirdFile, PASSWORD);
-        createTemporaryKeyStoreFile(scarabKeyStore, scarabFile, PASSWORD);
-        createTemporaryKeyStoreFile(beetlesKeyStore, beetlesFile, PASSWORD);
-        createTemporaryKeyStoreFile(trustStore, trustFile, PASSWORD);
     }
 
     private void safeClose(Closeable closeable) {
