@@ -50,6 +50,15 @@ import org.wildfly.security.password.util.ModularCrypt;
 public class MaskedPasswordTest {
 
     private static final Provider provider = new WildFlyElytronProvider();
+    private static final String[] unsupportedIbmAlgorithms = new String[]{
+            "ALGORITHM_MASKED_SHA1_RC2_40",
+            "ALGORITHM_MASKED_SHA1_RC2_40_CBC_PKCS5",
+            "ALGORITHM_MASKED_SHA1_RC2_128",
+            "ALGORITHM_MASKED_SHA1_RC2_128_CBC_PKCS5",
+            "ALGORITHM_MASKED_SHA1_RC4_40",
+            "ALGORITHM_MASKED_SHA1_RC4_40_ECB",
+            "ALGORITHM_MASKED_SHA1_RC4_128",
+            "ALGORITHM_MASKED_SHA1_RC4_128_ECB"};
 
     @BeforeClass
     public static void setup() {
@@ -68,7 +77,8 @@ public class MaskedPasswordTest {
     @Parameters(name = "{index}: {0}")
     public static Iterable<Object[]> algorithms() {
         return Arrays.stream(MaskedPassword.class.getDeclaredFields())
-                .filter(f -> f.getName().startsWith("ALGORITHM_MASKED_") && !f.isAnnotationPresent(Deprecated.class)).map(f -> {
+                .filter(f -> f.getName().startsWith("ALGORITHM_MASKED_") && !f.isAnnotationPresent(Deprecated.class)
+                        && (!isIbmJdk() || isSupportedByIbm(f.getName()))).map(f -> {
                     try {
                         return new Object[] {f.get(null)};
                     } catch (final IllegalAccessException e) {
@@ -110,5 +120,13 @@ public class MaskedPasswordTest {
         Password translated = factory.translate(decoded);
         ClearPasswordSpec unmasked = factory.getKeySpec(translated, ClearPasswordSpec.class);
         Assert.assertEquals("myMaskedPassword", new String(unmasked.getEncodedPassword()));
+    }
+
+    private static boolean isIbmJdk() {
+        return System.getProperty("java.vendor").startsWith("IBM");
+    }
+
+    private static boolean isSupportedByIbm(String algorithm) {
+        return ! Arrays.asList(unsupportedIbmAlgorithms).contains(algorithm);
     }
 }
