@@ -41,7 +41,6 @@ import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -56,7 +55,7 @@ import mockit.integration.junit4.JMockit;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 @RunWith(JMockit.class)
-public class CompatibilityServerTest extends BaseTestCase {
+public class CompatibilityServerTest {
 
     protected static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
     protected static final String QOP_PROPERTY = "javax.security.sasl.qop";

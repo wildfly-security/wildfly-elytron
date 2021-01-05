@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.scram;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
 import static org.wildfly.security.sasl.scram.ScramCallbackHandlerUtils.createClientCallbackHandler;
 
 import java.security.AccessController;
@@ -47,19 +48,17 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
+import org.wildfly.security.sasl.test.SaslTestUtil;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-
-import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class BasicScramSelfTest extends BaseTestCase {
+public class BasicScramSelfTest {
 
     private static final Provider[] providers = new Provider[] {
             WildFlyElytronSaslScramProvider.getInstance(),
@@ -291,7 +290,7 @@ public class BasicScramSelfTest extends BaseTestCase {
     }
 
     private SaslClientFactory obtainSaslClientFactory() {
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
+        final SaslClientFactory clientFactory = SaslTestUtil.obtainSaslClientFactory(ScramSaslClientFactory.class);
         Assert.assertTrue(clientFactory instanceof ScramSaslClientFactory);
         return clientFactory;
     }

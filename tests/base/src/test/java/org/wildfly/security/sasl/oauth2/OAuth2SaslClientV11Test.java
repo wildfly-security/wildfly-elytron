@@ -67,7 +67,6 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.sasl.SaslMechanismSelector;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -77,7 +76,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 // has dependency on wildfly-elytron-client
-public class OAuth2SaslClientV11Test extends BaseTestCase {
+public class OAuth2SaslClientV11Test {
 
     private static final MockWebServer server = new MockWebServer();
     private static final Provider[] providers = new Provider[] {

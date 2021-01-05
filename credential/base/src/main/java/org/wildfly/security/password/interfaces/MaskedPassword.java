@@ -41,14 +41,6 @@ public interface MaskedPassword extends TwoWayPassword {
     String ALGORITHM_MASKED_MD5_3DES_CBC_PKCS5 = "masked-MD5-3DES-CBC-PKCS5";
     String ALGORITHM_MASKED_SHA1_DES_EDE = "masked-SHA1-DES-EDE";
     String ALGORITHM_MASKED_SHA1_DES_EDE_CBC_PKCS5 = "masked-SHA1-DES-EDE-CBC-PKCS5";
-    String ALGORITHM_MASKED_SHA1_RC2_40 = "masked-SHA1-RC2-40";
-    String ALGORITHM_MASKED_SHA1_RC2_40_CBC_PKCS5 = "masked-SHA1-RC2-40-CBC-PKCS5";
-    String ALGORITHM_MASKED_SHA1_RC2_128 = "masked-SHA1-RC2-128";
-    String ALGORITHM_MASKED_SHA1_RC2_128_CBC_PKCS5 = "masked-SHA1-RC2-128-CBC-PKCS5";
-    String ALGORITHM_MASKED_SHA1_RC4_40 = "masked-SHA1-RC4-40";
-    String ALGORITHM_MASKED_SHA1_RC4_40_ECB = "masked-SHA1-RC4-40-ECB";
-    String ALGORITHM_MASKED_SHA1_RC4_128 = "masked-SHA1-RC4-128";
-    String ALGORITHM_MASKED_SHA1_RC4_128_ECB = "masked-SHA1-RC4-128-ECB";
     String ALGORITHM_MASKED_HMAC_SHA1_AES_128 = "masked-HMAC-SHA1-AES-128";
     String ALGORITHM_MASKED_HMAC_SHA224_AES_128 = "masked-HMAC-SHA224-AES-128";
     String ALGORITHM_MASKED_HMAC_SHA256_AES_128 = "masked-HMAC-SHA256-AES-128";
@@ -59,6 +51,19 @@ public interface MaskedPassword extends TwoWayPassword {
     String ALGORITHM_MASKED_HMAC_SHA256_AES_256 = "masked-HMAC-SHA256-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA384_AES_256 = "masked-HMAC-SHA384-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA512_AES_256 = "masked-HMAC-SHA512-AES-256";
+
+    /**
+     * The following algorithms are not supported with IBM JDK 8.
+     */
+    String ALGORITHM_MASKED_SHA1_RC2_40 = "masked-SHA1-RC2-40";
+    String ALGORITHM_MASKED_SHA1_RC2_40_CBC_PKCS5 = "masked-SHA1-RC2-40-CBC-PKCS5";
+    String ALGORITHM_MASKED_SHA1_RC2_128 = "masked-SHA1-RC2-128";
+    String ALGORITHM_MASKED_SHA1_RC2_128_CBC_PKCS5 = "masked-SHA1-RC2-128-CBC-PKCS5";
+    String ALGORITHM_MASKED_SHA1_RC4_40 = "masked-SHA1-RC4-40";
+    String ALGORITHM_MASKED_SHA1_RC4_40_ECB = "masked-SHA1-RC4-40-ECB";
+    String ALGORITHM_MASKED_SHA1_RC4_128 = "masked-SHA1-RC4-128";
+    String ALGORITHM_MASKED_SHA1_RC4_128_ECB = "masked-SHA1-RC4-128-ECB";
+
     /**
      * DEPRECATED - unusable for masked passwords as there is no encryption support in javax.crypto.Cipher for PKDBF2
      * family of algorithms, needs to be kept for compatibility

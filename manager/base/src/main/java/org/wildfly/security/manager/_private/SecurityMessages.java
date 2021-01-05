@@ -21,6 +21,8 @@ package org.wildfly.security.manager._private;
 import java.security.AccessControlException;
 import java.security.CodeSource;
 import java.security.Permission;
+
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -33,7 +35,7 @@ import static org.jboss.logging.Logger.Level.DEBUG;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @MessageLogger(projectCode = "WFSM")
-public interface SecurityMessages {
+public interface SecurityMessages extends BasicLogger {
     SecurityMessages access = Logger.getMessageLogger(SecurityMessages.class, "org.wildfly.security.access");
     SecurityMessages permission = Logger.getMessageLogger(SecurityMessages.class, "org.wildfly.security.permission");
 

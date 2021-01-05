@@ -18,7 +18,6 @@
 
 package org.wildfly.security.ssl;
 
-import org.wildfly.security.x500.X500;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.SSLEngine;
@@ -64,7 +63,7 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     private static final int DEFAULT_MAX_CERT_PATH_LENGTH = 5;
 
-    private final X509Certificate[] acceptedIssuers;
+    private X509Certificate[] acceptedIssuers;
     private final X509TrustManager trustManager;
 
     private X509RevocationTrustManager(Builder builder) {
@@ -123,8 +122,6 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
         if (builder.acceptedIssuers != null) {
             this.acceptedIssuers = builder.acceptedIssuers;
-        } else {
-            this.acceptedIssuers = X500.NO_CERTIFICATES;
         }
     }
 
@@ -160,7 +157,11 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public X509Certificate[] getAcceptedIssuers() {
-        return acceptedIssuers;
+        if (acceptedIssuers != null) {
+            return acceptedIssuers;
+        } else {
+            return this.trustManager.getAcceptedIssuers();
+        }
     }
 
     private Collection<? extends CRL> getCRLs(InputStream crlStream) throws GeneralSecurityException {
@@ -195,7 +196,9 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
          *
          * @param acceptedIssuers array of accepted issuers
          * @return this Builder for subsequent changes
+         * @deprecated accepted issuers are automatically set when creating the trust manager
          */
+        @Deprecated
         public Builder setAcceptedIssuers(X509Certificate[] acceptedIssuers) {
             this.acceptedIssuers = acceptedIssuers;
             return this;

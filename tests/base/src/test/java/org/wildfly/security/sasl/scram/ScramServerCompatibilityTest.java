@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -52,7 +53,6 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -67,7 +67,7 @@ import mockit.integration.junit4.JMockit;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 @RunWith(JMockit.class)
-public class ScramServerCompatibilityTest extends BaseTestCase {
+public class ScramServerCompatibilityTest {
 
     private static final Provider provider = WildFlyElytronSaslScramProvider.getInstance();
 

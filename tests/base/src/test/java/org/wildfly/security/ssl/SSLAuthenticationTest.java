@@ -23,24 +23,21 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.wildfly.security.ssl.test.util.CAGenerationTool.SIGNATURE_ALGORTHM;
 import static org.wildfly.security.x500.X500.OID_AD_OCSP;
 import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URI;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.Principal;
-import java.security.PublicKey;
-import java.security.PrivateKey;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.AccessController;
@@ -79,6 +76,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.client.AuthenticationContext;
@@ -87,15 +85,13 @@ import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.permission.PermissionVerifier;
-
+import org.wildfly.security.ssl.test.util.CAGenerationTool;
+import org.wildfly.security.ssl.test.util.CAGenerationTool.Identity;
 import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
 import org.wildfly.security.x500.cert.AccessDescription;
 import org.wildfly.security.x500.cert.AuthorityInformationAccessExtension;
-import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.ExtendedKeyUsageExtension;
-import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * Simple test case to test authentication occurring during the establishment of an {@link SSLSession}.
@@ -109,32 +105,20 @@ public class SSLAuthenticationTest {
     private static final int OCSP_PORT = 4854;
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
-    private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
-    private static final String ICA_JKS_LOCATION = "./target/test-classes/ica/jks";
+
+    private static final String JKS_LOCATION = "./target/test-classes/jks";
     private static final String CA_CRL_LOCATION = "./target/test-classes/ca/crl";
     private static final String ICA_CRL_LOCATION = "./target/test-classes/ica/crl";
-    private static final File WORKING_DIR_CA = new File(CA_JKS_LOCATION);
-    private static final File WORKING_DIR_ICA =  new File(ICA_JKS_LOCATION);
     private static final File WORKING_DIR_CACRL = new File(CA_CRL_LOCATION);
     private static final File WORKING_DIR_ICACRL = new File(ICA_CRL_LOCATION);
-    private static final File LADYBIRD_FILE = new File(WORKING_DIR_CA,"ladybird.keystore");
-    private static final File SCARAB_FILE = new File(WORKING_DIR_CA,"scarab.keystore");
-    private static final File DUNG_FILE = new File(WORKING_DIR_CA,"dung.keystore");
-    private static final File FIREFLY_FILE = new File(WORKING_DIR_CA,"firefly.keystore");
-    private static final File OCSP_RESPONDER_FILE = new File(WORKING_DIR_CA,"ocsp-responder.keystore");
-    private static final File OCSP_CHECKED_GOOD_FILE = new File(WORKING_DIR_CA,"ocsp-checked-good.keystore");
-    private static final File OCSP_CHECKED_REVOKED_FILE = new File(WORKING_DIR_CA,"ocsp-checked-revoked.keystore");
-    private static final File OCSP_CHECKED_UNKNOWN_FILE = new File(WORKING_DIR_CA,"ocsp-checked-unknown.keystore");
-    private static final File BEETLES_FILE = new File(WORKING_DIR_CA,"beetles.keystore");
-    private static final File TRUST_FILE = new File(WORKING_DIR_CA,"ca.truststore");
-    private static final File SHORTWINGED_FILE = new File(WORKING_DIR_ICA, "shortwinged.keystore");
-    private static final File ROVE_FILE = new File(WORKING_DIR_ICA, "rove.keystore");
+    private static final File SHORTWINGED_FILE = new File(JKS_LOCATION, "shortwinged.keystore");
     private static final File CA_BLANK_PEM_CRL = new File(WORKING_DIR_CACRL, "blank.pem");
     private static final File ICA_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank.pem");
     private static final File BLANK_BLANK_PEM_CRL = new File(WORKING_DIR_ICACRL, "blank-blank.pem");
     private static final File FIREFLY_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "firefly-revoked.pem");
     private static final File ICA_REVOKED_PEM_CRL = new File(WORKING_DIR_CACRL, "ica-revoked.pem");
     private static final File ROVE_REVOKED_PEM_CRL = new File(WORKING_DIR_ICACRL, "rove-revoked.pem");
+    private static CAGenerationTool caGenerationTool = null;
     private static TestingOcspServer ocspServer = null;
     private static X509Certificate ocspResponderCertificate;
 
@@ -169,7 +153,7 @@ public class SSLAuthenticationTest {
      */
     private static X509TrustManager getCATrustManager() throws Exception {
         TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
-        trustManagerFactory.init(createKeyStore("/ca/jks/ca.truststore"));
+        trustManagerFactory.init(createKeyStore("/jks/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
             if (current instanceof X509TrustManager) {
@@ -219,238 +203,53 @@ public class SSLAuthenticationTest {
 
     @BeforeClass
     public static void beforeTest() throws Exception {
-        WORKING_DIR_CA.mkdirs();
         WORKING_DIR_CACRL.mkdirs();
-        WORKING_DIR_ICA.mkdirs();
         WORKING_DIR_ICACRL.mkdirs();
 
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        caGenerationTool = CAGenerationTool.builder()
+                .setBaseDir(JKS_LOCATION)
+                .setRequestIdentities(Identity.values()) // Create all identities.
+                .build();
+
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        X500Principal issuerDN = new X500Principal("CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority");
-        X500Principal intermediateIssuerDN = new X500Principal("CN=Elytron ICA, ST=Elytron, C=UK, O=Intermediate Certificate Authority");
-
-        KeyStore ladybirdKeyStore = createKeyStore();
-        KeyStore scarabKeyStore = createKeyStore();
-        KeyStore dungKeyStore = createKeyStore();
-        KeyStore fireflyKeyStore = createKeyStore();
-        KeyStore beetlesKeyStore = createKeyStore();
-        KeyStore trustStore = createKeyStore();
-        KeyStore shortwingedKeyStore = createKeyStore();
-        KeyStore roveKeyStore = createKeyStore();
-
-        // Generates the issuer certificate and adds it to the keystores
-        SelfSignedX509CertificateAndSigningKey issuerSelfSignedX509CertificateAndSigningKey = SelfSignedX509CertificateAndSigningKey.builder()
-                .setDn(issuerDN)
-                .setKeyAlgorithmName("RSA")
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
-                .build();
-        X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
-        ladybirdKeyStore.setCertificateEntry("ca", issuerCertificate);
-        scarabKeyStore.setCertificateEntry("ca", issuerCertificate);
-        dungKeyStore.setCertificateEntry("ca", issuerCertificate);
-        fireflyKeyStore.setCertificateEntry("ca", issuerCertificate);
-        trustStore.setCertificateEntry("mykey",issuerCertificate);
-
-        // Generates the intermediate issuer certificate
-        KeyPair intermediateIssuerKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey intermediateIssuerSigningKey = intermediateIssuerKeys.getPrivate();
-        PublicKey intermediateIssuerPublicKey = intermediateIssuerKeys.getPublic();
-
-        X509Certificate intermediateIssuerCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(intermediateIssuerDN)
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(intermediateIssuerPublicKey)
-                .setSerialNumber(new BigInteger("6"))
-                .addExtension(new BasicConstraintsExtension(false, true, -1))
-                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
-                        new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )))
-                .build();
-
-        // Generates certificate and keystore for Ladybird
-        KeyPair ladybirdKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ladybirdSigningKey = ladybirdKeys.getPrivate();
-        PublicKey ladybirdPublicKey = ladybirdKeys.getPublic();
-
-        X509Certificate ladybirdCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Ladybird"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(ladybirdPublicKey)
-                .setSerialNumber(new BigInteger("3"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        ladybirdKeyStore.setKeyEntry("ladybird", ladybirdSigningKey, PASSWORD, new X509Certificate[]{ladybirdCertificate,issuerCertificate});
-
-        // Generates certificate and keystore for Scarab
-        KeyPair scarabKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey scarabSigningKey = scarabKeys.getPrivate();
-        PublicKey scarabPublicKey = scarabKeys.getPublic();
-
-        X509Certificate scarabCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Scarab"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(scarabPublicKey)
-                .setSerialNumber(new BigInteger("4"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        scarabKeyStore.setKeyEntry("scarab", scarabSigningKey, PASSWORD, new X509Certificate[]{scarabCertificate,issuerCertificate});
-
-        // Generates certificate and keystore for Dung
-        KeyPair dungKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey dungSigningKey = dungKeys.getPrivate();
-        PublicKey dungPublicKey = dungKeys.getPublic();
-
-        X509Certificate dungCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Dung"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(dungPublicKey)
-                .setSerialNumber(new BigInteger("2"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        dungKeyStore.setKeyEntry("dung", dungSigningKey, PASSWORD, new X509Certificate[]{dungCertificate,issuerCertificate});
-
-        // Generates certificate and keystore for Firefly
-        KeyPair fireflyKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey fireflySigningKey = fireflyKeys.getPrivate();
-        PublicKey fireflyPublicKey = fireflyKeys.getPublic();
-
-        X509Certificate fireflyCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Firefly"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(fireflyPublicKey)
-                .setSerialNumber(new BigInteger("1"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        fireflyKeyStore.setKeyEntry("firefly", fireflySigningKey, PASSWORD, new X509Certificate[]{fireflyCertificate,issuerCertificate});
-
-        // Generates certificate and keystore for Rove
-        KeyPair roveKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey roveSigningKey = roveKeys.getPrivate();
-        PublicKey rovePublicKey = roveKeys.getPublic();
-
-        X509Certificate roveCertificate = new X509CertificateBuilder()
-                .setIssuerDn(intermediateIssuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=Rove"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(intermediateIssuerSigningKey)
-                .setPublicKey(rovePublicKey)
-                .setSerialNumber(new BigInteger("100"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .build();
-        roveKeyStore.setKeyEntry("rove", roveSigningKey, PASSWORD, new X509Certificate[]{roveCertificate,intermediateIssuerCertificate,issuerCertificate});
-
         // Generates certificate and keystore for OCSP responder
-        KeyPair ocspResponderKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ocspResponderSigningKey = ocspResponderKeys.getPrivate();
-        PublicKey ocspResponderPublicKey = ocspResponderKeys.getPublic();
-
-        ocspResponderCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(ocspResponderPublicKey)
-                .setSerialNumber(new BigInteger("15"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .addExtension(new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)))
-                .build();
-        KeyStore ocspResponderKeyStore = createKeyStore();
-        ocspResponderKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspResponderKeyStore.setKeyEntry("ocspResponder", ocspResponderSigningKey, PASSWORD, new X509Certificate[]{ocspResponderCertificate, issuerCertificate});
-        createTemporaryKeyStoreFile(ocspResponderKeyStore, OCSP_RESPONDER_FILE, PASSWORD);
+        ocspResponderCertificate = caGenerationTool.createIdentity("ocspResponder",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=OcspResponder"),
+                "ocsp-responder.keystore", Identity.CA, new ExtendedKeyUsageExtension(false, Collections.singletonList(OID_KP_OCSP_SIGNING)));
 
         // Generates GOOD certificate referencing the OCSP responder
-        KeyPair ocspCheckedGoodKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ocspCheckedGoodSigningKey = ocspCheckedGoodKeys.getPrivate();
-        PublicKey ocspCheckedGoodPublicKey = ocspCheckedGoodKeys.getPublic();
-
-        X509Certificate ocspCheckedGoodCertificate = new X509CertificateBuilder()
-                .setIssuerDn(intermediateIssuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(intermediateIssuerSigningKey)
-                .setPublicKey(ocspCheckedGoodPublicKey)
-                .setSerialNumber(new BigInteger("20"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+        X509Certificate ocspCheckedGoodCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedGood"),
+                "ocsp-checked-good.keystore", Identity.INTERMEDIATE, new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )))
-                .build();
-        KeyStore ocspCheckedGoodKeyStore = createKeyStore();
-        ocspCheckedGoodKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspCheckedGoodKeyStore.setCertificateEntry("ca2", intermediateIssuerCertificate);
-        ocspCheckedGoodKeyStore.setKeyEntry("checked", ocspCheckedGoodSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedGoodCertificate, intermediateIssuerCertificate, issuerCertificate});
-        createTemporaryKeyStoreFile(ocspCheckedGoodKeyStore, OCSP_CHECKED_GOOD_FILE, PASSWORD);
+                )));
 
         // Generates REVOKED certificate referencing the OCSP responder
-        KeyPair ocspCheckedRevokedKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ocspCheckedRevokedSigningKey = ocspCheckedRevokedKeys.getPrivate();
-        PublicKey ocspCheckedRevokedPublicKey = ocspCheckedRevokedKeys.getPublic();
-
-        X509Certificate ocspCheckedRevokedCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(ocspCheckedRevokedPublicKey)
-                .setSerialNumber(new BigInteger("17"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+        X509Certificate ocspCheckedRevokedCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedRevoked"),
+                "ocsp-checked-revoked.keystore", Identity.CA, (new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )))
-                .build();
-        KeyStore ocspCheckedRevokedKeyStore = createKeyStore();
-        ocspCheckedRevokedKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspCheckedRevokedKeyStore.setKeyEntry("checked", ocspCheckedRevokedSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedRevokedCertificate,issuerCertificate});
-        createTemporaryKeyStoreFile(ocspCheckedRevokedKeyStore, OCSP_CHECKED_REVOKED_FILE, PASSWORD);
+                ))));
 
         // Generates UNKNOWN certificate referencing the OCSP responder
-        KeyPair ocspCheckedUnknownKeys = keyPairGenerator.generateKeyPair();
-        PrivateKey ocspCheckedUnknownSigningKey = ocspCheckedUnknownKeys.getPrivate();
-        PublicKey ocspCheckedUnknownPublicKey = ocspCheckedUnknownKeys.getPublic();
-
-        X509Certificate ocspCheckedUnknownCertificate = new X509CertificateBuilder()
-                .setIssuerDn(issuerDN)
-                .setSubjectDn(new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"))
-                .setSignatureAlgorithmName("SHA256withRSA")
-                .setSigningKey(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
-                .setPublicKey(ocspCheckedUnknownPublicKey)
-                .setSerialNumber(new BigInteger("18"))
-                .addExtension(new BasicConstraintsExtension(false, false, -1))
-                .addExtension(new AuthorityInformationAccessExtension(Collections.singletonList(
+        X509Certificate ocspCheckedUnknownCertificate = caGenerationTool.createIdentity("checked",
+                new X500Principal("OU=Elytron, O=Elytron, C=UK, ST=Elytron, CN=ocspCheckedUnknown"),
+                "ocsp-checked-unknown.keystore", Identity.CA, new AuthorityInformationAccessExtension(Collections.singletonList(
                         new AccessDescription(OID_AD_OCSP, new GeneralName.URIName("http://localhost:" + OCSP_PORT + "/ocsp"))
-                )))
-                .build();
-        KeyStore ocspCheckedUnknownKeyStore = createKeyStore();
-        ocspCheckedUnknownKeyStore.setCertificateEntry("ca", issuerCertificate);
-        ocspCheckedUnknownKeyStore.setKeyEntry("checked", ocspCheckedUnknownSigningKey, PASSWORD, new X509Certificate[]{ocspCheckedUnknownCertificate,issuerCertificate});
-        createTemporaryKeyStoreFile(ocspCheckedUnknownKeyStore, OCSP_CHECKED_UNKNOWN_FILE, PASSWORD);
+                )));
 
-
-        // Adds trusted certs for beetles
-        beetlesKeyStore.setCertificateEntry("ladybird", ladybirdCertificate);
-        beetlesKeyStore.setCertificateEntry("scarab", scarabCertificate);
-        beetlesKeyStore.setCertificateEntry("dung", dungCertificate);
-        beetlesKeyStore.setCertificateEntry("firefly", fireflyCertificate);
+        KeyStore beetlesKeyStore = createKeyStore("/jks/beetles.keystore");
         beetlesKeyStore.setCertificateEntry("ocspResponder", ocspResponderCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedGood", ocspCheckedGoodCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedRevoked", ocspCheckedRevokedCertificate);
         beetlesKeyStore.setCertificateEntry("ocspCheckedUnknown", ocspCheckedUnknownCertificate);
+        createTemporaryKeyStoreFile(beetlesKeyStore, new File(JKS_LOCATION, "beetles.keystore"), PASSWORD);
 
         // Adds trusted cert for shortwinged
-        shortwingedKeyStore.setCertificateEntry("rove", roveCertificate);
+        KeyStore shortwingedKeyStore = createKeyStore();
+        shortwingedKeyStore.setCertificateEntry("rove", caGenerationTool.getCertificate(Identity.ROVE));
+        createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
 
         // Used for all CRLs
         Calendar calendar = Calendar.getInstance();
@@ -463,79 +262,70 @@ public class SSLAuthenticationTest {
 
         // Creates the CRL for ca/crl/blank.pem
         X509v2CRLBuilder caBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(intermediateIssuerCertificate.getIssuerDN()),
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
                 currentDate
         );
         X509CRLHolder caBlankCrlHolder = caBlankCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA256withRSA")
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                        .build(caGenerationTool.getPrivateKey(Identity.CA))
         );
 
         // Creates the CRL for ica/crl/blank.pem
         X509v2CRLBuilder icaBlankCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(intermediateIssuerDN),
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
                 currentDate
         );
         X509CRLHolder icaBlankCrlHolder = icaBlankCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA256withRSA")
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(intermediateIssuerSigningKey)
+                        .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
         );
 
         // Creates the CRL for firefly-revoked.pem
         X509v2CRLBuilder fireflyRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(issuerCertificate.getSubjectDN()),
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
                 currentDate
         );
+
         fireflyRevokedCrlBuilder.addCRLEntry(
-                new BigInteger("1"),
+                caGenerationTool.getCertificate(Identity.FIREFLY).getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder fireflyRevokedCrlHolder = fireflyRevokedCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA256withRSA")
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                        .build(caGenerationTool.getPrivateKey(Identity.CA))
         );
 
         // Creates the CRL for ica-revoked.pem
         X509v2CRLBuilder icaRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(issuerCertificate.getSubjectDN()),
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.CA).getSubjectDN()),
                 currentDate
         );
         icaRevokedCrlBuilder.addCRLEntry(
-                new BigInteger("6"),
+                caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSerialNumber(),
                 revokeDate,
                 CRLReason.unspecified
         );
         X509CRLHolder icaRevokedCrlHolder = icaRevokedCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA256withRSA")
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                         .setProvider("BC")
-                        .build(issuerSelfSignedX509CertificateAndSigningKey.getSigningKey())
+                        .build(caGenerationTool.getPrivateKey(Identity.CA))
         );
 
         // Creates the CRL for rove-revoked.pem
         X509v2CRLBuilder roveRevokedCrlBuilder = new X509v2CRLBuilder(
-                convertSunStyleToBCStyle(intermediateIssuerCertificate.getSubjectDN()),
+                convertSunStyleToBCStyle(caGenerationTool.getCertificate(Identity.INTERMEDIATE).getSubjectDN()),
                 currentDate
         );
 
         X509CRLHolder roveRevokedCrlHolder = roveRevokedCrlBuilder.setNextUpdate(nextYear).build(
-                new JcaContentSignerBuilder("SHA256withRSA")
+                new JcaContentSignerBuilder(SIGNATURE_ALGORTHM)
                 .setProvider("BC")
-                .build(intermediateIssuerSigningKey)
+                .build(caGenerationTool.getPrivateKey(Identity.INTERMEDIATE))
         );
-
-        // Create the temporary files
-        createTemporaryKeyStoreFile(ladybirdKeyStore, LADYBIRD_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(scarabKeyStore, SCARAB_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(dungKeyStore, DUNG_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(fireflyKeyStore, FIREFLY_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(beetlesKeyStore, BEETLES_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(trustStore, TRUST_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(shortwingedKeyStore, SHORTWINGED_FILE, PASSWORD);
-        createTemporaryKeyStoreFile(roveKeyStore, ROVE_FILE, PASSWORD);
 
         PemWriter caBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(CA_BLANK_PEM_CRL)));
         PemWriter icaBlankCrlOutput = new PemWriter(new OutputStreamWriter(new FileOutputStream(ICA_BLANK_PEM_CRL)));
@@ -562,9 +352,9 @@ public class SSLAuthenticationTest {
         roveRevokedCrlOutput.close();
 
         ocspServer = new TestingOcspServer(OCSP_PORT);
-        ocspServer.createIssuer(1, issuerCertificate);
-        ocspServer.createIssuer(2, intermediateIssuerCertificate);
-        ocspServer.createCertificate(1, 1, intermediateIssuerCertificate);
+        ocspServer.createIssuer(1, caGenerationTool.getCertificate(Identity.CA));
+        ocspServer.createIssuer(2, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
+        ocspServer.createCertificate(1, 1, caGenerationTool.getCertificate(Identity.INTERMEDIATE));
         ocspServer.createCertificate(2, 2, ocspCheckedGoodCertificate);
         ocspServer.createCertificate(3, 1, ocspCheckedRevokedCertificate);
         ocspServer.revokeCertificate(3, 4);
@@ -591,34 +381,24 @@ public class SSLAuthenticationTest {
         if (ocspServer != null) {
             ocspServer.stop();
         }
-        LADYBIRD_FILE.delete();
-        SCARAB_FILE.delete();
-        DUNG_FILE.delete();
-        FIREFLY_FILE.delete();
-        OCSP_RESPONDER_FILE.delete();
-        OCSP_CHECKED_GOOD_FILE.delete();
-        OCSP_CHECKED_REVOKED_FILE.delete();
-        OCSP_CHECKED_UNKNOWN_FILE.delete();
-        BEETLES_FILE.delete();
-        TRUST_FILE.delete();
+
         SHORTWINGED_FILE.delete();
-        ROVE_FILE.delete();
         CA_BLANK_PEM_CRL.delete();
         ICA_BLANK_PEM_CRL.delete();
         BLANK_BLANK_PEM_CRL.delete();
         FIREFLY_REVOKED_PEM_CRL.delete();
         ICA_REVOKED_PEM_CRL.delete();
         ROVE_REVOKED_PEM_CRL.delete();
-        WORKING_DIR_CA.delete();
-        WORKING_DIR_ICA.delete();
         WORKING_DIR_CACRL.delete();
         WORKING_DIR_ICACRL.delete();
+
+        caGenerationTool.close();
     }
 
     @Test
     public void testOneWay() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
@@ -627,7 +407,7 @@ public class SSLAuthenticationTest {
     @Test
     public void testCrlBlank() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-crl.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Firefly", null, true);
@@ -636,7 +416,7 @@ public class SSLAuthenticationTest {
     @Test
     public void testServerRevoked() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ca/jks/firefly.keystore"))
+                .setKeyManager(getKeyManager("/jks/firefly.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-firefly-revoked.org", false, null, null, true);
@@ -645,7 +425,7 @@ public class SSLAuthenticationTest {
     @Test
     public void testServerIcaRevoked() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .setKeyManager(getKeyManager("/jks/rove.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-ica-revoked.org", false, null, null, true);
@@ -658,7 +438,7 @@ public class SSLAuthenticationTest {
     @Test
     public void testCRLMaxCertPathSucceeds() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .setKeyManager(getKeyManager("/jks/rove.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", null, true);
@@ -672,7 +452,7 @@ public class SSLAuthenticationTest {
     @Test
     public void testCRLMaxCertPathFails() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ica/jks/rove.keystore"))
+                .setKeyManager(getKeyManager("/jks/rove.keystore"))
                 .build().create();
 
         performConnectionTest(serverContext, "protocol://test-one-way-max-cert-path-failure.org", false, null, null, true);
@@ -681,8 +461,8 @@ public class SSLAuthenticationTest {
     @Test
     public void testTwoWay() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
@@ -694,8 +474,8 @@ public class SSLAuthenticationTest {
     @Test
     public void testTwoWayIca() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ica/jks/shortwinged.keystore"))
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/shortwinged.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
                 .build().create();
@@ -704,14 +484,33 @@ public class SSLAuthenticationTest {
                 "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Rove", false);
     }
 
+    /**
+     * Verifies ELY-2057 (No acceptedIssuers sent when CRLs are configured) is resolved.
+     * Test verifies a X509RevocationTrustManager configures accepted issuers.
+     */
+    @Test
+    public void testAcceptedIssuersConfiguredWithCRL() throws Throwable {
+        InputStream crl = new FileInputStream("./target/test-classes/ica/crl/blank-blank.pem");
+
+        X509RevocationTrustManager trustManager = X509RevocationTrustManager.builder()
+                .setTrustManagerFactory(getTrustManagerFactory())
+                .setTrustStore(createKeyStore("/jks/ca.truststore"))
+                .setCrlStream(crl)
+                .setPreferCrls(true)
+                .setNoFallback(true)
+                .build();
+
+        Assert.assertTrue(trustManager.getAcceptedIssuers().length > 0);
+    }
+
     @Test
     public void testOcspGood() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setNeedClientAuth(true)
@@ -743,11 +542,11 @@ public class SSLAuthenticationTest {
 
     private void ocspMaxCertPathCommon(int maxCertPath, boolean expectValid) throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
-                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/ca/jks/beetles.keystore"))
-                .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
                         .setOcspResponderCert(ocspResponderCertificate)
                         .setMaxCertPath(maxCertPath)
                         .build())
@@ -760,17 +559,17 @@ public class SSLAuthenticationTest {
     @Test
     public void testClientSideOcsp() throws Throwable {
         SSLContext serverContextGood = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ca/jks/ocsp-checked-good.keystore"))
+                .setKeyManager(getKeyManager("/jks/ocsp-checked-good.keystore"))
                 .build().create();
 
         SSLContext serverContextRevoked = new SSLContextBuilder()
-                .setKeyManager(getKeyManager("/ca/jks/ocsp-checked-revoked.keystore"))
+                .setKeyManager(getKeyManager("/jks/ocsp-checked-revoked.keystore"))
                 .build().create();
 
         SSLContext clientContext = new SSLContextBuilder()
                 .setTrustManager(X509RevocationTrustManager.builder()
                         .setTrustManagerFactory(getTrustManagerFactory())
-                        .setTrustStore(createKeyStore("/ca/jks/ca.truststore"))
+                        .setTrustStore(createKeyStore("/jks/ca.truststore"))
                         .setOcspResponderCert(ocspResponderCertificate)
                         .build())
                 .setClientMode(true)

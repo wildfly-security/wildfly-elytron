@@ -28,12 +28,11 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 /**
- * A base for the test cases to ensure the provider is registered before the test
- * is executed and removed after the test completes.
+ * A utility class containing common methods for working with SASL mechanisms.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class BaseTestCase {
+public final class SaslTestUtil {
 
     // Utility methods for use by the Test classes.
 
@@ -46,7 +45,7 @@ public class BaseTestCase {
      * @param requiredServerFactory - The server factory we are looking for.
      * @return the located server factory.
      */
-    protected static <T extends SaslServerFactory> T obtainSaslServerFactory(final Class<T> requiredServerFactory) {
+    public static <T extends SaslServerFactory> T obtainSaslServerFactory(final Class<T> requiredServerFactory) {
         Enumeration<SaslServerFactory> serverFactories = Sasl.getSaslServerFactories();
         while (serverFactories.hasMoreElements()) {
             SaslServerFactory current = serverFactories.nextElement();
@@ -67,7 +66,7 @@ public class BaseTestCase {
      * @param requiredClientFactory - The client factory we are looking for.
      * @return the located client factory.
      */
-    protected <T extends SaslClientFactory> T obtainSaslClientFactory(final Class<T> requiredClientFactory) {
+    public static <T extends SaslClientFactory> T obtainSaslClientFactory(final Class<T> requiredClientFactory) {
         Enumeration<SaslClientFactory> clientFactories = Sasl.getSaslClientFactories();
         while (clientFactories.hasMoreElements()) {
             SaslClientFactory current = clientFactories.nextElement();
@@ -84,7 +83,7 @@ public class BaseTestCase {
      *
      * @param mechanisms - the array of mechanisms to verify.
      */
-    protected void assertNoMechanisms(final String[] mechanisms) {
+    public static void assertNoMechanisms(final String[] mechanisms) {
         assertEquals(0, mechanisms.length);
     }
 
@@ -92,7 +91,7 @@ public class BaseTestCase {
      * @param mechanismName
      * @param mechanisms
      */
-    protected void assertSingleMechanism(final String mechanismName, final String[] mechanisms) {
+    public static void assertSingleMechanism(final String mechanismName, final String[] mechanisms) {
         assertEquals(1, mechanisms.length);
         assertEquals(mechanismName, mechanisms[0]);
     }
@@ -103,7 +102,7 @@ public class BaseTestCase {
      * @param expectedMechanisms the expected array of mechanisms
      * @param mechanisms the array of mechanisms to verify
      */
-    protected void assertMechanisms(final String[] expectedMechanisms, final String[] mechanisms) {
+    public static void assertMechanisms(final String[] expectedMechanisms, final String[] mechanisms) {
         assertEquals(expectedMechanisms.length, mechanisms.length);
         assertTrue(Arrays.asList(expectedMechanisms).containsAll(Arrays.asList(mechanisms)));
     }

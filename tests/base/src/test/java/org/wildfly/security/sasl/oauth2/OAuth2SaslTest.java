@@ -18,6 +18,9 @@
 
 package org.wildfly.security.sasl.oauth2;
 
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
+
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
@@ -40,7 +43,6 @@ import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -89,7 +91,7 @@ import static org.junit.Assert.fail;
  */
 // has dependency on wildfly-elytron-realm-auth-token
 @RunWith(JMockit.class)
-public class OAuth2SaslTest extends BaseTestCase {
+public class OAuth2SaslTest {
 
     private static final Provider provider = WildFlyElytronSaslOAuth2Provider.getInstance();
 

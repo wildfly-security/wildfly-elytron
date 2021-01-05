@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.sasl.test;
 
-import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.io.Closeable;
 import java.io.File;
