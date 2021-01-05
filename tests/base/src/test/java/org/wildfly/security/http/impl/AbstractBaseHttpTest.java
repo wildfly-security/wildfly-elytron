@@ -18,8 +18,33 @@
 
 package org.wildfly.security.http.impl;
 
-import mockit.Mock;
-import mockit.MockUp;
+import static org.wildfly.security.http.HttpConstants.AUTHENTICATION_INFO;
+import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.net.ssl.SSLSession;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.RealmCallback;
+
 import org.junit.Assert;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
@@ -38,44 +63,20 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
+import org.wildfly.security.http.basic.BasicMechanismFactory;
+import org.wildfly.security.http.digest.DigestMechanismFactory;
+import org.wildfly.security.http.digest.NonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.http.basic.BasicMechanismFactory;
-import org.wildfly.security.http.digest.DigestMechanismFactory;
-import org.wildfly.security.http.digest.NonceManager;
 
-import javax.net.ssl.SSLSession;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.wildfly.security.http.HttpConstants.AUTHENTICATION_INFO;
-import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
-import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import mockit.Mock;
+import mockit.MockUp;
 
 // has dependency on wildfly-elytron-sasl, wildfly-elytron-http-basic and wildfly-elytron-digest
-public class AbstractBaseHttpTest extends BaseTestCase {
+public class AbstractBaseHttpTest {
 
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();

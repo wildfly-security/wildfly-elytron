@@ -56,7 +56,6 @@ import org.wildfly.security.credential.store.CredentialStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.SaslMechanismSelector;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 import mockit.Mock;
@@ -71,7 +70,7 @@ import mockit.integration.junit4.JMockit;
  */
 // has dependency on wildfly-elytron-client, wildfly-elytron-credential
 @RunWith(JMockit.class)
-public class CompatibilityClientTest extends BaseTestCase {
+public class CompatibilityClientTest {
 
     /** mechanism name */
     protected static final String DIGEST = "DIGEST-MD5";

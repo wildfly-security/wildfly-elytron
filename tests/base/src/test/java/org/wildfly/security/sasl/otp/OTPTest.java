@@ -37,6 +37,8 @@ import static org.wildfly.security.sasl.otp.OTP.MATCH_RESPONSE_CHOICE;
 import static org.wildfly.security.sasl.otp.OTP.PASS_PHRASE;
 import static org.wildfly.security.sasl.otp.OTP.WORD_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.getOTPParameterSpec;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -88,7 +90,6 @@ import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.test.SaslServerBuilder.BuilderReference;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -105,7 +106,7 @@ import mockit.integration.junit4.JMockit;
  */
 // has dependency on wildfly-elytron-client
 @RunWith(JMockit.class)
-public class OTPTest extends BaseTestCase {
+public class OTPTest {
 
     private long timeout;
 

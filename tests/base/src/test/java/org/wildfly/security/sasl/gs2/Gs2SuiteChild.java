@@ -31,6 +31,9 @@ import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO_PLUS;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
 import static org.wildfly.security.sasl.gssapi.TestKDC.LDAP_PORT;
+import static org.wildfly.security.sasl.test.SaslTestUtil.assertMechanisms;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -80,7 +83,6 @@ import org.wildfly.security.mechanism.gssapi.GSSCredentialSecurityFactory;
 import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.GssapiTestSuite;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
@@ -93,7 +95,7 @@ import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 // has dependency on wildfly-elytron-client, wildfly-elytron-realm
-public class Gs2SuiteChild extends BaseTestCase {
+public class Gs2SuiteChild {
 
     private static final String TEST_SERVER_1 = "test_server_1";
     private static Subject clientSubject;

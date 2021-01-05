@@ -22,6 +22,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.sasl.test.SaslTestUtil.assertNoMechanisms;
+import static org.wildfly.security.sasl.test.SaslTestUtil.assertSingleMechanism;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.net.URI;
 import java.security.Provider;
@@ -40,7 +44,6 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.sasl.anonymous.WildFlyElytronSaslAnonymousProvider;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -49,6 +52,7 @@ import org.wildfly.security.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.security.sasl.anonymous.AnonymousSaslClient;
 import org.wildfly.security.sasl.anonymous.AnonymousSaslServer;
 import org.wildfly.security.sasl.anonymous.AnonymousServerFactory;
+import org.wildfly.security.sasl.anonymous.WildFlyElytronSaslAnonymousProvider;
 
 /**
  * Test for the Anonymous SASL mechanism, this will test both the client and server side.
@@ -56,7 +60,7 @@ import org.wildfly.security.sasl.anonymous.AnonymousServerFactory;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 // has dependency on wildfly-elytron-client
-public class AnonymousTest extends BaseTestCase {
+public class AnonymousTest {
 
     private static final String ANONYMOUS = "ANONYMOUS";
 

@@ -25,6 +25,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.test.SaslTestUtil.assertMechanisms;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslClientFactory;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -76,7 +79,6 @@ import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.SaslMechanismSelector;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
@@ -94,7 +96,7 @@ import mockit.integration.junit4.JMockit;
  */
 //has dependency on x500-cert
 @RunWith(JMockit.class)
-public class EntityTest extends BaseTestCase {
+public class EntityTest {
 
     private static final String CLIENT_KEYSTORE_ALIAS = "testclient1";
     private static final String KEYSTORE_TYPE = "JKS";

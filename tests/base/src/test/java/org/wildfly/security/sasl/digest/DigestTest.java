@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.wildfly.security.sasl.digest.DigestCallbackHandlerUtils.createClearPwdClientCallbackHandler;
 import static org.wildfly.security.sasl.digest.DigestCallbackHandlerUtils.createDigestPwdClientCallbackHandler;
+import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +55,6 @@ import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
@@ -64,7 +64,7 @@ import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class DigestTest extends BaseTestCase {
+public class DigestTest {
 
     private static Logger log = Logger.getLogger(DigestTest.class);
 

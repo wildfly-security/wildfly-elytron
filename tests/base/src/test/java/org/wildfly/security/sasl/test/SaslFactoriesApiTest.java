@@ -48,7 +48,7 @@ import org.junit.Test;
  * @author Josef Cacek
  */
 // dependency on wildfly-tests-common
-public class SaslFactoriesApiTest extends BaseTestCase {
+public class SaslFactoriesApiTest {
 
     private static final String REGEX_MECHANISM_NAME = "^[A-Z0-9-_]{1,20}$";
 
