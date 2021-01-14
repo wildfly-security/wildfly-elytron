@@ -1,0 +1,148 @@
+---
+layout: post
+title: 'Automatic Self-Signed Certificate Generation with Elytron'
+date: 2021-01-14
+tags: elytron wildfly22 tls certificates
+synopsis: An overview of the new automatic self-signed certificate generation included in WildFly 22.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 22 adds the ability to automatically generate a self-signed certificate the first time
+WildFly receives an HTTPS request when WildFly is being secured using Elytron. This is useful
+for development or testing environments. This blog post gives an introduction to this new feature.
+
+toc::[]
+
+== Default SSL context
+
+WildFly now contains configuration for one-way SSL out of the box. This means that by default,
+the Elytron subsystem now contains a `key-store`, `key-manager`, and `server-ssl-context` that
+are ready for you to use in a development or testing environment, as shown below:
+
+[source,xml]
+----
+<subsystem xmlns="urn:wildfly:elytron:12.0" final-providers="combined-providers" disallowed-providers="O
+racleUcrypto">
+...
+    <tls>
+        <key-stores>
+            <key-store name="applicationKS">
+                <credential-reference clear-text="password"/>
+                <implementation type="JKS"/>
+                <file path="application.keystore" relative-to="jboss.server.config.dir"/>
+            </key-store>
+        </key-stores>
+        <key-managers>
+            <key-manager name="applicationKM" key-store="applicationKS" generate-self-signed-certificate-host="localhost">
+                <credential-reference clear-text="password"/>
+            </key-manager>
+        </key-managers>
+        <server-ssl-contexts>
+            <server-ssl-context name="applicationSSC" key-manager="applicationKM"/>
+        </server-ssl-contexts>
+    </tls>
+...
+</subsystem>
+----
+
+Notice that the default `key-manager`, `applicationKM`, contains a `generate-self-signed-certificate-host`
+attribute with value `localhost`. This attribute indicates that when this `key-manager` is used to obtain the
+server's certificate, if the file that backs its `key-store` doesn't already exist, then the `key-manager` should
+automatically generate a self-signed certificate with `localhost` as the Common Name. This generated self-signed
+certificate will then be stored in the file that backs the `key-store`.
+
+== Making use of the default SSL context
+
+To make use of the new default SSL context, the Undertow subsystem `https-listener` configuration
+just needs to be updated to reference the Elytron `server-ssl-context`:
+
+[source,shell]
+----
+batch
+/subsystem=undertow/server=default-server/https-listener=https:undefine-attribute(name=security-realm)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=applicationSSC)
+run-batch
+reload
+----
+
+With this change, WildFly will automatically generate a self-signed certificate the first time it receives
+an HTTPS request if the server's key store file (`application.keystore`) does not already exist.
+
+To try this out, try accessing https://localhost:8443. Notice that WildFly generates and presents a
+self-signed certificate and your browser presents a warning message. Inspect the certificate and verify
+that the fingerprints shown in your browser match the fingerprints shown in the server log file before
+confirming that you want to accept the server's certificate.
+
+=== Log messages
+
+When using the default `server-ssl-context`, you'll notice some warning messages in the server log file before
+and after the self-signed certificate is automatically generated:
+
+[source]
+----
+13:21:39,197 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-6) WFLYELY01083: KeyStore /wildfly/standalone/configuration/application.keystore not found, it will be auto generated on first use with a self-signed certificate for host localhost
+...
+13:39:57,152 WARN  [org.wildfly.extension.elytron] (default task-1) WFLYELY01084: Generated self-signed certificate at /wildfly/dist/target/wildfly-22.0.0.Final/standalone/configuration/application.keystore. Please note that self-signed certificates are not secure and should only be used for testing purposes. Do not use this self-signed certificate in production.
+SHA-1 fingerprint of the generated key is fc:16:cf:bf:de:3a:6d:d6:fe:ec:f9:cd:9d:22:c9:3d:43:d7:e3:57
+SHA-256 fingerprint of the generated key is 38:69:00:4e:39:e2:40:e2:ef:b6:95:58:c6:ba:d0:0f:56:c5:7c:5d:fc:d5:c3:b9:b0:94:80:9c:f5:45:9d:40
+----
+
+As mentioned in the warning message, it is very important that the generated self-signed certificate is only used
+a development or testing environment. Self-signed certificates should never be used in a production environment.
+To disable the automatic self-signed certificate generation, simply undefine the `generate-self-signed-certificate-host`
+attribute for the default `key-manager`.
+
+== Switching to a signed certificate
+
+Since the default WildFly configuration contains one-way SSL configuration out of the box, it is now
+very simple to switch to using a signed certificate.
+
+=== Pre-requisite configuration
+
+We're going to switch to using a certificate from Let's Encrypt so we first need to configure
+a Let's Encrypt account:
+
+[source,shell]
+----
+/subsystem=elytron/key-store=accountsKS:add(path=accounts.keystore.jks,relative-to=jboss.server.config.dir,credential-reference={clear-text=secret},type=JKS)
+/subsystem=elytron/certificate-authority-account=myLetsEncryptAccount:add(alias=letsEncrypt,key-store=accountsKS,contact-urls=[mailto:admin@admin.org])
+----
+
+=== Switching to a certificate from Let's Encrypt
+
+First, undefine the `generate-self-signed-certificate-host` attribute:
+
+[source,shell]
+----
+/subsystem=elytron/key-manager=applicationKM:undefine-attribute(name=generate-self-signed-certificate-host)
+----
+
+Then, use the `applicationKS` key store to obtain a signed certificate from Let's Encrypt (make sure you update
+the `domain-names` parameter to specify the domain name(s) you want to obtain a certificate for):
+
+[source,shell]
+----
+/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)
+----
+
+Now, reload your `key-manager` so that WildFly makes use of your newly obtained signed certificate:
+
+[source,shell]
+----
+/subsystem=elytron/key-manager=applicationKM:init()
+----
+
+== Summary
+
+This blog post has given an overview of automatic self-signed certificate generation for WildFly.
+This feature should only be used in development or testing environments. For more details on this,
+take a look at the https://docs.wildfly.org/22/WildFly_Elytron_Security.html#Elytron_Subsystem[documentation].
+For more information on how to switch to a certificate from Let's Encrypt, take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli/[blog post].
+Details on how to switch to a certificate signed by a different certificate authority that implements the
+Automated Certificate Management Environment (ACME) protocol can be found
+https://dvilkola.wordpress.com/2019/06/11/obtain-and-manage-certificates-from-any-server-instance-that-implements-acme-specification-using-the-wildfly-cli/[here].
+
