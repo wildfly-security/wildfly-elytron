@@ -135,16 +135,17 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifyTimeConstraints(JsonObject claims) {
-        int currentTime = currentTimeInSeconds();
-        boolean expired = currentTime > claims.getInt("exp", -1);
+        long currentTime = currentTimeInSeconds();
+        if (claims.containsKey("exp")) {
+            boolean expired = currentTime > claims.getJsonNumber("exp").longValue();
 
-        if (expired) {
-            log.debug("Token expired");
-            return false;
+            if (expired) {
+                log.debug("Token expired");
+                return false;
+            }
         }
-
         if (claims.containsKey("nbf")) {
-            boolean notBefore = currentTime >= claims.getInt("nbf");
+            boolean notBefore = currentTime >= claims.getJsonNumber("nbf").longValue();
 
             if (!notBefore) {
                 log.debugf("Token is before [%s]", notBefore);
@@ -314,8 +315,8 @@ public class JwtValidator implements TokenValidator {
         }
     }
 
-    private static int currentTimeInSeconds() {
-        return ((int) (System.currentTimeMillis() / 1000));
+    private static long currentTimeInSeconds() {
+        return System.currentTimeMillis() / 1000;
     }
 
     public static class Builder {
