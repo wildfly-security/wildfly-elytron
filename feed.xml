@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 14 Jan 2021 15:58:56 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 14 Jan 2021 16:04:26 +0000</lastBuildDate>
+        
+        <item>
+            <title>Automatic Self-Signed Certificate Generation with Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/auto-self-signed-certificate-generation/
+            </link>
+            <description>
+                WildFly 22 adds the ability to automatically generate a self-signed certificate the first time WildFly receives an HTTPS request when WildFly is being secured using Elytron. This is useful for development or testing environments. This blog post gives an introduction to this new feature. Default SSL context Making use of...
+            </description>
+            <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/auto-self-signed-certificate-generation/
+            </guid>
+        </item>
         
         <item>
             <title>Using case principal transformers in Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 27 Jul 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/introduction-rule-engine-and-blacklist-dump/
-            </guid>
-        </item>
-        
-        <item>
-            <title>An Introduction to Intrusion Detection System using Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/
-            </link>
-            <description>
-                Intrusion Detection is the art of sensing when a system or network is being used inappropriately or without authorization. Without intrusion detection, an attacker can attempt attacks many times until an attack is finally successful. Intrusion detection allows for these attacks to be identified before a successful attack is likely...
-            </description>
-            <pubDate>Tue, 30 Jun 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/
             </guid>
         </item>
         
