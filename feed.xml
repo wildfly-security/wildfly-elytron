@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Tue, 05 Jan 2021 13:48:02 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 14 Jan 2021 15:58:56 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using case principal transformers in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/case-principal-transformer/
+            </link>
+            <description>
+                The case-principal-transformer quickstart demonstrates how to use a case-principal-transformer to adjust a principal to upper case when securing EJBs. Note, the quickstart is building from this post which more closely explains how to configure filesystem realms and SASL authentication to secure EJBs. An Overview of the Case Principal Transformer Principal...
+            </description>
+            <pubDate>Tue, 12 Jan 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/case-principal-transformer/
+            </guid>
+        </item>
         
         <item>
             <title>TLS 1.3 support for WildFly with OpenSSL</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 30 Jun 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using regex role mapper in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/
-            </link>
-            <description>
-                Elytron subsystem configuration was enhanced to allow possibility to define a regex based security roles mapping mechanism. With this functionality it is possible to easily translate list of roles, eg. app-admin, abc-user, to simpler roles , eg. admin, user. Add a regex role mapper You can add a regex-role-mapper to...
-            </description>
-            <pubDate>Tue, 16 Jun 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/regex-role-mapper/
             </guid>
         </item>
         
