@@ -117,7 +117,6 @@ public class TestKDC {
         for (String current : indexAttributes) {
             pf.addIndex(p, current, 10);
         }
-        p.setCacheService(directoryService.getCacheService());
         p.initialize();
         directoryService.addPartition(p);
     }
