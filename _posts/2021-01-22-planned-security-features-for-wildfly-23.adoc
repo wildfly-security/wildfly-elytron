@@ -1,0 +1,73 @@
+---
+layout: post
+title: 'Planned Security Features for WildFly'
+date: 2021-01-22
+tags: elytron wildfly security planning
+synopsis: An overview of the new security features that we will be working on.
+author: fjuma
+---
+
+Since the feature development phase for WildFly 23 has now started, we wanted to highlight the
+security features that we will be working on. As usual, please keep in mind that this blog post
+is a summary of our general plans and not a guarantee that each of these features will be merged
+for WildFly 23.
+
+== Planned Features
+
+=== Expression Resolution
+
+https://issues.redhat.com/browse/WFCORE-4360[WFC0RE-4360] *Support expression resolution backed by a credential store*
+
+* Currently, credential store references can be used anywhere in the model where a credential needs to be specified.
+This feature will make it possible to encrypt other attribute values stored in the management model. More details can be found https://github.com/wildfly/wildfly-proposals/pull/213[here].
+
+=== SSL/TLS Enhancements
+
+https://issues.redhat.com/browse/ELY-1996[ELY-1996] *SSLContext to support delegation to alternate instances based on peer information*
+
+* The host and port information of the peer that we are connecting to is available when an `SSLEngine` is being created.
+This feature looks at making use of this information to dynamically select which SSL context to use. More information can be found https://github.com/wildfly/wildfly-proposals/pull/328[here].
+
+https://issues.redhat.com/browse/WFCORE-5120[WFCORE-5120] *Automatic registration of a client side / JVM wide default SSLContext*
+
+* This feature will make it possible to register a JVM wide default SSL context for libraries that make use of Elytron
+client configuration. Additional information can be found https://github.com/wildfly/wildfly-proposals/pull/336[here].
+
+https://issues.redhat.com/browse/WFCORE-5170[WFCORE-5170] *Support for multiple certificate revocation lists*
+
+* Currently, it is only possible to configure a trust manager to make use of one certificate revocation list. This
+feature will make it possible to configure multiple certificate revocation lists (e.g., for the case where more
+than one certificate authority is being used). More details on this can be found https://github.com/wildfly/wildfly-proposals/pull/345[here].
+
+=== Principal Propagation
+
+https://issues.redhat.com/browse/WFLY-14074[WFLY-14074] *Normalization of principal propagation/injection across Elytron and Legacy security*
+
+* In certain cases, the principal associated with an unsecured EJB can differ depending on whether Elytron or legacy
+security is in use. This feature will make it possible for users to decide which behaviour they would like to use.
+More information can be found https://github.com/wildfly/wildfly-proposals/pull/346[here].
+
+=== Security Realm Enhancements
+
+https://issues.redhat.com/browse/WFCORE-5027[WFCORE-5027] *Security Realms should support specifying the charset and encoding for credentials*
+
+* This feature will make it possible for security realms to store hashed passwords in hex format, in addition to
+Base64 format. It will also make it possible to configure the character set to use when processing a user's
+password. More details can be found https://github.com/wildfly/wildfly-proposals/pull/323[here].
+
+=== OpenID Connect
+
+https://issues.redhat.com/browse/WFLY-14017[WFLY-14017] *Native support for OpenID Connect*
+
+* WildFly currently provides the ability to secure deployments using https://openid.net/connect/[OpenID Connect] (OIDC)
+by installing a Keycloak https://www.keycloak.org/docs/latest/securing_apps/#_jboss_adapter[client adapter].
+By adding native support for OpenID Connect to Elytron, the Keycloak client adapter will no longer be needed
+to secure applications deployed to WildFly using OIDC. More details can be found https://github.com/wildfly/wildfly-proposals/pull/341[here].
+
+== Summary
+
+This blog post has highlighted the security features that we will be working on. If any of these features
+are a priority for you, please let us know. Please also let us know if there are any security features that
+are missing that you would like to see prioritized as we can take this kind of feedback into account
+for future releases.
+
