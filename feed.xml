@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 14 Jan 2021 16:04:26 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 22 Jan 2021 15:49:45 +0000</lastBuildDate>
+        
+        <item>
+            <title>Planned Security Features for WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-23/
+            </link>
+            <description>
+                Since the feature development phase for WildFly 23 has now started, we wanted to highlight the security features that we will be working on. As usual, please keep in mind that this blog post is a summary of our general plans and not a guarantee that each of these features...
+            </description>
+            <pubDate>Fri, 22 Jan 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-23/
+            </guid>
+        </item>
         
         <item>
             <title>Automatic Self-Signed Certificate Generation with Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Sat, 29 Aug 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Introduction to Rule Engine & Blacklist IP Dump of Intrusion Detection System</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/introduction-rule-engine-and-blacklist-dump/
-            </link>
-            <description>
-                Earlier we introduced Intrusion Detection System using Elytron&#8217;s security events and discussed its architecture. In this blog we&#8217;ll discuss the implementation of Rule Engine &amp; Blacklist IP Dump. Rule Engine Rule Engine comprises of a set of pre-defined rules, which are used to score the event on a scale of...
-            </description>
-            <pubDate>Mon, 27 Jul 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/introduction-rule-engine-and-blacklist-dump/
             </guid>
         </item>
         
