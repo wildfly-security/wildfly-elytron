@@ -283,7 +283,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final Password password = credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword);
                 final String algorithm = password.getAlgorithm();
                 final DEREncoder encoder = new DEREncoder();
-                final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                final PasswordFactory passwordFactory = providers != null ? PasswordFactory.getInstance(algorithm, () -> providers) : PasswordFactory.getInstance(algorithm);
                 switch (algorithm) {
                     case BCryptPassword.ALGORITHM_BCRYPT:
                     case BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES:
@@ -676,7 +676,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         }
                     }
                 }
-                PasswordFactory passwordFactory = PasswordFactory.getInstance(matchedAlgorithm);
+                PasswordFactory passwordFactory = providers != null ? PasswordFactory.getInstance(matchedAlgorithm, () -> providers) : PasswordFactory.getInstance(matchedAlgorithm);
                 final Password password = passwordFactory.generatePassword(passwordSpec);
                 return credentialType.cast(new PasswordCredential(password));
             } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
