@@ -48,6 +48,7 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -61,7 +62,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class HttpAuthenticator {
 
-    private static final String AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
+    private static final String MY_AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
 
     private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
     private final SecurityDomain securityDomain;
@@ -70,6 +71,7 @@ public class HttpAuthenticator {
     private final boolean ignoreOptionalFailures;
     private final String programaticMechanismName;
     private final Consumer<Runnable> logoutHandlerConsumer;
+    private volatile IdentityCache identityCache;
     private volatile boolean authenticated = false;
 
     private HttpAuthenticator(final Builder builder) {
@@ -139,21 +141,10 @@ public class HttpAuthenticator {
                 }
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
-                    HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-                    if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
-                        log.tracef("Caching identity for '%s' against session scope.", username);
-                        /*
-                         * If we are associating an identity with the session for the first time we need to
-                         * change the ID of the session, in other cases we can continue with the same ID.
-                         */
-                        if (sessionScope.supportsChangeID() && sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY) == null) {
-                            sessionScope.changeID();
-                        }
-                        sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, authorizedIdentity));
-                    } else {
-                        log.tracef("Unable to cache identity for '%s'.", username);
-                    }
-                    setupProgramaticLogout(sessionScope);
+
+                    IdentityCache identityCache = getOrCreateIdentityCache(mechanismName);
+                    identityCache.put(authorizedIdentity);
+                    logoutHandlerConsumer.accept(identityCache::remove);
 
                     httpExchangeSpi.authenticationComplete(authorizedIdentity, mechanismName);
 
@@ -184,57 +175,119 @@ public class HttpAuthenticator {
             return false;
         }
 
-        HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-        if (sessionScope != null && sessionScope.supportsAttachments()) {
-            CachedIdentity cachedIdentity = sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY, CachedIdentity.class);
-            if (cachedIdentity != null) {
-                ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
-                SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
+        IdentityCache identityCache = getOrCreateIdentityCache(programaticMechanismName);
 
-                try {
-                    boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
-                    boolean cache = false;
+        CachedIdentity cachedIdentity = identityCache.get();
+        if (cachedIdentity != null) {
+            ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
+            SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
 
-                    if (authorized == false) {
-                        log.trace("Unable to use SecurityIdentity from CachedIdentity - attempting to recreate");
+            try {
+                boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
+                boolean cache = false;
 
-                        authenticationContext.setAuthenticationName(cachedIdentity.getName());
-                        authorized = authenticationContext.authorize();
-                        cache = true;
-                    }
+                if (authorized == false) {
+                    log.trace("Unable to use SecurityIdentity from CachedIdentity - attempting to recreate");
 
-                    if (authorized) {
-                        securityIdentity = authenticationContext.getAuthorizedIdentity();
-
-                        httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
-                        setupProgramaticLogout(sessionScope);
-
-                        if (cache) {
-                            log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
-                            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(cachedIdentity.getMechanismName(), securityIdentity));
-                        }
-
-                        return true;
-                    }
-                } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
-                    httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
+                    authenticationContext.setAuthenticationName(cachedIdentity.getName());
+                    authorized = authenticationContext.authorize();
+                    cache = true;
                 }
 
-                log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
-                sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null); // Whatever was in there no longer works so just
-                                                                              // drop it.
-            } else {
-                log.trace("No CachedIdentity to restore.");
+                if (authorized) {
+                    securityIdentity = authenticationContext.getAuthorizedIdentity();
+
+                    httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
+                    logoutHandlerConsumer.accept(identityCache::remove);
+
+                    if (cache) {
+                        log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
+                        identityCache.put(securityIdentity);
+                    }
+
+                    return true;
+                }
+            } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
+                httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
             }
+
+            log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
+            identityCache.remove(); // Whatever was in there no longer works so just
+                                    // drop it.
+        } else {
+            log.trace("No CachedIdentity to restore.");
         }
 
         return false;
     }
 
-    private void setupProgramaticLogout(HttpScope sessionScope) {
-        logoutHandlerConsumer.accept(() -> {
-            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null);
-        });
+    private IdentityCache getOrCreateIdentityCache(String mechanismName) {
+        if (identityCache == null) {
+            identityCache = new IdentityCache() {
+
+                @Override
+                public void put(SecurityIdentity identity) {
+                    HttpScope session = getAttachableSessionScope(true);
+
+                    if (session == null || !session.exists()) {
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Unable to cache identity for '%s'.", identity.getPrincipal().getName());
+                        }
+                        return;
+                    }
+
+                    if (session.supportsChangeID() && session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY) == null) {
+                        session.changeID();
+                    }
+
+                    if (log.isTraceEnabled()) {
+                        log.tracef("Caching identity for '%s' against session scope.", identity.getPrincipal().getName());
+                    }
+                    session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, identity));
+                }
+
+                @Override
+                public CachedIdentity get() {
+                    HttpScope session = getAttachableSessionScope(false);
+
+                    if (session == null || session.exists() == false) {
+                        return null;
+                    }
+
+                    return (CachedIdentity) session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY);
+                }
+
+                @Override
+                public CachedIdentity remove() {
+                    HttpScope session = getAttachableSessionScope(false);
+
+                    if (session == null || session.exists() == false) {
+                        return null;
+                    }
+
+                    CachedIdentity cachedIdentity = get();
+
+                    session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, null);
+
+                    return cachedIdentity;
+                }
+            };
+        }
+
+        return identityCache;
+    }
+
+    private HttpScope getAttachableSessionScope(boolean createSession) {
+        HttpScope scope = httpExchangeSpi.getScope(Scope.SESSION);
+        if (scope == null || scope.supportsAttachments() == false) {
+            return null;
+        }
+
+        if (scope != null && scope.exists() == false && createSession) {
+            scope.create();
+        }
+
+        return scope;
     }
 
     /**
