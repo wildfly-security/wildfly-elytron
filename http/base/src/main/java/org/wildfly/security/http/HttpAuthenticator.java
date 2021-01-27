@@ -65,6 +65,7 @@ public class HttpAuthenticator {
     private static final String MY_AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
 
     private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+    private final Supplier<IdentityCache> identityCacheSupplier;
     private final SecurityDomain securityDomain;
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
@@ -82,6 +83,7 @@ public class HttpAuthenticator {
         this.httpExchangeSpi = builder.httpExchangeSpi;
         this.required = builder.required;
         this.ignoreOptionalFailures = builder.ignoreOptionalFailures;
+        this.identityCacheSupplier = builder.identityCacheSupplier != null ? builder.identityCacheSupplier : () -> createIdentityCache(programaticMechanismName);
     }
 
     /**
@@ -142,7 +144,7 @@ public class HttpAuthenticator {
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
 
-                    IdentityCache identityCache = getOrCreateIdentityCache(mechanismName);
+                    IdentityCache identityCache = getOrCreateIdentityCache();
                     identityCache.put(authorizedIdentity);
                     logoutHandlerConsumer.accept(identityCache::remove);
 
@@ -175,7 +177,7 @@ public class HttpAuthenticator {
             return false;
         }
 
-        IdentityCache identityCache = getOrCreateIdentityCache(programaticMechanismName);
+        IdentityCache identityCache = getOrCreateIdentityCache();
 
         CachedIdentity cachedIdentity = identityCache.get();
         if (cachedIdentity != null) {
@@ -221,60 +223,64 @@ public class HttpAuthenticator {
         return false;
     }
 
-    private IdentityCache getOrCreateIdentityCache(String mechanismName) {
+    private IdentityCache getOrCreateIdentityCache() {
         if (identityCache == null) {
-            identityCache = new IdentityCache() {
-
-                @Override
-                public void put(SecurityIdentity identity) {
-                    HttpScope session = getAttachableSessionScope(true);
-
-                    if (session == null || !session.exists()) {
-                        if (log.isTraceEnabled()) {
-                            log.tracef("Unable to cache identity for '%s'.", identity.getPrincipal().getName());
-                        }
-                        return;
-                    }
-
-                    if (session.supportsChangeID() && session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY) == null) {
-                        session.changeID();
-                    }
-
-                    if (log.isTraceEnabled()) {
-                        log.tracef("Caching identity for '%s' against session scope.", identity.getPrincipal().getName());
-                    }
-                    session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, identity));
-                }
-
-                @Override
-                public CachedIdentity get() {
-                    HttpScope session = getAttachableSessionScope(false);
-
-                    if (session == null || session.exists() == false) {
-                        return null;
-                    }
-
-                    return (CachedIdentity) session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY);
-                }
-
-                @Override
-                public CachedIdentity remove() {
-                    HttpScope session = getAttachableSessionScope(false);
-
-                    if (session == null || session.exists() == false) {
-                        return null;
-                    }
-
-                    CachedIdentity cachedIdentity = get();
-
-                    session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, null);
-
-                    return cachedIdentity;
-                }
-            };
+            identityCache = identityCacheSupplier.get();
         }
 
         return identityCache;
+    }
+
+    private IdentityCache createIdentityCache(String mechanismName) {
+        return new IdentityCache() {
+
+            @Override
+            public void put(SecurityIdentity identity) {
+                HttpScope session = getAttachableSessionScope(true);
+
+                if (session == null || !session.exists()) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("Unable to cache identity for '%s'.", identity.getPrincipal().getName());
+                    }
+                    return;
+                }
+
+                if (session.supportsChangeID() && session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY) == null) {
+                    session.changeID();
+                }
+
+                if (log.isTraceEnabled()) {
+                    log.tracef("Caching identity for '%s' against session scope.", identity.getPrincipal().getName());
+                }
+                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, identity));
+            }
+
+            @Override
+            public CachedIdentity get() {
+                HttpScope session = getAttachableSessionScope(false);
+
+                if (session == null || session.exists() == false) {
+                    return null;
+                }
+
+                return (CachedIdentity) session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY);
+            }
+
+            @Override
+            public CachedIdentity remove() {
+                HttpScope session = getAttachableSessionScope(false);
+
+                if (session == null || session.exists() == false) {
+                    return null;
+                }
+
+                CachedIdentity cachedIdentity = get();
+
+                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, null);
+
+                return cachedIdentity;
+            }
+        };
     }
 
     private HttpScope getAttachableSessionScope(boolean createSession) {
@@ -591,6 +597,7 @@ public class HttpAuthenticator {
         private boolean ignoreOptionalFailures;
         private Consumer<Runnable> logoutHandlerConsumer;
         private String programmaticMechanismName;
+        private Supplier<IdentityCache> identityCacheSupplier;
 
         Builder() {
         }
@@ -688,7 +695,19 @@ public class HttpAuthenticator {
             this.programmaticMechanismName = programmaticMechanismName;
 
             return this;
+        }
 
+        /**
+         * Set a {@code Supplier} which acts as a factory to return a new {@link IdentityCache} instance for the current request, this allows
+         * alternative caching strategies to be provided.
+         *
+         * @param identityCacheSupplier - a factory which returns new {@link IdentityCache} instances for the current request.
+         * @return the {@link Builder} to allow method call chaining.
+         */
+        public Builder setIdentityCacheSupplier(final Supplier<IdentityCache> identityCacheSupplier) {
+            this.identityCacheSupplier = identityCacheSupplier;
+
+            return this;
         }
 
         /**
