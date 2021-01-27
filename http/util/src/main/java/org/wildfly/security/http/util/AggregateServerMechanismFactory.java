@@ -61,7 +61,7 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
             }
         }
         if (log.isTraceEnabled()) {
-            log.tracef("No %s provided by factories in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), Arrays.toString(factories));
+            log.tracef("%s provided by factories in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), Arrays.toString(factories));
         }
         return names.toArray(new String[names.size()]);
     }
@@ -84,7 +84,9 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
             }
         }
         if (log.isTraceEnabled()) {
-            log.tracef("No %s provided by factories in %s: %s", HttpServerAuthenticationMechanismFactory.class.getSimpleName(), getClass().getSimpleName(), Arrays.toString(factories));
+            log.tracef("Mechanism %s not provided as %s is not provided by factories in %s: %s",
+                    mechanismName, HttpServerAuthenticationMechanismFactory.class.getSimpleName(),
+                    getClass().getSimpleName(), Arrays.toString(factories));
         }
         return null;
     }
