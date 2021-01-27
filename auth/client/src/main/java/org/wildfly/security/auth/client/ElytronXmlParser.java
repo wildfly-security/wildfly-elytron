@@ -1970,7 +1970,7 @@ public final class ElytronXmlParser {
                         passwordFactory = () -> {
                             try {
                                 Password password = maskedPassword.get();
-                                PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm());
+                                PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm(), providersSupplier);
                                 ClearPasswordSpec spec = factory.getKeySpec(password, ClearPasswordSpec.class);
                                 return spec.getEncodedPassword();
                             } catch (GeneralSecurityException e) {

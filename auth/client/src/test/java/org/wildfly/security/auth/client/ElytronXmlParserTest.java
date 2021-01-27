@@ -26,9 +26,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLContext;
@@ -40,7 +38,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -55,7 +52,6 @@ public class ElytronXmlParserTest {
     private static File KEYSTORE_DIR = new File("./target/keystore");
     private static final String CLIENT_KEYSTORE_FILENAME = "/client.keystore";
     private static final char[] PASSWORD = "password".toCharArray();
-    private static final Provider provider = new WildFlyElytronProvider();
 
 
     /**
@@ -199,8 +195,6 @@ public class ElytronXmlParserTest {
 
     @BeforeClass
     public static void prepareKeyStores() throws Exception {
-        Security.addProvider(provider);
-
         if (KEYSTORE_DIR.exists() == false) {
             KEYSTORE_DIR.mkdirs();
         }
@@ -219,6 +213,7 @@ public class ElytronXmlParserTest {
 
     @AfterClass
     public static void removeProvider() {
-        Security.removeProvider(provider.getName());
+        Assert.assertTrue("Keystore deleted", new File(KEYSTORE_DIR, CLIENT_KEYSTORE_FILENAME).delete());
+        Assert.assertTrue("Keystore directory deleted", KEYSTORE_DIR.delete());
     }
 }
