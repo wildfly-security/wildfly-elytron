@@ -27,10 +27,11 @@ public interface SingleSignOnManager {
     /**
      * Creates a single sign-on entry using the specified mechanism and security identity
      * @param mechanismName an authentication mechanism name
+     * @param programmatic indicates if this identity was created as a result of programmatic authentication
      * @param identity a security identity of the authenticated user
      * @return a single sign-on entry
      */
-    SingleSignOn create(String mechanismName, SecurityIdentity identity);
+    SingleSignOn create(String mechanismName, boolean programmatic, SecurityIdentity identity);
 
     /**
      * Locates the single sign-on entry with the specified identifier, or null if none exists.

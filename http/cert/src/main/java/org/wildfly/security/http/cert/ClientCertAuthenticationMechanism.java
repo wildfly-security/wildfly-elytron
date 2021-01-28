@@ -214,7 +214,7 @@ final class ClientCertAuthenticationMechanism implements HttpServerAuthenticatio
 
             @Override
             public void put(SecurityIdentity identity) {
-                CachedIdentity cachedIdentity = new CachedIdentity(CLIENT_CERT_NAME, identity);
+                CachedIdentity cachedIdentity = new CachedIdentity(CLIENT_CERT_NAME, false, identity);
                 httpClientCert.tracef("storing into cache: %s", cachedIdentity);
                 identities.putIfAbsent(securityDomain, cachedIdentity);
             }

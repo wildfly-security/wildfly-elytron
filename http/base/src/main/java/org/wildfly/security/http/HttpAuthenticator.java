@@ -252,7 +252,7 @@ public class HttpAuthenticator {
                 if (log.isTraceEnabled()) {
                     log.tracef("Caching identity for '%s' against session scope.", identity.getPrincipal().getName());
                 }
-                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, identity));
+                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, true, identity));
             }
 
             @Override

@@ -100,7 +100,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                 String signOnSessionId = (cookie != null) ? cookie.getValue() : null;
                 SingleSignOnSession singleSignOnSession = (signOnSessionId != null) ? singleSignOnSessionFactory.find(signOnSessionId, request) : null;
 
-                return (singleSignOnSession == null) ? singleSignOnSessionFactory.create(request, mechanismName) : singleSignOnSession;
+                return (singleSignOnSession == null) ? singleSignOnSessionFactory.create(request, mechanismName, false) : singleSignOnSession;
             }
 
             private HttpServerAuthenticationMechanism getTargetMechanism(String mechanismName, SingleSignOnSession singleSignOnSession) throws HttpAuthenticationException {
