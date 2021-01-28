@@ -52,7 +52,7 @@ import static org.wildfly.security.http.util.sso.ElytronMessages.log;
 public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory delegate;
-    private final SingleSignOnConfiguration configuration;
+    private final org.wildfly.security.http.util.sso.SingleSignOnConfiguration configuration;
     private final SingleSignOnSessionFactory singleSignOnSessionFactory;
 
     /**
@@ -62,10 +62,22 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
      * @param singleSignOnSessionFactory a custom {@link SingleSignOnManager}
      * @param configuration the configuration related with the cookie representing user's session
      */
-    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, SingleSignOnConfiguration configuration) {
+    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, org.wildfly.security.http.util.sso.SingleSignOnConfiguration configuration) {
         this.delegate = delegate;
         this.configuration = configuration;
         this.singleSignOnSessionFactory = singleSignOnSessionFactory;
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param delegate the factory holding the target mechanisms
+     * @param singleSignOnSessionFactory a custom {@link SingleSignOnManager}
+     * @param configuration the configuration related with the cookie representing user's session
+     */
+    @Deprecated
+    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, SingleSignOnConfiguration configuration) {
+        this(delegate, singleSignOnSessionFactory, configuration.convert());
     }
 
     @Override
@@ -270,6 +282,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
         };
     }
 
+    @Deprecated
     public static final class SingleSignOnConfiguration {
 
         private final String cookieName;
@@ -304,6 +317,10 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
         public boolean isHttpOnly() {
             return httpOnly;
+        }
+
+        org.wildfly.security.http.util.sso.SingleSignOnConfiguration convert() {
+            return new org.wildfly.security.http.util.sso.SingleSignOnConfiguration(cookieName, domain, path, httpOnly, secure);
         }
     }
 }

@@ -20,27 +20,19 @@ package org.wildfly.security.http;
 
 import static java.lang.System.getSecurityManager;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.http.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
-import static org.wildfly.security.http.ElytronMessages.log;
 
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.net.ssl.SSLSession;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -52,6 +44,7 @@ import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.http.impl.BaseHttpServerRequest;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -305,7 +298,7 @@ public class HttpAuthenticator {
         return new Builder();
     }
 
-    private class AuthenticationExchange implements HttpServerRequest, HttpServerResponse {
+    private class AuthenticationExchange extends BaseHttpServerRequest implements HttpServerRequest, HttpServerResponse {
 
         private volatile HttpServerAuthenticationMechanism currentMechanism;
 
@@ -314,6 +307,10 @@ public class HttpAuthenticator {
         private volatile boolean statusCodeAllowed = false;
         private volatile List<HttpServerMechanismsResponder> responders;
         private volatile HttpServerMechanismsResponder successResponder;
+
+        AuthenticationExchange() {
+            super(httpExchangeSpi);
+        }
 
         private boolean authenticate() throws HttpAuthenticationException {
             List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.get();
@@ -395,39 +392,13 @@ public class HttpAuthenticator {
             }
         }
 
-        @Override
-        public List<String> getRequestHeaderValues(String headerName) {
-            return httpExchangeSpi.getRequestHeaderValues(headerName);
-        }
-
-        @Override
-        public String getFirstRequestHeaderValue(String headerName) {
-            return httpExchangeSpi.getFirstRequestHeaderValue(headerName);
-        }
-
-        @Override
-        public SSLSession getSSLSession() {
-            return httpExchangeSpi.getSSLSession();
-        }
-
+        /*
+         * This method is overridden to trigger certificate re-negotiation if authentication
+         * is required.
+         */
         @Override
         public Certificate[] getPeerCertificates() {
             return httpExchangeSpi.getPeerCertificates(required);
-        }
-
-        @Override
-        public HttpScope getScope(Scope scope) {
-            return httpExchangeSpi.getScope(scope);
-        }
-
-        @Override
-        public Collection<String> getScopeIds(Scope scope) {
-            return httpExchangeSpi.getScopeIds(scope);
-        }
-
-        @Override
-        public HttpScope getScope(Scope scope, String id) {
-            return httpExchangeSpi.getScope(scope, id);
         }
 
         @Override
@@ -435,11 +406,6 @@ public class HttpAuthenticator {
             if (responder != null) {
                 responders.add(responder);
             }
-        }
-
-        @Override
-        public String getRemoteUser() {
-            return httpExchangeSpi.getRemoteUser();
         }
 
         @Override
@@ -483,56 +449,6 @@ public class HttpAuthenticator {
             if (responder != null) {
                 responders.add(responder);
             }
-        }
-
-        @Override
-        public String getRequestMethod() {
-            return httpExchangeSpi.getRequestMethod();
-        }
-
-        @Override
-        public URI getRequestURI() {
-            return httpExchangeSpi.getRequestURI();
-        }
-
-        @Override
-        public String getRequestPath() {
-            return httpExchangeSpi.getRequestPath();
-        }
-
-        @Override
-        public Map<String, List<String>> getParameters() {
-            return httpExchangeSpi.getRequestParameters();
-        }
-
-        @Override
-        public Set<String> getParameterNames() {
-            return httpExchangeSpi.getRequestParameterNames();
-        }
-
-        @Override
-        public List<String> getParameterValues(String name) {
-            return httpExchangeSpi.getRequestParameterValues(name);
-        }
-
-        @Override
-        public String getFirstParameterValue(String name) {
-            return httpExchangeSpi.getFirstRequestParameterValue(name);
-        }
-
-        @Override
-        public List<HttpServerCookie> getCookies() {
-            return httpExchangeSpi.getCookies();
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return httpExchangeSpi.getRequestInputStream();
-        }
-
-        @Override
-        public InetSocketAddress getSourceAddress() {
-            return httpExchangeSpi.getSourceAddress();
         }
 
         @Override
