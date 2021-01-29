@@ -216,7 +216,14 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
             }
 
             HttpServerCookie getCookie(HttpServerRequest request) {
-                return request.getCookies().stream().filter(current -> configuration.getCookieName().equals(current.getName())).findFirst().orElse(null);
+                final String expectedCookieName = configuration.getCookieName();
+                for (HttpServerCookie currentCookie : request.getCookies()) {
+                    if (expectedCookieName.equals(currentCookie.getName())) {
+                        return currentCookie;
+                    }
+                }
+
+                return null;
             }
 
             HttpServerCookie createCookie(String value, int maxAge) {
