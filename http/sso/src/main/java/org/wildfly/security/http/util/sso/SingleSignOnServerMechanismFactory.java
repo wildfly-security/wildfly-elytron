@@ -30,6 +30,7 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerRequestWrapper;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.util.SimpleHttpServerCookie;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -227,47 +228,8 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
             }
 
             HttpServerCookie createCookie(String value, int maxAge) {
-                return new HttpServerCookie() {
-                    @Override
-                    public String getName() {
-                        return configuration.getCookieName();
-                    }
-
-                    @Override
-                    public String getValue() {
-                        return value;
-                    }
-
-                    @Override
-                    public String getDomain() {
-                        return configuration.getDomain();
-                    }
-
-                    @Override
-                    public int getMaxAge() {
-                        return maxAge;
-                    }
-
-                    @Override
-                    public String getPath() {
-                        return configuration.getPath();
-                    }
-
-                    @Override
-                    public boolean isSecure() {
-                        return configuration.isSecure();
-                    }
-
-                    @Override
-                    public int getVersion() {
-                        return 0;
-                    }
-
-                    @Override
-                    public boolean isHttpOnly() {
-                        return configuration.isHttpOnly();
-                    }
-                };
+                return SimpleHttpServerCookie.newInstance(configuration.getCookieName(), value, configuration.getDomain(),
+                        maxAge, configuration.getPath(), configuration.isSecure(), 0, configuration.isHttpOnly());
             }
         };
     }
