@@ -70,7 +70,7 @@ public class HttpAuthenticator {
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
     private final boolean ignoreOptionalFailures;
-    private final String programaticMechanismName;
+    private final String programmaticMechanismName;
     private final Consumer<Runnable> logoutHandlerConsumer;
     private volatile IdentityCache identityCache;
     private volatile boolean authenticated = false;
@@ -78,12 +78,12 @@ public class HttpAuthenticator {
     private HttpAuthenticator(final Builder builder) {
         this.mechanismSupplier = builder.mechanismSupplier;
         this.securityDomain = builder.securityDomain;
-        this.programaticMechanismName = builder.programmaticMechanismName;
+        this.programmaticMechanismName = builder.programmaticMechanismName;
         this.logoutHandlerConsumer = builder.logoutHandlerConsumer;
         this.httpExchangeSpi = builder.httpExchangeSpi;
         this.required = builder.required;
         this.ignoreOptionalFailures = builder.ignoreOptionalFailures;
-        this.identityCacheSupplier = builder.identityCacheSupplier != null ? builder.identityCacheSupplier : () -> createIdentityCache(programaticMechanismName);
+        this.identityCacheSupplier = builder.identityCacheSupplier != null ? builder.identityCacheSupplier : () -> createIdentityCache(programmaticMechanismName);
     }
 
     /**
@@ -115,7 +115,7 @@ public class HttpAuthenticator {
     public SecurityIdentity login(String username, String password) {
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(checkNotNullParam("password", password).toCharArray());
         try {
-            return login(username, evidence, programaticMechanismName);
+            return login(username, evidence, programmaticMechanismName);
         } finally {
             evidence.destroy();
         }
@@ -210,7 +210,7 @@ public class HttpAuthenticator {
                     return true;
                 }
             } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
-                httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
+                httpExchangeSpi.authenticationFailed(e.getMessage(), programmaticMechanismName);
             }
 
             log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
