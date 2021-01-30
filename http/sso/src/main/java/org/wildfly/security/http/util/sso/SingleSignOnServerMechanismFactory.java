@@ -88,6 +88,10 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         return new HttpServerAuthenticationMechanism() {
+
+            private volatile SingleSignOnSession singleSignOnSession;
+            private volatile HttpServerAuthenticationMechanism targetMechanism;
+
             @Override
             public String getMechanismName() {
                 return mechanismName;
@@ -95,17 +99,27 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
             @Override
             public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-                @SuppressWarnings("resource")
-                SingleSignOnSession singleSignOnSession = getSingleSignOnSession(request);
+                singleSignOnSession = getSingleSignOnSession(request);
                 if (singleSignOnSession.logout()) {
                     singleSignOnSession.close();
                     return;
                 }
-                HttpServerAuthenticationMechanism mechanism = getTargetMechanism(mechanismName, singleSignOnSession);
-                if (mechanism == null) {
+                targetMechanism = getTargetMechanism(mechanismName, singleSignOnSession);
+                if (targetMechanism == null) {
                     throw log.httpServerAuthenticationMechanismNotFound(mechanismName);
                 }
-                mechanism.evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
+                targetMechanism.evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
+            }
+
+            @Override
+            public void dispose() {
+                if (targetMechanism != null) {
+                    targetMechanism.dispose();
+                }
+
+                if (singleSignOnSession != null) {
+                    singleSignOnSession.close();
+                }
             }
 
             private SingleSignOnSession getSingleSignOnSession(HttpServerRequest request) {

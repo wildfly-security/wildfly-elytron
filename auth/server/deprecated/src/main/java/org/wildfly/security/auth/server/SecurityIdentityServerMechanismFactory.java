@@ -91,6 +91,11 @@ class SecurityIdentityServerMechanismFactory implements HttpServerAuthentication
                             : delegate.getNegotiatedProperty(propertyName);
                 }
 
+                @Override
+                public void dispose() {
+                    delegate.dispose();
+                }
+
             };
         }
         return null;
