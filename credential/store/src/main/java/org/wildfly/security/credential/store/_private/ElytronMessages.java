@@ -140,4 +140,13 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 12000, value = "The credential store file %s does not exist or cannot be accessed.")
     CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
 
+    @Message(id = 12001, value = "The credential store has not been initialised.")
+    CredentialStoreException storeNotInitialised();
+
+    @Message(id = 12002, value = "The required initialisation attrribute '%s' has not been specified.")
+    CredentialStoreException missingInitialisationAttribute(String attribute);
+
+    @Message(id = 12003, value = "Invalid CredentialStore property '%s'.")
+    CredentialStoreException invalidCredentialStoreProperty(String data);
+
 }

@@ -70,9 +70,16 @@ public class SecretKeyUtil {
         return ByteIterator.ofBytes(result).base64Encode().drainToString();
     }
 
+    public static SecretKey importSecretKey(final char[] rawData, int offset, int length) {
+        return importSecretKey(CodePointIterator.ofChars(checkNotNullParam("rawData", rawData), offset, length));
+    }
+
     public static SecretKey importSecretKey(final String secretKey) {
-        checkNotNullParam("secretKey", secretKey);
-        ByteIterator byteIterator = CodePointIterator.ofString(secretKey).base64Decode();
+        return importSecretKey(CodePointIterator.ofString(checkNotNullParam("secretKey", secretKey)));
+    }
+
+    private static SecretKey importSecretKey(CodePointIterator codePointIterator) {
+        ByteIterator byteIterator = codePointIterator.base64Decode();
         byte[] prefixVersion = byteIterator.drain(4);
         if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' ||
                 prefixVersion[2] != 'Y' || prefixVersion[3] != VERSION) {
