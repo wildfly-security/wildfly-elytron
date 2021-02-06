@@ -215,7 +215,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
 
                 if (start > -1 && delimiter > -1 && end > -1) {
                     String alias = new String(currentLine, start, delimiter - start);
-                    SecretKey secretKey = importSecretKey(currentLine, delimiter, end - delimiter);
+                    SecretKey secretKey = importSecretKey(currentLine, delimiter + 1, end - delimiter);
                     entries.put(alias, secretKey);
                 } else {
                     throw log.invalidCredentialStoreProperty(line);

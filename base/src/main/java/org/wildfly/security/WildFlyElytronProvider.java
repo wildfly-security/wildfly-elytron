@@ -313,6 +313,7 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new Service(this, "CredentialStore", "KeyStoreCredentialStore", "org.wildfly.security.credential.store.impl.KeyStoreCredentialStore", emptyList, emptyMap));
         putService(new Service(this, "CredentialStore", "VaultCredentialStore", "org.wildfly.security.credential.store.impl.VaultCredentialStore", emptyList, emptyMap));
         putService(new Service(this, "CredentialStore", "MapCredentialStore", "org.wildfly.security.credential.store.impl.MapCredentialStore", emptyList, emptyMap));
+        putService(new Service(this, "CredentialStore", "PropertiesCredentialStore", "org.wildfly.security.credential.store.impl.PropertiesCredentialStore", emptyList, emptyMap));
     }
 
     class ProviderService extends Service {
