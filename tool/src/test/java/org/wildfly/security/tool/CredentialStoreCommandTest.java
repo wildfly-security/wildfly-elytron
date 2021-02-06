@@ -36,8 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.crypto.SecretKey;
-
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
@@ -45,10 +43,8 @@ import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.credential.KeyPairCredential;
-import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
-import org.wildfly.security.encryption.SecretKeyUtil;
 
 /**
  * Test for "credential-store" command.
@@ -687,61 +683,4 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         Assert.assertFalse(output.contains("Option \"create\" specified more than once. Only the first occurrence will be used"));
     }
 
-
-    private boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().startsWith("windows");
-    }
-
-    @Test
-    public void testGenerateSecretKey() throws Exception {
-        String storageLocation = getStoragePathForNewFile();
-        String storagePassword = "cspassword";
-        String aliasName = "testkey";
-
-        String[] args = { "--location=" + storageLocation, "--create", "--generate-secret-key", aliasName,  "--summary", "--password", storagePassword };
-        executeCommandAndCheckStatus(args);
-
-        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
-        store.exists(aliasName, SecretKeyCredential.class);
-    }
-
-    @Test
-    public void testExportSecretKey() throws Exception {
-        String storageLocation = getStoragePathForNewFile();
-        String storagePassword = "cspassword";
-        String aliasName = "testkey";
-
-        String[] args = { "--location=" + storageLocation, "--create", "--generate-secret-key", aliasName,  "--summary", "--password", storagePassword };
-        executeCommandAndCheckStatus(args);
-
-        args = new String[] { "--location=" + storageLocation, "--export-secret-key", aliasName, "--password", storagePassword };
-        String output = executeCommandAndCheckStatusAndGetOutput(args);
-        int startPos = output.indexOf(aliasName) + aliasName.length() + 1;
-        String key = output.substring(startPos, output.length() -1);
-
-        SecretKey secretKey = SecretKeyUtil.importSecretKey(key);
-
-        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
-        SecretKeyCredential secretKeyCredential = store.retrieve(aliasName, SecretKeyCredential.class);
-
-        assertEquals("Matching keys", secretKey, secretKeyCredential.getSecretKey());
-    }
-
-    @Test
-    public void testImportSecretKey() throws Exception {
-        String storageLocation = getStoragePathForNewFile();
-        String storagePassword = "cspassword";
-        String aliasName = "testkey";
-
-        SecretKey secretKey = SecretKeyUtil.generateSecretKey(128);
-        String encoded = SecretKeyUtil.exportSecretKey(secretKey);
-
-        String[] args = { "--location=" + storageLocation, "--create", "--import-secret-key", aliasName, "--key", encoded, "--summary", "--password", storagePassword };
-        executeCommandAndCheckStatus(args);
-
-        CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
-        SecretKeyCredential secretKeyCredential = store.retrieve(aliasName, SecretKeyCredential.class);
-
-        assertEquals("Matching keys", secretKey, secretKeyCredential.getSecretKey());
-    }
 }
