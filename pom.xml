@@ -79,8 +79,8 @@
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
         <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.1.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
+        <version.jakarta.json.jakarta-json-api>1.1.6</version.jakarta.json.jakarta-json-api>
         <version.org.jboss.threads>2.4.0.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
@@ -960,9 +960,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.jboss.spec.javax.json</groupId>
-                <artifactId>jboss-json-api_1.0_spec</artifactId>
-                <version>${version.org.jboss.spec.jboss-json-api_1.0_spec}</version>
+                <groupId>jakarta.json</groupId>
+                <artifactId>jakarta.json-api</artifactId>
+                <version>${version.jakarta.json.jakarta-json-api}</version>
                 <scope>provided</scope>
             </dependency>
 
