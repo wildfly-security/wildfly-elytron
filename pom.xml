@@ -60,8 +60,8 @@
         <version.io.smallrye.jwt>2.0.13</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
-        <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
-        <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
+        <version.org.apache.directory.server>2.0.0.AM26</version.org.apache.directory.server>
+        <version.org.apache.directory.api>2.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
