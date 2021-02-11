@@ -17,9 +17,13 @@
  */
 
 package org.wildfly.security.encryption;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.encryption.Common.CIPHER_TEXT_IDENTIFIER;
+import static org.wildfly.security.encryption.Common.VERSION;
 import static org.wildfly.security.encryption.SecretKeyUtil.exportSecretKey;
 import static org.wildfly.security.encryption.SecretKeyUtil.generateSecretKey;
 import static org.wildfly.security.encryption.SecretKeyUtil.importSecretKey;
@@ -31,8 +35,6 @@ import javax.crypto.SecretKey;
 import org.junit.Test;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
-
-import static org.junit.Assert.assertNotEquals;
 
 /**
  * Test Case for the {@code SecretKeyUtil} utility.
@@ -90,7 +92,18 @@ public class SecretKeyUtilTest {
         SecretKey original = generateSecretKey(128);
         String exported = exportSecretKey(original);
         byte[] raw = CodePointIterator.ofString(exported).base64Decode().drain();
-        raw[4] = SecretKeyUtil.VERSION + 1;  // We don't want to test all bad versions but do want to be sure the next version is automatically rejected.
+        raw[3] = VERSION + 1;  // We don't want to test all bad versions but do want to be sure the next version is automatically rejected.
+        String encoded = ByteIterator.ofBytes(raw).base64Encode().drainToString();
+
+        importSecretKey(encoded);
+    }
+
+    @Test(expected=GeneralSecurityException.class)
+    public void testBadTokenType() throws Exception {
+        SecretKey original = generateSecretKey(128);
+        String exported = exportSecretKey(original);
+        byte[] raw = CodePointIterator.ofString(exported).base64Decode().drain();
+        raw[4] = CIPHER_TEXT_IDENTIFIER;
         String encoded = ByteIterator.ofBytes(raw).base64Encode().drainToString();
 
         importSecretKey(encoded);

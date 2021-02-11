@@ -46,4 +46,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 19001, value = "Invalid prefix importing SecretKey")
     GeneralSecurityException badKeyPrefix();
 
+    @Message(id = 19002, value = "Unsupported version '%d' the maximum supported version is '%d'")
+    GeneralSecurityException unsupportedVersion(int discovered, int maxSupported);
+
+    @Message(id = 19003, value = "Unexpected token type '%s', expected '%s'")
+    GeneralSecurityException unexpectedTokenType(String actual, String expected);
+
 }

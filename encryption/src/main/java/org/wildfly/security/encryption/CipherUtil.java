@@ -17,6 +17,10 @@
 package org.wildfly.security.encryption;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.encryption.Common.CIPHER_TEXT_IDENTIFIER;
+import static org.wildfly.security.encryption.Common.CIPHER_TEXT_NAME;
+import static org.wildfly.security.encryption.Common.VERSION;
+import static org.wildfly.security.encryption.Common.toName;
 import static org.wildfly.security.encryption.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
@@ -38,7 +42,6 @@ import org.wildfly.common.iteration.CodePointIterator;
  */
 public class CipherUtil {
 
-    static final int VERSION = 1;
     private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
 
     public static String encrypt(final String clearText, final SecretKey secretKey) throws GeneralSecurityException {
@@ -57,9 +60,10 @@ public class CipherUtil {
         result[0] = 'E';
         result[1] = 'L';
         result[2] = 'Y';
-        result[3] = 'C'; // C for cipher text.
         // Version (Initially only version 1 supported)
-        result[4] = VERSION;
+        result[3] = VERSION;
+        // Type - 'C' for CipherText
+        result[4] = CIPHER_TEXT_IDENTIFIER;
         // IV Length
         result[5] = (byte) iv.length;
         // IV
@@ -74,11 +78,14 @@ public class CipherUtil {
         checkNotNullParam("secretKey", secretKey);
         ByteIterator byteIterator = CodePointIterator.ofString(checkNotNullParam("token", token)).base64Decode();
         byte[] prefixVersion = byteIterator.drain(5);
-        // TODO Specific meaningful errors for prefixVersion[3] != 'C' || prefixVersion[4] != VERSION.
-        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' ||
-                prefixVersion[2] != 'Y' || prefixVersion[3] != 'C' || prefixVersion[4] != VERSION) {
+        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
             throw log.badKeyPrefix();
+        } else if (prefixVersion[3] != VERSION) {
+            throw log.unsupportedVersion(prefixVersion[3], VERSION);
+        } else if (prefixVersion[4] != CIPHER_TEXT_IDENTIFIER) {
+            throw log.unexpectedTokenType(toName((char) prefixVersion[4]), CIPHER_TEXT_NAME);
         }
+
         int ivLength = byteIterator.next();
         byte[] iv = byteIterator.drain(ivLength);
         byte[] cipherText = byteIterator.drain();

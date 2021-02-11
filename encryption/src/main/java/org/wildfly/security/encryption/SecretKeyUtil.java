@@ -17,6 +17,10 @@
 package org.wildfly.security.encryption;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.encryption.Common.SECRET_KEY_IDENTIFIER;
+import static org.wildfly.security.encryption.Common.SECRET_KEY_NAME;
+import static org.wildfly.security.encryption.Common.VERSION;
+import static org.wildfly.security.encryption.Common.toName;
 import static org.wildfly.security.encryption.ElytronMessages.log;
 
 import java.security.GeneralSecurityException;
@@ -36,8 +40,6 @@ import org.wildfly.common.iteration.CodePointIterator;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class SecretKeyUtil {
-
-    static final int VERSION = 1;
 
     private static final String SECRET_KEY_ALGORITHM = "AES";
 
@@ -65,9 +67,11 @@ public class SecretKeyUtil {
         result[0] = 'E';
         result[1] = 'L';
         result[2] = 'Y';
-        result[3] = 'K'; // K for Key
         // Version (Initially only version 1 supported)
-        result[4] = VERSION;
+        result[3] = VERSION;
+        // Type - 'K' for Key
+        result[4] = SECRET_KEY_IDENTIFIER;
+
         System.arraycopy(key, 0, result, 5, key.length);
 
         return ByteIterator.ofBytes(result).base64Encode().drainToString();
@@ -84,11 +88,14 @@ public class SecretKeyUtil {
     private static SecretKey importSecretKey(CodePointIterator codePointIterator) throws GeneralSecurityException {
         ByteIterator byteIterator = codePointIterator.base64Decode();
         byte[] prefixVersion = byteIterator.drain(5);
-        // TODO Specific meaningful errors for prefixVersion[3] != 'K' || prefixVersion[4] != VERSION.
-        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' ||
-                prefixVersion[2] != 'Y' || prefixVersion[3] != 'K' || prefixVersion[4] != VERSION) {
+        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
             throw log.badKeyPrefix();
+        } else if (prefixVersion[3] != VERSION) {
+            throw log.unsupportedVersion(prefixVersion[3], VERSION);
+        } else if (prefixVersion[4] != SECRET_KEY_IDENTIFIER) {
+            throw log.unexpectedTokenType(toName((char) prefixVersion[4]), SECRET_KEY_NAME);
         }
+
         byte[] key = byteIterator.drain();
         checkKeySize(key.length * 8);
 
