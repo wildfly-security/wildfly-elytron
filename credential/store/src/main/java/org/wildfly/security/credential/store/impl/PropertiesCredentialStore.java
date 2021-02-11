@@ -57,6 +57,8 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
  */
 public class PropertiesCredentialStore extends CredentialStoreSpi {
 
+    public static final String NAME = PropertiesCredentialStore.class.getSimpleName();
+
     private final String HEADER = "# Properties Credential Store (Do Not Modify)";
     private static final char COMMENT = '#';
     private static final char DELIMITER = '=';

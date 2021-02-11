@@ -62,6 +62,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.encryption.SecretKeyUtil;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.pem.Pem;
@@ -366,7 +367,7 @@ class CredentialStoreCommand extends Command {
         }
 
         CredentialStore.CredentialSourceProtectionParameter credentialSourceProtectionParameter = null;
-        if (csPassword == null) {
+        if (csPassword == null && !PropertiesCredentialStore.NAME.equals(csType)) {
             // prompt for password
             csPassword = prompt(false, ElytronToolMessages.msg.credentialStorePasswordPrompt(), createStorage, ElytronToolMessages.msg.credentialStorePasswordPromptConfirm());
             if (csPassword == null) {
@@ -428,7 +429,7 @@ class CredentialStoreCommand extends Command {
 
             if (cmdLine.hasOption(ADD_ALIAS_PARAM)) {
                 if (implProps.get("create") != null && implProps.get("create").equals("true")) {
-                    getCreateSummary(implProps, com, password);
+                    getCreateDefaultSummary(implProps, com, password);
                     com.append("\n");
                 }
                 com.append("/subsystem=elytron/credential-store=test:add-alias(alias=");
@@ -449,7 +450,11 @@ class CredentialStoreCommand extends Command {
             } else if (cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM) ) {
                 com.append("/subsystem=elytron/credential-store=test:read-aliases()");
             } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)){
-                getCreateSummary(implProps, com, password);
+                if (PropertiesCredentialStore.NAME.equals(csType)) {
+                    getCreatePropertiesCredentialStoreSummary(com, location);
+                } else {
+                    getCreateDefaultSummary(implProps, com, password);
+                }
             }
 
             System.out.println(ElytronToolMessages.msg.commandSummary(com.toString()));
@@ -899,7 +904,7 @@ class CredentialStoreCommand extends Command {
         return defaultValue;
     }
 
-    static void getCreateSummary(Map<String, String> implProps, StringBuilder com, String password) {
+    static void getCreateDefaultSummary(Map<String, String> implProps, StringBuilder com, String password) {
         com.append("/subsystem=elytron/credential-store=test:add(");
         com.append("relative-to=jboss.server.data.dir,");
         if (implProps != null && !implProps.isEmpty()) {
@@ -928,6 +933,12 @@ class CredentialStoreCommand extends Command {
         com.append("clear-text=\"");
         com.append(password);
         com.append("\"})");
+    }
+
+    static void getCreatePropertiesCredentialStoreSummary(StringBuilder com, String location) {
+        com.append("/subsystem=elytron/secret-key-credential-store=test:add(");
+        com.append("relative-to=jboss.server.data.dir,");
+        com.append("path=\"").append(location).append("\")");
     }
 
     private static void safeClose(Closeable c) {

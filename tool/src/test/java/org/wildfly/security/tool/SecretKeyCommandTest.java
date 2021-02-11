@@ -128,10 +128,6 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
             arguments.add(additional);
         }
 
-        // TODO - PropertiesKeyStore does not need a password so the tool should not prompt.
-        arguments.add("--password");
-        arguments.add(PASSWORD);
-
         if (summary) {
             arguments.add("--summary");
         }
