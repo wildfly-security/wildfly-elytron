@@ -473,4 +473,18 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "SecretKey to import: ")
     String keyToImport();
 
+    @Message(id = NONE, value = "Encrypt a clear text string using the SecretKey specified by <alias>.")
+    String encrypt();
+
+    @Message(id = NONE, value = "The clear text to encrypt.")
+    String clearText();
+
+    @Message(id = NONE, value = "Clear text value:")
+    String clearTextToImport();
+
+    @Message(id = NONE, value = "Confirm clear text value:")
+    String clearTextToImportAgain();
+
+    @Message(id = NONE, value = "Clear text encrypted to token '%s' using alias '%s'.")
+    String encryptedToken(String token, String alias);
 }
