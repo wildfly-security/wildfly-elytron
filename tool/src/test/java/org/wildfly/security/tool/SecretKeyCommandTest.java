@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.encryption.CipherUtil;
 import org.wildfly.security.encryption.SecretKeyUtil;
 
 /**
@@ -44,6 +45,8 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
 
     private static final String ALIAS = "testKey";
     private static final String PASSWORD = "cspassword";
+    // TODO We need to check clear text with spaces.
+    private static final String CLEAR_TEXT = "SomeSecretPassword";
 
     private static final String KEY_STORE_CS = "KeyStoreCredentialStore";
     private static final String PROPERTIES_CS = "PropertiesCredentialStore";
@@ -92,6 +95,7 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
         assertEquals("Matching keys", secretKey, secretKeyCredential.getSecretKey());
     }
 
+    // TODO We also need a test which includes being prompted for the key.
     @Test
     public void testImportSecretKey() throws Exception {
         String storageLocation = getStoragePathForNewFile();
@@ -106,6 +110,27 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
         SecretKeyCredential secretKeyCredential = store.retrieve(ALIAS, SecretKeyCredential.class);
 
         assertEquals("Matching keys", secretKey, secretKeyCredential.getSecretKey());
+    }
+
+    // TODO We also need a test which includes being prompted for the clear text.
+    @Test
+    public void testEncryptClearText() throws Exception {
+        String storageLocation = getStoragePathForNewFile();
+
+        String[] args = getArgs(storageLocation, true, new String[] { "--create", "--generate-secret-key", ALIAS });
+        executeCommandAndCheckStatus(args);
+
+        args = getArgs(storageLocation, false, new String[] { "--encrypt", ALIAS, "--clear-text", CLEAR_TEXT});
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        int start = output.indexOf('\'');
+        int end = output.indexOf('\'', start + 1);
+        String token = output.substring(start + 1, end);
+
+        CredentialStore store = getExistingCredentialStore(storageLocation);
+        SecretKeyCredential secretKeyCredential = store.retrieve(ALIAS, SecretKeyCredential.class);
+
+        String decrypted = CipherUtil.decrypt(token, secretKeyCredential.getSecretKey());
+        assertEquals("Expected original clear text", CLEAR_TEXT, decrypted);
     }
 
     private CredentialStore getExistingCredentialStore(final String storageLocation) throws Exception {
