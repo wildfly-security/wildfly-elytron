@@ -49,7 +49,7 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
     @ValidIdRange(min = 2009, max = 2009),
     @ValidIdRange(min = 9500, max = 9528),
     @ValidIdRange(min = 11006, max = 11006),
-    @ValidIdRange(min = 12000, max = 12999)
+    @ValidIdRange(min = 20000, max = 20999)
 })
 public interface ElytronMessages extends BasicLogger {
 
@@ -137,19 +137,26 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11006, value = "External storage key under alias \"%s\" does not exist")
     CredentialStoreException externalStorageKeyDoesNotExist(String keyAlias);
 
-    @Message(id = 12000, value = "The credential store file %s does not exist or cannot be accessed.")
+    /*
+     * The error code 12000 had accidentally been used twice, to avoid ambiguity it has been replaced with 20000.
+     */
+
+    //@Message(id = 12000, value = "The credential store file %s does not exist or cannot be accessed.")
+    //CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
+
+    @Message(id = 20000, value = "The credential store file %s does not exist or cannot be accessed.")
     CredentialStoreException credentialStoreFileDoesNotExist(String fileLocation);
 
-    @Message(id = 12001, value = "The credential store has not been initialised.")
+    @Message(id = 20001, value = "The credential store has not been initialised.")
     CredentialStoreException storeNotInitialised();
 
-    @Message(id = 12002, value = "The required initialisation attribute '%s' has not been specified.")
+    @Message(id = 20002, value = "The required initialisation attribute '%s' has not been specified.")
     CredentialStoreException missingInitialisationAttribute(String attribute);
 
-    @Message(id = 12003, value = "Invalid CredentialStore property '%s'.")
+    @Message(id = 20003, value = "Invalid CredentialStore property '%s'.")
     CredentialStoreException invalidCredentialStoreProperty(String data);
 
-    @Message(id = 12004, value = "Can not load SecretKey for '%s'.")
+    @Message(id = 20004, value = "Can not load SecretKey for '%s'.")
     CredentialStoreException canNotLoadSecretKey(String alias, @Cause Throwable cause);
 
 }
