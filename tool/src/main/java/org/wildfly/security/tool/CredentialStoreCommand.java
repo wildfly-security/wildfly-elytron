@@ -105,10 +105,10 @@ class CredentialStoreCommand extends Command {
     public static final String OTHER_PROVIDERS_PARAM = "other-providers";
     public static final String DEBUG_PARAM = "debug";
     public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+    public static final String SIZE_PARAM = "size";
 
     public static final String GENERATE_KEY_PAIR_PARAM = "generate-key-pair";
     public static final String ALGORITHM_PARAM = "algorithm";
-    public static final String SIZE_PARAM = "size";
     public static final String EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM = "export-key-pair-public-key";
     public static final String IMPORT_KEY_PAIR_PARAM = "import-key-pair";
     public static final String PRIVATE_KEY_LOCATION_PARAM = "private-key-location";
@@ -118,7 +118,6 @@ class CredentialStoreCommand extends Command {
     public static final String KEY_PASSPHRASE_PARAM = "key-passphrase";
 
     public static final String GENERATE_SECRET_KEY = "generate-secret-key";
-    public static final String SIZE = "size";
     public static final String EXPORT_SECRET_KEY = "export-secret-key";
     public static final String IMPORT_SECRET_KEY = "import-secret-key";
     public static final String KEY_PARAM = "key";
@@ -185,7 +184,7 @@ class CredentialStoreCommand extends Command {
         options.addOptionGroup(publicKP);
 
         options.addOption(Option.builder()
-                .longOpt(SIZE)
+                .longOpt(SIZE_PARAM)
                 .hasArg()
                 .argName("size")
                 .desc(ElytronToolMessages.msg.keySize())
@@ -356,7 +355,7 @@ class CredentialStoreCommand extends Command {
         String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
         String key = cmdLine.getOptionValue(KEY_PARAM);
 
-        int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE), 256);
+        int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE_PARAM), 256);
 
         Map<String, String> implProps = parseCredentialStoreProperties(cmdLine.getOptionValue(IMPLEMENTATION_PROPERTIES_PARAM));
 
