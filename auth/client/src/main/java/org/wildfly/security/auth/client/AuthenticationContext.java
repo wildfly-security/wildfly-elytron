@@ -354,6 +354,10 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
         return runExFunction(ExceptionSupplier::get, action);
     }
 
+    RuleNode<SecurityFactory<SSLContext>> getSslRules() {
+        return this.sslRules;
+    }
+
     public ContextManager<AuthenticationContext> getInstanceContextManager() {
         return getContextManager();
     }

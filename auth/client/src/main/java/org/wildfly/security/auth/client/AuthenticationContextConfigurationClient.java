@@ -30,7 +30,9 @@ import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.Provider;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -194,6 +196,44 @@ public final class AuthenticationContextConfigurationClient {
             }
         }
         return configuration;
+    }
+
+    /**
+     * Get all SSL contexts configured for this authentication context.
+     * This method is not part of the public API.
+     *
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @return List of all configured SSL context belonging to the provided authentication context
+     */
+    public List<SSLContext> getConfiguredSSLContexts(AuthenticationContext authenticationContext) throws GeneralSecurityException {
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
+        List<SSLContext> sslContexts = new ArrayList<>();
+        RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.getSslRules();
+        while (node != null) {
+            sslContexts.add(node.getConfiguration().create());
+            node = node.getNext();
+        }
+        return sslContexts;
+    }
+
+    /**
+     * Get the default SSL context that should be used when no other rules match, or {@link SSLContext#getDefault()} if there is none configured.
+     * This method is not part of the public API.
+     *
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @return the default SSL context configured if no other rules match
+     */
+    public SSLContext getDefaultSSLContext(AuthenticationContext authenticationContext) throws GeneralSecurityException {
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
+        SSLContext defaultSSLContext = null;
+        RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.getSslRules();
+        while (node != null) {
+            if (node.getRule().equals(MatchRule.ALL)) {
+                defaultSSLContext = node.getConfiguration().create();
+            }
+            node = node.getNext();
+        }
+        return defaultSSLContext == null ? SSLContext.getDefault() : defaultSSLContext;
     }
 
     /**

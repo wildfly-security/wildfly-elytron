@@ -114,7 +114,7 @@
 18000 - 18999    wildfly-elytron-x500-cert (2)
 19000 - 19999    wildfly-elytron-encryption
 20000 - 20999    wildfly-elytron-credential-store
-21000 - 21999
+21000 - 21999    wildfly-elytron-dynamic-ssl
 22000 - 22999
 23000 - 23999
 24000 - 24999

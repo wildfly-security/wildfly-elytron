@@ -142,11 +142,6 @@
             <version>${version.org.jboss.ws.jbossws-spi}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <scope>provided</scope>
-        </dependency>
 
         <!--Test scope-->
         <dependency>
@@ -160,5 +155,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
 </project>

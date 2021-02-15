@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.5">
+        <key-stores>
+            <key-store name="keystore1" type="JKS">
+                <file name="target/keystores/client1.keystore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="truststore1" type="JKS">
+                <file name="target/keystores/client1.truststore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="keystore2" type="JKS">
+                <file name="target/keystores/client2.keystore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="truststore2" type="JKS">
+                <file name="target/keystores/client2.truststore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="keystore3" type="JKS">
+                <file name="target/keystores//client3.keystore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="truststore3" type="JKS">
+                <file name="target/keystores/client3.truststore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="client-context1">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="truststore1"/>
+                <key-store-ssl-certificate key-store-name="keystore1">
+                    <key-store-clear-password password="secret"/>
+                </key-store-ssl-certificate>
+            </ssl-context>
+            <ssl-context name="client-context2">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="truststore2"/>
+                <key-store-ssl-certificate key-store-name="keystore2">
+                    <key-store-clear-password password="secret"/>
+                </key-store-ssl-certificate>
+            </ssl-context>
+            <ssl-context name="client-context3">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="truststore3"/>
+                <key-store-ssl-certificate key-store-name="keystore3">
+                    <key-store-clear-password password="secret"/>
+                </key-store-ssl-certificate>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="client-context1">
+                <match-host name="localhost"/>
+                <match-port number="10001"/>
+            </rule>
+            <rule use-ssl-context="client-context2">
+                <match-host name="localhost"/>
+                <match-port number="10002"/>
+            </rule>
+            <rule use-ssl-context="client-context3">
+                <match-host name="localhost"/>
+                <match-port number="10003"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>
