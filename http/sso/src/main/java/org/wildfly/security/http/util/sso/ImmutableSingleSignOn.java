@@ -44,7 +44,9 @@ public interface ImmutableSingleSignOn {
      *
      * @return {@code true} if this single sign on is as a result of programmatic authentication.
      */
-    boolean isProgrammatic();
+    default boolean isProgrammatic() {
+        return false;
+    }
 
     /**
      * Returns the name of the principal associated with this single sign-on entry.
