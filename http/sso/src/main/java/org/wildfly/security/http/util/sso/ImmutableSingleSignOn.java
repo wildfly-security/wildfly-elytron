@@ -40,6 +40,15 @@ public interface ImmutableSingleSignOn {
     String getMechanism();
 
     /**
+     * Returns {@code true} if this single sign on is as a result of programmatic authentication.
+     *
+     * @return {@code true} if this single sign on is as a result of programmatic authentication.
+     */
+    default boolean isProgrammatic() {
+        return false;
+    }
+
+    /**
      * Returns the name of the principal associated with this single sign-on entry.
      * @return a principal name
      */

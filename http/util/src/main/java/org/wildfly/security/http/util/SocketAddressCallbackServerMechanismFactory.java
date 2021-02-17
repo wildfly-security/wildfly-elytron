@@ -81,6 +81,17 @@ public final class SocketAddressCallbackServerMechanismFactory implements HttpSe
 
                 mechanism.evaluateRequest(request);
             }
+
+            @Override
+            public Object getNegotiatedProperty(String propertyName) {
+                return mechanism.getNegotiatedProperty(propertyName);
+            }
+
+            @Override
+            public void dispose() {
+                mechanism.dispose();
+            }
+
         } : null;
     }
 }

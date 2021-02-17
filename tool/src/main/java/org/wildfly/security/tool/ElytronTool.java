@@ -92,7 +92,7 @@ public class ElytronTool {
                         System.err.println(ElytronToolMessages.msg.commandExecuteException());
                         e.printStackTrace(System.err);
                     } else {
-                        if (e.getLocalizedMessage() != null && (e.getLocalizedMessage().startsWith("ELYTOOL")
+                        if (e.getLocalizedMessage() != null && (e.getLocalizedMessage().startsWith("ELY")
                                 || e instanceof org.apache.commons.cli.ParseException)) {
                             System.err.println(ElytronToolMessages.msg.commandExecuteException());
                             System.err.println(e.getLocalizedMessage());

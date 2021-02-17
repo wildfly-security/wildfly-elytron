@@ -42,7 +42,8 @@ public interface SingleSignOnSessionFactory {
      *
      * @param request the current request
      * @param mechanismName the name of the authentication mechanism
+     * @param programmatic {@code true} if the session if being created for programmatic authentication
      * @return a {@link SingleSignOnSession} instance associated with the specified identifier and request
      */
-    SingleSignOnSession create(HttpServerRequest request, String mechanismName);
+    SingleSignOnSession create(HttpServerRequest request, String mechanismName, boolean programmatic);
 }

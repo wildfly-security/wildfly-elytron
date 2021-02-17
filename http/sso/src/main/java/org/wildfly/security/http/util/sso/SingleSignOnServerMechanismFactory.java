@@ -30,6 +30,7 @@ import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerRequestWrapper;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.util.SimpleHttpServerCookie;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -51,7 +52,7 @@ import static org.wildfly.security.http.util.sso.ElytronMessages.log;
 public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory delegate;
-    private final SingleSignOnConfiguration configuration;
+    private final org.wildfly.security.http.util.sso.SingleSignOnConfiguration configuration;
     private final SingleSignOnSessionFactory singleSignOnSessionFactory;
 
     /**
@@ -61,10 +62,22 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
      * @param singleSignOnSessionFactory a custom {@link SingleSignOnManager}
      * @param configuration the configuration related with the cookie representing user's session
      */
-    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, SingleSignOnConfiguration configuration) {
+    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, org.wildfly.security.http.util.sso.SingleSignOnConfiguration configuration) {
         this.delegate = delegate;
         this.configuration = configuration;
         this.singleSignOnSessionFactory = singleSignOnSessionFactory;
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param delegate the factory holding the target mechanisms
+     * @param singleSignOnSessionFactory a custom {@link SingleSignOnManager}
+     * @param configuration the configuration related with the cookie representing user's session
+     */
+    @Deprecated
+    public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, SingleSignOnConfiguration configuration) {
+        this(delegate, singleSignOnSessionFactory, configuration.convert());
     }
 
     @Override
@@ -75,6 +88,10 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         return new HttpServerAuthenticationMechanism() {
+
+            private volatile SingleSignOnSession singleSignOnSession;
+            private volatile HttpServerAuthenticationMechanism targetMechanism;
+
             @Override
             public String getMechanismName() {
                 return mechanismName;
@@ -82,17 +99,27 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
             @Override
             public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
-                @SuppressWarnings("resource")
-                SingleSignOnSession singleSignOnSession = getSingleSignOnSession(request);
+                singleSignOnSession = getSingleSignOnSession(request);
                 if (singleSignOnSession.logout()) {
                     singleSignOnSession.close();
                     return;
                 }
-                HttpServerAuthenticationMechanism mechanism = getTargetMechanism(mechanismName, singleSignOnSession);
-                if (mechanism == null) {
+                targetMechanism = getTargetMechanism(mechanismName, singleSignOnSession);
+                if (targetMechanism == null) {
                     throw log.httpServerAuthenticationMechanismNotFound(mechanismName);
                 }
-                mechanism.evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
+                targetMechanism.evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
+            }
+
+            @Override
+            public void dispose() {
+                if (targetMechanism != null) {
+                    targetMechanism.dispose();
+                }
+
+                if (singleSignOnSession != null) {
+                    singleSignOnSession.close();
+                }
             }
 
             private SingleSignOnSession getSingleSignOnSession(HttpServerRequest request) {
@@ -100,7 +127,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                 String signOnSessionId = (cookie != null) ? cookie.getValue() : null;
                 SingleSignOnSession singleSignOnSession = (signOnSessionId != null) ? singleSignOnSessionFactory.find(signOnSessionId, request) : null;
 
-                return (singleSignOnSession == null) ? singleSignOnSessionFactory.create(request, mechanismName) : singleSignOnSession;
+                return (singleSignOnSession == null) ? singleSignOnSessionFactory.create(request, mechanismName, false) : singleSignOnSession;
             }
 
             private HttpServerAuthenticationMechanism getTargetMechanism(String mechanismName, SingleSignOnSession singleSignOnSession) throws HttpAuthenticationException {
@@ -216,51 +243,19 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
             }
 
             HttpServerCookie getCookie(HttpServerRequest request) {
-                return request.getCookies().stream().filter(current -> configuration.getCookieName().equals(current.getName())).findFirst().orElse(null);
+                final String expectedCookieName = configuration.getCookieName();
+                for (HttpServerCookie currentCookie : request.getCookies()) {
+                    if (expectedCookieName.equals(currentCookie.getName())) {
+                        return currentCookie;
+                    }
+                }
+
+                return null;
             }
 
             HttpServerCookie createCookie(String value, int maxAge) {
-                return new HttpServerCookie() {
-                    @Override
-                    public String getName() {
-                        return configuration.getCookieName();
-                    }
-
-                    @Override
-                    public String getValue() {
-                        return value;
-                    }
-
-                    @Override
-                    public String getDomain() {
-                        return configuration.getDomain();
-                    }
-
-                    @Override
-                    public int getMaxAge() {
-                        return maxAge;
-                    }
-
-                    @Override
-                    public String getPath() {
-                        return configuration.getPath();
-                    }
-
-                    @Override
-                    public boolean isSecure() {
-                        return configuration.isSecure();
-                    }
-
-                    @Override
-                    public int getVersion() {
-                        return 0;
-                    }
-
-                    @Override
-                    public boolean isHttpOnly() {
-                        return configuration.isHttpOnly();
-                    }
-                };
+                return SimpleHttpServerCookie.newInstance(configuration.getCookieName(), value, configuration.getDomain(),
+                        maxAge, configuration.getPath(), configuration.isSecure(), 0, configuration.isHttpOnly());
             }
         };
     }
@@ -301,6 +296,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
         };
     }
 
+    @Deprecated
     public static final class SingleSignOnConfiguration {
 
         private final String cookieName;
@@ -335,6 +331,10 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
         public boolean isHttpOnly() {
             return httpOnly;
+        }
+
+        org.wildfly.security.http.util.sso.SingleSignOnConfiguration convert() {
+            return new org.wildfly.security.http.util.sso.SingleSignOnConfiguration(cookieName, domain, path, httpOnly, secure);
         }
     }
 }

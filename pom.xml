@@ -57,7 +57,7 @@
     <properties>
         <jdk.min.version>11</jdk.min.version>
         <version.commons-cli>1.4</version.commons-cli>
-        <version.io.smallrye.jwt>2.0.13</version.io.smallrye.jwt>
+        <version.io.smallrye.jwt>3.0.0</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0.AM26</version.org.apache.directory.server>
@@ -65,7 +65,7 @@
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
-        <version.org.eclipse.microprofile.jwt.api>1.1.1</version.org.eclipse.microprofile.jwt.api>
+        <version.org.eclipse.microprofile.jwt.api>1.2</version.org.eclipse.microprofile.jwt.api>
         <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
 
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
@@ -273,6 +273,7 @@
                             ${project.basedir}/credential/base/src/main/java/;
                             ${project.basedir}/credential/store/src/main/java/;
                             ${project.basedir}/digest/src/main/java/;
+                            ${project.basedir}/encryption/src/main/java/;
                             ${project.basedir}/http/base/src/main/java/;
                             ${project.basedir}/http/basic/src/main/java/;
                             ${project.basedir}/http/bearer/src/main/java/;
@@ -501,6 +502,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-digest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-encryption</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -804,8 +810,8 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <artifactId>smallrye-jwt</artifactId>
                 <groupId>io.smallrye</groupId>
+                <artifactId>smallrye-jwt-cdi-extension</artifactId>
                 <version>${version.io.smallrye.jwt}</version>
                 <scope>provided</scope>
             </dependency>
@@ -1266,6 +1272,7 @@
         <module>credential/store</module>
         <module>credential/source/impl</module>
         <module>digest</module>
+        <module>encryption</module>
         <module>http/base</module>
         <module>http/basic</module>
         <module>http/bearer</module>

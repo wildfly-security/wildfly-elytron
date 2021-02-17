@@ -17,35 +17,34 @@
  */
 package org.wildfly.security.tool;
 
-import java.io.IOException;
-import java.io.InputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.security.KeyPair;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Map;
-
-import org.apache.commons.cli.AlreadySelectedException;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.wildfly.security.credential.KeyPairCredential;
-import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.CredentialStoreException;
-
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclEntryPermission;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.security.KeyPair;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import org.apache.commons.cli.AlreadySelectedException;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.wildfly.security.credential.KeyPairCredential;
+import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreException;
 
 /**
  * Test for "credential-store" command.
@@ -684,7 +683,4 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         Assert.assertFalse(output.contains("Option \"create\" specified more than once. Only the first occurrence will be used"));
     }
 
-    private boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().startsWith("windows");
-    }
 }

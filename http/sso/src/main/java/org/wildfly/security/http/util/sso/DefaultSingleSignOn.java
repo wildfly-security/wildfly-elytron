@@ -56,6 +56,11 @@ public class DefaultSingleSignOn implements SingleSignOn {
     }
 
     @Override
+    public boolean isProgrammatic() {
+        return this.entry.getCachedIdentity().isProgrammatic();
+    }
+
+    @Override
     public String getName() {
         return this.entry.getCachedIdentity().getName();
     }
@@ -71,7 +76,7 @@ public class DefaultSingleSignOn implements SingleSignOn {
         synchronized (this.entry) {
             CachedIdentity cached = this.entry.getCachedIdentity();
             if (cached.getSecurityIdentity() == null) {
-                this.entry.setCachedIdentity(new CachedIdentity(cached.getMechanismName(), identity));
+                this.entry.setCachedIdentity(new CachedIdentity(cached.getMechanismName(), cached.isProgrammatic(), identity));
             }
         }
     }

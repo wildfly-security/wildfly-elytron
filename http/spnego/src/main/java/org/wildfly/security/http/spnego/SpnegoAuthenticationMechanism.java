@@ -336,7 +336,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                     httpScope.changeID();
                 }
 
-                httpScope.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(SPNEGO_NAME, identity));
+                httpScope.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(SPNEGO_NAME, false, identity));
             }
 
             @Override

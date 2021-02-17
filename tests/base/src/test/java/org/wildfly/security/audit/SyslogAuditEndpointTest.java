@@ -106,7 +106,7 @@ public class SyslogAuditEndpointTest {
             AuditEndpoint endpoint = setupEndpointBadUdpReconnectAttempts(BAD_RECONNECT_NUMBER);
             Assert.fail("No error was thrown while attempting to log with an invalid reconnect-attempts number.");
         } catch (IllegalArgumentException e) {
-            assertCorrectError(e, new String[] {"ELY12000", Integer.toString(BAD_RECONNECT_NUMBER)});
+            assertCorrectError(e, new String[] {"ELY12003", Integer.toString(BAD_RECONNECT_NUMBER)});
         }
     }
 

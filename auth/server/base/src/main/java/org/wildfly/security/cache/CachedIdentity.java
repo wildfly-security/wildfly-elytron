@@ -30,13 +30,15 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  * @author Paul Ferraro
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @see IdentityCache
  */
 public final class CachedIdentity implements Serializable {
 
-    private static final long serialVersionUID = 750487522862481938L;
+    private static final long serialVersionUID = -6408689383511392746L;
 
     private final String mechanismName;
+    private final boolean programmatic;
     private final String name;
     private final transient SecurityIdentity securityIdentity;
 
@@ -44,24 +46,27 @@ public final class CachedIdentity implements Serializable {
      * Creates a new instance based on the given <code>mechanismName</code> and <code>securityIdentity</code>.
      *
      * @param mechanismName the name of the authentication mechanism used to authenticate/authorize the identity
+     * @param programmatic indicates if this identity was created as a result of programmatic authentication
      * @param securityIdentity the identity to cache
      */
-    public CachedIdentity(String mechanismName, SecurityIdentity securityIdentity) {
-        this(mechanismName, checkNotNullParam("securityIdentity", securityIdentity), securityIdentity.getPrincipal());
+    public CachedIdentity(String mechanismName, boolean programmatic, SecurityIdentity securityIdentity) {
+        this(mechanismName, programmatic, checkNotNullParam("securityIdentity", securityIdentity), securityIdentity.getPrincipal());
     }
 
     /**
      * Creates a new instance based on the given <code>mechanismName</code> and <code>principal</code>.
      *
      * @param mechanismName the name of the authentication mechanism used to authenticate/authorize the identity
+     * @param programmatic indicates if this identity was created as a result of programmatic authentication
      * @param principal the principal of this cached identity
      */
-    public CachedIdentity(String mechanismName, Principal principal) {
-        this(mechanismName, null, principal);
+    public CachedIdentity(String mechanismName, boolean programmatic, Principal principal) {
+        this(mechanismName, programmatic, null, principal);
     }
 
-    private CachedIdentity(String mechanismName, SecurityIdentity securityIdentity, Principal principal) {
+    private CachedIdentity(String mechanismName, boolean programmatic, SecurityIdentity securityIdentity, Principal principal) {
         this.mechanismName = checkNotNullParam("mechanismName", mechanismName);
+        this.programmatic = programmatic;
         this.name = checkNotNullParam("name", checkNotNullParam("principal", principal).getName());
         this.securityIdentity = securityIdentity;
     }
@@ -93,8 +98,17 @@ public final class CachedIdentity implements Serializable {
         return this.securityIdentity;
     }
 
+    /**
+     * Returns {@code true} if this identity was established using programmatic authentication, {@code false} otherwise.
+     *
+     * @return {@code true} if this identity was established using programmatic authentication, {@code false} otherwise.
+     */
+    public boolean isProgrammatic() {
+        return programmatic;
+    }
+
     @Override
     public String toString() {
-        return "CachedIdentity{" + mechanismName + ", '" + name + "', " + securityIdentity + "}";
+        return "CachedIdentity{" + mechanismName + ", '" + name + "', " + securityIdentity + ", " + programmatic + "}";
     }
 }

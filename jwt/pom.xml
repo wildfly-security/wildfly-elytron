@@ -56,8 +56,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <artifactId>smallrye-jwt</artifactId>
             <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-jwt-cdi-extension</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

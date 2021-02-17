@@ -451,4 +451,40 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "\nSome of the parameters below are mutually exclusive actions which are marked with (Action) in the description.")
     String cmdLineActionsHelpHeader();
+
+    @Message(id = NONE, value = "Key size (bits).")
+    String keySize();
+
+    @Message(id = NONE, value = "Generate a new SecretKey and store it in the credential store.")
+    String generateSecretKey();
+
+    @Message(id = NONE, value = "Export existing SecretKey stored in the credential store.")
+    String exportSecretKey();
+
+    @Message(id = NONE, value = "Exported SecretKey for alias %s=%s")
+    String exportedSecretKey(String alias, String key);
+
+    @Message(id = NONE, value = "The encoded Key to import.")
+    String key();
+
+    @Message(id = NONE, value = "Import an existing encoded SecretKey to the credential store.")
+    String importSecretKey();
+
+    @Message(id = NONE, value = "SecretKey to import: ")
+    String keyToImport();
+
+    @Message(id = NONE, value = "Encrypt a clear text string using the SecretKey specified by <alias>.")
+    String encrypt();
+
+    @Message(id = NONE, value = "The clear text to encrypt.")
+    String clearText();
+
+    @Message(id = NONE, value = "Clear text value:")
+    String clearTextToImport();
+
+    @Message(id = NONE, value = "Confirm clear text value:")
+    String clearTextToImportAgain();
+
+    @Message(id = NONE, value = "Clear text encrypted to token '%s' using alias '%s'.")
+    String encryptedToken(String token, String alias);
 }

@@ -42,6 +42,7 @@ public final class WildFlyElytronCredentialStoreProvider extends WildFlyElytronB
         putService(new Service(this, "CredentialStore", "KeyStoreCredentialStore", "org.wildfly.security.credential.store.impl.KeyStoreCredentialStore", emptyList, emptyMap));
         putService(new Service(this, "CredentialStore", "VaultCredentialStore", "org.wildfly.security.credential.store.impl.VaultCredentialStore", emptyList, emptyMap));
         putService(new Service(this, "CredentialStore", "MapCredentialStore", "org.wildfly.security.credential.store.impl.MapCredentialStore", emptyList, emptyMap));
+        putService(new Service(this, "CredentialStore", "PropertiesCredentialStore", "org.wildfly.security.credential.store.impl.PropertiesCredentialStore", emptyList, emptyMap));
 
         putService(new Service(this, "KeyStore", "PasswordFile", "org.wildfly.security.keystore.PasswordKeyStoreSpi", emptyList, emptyMap));
         putAlgorithmParametersImplementations();
