@@ -38,7 +38,7 @@ import org.jboss.logging.annotations.ValidIdRanges;
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
     @ValidIdRange(min = 11001, max = 11007),
-    @ValidIdRange(min = 12000, max = 12002)
+    @ValidIdRange(min = 12000, max = 12999)
 })
 interface ElytronMessages extends BasicLogger {
     ElytronMessages audit = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.audit");
@@ -65,12 +65,20 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 11007, value = "Endpoint unable to accept SecurityEvent.")
     void unableToAcceptEvent(@Cause Throwable cause);
 
-    @Message(id = 12000, value = "The reconnect attempts value of %s is invalid. Please use an integer value >= -1.")
-    IllegalArgumentException badReconnectAttemptsNumber(int reconnectAttempts);
+    /*
+     * The error code 12000 had accidentally been used twice, to avoid ambiguity it has been replaced with 12003.
+     */
+
+    //@Message(id = 12000, value = "The reconnect attempts value of %s is invalid. Please use an integer value >= -1.")
+    //IllegalArgumentException badReconnectAttemptsNumber(int reconnectAttempts);
 
     @Message(id = 12001, value = "The maximum reconnect attempts value of %s was reached. The syslog endpoint will be shutdown.")
     IOException syslogMaximumReconnectAttemptsReached(int reconnectAttempts);
 
     @Message(id = 12002, value = "The configured UDP port is unavailable.")
     PortUnreachableException udpPortUnavailable(@Cause Throwable cause);
+
+    @Message(id = 12003, value = "The reconnect attempts value of %s is invalid. Please use an integer value >= -1.")
+    IllegalArgumentException badReconnectAttemptsNumber(int reconnectAttempts);
+
 }

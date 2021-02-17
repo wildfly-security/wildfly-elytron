@@ -445,7 +445,7 @@ public class VaultCommand extends Command {
                         : MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
             }
         }
-        CredentialStoreCommand.getCreateSummary(implProps, com, password);
+        CredentialStoreCommand.getCreateDefaultSummary(implProps, com, password);
         System.out.println(ElytronToolMessages.msg.vaultConversionSummary(com.toString()));
     }
 
