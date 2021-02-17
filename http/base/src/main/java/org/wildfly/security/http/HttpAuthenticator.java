@@ -206,7 +206,7 @@ public class HttpAuthenticator {
                 httpExchangeSpi.authenticationFailed(e.getMessage(), programmaticMechanismName);
             }
 
-            log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
+            log.tracef("Restoring identity '%s' failed, clearing cache from scope.", cachedIdentity.getName());
             identityCache.remove(); // Whatever was in there no longer works so just
                                     // drop it.
         } else {
