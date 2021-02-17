@@ -60,11 +60,11 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
     private final SingleSignOnSessionContext context;
     private final Function<SecurityIdentity, SingleSignOn> ssoFactory;
 
-    public DefaultSingleSignOnSession(SingleSignOnSessionContext context, HttpServerRequest request, String mechanismName) {
+    public DefaultSingleSignOnSession(SingleSignOnSessionContext context, HttpServerRequest request, String mechanismName, boolean programmatic) {
         this.context = checkNotNullParam("context", context);
         this.request = checkNotNullParam("request", request);
         checkNotNullParam("mechanismName", mechanismName);
-        this.ssoFactory = identity -> context.getSingleSignOnManager().create(mechanismName, identity);
+        this.ssoFactory = identity -> context.getSingleSignOnManager().create(mechanismName, programmatic, identity);
     }
 
     public DefaultSingleSignOnSession(SingleSignOnSessionContext context, HttpServerRequest request, SingleSignOn sso) {
@@ -236,7 +236,8 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
     private static CachedIdentity getCachedIdentity(SingleSignOn sso) {
         String mechanism = sso.getMechanism();
+        boolean programmatic = sso.isProgrammatic();
         SecurityIdentity identity = sso.getIdentity();
-        return (identity != null) ? new CachedIdentity(mechanism, identity) : new CachedIdentity(mechanism, new NamePrincipal(sso.getName()));
+        return (identity != null) ? new CachedIdentity(mechanism, programmatic, identity) : new CachedIdentity(mechanism, programmatic, new NamePrincipal(sso.getName()));
     }
 }

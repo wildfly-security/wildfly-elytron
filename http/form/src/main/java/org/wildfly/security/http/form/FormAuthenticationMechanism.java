@@ -145,7 +145,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                     fixCachedLocation(session, originalSessionID, newSessionID);
                 }
 
-                session.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), identity));
+                session.setAttachment(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), false, identity));
             }
 
             @Override

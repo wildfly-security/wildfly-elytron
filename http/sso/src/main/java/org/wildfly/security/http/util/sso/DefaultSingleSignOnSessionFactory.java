@@ -69,11 +69,11 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
     }
 
     @Override
-    public SingleSignOnSession create(HttpServerRequest request, String mechanismName) {
+    public SingleSignOnSession create(HttpServerRequest request, String mechanismName, boolean programmatic) {
         checkNotNullParam("request", request);
         checkNotNullParam("mechanismName", mechanismName);
 
-        return new DefaultSingleSignOnSession(this, request, mechanismName);
+        return new DefaultSingleSignOnSession(this, request, mechanismName, programmatic);
     }
 
     @Override

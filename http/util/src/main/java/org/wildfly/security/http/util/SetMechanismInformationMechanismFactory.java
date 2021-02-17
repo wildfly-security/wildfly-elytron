@@ -118,6 +118,12 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
 
                 mechanism.evaluateRequest(request);
             }
+
+            @Override
+            public void dispose() {
+                mechanism.dispose();
+            }
+
         } : null;
     }
 

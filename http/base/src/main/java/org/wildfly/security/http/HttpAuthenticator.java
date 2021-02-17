@@ -20,27 +20,19 @@ package org.wildfly.security.http;
 
 import static java.lang.System.getSecurityManager;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.http.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
-import static org.wildfly.security.http.ElytronMessages.log;
 
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import javax.net.ssl.SSLSession;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -48,9 +40,11 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.http.impl.BaseHttpServerRequest;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -61,25 +55,28 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class HttpAuthenticator {
 
-    private static final String AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
+    private static final String MY_AUTHENTICATED_IDENTITY_KEY = HttpAuthenticator.class.getName() + ".authenticated-identity";
 
     private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+    private final Supplier<IdentityCache> identityCacheSupplier;
     private final SecurityDomain securityDomain;
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
     private final boolean ignoreOptionalFailures;
-    private final String programaticMechanismName;
+    private final String programmaticMechanismName;
     private final Consumer<Runnable> logoutHandlerConsumer;
+    private volatile IdentityCache identityCache;
     private volatile boolean authenticated = false;
 
     private HttpAuthenticator(final Builder builder) {
         this.mechanismSupplier = builder.mechanismSupplier;
         this.securityDomain = builder.securityDomain;
-        this.programaticMechanismName = builder.programmaticMechanismName;
+        this.programmaticMechanismName = builder.programmaticMechanismName;
         this.logoutHandlerConsumer = builder.logoutHandlerConsumer;
         this.httpExchangeSpi = builder.httpExchangeSpi;
         this.required = builder.required;
         this.ignoreOptionalFailures = builder.ignoreOptionalFailures;
+        this.identityCacheSupplier = builder.identityCacheSupplier != null ? builder.identityCacheSupplier : () -> createIdentityCache(programmaticMechanismName);
     }
 
     /**
@@ -111,7 +108,7 @@ public class HttpAuthenticator {
     public SecurityIdentity login(String username, String password) {
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(checkNotNullParam("password", password).toCharArray());
         try {
-            return login(username, evidence, programaticMechanismName);
+            return login(username, evidence, programmaticMechanismName);
         } finally {
             evidence.destroy();
         }
@@ -139,21 +136,10 @@ public class HttpAuthenticator {
                 }
                 if (authenticationContext.authorize()) {
                     SecurityIdentity authorizedIdentity = authenticationContext.getAuthorizedIdentity();
-                    HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-                    if (sessionScope != null && sessionScope.supportsAttachments() && (sessionScope.exists() || sessionScope.create())) {
-                        log.tracef("Caching identity for '%s' against session scope.", username);
-                        /*
-                         * If we are associating an identity with the session for the first time we need to
-                         * change the ID of the session, in other cases we can continue with the same ID.
-                         */
-                        if (sessionScope.supportsChangeID() && sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY) == null) {
-                            sessionScope.changeID();
-                        }
-                        sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, authorizedIdentity));
-                    } else {
-                        log.tracef("Unable to cache identity for '%s'.", username);
-                    }
-                    setupProgramaticLogout(sessionScope);
+
+                    IdentityCache identityCache = getOrCreateIdentityCache();
+                    identityCache.put(authorizedIdentity);
+                    logoutHandlerConsumer.accept(identityCache::remove);
 
                     httpExchangeSpi.authenticationComplete(authorizedIdentity, mechanismName);
 
@@ -184,57 +170,123 @@ public class HttpAuthenticator {
             return false;
         }
 
-        HttpScope sessionScope = httpExchangeSpi.getScope(Scope.SESSION);
-        if (sessionScope != null && sessionScope.supportsAttachments()) {
-            CachedIdentity cachedIdentity = sessionScope.getAttachment(AUTHENTICATED_IDENTITY_KEY, CachedIdentity.class);
-            if (cachedIdentity != null) {
-                ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
-                SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
+        IdentityCache identityCache = getOrCreateIdentityCache();
 
-                try {
-                    boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
-                    boolean cache = false;
+        CachedIdentity cachedIdentity = identityCache.get();
+        if (cachedIdentity != null) {
+            ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
+            SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
 
-                    if (authorized == false) {
-                        log.trace("Unable to use SecurityIdentity from CachedIdentity - attempting to recreate");
+            try {
+                boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
+                boolean cache = false;
 
-                        authenticationContext.setAuthenticationName(cachedIdentity.getName());
-                        authorized = authenticationContext.authorize();
-                        cache = true;
-                    }
+                if (authorized == false) {
+                    log.trace("Unable to use SecurityIdentity from CachedIdentity - attempting to recreate");
 
-                    if (authorized) {
-                        securityIdentity = authenticationContext.getAuthorizedIdentity();
-
-                        httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
-                        setupProgramaticLogout(sessionScope);
-
-                        if (cache) {
-                            log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
-                            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(cachedIdentity.getMechanismName(), securityIdentity));
-                        }
-
-                        return true;
-                    }
-                } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
-                    httpExchangeSpi.authenticationFailed(e.getMessage(), programaticMechanismName);
+                    authenticationContext.setAuthenticationName(cachedIdentity.getName());
+                    authorized = authenticationContext.authorize();
+                    cache = true;
                 }
 
-                log.tracef("Restoring identify '%s' failed, clearing cache from scope.", cachedIdentity.getName());
-                sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null); // Whatever was in there no longer works so just
-                                                                              // drop it.
-            } else {
-                log.trace("No CachedIdentity to restore.");
+                if (authorized) {
+                    securityIdentity = authenticationContext.getAuthorizedIdentity();
+
+                    httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
+                    logoutHandlerConsumer.accept(identityCache::remove);
+
+                    if (cache) {
+                        log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
+                        identityCache.put(securityIdentity);
+                    }
+
+                    return true;
+                }
+            } catch (IllegalArgumentException | RealmUnavailableException | IllegalStateException e) {
+                httpExchangeSpi.authenticationFailed(e.getMessage(), programmaticMechanismName);
             }
+
+            log.tracef("Restoring identity '%s' failed, clearing cache from scope.", cachedIdentity.getName());
+            identityCache.remove(); // Whatever was in there no longer works so just
+                                    // drop it.
+        } else {
+            log.trace("No CachedIdentity to restore.");
         }
 
         return false;
     }
 
-    private void setupProgramaticLogout(HttpScope sessionScope) {
-        logoutHandlerConsumer.accept(() -> {
-            sessionScope.setAttachment(AUTHENTICATED_IDENTITY_KEY, null);
-        });
+    private IdentityCache getOrCreateIdentityCache() {
+        if (identityCache == null) {
+            identityCache = identityCacheSupplier.get();
+        }
+
+        return identityCache;
+    }
+
+    private IdentityCache createIdentityCache(String mechanismName) {
+        return new IdentityCache() {
+
+            @Override
+            public void put(SecurityIdentity identity) {
+                HttpScope session = getAttachableSessionScope(true);
+
+                if (session == null || !session.exists()) {
+                    if (log.isTraceEnabled()) {
+                        log.tracef("Unable to cache identity for '%s'.", identity.getPrincipal().getName());
+                    }
+                    return;
+                }
+
+                if (session.supportsChangeID() && session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY) == null) {
+                    session.changeID();
+                }
+
+                if (log.isTraceEnabled()) {
+                    log.tracef("Caching identity for '%s' against session scope.", identity.getPrincipal().getName());
+                }
+                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, new CachedIdentity(mechanismName, true, identity));
+            }
+
+            @Override
+            public CachedIdentity get() {
+                HttpScope session = getAttachableSessionScope(false);
+
+                if (session == null || session.exists() == false) {
+                    return null;
+                }
+
+                return (CachedIdentity) session.getAttachment(MY_AUTHENTICATED_IDENTITY_KEY);
+            }
+
+            @Override
+            public CachedIdentity remove() {
+                HttpScope session = getAttachableSessionScope(false);
+
+                if (session == null || session.exists() == false) {
+                    return null;
+                }
+
+                CachedIdentity cachedIdentity = get();
+
+                session.setAttachment(MY_AUTHENTICATED_IDENTITY_KEY, null);
+
+                return cachedIdentity;
+            }
+        };
+    }
+
+    private HttpScope getAttachableSessionScope(boolean createSession) {
+        HttpScope scope = httpExchangeSpi.getScope(Scope.SESSION);
+        if (scope == null || scope.supportsAttachments() == false) {
+            return null;
+        }
+
+        if (scope != null && scope.exists() == false && createSession) {
+            scope.create();
+        }
+
+        return scope;
     }
 
     /**
@@ -246,7 +298,7 @@ public class HttpAuthenticator {
         return new Builder();
     }
 
-    private class AuthenticationExchange implements HttpServerRequest, HttpServerResponse {
+    private class AuthenticationExchange extends BaseHttpServerRequest implements HttpServerRequest, HttpServerResponse {
 
         private volatile HttpServerAuthenticationMechanism currentMechanism;
 
@@ -255,6 +307,10 @@ public class HttpAuthenticator {
         private volatile boolean statusCodeAllowed = false;
         private volatile List<HttpServerMechanismsResponder> responders;
         private volatile HttpServerMechanismsResponder successResponder;
+
+        AuthenticationExchange() {
+            super(httpExchangeSpi);
+        }
 
         private boolean authenticate() throws HttpAuthenticationException {
             List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.get();
@@ -336,39 +392,13 @@ public class HttpAuthenticator {
             }
         }
 
-        @Override
-        public List<String> getRequestHeaderValues(String headerName) {
-            return httpExchangeSpi.getRequestHeaderValues(headerName);
-        }
-
-        @Override
-        public String getFirstRequestHeaderValue(String headerName) {
-            return httpExchangeSpi.getFirstRequestHeaderValue(headerName);
-        }
-
-        @Override
-        public SSLSession getSSLSession() {
-            return httpExchangeSpi.getSSLSession();
-        }
-
+        /*
+         * This method is overridden to trigger certificate re-negotiation if authentication
+         * is required.
+         */
         @Override
         public Certificate[] getPeerCertificates() {
             return httpExchangeSpi.getPeerCertificates(required);
-        }
-
-        @Override
-        public HttpScope getScope(Scope scope) {
-            return httpExchangeSpi.getScope(scope);
-        }
-
-        @Override
-        public Collection<String> getScopeIds(Scope scope) {
-            return httpExchangeSpi.getScopeIds(scope);
-        }
-
-        @Override
-        public HttpScope getScope(Scope scope, String id) {
-            return httpExchangeSpi.getScope(scope, id);
         }
 
         @Override
@@ -376,11 +406,6 @@ public class HttpAuthenticator {
             if (responder != null) {
                 responders.add(responder);
             }
-        }
-
-        @Override
-        public String getRemoteUser() {
-            return httpExchangeSpi.getRemoteUser();
         }
 
         @Override
@@ -424,56 +449,6 @@ public class HttpAuthenticator {
             if (responder != null) {
                 responders.add(responder);
             }
-        }
-
-        @Override
-        public String getRequestMethod() {
-            return httpExchangeSpi.getRequestMethod();
-        }
-
-        @Override
-        public URI getRequestURI() {
-            return httpExchangeSpi.getRequestURI();
-        }
-
-        @Override
-        public String getRequestPath() {
-            return httpExchangeSpi.getRequestPath();
-        }
-
-        @Override
-        public Map<String, List<String>> getParameters() {
-            return httpExchangeSpi.getRequestParameters();
-        }
-
-        @Override
-        public Set<String> getParameterNames() {
-            return httpExchangeSpi.getRequestParameterNames();
-        }
-
-        @Override
-        public List<String> getParameterValues(String name) {
-            return httpExchangeSpi.getRequestParameterValues(name);
-        }
-
-        @Override
-        public String getFirstParameterValue(String name) {
-            return httpExchangeSpi.getFirstRequestParameterValue(name);
-        }
-
-        @Override
-        public List<HttpServerCookie> getCookies() {
-            return httpExchangeSpi.getCookies();
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return httpExchangeSpi.getRequestInputStream();
-        }
-
-        @Override
-        public InetSocketAddress getSourceAddress() {
-            return httpExchangeSpi.getSourceAddress();
         }
 
         @Override
@@ -538,6 +513,7 @@ public class HttpAuthenticator {
         private boolean ignoreOptionalFailures;
         private Consumer<Runnable> logoutHandlerConsumer;
         private String programmaticMechanismName;
+        private Supplier<IdentityCache> identityCacheSupplier;
 
         Builder() {
         }
@@ -635,7 +611,19 @@ public class HttpAuthenticator {
             this.programmaticMechanismName = programmaticMechanismName;
 
             return this;
+        }
 
+        /**
+         * Set a {@code Supplier} which acts as a factory to return a new {@link IdentityCache} instance for the current request, this allows
+         * alternative caching strategies to be provided.
+         *
+         * @param identityCacheSupplier - a factory which returns new {@link IdentityCache} instances for the current request.
+         * @return the {@link Builder} to allow method call chaining.
+         */
+        public Builder setIdentityCacheSupplier(final Supplier<IdentityCache> identityCacheSupplier) {
+            this.identityCacheSupplier = identityCacheSupplier;
+
+            return this;
         }
 
         /**

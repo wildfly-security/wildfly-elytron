@@ -46,9 +46,9 @@ public class DefaultSingleSignOnManager implements SingleSignOnManager {
     }
 
     @Override
-    public SingleSignOn create(String mechanismName, SecurityIdentity identity) {
+    public SingleSignOn create(String mechanismName, boolean programmatic, SecurityIdentity identity) {
         String id = this.identifierFactory.get();
-        SingleSignOnEntry entry = new DefaultSingleSignOnEntry(new CachedIdentity(mechanismName, identity));
+        SingleSignOnEntry entry = new DefaultSingleSignOnEntry(new CachedIdentity(mechanismName, programmatic, identity));
         SingleSignOn sso = new DefaultSingleSignOn(id, entry, () -> this.mutator.accept(id, entry), () -> this.cache.remove(id));
         this.cache.put(id, entry);
         return sso;

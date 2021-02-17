@@ -35,7 +35,7 @@ public interface SingleSignOnSession extends IdentityCache, AutoCloseable {
     String getId();
 
     /**
-     * Performs a local logout where only the local session is invalidated.
+     * Performs a local logout if the incoming request is a logout message, otherwise do nothing.
      *
      * @return {@code true} if local session was invalidated. Otherwise, {@code false}
      */
