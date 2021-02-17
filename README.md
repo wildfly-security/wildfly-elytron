@@ -34,8 +34,6 @@ Bugs and features are tracked within the Elytron Jira project at https://issues.
 Contributions
 -------------
 
-When submitting bug fixes please start from the 1.3.x branch and submit the pull request against this branch.
-
 All new features and enhancements should be submitted to 1.x branch only.
 
-https://developer.jboss.org/wiki/GettingStartedWithWildFlyElytron
+https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/
