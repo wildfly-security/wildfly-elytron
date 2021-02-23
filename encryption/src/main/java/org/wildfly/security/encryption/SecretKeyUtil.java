@@ -30,6 +30,7 @@ import java.util.Arrays;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.wildfly.common.codec.DecodeException;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 
@@ -86,20 +87,26 @@ public class SecretKeyUtil {
     }
 
     private static SecretKey importSecretKey(CodePointIterator codePointIterator) throws GeneralSecurityException {
-        ByteIterator byteIterator = codePointIterator.base64Decode();
-        byte[] prefixVersion = byteIterator.drain(5);
-        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
-            throw log.badKeyPrefix();
-        } else if (prefixVersion[3] != VERSION) {
-            throw log.unsupportedVersion(prefixVersion[3], VERSION);
-        } else if (prefixVersion[4] != SECRET_KEY_IDENTIFIER) {
-            throw log.unexpectedTokenType(toName((char) prefixVersion[4]), SECRET_KEY_NAME);
+        try {
+            ByteIterator byteIterator = codePointIterator.base64Decode();
+
+            byte[] prefixVersion = byteIterator.drain(5);
+            if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
+                throw log.badKeyPrefix();
+            } else if (prefixVersion[3] != VERSION) {
+                throw log.unsupportedVersion(prefixVersion[3], VERSION);
+            } else if (prefixVersion[4] != SECRET_KEY_IDENTIFIER) {
+                throw log.unexpectedTokenType(toName((char) prefixVersion[4]), SECRET_KEY_NAME);
+            }
+
+            byte[] key = byteIterator.drain();
+            checkKeySize(key.length * 8);
+
+            return new SecretKeySpec(key, SECRET_KEY_ALGORITHM);
+
+        } catch (DecodeException e) {
+            throw log.unableToDecodeBase64Token(e);
         }
-
-        byte[] key = byteIterator.drain();
-        checkKeySize(key.length * 8);
-
-        return new SecretKeySpec(key, SECRET_KEY_ALGORITHM);
     }
 
     private static void checkKeySize(final int keySize) throws GeneralSecurityException {

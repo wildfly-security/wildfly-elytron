@@ -31,6 +31,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import org.wildfly.common.codec.DecodeException;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 
@@ -76,28 +77,36 @@ public class CipherUtil {
 
     public static String decrypt(final String token, final SecretKey secretKey) throws GeneralSecurityException {
         checkNotNullParam("secretKey", secretKey);
-        ByteIterator byteIterator = CodePointIterator.ofString(checkNotNullParam("token", token)).base64Decode();
-        byte[] prefixVersion = byteIterator.drain(5);
-        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
-            throw log.badKeyPrefix();
-        } else if (prefixVersion[3] != VERSION) {
-            throw log.unsupportedVersion(prefixVersion[3], VERSION);
-        } else if (prefixVersion[4] != CIPHER_TEXT_IDENTIFIER) {
-            throw log.unexpectedTokenType(toName((char) prefixVersion[4]), CIPHER_TEXT_NAME);
+
+        try {
+            ByteIterator byteIterator = CodePointIterator.ofString(checkNotNullParam("token", token)).base64Decode();
+
+            byte[] prefixVersion = byteIterator.drain(5);
+            if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
+                throw log.badKeyPrefix();
+            } else if (prefixVersion[3] != VERSION) {
+                throw log.unsupportedVersion(prefixVersion[3], VERSION);
+            } else if (prefixVersion[4] != CIPHER_TEXT_IDENTIFIER) {
+                throw log.unexpectedTokenType(toName((char) prefixVersion[4]), CIPHER_TEXT_NAME);
+            }
+
+            int ivLength = byteIterator.next();
+            byte[] iv = byteIterator.drain(ivLength);
+            byte[] cipherText = byteIterator.drain();
+
+            // We successfully disected the token, now decrypt the value.
+            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+            AlgorithmParameterSpec spec = new IvParameterSpec(iv);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+
+            byte[] clearText = cipher.doFinal(cipherText);
+
+            return new String(clearText, StandardCharsets.UTF_8);
+
+        } catch (DecodeException e) {
+            throw log.unableToDecodeBase64Token(e);
         }
 
-        int ivLength = byteIterator.next();
-        byte[] iv = byteIterator.drain(ivLength);
-        byte[] cipherText = byteIterator.drain();
-
-        // We successfully disected the token, now decrypt the value.
-        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-        AlgorithmParameterSpec spec = new IvParameterSpec(iv);
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
-
-        byte[] clearText = cipher.doFinal(cipherText);
-
-        return new String(clearText, StandardCharsets.UTF_8);
     }
 
 
