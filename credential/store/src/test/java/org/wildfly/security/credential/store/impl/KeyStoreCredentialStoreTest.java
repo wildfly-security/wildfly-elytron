@@ -19,6 +19,7 @@
 package org.wildfly.security.credential.store.impl;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,9 +45,11 @@ import org.junit.runners.Parameterized.Parameters;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStore.CredentialSourceProtectionParameter;
+import org.wildfly.security.encryption.SecretKeyUtil;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
@@ -69,7 +73,8 @@ public class KeyStoreCredentialStoreTest {
 
     private char[] secretPassword;
 
-    private PasswordCredential storedCredential;
+    private PasswordCredential storedPasswordCredential;
+    private SecretKeyCredential storedSecretKeyCredential;
 
     private CredentialSourceProtectionParameter storeProtection;
 
@@ -104,7 +109,8 @@ public class KeyStoreCredentialStoreTest {
 
         final Password secret = passwordFactory.generatePassword(new ClearPasswordSpec(secretPassword));
 
-        storedCredential = new PasswordCredential(secret);
+        storedPasswordCredential = new PasswordCredential(secret);
+        storedSecretKeyCredential = new SecretKeyCredential(SecretKeyUtil.generateSecretKey(256));
     }
 
     @After
@@ -125,7 +131,7 @@ public class KeyStoreCredentialStoreTest {
 
         originalStore.initialize(attributes, storeProtection, null);
 
-        originalStore.store("key", storedCredential, null);
+        originalStore.store("key", storedPasswordCredential, null);
 
         originalStore.flush();
 
@@ -146,6 +152,56 @@ public class KeyStoreCredentialStoreTest {
     }
 
     @Test
+    public void multipleCredentialTypes() throws Exception {
+        final KeyStoreCredentialStore originalStore = new KeyStoreCredentialStore();
+
+        final File keyStoreFile = new File(tmp.getRoot(), "keystore");
+
+        final Map<String, String> attributes = new HashMap<>();
+        attributes.put("location", keyStoreFile.getAbsolutePath());
+        attributes.put("create", Boolean.TRUE.toString());
+        attributes.put("keyStoreType", keyStoreFormat);
+
+        originalStore.initialize(attributes, storeProtection, null);
+
+        originalStore.store("key", storedPasswordCredential, null);
+        originalStore.store("key", storedSecretKeyCredential, null);
+
+        originalStore.flush();
+
+        assertTrue(keyStoreFile.exists());
+
+        final KeyStoreCredentialStore retrievalStore = new KeyStoreCredentialStore();
+        retrievalStore.initialize(attributes, storeProtection, null);
+
+        Set<String> aliases = retrievalStore.getAliases();
+        assertEquals("Expected alias count", 1, aliases.size());
+        assertTrue("Expected alias 'key'", aliases.contains("key"));
+
+        final PasswordCredential retrievedPasswordCredential = retrievalStore.retrieve("key", PasswordCredential.class, null,
+                null, null);
+
+        final ClearPasswordSpec retrievedPassword = passwordFactory.getKeySpec(retrievedPasswordCredential.getPassword(),
+                ClearPasswordSpec.class);
+
+        assertArrayEquals(secretPassword, retrievedPassword.getEncodedPassword());
+
+        SecretKeyCredential retrievedSecretKeyCredential = retrievalStore.retrieve("key", SecretKeyCredential.class, null, null, null);
+        assertEquals("Expect SecretKeys to match", storedSecretKeyCredential.getSecretKey(), retrievedSecretKeyCredential.getSecretKey());
+
+        retrievalStore.remove("key", PasswordCredential.class, null, null);
+
+        aliases = retrievalStore.getAliases();
+        assertEquals("Expected alias count", 1, aliases.size());
+        assertTrue("Expected alias 'key'", aliases.contains("key"));
+
+        retrievalStore.remove("key", SecretKeyCredential.class, null, null);
+
+        aliases = retrievalStore.getAliases();
+        assertEquals("Expected alias count", 0, aliases.size());
+    }
+
+    @Test
     public void symbolicLinkLocation() throws Exception {
         final KeyStoreCredentialStore originalStore = new KeyStoreCredentialStore();
 
@@ -157,7 +213,7 @@ public class KeyStoreCredentialStoreTest {
         attributes.put("keyStoreType", "JCEKS");
 
         originalStore.initialize(attributes, storeProtection, null);
-        originalStore.store("key", storedCredential, null);
+        originalStore.store("key", storedPasswordCredential, null);
         originalStore.flush();
 
         assertTrue(keyStoreFile.exists());
@@ -172,7 +228,7 @@ public class KeyStoreCredentialStoreTest {
         attributesRetrieval.put("keyStoreType", "JCEKS");
 
         retrievalStore.initialize(attributesRetrieval, storeProtection, null);
-        retrievalStore.store("key2", storedCredential, null);
+        retrievalStore.store("key2", storedPasswordCredential, null);
         retrievalStore.flush();
 
         assertTrue(Files.isSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath())));
