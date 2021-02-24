@@ -729,7 +729,9 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     }
                 }
             }
-            cache.remove(credentialAliasLowerCase);
+            if (topEntry.getMap().size() == 0) {
+                cache.remove(credentialAliasLowerCase);
+            }
             // done!
         } catch (KeyStoreException e) {
             throw log.cannotRemoveCredentialFromStore(e);
