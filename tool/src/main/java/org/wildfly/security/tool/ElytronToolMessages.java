@@ -157,7 +157,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Alias \"%s\" does not exist")
     String aliasDoesNotExist(String alias);
 
-    @Message(id = NONE, value = "Alias \"%s\" of type \"%s\"does not exist")
+    @Message(id = NONE, value = "Alias \"%s\" of type \"%s\" does not exist")
     String aliasDoesNotExist(String alias, String type);
 
     @Message(id = NONE, value = "Alias \"%s\" has been successfully stored")

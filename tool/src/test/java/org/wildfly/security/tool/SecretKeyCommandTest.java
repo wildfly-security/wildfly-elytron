@@ -17,6 +17,8 @@
 package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +45,7 @@ import org.wildfly.security.encryption.SecretKeyUtil;
 @RunWith(Parameterized.class)
 public class SecretKeyCommandTest extends AbstractCommandTest {
 
-    private static final String ALIAS = "testKey";
+    private static final String ALIAS = "testkey";
     private static final String PASSWORD = "cspassword";
     // TODO We need to check clear text with spaces.
     private static final String CLEAR_TEXT = "SomeSecretPassword";
@@ -131,6 +133,55 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
 
         String decrypted = CipherUtil.decrypt(token, secretKeyCredential.getSecretKey());
         assertEquals("Expected original clear text", CLEAR_TEXT, decrypted);
+    }
+
+    @Test
+    public void testQueryActions() throws Exception {
+        String storageLocation = getStoragePathForNewFile();
+
+        String[] args = getArgs(storageLocation, true, new String[] { "--create", "--generate-secret-key", ALIAS });
+        executeCommandAndCheckStatus(args);
+
+        args = getArgs(storageLocation, false, new String[] { "--aliases" });
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue("Expected alias listed", output.contains(ALIAS));
+
+        args = getArgs(storageLocation, false, new String[] { "--exists", ALIAS, "--entry-type", "SecretKeyCredential" });
+        output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertEquals("Expected Output", "Alias \"testkey\" exists", output.trim());
+
+        if (PROPERTIES_CS.equals(credentialStoreType)) {
+            args = getArgs(storageLocation, false, new String[] { "--exists", ALIAS});
+            output = executeCommandAndCheckStatusAndGetOutput(args);
+            assertEquals("Expected Output", "Alias \"testkey\" exists", output.trim());
+        }
+
+        args = getArgs(storageLocation, false, new String[] { "--remove", ALIAS, "--entry-type", "SecretKeyCredential" });
+        output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertEquals("Alias \"testkey\" of type \"SecretKeyCredential\" has been successfully removed", output.trim());
+
+        if (PROPERTIES_CS.equals(credentialStoreType)) {
+            args = getArgs(storageLocation, false, new String[] { "--create", "--generate-secret-key", ALIAS });
+            executeCommandAndCheckStatus(args);
+
+            args = getArgs(storageLocation, false, new String[] { "--remove", ALIAS });
+            output = executeCommandAndCheckStatusAndGetOutput(args);
+            assertEquals("Alias \"testkey\" has been successfully removed", output.trim());
+        }
+
+        args = getArgs(storageLocation, false, new String[] { "--aliases" });
+        output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertFalse("Expected alias listed", output.contains(ALIAS));
+
+        args = getArgs(storageLocation, false, new String[] { "--exists", ALIAS, "--entry-type", "SecretKeyCredential" });
+        output = executeCommandAndCheckStatusAndGetOutput(args, CredentialStoreCommand.ALIAS_NOT_FOUND);
+        assertEquals("Expected Output", "Alias \"testkey\" of type \"SecretKeyCredential\" does not exist", output.trim());
+
+        if (PROPERTIES_CS.equals(credentialStoreType)) {
+            args = getArgs(storageLocation, false, new String[] { "--exists", ALIAS});
+            output = executeCommandAndCheckStatusAndGetOutput(args, CredentialStoreCommand.ALIAS_NOT_FOUND);
+            assertEquals("Expected Output", "Alias \"testkey\" does not exist", output.trim());
+        }
     }
 
     private CredentialStore getExistingCredentialStore(final String storageLocation) throws Exception {

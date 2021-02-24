@@ -30,15 +30,19 @@ import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import javax.crypto.SecretKey;
 
+import org.wildfly.common.codec.DecodeException;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -56,6 +60,22 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class PropertiesCredentialStore extends CredentialStoreSpi {
+
+    /*
+     * Regular Expression To Test Valid Line In Credential Store.
+     *
+     * ^     - Apply test from the start of the line.
+     * \s*   - Whitespace is allowed at the start.
+     * (#.*) - A comment character followed by one or more characters.
+     * OR (\\w+=[^=]+={0,2}\\s*)
+     *   \w     - Alpha numeric one or more times (The alias of the entry)
+     *   =      - A single '=' delimiter.
+     *   [^=]+  - Any character other than '=' one or more times.
+     *   ={0,2} - An '='up to two times (Base64 padding).
+     *   \s*    - Whitespace is allowed at the end.
+     * $     - Apply the test to the end of the line.
+     */
+    private static final Pattern PATTERN = Pattern.compile("^\\s*(#.*)|(\\w+=[^=]+={0,2}\\s*)$");
 
     public static final String NAME = PropertiesCredentialStore.class.getSimpleName();
 
@@ -110,7 +130,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialClass == SecretKeyCredential.class) {
             try (Lock lock = lockForWrite()) {
                 assertInitialised();
-                entries.get().put(credentialAlias, ((SecretKeyCredential) credential).getSecretKey());
+                entries.get().put(credentialAlias.toLowerCase(Locale.getDefault()), ((SecretKeyCredential) credential).getSecretKey());
             }
         } else {
             throw log.unsupportedCredentialType(credentialClass);
@@ -123,7 +143,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialType.isAssignableFrom(SecretKeyCredential.class)) {
             try (Lock lock = lockForRead()) {
                 assertInitialised();
-                SecretKey secretKey = entries.get().get(credentialAlias);
+                SecretKey secretKey = entries.get().get(credentialAlias.toLowerCase(Locale.getDefault()));
                 if (secretKey != null) {
                     SecretKeyCredential credential = new SecretKeyCredential(secretKey);
 
@@ -144,7 +164,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialType.isAssignableFrom(SecretKeyCredential.class)) {
             try (Lock lock = lockForWrite()) {
                 assertInitialised();
-                entries.get().remove(credentialAlias);
+                entries.get().remove(credentialAlias.toLowerCase(Locale.getDefault()));
             }
         } else {
             throw log.unsupportedCredentialType(credentialType);
@@ -185,9 +205,14 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
     private Map<String, SecretKey> load() throws CredentialStoreException, IOException {
         Map<String, SecretKey> entries = new LinkedHashMap<>();
         try (FileReader fr = new FileReader(credentialStoreLocation); BufferedReader bis = new BufferedReader(fr)) {
+            Predicate<String> validLine = PATTERN.asPredicate();
             String line;
             skip:
             while ((line = bis.readLine()) != null) {
+                if (!validLine.test(line)) {
+                    throw log.invalidCredentialStoreProperty(line);
+                }
+
                 char[] currentLine = line.toCharArray();
                 int start = -1;
                 int delimiter = -1;
@@ -217,11 +242,11 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
                 }
 
                 if (start > -1 && delimiter > -1 && end > -1) {
-                    String alias = new String(currentLine, start, delimiter - start);
+                    String alias = new String(currentLine, start, delimiter - start).toLowerCase(Locale.getDefault());
                     SecretKey secretKey;
                     try {
                         secretKey = importSecretKey(currentLine, delimiter + 1, end - delimiter);
-                    } catch (GeneralSecurityException e) {
+                    } catch (GeneralSecurityException | DecodeException e) {
                         throw log.canNotLoadSecretKey(alias, e);
                     }
                     entries.put(alias, secretKey);
