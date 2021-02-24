@@ -1161,21 +1161,21 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         return principal;
     }
 
-    static String mapAll(Principal principal, RealmMapper r1, RealmMapper r2, RealmMapper r3, String defaultRealmName) {
+    static String mapAll(Principal principal, RealmMapper r1, RealmMapper r2, RealmMapper r3, String defaultRealmName, Evidence evidence) {
         if (r1 != null) {
-            return mapRealmName(principal, r1, defaultRealmName);
+            return mapRealmName(principal, r1, defaultRealmName, evidence);
         }
         if (r2 != null) {
-            return mapRealmName(principal, r2, defaultRealmName);
+            return mapRealmName(principal, r2, defaultRealmName, evidence);
         }
         if (r3 != null) {
-            return mapRealmName(principal, r3, defaultRealmName);
+            return mapRealmName(principal, r3, defaultRealmName, evidence);
         }
         return defaultRealmName;
     }
 
-    private static String mapRealmName(Principal principal, RealmMapper realmMapper, String defaultRealmName) {
-        String realmName = realmMapper.getRealmMapping(principal, null);
+    private static String mapRealmName(Principal principal, RealmMapper realmMapper, String defaultRealmName, Evidence evidence) {
+        String realmName = realmMapper.getRealmMapping(principal, evidence);
         return realmName != null ? realmName : defaultRealmName;
     }
 
@@ -1190,7 +1190,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             log.tracef("Unable to rewrite principal [%s] by pre-realm rewritters", originalPrincipal);
             return new InvalidNameState(capturedIdentity, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials, runtimeAttributes);
         }
-        String realmName = mapAll(preRealmPrincipal, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
+        String realmName = mapAll(preRealmPrincipal, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName(), evidence);
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         final Principal postRealmPrincipal = rewriteAll(preRealmPrincipal, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         if (postRealmPrincipal == null) {
