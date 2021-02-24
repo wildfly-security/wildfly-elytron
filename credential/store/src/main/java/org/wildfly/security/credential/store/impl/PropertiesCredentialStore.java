@@ -30,6 +30,7 @@ import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -129,7 +130,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialClass == SecretKeyCredential.class) {
             try (Lock lock = lockForWrite()) {
                 assertInitialised();
-                entries.get().put(credentialAlias, ((SecretKeyCredential) credential).getSecretKey());
+                entries.get().put(credentialAlias.toLowerCase(Locale.getDefault()), ((SecretKeyCredential) credential).getSecretKey());
             }
         } else {
             throw log.unsupportedCredentialType(credentialClass);
@@ -142,7 +143,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialType.isAssignableFrom(SecretKeyCredential.class)) {
             try (Lock lock = lockForRead()) {
                 assertInitialised();
-                SecretKey secretKey = entries.get().get(credentialAlias);
+                SecretKey secretKey = entries.get().get(credentialAlias.toLowerCase(Locale.getDefault()));
                 if (secretKey != null) {
                     SecretKeyCredential credential = new SecretKeyCredential(secretKey);
 
@@ -163,7 +164,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
         if (credentialType.isAssignableFrom(SecretKeyCredential.class)) {
             try (Lock lock = lockForWrite()) {
                 assertInitialised();
-                entries.get().remove(credentialAlias);
+                entries.get().remove(credentialAlias.toLowerCase(Locale.getDefault()));
             }
         } else {
             throw log.unsupportedCredentialType(credentialType);
@@ -241,7 +242,7 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
                 }
 
                 if (start > -1 && delimiter > -1 && end > -1) {
-                    String alias = new String(currentLine, start, delimiter - start);
+                    String alias = new String(currentLine, start, delimiter - start).toLowerCase(Locale.getDefault());
                     SecretKey secretKey;
                     try {
                         secretKey = importSecretKey(currentLine, delimiter + 1, end - delimiter);

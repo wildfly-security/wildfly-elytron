@@ -117,7 +117,7 @@ public class PropertiesCredentialStoreTest {
             credentialStore.store("mySecretKey", new SecretKeyCredential(secretKey128));
 
             assertEquals("Alias Count", 1, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("mySecretKey"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("mysecretkey"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("mySecretKey", SecretKeyCredential.class).getSecretKey());
 
             credentialStore.flush();
@@ -125,7 +125,7 @@ public class PropertiesCredentialStoreTest {
             credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
 
             assertEquals("Alias Count", 1, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("mySecretKey"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("mysecretkey"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("mySecretKey", SecretKeyCredential.class).getSecretKey());
 
             credentialStore.remove("mySecretKey", SecretKeyCredential.class);
@@ -165,9 +165,9 @@ public class PropertiesCredentialStoreTest {
             credentialStore.store("TwoFiveSix", new SecretKeyCredential(secretKey256));
 
             assertEquals("Alias Count", 3, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneTwoEight"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneNineTwo"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("TwoFiveSix"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("onetwoeight"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("oneninetwo"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("twofivesix"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("OneTwoEight", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey192, credentialStore.retrieve("OneNineTwo", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey256, credentialStore.retrieve("TwoFiveSix", SecretKeyCredential.class).getSecretKey());
@@ -177,9 +177,9 @@ public class PropertiesCredentialStoreTest {
             credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
 
             assertEquals("Alias Count", 3, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneTwoEight"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneNineTwo"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("TwoFiveSix"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("onetwoeight"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("oneninetwo"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("twofivesix"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("OneTwoEight", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey192, credentialStore.retrieve("OneNineTwo", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey256, credentialStore.retrieve("TwoFiveSix", SecretKeyCredential.class).getSecretKey());
@@ -187,8 +187,8 @@ public class PropertiesCredentialStoreTest {
             credentialStore.remove("OneNineTwo", SecretKeyCredential.class);
 
             assertEquals("Alias Count", 2, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneTwoEight"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("TwoFiveSix"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("onetwoeight"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("twofivesix"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("OneTwoEight", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey256, credentialStore.retrieve("TwoFiveSix", SecretKeyCredential.class).getSecretKey());
 
@@ -197,8 +197,8 @@ public class PropertiesCredentialStoreTest {
             credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
 
             assertEquals("Alias Count", 2, credentialStore.getAliases().size());
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("OneTwoEight"));
-            assertTrue("Correct Alias", credentialStore.getAliases().contains("TwoFiveSix"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("onetwoeight"));
+            assertTrue("Correct Alias", credentialStore.getAliases().contains("twofivesix"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("OneTwoEight", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey256, credentialStore.retrieve("TwoFiveSix", SecretKeyCredential.class).getSecretKey());
         } finally {
