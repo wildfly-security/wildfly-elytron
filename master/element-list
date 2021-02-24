@@ -35,6 +35,7 @@ org.wildfly.security.credential.store
 org.wildfly.security.credential.store._private
 org.wildfly.security.credential.store.impl
 org.wildfly.security.digest
+org.wildfly.security.encryption
 org.wildfly.security.evidence
 org.wildfly.security.http
 org.wildfly.security.http.basic
@@ -43,6 +44,7 @@ org.wildfly.security.http.cert
 org.wildfly.security.http.digest
 org.wildfly.security.http.external
 org.wildfly.security.http.form
+org.wildfly.security.http.impl
 org.wildfly.security.http.spnego
 org.wildfly.security.http.util
 org.wildfly.security.http.util.sso
