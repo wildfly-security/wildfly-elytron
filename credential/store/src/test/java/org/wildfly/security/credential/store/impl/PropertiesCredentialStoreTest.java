@@ -20,13 +20,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
+import static org.wildfly.security.encryption.SecretKeyUtil.exportSecretKey;
 import static org.wildfly.security.encryption.SecretKeyUtil.generateSecretKey;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.Collections;
@@ -39,6 +42,8 @@ import javax.crypto.SecretKey;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
@@ -196,6 +201,123 @@ public class PropertiesCredentialStoreTest {
             assertTrue("Correct Alias", credentialStore.getAliases().contains("TwoFiveSix"));
             assertEquals("Returned key", secretKey128, credentialStore.retrieve("OneTwoEight", SecretKeyCredential.class).getSecretKey());
             assertEquals("Returned key", secretKey256, credentialStore.retrieve("TwoFiveSix", SecretKeyCredential.class).getSecretKey());
+        } finally {
+            if (storeFile.exists()) {
+                storeFile.delete();
+            }
+        }
+    }
+
+    /*
+     * Test case to verify the error reported if there is an entry in the properties file missing the '=' delimiter.
+     */
+    @Test
+    public void testMissingPropertyDelimiter() throws IOException, GeneralSecurityException {
+        testMissingPropertyDelimiter(128);
+        testMissingPropertyDelimiter(192);
+        testMissingPropertyDelimiter(256);
+    }
+
+    private void testMissingPropertyDelimiter(int keySize) throws IOException, GeneralSecurityException {
+        final SecretKey secretKey = generateSecretKey(keySize);
+
+        File storeFile = new File(getStoragePathForNewFile());
+        assertFalse(storeFile.exists());
+        try {
+            try (PrintWriter pw = new PrintWriter(storeFile)) {
+                pw.print("testAlias");
+                pw.println(exportSecretKey(secretKey));
+            }
+
+            try {
+                CredentialStore credentialStore = CredentialStore.getInstance(STORE_TYPE, () -> new Provider[] { PROVIDER });
+                credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
+                fail("Expected CredentialStoreException Not Thrown");
+            } catch (CredentialStoreException e) {
+                assertTrue("Expected error", e.getMessage().contains("ELY20003:"));
+            }
+
+        } finally {
+            if (storeFile.exists()) {
+                storeFile.delete();
+            }
+        }
+    }
+
+    /*
+     * Test case to verify the error reported if a part of the encoded Base64 value is truncated.
+     */
+    @Test
+    public void testTruncatedBase64Value() throws IOException, GeneralSecurityException {
+        testTruncatedBase64Value(128);
+        testTruncatedBase64Value(192);
+        testTruncatedBase64Value(256);
+    }
+
+    private void testTruncatedBase64Value(int keySize) throws IOException, GeneralSecurityException {
+        final SecretKey secretKey = generateSecretKey(keySize);
+
+        File storeFile = new File(getStoragePathForNewFile());
+        assertFalse(storeFile.exists());
+        try {
+            try (PrintWriter pw = new PrintWriter(storeFile)) {
+                pw.print("testAlias=");
+                String secretKeyToken = exportSecretKey(secretKey);
+                pw.println(secretKeyToken.subSequence(0, secretKeyToken.length() -1));
+            }
+
+            try {
+                CredentialStore credentialStore = CredentialStore.getInstance(STORE_TYPE, () -> new Provider[] { PROVIDER });
+                credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
+                fail("Expected CredentialStoreException Not Thrown");
+            } catch (CredentialStoreException e) {
+                assertTrue("Expected error", e.getMessage().contains("ELY20004:"));
+                String causeMessage = e.getCause().getMessage();
+                assertTrue("Expected cause", causeMessage.contains("COM00501:") || causeMessage.contains("COM00507:")); // i.e. Base64 padding broken.
+            }
+
+        } finally {
+            if (storeFile.exists()) {
+                storeFile.delete();
+            }
+        }
+    }
+
+    /*
+     * Test case to verify the error if the underlying token has bytes removed.
+     */
+    @Test
+    public void testTruncatedKey() throws IOException, GeneralSecurityException {
+        testTruncatedKey(128);
+        testTruncatedKey(192);
+        testTruncatedKey(256);
+    }
+
+    private void testTruncatedKey(int keySize) throws IOException, GeneralSecurityException {
+        final SecretKey secretKey = generateSecretKey(keySize);
+
+        File storeFile = new File(getStoragePathForNewFile());
+        assertFalse(storeFile.exists());
+        try {
+            try (PrintWriter pw = new PrintWriter(storeFile)) {
+                pw.print("testAlias=");
+
+                byte[] underlyingToken = CodePointIterator.ofString(exportSecretKey(secretKey)).base64Decode().drain();
+                String secretKeyToken = ByteIterator.ofBytes(underlyingToken, 0, underlyingToken.length - 2).base64Encode().drainToString();
+
+                pw.println(secretKeyToken);
+            }
+
+            try {
+                CredentialStore credentialStore = CredentialStore.getInstance(STORE_TYPE, () -> new Provider[] { PROVIDER });
+                credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), false));
+                fail("Expected CredentialStoreException Not Thrown");
+            } catch (CredentialStoreException e) {
+                assertTrue("Expected error", e.getMessage().contains("ELY20004:"));
+                String causeMessage = e.getCause().getMessage();
+                assertTrue("Expected cause", causeMessage.contains("ELY19000:")); // Bad key size.
+            }
+
         } finally {
             if (storeFile.exists()) {
                 storeFile.delete();
