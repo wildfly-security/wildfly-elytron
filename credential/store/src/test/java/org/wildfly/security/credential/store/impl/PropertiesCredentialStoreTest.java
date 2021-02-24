@@ -273,7 +273,7 @@ public class PropertiesCredentialStoreTest {
             } catch (CredentialStoreException e) {
                 assertTrue("Expected error", e.getMessage().contains("ELY20004:"));
                 String causeMessage = e.getCause().getMessage();
-                assertTrue("Expected cause", causeMessage.contains("COM00501:") || causeMessage.contains("COM00507:")); // i.e. Base64 padding broken.
+                assertTrue("Expected cause", causeMessage.contains("ELY19004:")); // i.e. Base64 padding broken.
             }
 
         } finally {
