@@ -286,7 +286,7 @@ the <code>domain-names</code> parameter to specify the domain name(s) you want t
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=serverKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)</code></pre>
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/key-store=applicationKS:obtain-certificate(alias=server,domain-names=[www.example.org],certificate-authority-account=myLetsEncryptAccount,agree-to-terms-of-service)</code></pre>
 </div>
 </div>
 <div class="paragraph">
