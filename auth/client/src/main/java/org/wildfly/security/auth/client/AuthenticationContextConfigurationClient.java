@@ -197,6 +197,16 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
+     * Get the configured SSL context which matches ALL rules from provided AuthenticationContext, or {@link SSLContext#getDefault()} if there is none.
+     *
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @return the SSL context from provided AuthenticationContext that matches ALL rules
+     */
+    public SSLContext getSSLContext(AuthenticationContext authenticationContext) throws GeneralSecurityException {
+        return getSSLContext(null,  authenticationContext, null, null);
+    }
+
+    /**
      * Get the SSL context which matches the given URI, or {@link SSLContext#getDefault()} if there is none.
      *
      * @param uri the URI to match (must not be {@code null})
@@ -223,14 +233,13 @@ public final class AuthenticationContextConfigurationClient {
     /**
      * Get the SSL context factory which matches the given URI and type, or {@link SSLContext#getDefault()} if there is none.
      *
-     * @param uri the URI to match (must not be {@code null})
+     * @param uri the URI to match
      * @param authenticationContext the authentication context to examine (must not be {@code null})
      * @param abstractType the abstract type (may be {@code null})
      * @param abstractTypeAuthority the abstract type authority (may be {@code null})
      * @return the matching SSL context factory (not {@code null})
      */
     public SecurityFactory<SSLContext> getSSLContextFactory(URI uri, AuthenticationContext authenticationContext, String abstractType, String abstractTypeAuthority) {
-        Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
         final RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.sslRuleMatching(uri, abstractType, abstractTypeAuthority);
         if (node == null) return SSLContext::getDefault;
