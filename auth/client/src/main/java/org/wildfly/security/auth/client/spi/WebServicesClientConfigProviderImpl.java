@@ -52,7 +52,6 @@ import org.kohsuke.MetaInfServices;
 public class WebServicesClientConfigProviderImpl implements ClientConfigProvider {
 
     private static final AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT = AccessController.doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
-    private AuthenticationContext authenticationContext = AuthenticationContext.captureCurrent();
 
     @Override
     public ClientConfig configure(ClientConfig config, BindingProvider bindingProvider) throws ClientConfigException {
@@ -63,17 +62,18 @@ public class WebServicesClientConfigProviderImpl implements ClientConfigProvider
         } catch (URISyntaxException e) {
             throw new ClientConfigException("Unable to obtain URI");
         }
+        AuthenticationContext authenticationContext = AuthenticationContext.captureCurrent();
         if (authenticationContext == AuthenticationContext.empty()) {
             return config;
         }
         Map<String, Object> attachments = config == null ? new HashMap<>() : new HashMap<String, Object>(config.getAttachments());
 
         putNotNullProperty(attachments, CLIENT_PROVIDER_CONFIGURED, "true");
-        putNotNullProperty(attachments, CLIENT_USERNAME, getUsername(uri));
-        putNotNullProperty(attachments, CLIENT_PASSWORD, getPassword(uri));
-        putNotNullProperty(attachments, CLIENT_HTTP_MECHANISM, getHttpMechanism(uri));
-        putNotNullProperty(attachments, CLIENT_WS_SECURITY_TYPE, getWsSecurityType(uri));
-        attachments.put(CLIENT_SSL_CONTEXT, getSSLContext(uri));
+        putNotNullProperty(attachments, CLIENT_USERNAME, getUsername(uri, authenticationContext));
+        putNotNullProperty(attachments, CLIENT_PASSWORD, getPassword(uri, authenticationContext));
+        putNotNullProperty(attachments, CLIENT_HTTP_MECHANISM, getHttpMechanism(uri, authenticationContext));
+        putNotNullProperty(attachments, CLIENT_WS_SECURITY_TYPE, getWsSecurityType(uri, authenticationContext));
+        attachments.put(CLIENT_SSL_CONTEXT, getSSLContext(uri, authenticationContext));
 
         if (config == null) {
             ClientConfig cc = new ClientConfig(ClientConfig.WILDLFY_CLIENT_CONFIG_FILE, null, null, null, null);
@@ -91,7 +91,7 @@ public class WebServicesClientConfigProviderImpl implements ClientConfigProvider
         }
     }
 
-    private SSLContext getSSLContext(URI uri) throws ClientConfigException {
+    private SSLContext getSSLContext(URI uri, AuthenticationContext authenticationContext) throws ClientConfigException {
         try {
             return AUTH_CONTEXT_CLIENT.getSSLContext(uri, authenticationContext);
         } catch (GeneralSecurityException e) {
@@ -99,7 +99,7 @@ public class WebServicesClientConfigProviderImpl implements ClientConfigProvider
         }
     }
 
-    private String getUsername(URI uri) throws ClientConfigException {
+    private String getUsername(URI uri, AuthenticationContext authenticationContext) throws ClientConfigException {
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, authenticationContext));
         NameCallback nameCallback = new NameCallback("user name");
         try {
@@ -110,7 +110,7 @@ public class WebServicesClientConfigProviderImpl implements ClientConfigProvider
         }
     }
 
-    private String getPassword(URI uri) throws ClientConfigException {
+    private String getPassword(URI uri, AuthenticationContext authenticationContext) throws ClientConfigException {
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, authenticationContext));
         PasswordCallback passwordCallback = new PasswordCallback("password", false);
         try {
@@ -125,11 +125,11 @@ public class WebServicesClientConfigProviderImpl implements ClientConfigProvider
         }
     }
 
-    private String getHttpMechanism(URI uri) {
+    private String getHttpMechanism(URI uri, AuthenticationContext authenticationContext) {
         return AUTH_CONTEXT_CLIENT.getWsHttpMech(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, authenticationContext));
     }
 
-    private String getWsSecurityType(URI uri) {
+    private String getWsSecurityType(URI uri, AuthenticationContext authenticationContext) {
         return AUTH_CONTEXT_CLIENT.getWsSecurityType(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, authenticationContext));
     }
 }
