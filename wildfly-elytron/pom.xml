@@ -170,9 +170,9 @@
                             <createSourcesJar>true</createSourcesJar>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
-                                <excludes>
-                                    <exclude>org.wildfly.common:wildfly-common</exclude>
-                                </excludes>
+                                <includes>
+                                    <include>org.wildfly.security:*</include>
+                                </includes>
                             </artifactSet>
                             <transformers>
                                 <transformer
