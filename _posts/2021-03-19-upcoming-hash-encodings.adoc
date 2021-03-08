@@ -1,0 +1,43 @@
+---
+layout: post
+title: "Upcoming hash character sets and hash encodings support in Elytron"
+date: 2021-03-19
+tags: wildfly elytron
+synopsis: An overview of the upcoming hash character set and hash encoding support in Elytron Security Realms.
+author: szaldana
+---
+
+One of the features we have been working on for the Elytron subsytem is the ability to specify the hash character set
+and hash encoding in security realms that support storing hashed passwords. The purpose of this task is to ensure feature parity with
+legacy security configurations. We have plans that this feature will be released in WildFly 24.
+
+
+== An Overview of Hash Character Sets and Hash Encodings in Legacy Security
+
+In the legacy security configuration using PicketBox, the
+*https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html-single/login_module_reference/index#usernamepassword_login_module[UsernamePasswordLoginModule]*
+supports storing hashed passwords by specifying the hashing algorithm, encoding and character set to compare
+the client-supplied password to the password stored in the management system.
+
+Currently, Elytron supports specifying the hashing algorithm, but not the string encoding or character set to use
+in its security realms (with the exception of the JDBC realm where configuring the encoding is supported). From WildFly 24,
+the Properties Realm, Filesystem Realm, JDBC Realm and LDAP Realm will support specifying the hash encoding and charset.
+
+
+== Hash Encoding and Hash Charset Configuration
+
+All realms that support storing hashed passwords (namely the Properties Realm, Filesystem Realm, JDBC Realm and LDAP realm)
+will support the following new attributes:
+
+* ``hash-encoding``: This attribute will specify the string format for the hashed password if the
+password is not being stored in plain text. It will specify one of two: ``hex`` or ``base64``.
+
+* ``hash-charset``: This attribute will specify the name of the character set to use when converting the client provided
+password string to a byte array for hashing calculations.
+
+
+== Summary
+This blog post has given an overview of the upcoming hash encoding and hash charset support for security realms in the Elytron Subsystem.
+
+For more details and updates on the status of this feature,
+keep an eye on https://issues.redhat.com/browse/WFCORE-5027[WFCORE-5027].
