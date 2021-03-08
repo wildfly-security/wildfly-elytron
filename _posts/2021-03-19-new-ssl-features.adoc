@@ -1,0 +1,59 @@
+---
+layout: post
+title: "Upcoming SSL features: Multiple certificate revocation lists support and SSLv2Hello support"
+date: 2021-03-19
+tags: wildfly elytron
+synopsis: An overview of the upcoming SSL/TLS features including the ability to configure
+multiple certificate revocation lists and SSLv2Hello support.
+author: szaldana
+link:
+---
+
+Two of the new features regarding SSL that we have been working on include adding support for configuring multiple
+certificate revocation lists and ``SSLv2Hello`` support. These features did not make it into WildFly 23
+but we have plans for them to be included in WildFly 24.
+
+== An Overview of Certificate Revocation Lists
+
+Certificate Revocation Lists (CRLs) contain a list of certificates that have been revoked
+by the issuing Certificate Authority before their expected expiration date, and therefore should no longer
+be trusted. Elytron currently supports configuring only one Certificate Revocation List.
+
+From WildFly 24, it will be possible to configure multiple CRL files, which is useful when several certificate
+authorities are used.
+
+
+=== Certificate Revocation List Configuration
+
+Support for multiple CRLs will be available for both the server and client. Currently, in the Elytron Subsystem, we can
+configure a single CRL in the ``trust-manager`` element using the ``certificate-revocation-list`` attribute.
+From WildFly 24, we will be able to configure a list of certificate revocation lists using the new ``certificate-revocation-lists`` attribute.
+
+
+== An Overview of the SSLv2Hello Protocol
+
+Older JDK versions use ``SSLv2Hello`` during the initial handshake message
+where the ``SSL`` version that will be used for the rest of the handshake is negotiated.
+
+The use of this protocol is discouraged. As a result, newer JDK versions disable this
+protocol by default for clients, but do provide the ability to re-enable it if needed.
+
+By adding ``SSLv2Hello`` as a supported protocol in WildFly, we are ensuring older
+clients are still able to communicate to servers guaranteeing parity with legacy security.
+
+=== SSLv2Hello Configuration
+
+``SSLv2Hello`` will be enabled by configuring it in the ``protocols`` attribute in the
+SSL context definition in the Elytron subsystem: the ``server-ssl-context`` and ``client-ssl-context`` for the
+server and client respectively. The attribute ``protocols`` contains the list of protocols supported by WildFly.
+From WildFly 24, this attribute will also allow ``SSLv2Hello`` to be specified.
+
+
+
+== Summary
+
+This blog post has given an overview of the upcoming support for multiple certificate revocation lists and
+``SSLv2Hello``.
+
+For more details on these features, keep an eye on https://issues.redhat.com/browse/WFCORE-5170[WFCORE-5170]
+and https://issues.redhat.com/browse/WFCORE-5145[WFCORE-5145] respectively.
