@@ -1,0 +1,22 @@
+---
+layout: post
+title: 'Upcoming SSLContext that supports delegation to alternate instances based on peer information'
+date: 2021-03-19
+tags: elytron wildfly23 ssl context delegation dynamic peer information
+synopsis: An overview of the upcoming SSLContext that delegates to alternative instances based on peer's host and port information
+author: dvilkola
+---
+
+One of the features we have been working on for the Elytron subsytem is the ability to configure SSL context that will delegate to different instances of SSL context based on the host and port of the peer.
+
+== Background
+
+In some cases it can be useful to have SSL context that can select appropriate certificate/keystore for the connection based on the hostname and/or port of the peer. It would be easier to configure one such SSL context and provide rules at one place based on which the appropriate SSL Context instance will be selected.
+
+In Elytron it is already possible to configure `authentication-context` resource where you can provide rules that associate SSL context with specific host and/or port. After this feature is complete, you should be able to configure dynamic SSL context that will use these rules and will select appropriate SSL context for the connection.
+
+== Summary
+
+This blog post has given a short overview of the upcoming SSL context that selects appropriate instances based on peer information. It will be possible to configure it using WildFly CLI or directly in server configuration file.
+
+For more details and updates on the status of this feature, take a look at https://issues.redhat.com/browse/WFLY-13762[WFLY-13762]. You can also take a look at the https://github.com/wildfly/wildfly-proposals/pull/328[proposal]. We welcome feedback.
