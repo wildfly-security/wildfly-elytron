@@ -183,18 +183,21 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
         @Override
         public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            if (exists() && isBearerTokenEvidence(evidenceType)) {
+            if (isBearerTokenEvidence(evidenceType)) {
                 return SupportLevel.SUPPORTED;
             }
 
             return SupportLevel.UNSUPPORTED;
         }
 
+        private void setClaims(Attributes claims) throws RealmUnavailableException {
+            this.claims = claims;
+        }
+
         private Attributes getClaims() throws RealmUnavailableException {
             if (this.claims == null) {
-                this.claims = validateToken(this.evidence);
+                validateToken(this.evidence);
             }
-
             return this.claims;
         }
 
@@ -204,7 +207,8 @@ public final class TokenSecurityRealm implements SecurityRealm {
             }
             BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
             try {
-                return strategy.validate(tokenEvidence);
+                setClaims(strategy.validate(tokenEvidence));
+                return this.claims;
             } catch (RealmUnavailableException rue) {
                 throw rue;
             } catch (Exception unknown) {
