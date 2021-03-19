@@ -1,0 +1,230 @@
+---
+layout: post
+title: 'WildFly Encrypted Expression Support'
+date: 2021-03-19
+tags: elytron wildfly encryption aes expression management-model
+synopsis: A guide to show how to quickly begin using encrypted expressions in WildFly.
+author: darranl
+---
+
+With the release of WildFly 23 the WildFly Elytron project and it's integration now adds support for
+encrypted expressions within the management model, this post will describe the steps to quickly get
+started using this new feature.
+
+== Introduction
+
+The `CredentialStore` functionality provided by WildFly Elytron provides a mechanism for the secure
+storage of credentials that can be cross referenced by WildFly's management model to avoid storing
+the credentials directly in the configuration.
+
+Using the credential store however leaves us with two remaining problems:
+
+ * How to protect the secret of the credential store.
+ * How to protect other configuration values.
+
+Within WildFly in addition to specifying a clear text password to unlock the credential store an
+administrator can configure the server to run an external command to obtain the password or the
+administrator can MASK the password.  The issue with the masked password support however is this
+uses password based encryption using a well know password publicly available in open source
+projects.
+
+The encrypted expression support added to WildFly solves both of these problems.  Firstly by adding
+support for loading `SecretKey` instances from the credential store including a new clear store.
+Secondly by adding support for values contained in the model to be encrypted and dynamically
+decrypted using the stored keys.
+
+The first part of this blog post will illustrate the commands to get started with encrypted
+expressions using an automatically generated `SecretKey`.  The second part of this post will
+illustrate how an encrypted expression can be used to protect a second credential store which in
+turn will have a `SecretKey` added and enabled for use with expression encryption.
+
+== Initial Encrypted Expression Support
+
+Starting with a clean and running WildFly 23 (or later) installation, the examples in this post
+will make use of the `jboss-cli` to configure the server.
+
+Before we begin it is worth noting that by default the CLI will cache all executed commands in it's
+history, as these examples are going to be encrypting clear text passwords we should disable
+history for our session.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] history --disable
+----
+
+First we will add a new credential store which will be automatically be populated with a
+dynamically `SecretKey` and stored under the alias `key`.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/secret-key-credential-store=initial:add( \
+    relative-to=jboss.server.config.dir, \
+    path=initial.cs)
+{"outcome" => "success"}
+----
+
+This will create a new credential store `initial.cs` in the configuration directory of your
+application server installation.  If a key is lost we do not have the ability to recover previously
+encrypted expressions so be sure to backup the credential store or export the key and store it
+safely.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/secret-key-credential-store=initial:export-secret-key(\ 
+    alias=key)
+{
+    "outcome" => "success",
+    "result" => {"key" => "RUxZAUuMVPg8wefEp0KTvGJfRrmwWwGIql2px7MKAbwV3gW3bg=="}
+}
+
+----
+
+*This credential store is not protected by it's own password so filesystem permissions should
+be used to ensure it is only accessible by the application server process.*
+
+Now that we have a generated secret key in a credential store we can activate the resource responsible
+for handling encrypted expressions.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:add( \
+    resolvers=[{name=initial-resolver, \
+                credential-store=initial, \
+                secret-key=key}])
+{"outcome" => "success"}
+----
+
+Support for encrypted expressions is now active, we can now encrypt a clear text value and convert
+it to an expression.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:create-expression( \
+    resolver=initial-resolver, clear-text=MyPassword)
+{
+    "outcome" => "success",
+    "result" => {"expression" => \
+        "${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"}
+}
+----
+
+The expression returned here can be used on any attribute in other subsystems which supports
+expressions.  The `read-resource-description` operation can be used on a resource to identify 
+if it's attributes support expressions.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/dir-context=*:read-resource-description
+{
+    "outcome" => "success",
+    "result" => [{
+        "address" => [
+            ("subsystem" => "elytron"),
+            ("dir-context" => "*")
+        ],
+....
+                "properties" => {
+                    "type" => OBJECT,
+                    "description" => "The additional connection properties for the DirContext.",
+
+                   "expressions-allowed" => true,
+
+                },
+....
+----
+
+Where an attribute specifies `expressions-allowed` is set to `true` these encrypted expressions can be used.
+
+== Second Credential Store
+
+Now we have a password converted to an encrypted expression we can define a new credential store using this
+password and we can also add a `SecretKey` to the second store.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/credential-store=main:add( \
+    relative-to=jboss.server.config.dir, \
+    path=main.cs, \
+    credential-reference= \
+        {clear-text="${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"}, \
+    create=true)
+{"outcome" => "success"}
+
+[standalone@localhost:9990 /] /subsystem=elytron/credential-store=main:generate-secret-key( \
+    alias=main-key)
+{"outcome" => "success"}
+----
+
+A second resolver can now be added to the `expression=resolver` resource, we can also make this new
+resolver a default.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:list-add(\ 
+    name=resolvers, \
+    value={ \
+        name=main-resolver, \
+        credential-store=main, \
+        secret-key=main-key})
+
+....
+
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:write-attribute( \
+    name=default-resolver, \
+    value=main-resolver)
+
+''''
+
+[standalone@localhost:9990 /] :reload
+
+....
+
+----
+
+Finally we can use this new resolver to create an expression.
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:create-expression( \
+    clear-text=MySecondPassword)
+{
+    "outcome" => "success",
+    "result" => { \
+        "expression" => "${ENC::RUxZAUMQLRoRLS2PYwFgxXlFTNvTaaI5GXO7qkY4W7UHCwGgUl9Vr4R1BKgm+SKfb4DCwuHf}
+"}
+}
+
+----
+
+As we defined a `default-resolver` this was omitted in the `create-expression` operation,
+additionally the name of the resolver is not included in the resulting expression.
+
+== XML Configuration
+
+The commands executed in this post have resulted in the following resources being defined in the
+`elytron` subsystem.
+
+[source,xml]
+----
+<credential-stores>
+    <credential-store name="main" relative-to="jboss.server.config.dir" path="main.cs" create="true">
+        <credential-reference 
+            clear-text="${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"/>
+    </credential-store>
+    <secret-key-credential-store name="initial" relative-to="jboss.server.config.dir" path="initial.cs"/>
+</credential-stores>
+<expression-resolver default-resolver="main-resolver">
+    <resolver name="initial-resolver" credential-store="initial" secret-key="key"/>
+    <resolver name="main-resolver" credential-store="main" secret-key="main-key"/>
+</expression-resolver>
+----
+
+== Further Reading
+
+This blog post has illustrated the use of this new feature using a specific scenario, further
+information is available in the WildFly documentation including information using the stand alone
+command line tooling.
+
+ * https://docs.wildfly.org/23/WildFly_Elytron_Security.html#CredentialStore[WildFly Elytron Credential Store, window="_blank"]
+ * https://docs.wildfly.org/23/WildFly_Elytron_Security.html#EncryptedExpressions[Encrypted Expressions, window="_blank"]
+
