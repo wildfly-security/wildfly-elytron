@@ -1,0 +1,47 @@
+---
+layout: post
+title: 'Normalize principal propagation/injection across elytron and legacy'
+date: 2021-03-19
+tags: elytron wildfly23 ejb principal propagation authentication
+synopsis: An overview of the new configuration option in the EJB subsystem that allows to switch between legacy and elytron principal propagation
+author: dvilkola
+---
+
+In WildFly 23 there is a new configuration option in the EJB subsystem that allows to switch between legacy and elytron principal propagation. This blog post will provide an explanation about the difference between these propagation modes and where the configuration can be done.
+
+== Definition of terms
+
+`Secured EJB` refers to EJB that has any security metadata configured at the EJB level. `Unsecured EJB` is EJB without such security metadata.
+
+Incoming run-as identity refers to the security identity that was active for the context before the `run-as*` annotation was applied. For further information please see https://docs.wildfly.org/22/Developer_Guide.html#run-as-principal[RunAsPrincipal annotation documentation].
+
+== Background
+
+Issue https://issues.redhat.com/browse/WFLY-12537[WFLY-12537] was created to resolve incompatibility between Elytron and legacy principal propagation.
+
+If Elytron was used before this issue was resolved, then the security identity of an unsecured EJB was always anonymous if there was no incoming run-as identity. This is not true for legacy, where the identity is anonymous only if mentioned unsecured EJB was called from remote context. The identity for local EJB is the current security identity obtained from security domain.
+
+This behaviour was made consistent after issue WFLY-12537 got resolved. However in WildFly 23, we decided to provide possibility for both options in order to avoid regressions for users.
+
+== Configuration
+
+New attribute called `legacy-compliant-principal-propagation`  was added to the `application-security-domain` component in the ejb3 subsystem. You can configure it the following way:
+
+```
+/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain,legacy-compliant-principal-propagation=false)
+```
+
+See below the full description of the difference.
+
+ * *legacy-compliant-principal-propagation set to true* If incoming run-as identity exists then it is the identity of the EJB. Otherwise, if the EJB is secured, then the identity is the current security identity obtained from a security domain. If the EJB is unsecured then identity is anonymous regardless of whether the EJB was called from remote context or not.
+ * *legacy-compliant-principal-propagation set to false* If incoming run-as identity exists then it is the identity of the EJB. Otherwise,
+** if the EJB is local then the security identity of this EJB is the current security identity obtained from security domain.
+ ** if the EJB is unsecured and called from remote context then its identity is anonymous. If the EJB is secured and called from remote context then its identity is the current security identity obtained from security domain.
+
+
+The attribute's default value is true.
+
+
+== Summary
+
+This blog post has given an overview of how to switch between legacy compliant principal propagation and Elytron principal propagation in the EJB subsystem.

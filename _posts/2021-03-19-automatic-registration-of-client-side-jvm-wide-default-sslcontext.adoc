@@ -1,0 +1,23 @@
+---
+layout: post
+title: 'Upcoming automatic registration of client side default SSLContext'
+date: 2021-03-19
+tags: elytron wildfly23 default ssl context client jvm security provider
+synopsis: An overview of the upcoming automatic registration of client side JVM wide default SSLContext
+author: dvilkola
+---
+
+One of the features we have been working on for the Elytron subsytem is the ability to automatically register client side JVM wide default SSL context. This SSL context will be available to any library that supports the use of the default context.
+
+== Details
+
+We plan to provide implementation of new java security provider that will provide protocol named "Default". When registering this provider, elytron client will load configuration and provide initialized ssl context for clients requesting SSL context by using `SSLContext.getDefault()` or by using method `SSLContext.getInstance("Default", newElytronClientProviderInstance)`.
+
+Our plans are that this provider will load the ssl context from either current authentication context obtained from classpath, or from authentication context obtained from file that is passed to the security provider either dynamically or as an argument in java.security file.
+
+== Summary
+
+This blog post has given a short overview of the upcoming client side jvm wide default SSL context that will be configurable in Elytron client configuration.
+
+For more details and updates on the status of this feature, keep an eye on https://issues.redhat.com/browse/WFLY-13762[WFCORE-5120]. You can also take a look at the https://github.com/wildfly/wildfly-proposals/pull/336[proposal]. We welcome feedback.
+

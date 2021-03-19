@@ -1,0 +1,85 @@
+---
+layout: post
+title: 'New Security Features in WildFly 23'
+date: 2021-03-19
+tags: elytron release wildfly23
+synopsis: An overview of the new security features in WildFly 23.
+author: fjuma
+---
+
+This blog post highlights the new security features that are in WildFly 23 and also gives an update
+on the new security features that the Elytron team has been working on.
+
+== New Features in WildFly 23
+
+=== Encrypted Expression Support
+
+WildFly 23 now adds support for encrypted expressions within the management model. For details on how to
+quickly get started with this new feature, check out this https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/[blog post].
+
+=== Principal Propagation
+
+In certain cases, the principal associated with an unsecured EJB can differ depending on whether Elytron or legacy
+security is in use. WildFly 23 makes it possible for users to decide which behaviour they would like to use.
+More information can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/[blog post].
+
+=== Support for MicroProfile JWT 1.2
+
+The version of MicroProfile JWT supported by WildFly has been upgraded to version 1.2. More
+information about what's new in MicroProfile JWT 1.2 can be found https://github.com/eclipse/microprofile-jwt-auth/releases/tag/1.2[here].
+
+== In Progress Features
+
+The Elytron team has also been working on many other new features during the WildFly 23 development phase. Although
+these features weren't quite ready to be included in WildFly 23, we hope to include them in a future WildFly release.
+Here's a quick update on these features.
+
+=== SSL/TLS enhancements
+
+https://issues.redhat.com/browse/ELY-1996[ELY-1996] *SSLContext to support delegation to alternate instances based on peer information*
+
+* This feature looks at making use of the host and port information of the peer that we are
+connecting to in order to dynamically select which SSL context to use. More information about how this
+new feature will be configured can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/[blog post].
+
+https://issues.redhat.com/browse/WFCORE-5120[WFCORE-5120] *Automatic registration of a client side / JVM wide default SSLContext*
+
+* This feature will make it possible to register a JVM wide default SSL context for libraries that make use of Elytron
+client configuration. Additional information on the plans for this feature can be found https://wildfly-security.github.io/wildfly-elytron/blog/automatic-registration-of-client-side-jvm-wide-default-sslcontext/[here].
+
+https://issues.redhat.com/browse/WFCORE-5170[WFCORE-5170] *Support for multiple certificate revocation lists*
+
+* This feature will make it possible to configure multiple certificate revocation lists (e.g., for the case where more
+than one certificate authority is being used). An introduction to this feature can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/[blog post].
+
+https://issues.redhat.com/browse/WFCORE-5145[WFCORE-5145] *Elytron server-ssl-context allowed protocols*
+
+* This enhancement allows an additional legacy protocol to be configured for SSL contexts to provide feature
+parity with legacy security. More information can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/[blog post].
+
+=== Security Realm Enhancements
+
+https://issues.redhat.com/browse/WFCORE-5027[WFCORE-5027] *Security Realms should support specifying the charset and encoding for credentials*
+
+* This feature will make it possible for security realms to store hashed passwords in hex format, in addition to
+Base64 format. It will also make it possible to configure the character set to use when processing a user's
+password. An introduction to this new feature can be found in this https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/[blog post].
+
+=== OpenID Connect
+
+https://issues.redhat.com/browse/WFLY-14017[WFLY-14017] *Native support for OpenID Connect*
+
+* WildFly currently provides the ability to secure deployments using https://openid.net/connect/[OpenID Connect] (OIDC)
+by installing a Keycloak https://www.keycloak.org/docs/latest/securing_apps/#_jboss_adapter[client adapter].
+By adding native support for OpenID Connect to Elytron, the Keycloak client adapter will no longer be needed
+to secure applications deployed to WildFly using OIDC. More details can be found https://github.com/wildfly/wildfly-proposals/pull/341[here].
+
+== Where to Find More Information
+
+This blog post has given an overview of the new security features that are included in WildFly 23 and has
+also given an update on the new security features that are currently in progress. Be sure to check out our
+https://wildfly-security.github.io/wildfly-elytron/blog/[blog posts] page, where we have all our
+blog posts on Elytron features. If there is an Elytron topic you’d like to see a blog post on, feel free to
+let us know on WildFly’s https://groups.google.com/forum/#!forum/wildfly[user forums].
+
+To learn more about Elytron, check out our https://wildfly-security.github.io/wildfly-elytron/[site].
