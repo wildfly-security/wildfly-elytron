@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Fri, 19 Mar 2021 18:42:41 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 19 Mar 2021 18:44:43 +0000</lastBuildDate>
         
         <item>
             <title>WildFly Encrypted Expression Support</title>
@@ -18,6 +18,90 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming hash character sets and hash encodings support in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/
+            </link>
+            <description>
+                One of the features we have been working on for the Elytron subsytem is the ability to specify the hash character set and hash encoding in security realms that support storing hashed passwords. The purpose of this task is to ensure feature parity with legacy security configurations. We have plans...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming SSLContext that supports delegation to alternate instances based on peer information</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/
+            </link>
+            <description>
+                One of the features we have been working on for the Elytron subsytem is the ability to configure SSL context that will delegate to different instances of SSL context based on the host and port of the peer. Background In some cases it can be useful to have SSL context...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Normalize principal propagation/injection across elytron and legacy</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/
+            </link>
+            <description>
+                In WildFly 23 there is a new configuration option in the EJB subsystem that allows to switch between legacy and elytron principal propagation. This blog post will provide an explanation about the difference between these propagation modes and where the configuration can be done. Definition of terms Secured EJB refers...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming SSL features: Multiple certificate revocation lists support and SSLv2Hello support</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/
+            </link>
+            <description>
+                Two of the new features regarding SSL that we have been working on include adding support for configuring multiple certificate revocation lists and SSLv2Hello support. These features did not make it into WildFly 23 but we have plans for them to be included in WildFly 24. An Overview of Certificate...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/
+            </guid>
+        </item>
+        
+        <item>
+            <title>New Security Features in WildFly 23</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-23/
+            </link>
+            <description>
+                This blog post highlights the new security features that are in WildFly 23 and also gives an update on the new security features that the Elytron team has been working on. New Features in WildFly 23 Encrypted Expression Support WildFly 23 now adds support for encrypted expressions within the management...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-23/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming automatic registration of client side default SSLContext</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-registration-of-client-side-jvm-wide-default-sslcontext/
+            </link>
+            <description>
+                One of the features we have been working on for the Elytron subsytem is the ability to automatically register client side JVM wide default SSL context. This SSL context will be available to any library that supports the use of the default context. Details We plan to provide implementation of...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-registration-of-client-side-jvm-wide-default-sslcontext/
             </guid>
         </item>
         
@@ -60,90 +144,6 @@
             <pubDate>Tue, 12 Jan 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/case-principal-transformer/
-            </guid>
-        </item>
-        
-        <item>
-            <title>TLS 1.3 support for WildFly with OpenSSL</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/
-            </link>
-            <description>
-                WildFly 21 adds the ability to use TLS 1.3 with WildFly when using the OpenSSL TLS provider. This blog post will give an introduction to this new feature. Disabled by Default The use of TLS 1.3 is currently disabled by default when using the OpenSSL TLS provider. This is because...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly-openssl/
-            </guid>
-        </item>
-        
-        <item>
-            <title>SSH Authentication with Git Persistence</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/
-            </link>
-            <description>
-                When using a standalone WildFly server, it is currently possible to manage your configuration file history using a git repository. While previously it was only possible to connect to HTTP git servers, it is now possible to establish a connection with SSH servers as well. In order to connect to...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ssh-auth-for-git-persistence/
-            </guid>
-        </item>
-        
-        <item>
-            <title>RESTEasy client integration with WildFly Elytron client</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/resteasy-elytron-client-integration/
-            </link>
-            <description>
-                We have added a new functionality to the RESTEasy client that allows it to use authentication configuration from WildFly Elytron client. It is now possible to configure bearer token, SSL context and credentials in Elytron client that RESTEasy client will automatically use when making requests. Elytron client configuration No new...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/resteasy-elytron-client-integration/
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly 21</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-21/
-            </link>
-            <description>
-                This blog post highlights the new security features that are in WildFly 21. Security Realm Enhancements If a security realm becomes unavailable for some reason, it is now possible to fail over to an alternate security realm. WildFly 21 also adds support for distributed security realms, where identities can be...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-21/
-            </guid>
-        </item>
-        
-        <item>
-            <title>HTTP External Mechanism</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/
-            </link>
-            <description>
-                WildFly Elytron now supports authenticating users with the External HTTP mechanism. The External mechanism allows users to be authenticated with credentials established outside the server via the AJP protocol. This means if you have users authenticated by an Apache httpd server, these users can be forwarded to WildFly. This can...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/http-external-mechanism/
-            </guid>
-        </item>
-        
-        <item>
-            <title>An overview of new security realm implementations</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-and-failover-realms/
-            </link>
-            <description>
-                We have added a new functionality to WildFly Elytron It is now possible to configure security realms that delegate authentication and authorization to multiple realms. Distributed realm First added realm is the distributed-realm, which can be used to join multiple realms into one, for example if you have user data...
-            </description>
-            <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-and-failover-realms/
             </guid>
         </item>
         

@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: Planned Security Features for WildFly 19</title>
+    <title>Elytron: Upcoming SSLContext that supports delegation to alternate instances based on peer information</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -105,36 +105,60 @@
             <div class="content">
                 <div class="post-page grid-wrapper">
   <div class="grid__item width-12-12 width-12-12-m doc-content">
-    <h1>Planned Security Features for WildFly 19</h1>
+    <h1>Upcoming SSLContext that supports delegation to alternate instances based on peer information</h1>
     <div class="grid-wrapper">
       <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
         
         
-          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          <img class="headshot" src="https://www.gravatar.com/avatar/4336bee4b72f539ef5f8cc0d2c6026f5">
         
-        <p class="byline">By <a href="https://github.com/fjuma">Farah Juma</a> | October 10, 2019</p>
+        <p class="byline">By <a href="https://github.com/Skyllarr">Diana Krepinska Vilkolakova</a> | March 19, 2021</p>
       </div>
       
       <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
-  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-19/&title=Planned Security Features for WildFly 19" rel="nofollow" target="_blank" title="Share on LinkedIn">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/&title=Upcoming SSLContext that supports delegation to alternate instances based on peer information" rel="nofollow" target="_blank" title="Share on LinkedIn">
     <i class="fab fa-linkedin"></i>
   </a>
-  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Planned Security Features for WildFly 19&url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-19/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Upcoming SSLContext that supports delegation to alternate instances based on peer information&url=https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
     <i class="fab fa-twitter-square"></i>
   </a>
-  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-19/" rel="nofollow" target="_blank" title="Share on Facebook">
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/" rel="nofollow" target="_blank" title="Share on Facebook">
     <i class="fab fa-facebook-square"></i>
   </a>
-  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-19/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
     <i class="fab fa-reddit-square"></i>
   </a>
-  <a class="share-email" href="mailto:?subject=Planned Security Features for WildFly 19&amp;body=Planned Security Features for WildFly 19 https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-19/" title="Share via Email" >
+  <a class="share-email" href="mailto:?subject=Upcoming SSLContext that supports delegation to alternate instances based on peer information&amp;body=Upcoming SSLContext that supports delegation to alternate instances based on peer information https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/" title="Share via Email" >
     <i class="fas fa-envelope-square"></i>
   </a>
 </div>
 </div>
       <div class="grid__item width-12-12">
-          
+          <div class="paragraph">
+<p>One of the features we have been working on for the Elytron subsytem is the ability to configure SSL context that will delegate to different instances of SSL context based on the host and port of the peer.</p>
+</div>
+<div class="sect1">
+<h2 id="background"><a class="anchor" href="#background"></a>Background</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In some cases it can be useful to have SSL context that can select appropriate certificate/keystore for the connection based on the hostname and/or port of the peer. It would be easier to configure one such SSL context and provide rules at one place based on which the appropriate SSL Context instance will be selected.</p>
+</div>
+<div class="paragraph">
+<p>In Elytron it is already possible to configure <code>authentication-context</code> resource where you can provide rules that associate SSL context with specific host and/or port. After this feature is complete, you should be able to configure dynamic SSL context that will use these rules and will select appropriate SSL context for the connection.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given a short overview of the upcoming SSL context that selects appropriate instances based on peer information. It will be possible to configure it using WildFly CLI or directly in server configuration file.</p>
+</div>
+<div class="paragraph">
+<p>For more details and updates on the status of this feature, take a look at <a href="https://issues.redhat.com/browse/WFLY-13762">WFLY-13762</a>. You can also take a look at the <a href="https://github.com/wildfly/wildfly-proposals/pull/328">proposal</a>. We welcome feedback.</p>
+</div>
+</div>
+</div>
       </div>
     </div>
   </div>
