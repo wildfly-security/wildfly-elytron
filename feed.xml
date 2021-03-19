@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Thu, 18 Mar 2021 19:39:44 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 19 Mar 2021 18:42:41 +0000</lastBuildDate>
+        
+        <item>
+            <title>WildFly Encrypted Expression Support</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
+            </link>
+            <description>
+                With the release of WildFly 23 the WildFly Elytron project and it&#8217;s integration now adds support for encrypted expressions within the management model, this post will describe the steps to quickly get started using this new feature. Introduction The CredentialStore functionality provided by WildFly Elytron provides a mechanism for the...
+            </description>
+            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
+            </guid>
+        </item>
         
         <item>
             <title>Planned Security Features for WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 14 Oct 2020 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/distributed-and-failover-realms/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Anomaly based Intrusion Detection System</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/
-            </link>
-            <description>
-                Intrusion Detection is the art of sensing when a system or network is being used inappropriately or without authorization. Without intrusion detection, an attacker can attempt attacks many times until an attack is finally successful. Intrusion detection allows for these attacks to be identified before a successful attack is likely...
-            </description>
-            <pubDate>Sat, 29 Aug 2020 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/anomaly-based-intrusion-detection-system/
             </guid>
         </item>
         
