@@ -1,0 +1,38 @@
+---
+layout: documentation
+title: WildFly Elytron Documentation
+permalink: /docs/
+---
+
+= WildFly Elytron Documentation
+
+= WildFly Elytron Documentation
+
+For information regarding using WildFly Elytron within the WildFly application server please consult the
+https://docs.wildfly.org/23/WildFly_Elytron_Security.html[subsystem documentation].
+
+== API References
+
+Javdoc of the public APIs is available for the most recent two major WildFly releases.
+
+ * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 23 API].
+ * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 22 API].
+
+Javadoc of the public APIs is also available for the versions of WildFly Elytron included in JBoss EAP.
+
+ * link:/wildfly-elytron/documentation/api/eap73/index.html[JBoss EAP 7.3 API].
+ * link:/wildfly-elytron/documentation/api/eap72/index.html[JBoss EAP 7.2 API].
+
+== Developing WildFly Elytron
+
+For information on getting started developing WildFly Elytron please see
+link:/wildfly-elytron/getting-started-for-developers[Getting Started for Developers].
+
+=== Full Javadoc
+
+Two versions of the full javdoc (including private APIs) are available.
+
+ * link:/wildfly-elytron/documentation/api/next/index.html[Next WildFly Release].
+ * link:/wildfly-elytron/documentation/api/upstream/index.html[Upstream Javadoc].
+
+NOTE: This full javadoc includes private API which may be subject to change.
