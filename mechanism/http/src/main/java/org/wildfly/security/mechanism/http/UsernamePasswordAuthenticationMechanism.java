@@ -20,6 +20,7 @@ package org.wildfly.security.mechanism.http;
 
 import java.io.IOException;
 
+import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -60,6 +61,7 @@ public abstract class UsernamePasswordAuthenticationMechanism implements HttpSer
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
         nameCallback.setName(username);
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
+        final ClearPassword clearPwd = ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password);
         EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
 
         httpUserPass.debugf("Username authentication. Realm: [%s], Username: [%s].",
@@ -76,13 +78,14 @@ public abstract class UsernamePasswordAuthenticationMechanism implements HttpSer
             callbackHandler.handle(callbacks);
 
             if(evidenceVerifyCallback.isVerified()) {
-                IdentityCredentialCallback credentialUpdateCallback = new IdentityCredentialCallback(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password)), true);
+                IdentityCredentialCallback credentialUpdateCallback = new IdentityCredentialCallback(new PasswordCredential(clearPwd), true);
                 callbackHandler.handle(new Callback[]{credentialUpdateCallback});
                 return true;
             } else {
+                clearPwd.destroy();
                 return false;
             }
-        } catch (UnsupportedCallbackException e) {
+        } catch (UnsupportedCallbackException|DestroyFailedException e) {
             return false;
         } catch (IOException e) {
             throw new HttpAuthenticationException(e);
