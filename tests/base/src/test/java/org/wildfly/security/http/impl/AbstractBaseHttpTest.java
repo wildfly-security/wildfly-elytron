@@ -45,13 +45,17 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
+
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -303,10 +307,15 @@ public class AbstractBaseHttpTest {
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
                     ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
+                    evidence.destroy();
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
-                    // NO-OP
+                    Credential credential = ((IdentityCredentialCallback) callback).getCredential();
+                    MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
+                    ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
+                    Assert.assertNotNull(clearPwdCredential);
+                    Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
                 } else if (callback instanceof AuthorizeCallback) {
                     if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
                        username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
