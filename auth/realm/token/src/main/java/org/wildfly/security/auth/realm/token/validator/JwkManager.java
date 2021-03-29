@@ -174,8 +174,8 @@ class JwkManager {
                 continue;
             }
 
-            BigInteger e = new BigInteger(Base64.getDecoder().decode(e1));
-            BigInteger n = new BigInteger(Base64.getDecoder().decode(n1));
+            BigInteger e = new BigInteger(1, Base64.getUrlDecoder().decode(e1));
+            BigInteger n = new BigInteger(1, Base64.getUrlDecoder().decode(n1));
             RSAPublicKeySpec keySpec = new RSAPublicKeySpec(n, e);
 
             try {
