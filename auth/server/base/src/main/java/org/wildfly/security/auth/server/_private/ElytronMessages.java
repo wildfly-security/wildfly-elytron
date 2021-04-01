@@ -22,7 +22,9 @@ import static org.jboss.logging.Logger.Level.ERROR;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.cert.CertificateException;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -34,6 +36,10 @@ import org.jboss.logging.annotations.Param;
 
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
+import org.jose4j.jwt.NumericDate;
+import org.wildfly.security.auth.server.jwt.JwtException;
+import org.wildfly.security.auth.server.jwt.LoadingKeyException;
+import org.wildfly.security.auth.server.jwt.ParseException;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 
@@ -147,4 +153,63 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 16002, value = "Can not handle SecurityEvent with SecurityIdentity from other SecurityDomain")
     IllegalArgumentException securityEventIdentityWrongDomain();
+
+    @Message(id = 16003, value = "Generated Certificate could not be stored in keystore")
+    CertificateException couldNotStoreCertificate(@Cause Throwable throwable);
+
+    @Message(id = 16004, value = "Keystore file does not exist")
+    IOException keystoreFileDoesNotExist(@Cause Throwable cause);
+
+    @Message(id = 16005, value = "No such algorithm found to check the integrity of the KeyStore")
+    NoSuchAlgorithmException noSuchAlgorithmToCheckKeyStoreIntegrity(@Cause Throwable cause);
+
+    @Message(id = 16006, value = "The Expiration Time (exp=%s) claim value cannot be less than Issued At (iat=%s) claim value")
+    ParseException failedToVerifyIatExp(NumericDate exp, NumericDate iat);
+
+    @Message(id = 16007, value = "Invalid 'iat' or 'exp' claim value")
+    ParseException invalidIatExp();
+
+    @Message(id = 16008, value = "The Expiration Time (exp=%s) claim value cannot be more than %d"
+            + " seconds in the future relative to Issued At (iat=%s) claim value")
+    ParseException expExceeded(NumericDate exp, long maxTimeToLiveSecs, NumericDate iat);
+
+    @Message(id = 16009, value = "Encrypted token sequence is invalid")
+    ParseException encryptedTokenSequenceInvalid(@Cause Throwable throwable);
+
+    @Message(id = 16010, value = "Failed to verify a token")
+    ParseException failedToVerifyToken(@Cause Throwable throwable);
+
+    @Message(id = 16011, value = "Failed to load public or private key from keystore")
+    LoadingKeyException failedToLoadKey(@Cause Throwable throwable);
+
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 16012, value = "The value of (claim=%s) is not the expected type")
+    void invalidClaimValue(@Cause Throwable throwable, String claim);
+
+    @Message(id = 16013, value = "Error parsing Json Web Token")
+    JwtException errorParsingJwt(@Cause Throwable throwable);
+
+    @Message(id = 16014, value = "Token Provider is not built yet")
+    IllegalStateException tokenProviderNotBuilt();
+
+    @Message(id = 16015, value = "Failed to issue Json Web Token")
+    JwtException failedToIssueJwt();
+
+    @Message(id = 16016, value = "Failed to parse or validate Json Web Token")
+    JwtException failedToValidateToken();
+
+    @Message(id = 16017, value = "Missing information to use provided keystore")
+    IllegalStateException missingInformationForUserKeyStore();
+
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 16019, value = "Access token is invalid")
+    void accessTokenIsInvalid();
+
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 16020, value = "Refresh token is invalid")
+    void refreshTokenIsInvalid();
+
+    @Message(id = 16021, value = "Invalid signing and/or encryption configuration")
+    JwtException invalidSigningAndEncryptionConfiguration();
+
 }
