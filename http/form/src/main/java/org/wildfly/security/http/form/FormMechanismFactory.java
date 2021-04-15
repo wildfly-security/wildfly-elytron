@@ -19,10 +19,13 @@
 package org.wildfly.security.http.form;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.http.HttpConstants.DISABLE_SESSION_ID_CHANGE;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
+import static org.wildfly.security.http.form.ElytronMessages.log;
 
 import java.security.Provider;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -39,6 +42,8 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class FormMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+
+    private static final AtomicBoolean ID_CHANGE_LOGGED = new AtomicBoolean(false);
 
     public FormMechanismFactory() {
     }
@@ -66,6 +71,10 @@ public class FormMechanismFactory implements HttpServerAuthenticationMechanismFa
         checkNotNullParam("callbackHandler", callbackHandler);
 
         if (FORM_NAME.equals(mechanismName)) {
+            if (Boolean.valueOf((String) properties.get(DISABLE_SESSION_ID_CHANGE)) && !ID_CHANGE_LOGGED.getAndSet(true)) {
+                log.sessionIdChangeDiabled();
+            }
+
             return new FormAuthenticationMechanism(callbackHandler, properties);
         }
 
