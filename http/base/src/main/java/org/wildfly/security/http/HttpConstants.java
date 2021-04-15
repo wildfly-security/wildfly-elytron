@@ -99,6 +99,14 @@ public class HttpConstants {
      */
     public static final String CONFIG_STATE_SCOPES = CONFIG_BASE + ".state-scopes";
 
+    /**
+     * If set to {@code true} the SPNEGO and FORM authentication mechanisms will not change the session ID
+     * after a successful authentication.
+     *
+     * Where set the web application should be configured to use cookies exclusively for session management.
+     */
+    public static final String DISABLE_SESSION_ID_CHANGE = CONFIG_BASE + ".unsafe.disable-session-change-id";
+
     /*
      * Header Fields
      */
