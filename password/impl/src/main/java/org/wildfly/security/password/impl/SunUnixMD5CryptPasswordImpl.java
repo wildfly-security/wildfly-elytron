@@ -32,14 +32,13 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * Implementation of the Sun variant of the Unix MD5 Crypt password.
