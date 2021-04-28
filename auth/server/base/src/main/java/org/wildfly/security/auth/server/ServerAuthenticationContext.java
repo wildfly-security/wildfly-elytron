@@ -1057,8 +1057,12 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     log.tracef("Handling SocketAddressCallback");
                     if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
                         Attributes runtimeAttributes = new MapAttributes();
-                        runtimeAttributes.addFirst(KEY_SOURCE_ADDRESS, ((InetSocketAddress) socketAddressCallback.getAddress()).getAddress().getHostAddress());
-                        addRuntimeAttributes(runtimeAttributes);
+                        if ((socketAddressCallback.getAddress() != null) && ((InetSocketAddress) socketAddressCallback.getAddress()).getAddress() != null) {
+                            runtimeAttributes.addFirst(KEY_SOURCE_ADDRESS, ((InetSocketAddress) socketAddressCallback.getAddress()).getAddress().getHostAddress());
+                            addRuntimeAttributes(runtimeAttributes);
+                        } else {
+                            log.tracef("Client's IP address is unknown.");
+                        }
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SecurityIdentityCallback) {
