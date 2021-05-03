@@ -17,6 +17,13 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - if: matrix.os == 'macos-latest'
+        name: Install docker
+        run: |
+          brew install docker docker-machine docker-compose
+          brew services start docker-machine
+          docker-machine create --driver virtualbox default
+          docker --version
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
