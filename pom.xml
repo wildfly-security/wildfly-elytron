@@ -95,6 +95,9 @@
         <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
+        <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
+        <version.org.keycloak.keycloak-admin-client>12.0.4</version.org.keycloak.keycloak-admin-client>
+        <version.io.rest-assured>4.3.3</version.io.rest-assured>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -566,6 +569,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-oidc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-spnego</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -786,6 +794,12 @@
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-tool</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-tests</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
@@ -1159,6 +1173,24 @@
                 <version>${version.org.mock-server.mockserver-netty}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>${version.io.rest-assured}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${version.org.testcontainers.testcontainers}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-admin-client</artifactId>
+                <version>${version.org.keycloak.keycloak-admin-client}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1313,6 +1345,7 @@
         <module>http/digest</module>
         <module>http/external</module>
         <module>http/form</module>
+        <module>http/oidc</module>
         <module>http/spnego</module>
         <module>http/sso</module>
         <module>http/util</module>
