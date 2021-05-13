@@ -1,0 +1,117 @@
+---
+layout: post
+title: 'Secure WildFly CLI with Keycloak'
+date: 2021-06-15
+tags: elytron wildfly cli keycloak oath2 sso management-model
+synopsis: A guide to show how to secure WildFly CLI using Keycloak.
+author: dvilkola
+---
+
+This blog post gives an example of how to secure WildFly CLI using Keycloak and Elytron.
+
+== Keycloak's Wildfly Elytron Adapter
+
+Download WildFly server, Keycloak server and the WildFly OpenID Connect client adapter for WildFly from https://www.keycloak.org/downloads.html[keycloak.org]. Make sure your versions are compatible. Then, extract the contents of the client adapter into the root directory of your WildFly server.
+
+Start WildFly on default port 8080:
+
+[source,shell]
+----
+$WILDFLY_HOME/bin/standalone.sh
+----
+
+For Keycloak, use the following command to start the server on port 8180:
+
+[source,shell]
+----
+$KEYCLOAK_HOME/bin/standalone.sh -Djboss.socket.binding.port-offset=100
+----
+
+Below script will make the necessary edits to the `$WILDFLY_HOME/standalone/configuration/standalone.xml` file in order to install the keycloak adapter.
+
+[source,shell]
+----
+$WILDFLY_HOME/bin/jboss-cli.sh --file=$WILDFLY_HOME/bin/adapter-elytron-install-offline.cli
+----
+
+You should be able to access Keycloak Administration Console at http://localhost:8180/auth. If you are running the server for the first time, you should create an initial admin user to get started. Once you provide the username and password for the admin user you will be able to log in.
+
+== Keycloak configuration
+
+Create a realm with a name `wildfly-realm`. Then, create a client application with a name `wildfly-cli` and configure it as follows:
+
+ *  Select *confidential* in the *Access Type* field
+
+ *  Put value http://localhost:9990/ to *Valid Redirect URI* field
+
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/2021-06-15-secure-wildfly-cli-with-keycloak-WildFlyClientApp.png[]
+
+Now you need to create a user in `wildfly-realm`. Make sure you configure password for this user as well.
+
+Create an *ADMINISTRATOR* role. You need to add this role to this user in order to grant him/her access to the Wildfly CLI.
+
+Finally, you should configure the Keycloak realm to put roles in a top level field in the JWT roken. This is because Keycloak uses the claim `realm_access.roles` to map roles by default. Since we want to configure role decoder to take roles from the claim `Roles`, we need to configure Keycloak to use this claim as well. It is of course possible to configure some other claim as well.
+
+To configure this in Keycloak, go to the client scopes and click on `roles`. You should be able to find `realm roles` in the `Mappers` tab. Change the `Token Claim Name` to be `Roles`.
+
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/2021-06-15-secure-wildfly-cli-with-keycloak-RealmRoles.png[]
+
+== WildFly configuration
+
+Connect to the WildFly CLI and run the below commands. Make sure you change the `<wildfly-cli-client-secret>` to match the client secret of your `wildfly-cli` client. You can find it in the Keycloak Administration Console.
+
+[source,shell]
+----
+/subsystem=elytron/token-realm=my-jwt-realm:add(oauth2-introspection={client-id=wildfly-cli,client-secret=<wildfly-cli-client-secret>,introspection-url="http://localhost:8180/auth/realms/wildfly-realm/protocol/openid-connect/token/introspect"})
+
+/subsystem=elytron/simple-role-decoder=roles-attribute:add(attribute="Roles")
+
+/subsystem=elytron/security-domain=my-jwt-domain:add(realms=[{realm=my-jwt-realm,role-decoder=roles-attribute}],permission-mapper=default-permission-mapper,default-realm=my-jwt-realm)
+
+/subsystem=elytron/sasl-authentication-factory=my-sasl-auth:add(sasl-server-factory=configured,security-domain=my-jwt-domain,mechanism-configurations=[{mechanism-name=OAUTHBEARER,mechanism-realm-configurations=[{realm-name=my-jwt-realm}]}])
+
+/core-service=management/management-interface=http-interface:write-attribute(name=http-upgrade.sasl-authentication-factory, value=my-sasl-auth)
+
+reload
+----
+
+Above commands configure the WildFly CLI to require token for authorization of users. All incoming tokens will be validated using Keycloak's token introspection endpoint.
+
+You will be asked to provide a token when trying to access WildFly CLI with `$WILDFLY_HOME/bin/jboss-cli.sh` client.
+To obtain and provide a token, create a file `$WILDFLY_HOME/wildfly-config.xml` with the following content:
+
+[source,xml]
+----
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.6">
+        <authentication-rules>
+            <rule use-configuration="myconfig">
+            </rule>
+        </authentication-rules>
+        <authentication-configurations>
+            <configuration name="myconfig">
+                <credentials>
+                    <oauth2-bearer-token
+                            token-endpoint-uri="http://localhost:8180/auth/realms/wildfly-realm/protocol/openid-connect/token">
+                        <resource-owner-credentials name="administrator-user">
+                            <credential-store-reference clear-text="password"/>
+                        </resource-owner-credentials>
+                        <client-credentials client-id="wildfly-cli"
+                                            client-secret="<wildfly-cli-client-secret>">
+                        </client-credentials>
+                    </oauth2-bearer-token>
+                </credentials>
+            </configuration>
+        </authentication-configurations>
+    </authentication-client>
+</configuration>
+----
+
+Make sure you configure your client secret accordingly and change the resource owner credentials to match the user you added to the `wildfly-cli` realm. This configuration ensures that the token will be obtained from Keycloak and subsequently sent to the WildFly CLI endpoint.
+
+Now you can connect to the WildFly CLI with the following command:
+
+[source,shell]
+----
+$WILDFLY_HOME/bin/jboss-cli.sh -c -Dwildfly.config.url=$WILDFLY_HOME/wildfly-config.xml
+----
