@@ -87,6 +87,24 @@ public class PropertiesCredentialStoreTest {
         }
     }
 
+    /**
+     * Test verifies that parent directories are created when creating a properties credential store
+     */
+    @Test
+    public void testCreatingStoreWithParentDirectories() throws Exception {
+        File storeFile = new File(tmp.getRoot().getAbsolutePath() + "/parent1/parent2/test1.store");
+        assertFalse(storeFile.exists());
+        try {
+            CredentialStore credentialStore = CredentialStore.getInstance(STORE_TYPE, () -> new Provider[] { PROVIDER });
+            credentialStore.initialize(toConfigurationMap(storeFile.getAbsolutePath(), true));
+            assertTrue(storeFile.exists());
+        } finally {
+            if (storeFile.exists()) {
+                storeFile.delete();
+            }
+        }
+    }
+
     @Test
     public void testFileDoesNotExist() throws NoSuchAlgorithmException {
         File storeFile = new File(getStoragePathForNewFile());
