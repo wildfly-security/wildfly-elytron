@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -41,6 +42,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -114,6 +116,21 @@ public class JwtSecurityRealmTest {
 
     private static String jwksResponse;
 
+    // rfc7518 dictates the use of Base64urlUInt for "n" and "e" and it explicitly mentions that the
+    // minimum number of octets should be used and the 0 leading sign byte should not be included
+    private static byte[] toBase64urlUInt(final BigInteger bigInt) {
+        byte[] bytes = bigInt.toByteArray();
+        int i = 0;
+        while (i < bytes.length && bytes[i] == 0) {
+            i++;
+        }
+        if (i > 0 && i < bytes.length) {
+            return Arrays.copyOfRange(bytes, i, bytes.length);
+        } else {
+            return bytes;
+        }
+    }
+
     @BeforeClass
     public static void setup() throws GeneralSecurityException, IOException {
         System.setProperty("wildfly.config.url", JwtSecurityRealmTest.class.getResource("wildfly-jwt-test-config.xml").toExternalForm());
@@ -129,20 +146,20 @@ public class JwtSecurityRealmTest {
         jwk1.setAlg("RS256");
         jwk1.setKid("1");
         jwk1.setKty("RSA");
-        jwk1.setE(Base64.getEncoder().encodeToString(pk1.getPublicExponent().toByteArray()));
-        jwk1.setN(Base64.getEncoder().encodeToString(pk1.getModulus().toByteArray()));
+        jwk1.setE(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk1.getPublicExponent())));
+        jwk1.setN(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk1.getModulus())));
 
         jwk2.setAlg("RS256");
         jwk2.setKid("2");
         jwk2.setKty("RSA");
-        jwk2.setE(Base64.getEncoder().encodeToString(pk2.getPublicExponent().toByteArray()));
-        jwk2.setN(Base64.getEncoder().encodeToString(pk2.getModulus().toByteArray()));
+        jwk2.setE(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk2.getPublicExponent())));
+        jwk2.setN(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk2.getModulus())));
 
         jwk3.setAlg("RS256");
         jwk3.setKid("3");
         jwk3.setKty("RSA");
-        jwk3.setE(Base64.getEncoder().encodeToString(pk3.getPublicExponent().toByteArray()));
-        jwk3.setN(Base64.getEncoder().encodeToString(pk3.getModulus().toByteArray()));
+        jwk3.setE(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk3.getPublicExponent())));
+        jwk3.setN(Base64.getUrlEncoder().withoutPadding().encodeToString(toBase64urlUInt(pk3.getModulus())));
 
         JsonObject jwks = jwksToJson(jwk1, jwk2);
 
