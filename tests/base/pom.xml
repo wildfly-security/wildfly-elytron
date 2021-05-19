@@ -531,12 +531,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.spec.javax.security.jacc</groupId>
-            <artifactId>jboss-jacc-api_1.5_spec</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.jboss.spec.javax.json</groupId>
             <artifactId>jboss-json-api_1.0_spec</artifactId>
             <scope>provided</scope>
@@ -823,7 +817,6 @@
                                     <include>org.wildfly.security.auth</include>
                                     <include>org.wildfly.security.auth.callback</include>
                                     <include>org.wildfly.security.auth.client</include>
-                                    <include>org.wildfly.security.auth.jaspi</include>
                                     <include>org.wildfly.security.auth.permission</include>
                                     <include>org.wildfly.security.auth.principal</include>
                                     <include>org.wildfly.security.auth.server</include>
