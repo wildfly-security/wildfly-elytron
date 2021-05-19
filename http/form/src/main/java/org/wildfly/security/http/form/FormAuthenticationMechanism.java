@@ -23,6 +23,7 @@ import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_ERROR_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_LOGIN_PAGE;
 import static org.wildfly.security.http.HttpConstants.CONFIG_POST_LOCATION;
+import static org.wildfly.security.http.HttpConstants.DISABLE_SESSION_ID_CHANGE;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.FOUND;
 import static org.wildfly.security.http.HttpConstants.HTTP;
@@ -76,6 +77,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
     private final String loginPage;
     private final String errorPage;
     private final String postLocation;
+    private final boolean disableSessionIdChange;
 
     FormAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
         super(checkNotNullParam("callbackHandler", callbackHandler));
@@ -87,6 +89,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
         contextPath = properties.containsKey(CONFIG_CONTEXT_PATH) ? (String) properties.get(CONFIG_CONTEXT_PATH) : "";
         loginPage = (String) properties.get(CONFIG_LOGIN_PAGE);
         errorPage = (String) properties.get(CONFIG_ERROR_PAGE);
+        disableSessionIdChange = Boolean.valueOf((String) properties.get(DISABLE_SESSION_ID_CHANGE));
     }
 
     @Override
@@ -138,7 +141,7 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
                  * If we are associating an identity with the session for the first time we need to
                  * change the ID of the session, in other cases we can continue with the same ID.
                  */
-                if (session.supportsChangeID() && session.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                if (!disableSessionIdChange && session.supportsChangeID() && session.getAttachment(CACHED_IDENTITY_KEY) == null) {
                     String originalSessionID = session.getID();
                     session.changeID();
                     String newSessionID = session.getID();
