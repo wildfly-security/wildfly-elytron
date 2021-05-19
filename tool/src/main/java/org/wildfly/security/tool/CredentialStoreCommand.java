@@ -271,7 +271,7 @@ class CredentialStoreCommand extends Command {
                     attrs.put(prefix + e.getKey(), e.getValue());
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             // A view can be supported but the operation is later reported
             // as not supported, so just add the attributes if possible.
         }

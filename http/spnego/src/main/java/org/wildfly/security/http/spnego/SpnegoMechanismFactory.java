@@ -20,9 +20,12 @@ package org.wildfly.security.http.spnego;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
+import static org.wildfly.security.http.HttpConstants.DISABLE_SESSION_ID_CHANGE;
+import static org.wildfly.security.http.spnego.ElytronMessages.log;
 
 import java.security.Provider;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -39,6 +42,8 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class SpnegoMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+
+    private static final AtomicBoolean ID_CHANGE_LOGGED = new AtomicBoolean(false);
 
     public SpnegoMechanismFactory() {
     }
@@ -66,6 +71,10 @@ public class SpnegoMechanismFactory implements HttpServerAuthenticationMechanism
         checkNotNullParam("callbackHandler", callbackHandler);
 
         if (SPNEGO_NAME.equals(mechanismName)) {
+            if (Boolean.valueOf((String) properties.get(DISABLE_SESSION_ID_CHANGE)) && !ID_CHANGE_LOGGED.getAndSet(true)) {
+                log.sessionIdChangeDiabled();
+            }
+
             return new SpnegoAuthenticationMechanism(callbackHandler, properties);
         }
 

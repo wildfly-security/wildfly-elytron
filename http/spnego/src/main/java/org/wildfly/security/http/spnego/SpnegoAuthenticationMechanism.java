@@ -23,6 +23,7 @@ import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CREATE_NAME_GSS_INIT;
 import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
 import static org.wildfly.security.http.HttpConstants.CONFIG_STATE_SCOPES;
+import static org.wildfly.security.http.HttpConstants.DISABLE_SESSION_ID_CHANGE;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
@@ -92,6 +93,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
     private final GSSManager gssManager;
     private final Scope[] storageScopes;
     private final boolean disableRestoreSecurityIdentity;
+    private final boolean disableSessionIdChange;
 
     SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
         checkNotNullParam("callbackHandler", callbackHandler);
@@ -129,6 +131,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                 }
             }
         }
+        disableSessionIdChange = Boolean.valueOf((String) properties.get(DISABLE_SESSION_ID_CHANGE));
     }
 
     @Override
@@ -332,7 +335,7 @@ public final class SpnegoAuthenticationMechanism implements HttpServerAuthentica
                  * If we are associating an identity with the session for the first time we need to
                  * change the ID of the session, in other cases we can continue with the same ID.
                  */
-                if (httpScope.supportsChangeID() && httpScope.getAttachment(CACHED_IDENTITY_KEY) == null) {
+                if (!disableSessionIdChange && httpScope.supportsChangeID() && httpScope.getAttachment(CACHED_IDENTITY_KEY) == null) {
                     httpScope.changeID();
                 }
 
