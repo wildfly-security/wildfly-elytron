@@ -88,6 +88,7 @@ public class OidcTest extends AbstractBaseHttpTest {
             DockerClientFactory.instance().client();
             return true;
         } catch (Throwable ex) {
+            System.out.println("DOCKER EXCEPTION " + ex);
             return false;
         }
     }
