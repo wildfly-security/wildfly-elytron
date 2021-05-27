@@ -98,6 +98,7 @@ public class DirContextFactoryRule implements TestRule {
                 .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
                 .build();
         X509Certificate issuerCertificate = issuerSelfSignedX509CertificateAndSigningKey.getSelfSignedCertificate();
+        localhostKeyStore.setCertificateEntry("ca", issuerCertificate);
         trustStore.setCertificateEntry("mykey", issuerCertificate);
 
         // Generates certificate and keystore for Localhost
