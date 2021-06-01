@@ -140,7 +140,10 @@ pre > code, table code { border: none; background-color: transparent; }
 .getting-started-page h3 { font-size: 20px; font-weight: 600; }
 .getting-started-page h1, .getting-started-page h2, .getting-started-page h3, .getting-started-page h4, .getting-started-page h5 { font-family: "Titillium Web", sans-serif; }
 
-.javadoc-page-title { color: #004153 !important; font-size: 35px; font-family: "Titillium Web", sans-serif; }
+.documentation h1 { color: #004153 !important; font-size: 35px; font-weight: 600; }
+.documentation h2 { font-size: 22px; font-weight: 600; }
+.documentation h3 { font-size: 20px; font-weight: 600; }
+.documentation h1, .documentation h2, .documentation h3, .documentation h4, .documentation h5 { font-family: "Titillium Web", sans-serif; }
 
 * { color: #000000; font-family: "Titillium Web", sans-serif; }
 
