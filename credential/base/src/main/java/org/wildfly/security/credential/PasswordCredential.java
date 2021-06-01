@@ -18,6 +18,11 @@
 
 package org.wildfly.security.credential;
 
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
+
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -109,14 +114,40 @@ public final class PasswordCredential implements AlgorithmCredential {
     }
 
     public boolean verify(final Supplier<Provider[]> providerSupplier, final Evidence evidence) {
+        return verify(providerSupplier, evidence, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Verify the given evidence.
+     *
+     * @param providerSupplier the provider supplier to use for verification purposes (must not be {@code null})
+     * @param evidence the evidence to verify (must not be {@code null})
+     * @param hashCharset the character set to use when converting the password string to a byte array (must not be {@code null})
+     *
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
+    public boolean verify(final Supplier<Provider[]> providerSupplier, final Evidence evidence, Charset hashCharset) {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
         Assert.checkNotNullParam("evidence", evidence);
+        Assert.checkNotNullParam("hashCharset", hashCharset);
         if (evidence instanceof PasswordGuessEvidence) try {
             final PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm(), providerSupplier);
-            return factory.verify(factory.translate(password), ((PasswordGuessEvidence) evidence).getGuess());
+            return factory.verify(factory.translate(password), ((PasswordGuessEvidence) evidence).getGuess(), hashCharset);
         } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
         }
         return false;
+    }
+
+    /**
+     * Verify the given evidence.
+     *
+     * @param evidence the evidence to verify (must not be {@code null})
+     * @param hashCharset the character set to use when converting the password string to a byte array (must not be {@code null})
+     *
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
+    public boolean verify(final Evidence evidence, Charset hashCharset) {
+        return verify(INSTALLED_PROVIDERS, evidence, hashCharset);
     }
 
     public PasswordCredential clone() {

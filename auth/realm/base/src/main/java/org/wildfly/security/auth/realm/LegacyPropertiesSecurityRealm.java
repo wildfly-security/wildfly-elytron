@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
@@ -27,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -64,6 +66,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 
@@ -82,6 +85,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private final Supplier<Provider[]> providers;
     private final String defaultRealm;
     private final boolean plainText;
+    private final Encoding hashEncoding;
+    private final Charset hashCharset;
 
     private final String groupsAttribute;
 
@@ -92,6 +97,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         groupsAttribute = builder.groupsAttribute;
         providers = builder.providers;
         defaultRealm = builder.defaultRealm;
+        hashEncoding = builder.hashEncoding;
+        hashCharset = builder.hashCharset;
     }
 
     @Override
@@ -176,7 +183,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                                 return null; // no digest for given username+realm
                             }
                         }
-                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
+                        byte[] hashed;
+                        if (hashEncoding.equals(Encoding.BASE64)) {
+                            hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(hashCharset)).asUtf8String().base64Decode().drain();
+                        } else {
+                            // use hex by default otherwise
+                            hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(hashCharset)).asUtf8String().hexDecode().drain();
+                        }
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
                 }
@@ -205,7 +218,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     try {
-                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).asUtf8String().hexDecode().drain();
+                        byte[] hashed;
+                        if (hashEncoding.equals(Encoding.BASE64)) {
+                            hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(hashCharset)).asUtf8String().base64Decode().drain();
+                        }  else {
+                            // use hex by default otherwise
+                            hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(hashCharset)).asUtf8String().hexDecode().drain();
+                        }
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     } catch (DecodeException e) {
                         throw log.decodingHashedPasswordFromPropertiesRealmFailed(e);
@@ -217,8 +236,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         accountEntry.getName());
 
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
-
-                    return passwordFactory.verify(actualPassword, guess);
+                    return passwordFactory.verify(actualPassword, guess, hashCharset);
                 } catch (InvalidKeySpecException | InvalidKeyException | IllegalStateException e) {
                     throw new IllegalStateException(e);
                 }
@@ -376,6 +394,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private String defaultRealm = null;
         private boolean plainText;
         private String groupsAttribute = "groups";
+        private Encoding hashEncoding = Encoding.HEX; // set to hex by default
+        private Charset hashCharset = StandardCharsets.UTF_8; // set to UTF-8 by default
 
         Builder() {
         }
@@ -451,6 +471,33 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          */
         public Builder setPlainText(boolean plainText) {
             this.plainText = plainText;
+
+            return this;
+        }
+
+        /**
+         * Set the string format for the password in the properties file if they are not
+         * stored in plain text. Set to hex by default.
+         *
+         * @param hashEncoding specifies the string format for the hashed password
+         * @return this {@link Builder}
+         */
+        public Builder setHashEncoding(Encoding hashEncoding) {
+            assertNotNull(hashEncoding);
+            this.hashEncoding = hashEncoding;
+
+            return this;
+        }
+
+        /**
+         * Set the character set to use when converting the password string
+         * to a byte array. Set to UTF-8 by default.
+         * @param hashCharset the name of the character set (must not be {@code null})
+         * @return this {@link Builder}
+         */
+        public Builder setHashCharset(Charset hashCharset) {
+            assertNotNull(hashCharset);
+            this.hashCharset = hashCharset;
 
             return this;
         }

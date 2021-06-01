@@ -22,6 +22,7 @@ import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -164,6 +165,11 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         } catch (InvalidKeySpecException e) {
             throw new InvalidKeyException(e);
         }
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        return verify(guess);
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.auth.realm.ldap;
 
+import java.nio.charset.Charset;
 import java.security.Provider;
 import java.util.function.Supplier;
 
@@ -51,5 +52,18 @@ interface IdentityEvidenceVerifier {
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
     boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException;
+
+    /**
+     * Verify the given evidence against the named credential.
+     *
+     * @param evidence the evidence to verify.
+     * @param providers the providers to use when verifying evidence.
+     * @param hashCharset the name of the character set (must not be {@code null}).
+     * @return {@code true} if the evidence is successfully verified, {@code false} otherwise.
+     * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
+     */
+    default boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers, Charset hashCharset) throws RealmUnavailableException {
+        return verifyEvidence(evidence, providers);
+    }
 
 }

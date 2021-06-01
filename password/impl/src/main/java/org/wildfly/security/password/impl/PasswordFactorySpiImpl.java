@@ -32,6 +32,7 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
 
+import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -115,13 +116,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new BCryptPasswordImpl(encryptableSpec.getPassword());
+                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
-                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec);
+                            return new BCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -150,9 +154,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new UnixMD5CryptPasswordImpl(encryptableSpec.getPassword());
+                            return new UnixMD5CryptPasswordImpl(encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new UnixMD5CryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new UnixMD5CryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -188,13 +193,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword());
+                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
-                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec);
+                            return new SunUnixMD5CryptPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -230,13 +238,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new UnixSHACryptPasswordImpl(algorithm, encryptableSpec.getPassword());
+                            return new UnixSHACryptPasswordImpl(algorithm, encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
-                            return new UnixSHACryptPasswordImpl(algorithm, (IteratedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword());
+                            return new UnixSHACryptPasswordImpl(algorithm, (IteratedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword(),
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-                            return new UnixSHACryptPasswordImpl(algorithm, (IteratedSaltedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword());
+                            return new UnixSHACryptPasswordImpl(algorithm, (IteratedSaltedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword(),
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new UnixSHACryptPasswordImpl(algorithm, (SaltedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword());
+                            return new UnixSHACryptPasswordImpl(algorithm, (SaltedPasswordAlgorithmSpec) parameterSpec, encryptableSpec.getPassword(),
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -282,7 +293,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new SimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword());
+                            return new SimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -320,9 +331,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new SaltedSimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword());
+                            return new SaltedSimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new SaltedSimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new SaltedSimpleDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -349,9 +361,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new UnixDESCryptPasswordImpl(encryptableSpec.getPassword());
+                            return new UnixDESCryptPasswordImpl(encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new UnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new UnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -386,13 +399,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword());
+                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
-                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec);
+                            return new BSDUnixDESCryptPasswordImpl(encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -430,13 +446,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                         final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
                         final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
                         if (parameterSpec == null) {
-                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword());
+                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
-                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec);
+                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
-                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec);
+                            return new ScramDigestPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec,
+                                    encryptableSpec.getHashCharset());
                         } else {
                             break;
                         }
@@ -759,6 +778,17 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
             if (algorithm.equals(abstractPassword.getAlgorithm())) {
                 return abstractPassword.verify(guess);
+            }
+        }
+        throw new InvalidKeyException();
+    }
+
+    @Override
+    protected boolean engineVerify(final String algorithm, final Password password, final char[] guess, Charset hashCharset) throws InvalidKeyException {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword.verify(guess, hashCharset);
             }
         }
         throw new InvalidKeyException();

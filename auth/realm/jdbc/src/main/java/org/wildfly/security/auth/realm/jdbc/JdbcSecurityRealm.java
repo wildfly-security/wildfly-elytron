@@ -19,6 +19,7 @@ package org.wildfly.security.auth.realm.jdbc;
 
 import static org.wildfly.security.auth.realm.jdbc._private.ElytronMessages.log;
 
+import java.nio.charset.Charset;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -55,14 +56,16 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
     private final Supplier<Provider[]> providers;
     private final List<QueryConfiguration> queryConfiguration;
+    private final Charset hashCharset;
 
     public static JdbcSecurityRealmBuilder builder() {
         return new JdbcSecurityRealmBuilder();
     }
 
-    JdbcSecurityRealm(List<QueryConfiguration> queryConfiguration, Supplier<Provider[]> providers) {
+    JdbcSecurityRealm(List<QueryConfiguration> queryConfiguration, Supplier<Provider[]> providers, Charset hashCharset) {
         this.queryConfiguration = queryConfiguration;
         this.providers = providers;
+        this.hashCharset = hashCharset;
     }
 
     @Override
@@ -70,7 +73,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         if (! (principal instanceof NamePrincipal)) {
             return RealmIdentity.NON_EXISTENT;
         }
-        return new JdbcRealmIdentity(principal.getName());
+        return new JdbcRealmIdentity(principal.getName(), hashCharset);
     }
 
     @Override
@@ -113,9 +116,11 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
         private final String name;
         private boolean loaded = false;
         private JdbcIdentity identity;
+        private final Charset hashCharset;
 
-        public JdbcRealmIdentity(String name) {
+        public JdbcRealmIdentity(String name, Charset hashCharset) {
             this.name = name;
+            this.hashCharset = hashCharset;
         }
 
         public Principal getRealmIdentityPrincipal() {
@@ -174,7 +179,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
             JdbcIdentity identity = getIdentity();
             if (identity != null) {
-                return identity.identityCredentials.verify(evidence);
+                return identity.identityCredentials.verify(evidence, hashCharset);
             }
 
             return false;

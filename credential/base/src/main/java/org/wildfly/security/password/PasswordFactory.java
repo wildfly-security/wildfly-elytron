@@ -21,6 +21,7 @@ package org.wildfly.security.password;
 import static org.wildfly.security.credential._private.ElytronMessages.log;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
+import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -208,6 +209,19 @@ public final class PasswordFactory {
      */
     public boolean verify(Password password, char[] guess) throws InvalidKeyException {
         return spi.engineVerify(algorithm, password, guess);
+    }
+
+    /**
+     * Verify a password guess.
+     *
+     * @param password the password object
+     * @param guess the guessed password characters
+     * @param hashCharset the character set to use when converting the password string to a byte array (must not be {@code null})
+     * @return {@code true} if the guess matches the password, {@code false} otherwise
+     * @throws InvalidKeyException if the given password is not supported by this factory
+     */
+    public boolean verify(Password password, char[] guess, Charset hashCharset) throws InvalidKeyException {
+        return spi.engineVerify(algorithm, password, guess, hashCharset);
     }
 
     /**

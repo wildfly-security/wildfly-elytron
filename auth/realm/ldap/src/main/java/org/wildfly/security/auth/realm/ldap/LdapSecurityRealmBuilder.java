@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
+import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
@@ -26,12 +27,15 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealm.IdentityMapping;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.password.spec.Encoding;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.ldap.LdapName;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +69,8 @@ public class LdapSecurityRealmBuilder {
     private List<CredentialLoader> credentialLoaders = new ArrayList<>();
     private List<CredentialPersister> credentialPersisters = new ArrayList<>();
     private List<EvidenceVerifier> evidenceVerifiers = new ArrayList<>();
+    private Charset hashCharset = StandardCharsets.UTF_8;
+    private Encoding hashEncoding = Encoding.BASE64;
 
     private LdapSecurityRealmBuilder() {
     }
@@ -149,6 +155,34 @@ public class LdapSecurityRealmBuilder {
         return this;
     }
 
+    /**
+     * Set the character set to use when converting the password string
+     * to a byte array. Set to UTF-8 by default.
+     * @param hashCharset the name of the character set (must not be {@code null}).
+     *
+     * @return this builder
+     */
+    public LdapSecurityRealmBuilder setHashCharset(Charset hashCharset) {
+        assertNotNull(hashCharset);
+        this.hashCharset = hashCharset;
+
+        return this;
+    }
+
+    /**
+     *  Set the string format for the password in the properties file if they are not
+     *  stored in plain text. Set to base64 by default.
+     * @param hashEncoding specifies the string format for the hashed password
+     *
+     * @return this builder
+     */
+    public LdapSecurityRealmBuilder setHashEncoding(Encoding hashEncoding) {
+        assertNotNull(hashEncoding);
+        this.hashEncoding = hashEncoding;
+
+        return this;
+    }
+
     public UserPasswordCredentialLoaderBuilder userPasswordCredentialLoader() {
         assertNotBuilt();
 
@@ -210,7 +244,9 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(providers, dirContextSupplier, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
+        return new LdapSecurityRealm(providers, dirContextSupplier, nameRewriter,
+                identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers,
+                pageSize, hashCharset, hashEncoding);
     }
 
     private void assertNotBuilt() {

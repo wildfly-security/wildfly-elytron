@@ -23,6 +23,8 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
@@ -73,24 +75,28 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         this(passwordSpec.getEncodedPassword(), ThreadLocalRandom.current().nextInt() & 0xffffff, DEFAULT_ITERATION_COUNT);
     }
 
-    BSDUnixDESCryptPasswordImpl(final char[] password) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, DEFAULT_ITERATION_COUNT);
+    BSDUnixDESCryptPasswordImpl(final char[] password, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
+        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
-    BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, getSaltValue(spec.getSalt()), spec.getIterationCount());
+    BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
+        this(password, getSaltValue(spec.getSalt()), spec.getIterationCount(), hashCharset);
     }
 
-    BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, spec.getIterationCount());
+    BSDUnixDESCryptPasswordImpl(final char[] password, final IteratedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
+        this(password, ThreadLocalRandom.current().nextInt() & 0xffffff, spec.getIterationCount(), hashCharset);
     }
 
-    BSDUnixDESCryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, InvalidParameterSpecException {
-        this(password, getSaltValue(spec.getSalt()), DEFAULT_ITERATION_COUNT);
+    BSDUnixDESCryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, InvalidParameterSpecException {
+        this(password, getSaltValue(spec.getSalt()), DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
     BSDUnixDESCryptPasswordImpl(final char[] password, final int salt, final int iterationCount) throws InvalidKeySpecException {
         this(salt, iterationCount, generateHash(salt, iterationCount, password));
+    }
+
+    BSDUnixDESCryptPasswordImpl(final char[] password, final int salt, final int iterationCount, final Charset hashCharset) throws InvalidKeySpecException {
+        this(salt, iterationCount, generateHash(salt, iterationCount, password, hashCharset));
     }
 
     BSDUnixDESCryptPasswordImpl(final BSDUnixDESCryptPassword password) throws InvalidKeyException {
@@ -126,7 +132,12 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     boolean verify(final char[] guess) throws InvalidKeyException {
-        return Arrays.equals(hash, generateHash(salt, iterationCount, guess));
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        return Arrays.equals(hash, generateHash(salt, iterationCount, guess, hashCharset));
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
@@ -152,6 +163,11 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
     private static byte[] generateHash(final int salt, int iterationCount, final char[] password) {
         final byte[] bytes1 = getNormalizedPasswordBytes(password);
+        return crypt(bytes1, salt, iterationCount);
+    }
+
+    private static byte[] generateHash(final int salt, int iterationCount, final char[] password, final Charset hashCharset) {
+        final byte[] bytes1 = getNormalizedPasswordBytes(password, hashCharset);
         return crypt(bytes1, salt, iterationCount);
     }
 

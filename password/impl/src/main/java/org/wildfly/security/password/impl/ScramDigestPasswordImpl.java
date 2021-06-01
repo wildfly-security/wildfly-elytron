@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -87,24 +88,31 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         this(algorithm, spec.getEncodedPassword(), PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final Charset hashCharset) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        this(algorithm, password, spec.getSalt(), spec.getIterationCount());
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, spec.getSalt(), spec.getIterationCount(), hashCharset);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        this(algorithm, password, spec.getSalt(), DEFAULT_ITERATION_COUNT);
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, spec.getSalt(), DEFAULT_ITERATION_COUNT, hashCharset);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount());
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount(), hashCharset);
     }
 
     ScramDigestPasswordImpl(final String algorithm, final char[] password, final byte[] salt, final int iterationCount) throws InvalidKeyException, NoSuchAlgorithmException {
         this(algorithm, scramDigest(algorithm, getNormalizedPasswordBytes(password), salt, iterationCount), salt, iterationCount);
+    }
+
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final byte[] salt, final int iterationCount, final Charset hashCharset) throws InvalidKeyException, NoSuchAlgorithmException {
+        this.algorithm = algorithm;
+        this.digest = scramDigest(algorithm, getNormalizedPasswordBytes(password, hashCharset), salt, iterationCount, hashCharset);
+        this.salt = salt;
+        this.iterationCount = iterationCount;
     }
 
     @Override
@@ -190,9 +198,14 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
     @Override
     boolean verify(char[] guess) throws InvalidKeyException {
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         if (guess.length == 0) return false;
         try {
-            byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
+            byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess, hashCharset), this.getSalt(), this.getIterationCount());
             return Arrays.equals(this.digest, output);
         } catch (NoSuchAlgorithmException nsae) {
             throw new InvalidKeyException(nsae);
@@ -237,11 +250,17 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     static byte[] scramDigest(final String algorithm, final byte[] password, final byte[] salt, final int iterationCount)
             throws NoSuchAlgorithmException, InvalidKeyException {
 
+        return scramDigest(algorithm, password, salt, iterationCount, StandardCharsets.UTF_8);
+    }
+
+    static byte[] scramDigest(final String algorithm, final byte[] password, final byte[] salt, final int iterationCount, final Charset hashCharset)
+            throws NoSuchAlgorithmException, InvalidKeyException {
+
         Mac hmac = getMacInstance(algorithm, password);
 
         // compute U1 (see Hi function description in the javadoc).
         hmac.update(salt);
-        hmac.update("\00\00\00\01".getBytes(StandardCharsets.UTF_8));
+        hmac.update("\00\00\00\01".getBytes(hashCharset));
         byte[] hi = hmac.doFinal();
         addIterations(hi, hmac, 1, iterationCount);
         return hi;
