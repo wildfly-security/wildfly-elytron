@@ -72,7 +72,7 @@ public class ModifiabilitySuiteChild {
                      AttributeMapping.fromIdentity().from("sn").to("lastName").build(),
                      AttributeMapping.fromIdentity().from("description").to("description").build(),
                      AttributeMapping.fromIdentity().from("telephoneNumber").to("phones").build(),
-                     AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member=uid={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build())
+                     AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build())
                 .setNewIdentityParent(new LdapName("dc=elytron,dc=wildfly,dc=org"))
                 .setNewIdentityAttributes(attributes)
                 .setIteratorFilter("(uid=*)")
