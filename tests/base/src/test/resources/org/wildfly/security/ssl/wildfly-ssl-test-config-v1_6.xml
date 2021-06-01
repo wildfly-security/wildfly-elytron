@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2019 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.6">
+        <key-stores>
+            <key-store name="scarab" type="JKS">
+                <file name="target/test-classes/ca/jks/scarab.keystore"/>
+            </key-store>
+            <key-store name="ladybird" type="JKS">
+                <file name="target/test-classes/ca/jks/ladybird.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="two-way-sslv2hello">
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="scarab"/>
+                <protocol names="SSLv2Hello TLSv1"/>
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+            <ssl-context name="two-way-no-sslv2hello">
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="scarab"/>
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+            <ssl-context name="one-way-sslv2hello">
+                <trust-store key-store-name="scarab"/>
+                <protocol names="SSLv2Hello TLSv1"/>
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="two-way-sslv2hello">
+                <match-host name="test-two-way-sslv2hello.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-no-sslv2hello">
+                <match-host name="two-way-no-sslv2hello.org" />
+            </rule>
+            <rule use-ssl-context="one-way-sslv2hello">
+                <match-host name="one-way-sslv2hello.org" />
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>
