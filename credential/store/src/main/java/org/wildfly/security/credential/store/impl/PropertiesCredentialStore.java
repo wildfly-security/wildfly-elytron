@@ -21,9 +21,11 @@ import static org.wildfly.security.encryption.SecretKeyUtil.exportSecretKey;
 import static org.wildfly.security.encryption.SecretKeyUtil.importSecretKey;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.security.GeneralSecurityException;
 import java.security.Provider;
@@ -50,6 +52,7 @@ import org.wildfly.security.credential.store.CredentialStore.ProtectionParameter
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
+import org.wildfly.security.util.AtomicFileOutputStream;
 
 /**
  * A {@link CredentialStore} implementation backed by a properties file.
@@ -190,7 +193,8 @@ public class PropertiesCredentialStore extends CredentialStoreSpi {
     }
 
     private void save() throws CredentialStoreException {
-        try (PrintWriter pw = new PrintWriter(credentialStoreLocation)) {
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new AtomicFileOutputStream(credentialStoreLocation))),
+                false)) {
             pw.println(HEADER);
             for (Entry<String, SecretKey> entry : entries.get().entrySet() ) {
                 pw.print(entry.getKey());
