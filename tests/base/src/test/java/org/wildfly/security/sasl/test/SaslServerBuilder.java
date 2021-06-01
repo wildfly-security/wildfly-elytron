@@ -22,6 +22,9 @@ import static org.wildfly.security.sasl.test.SaslTestUtil.obtainSaslServerFactor
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,11 +44,15 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
+import org.hsqldb.jdbc.JDBCDataSource;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
+import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
+import org.wildfly.security.auth.realm.jdbc.JdbcSecurityRealm;
+import org.wildfly.security.auth.realm.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -58,8 +65,12 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AvailableRealmsSaslServerFactory;
@@ -88,10 +99,17 @@ public class SaslServerBuilder {
     private String realmName = DEFAULT_REALM_NAME;
     private String defaultRealmName = realmName;
     private boolean modifiableRealm;
+    private InputStream legacyInputStream;
+    private boolean plainText;
+    private String principalQuery;
+    private JDBCDataSource dataSource;
+    private String mapperAlgorithm;
     private Map<String, Permissions> permissionsMap = null;
     private Map<String, SimpleRealmEntry> passwordMap;
     private Map<String, SecurityRealm> realms = new HashMap<String, SecurityRealm>();
     private Map<String, MechanismRealmConfiguration> mechanismRealms = new LinkedHashMap<>();
+    private Encoding hashEncoding = Encoding.BASE64;
+    private Charset hashCharset = StandardCharsets.UTF_8;
 
     //Server factory decorators
     private Map<String, Object> properties;
@@ -125,6 +143,13 @@ public class SaslServerBuilder {
         copy.realmName = realmName;
         copy.defaultRealmName = defaultRealmName;
         copy.modifiableRealm = modifiableRealm;
+        copy.legacyInputStream = legacyInputStream;
+        copy.plainText = plainText;
+        copy.principalQuery = principalQuery;
+        copy.dataSource = dataSource;
+        copy.mapperAlgorithm = mapperAlgorithm;
+        copy.hashEncoding = hashEncoding;
+        copy.hashCharset = hashCharset;
         if (permissionsMap != null) {
             copy.permissionsMap = new HashMap<>(permissionsMap);
         }
@@ -215,6 +240,48 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setHashEncoding(Encoding hashEncoding) {
+        Assert.assertNotNull(hashEncoding);
+        this.hashEncoding = hashEncoding;
+        return this;
+    }
+
+    public SaslServerBuilder setHashCharset(Charset hashCharset) {
+        Assert.assertNotNull(hashCharset);
+        this.hashCharset = hashCharset;
+        return this;
+    }
+
+    public SaslServerBuilder setLegacyInputStream(InputStream legacyInputStream) {
+        Assert.assertNotNull(legacyInputStream);
+        this.legacyInputStream = legacyInputStream;
+        return this;
+    }
+
+    public SaslServerBuilder setPlainText(boolean plainText) {
+        Assert.assertNotNull(plainText);
+        this.plainText = plainText;
+        return this;
+    }
+
+    public SaslServerBuilder setPrincipalQuery(String principalQuery) {
+        Assert.assertNotNull(principalQuery);
+        this.principalQuery = principalQuery;
+        return this;
+    }
+
+    public SaslServerBuilder setDataSource(JDBCDataSource dataSource) {
+        Assert.assertNotNull(dataSource);
+        this.dataSource = dataSource;
+        return this;
+    }
+
+    public SaslServerBuilder setMapperAlgorithm(String algorithm) {
+        Assert.assertNotNull(algorithm);
+        this.mapperAlgorithm = algorithm;
+        return this;
+    }
+
     public SaslServerBuilder setProperties(Map<String, Object> properties) {
         Assert.assertNotNull(properties);
         this.properties = properties;
@@ -302,7 +369,7 @@ public class SaslServerBuilder {
 
     public SaslServer build() throws IOException {
         if (securityDomain == null) {
-            securityDomain = createSecurityDomain();
+            securityDomain = createSecurityDomain(hashEncoding, hashCharset);
         }
         if (securityDomainReference != null) {
             securityDomainReference.setReference(securityDomain);
@@ -353,27 +420,84 @@ public class SaslServerBuilder {
         return server;
     }
 
-    private SecurityDomain createSecurityDomain() throws IOException {
+    private SecurityDomain createSecurityDomain(Encoding hashEncoding, Charset hashCharset) throws IOException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         if (! modifiableRealm) {
-            final SimpleMapBackedSecurityRealm mainRealm = providerSupplier != null ? new SimpleMapBackedSecurityRealm(providerSupplier) : new SimpleMapBackedSecurityRealm();
-            realms.put(realmName, mainRealm);
-            realms.forEach((name, securityRealm) -> {
-                domainBuilder.addRealm(name, securityRealm).build();
-            });
+            if (legacyInputStream != null) { // use Legacy properties Security Realm
 
-            if (passwordMap != null) {
-                mainRealm.setIdentityMap(passwordMap);
-            } else if (username != null) {
-                mainRealm.setIdentityMap(Collections.singletonMap(username, new SimpleRealmEntry(
-                        Collections.singletonList(new PasswordCredential(password)),
-                        Attributes.EMPTY
-                )));
+                final LegacyPropertiesSecurityRealm mainRealm = LegacyPropertiesSecurityRealm.builder()
+                        .setUsersStream(legacyInputStream)
+                        .setHashCharset(hashCharset)
+                        .setHashEncoding(hashEncoding)
+                        .setPlainText(plainText)
+                        .build();
+
+                realms.put(realmName, mainRealm);
+                realms.forEach((name, securityRealm) -> {
+                    domainBuilder.addRealm(name, securityRealm).build();
+                });
+
+
+            } else if (principalQuery != null) { // use JDBC realm
+
+                PasswordKeyMapper passwordKeyMapper;
+
+                if (mapperAlgorithm.equals(BCryptPassword.ALGORITHM_BCRYPT) || mapperAlgorithm.equals(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256)) {
+                    passwordKeyMapper = PasswordKeyMapper.builder()
+                            .setDefaultAlgorithm(mapperAlgorithm)
+                            .setHashColumn(1).setHashEncoding(hashEncoding)
+                            .setSaltColumn(2)
+                            .setIterationCountColumn(3)
+                            .build();
+                } else if (mapperAlgorithm.equals(SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512)){
+                    passwordKeyMapper = PasswordKeyMapper.builder()
+                            .setDefaultAlgorithm(mapperAlgorithm)
+                            .setHashColumn(1).setHashEncoding(hashEncoding)
+                            .setSaltColumn(2)
+                            .build();
+
+                } else {
+                    passwordKeyMapper = PasswordKeyMapper.builder()
+                            .setDefaultAlgorithm(mapperAlgorithm)
+                            .setHashColumn(1).setHashEncoding(hashEncoding)
+                            .build();
+                }
+
+                JdbcSecurityRealm mainRealm = JdbcSecurityRealm.builder()
+                        .setHashCharset(hashCharset)
+                        .principalQuery(principalQuery)
+                        .withMapper(passwordKeyMapper)
+                        .from(dataSource)
+                        .build();
+
+                realms.put(realmName, mainRealm);
+                realms.forEach((name, securityRealm) -> {
+                    domainBuilder.addRealm(name, securityRealm).build();
+                });
+            }
+
+            else { // use SimpleMapBackedSecurityRealm
+
+                final SimpleMapBackedSecurityRealm mainRealm = providerSupplier != null ? new SimpleMapBackedSecurityRealm(providerSupplier) : new SimpleMapBackedSecurityRealm();
+
+                realms.put(realmName, mainRealm);
+                realms.forEach((name, securityRealm) -> {
+                    domainBuilder.addRealm(name, securityRealm).build();
+                });
+
+                if (passwordMap != null) {
+                    mainRealm.setIdentityMap(passwordMap);
+                } else if (username != null) {
+                    mainRealm.setIdentityMap(Collections.singletonMap(username, new SimpleRealmEntry(
+                            Collections.singletonList(new PasswordCredential(password)),
+                            Attributes.EMPTY
+                    )));
+                }
             }
         } else {
             final Path root = Paths.get(".", "target", "test-domains", String.valueOf(System.currentTimeMillis())).normalize();
             Files.createDirectories(root);
-            final FileSystemSecurityRealm mainRealm = new FileSystemSecurityRealm(root);
+            final FileSystemSecurityRealm mainRealm = new FileSystemSecurityRealm(root, hashEncoding, hashCharset);
             realms.put(realmName, mainRealm);
             realms.forEach((name, securityRealm) -> {
                 domainBuilder.addRealm(name, securityRealm).build();

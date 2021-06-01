@@ -44,6 +44,7 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
@@ -51,6 +52,8 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -232,6 +235,38 @@ public class FileSystemSecurityRealmTest {
     }
 
     @Test
+    public void testCreateIdentityWithBcryptCredentialHexEncoded() throws Exception {
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+        char[] actualPassword = "secretPassword".toCharArray();
+        BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE))));
+
+        assertCreateIdentityWithPassword(actualPassword, bCryptPassword, Encoding.HEX, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testCreateIdentityWithBcryptCredentialBase64AndCharset() throws Exception {
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+        char[] actualPassword = "password密码".toCharArray();
+        BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE)),
+                        Charset.forName("gb2312")));
+
+        assertCreateIdentityWithPassword(actualPassword, bCryptPassword, Encoding.BASE64, Charset.forName("gb2312"));
+    }
+
+    @Test
+    public void testCreateIdentityWithBcryptCredentialHexEncodedAndCharset() throws Exception {
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+        char[] actualPassword = "password密码".toCharArray();
+        BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(10, generateRandomSalt(BCRYPT_SALT_SIZE)), Charset.forName("gb2312"))
+        );
+
+        assertCreateIdentityWithPassword(actualPassword, bCryptPassword, Encoding.HEX, Charset.forName("gb2312"));
+    }
+
+    @Test
     public void testCreateIdentityWithScramCredential() throws Exception {
         char[] actualPassword = "secretPassword".toCharArray();
         byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
@@ -240,6 +275,29 @@ public class FileSystemSecurityRealmTest {
         ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
 
         assertCreateIdentityWithPassword(actualPassword, scramPassword);
+    }
+
+    @Test
+    public void testCreateIdentityWithScramCredentialHexEncoded() throws Exception {
+        char[] actualPassword = "secretPassword".toCharArray();
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
+        PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
+        EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(4096, salt));
+        ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
+
+        assertCreateIdentityWithPassword(actualPassword, scramPassword, Encoding.HEX, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testCreateIdentityWithScramCredentialHexEncodedAndCharset() throws Exception {
+        char[] actualPassword = "passwordHyväää".toCharArray();
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
+        PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
+        EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(actualPassword, new IteratedSaltedPasswordAlgorithmSpec(4096, salt),
+                Charset.forName("ISO-8859-1"));
+        ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
+
+        assertCreateIdentityWithPassword(actualPassword, scramPassword, Encoding.HEX, Charset.forName("ISO-8859-1"));
     }
 
     @Test
@@ -254,6 +312,28 @@ public class FileSystemSecurityRealmTest {
     }
 
     @Test
+    public void testCreateIdentityWithDigestHexEncoded() throws Exception {
+        char[] actualPassword = "secretPassword".toCharArray();
+        PasswordFactory factory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_512);
+        DigestPasswordAlgorithmSpec dpas = new DigestPasswordAlgorithmSpec("jsmith", "elytron");
+        EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(actualPassword, dpas);
+        DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);
+
+        assertCreateIdentityWithPassword(actualPassword, digestPassword, Encoding.HEX, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testCreateIdentityWithDigestHexEncodedAndCharset() throws Exception {
+        char[] actualPassword = "пароль".toCharArray();
+        PasswordFactory factory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_512);
+        DigestPasswordAlgorithmSpec dpas = new DigestPasswordAlgorithmSpec("jsmith", "elytron");
+        EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(actualPassword, dpas, Charset.forName("KOI8-R"));
+        DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);
+
+        assertCreateIdentityWithPassword(actualPassword, digestPassword, Encoding.HEX, Charset.forName("KOI8-R"));
+    }
+
+    @Test
     public void testCreateIdentityWithSimpleDigest() throws Exception {
         char[] actualPassword = "secretPassword".toCharArray();
         EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, null);
@@ -261,6 +341,26 @@ public class FileSystemSecurityRealmTest {
         SimpleDigestPassword tsdp = (SimpleDigestPassword) passwordFactory.generatePassword(eps);
 
         assertCreateIdentityWithPassword(actualPassword, tsdp);
+    }
+
+    @Test
+    public void testCreateIdentityWithSimpleDigestHexEncoded() throws Exception {
+        char[] actualPassword = "secretPassword".toCharArray();
+        EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, null);
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512);
+        SimpleDigestPassword tsdp = (SimpleDigestPassword) passwordFactory.generatePassword(eps);
+
+        assertCreateIdentityWithPassword(actualPassword, tsdp, Encoding.HEX, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testCreateIdentityWithSimpleDigestHexEncodedAndCharset() throws Exception {
+        char[] actualPassword = "password密码".toCharArray();
+        EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, null, Charset.forName("gb2312"));
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512);
+        SimpleDigestPassword tsdp = (SimpleDigestPassword) passwordFactory.generatePassword(eps);
+
+        assertCreateIdentityWithPassword(actualPassword, tsdp, Encoding.HEX, Charset.forName("gb2312"));
     }
 
     @Test
@@ -273,6 +373,30 @@ public class FileSystemSecurityRealmTest {
         SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) passwordFactory.generatePassword(eps);
 
         assertCreateIdentityWithPassword(actualPassword, tsdp);
+    }
+
+    @Test
+    public void testCreateIdentityWithSimpleSaltedDigestHexEncoded() throws Exception {
+        char[] actualPassword = "secretPassword".toCharArray();
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
+        SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
+        EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, spac);
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512);
+        SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) passwordFactory.generatePassword(eps);
+
+        assertCreateIdentityWithPassword(actualPassword, tsdp, Encoding.HEX, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    public void testCreateIdentityWithSimpleSaltedDigestHexEncodedAndCharset() throws Exception {
+        char[] actualPassword = "password密码".toCharArray();
+        byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
+        SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
+        EncryptablePasswordSpec eps = new EncryptablePasswordSpec(actualPassword, spac, Charset.forName("gb2312"));
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512);
+        SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) passwordFactory.generatePassword(eps);
+
+        assertCreateIdentityWithPassword(actualPassword, tsdp, Encoding.HEX, Charset.forName("gb2312"));
     }
 
     @Test
@@ -429,13 +553,17 @@ public class FileSystemSecurityRealmTest {
     }
 
     private void assertCreateIdentityWithPassword(char[] actualPassword, Password credential) throws Exception {
-        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        assertCreateIdentityWithPassword(actualPassword, credential, Encoding.BASE64, StandardCharsets.UTF_8);
+    }
+
+    private void assertCreateIdentityWithPassword(char[] actualPassword, Password credential, Encoding hashEncoding, Charset hashCharset) throws Exception {
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1, hashEncoding, hashCharset);
         ModifiableRealmIdentity newIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("plainUser"));
         newIdentity.create();
         newIdentity.setCredentials(Collections.singleton(new PasswordCredential(credential)));
         newIdentity.dispose();
 
-        securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
+        securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1, hashEncoding, hashCharset);
         ModifiableRealmIdentity existingIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("plainUser"));
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence(actualPassword)));

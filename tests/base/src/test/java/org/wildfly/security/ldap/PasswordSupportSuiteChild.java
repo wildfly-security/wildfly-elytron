@@ -23,6 +23,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
@@ -40,6 +42,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
@@ -49,6 +52,7 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 
 /**
@@ -64,6 +68,8 @@ import org.wildfly.security.password.spec.OneTimePasswordSpec;
 public class PasswordSupportSuiteChild {
 
     private static SecurityRealm simpleToDnRealm;
+    private static SecurityRealm charsetDnRealm;
+    private static SecurityRealm encodingDnRealm;
 
     @BeforeClass
     public static void createRealm() {
@@ -83,6 +89,43 @@ public class PasswordSupportSuiteChild {
                 .setOtpSequenceAttribute("otpSequence")
                 .build()
             .build();
+
+        charsetDnRealm = LdapSecurityRealmBuilder.builder()
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
+                .setHashCharset(Charset.forName("gb2312"))
+                .identityMapping()
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setRdnIdentifier("uid")
+                .build()
+                .userPasswordCredentialLoader()
+                .enablePersistence()
+                .build()
+                .otpCredentialLoader()
+                .setOtpAlgorithmAttribute("otpAlgorithm")
+                .setOtpHashAttribute("otpHash")
+                .setOtpSeedAttribute("otpSeed")
+                .setOtpSequenceAttribute("otpSequence")
+                .build()
+                .build();
+
+        encodingDnRealm = LdapSecurityRealmBuilder.builder()
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
+                .setHashEncoding(Encoding.HEX)
+                .setHashCharset(Charset.forName("gb2312"))
+                .identityMapping()
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setRdnIdentifier("uid")
+                .build()
+                .userPasswordCredentialLoader()
+                .enablePersistence()
+                .build()
+                .otpCredentialLoader()
+                .setOtpAlgorithmAttribute("otpAlgorithm")
+                .setOtpHashAttribute("otpHash")
+                .setOtpSeedAttribute("otpSeed")
+                .setOtpSequenceAttribute("otpSequence")
+                .build()
+                .build();
     }
 
     @Test
@@ -97,8 +140,34 @@ public class PasswordSupportSuiteChild {
     }
 
     @Test
+    public void testMd5UserWithCharset() throws Exception {
+        performSimpleNameTest("md5UserCharset", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5,
+                "password密码".toCharArray(), Charset.forName("gb2312"), charsetDnRealm);
+
+    }
+
+    @Test
+    public void testMd5UserWithCharsetAndHexEncoding() throws Exception {
+        performSimpleNameTest("md5UserCharsetHex", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5,
+                "password密码".toCharArray(), Charset.forName("gb2312"), encodingDnRealm);
+
+    }
+
+    @Test
     public void testSmd5User() throws Exception {
         performSimpleNameTest("smd5User", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "smd5Password".toCharArray());
+    }
+
+    @Test
+    public void testSmd5UserWithCharset() throws Exception {
+        performSimpleNameTest("smd5UserCharset", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "password密码".toCharArray(),
+                Charset.forName("gb2312"), charsetDnRealm);
+    }
+
+    @Test
+    public void testSmd5UserWithCharsetAndHexEncoded() throws Exception {
+        performSimpleNameTest("smd5UserCharsetHex", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "password密码".toCharArray(),
+                Charset.forName("gb2312"), encodingDnRealm);
     }
 
     @Test
@@ -107,13 +176,43 @@ public class PasswordSupportSuiteChild {
     }
 
     @Test
+    public void testSha512UserWithCharset() throws Exception {
+        performSimpleNameTest("sha512UserCharset", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512, "password密码".toCharArray(),
+                Charset.forName("gb2312"), charsetDnRealm);
+    }
+
+    @Test
+    public void testSha512UserWithCharsetAndHexEncoded() throws Exception {
+        performSimpleNameTest("sha512UserCharsetHex", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512, "password密码".toCharArray(),
+                Charset.forName("gb2312"), encodingDnRealm);
+    }
+
+    @Test
     public void testSsha512User() throws Exception {
         performSimpleNameTest("ssha512User", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
     }
 
     @Test
+    public void testSsha512UserWithCharset() throws Exception {
+        performSimpleNameTest("ssha512UserCharset", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "password密码".toCharArray(),
+                Charset.forName("gb2312"), charsetDnRealm);
+    }
+
+    @Test
+    public void testSsha512UserWithCharsetAndHexEncoded() throws Exception {
+        performSimpleNameTest("ssha512UserCharsetHex", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "password密码".toCharArray(),
+                Charset.forName("gb2312"), encodingDnRealm);
+    }
+
+    @Test
     public void testCryptUser() throws Exception {
         performSimpleNameTest("cryptUser", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptIt".toCharArray());
+    }
+
+    @Test
+    public void testCryptUserWithCharset() throws Exception {
+        performSimpleNameTest("cryptUserCharset", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "password密码".toCharArray(),
+                Charset.forName("gb2312"), charsetDnRealm);
     }
 
     @Test
@@ -124,6 +223,12 @@ public class PasswordSupportSuiteChild {
     @Test
     public void testBsdCryptUser() throws Exception {
         performSimpleNameTest("bsdCryptUser", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
+    }
+
+    @Test
+    public void testBsdCryptUserWithCharset() throws Exception {
+        performSimpleNameTest("bsdCryptUserCharset", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "password密码".toCharArray(),
+                Charset.forName("gb2312"), charsetDnRealm);
     }
 
     @Test
@@ -226,12 +331,16 @@ public class PasswordSupportSuiteChild {
     }
 
     private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        RealmIdentity realmIdentity = simpleToDnRealm.getRealmIdentity(new NamePrincipal(simpleName));
-        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null);
+        performSimpleNameTest(simpleName, algorithm, password, StandardCharsets.UTF_8, simpleToDnRealm);
+    }
+
+    private void performSimpleNameTest(String simpleName, String algorithm, char[] password, Charset hashCharset, SecurityRealm realm) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
+        RealmIdentity realmIdentity = realm.getRealmIdentity(new NamePrincipal(simpleName));
+        SupportLevel support = realm.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 
         verifyPasswordSupport(realmIdentity, algorithm, SupportLevel.SUPPORTED);
-        verifyPassword(realmIdentity, algorithm, password);
+        verifyPassword(realmIdentity, algorithm, password, hashCharset);
     }
 
     private void verifyPasswordSupport(RealmIdentity identity, final String algorithm, SupportLevel requiredSupport) throws RealmUnavailableException {
@@ -239,12 +348,13 @@ public class PasswordSupportSuiteChild {
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 
-    private void verifyPassword(RealmIdentity identity, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
+    private void verifyPassword(RealmIdentity identity, String algorithm, char[] password, Charset hashCharset) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         Password loadedPassword = identity.getCredential(PasswordCredential.class).getPassword();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         final Password translated = factory.translate(loadedPassword);
-        assertTrue("Valid Password", factory.verify(translated, password));
+        assertTrue("Valid Password", factory.verify(translated, password, hashCharset));
         assertFalse("Invalid Password", factory.verify(translated, "LetMeIn".toCharArray()));
+        Assert.assertTrue(identity.verifyEvidence(new PasswordGuessEvidence(password)));
     }
 }

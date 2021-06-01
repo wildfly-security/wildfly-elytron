@@ -57,11 +57,11 @@
     <properties>
         <jdk.min.version>11</jdk.min.version>
         <version.commons-cli>1.4</version.commons-cli>
-        <version.io.smallrye.jwt>3.0.0</version.io.smallrye.jwt>
+        <version.io.smallrye.jwt>3.1.1</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
-        <version.org.apache.directory.server>2.0.0.AM26</version.org.apache.directory.server>
-        <version.org.apache.directory.api>2.0.0</version.org.apache.directory.api>
+        <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
+        <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
@@ -89,7 +89,7 @@
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.5.4.Final</version.org.wildfly.common>
-        <version.commons-io.commons-io>2.6</version.commons-io.commons-io>
+        <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
 
@@ -840,7 +840,11 @@
                 <groupId>org.jboss.logmanager</groupId>
                 <artifactId>jboss-logmanager</artifactId>
                 <version>${version.org.jboss.logmanager}</version>
-                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.slf4j</groupId>
+                <artifactId>slf4j-jboss-logmanager</artifactId>
+                <version>${version.org.jboss.slf4j}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.modules</groupId>
@@ -1009,12 +1013,6 @@
                 <groupId>org.jboss.logmanager</groupId>
                 <artifactId>log4j-jboss-logmanager</artifactId>
                 <version>${version.org.jboss.logmanager.log4j-jboss}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.slf4j</groupId>
-                <artifactId>slf4j-jboss-logmanager</artifactId>
-                <version>${version.org.jboss.slf4j}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

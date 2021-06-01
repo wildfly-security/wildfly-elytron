@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.DigestUtil.userRealmPasswordDig
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -69,15 +70,15 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     // information we can not generate ourselves.
 
     DigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getPassword(), (DigestPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+        this(algorithm, spec.getPassword(), (DigestPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec(), spec.getHashCharset());
     }
 
-    DigestPasswordImpl(final String algorithm, final char[] password, final DigestPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+    DigestPasswordImpl(final String algorithm, final char[] password, final DigestPasswordAlgorithmSpec spec, final Charset hashCharset) throws InvalidKeySpecException {
         this.algorithm = algorithm;
         this.username = spec.getUsername();
         this.realm = spec.getRealm();
         try {
-            this.digest = userRealmPasswordDigest(getMessageDigest(algorithm), spec.getUsername(), spec.getRealm(), password);
+            this.digest = userRealmPasswordDigest(getMessageDigest(algorithm), spec.getUsername(), spec.getRealm(), password, hashCharset);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -115,6 +116,17 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     boolean verify(char[] guess) throws InvalidKeyException {
         try {
             byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
+            return Arrays.equals(digest, guessDigest);
+        } catch (NoSuchAlgorithmException e) {
+            throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
+        }
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        try {
+            byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess, hashCharset);
+            // compare guessDigest equals the digest calculated by server
             return Arrays.equals(digest, guessDigest);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);

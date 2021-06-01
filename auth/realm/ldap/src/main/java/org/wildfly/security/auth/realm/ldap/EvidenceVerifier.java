@@ -21,6 +21,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.password.spec.Encoding;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -57,6 +58,23 @@ interface EvidenceVerifier {
      * @return An {@link IdentityEvidenceVerifier} for the specified identity identified by their distinguished name.
      */
     IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, String url, Attributes attributes) throws RealmUnavailableException;
+
+    /**
+     * Obtain an {@link IdentityEvidenceVerifier} to verify the evidence for a specific identity.
+     *
+     * Note: By this point referrals relating to the identity should have been resolved so the {@link DirContextFactory} should
+     * be suitable for use with the supplied {@code distinguishedName}
+     *
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
+     * @param distinguishedName the distinguished name of the identity entry.
+     * @param url the absolute distinguished name of identity LDAP entry as URL string (when identity is not in realm context)
+     * @param attributes the identity attributes requested by {@link #addRequiredIdentityAttributes(Collection)}.
+     * @param hashEncoding specifies the string format for the hashed password
+     * @return An {@link IdentityEvidenceVerifier} for the specified identity identified by their distinguished name.
+     */
+    default IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, String url, Attributes attributes, Encoding hashEncoding) throws RealmUnavailableException {
+        return forIdentity(dirContext, distinguishedName, url, attributes);
+    }
 
     /**
      * Construct set of LDAP attributes, which should be loaded as part of the identity from identity entry.

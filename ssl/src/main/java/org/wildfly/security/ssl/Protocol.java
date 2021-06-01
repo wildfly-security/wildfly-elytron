@@ -53,6 +53,10 @@ public enum Protocol {
      * The TLS version 1.3 protocol.
      */
     TLSv1_3 ("TLSV1.3"),
+    /**
+     * The SSL version 2 hello protocol
+     */
+    SSLv2Hello("SSLV2HELLO")
     ;
 
     static final int fullSize = values().length;

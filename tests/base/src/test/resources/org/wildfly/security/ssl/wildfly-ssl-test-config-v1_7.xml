@@ -18,10 +18,13 @@
   ~ limitations under the License.
   -->
 <configuration>
-    <authentication-client xmlns="urn:elytron:client:1.1">
+    <authentication-client xmlns="urn:elytron:client:1.7">
         <key-stores>
             <key-store name="ca" type="JKS">
                 <file name="target/test-classes/jks/ca.truststore"/>
+            </key-store>
+            <key-store name="ca2" type="JKS">
+                <file name="target/test-classes/jks/ca.truststore2" />
             </key-store>
             <key-store name="scarab" type="JKS">
                 <file name="target/test-classes/jks/scarab.keystore"/>
@@ -44,6 +47,14 @@
             </key-store>
             <key-store name="ocsp-checked-unknown" type="JKS">
                 <file name="target/test-classes/jks/ocsp-checked-unknown.keystore"/>
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="ladybug" type="JKS">
+                <file name="target/test-classes/jks/ladybug.keystore" />
+                <key-store-clear-password password="Elytron"/>
+            </key-store>
+            <key-store name="greenjune" type="JKS">
+                <file name="target/test-classes/jks/greenjune.keystore" />
                 <key-store-clear-password password="Elytron"/>
             </key-store>
         </key-stores>
@@ -74,6 +85,35 @@
                 </providers>
                 <trust-store key-store-name="ca"/>
                 <certificate-revocation-list path="target/test-classes/ica/crl/blank-blank.pem"/>
+            </ssl-context>
+            <ssl-context name="one-way-one-crl" >
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-lists>
+                    <certificate-revocation-list path="target/test-classes/ca/crl/firefly-revoked.pem"/>
+                </certificate-revocation-lists>
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+            <ssl-context name="one-way-multiple-crls-failure" >
+                <trust-store key-store-name="ca"/>
+                <certificate-revocation-lists>
+                    <certificate-revocation-list path="target/test-classes/ca/crl/firefly-revoked.pem"/>
+                    <certificate-revocation-list path="target/test-classes/ca/crl/ladybug-revoked.pem"/>
+                </certificate-revocation-lists>
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+            <ssl-context name="one-way-multiple-crls-success" >
+                <trust-store key-store-name="ca2"/>
+                <certificate-revocation-lists>
+                    <certificate-revocation-list path="target/test-classes/ca/crl/firefly-revoked.pem"/>
+                    <certificate-revocation-list path="target/test-classes/ca/crl/ladybug-revoked.pem"/>
+                </certificate-revocation-lists>
+                <providers>
+                    <global/>
+                </providers>
             </ssl-context>
             <ssl-context name="one-way-firefly-revoked-ssl">
                 <providers>
@@ -116,6 +156,24 @@
                 </key-store-ssl-certificate>
                 <trust-store key-store-name="ca"/>
             </ssl-context>
+            <ssl-context name="two-way-no-crl-failure">
+                <key-store-ssl-certificate key-store-name="ladybug" alias="ladybug">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca" />
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
+            <ssl-context name="two-way-no-crl-success">
+                <key-store-ssl-certificate key-store-name="greenjune" alias="greenjune">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="ca" />
+                <providers>
+                    <global/>
+                </providers>
+            </ssl-context>
             <ssl-context name="two-way-ocsp-good-ssl">
                 <providers>
                     <global/>
@@ -150,6 +208,21 @@
             </rule>
             <rule use-ssl-context="one-way-crl-ssl">
                 <match-host name="test-one-way-crl.org"/>
+            </rule>
+            <rule use-ssl-context="two-way-no-crl-failure">
+                <match-host name="test-two-way-no-crl-failure.org" />
+            </rule>
+            <rule use-ssl-context="two-way-no-crl-success">
+                <match-host name="test-two-way-no-crl-success.org" />
+            </rule>
+            <rule use-ssl-context="one-way-one-crl" >
+                <match-host name="test-one-way-one-crl.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-multiple-crls-failure" >
+                <match-host name="test-one-way-multiple-crls-failure.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-multiple-crls-success" >
+                <match-host name="test-one-way-multiple-crls-success.org" />
             </rule>
             <rule use-ssl-context="one-way-firefly-revoked-ssl">
                 <match-host name="test-one-way-firefly-revoked.org"/>

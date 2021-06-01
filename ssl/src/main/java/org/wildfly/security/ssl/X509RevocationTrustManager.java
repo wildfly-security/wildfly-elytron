@@ -46,8 +46,10 @@ import java.security.cert.PKIXReason;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -71,8 +73,8 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         try {
             PKIXBuilderParameters params = new PKIXBuilderParameters(builder.trustStore, new X509CertSelector());
 
-            if (builder.crlStream != null) {
-                CertStoreParameters csp = new CollectionCertStoreParameters(getCRLs(builder.crlStream));
+            if (builder.crlStreams != null && ! builder.crlStreams.isEmpty()) {
+                CertStoreParameters csp = new CollectionCertStoreParameters(getCRLs(builder.crlStreams));
                 CertStore store = CertStore.getInstance("Collection", csp);
                 params.addCertStore(store);
             }
@@ -164,14 +166,20 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         }
     }
 
-    private Collection<? extends CRL> getCRLs(InputStream crlStream) throws GeneralSecurityException {
+    private Collection<? extends CRL> getCRLs(List<InputStream> crlStreams) throws GeneralSecurityException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        Collection<CRL> crls = new ArrayList<>();
         try {
-            return cf.generateCRLs(crlStream);
+            for (InputStream stream : crlStreams) {
+                crls.addAll(cf.generateCRLs(stream));
+            }
+            return crls;
         } finally {
-            try {
-                crlStream.close();
-            } catch (Exception ignore) {}
+                for (InputStream stream : crlStreams) {
+                    try {
+                        stream.close();
+                    } catch (Exception ignore) {}
+                }
         }
     }
 
@@ -180,7 +188,7 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
         private KeyStore trustStore = null;
         private TrustManagerFactory trustManagerFactory = null;
         private URI responderUri = null;
-        private InputStream crlStream = null;
+        private List<InputStream> crlStreams = null;
         private X509Certificate ocspResponderCert = null;
         private int maxCertPath = DEFAULT_MAX_CERT_PATH_LENGTH;
         private boolean preferCrls = false;
@@ -244,7 +252,21 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
          * @return this Builder for subsequent changes
          */
         public Builder setCrlStream(InputStream crlStream) {
-            this.crlStream = crlStream;
+            List<InputStream> crlStreams = new ArrayList();
+            crlStreams.add(crlStream);
+            this.crlStreams = crlStreams;
+            return this;
+        }
+
+        /**
+         * Set the input streams pointing to certificate revocation lists (may be an empty list). The streams will be
+         * automatically closed after the invocation
+         *
+         * @param crlStreams the input streams
+         * @return this Builder for subsequent changes
+         */
+        public Builder setCrlStreams(List<InputStream> crlStreams) {
+            this.crlStreams = crlStreams;
             return this;
         }
 

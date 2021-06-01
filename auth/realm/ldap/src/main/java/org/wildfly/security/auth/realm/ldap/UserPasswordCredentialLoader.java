@@ -22,6 +22,8 @@ import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 import static org.wildfly.security.auth.realm.ldap.UserPasswordPasswordUtil.parseUserPassword;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -43,6 +45,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.spec.Encoding;
 import org.wildfly.security.util.LdapUtil;
 
 /**
@@ -81,6 +84,11 @@ class UserPasswordCredentialLoader implements CredentialPersister {
     }
 
     @Override
+    public IdentityCredentialPersister forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes, Encoding hashEncoding) {
+        return new ForIdentityLoader(dirContext, distinguishedName, attributes, hashEncoding);
+    }
+
+    @Override
     public void addRequiredIdentityAttributes(Collection<String> attributes) {
         attributes.add(userPasswordAttributeName);
     }
@@ -101,6 +109,11 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             }
 
             @Override
+            public IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, String url, Attributes attributes, Encoding hashEncoding) throws RealmUnavailableException {
+                return new ForIdentityLoader(dirContext, distinguishedName, attributes, hashEncoding);
+            }
+
+            @Override
             public void addRequiredIdentityAttributes(Collection<String> attributes) {
                 attributes.add(userPasswordAttributeName);
             }
@@ -112,11 +125,17 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         private final DirContext context;
         private final String distinguishedName;
         private final Attributes attributes;
+        private final Encoding hashEncoding;
 
         public ForIdentityLoader(DirContext context, String distinguishedName, Attributes attributes) {
+            this(context, distinguishedName, attributes, Encoding.BASE64);
+        }
+
+        public ForIdentityLoader(DirContext context, String distinguishedName, Attributes attributes, Encoding hashEncoding) {
             this.context = context;
             this.distinguishedName = distinguishedName;
             this.attributes = attributes;
+            this.hashEncoding = hashEncoding;
         }
 
         @Override
@@ -137,6 +156,11 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
+        public boolean verifyEvidence(Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException {
+            return verifyEvidence(evidence, providers, StandardCharsets.UTF_8);
+        }
+
+        @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String credentialAlgorithm, final AlgorithmParameterSpec parameterSpec, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
@@ -148,7 +172,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                     for (int i = 0; i < size; i++) {
                         byte[] value = (byte[]) attribute.get(i);
 
-                        Password password = parseUserPassword(value);
+                        Password password = parseUserPassword(value, hashEncoding);
 
                         if (credentialType.isAssignableFrom(PasswordCredential.class) && (credentialAlgorithm == null || credentialAlgorithm.equals(password.getAlgorithm()))) {
                             return credentialType.cast(new PasswordCredential(password));
@@ -165,10 +189,10 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException {
+        public boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers, Charset hashCharset) throws RealmUnavailableException {
             final PasswordCredential credential = getCredential(PasswordCredential.class, null, null, providers);
             if (credential == null) return false;
-            return credential.verify(providers, evidence);
+            return credential.verify(providers, evidence, hashCharset);
         }
 
         @Override
@@ -182,7 +206,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             // TODO - We probably need some better resolution here of the existing attributes - i.e. different types we would want to add, same type we would want to replace.
 
             try {
-                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword(credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword));
+                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword(credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword), hashEncoding);
                 Assert.assertNotNull(composedPassword);
 
                 Attributes attributes = new BasicAttributes();

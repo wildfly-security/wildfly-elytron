@@ -26,6 +26,8 @@ import static java.lang.Math.min;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -71,8 +73,8 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this.hash = hash;
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final char[] passwordChars) throws NoSuchAlgorithmException {
-        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), DEFAULT_ITERATION_COUNT, passwordChars);
+    UnixSHACryptPasswordImpl(final String algorithm, final char[] passwordChars, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), DEFAULT_ITERATION_COUNT, passwordChars, hashCharset);
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedHashPasswordSpec spec) {
@@ -84,23 +86,23 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, spec.getEncodedPassword());
+        this(algorithm, spec.getEncodedPassword(), StandardCharsets.UTF_8);
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, truncatedClone(parameterSpec.getSalt()), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
+    UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedPasswordAlgorithmSpec parameterSpec, final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, truncatedClone(parameterSpec.getSalt()), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password, hashCharset);
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final SaltedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, truncatedClone(parameterSpec.getSalt()), DEFAULT_ITERATION_COUNT, password);
+    UnixSHACryptPasswordImpl(final String algorithm, final SaltedPasswordAlgorithmSpec parameterSpec, final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, truncatedClone(parameterSpec.getSalt()), DEFAULT_ITERATION_COUNT, password, hashCharset);
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final IteratedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
+    UnixSHACryptPasswordImpl(final String algorithm, final IteratedPasswordAlgorithmSpec parameterSpec, final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password, hashCharset);
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final byte[] clonedSalt, final int adjustedIterationCount, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, clonedSalt, adjustedIterationCount, doEncode(algorithm, getNormalizedPasswordBytes(password), clonedSalt, adjustedIterationCount));
+    UnixSHACryptPasswordImpl(final String algorithm, final byte[] clonedSalt, final int adjustedIterationCount, final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(algorithm, clonedSalt, adjustedIterationCount, doEncode(algorithm, getNormalizedPasswordBytes(password, hashCharset), clonedSalt, adjustedIterationCount));
     }
 
     private static byte[] truncatedClone(final byte[] salt) {
@@ -142,8 +144,13 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     boolean verify(final char[] guess) throws InvalidKeyException {
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         try {
-            byte[] password = getNormalizedPasswordBytes(guess);
+            byte[] password = getNormalizedPasswordBytes(guess, hashCharset);
             byte[] encodedGuess = doEncode(algorithm, password, salt, iterationCount);
             return Arrays.equals(getHash(), encodedGuess);
         } catch (NoSuchAlgorithmException e) {

@@ -57,6 +57,14 @@ final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServer
         return wrap(super.createServerSocket(port, backlog, ifAddress));
     }
 
+    public String[] getDefaultCipherSuites() {
+        return sslConfigurator.getDefaultSSLParameters(sslContext, sslContext.getDefaultSSLParameters()).getCipherSuites();
+    }
+
+    public String[] getSupportedCipherSuites() {
+        return sslConfigurator.getSupportedSSLParameters(sslContext, sslContext.getSupportedSSLParameters()).getCipherSuites();
+    }
+
     private ServerSocket wrap(ServerSocket original) throws IOException {
         if (original instanceof SSLServerSocket) {
             final SSLServerSocket sslServerSocket = (SSLServerSocket) original;

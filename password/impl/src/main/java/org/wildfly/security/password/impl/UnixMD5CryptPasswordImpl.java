@@ -23,6 +23,7 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -70,16 +71,16 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this.hash = encode(getNormalizedPasswordBytes(spec.getEncodedPassword()), this.salt);
     }
 
-    UnixMD5CryptPasswordImpl(final char[] password) throws NoSuchAlgorithmException {
-        this(password, PasswordUtil.generateRandomSalt(SALT_SIZE));
+    UnixMD5CryptPasswordImpl(final char[] password, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(password, PasswordUtil.generateRandomSalt(SALT_SIZE), hashCharset);
     }
 
-    UnixMD5CryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(password, truncatedClone(spec.getSalt()));
+    UnixMD5CryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(password, truncatedClone(spec.getSalt()), hashCharset);
     }
 
-    UnixMD5CryptPasswordImpl(final char[] password, final byte[] salt) throws NoSuchAlgorithmException {
-        this(encode(getNormalizedPasswordBytes(password), salt), salt);
+    UnixMD5CryptPasswordImpl(final char[] password, final byte[] salt, final Charset hashCharset) throws NoSuchAlgorithmException {
+        this(encode(getNormalizedPasswordBytes(password, hashCharset), salt), salt);
     }
 
     private static byte[] truncatedClone(final byte[] salt) {
@@ -115,7 +116,12 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     boolean verify(final char[] guess) throws InvalidKeyException {
-        byte[] guessAsBytes = getNormalizedPasswordBytes(guess);
+        return verify(guess, StandardCharsets.UTF_8);
+    }
+
+    @Override
+    boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
+        byte[] guessAsBytes = getNormalizedPasswordBytes(guess, hashCharset);
         byte[] test;
         try {
             test = encode(guessAsBytes, getSalt());

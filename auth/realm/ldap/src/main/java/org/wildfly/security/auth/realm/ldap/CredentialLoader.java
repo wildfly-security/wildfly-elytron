@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.ldap;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.password.spec.Encoding;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -69,6 +70,22 @@ interface CredentialLoader {
      * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
      */
     IdentityCredentialLoader forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes) throws RealmUnavailableException;
+
+    /**
+     * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.
+     * <p>
+     * Note: By this point referrals relating to the identity should have been resolved so the {@link DirContextFactory} should
+     * be suitable for use with the supplied {@code distinguishedName}
+     *
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
+     * @param distinguishedName the distinguished name of the identity.
+     * @param attributes the identity attributes requested by {@link #addRequiredIdentityAttributes(Collection)}
+     * @param hashEncoding specifies the string format for the hashed password
+     * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
+     */
+    default IdentityCredentialLoader forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes, Encoding hashEncoding) throws RealmUnavailableException {
+        return forIdentity(dirContext, distinguishedName, attributes);
+    }
 
     /**
      * Construct set of LDAP attributes, which should be loaded as part of the identity from identity entry.

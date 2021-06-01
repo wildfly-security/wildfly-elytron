@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password;
 
+import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -88,6 +89,21 @@ public abstract class PasswordFactorySpi {
      * @throws InvalidKeyException if the given password type is not supported
      */
     protected abstract boolean engineVerify(String algorithm, Password password, final char[] guess) throws InvalidKeyException;
+
+    /**
+     * Perform password verification.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password object
+     * @param guess the guessed password
+     * @param hashCharset the character set used in the password object representation (must not be {@code null})
+     * @return {@code true} if the password matches, {@code false} otherwise
+     * @throws InvalidKeyException if the given password type is not supported
+     * @throws UnsupportedOperationException if this method is not supported by the password factory implementation
+     */
+    protected boolean engineVerify(String algorithm, Password password, final char[] guess, Charset hashCharset) throws InvalidKeyException{
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Determine whether the given password object is convertible to the given key specification type.
