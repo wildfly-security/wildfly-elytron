@@ -67,7 +67,7 @@ final class OAuth2SaslServer extends AbstractSaslServer {
                     // successful authentication, otherwise the server responds with an error message
                     if (serverResponse.length == 0) {
                         ok = true;
-                        setNegotiationState(COMPLETE_STATE);
+                        negotiationComplete();
                     } else {
                         ok = true;
                         setNegotiationState(S_IN_ERROR);

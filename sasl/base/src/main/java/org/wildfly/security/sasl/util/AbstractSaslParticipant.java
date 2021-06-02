@@ -206,6 +206,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      */
     public void negotiationComplete() {
         state = COMPLETE_STATE;
+        log.tracef("SASL Negotiation Completed");
     }
 
     protected byte[] evaluateMessage(final byte[] message) throws SaslException {
@@ -222,6 +223,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         } finally {
             if (! ok) {
                 state = FAILED_STATE;
+                log.tracef("SASL Negotiation Failed");
             }
         }
     }
