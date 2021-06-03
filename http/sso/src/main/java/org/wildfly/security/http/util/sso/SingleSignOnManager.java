@@ -31,20 +31,7 @@ public interface SingleSignOnManager {
      * @param identity a security identity of the authenticated user
      * @return a single sign-on entry
      */
-    default SingleSignOn create(String mechanismName, boolean programmatic, SecurityIdentity identity) {
-        return create(mechanismName, identity);
-    };
-
-    /**
-     * Creates a single sign-on entry using the specified mechanism and security identity
-     * @param mechanismName an authentication mechanism name
-     * @param identity a security identity of the authenticated user
-     * @return a single sign-on entry
-     */
-    @Deprecated
-    default SingleSignOn create(String mechanismName, SecurityIdentity identity) {
-        throw new IllegalStateException("Method being replaced by - create(String mechanismName, boolean programmatic, SecurityIdentity identity)");
-    };
+    SingleSignOn create(String mechanismName, boolean programmatic, SecurityIdentity identity);
 
     /**
      * Locates the single sign-on entry with the specified identifier, or null if none exists.
