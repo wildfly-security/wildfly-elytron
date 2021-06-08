@@ -93,7 +93,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                 case S_FINAL_MESSAGE: {
                     final ScramFinalClientMessage finalClientMessage = scramServer.parseFinalClientMessage(initialClientMessage, initialServerResult, response);
                     final ScramFinalServerMessage finalServerMessage = scramServer.evaluateFinalClientMessage(initialServerResult, finalClientMessage);
-                    setNegotiationState(COMPLETE_STATE);
+                    negotiationComplete();
                     ok = true;
                     return finalServerMessage.getMessageBytes();
                 }

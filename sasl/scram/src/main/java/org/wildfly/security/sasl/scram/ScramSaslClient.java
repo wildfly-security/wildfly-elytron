@@ -80,7 +80,7 @@ final class ScramSaslClient extends AbstractSaslClient {
                 case ST_R2_SENT: {
                     final ScramFinalServerMessage finalChallenge = scramClient.parseFinalServerMessage(challenge);
                     scramClient.verifyFinalChallenge(finalResponse, finalChallenge);
-                    setNegotiationState(COMPLETE_STATE);
+                    negotiationComplete();
                     ok = true;
                     return null;
                 }

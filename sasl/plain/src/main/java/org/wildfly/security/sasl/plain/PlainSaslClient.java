@@ -95,6 +95,7 @@ final class PlainSaslClient implements SaslClient, SaslWrapper {
             StringPrep.encode(name, b, this.profile);
             b.append((byte) 0);
             StringPrep.encode(password, b, this.profile);
+            saslPlain.tracef("SASL Negotiation Completed");
             return b.toArray();
         } catch (IllegalArgumentException ex) {
             throw saslPlain.mechMalformedFields(ex).toSaslException();
