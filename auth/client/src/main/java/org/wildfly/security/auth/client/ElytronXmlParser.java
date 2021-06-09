@@ -750,7 +750,6 @@ public final class ElytronXmlParser {
         ExceptionSupplier<InputStream, IOException> resourceSource = null;
         URI uriSource = null;
         boolean gotSource = false;
-        int maxCertPath = 0;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
@@ -803,7 +802,6 @@ public final class ElytronXmlParser {
                         throw new ConfigXMLParseException(e);
                     }
                 }
-                if (maxCertPath != 0) builder.setMaxCertPath(maxCertPath);
                 return;
             } else {
                 throw reader.unexpectedContent();
