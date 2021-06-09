@@ -1,0 +1,147 @@
+---
+layout: post
+title: "Invoking EJBs over HTTP"
+date: 2021-06-14
+tags: wildfly elytron
+synopsis: An overview of how to setup EJBs to operate over HTTP.
+author: araskar
+---
+:toc: macro
+:toc-title:
+
+toc::[]
+
+The *https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ejb-http[ejb-http]* quickstart will describe the steps to setting up EJBs using HTTP as the transport. It will also secure it with a FileSystem realm, and use a credential store to access the EJB. This will focus on the configuration of the server to allow it to communicate over HTTP.
+
+== Server Configuration
+
+=== Prerequisite Configuration
+
+First we will connect to the server via:
+[source, shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+`WILDFLY_HOME` refers to the location where WildFly is installed. For example it could be something like `~/wildfly/build/target/wildfly-24.0.0.Beta1-SNAPSHOT`
+
+Then we will create a file system realm called fsRealm, and add a directory in the jboss server config directory called fs-realm-users that will contain all the data of the identity of each user created:
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm-users, relative-to=jboss.server.config.dir)
+----
+
+Then we will create a new user, assign them a password, and give them the role of guest:
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(clear={password=quickstartPwd1!},identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=[guest])
+----
+
+We will also add a role decoder to be able to process the roles assigned:
+[source]
+----
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+----
+
+We create a security domain that references the filesystem realm and will use the role decoder we created above:
+[source]
+----
+/subsystem=elytron/security-domain=fsSD:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+----
+
+Next we add the application security domain mapping in the EJB3 subsystem so that the server uses the correct security domain:
+[source]
+----
+/subsystem=ejb3/application-security-domain=other:add(security-domain=fsSD)
+----
+
+=== Configure the HTTP Transport
+First we must configure the http-authentication-factory for the server to authenticate over HTTP.
+Here we set the mechanism to BASIC (but could also be set to another HTTP mechansim, like FORM for example), point to the fsSD security-domain, and the fsRealm filesystem-realm, and we call the newly created http-authentication-factory, example-http-auth:
+[source]
+----
+/subsystem=elytron/http-authentication-factory=example-http-auth:add(http-server-mechanism-factory=global,security-domain=fsSD,mechanism-configurations=[{mechanism-name=BASIC,mechanism-realm-configurations=[{realm-name=fsRealm}]}])
+----
+
+Then in order to operate over HTTP, we must disable the legacy security-realm. This is done by undefining it from the http-invoker:
+[source]
+----
+/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)
+----
+
+And finally we can enable the http-invoker with the http-authentication-factory defined earlier (example-http-auth) that allows HTTP invocation for the EJB:
+[source]
+----
+/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=example-http-auth)
+----
+
+== Client Configuration
+
+=== Prerequisite Configuration
+
+To create a credential store, we run the following command, which creates it in the path specified after the --location flag, and secures it with the password specified after the --password flag (in this case it is “StorePassword”):
+[source]
+----
+WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/mycredstore.cs" --password StorePassword
+----
+
+We now create an alias that will hold the password to use when accessing the EJB. In this case the alias username is “quickstartUser”, and the password is “quickstartPwd1!”:
+[source]
+----
+WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/mycredstore.cs" --password StorePassword --add quickstartUser --secret quickstartPwd1!
+----
+
+If we access the `wildfly-config-xml`, the following file should appear:
+[source, xml]
+----
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.7">
+        <credential-stores>
+            <credential-store name="mycredstore">
+                <attributes>
+                    <attribute name="keyStoreType" value="JCEKS"/>
+                    <attribute name="location" value="/PATH/TO/mycredstore.cs"></attribute>
+                </attributes>
+                <protection-parameter-credentials>
+                    <clear-password password="StorePassword"/>
+                </protection-parameter-credentials>
+            </credential-store>
+        </credential-stores>
+
+        <authentication-rules>
+            <rule use-configuration="default-config"/>
+        </authentication-rules>
+        <authentication-configurations>
+            <configuration name="default-config">
+                <set-user-name name="quickstartUser"/>
+                <credentials>
+                    <credential-store-reference store="mycredstore" alias="quickstartUser"/>
+                </credentials>
+                <providers>
+                    <use-service-loader />
+                </providers>
+            </configuration>
+        </authentication-configurations>
+    </authentication-client>
+</configuration>
+----
+Here we can see the definition of the credential store.
+Make sure to change the path from "/PATH/TO/mycredstore.cs", to the same path as when configuring the credential store. Also ensure that the path here is the absolute path, starting with a `/`
+
+=== Performing Invocations
+When creating the `InitialContext` in your Client Application, the `PROVIDER_URL` field should be changed.
+When using EJB over the Remoting protocol, the `PROVIDER_URL` is set to:
+[source, java]
+----
+"remote+http://localhost:8080"
+----
+Since we now want to use EJB over HTTP, the `PROVIDER_URL` should be changed to: +
+[source, java]
+----
+"http://localhost:8080/wildfly-services"
+----
+The path that specifies `/wildfly-services` is the default when setting up the http-invoker, and should be changed to the same as the one specified, if the defaut was not used.
+
+== Summary
+This blog post has given an overview on how to invoke an EJB over HTTP, make use of a filesystem realm, and use a credential-store to obtain the password to invoke the EJB.
