@@ -296,6 +296,10 @@ public class JwtValidator implements TokenValidator {
             return defaultPublicKey;
         }
         if (jku != null) {
+            if (jwkManager == null) {
+                log.debugf("Cannot validate token with jku [%s]. SSL is not configured and jku claim is not supported.", jku);
+                return null;
+            }
             try {
                 return jwkManager.getPublicKey(kid.getString(), new URL(jku.getString()));
             } catch (MalformedURLException e) {
