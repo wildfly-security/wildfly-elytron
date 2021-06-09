@@ -71,7 +71,7 @@ final class OAuth2SaslClient extends AbstractSaslClient {
 
                     // successful authentication
                     if (finalMessage == null) {
-                        setNegotiationState(COMPLETE_STATE);
+                        negotiationComplete();
                         ok = true;
                     }
 
