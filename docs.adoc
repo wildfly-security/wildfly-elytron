@@ -15,8 +15,8 @@ https://docs.wildfly.org/23/WildFly_Elytron_Security.html[subsystem documentatio
 
 Javdoc of the public APIs is available for the most recent two major WildFly releases.
 
- * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 23 API].
- * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 22 API].
+ * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 24 API].
+ * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 23 API].
 
 Javadoc of the public APIs is also available for the versions of WildFly Elytron included in JBoss EAP.
 
