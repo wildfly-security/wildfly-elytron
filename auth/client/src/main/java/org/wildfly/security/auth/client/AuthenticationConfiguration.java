@@ -530,37 +530,39 @@ public final class AuthenticationConfiguration {
             return true;
         }
         // otherwise, use mechanism information and our credential set
-        Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
-        final CredentialSource credentials = credentialSource;
-        for (Class<? extends Credential> type : types) {
-            if (AlgorithmCredential.class.isAssignableFrom(type)) {
-                Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, type);
-                if (algorithms.contains("*")) {
-                    try {
-                        if (credentials.getCredentialAcquireSupport(type, null).mayBeSupported()) {
-                            return true;
-                        }
-                    } catch (IOException e) {
-                        // no match
-                    }
-                } else {
-                    for (String algorithm : algorithms) {
+        if (credentialSource != null) {
+            Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+            final CredentialSource credentials = credentialSource;
+            for (Class<? extends Credential> type : types) {
+                if (AlgorithmCredential.class.isAssignableFrom(type)) {
+                    Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, type);
+                    if (algorithms.contains("*")) {
                         try {
-                            if (credentials.getCredentialAcquireSupport(type, algorithm).mayBeSupported()) {
+                            if (credentials.getCredentialAcquireSupport(type, null).mayBeSupported()) {
                                 return true;
                             }
                         } catch (IOException e) {
                             // no match
                         }
+                    } else {
+                        for (String algorithm : algorithms) {
+                            try {
+                                if (credentials.getCredentialAcquireSupport(type, algorithm).mayBeSupported()) {
+                                    return true;
+                                }
+                            } catch (IOException e) {
+                                // no match
+                            }
+                        }
                     }
-                }
-            } else {
-                try {
-                    if (credentials.getCredentialAcquireSupport(type).mayBeSupported()) {
-                        return true;
+                } else {
+                    try {
+                        if (credentials.getCredentialAcquireSupport(type).mayBeSupported()) {
+                            return true;
+                        }
+                    } catch (IOException e) {
+                        // no match
                     }
-                } catch (IOException e) {
-                    // no match
                 }
             }
         }
