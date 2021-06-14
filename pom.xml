@@ -68,7 +68,7 @@
         <version.org.eclipse.microprofile.jwt.api>1.2</version.org.eclipse.microprofile.jwt.api>
         <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
 
-        <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
+        <version.org.jboss.logging>3.4.2.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.18.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
