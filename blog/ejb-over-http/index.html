@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Invoking EJBs over HTTP</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Invoking EJBs over HTTP</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/9fa88b105a019dccd6ab8db410e67123">
+        
+        <p class="byline">By <a href="https://github.com/ashpan">Ashpan Raskar</a> | June 14, 2021</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/&title=Invoking EJBs over HTTP" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Invoking EJBs over HTTP&url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Invoking EJBs over HTTP&amp;body=Invoking EJBs over HTTP https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#server-configuration">Server Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#prerequisite-configuration">Prerequisite Configuration</a></li>
+<li><a href="#configure-the-http-transport">Configure the HTTP Transport</a></li>
+</ul>
+</li>
+<li><a href="#client-configuration">Client Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#prerequisite-configuration-2">Prerequisite Configuration</a></li>
+<li><a href="#performing-invocations">Performing Invocations</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ejb-http">ejb-http</a></strong> quickstart will describe the steps to setting up EJBs using HTTP as the transport. It will also secure it with a FileSystem realm, and use a credential store to access the EJB. This will focus on the configuration of the server to allow it to communicate over HTTP.</p>
+</div>
+<div class="sect1">
+<h2 id="server-configuration"><a class="anchor" href="#server-configuration"></a>Server Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="prerequisite-configuration"><a class="anchor" href="#prerequisite-configuration"></a>Prerequisite Configuration</h3>
+<div class="paragraph">
+<p>First we will connect to the server via:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>WILDFLY_HOME</code> refers to the location where WildFly is installed. For example it could be something like <code>~/wildfly/build/target/wildfly-24.0.0.Beta1-SNAPSHOT</code></p>
+</div>
+<div class="paragraph">
+<p>Then we will create a file system realm called fsRealm, and add a directory in the jboss server config directory called fs-realm-users that will contain all the data of the identity of each user created:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm-users, relative-to=jboss.server.config.dir)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then we will create a new user, assign them a password, and give them the role of guest:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(clear={password=quickstartPwd1!},identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=[guest])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We will also add a role decoder to be able to process the roles assigned:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We create a security domain that references the filesystem realm and will use the role decoder we created above:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=fsSD:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next we add the application security domain mapping in the EJB3 subsystem so that the server uses the correct security domain:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=ejb3/application-security-domain=other:add(security-domain=fsSD)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-the-http-transport"><a class="anchor" href="#configure-the-http-transport"></a>Configure the HTTP Transport</h3>
+<div class="paragraph">
+<p>First we must configure the http-authentication-factory for the server to authenticate over HTTP.
+Here we set the mechanism to BASIC (but could also be set to another HTTP mechansim, like FORM for example), point to the fsSD security-domain, and the fsRealm filesystem-realm, and we call the newly created http-authentication-factory, example-http-auth:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/http-authentication-factory=example-http-auth:add(http-server-mechanism-factory=global,security-domain=fsSD,mechanism-configurations=[{mechanism-name=BASIC,mechanism-realm-configurations=[{realm-name=fsRealm}]}])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then in order to operate over HTTP, we must disable the legacy security-realm. This is done by undefining it from the http-invoker:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally we can enable the http-invoker with the http-authentication-factory defined earlier (example-http-auth) that allows HTTP invocation for the EJB:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=example-http-auth)</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-configuration"><a class="anchor" href="#client-configuration"></a>Client Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="prerequisite-configuration-2"><a class="anchor" href="#prerequisite-configuration-2"></a>Prerequisite Configuration</h3>
+<div class="paragraph">
+<p>To create a credential store, we run the following command, which creates it in the path specified after the --location flag, and secures it with the password specified after the --password flag (in this case it is “StorePassword”):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/mycredstore.cs" --password StorePassword</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We now create an alias that will hold the password to use when accessing the EJB. In this case the alias username is “quickstartUser”, and the password is “quickstartPwd1!”:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/mycredstore.cs" --password StorePassword --add quickstartUser --secret quickstartPwd1!</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we access the <code>wildfly-config-xml</code>, the following file should appear:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;configuration&gt;
+    &lt;authentication-client xmlns="urn:elytron:client:1.7"&gt;
+        &lt;credential-stores&gt;
+            &lt;credential-store name="mycredstore"&gt;
+                &lt;attributes&gt;
+                    &lt;attribute name="keyStoreType" value="JCEKS"/&gt;
+                    &lt;attribute name="location" value="/PATH/TO/mycredstore.cs"&gt;&lt;/attribute&gt;
+                &lt;/attributes&gt;
+                &lt;protection-parameter-credentials&gt;
+                    &lt;clear-password password="StorePassword"/&gt;
+                &lt;/protection-parameter-credentials&gt;
+            &lt;/credential-store&gt;
+        &lt;/credential-stores&gt;
+
+        &lt;authentication-rules&gt;
+            &lt;rule use-configuration="default-config"/&gt;
+        &lt;/authentication-rules&gt;
+        &lt;authentication-configurations&gt;
+            &lt;configuration name="default-config"&gt;
+                &lt;set-user-name name="quickstartUser"/&gt;
+                &lt;credentials&gt;
+                    &lt;credential-store-reference store="mycredstore" alias="quickstartUser"/&gt;
+                &lt;/credentials&gt;
+                &lt;providers&gt;
+                    &lt;use-service-loader /&gt;
+                &lt;/providers&gt;
+            &lt;/configuration&gt;
+        &lt;/authentication-configurations&gt;
+    &lt;/authentication-client&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here we can see the definition of the credential store.
+Make sure to change the path from "/PATH/TO/mycredstore.cs", to the same path as when configuring the credential store. Also ensure that the path here is the absolute path, starting with a <code>/</code></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="performing-invocations"><a class="anchor" href="#performing-invocations"></a>Performing Invocations</h3>
+<div class="paragraph">
+<p>When creating the <code>InitialContext</code> in your Client Application, the <code>PROVIDER_URL</code> field should be changed.
+When using EJB over the Remoting protocol, the <code>PROVIDER_URL</code> is set to:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">"remote+http://localhost:8080"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Since we now want to use EJB over HTTP, the <code>PROVIDER_URL</code> should be changed to:<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">"http://localhost:8080/wildfly-services"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The path that specifies <code>/wildfly-services</code> is the default when setting up the http-invoker, and should be changed to the same as the one specified, if the defaut was not used.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how to invoke an EJB over HTTP, make use of a filesystem realm, and use a credential-store to obtain the password to invoke the EJB.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
