@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Mon, 14 Jun 2021 16:25:42 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 15 Jun 2021 12:05:09 +0000</lastBuildDate>
+        
+        <item>
+            <title>Secure WildFly CLI with Keycloak</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/secure-wildfly-cli-with-keycloak/
+            </link>
+            <description>
+                This blog post gives an example of how to secure WildFly CLI using Keycloak and Elytron. Keycloak&#8217;s Wildfly Elytron Adapter Download WildFly server, Keycloak server and the WildFly OpenID Connect client adapter for WildFly from keycloak.org. Make sure your versions are compatible. Then, extract the contents of the client adapter...
+            </description>
+            <pubDate>Tue, 15 Jun 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/secure-wildfly-cli-with-keycloak/
+            </guid>
+        </item>
         
         <item>
             <title>Invoking EJBs over HTTP</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 22 Jan 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/planned-security-features-for-wildfly-23/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Automatic Self-Signed Certificate Generation with Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/auto-self-signed-certificate-generation/
-            </link>
-            <description>
-                WildFly 22 adds the ability to automatically generate a self-signed certificate the first time WildFly receives an HTTPS request when WildFly is being secured using Elytron. This is useful for development or testing environments. This blog post gives an introduction to this new feature. Default SSL context Making use of...
-            </description>
-            <pubDate>Thu, 14 Jan 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/auto-self-signed-certificate-generation/
             </guid>
         </item>
         
