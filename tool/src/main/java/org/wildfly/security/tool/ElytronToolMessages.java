@@ -221,6 +221,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = 7, value = "Invalid \"%s\" value. Must be an integer between %d and %d, inclusive")
     IllegalArgumentException invalidParameterMustBeIntBetween(String parameter, int min, int max);
 
+    @Message(id = NONE, value = "Secret not specified.")
+    MissingArgumentException secretNotSpecified();
+
     // vault command
     @Message(id = NONE, value = "\"vault\" command is used convert PicketBox Security Vault to credential store using default implementation (KeyStoreCredentialStore)" +
                                 " or custom implementation set with the \"type\" option.")
