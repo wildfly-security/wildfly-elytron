@@ -4,8 +4,8 @@
     <channel>
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
-        <description>WildFly Elytron: Security, Authentication, and Authorization SPIs for the WildFly project</description>
-        <lastBuildDate>Tue, 15 Jun 2021 12:05:09 +0000</lastBuildDate>
+        <description></description>
+        <lastBuildDate>Fri, 18 Jun 2021 10:12:50 +0000</lastBuildDate>
         
         <item>
             <title>Secure WildFly CLI with Keycloak</title>
