@@ -37,6 +37,23 @@ This is the main application server project. Integration related to Elytron can 
 https://github.com/wildfly/wildfly[Git Repository]
 https://issues.redhat.com/projects/WFLY[Issue Tracker]
 
+=== Elytron Web
+
+This is the integration project for integrating Elytron based HTTP authentication with web containers and clients.
+
+[%hardbreaks]
+https://github.com/wildfly-security/elytron-web[Git Repository]
+https://issues.redhat.com/projects/ELYWEB/[Issue Tracker]
+
+=== WildFly OpenSSL
+
+This project provides OpenSSL bindings for Java, attempting to use existing JSSE APIs as much as possible.
+
+[%hardbreaks]
+https://github.com/wildfly-security/wildfly-openssl[Git Repository]
+https://issues.redhat.com/projects/WFSSL[Issue Tracker]
+
+
 === WildFly Proposals
  
 When starting on a new Elytron feature, we prepare an analysis document and submit a PR against the WildFly
@@ -79,7 +96,7 @@ For example:
 [source,shell]
 git remote add upstream https://github.com/wildfly-security/wildfly-elytron
 
-To build `wildfly-elytron`, `wildfly-core`, or `wildfly`, `cd` to the appropriate directory and then run:
+To build `wildfly-elytron`, `wildfly-core`, `wildfly`, `elytron-web`, or `wildfly-openssl`, `cd` to the appropriate directory and then run:
 
 [source,shell]
 mvn clean install
@@ -103,7 +120,10 @@ reference your locally built `wildfly-elytron` `SNAPSHOT` version
 3. Build `wildfly-core`
 4. Update the `version.org.wildfly.core` property in the `wildfly/pom.xml` file to reference your locally
 built `wildfly-core` `SNAPSHOT` version
-5. Build `wildfly` 
+5. Build `wildfly`
+
+NOTE: Refer to the building section in the https://github.com/wildfly-security/wildfly-openssl#building[WildFly OpenSSL]
+repository to get more information about building the native code.
 
 == Running the Test Suites
 
