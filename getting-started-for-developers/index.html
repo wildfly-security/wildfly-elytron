@@ -113,6 +113,8 @@
 <li><a href="#wildfly-elytron">WildFly Elytron</a></li>
 <li><a href="#wildfly-core">WildFly Core</a></li>
 <li><a href="#wildfly">WildFly</a></li>
+<li><a href="#elytron-web">Elytron Web</a></li>
+<li><a href="#wildfly-openssl">WildFly OpenSSL</a></li>
 <li><a href="#wildfly-proposals">WildFly Proposals</a></li>
 </ul>
 </li>
@@ -157,6 +159,26 @@ it is possible to use Elytron outside of WildFly.</p>
 <div class="paragraph">
 <p><a href="https://github.com/wildfly/wildfly">Git Repository</a><br>
 <a href="https://issues.redhat.com/projects/WFLY">Issue Tracker</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="elytron-web"><a class="anchor" href="#elytron-web"></a>Elytron Web</h3>
+<div class="paragraph">
+<p>This is the integration project for integrating Elytron based HTTP authentication with web containers and clients.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly-security/elytron-web">Git Repository</a><br>
+<a href="https://issues.redhat.com/projects/ELYWEB/">Issue Tracker</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly-openssl"><a class="anchor" href="#wildfly-openssl"></a>WildFly OpenSSL</h3>
+<div class="paragraph">
+<p>This project provides OpenSSL bindings for Java, attempting to use existing JSSE APIs as much as possible.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/wildfly-security/wildfly-openssl">Git Repository</a><br>
+<a href="https://issues.redhat.com/projects/WFSSL">Issue Tracker</a></p>
 </div>
 </div>
 <div class="sect2">
@@ -233,7 +255,7 @@ For example:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>To build <code>wildfly-elytron</code>, <code>wildfly-core</code>, or <code>wildfly</code>, <code>cd</code> to the appropriate directory and then run:</p>
+<p>To build <code>wildfly-elytron</code>, <code>wildfly-core</code>, <code>wildfly</code>, <code>elytron-web</code>, or <code>wildfly-openssl</code>, <code>cd</code> to the appropriate directory and then run:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -280,6 +302,19 @@ built <code>wildfly-core</code> <code>SNAPSHOT</code> version</p>
 <p>Build <code>wildfly</code></p>
 </li>
 </ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Refer to the building section in the <a href="https://github.com/wildfly-security/wildfly-openssl#building">WildFly OpenSSL</a>
+repository to get more information about building the native code.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
