@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: SSL Certificate Revocation Lists with WildFly</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>SSL Certificate Revocation Lists with WildFly</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/abf96d05af53c494685384d382dba345">
+        
+        <p class="byline">By <a href="https://github.com/SoniaZaldana">Sonia Zaldana Calles</a> | June 18, 2021</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/&title=SSL Certificate Revocation Lists with WildFly" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=SSL Certificate Revocation Lists with WildFly&url=https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=SSL Certificate Revocation Lists with WildFly&amp;body=SSL Certificate Revocation Lists with WildFly https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#an-overview-of-certificate-revocation-lists">An Overview of Certificate Revocation Lists</a></li>
+<li><a href="#configuring-crls-on-the-client-side">Configuring CRLs on the Client Side</a>
+<ul class="sectlevel2">
+<li><a href="#back-up-your-standalone-server-configuration">Back Up Your Standalone Server Configuration</a></li>
+<li><a href="#pre-requisite-server-configuration">Pre-requisite Server Configuration</a></li>
+<li><a href="#pre-requisite-client-configuration">Pre-requisite Client Configuration</a></li>
+<li><a href="#configure-the-server">Configure the Server</a></li>
+<li><a href="#create-the-certificate-revocation-lists">Create the Certificate Revocation Lists</a></li>
+<li><a href="#configure-a-client-that-verifies-certificates-against-crls">Configure a Client that verifies certificates against CRLs</a></li>
+<li><a href="#build-and-deploy-the-application">Build and Deploy the Application</a></li>
+<li><a href="#run-the-client-and-verify-certificate-rejection">Run the Client and Verify Certificate Rejection</a></li>
+</ul>
+</li>
+<li><a href="#undeploy-the-application">Undeploy the Application</a>
+<ul class="sectlevel2">
+<li><a href="#restore-the-wildfly-standalone-server-configuration">Restore the WildFly Standalone Server Configuration</a></li>
+</ul>
+</li>
+<li><a href="#configuring-crls-on-the-server-side">Configuring CRLs on the Server Side</a></li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-certificate-revocation-lists"><a class="anchor" href="#an-overview-of-certificate-revocation-lists"></a>An Overview of Certificate Revocation Lists</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Certificate Revocation Lists (CRLs) contain a list of certificates that have been revoked
+by the issuing Certificate Authority before their expected expiration date, and therefore should no longer
+be trusted. Elytron previously supported configuring only one Certificate Revocation List.</p>
+</div>
+<div class="paragraph">
+<p>It is now possible to configure multiple CRL files, which is useful when several certificate authorities are used.
+This blog post assumes previous knowledge on how to configure SSL in Elytron. For more information on how to configure SSL,
+refer to the elytron <a href="https://docs.wildfly.org/24/WildFly_Elytron_Security.html#configure-ssltls">documentation.</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-crls-on-the-client-side"><a class="anchor" href="#configuring-crls-on-the-client-side"></a>Configuring CRLs on the Client Side</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Support for multiple CRLs is now available in the client and server side using WildFly Elytron.
+Let&#8217;s take a look at an example configuring one way SSL using CRLs in the client. The example application is
+available <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ssl-certificate-revocation-lists"> here.</a></p>
+</div>
+<div class="sect2">
+<h3 id="back-up-your-standalone-server-configuration"><a class="anchor" href="#back-up-your-standalone-server-configuration"></a>Back Up Your Standalone Server Configuration</h3>
+<div class="paragraph">
+<p>Prior to starting, back up your standalone server configuration by making a copy of
+your <code>WILDFLY_HOME/standalone/configuration/standalone.xml</code> file. You will need it in the end
+to restore your server&#8217;s configuration.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="pre-requisite-server-configuration"><a class="anchor" href="#pre-requisite-server-configuration"></a>Pre-requisite Server Configuration</h3>
+<div class="paragraph">
+<p>Since certificate revocation lists correspond to a specific certificate authority, we will create our own
+self signed Root Certificate Authority which will then be used to sign our server&#8217;s certificate.
+The following steps demonstrate how to achieve this set up:</p>
+</div>
+<div class="sect3">
+<h4 id="generate-a-self-signed-root-certificate-authority"><a class="anchor" href="#generate-a-self-signed-root-certificate-authority"></a>Generate a Self Signed Root Certificate Authority</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Navigate to the directory where you would like to configure your Root Certificate Authority.
+We will refer to this directory as <code><code>SSL_CONFIG</code></code> throughout this blog post.</p>
+</li>
+<li>
+<p>Generate a 4096-bit long RSA key for our Root Certificate Authority and store it in the file <code>ca.key</code>:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl genrsa -out ca.key 4096
+Generating RSA private key, 4096 bit long modulus (2 primes)
+..................................................................++++
+......................................................................
+.............................................................................
+......................................................++++
+e is 65537 (0x010001)</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create the self-signed Root CA certificate <code>ca.crt</code> as follows:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">openssl req -new -x509 -days 365 -key ca.key -out ca.crt
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:US
+State or Province Name (full name) []:North Carolina
+Locality Name (eg, city) [Default City]:Raleigh
+Organization Name (eg, company) [Default Company Ltd]:WildFly
+Organizational Unit Name (eg, section) []:jboss
+Common Name (eg, your name or your server's hostname) []:Root Certificate Authority
+Email Address []:</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note the information about the CA is not relevant to the configuration.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="create-the-server-certificate"><a class="anchor" href="#create-the-server-certificate"></a>Create the Server Certificate</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Navigate to the server <code>configuration</code> directory:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script">cd WILDFLY_HOME/standalone/configuration/</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Generate the private key for the server:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl genrsa -out server.key 4096
+Generating RSA private key, 4096 bit long modulus (2 primes)
+....................++++
+............................................................................++++
+e is 65537 (0x010001)</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Generate a certificate signing request for our Root Certificate Authority.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl req -new -key server.key -out server.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:US
+State or Province Name (full name) []:North Carolina
+Locality Name (eg, city) [Default City]:Raleigh
+Organization Name (eg, company) [Default Company Ltd]:WildFly
+Organizational Unit Name (eg, section) []:jboss
+Common Name (eg, your name or your server's hostname) []:localhost
+Email Address []:
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Make sure you enter "localhost" as the Common Name, otherwise you might run into
+issues.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create the following files, which will be helpful when
+creating the certificate revocation list:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">touch SSL_CONFIG/certindex
+echo 01 &gt; SSL_CONFIG/certserial
+echo 01 &gt; SSL_CONFIG/crlnumber</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Also, create the configuration file <code>SSL_CONFIG/ca.conf</code> with the content below:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>[ ca ]
+default_ca = myca
+
+[ crl_ext ]
+# issuerAltName=issuer:copy  #this would copy the issuer name to altname
+authorityKeyIdentifier=keyid:always
+
+ [ myca ]
+ dir = ./
+ new_certs_dir = $dir
+ unique_subject = no
+ certificate = $dir/ca.crt
+ database = $dir/certindex
+ private_key = $dir/ca.key
+ serial = $dir/certserial
+ default_days = 730
+ default_md = sha1
+ policy = myca_policy
+ x509_extensions = myca_extensions
+ crlnumber = $dir/crlnumber
+ default_crl_days = 730
+
+ [ myca_policy ]
+ commonName = supplied
+ stateOrProvinceName = supplied
+ countryName = optional
+ emailAddress = optional
+ organizationName = supplied
+ organizationalUnitName = optional
+
+ [ myca_extensions ]
+ basicConstraints = CA:false
+ subjectKeyIdentifier = hash
+ authorityKeyIdentifier = keyid:always
+ keyUsage = digitalSignature,keyEncipherment
+ extendedKeyUsage = serverAuth
+ crlDistributionPoints = URI:http://example.com/root.crl
+ subjectAltName  = @alt_names
+
+ [alt_names]
+ DNS.1 = example.com
+ DNS.2 = *.example.com</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You must change the <code>crlDistributionPoints</code> to point to your domain if you wish
+to use distribution points to access the certificate revocation lists. This example uses
+a file in your system to configure the CRL as opposed to the CRL distribution points.
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Sign the server&#8217;s certificate signing request with your Root Certificate Authority:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl ca -batch -config SSL_CONFIG/ca.conf -notext -in server.csr -out server.crt
+Using configuration from ca.conf
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+countryName           :PRINTABLE:'US'
+stateOrProvinceName   :ASN.1 12:'North Carolina'
+localityName          :ASN.1 12:'Raleigh'
+organizationName      :ASN.1 12:'WildFly'
+organizationalUnitName:ASN.1 12:'jboss'
+commonName            :ASN.1 12:'localhost'
+Certificate is to be certified until Dec  9 19:15:58 2022 GMT (730 days)
+
+Write out database with 1 new entries
+Data Base Updated</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="create-the-server-keystore"><a class="anchor" href="#create-the-server-keystore"></a>Create the Server Keystore</h4>
+<div class="paragraph">
+<p>The server&#8217;s keystore should include our server&#8217;s certificate along with its entire certificate chain
+i.e. server.crt &#8594; ca.crt.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create the certificate chain as follows:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>cat server.crt SSL_CONFIG/ca.crt &gt; chained.crt</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For Windows, use notepad to concatenate certificates.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Pack all the certificates, and the server private key into a pkcs12 file as follows:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl pkcs12 -export -inkey server.key -in chained.crt -out chained.pkcs12
+Enter Export Password:
+Verifying - Enter Export Password:</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Enter <code>secret</code> as the password.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Import this pkcs12 file into a java keystore:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>keytool -importkeystore -srckeystore chained.pkcs12 -srcstoretype PKCS12 -destkeystore server.keystore
+Enter destination keystore password:
+Re-enter new password:
+Enter source keystore password:
+Entry for alias 1 successfully imported.
+Import command completed:  1 entries successfully imported, 0 entries failed or cancelled</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Again, you can use the password <code>secret</code> for <code>server.keystore</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="pre-requisite-client-configuration"><a class="anchor" href="#pre-requisite-client-configuration"></a>Pre-requisite Client Configuration</h3>
+<div class="paragraph">
+<p>Now that we have configured a server certificate signed by our Root Certificate Authority. We need
+to configure our client&#8217;s trust store.</p>
+</div>
+<div class="sect3">
+<h4 id="configure-client-truststore"><a class="anchor" href="#configure-client-truststore"></a>Configure Client TrustStore</h4>
+<div class="paragraph">
+<p>For the client&#8217;s trust store, it suffices if it holds the certificate for the Root Certificate
+Authority. The client will automatically trust any certificates which have been issued by the Root Certificate Authority
+or whose certificate chain contains the Root Certificate Authority.</p>
+</div>
+<div class="paragraph">
+<p>Configure it as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">keytool -import -file SSL_CONFIG/ca.crt -alias ca -keystore client.truststore -storepass secret
+Owner: CN=Root Certificate Authority, OU=jboss, O=WildFly, L=Raleigh, ST=North Carolina, C=US
+Issuer: CN=Root Certificate Authority, OU=jboss, O=WildFly, L=Raleigh, ST=North Carolina, C=US
+Serial number: 66724cf6a35ff0fd504e6b30bbbad73e8ae4e7b3
+Valid from: Wed Dec 09 14:10:06 EST 2020 until: Thu Dec 09 14:10:06 EST 2021
+Certificate fingerprints:
+	 SHA1: 4A:63:B8:AA:D2:9A:D4:E4:21:14:C6:AA:4A:74:00:AD:02:DE:91:EB
+	 SHA256: EC:06:81:49:F7:E6:D9:54:5E:77:79:EC:EE:D2:16:90:60:F6:B9:92:F3:4D:D9:2E:C2:F6:E8:28:4E:4D:52:98
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 4096-bit RSA key
+Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.35 Criticality=false
+AuthorityKeyIdentifier [
+KeyIdentifier [
+0000: CD CA 95 5D C3 6E 03 C4   A3 59 A5 0C 4D 8C 20 9E  ...].n...Y..M. .
+0010: 52 0A C3 86                                        R...
+]
+]
+
+#2: ObjectId: 2.5.29.19 Criticality=true
+BasicConstraints:[
+  CA:true
+  PathLen:2147483647
+]
+
+#3: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: CD CA 95 5D C3 6E 03 C4   A3 59 A5 0C 4D 8C 20 9E  ...].n...Y..M. .
+0010: 52 0A C3 86                                        R...
+]
+]
+
+Trust this certificate? [no]:  y
+Certificate was added to keystore</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-the-server"><a class="anchor" href="#configure-the-server"></a>Configure the Server</h3>
+<div class="paragraph">
+<p>You configure the SSL context by running JBoss CLI commands. For your convenience, this quickstart batches the commands into a <code>configure-ssl.cli</code> script provided in the root directory of this example.</p>
+</div>
+<div class="paragraph">
+<p>Before you begin, make sure you do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Start the server with the standalone default profile as follows:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>WILDFLY_HOME/bin/standalone.sh</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Review the <code>configure-ssl.cli</code> file in the root of this directory. Comments in the script describe the purpose of each block of commands.</p>
+</li>
+<li>
+<p>Open a new terminal, navigate to the root directory of this quickstart, and run the following command, replacing <code>WILDFLY_HOME</code> with the path to your server:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ WILDFLY_HOME/bin/jboss-cli.sh --connect --file=configure-ssl.cli</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For Windows, use the <code>WILDFLY_HOME\bin\jboss-cli.bat</code> script.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You should see the following result when you run the script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">The batch executed successfully
+process-state: reload-required</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="create-the-certificate-revocation-lists"><a class="anchor" href="#create-the-certificate-revocation-lists"></a>Create the Certificate Revocation Lists</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Navigate to your <code>SSL_CONFIG</code> directory.</p>
+</li>
+<li>
+<p>Generate an empty CRL file as follows:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl ca -config ca.conf -gencrl -keyfile ca.key -cert ca.crt -out ca.crl.pem
+Using configuration from ca.conf</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Revoke the server&#8217;s certificate using this command:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl ca -config ca.conf -revoke WILDFLY_HOME/standalone/configuration/server.crt -keyfile ca.key -cert ca.crt
+Using configuration from ca.conf
+Revoking Certificate 01.
+Data Base Updated</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Regenerate the CRL file:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>openssl ca -gencrl -keyfile ca.key -cert ca.crt -out ca.crl.pem -config ca.conf
+Using configuration from ca.conf</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Test the CRL:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>cat ca.crt ca.crl.pem &gt; test.pem
+
+openssl verify -extended_crl -verbose -CAfile test.pem -crl_check WILDFLY_HOME/standalone/configuration/server.crt
+error 23 at 0 depth lookup: certificate revoked
+error server.crt: verification failed</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Error 23 indicates the certificate has been revoked, as expected.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-a-client-that-verifies-certificates-against-crls"><a class="anchor" href="#configure-a-client-that-verifies-certificates-against-crls"></a>Configure a Client that verifies certificates against CRLs</h3>
+<div class="paragraph">
+<p>The example application presents a simple client <code>SslClient.java</code> which checks the connection
+to the server is successful. To ensure the client configures
+certificate revocation lists, we have provided a common configuration framework in
+<code>wildfly-config.xml</code>.</p>
+</div>
+<div class="paragraph">
+<p>Review this file to see how the certificate revocation lists are configured in the client SSL
+context:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;certificate-revocation-lists&gt;
+    &lt;certificate-revocation-list path="PATH/TO/CRL"/&gt;
+&lt;/certificate-revocation-lists&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In this example we have only configured one CRL under the <code>certificate-revocation-lists</code>
+tag, as we are only concerned that our client accepts certificates signed by the CA we created. If we wanted
+our client to trust certificates from various CAs, and therefore be able to access the CRLs corresponding
+to each of those CAs, we could simply add additional <code>certificate-revocation-list</code> objects.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As a final step in configuring the client, update the path to the client&#8217;s trust store with the
+path to your trust store. Additionally, also update the <code>certificate-revocation-list</code> tag to the
+path the CRL we configured earlier.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="build-and-deploy-the-application"><a class="anchor" href="#build-and-deploy-the-application"></a>Build and Deploy the Application</h3>
+<div class="paragraph">
+<p>Ensure you have a running instance of your server. Then, navigate to the root directory of the example application and run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd ssl-server
+mvn clean package wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This deploys the <code>ssl-server.war</code> to the running instance of the server.
+You should see a message in the server log indicating that the archive deployed successfully.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="run-the-client-and-verify-certificate-rejection"><a class="anchor" href="#run-the-client-and-verify-certificate-rejection"></a>Run the Client and Verify Certificate Rejection</h3>
+<div class="paragraph">
+<p>Navigate to the root directory of the example application and run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd ssl-client
+mvn clean install -Dtest=SslClient</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see the following error in the log:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">  test(SslClient): RESTEASY004655: Unable to invoke request:
+javax.net.ssl.SSLHandshakeException: PKIX path validation failed: java.security.cert.CertPathValidatorException:
+Certificate has been revoked, reason: UNSPECIFIED, revocation date: Wed Dec 09 14:26:04 EST 2020,
+authority: CN=Root Certificate Authority, OU=jboss, O=WildFly, L=Raleigh, ST=North Carolina, C=US, extension OIDs: []</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you could comment out the entire <code>certificate-revocation-lists</code> tag in your
+<code>wildfy-config.xml</code> file and verify that communication succeeds otherwise.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="undeploy-the-application"><a class="anchor" href="#undeploy-the-application"></a>Undeploy the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you are finished testing the application, follow these steps to undeploy the archive:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Make sure you start the WildFly server.</p>
+</li>
+<li>
+<p>Open a terminal and navigate to the root directory of this example.</p>
+</li>
+<li>
+<p>Type the following commands to undeploy the archive:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>cd ssl-server
+mvn wildfly:undeploy</pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="restore-the-wildfly-standalone-server-configuration"><a class="anchor" href="#restore-the-wildfly-standalone-server-configuration"></a>Restore the WildFly Standalone Server Configuration</h3>
+<div class="paragraph">
+<p>You can restore your WildFly Standalone Server Configuration by replacing your
+<code>WILDFLY_HOME/standalone/configuration/standalone.xml</code> file with your backed up copy.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-crls-on-the-server-side"><a class="anchor" href="#configuring-crls-on-the-server-side"></a>Configuring CRLs on the Server Side</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This example has demonstrated how to configure CRLs on the client side. However, it is also
+possible to configure multiple CRLs on the server side for two-way SSL communication.
+Please review the documentation <a href="https://docs.wildfly.org/24/WildFly_Elytron_Security.html#Using_the_Elytron_Subsystem#configure-ssltls">here.</a> to learn more.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how certificate revocation lists can be used with WildFly on
+the client side. For more details, take a look at the Elytron documentation.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
