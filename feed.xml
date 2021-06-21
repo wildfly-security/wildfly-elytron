@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 18 Jun 2021 17:38:57 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 21 Jun 2021 15:39:55 +0000</lastBuildDate>
+        
+        <item>
+            <title>SSLv2Hello with WildFly</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/
+            </link>
+            <description>
+                It is now possible to use SSLv2Hello with WildFly. This blog post will give an introduction to this new feature, but it will assume previous knowledge on how to configure SSL in Elytron. For more information on how to configure SSL, refer to the elytron documentation. An Overview of SSLv2Hello...
+            </description>
+            <pubDate>Mon, 21 Jun 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/
+            </guid>
+        </item>
         
         <item>
             <title>SSL Certificate Revocation Lists with WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-23/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming automatic registration of client side default SSLContext</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-registration-of-client-side-jvm-wide-default-sslcontext/
-            </link>
-            <description>
-                One of the features we have been working on for the Elytron subsytem is the ability to automatically register client side JVM wide default SSL context. This SSL context will be available to any library that supports the use of the default context. Details We plan to provide implementation of...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/automatic-registration-of-client-side-jvm-wide-default-sslcontext/
             </guid>
         </item>
         

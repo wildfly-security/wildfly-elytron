@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: SSLv2Hello with WildFly</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>SSLv2Hello with WildFly</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/abf96d05af53c494685384d382dba345">
+        
+        <p class="byline">By <a href="https://github.com/SoniaZaldana">Sonia Zaldana Calles</a> | June 21, 2021</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/&title=SSLv2Hello with WildFly" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=SSLv2Hello with WildFly&url=https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=SSLv2Hello with WildFly&amp;body=SSLv2Hello with WildFly https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>It is now possible to use <code>SSLv2Hello</code> with WildFly. This blog post will give an
+introduction to this new feature, but it will assume previous knowledge on how to
+configure SSL in Elytron. For more information on how to configure SSL,
+refer to the elytron <a href="https://docs.wildfly.org/21/WildFly_Elytron_Security.html#configure-ssltls">documentation.</a></p>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-sslv2hello"><a class="anchor" href="#an-overview-of-sslv2hello"></a>An Overview of SSLv2Hello</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Older JDK versions use <code>SSLv2Hello</code> during the initial handshake message
+where the SSL version that will be used for the rest of the handshake is negotiated.</p>
+</div>
+<div class="paragraph">
+<p>The use of this protocol is discouraged. As a result, newer JDK versions disable this
+protocol by default for clients, but do provide the ability to re-enable it if needed.</p>
+</div>
+<div class="paragraph">
+<p>By adding <code>SSLv2Hello</code> as a supported protocol in WildFly, we are ensuring older
+clients are still able to communicate to servers guaranteeing parity with legacy security.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="enabling-sslv2hello-on-the-server-side"><a class="anchor" href="#enabling-sslv2hello-on-the-server-side"></a>Enabling SSLv2Hello on the Server Side</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>SSLv2Hello</code> can be enabled by configuring it in the <code>protocols</code> attribute in the
+SSL context definition in the Elytron subsystem. Let&#8217;s take a look at an example configuring
+one way SSL using <code>SSLv2Hello</code> in the server and client. The example application is available
+<a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/sslv2hello-oneway"> here.</a></p>
+</div>
+<div class="sect2">
+<h3 id="back-up-your-standalone-server-configuration"><a class="anchor" href="#back-up-your-standalone-server-configuration"></a>Back Up Your Standalone Server Configuration</h3>
+<div class="paragraph">
+<p>Prior to starting, back up your standalone server configuration by making a copy of
+your <code>WILDFLY_HOME/standalone/configuration/standalone.xml</code> file. You will need it in the end
+to restore your server&#8217;s configuration.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="pre-requisite-server-configuration"><a class="anchor" href="#pre-requisite-server-configuration"></a>Pre-requisite Server Configuration</h3>
+<div class="paragraph">
+<p>As a first step, we&#8217;re going to enable one-way SSL for applications deployed to WildFly
+using the <code>security enable-ssl-http-server</code> CLI command.</p>
+</div>
+<div class="paragraph">
+<p>First, make sure you have an instance of your WildFly server running. Then,
+run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then run the <code>security enable-ssl-http-server</code> command as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">security enable-ssl-http-server --interactive
+Please provide required pieces of information to enable SSL:
+
+Certificate info:
+Key-store file name (default default-server.keystore): server.keystore
+Password (blank generated): secret
+What is your first and last name? [Unknown]: localhost
+What is the name of your organizational unit? [Unknown]: wildfly
+What is the name of your organization? [Unknown]: jboss
+What is the name of your City or Locality? [Unknown]: Raleigh
+What is the name of your State or Province? [Unknown]: North Carolina
+What is the two-letter country code for this unit? [Unknown]: US
+Is CN=localhost, OU=jboss, O=wildfly, L=Raleigh, ST=North Carolina, C=US correct y/n [y]?y
+Validity (in days, blank default): 365
+Alias (blank generated): localhost
+Enable SSL Mutual Authentication y/n (blank n):n
+
+SSL options:
+key store file: server.keystore
+distinguished name: CN=localhost, OU=wildfly, O=jboss, L=Raleigh, ST=North Caro
+lina, C=US
+password: secret
+validity: 365
+alias: localhost
+Server keystore file server.keystore, certificate file server.pem and server.csr file will be generated in server configuration directory.
+
+Do you confirm y/n :y
+Server reloaded.
+SSL enabled for default-server
+ssl-context is ssl-context-aaad4a67-14f1-4869-a01c-9fc56c3ff884
+key-manager is key-manager-aaad4a67-14f1-4869-a01c-9fc56c3ff884
+key-store   is key-store-aaad4a67-14f1-4869-a01c-9fc56c3ff884</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Make sure you enter your desired "hostname" for the <code>first and last name</code> field, otherwise you might
+run into issues while permanently accepting this certificate
+as an exception to some browsers. Chrome does not currently exhibit this behaviour.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As we can see from the output, the above command automatically generated a self-signed
+certificate, added it to a newly created keystore and added a new <code>ssl-context</code> resource,
+<code>ssl-context-aaad4a67-14f1-4869-a01c-9fc56c3ff884</code> to the Elytron subsystem in order to enable
+one-way SSL for applications deployed to WildFly.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="test-the-server-ssl-configuration"><a class="anchor" href="#test-the-server-ssl-configuration"></a>Test the Server SSL Configuration</h3>
+<div class="paragraph">
+<p>To test the connection to the SSL port of your server instance, open a browser and navigate to
+<a href="https://localhost:8443/" class="bare">https://localhost:8443/</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You get the privacy error because the
+server certificate is self-signed. If you need to use a fully signed certificate, you must
+get a PEM file from the Certificate Authority and then import the PEM into the keystore.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configuring-sslv2hello-in-the-server"><a class="anchor" href="#configuring-sslv2hello-in-the-server"></a>Configuring SSLv2Hello in the Server</h3>
+<div class="paragraph">
+<p>At this point in time, your server has not yet been configured to accept <code>SSLv2Hello</code>
+messages. Since, we used the <code>security enable-ssl-http-server</code> CLI command, this configures our SSL context
+to accept <code>TLSv1.2</code> only. To enable <code>SSLv2Hello</code>, we need to update our <code>ssl-context</code> configuration in the
+Elytron subsystem to modify the attribute <code>protocols</code> to include <code>SSLv2Hello</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/server-ssl-context=ssl-context-aaad4a67-14f1-4869-a01c-9fc56c3ff884:write-attribute(name=protocols,value=[TLSv1,SSLv2Hello])
+
+reload</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When configuring any SSL context to enable <code>SSLv2Hello</code> (client or server), you always
+need to specify an additional SSL/TLS protocol. <code>SSLv2Hello</code> cannot be specified by itself,
+as it is a pseudo protocol which is only used to negotiate another SSL/TLS version to be used
+throughout the rest of the communication.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="a-note-on-enabling-sslv2hello-in-newer-jdk-versions"><a class="anchor" href="#a-note-on-enabling-sslv2hello-in-newer-jdk-versions"></a>A Note On Enabling SSLv2Hello In Newer JDK Versions</h3>
+<div class="paragraph">
+<p>Newer JDK versions have disabled TLSv1. Since we need the TLSv1 protocol to make use of
+SSLv2Hello, we will walk you through how to re-enable it on the server side.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Access the following file: <code>WILDFLY_HOME/bin/standalone.conf</code>.</p>
+</li>
+<li>
+<p>Look for the following line</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell script hljs" data-lang="shell script"># JAVA_OPTS="$JAVA_OPTS -Djava.security.properties==/path/to/custom/java.security"</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Make sure to uncomment it and edit the path to the file <code>enabled_tlsv1.properties</code> in this example application.
+Additionally, make sure you use one <code>=</code> as opposed to two. That way you will not completely
+override the <code>java.security</code> file.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note, you might have to reload your server for these changes to take effect.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-the-clients-trust-store"><a class="anchor" href="#configure-the-clients-trust-store"></a>Configure the Client&#8217;s Trust Store</h3>
+<div class="paragraph">
+<p>Export the server&#8217;s certificate to a file by navigating to <code>WILDFLY_HOME/standalone/configuration</code> and
+running the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">keytool -export -alias localhost -keystore server.keystore -file myCert.cer -storepass secret</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Import the certificate into the client&#8217;s trust store. Note the following command will create a trust store
+if it does not exist at the location specified.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">keytool -import -file myCert.cer -alias localhost -keystore client.keystore -storepass secret</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see the following output next:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">Owner: CN=localhost, OU=wildfly, O=jboss, L=Raleigh, ST=North Carolina, C=US
+Issuer: CN=localhost, OU=wildfly, O=jboss, L=Raleigh, ST=North Carolina, C=US
+Serial number: 7af5ad9991816bbc
+Valid from: Wed Nov 04 16:15:09 EST 2020 until: Thu Nov 04 16:15:09 EDT 2021
+Certificate fingerprints:
+	 SHA1: 24:6E:96:9A:8B:D2:FF:2B:7B:58:87:84:03:F3:ED:C6:56:8B:96:5B
+	 SHA256: 27:51:F6:7A:F8:51:7D:6E:CB:DA:4A:9A:75:E5:9A:AD:06:88:1B:AE:40:73:7D:D8:E4:4F:22:CA:8E:03:94:37
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: FF BA 34 E8 94 94 BE EB   25 B5 C5 4E B3 B2 A4 34  ..4.....%..N...4
+0010: 97 EE A2 24                                        ...$
+]
+]
+
+Trust this certificate? [no]: y
+Certificate was added to keystore</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You have now created the client&#8217;s trustore and imported the server&#8217;s certificate.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configure-a-client-that-sends-sslv2hello-messages"><a class="anchor" href="#configure-a-client-that-sends-sslv2hello-messages"></a>Configure a Client that sends SSLv2Hello messages</h3>
+<div class="paragraph">
+<p>The example application presents a simple client <code>Client.java</code> which checks the connection
+to the server is successful. To ensure the client uses <code>SSLv2Hello</code> in its initial
+handshake, we have provided a common configuration framework in
+<code>wildfly-config.xml</code>.</p>
+</div>
+<div class="paragraph">
+<p>Review this file to see how <code>SSLv2Hello</code> is enabled in the client SSL context along with
+<code>TLSv1</code>.</p>
+</div>
+<div class="paragraph">
+<p>As a final step in configuring the client, update the path to the client&#8217;s trust store to
+<code>/PATH/TO/client.keystore</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="build-and-deploy-the-application"><a class="anchor" href="#build-and-deploy-the-application"></a>Build and Deploy the Application</h3>
+<div class="paragraph">
+<p>Ensure you have a running instance of your server. Then, navigate to the root directory of the example application and run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd server
+mvn clean package wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This deploys the <code>server-sslv2hello.war</code> to the running instance of the server.
+You should see a message in the server log indicating that the archive deployed successfully.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="run-the-client"><a class="anchor" href="#run-the-client"></a>Run the Client</h3>
+<div class="paragraph">
+<p>Navigate to the root directory of the example application and run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">cd client
+mvn clean install -Dtest=Client</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The test verifies a successful connection using <code>SSLv2Hello</code>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="verifying-the-client-sends-sslv2hello-messages"><a class="anchor" href="#verifying-the-client-sends-sslv2hello-messages"></a>Verifying the Client Sends SSLv2Hello Messages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the following section, we will be inspecting the SSL debug logs to ensure the Client Hello messages
+make use of <code>SSLv2Hello</code>. You will need to enable SSL debug logs in your client and server using
+the <code>javax.net.debug</code> system property as follows:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>To run your client with SSL debug logs:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>mvn clean install -Dtest=Client -Djavax.net.debug=ssl,handshake</pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>To run your server with SSL debug logs:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>WILDFLY_HOME/bin/standalone.sh -Djavax.net.debug=ssl,handshake</pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="verifying-sslv2hello-messages-succeed-when-sslv2hello-is-configured-on-the-server"><a class="anchor" href="#verifying-sslv2hello-messages-succeed-when-sslv2hello-is-configured-on-the-server"></a>Verifying SSLv2Hello Messages Succeed When SSLv2Hello is Configured on the Server</h3>
+<div class="paragraph">
+<p>Run your client.</p>
+</div>
+<div class="paragraph">
+<p>In your client SSL logs, you should see a <code>ClientHello</code> message similar to the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">"ClientHello": {
+  "client version"      : "TLSv1",
+  "random"              : "28 D9 B0 EB 0E A1 5B 07 B6 0D 21 B1 87 F8 42 14 EE 11 6A 11 8B B6 19 7D 2B CF DB B5 B1 A1 43 01",
+  "session id"          : "",
+  "cipher suites"       : "[TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA(0xC00A), TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA(0xC014), TLS_RSA_WITH_AES_256_CBC_SHA(0x0035), TLS_DHE_RSA_WITH_AES_256_CBC_SHA(0x0039), TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA(0xC009), TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA(0xC013), TLS_RSA_WITH_AES_128_CBC_SHA(0x002F), TLS_DHE_RSA_WITH_AES_128_CBC_SHA(0x0033)]",
+  "compression methods" : "00",
+  "extensions"          : [
+    "status_request (5)": {
+      "certificate status type": ocsp
+      "OCSP status request": {
+        "responder_id": &lt;empty&gt;
+        "request extensions": {
+          &lt;empty&gt;
+        }
+      }
+    },
+    "supported_groups (10)": {
+      "versions": [secp256r1, secp384r1, secp521r1, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+    },
+    "ec_point_formats (11)": {
+      "formats": [uncompressed]
+    },
+    "status_request_v2 (17)": {
+      "cert status request": {
+        "certificate status type": ocsp_multi
+        "OCSP status request": {
+          "responder_id": &lt;empty&gt;
+          "request extensions": {
+            &lt;empty&gt;
+          }
+        }
+      }
+    },
+    "extended_master_secret (23)": {
+      &lt;empty&gt;
+    },
+    "supported_versions (43)": {
+      "versions": [TLSv1, SSLv2Hello]
+    },
+    "renegotiation_info (65,281)": {
+      "renegotiated connection": [&lt;no renegotiated connection&gt;]
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice how <code>TLSv1</code> and <code>SSLv2Hello</code> are specified under <code>supported_versions</code>. This triggers
+an <code>SSLv2Hello ClientHello</code>. Your tests should succeed, and you should be able to see the
+negotiated protocol is <code>TLSv1</code> in both your client and server logs.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="verifying-sslv2hello-messages-fail-when-sslv2hello-is-not-configured-on-the-server"><a class="anchor" href="#verifying-sslv2hello-messages-fail-when-sslv2hello-is-not-configured-on-the-server"></a>Verifying SSLv2Hello messages fail when SSLv2Hello is not configured on the server</h3>
+<div class="paragraph">
+<p>You can modify your <code>server-ssl-context</code> resource again to only accept <code>TLSv1</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">/subsystem=elytron/server-ssl-context=ssl-context-aaad4a67-14f1-4869-a01c-9fc56c3ff884:write-attribute(name=protocols,value=[TLSv1])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, run your client.
+You should be able to see a similar <code>ClientHello</code> as the one in the section above, but you should also see a
+<code>handshake_failure</code> in the log.</p>
+</div>
+<div class="paragraph">
+<p>Upon reviewing your server log, it should provide more details as to what causes the failure. You should see a
+message similar to the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">ERROR [stderr] (default I/O-2) javax.net.ssl|ERROR|01 14|default I/O-2|2020-11-05
+14:29:27.677 EST|TransportContext.java:318|Fatal (HANDSHAKE_FAILURE): SSLv2Hello is not enabled (
+14:29:27,678 ERROR [stderr] (default I/O-2) "throwable" : {
+14:29:27,678 ERROR [stderr] (default I/O-2)   javax.net.ssl.SSLHandshakeException: SSLv2Hello is not enabled</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, you have verified that enabling <code>SSLv2Hello</code> on the client side triggers an <code>SSLv2Hello</code> message,
+which if not supported by the server, causes a handshake exception.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="undeploy-the-application"><a class="anchor" href="#undeploy-the-application"></a>Undeploy the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you are finished testing the application, follow these steps to undeploy the archive:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Make sure you start the WildFly server.</p>
+</li>
+<li>
+<p>Open a terminal and navigate to the root directory of this example.</p>
+</li>
+<li>
+<p>Type the following commands to undeploy the archive:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>cd server
+mvn wildfly:undeploy</pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="restore-the-wildfly-standalone-server-configuration"><a class="anchor" href="#restore-the-wildfly-standalone-server-configuration"></a>Restore the WildFly Standalone Server Configuration</h3>
+<div class="paragraph">
+<p>You can restore your WildFly Standalone Server Configuration by replacing your
+<code>WILDFLY_HOME/standalone/configuration/standalone.xml</code> file with your backed up copy.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how <code>SSLv2Hello</code> can be used with WildFly on both
+the server and client side. For more details, take a look at the
+Elytron documentation.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
