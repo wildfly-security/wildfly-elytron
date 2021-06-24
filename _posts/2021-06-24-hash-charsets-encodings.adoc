@@ -1,0 +1,123 @@
+---
+layout: post
+title: "Using hash character sets and encodings in Elytron"
+date: 2021-06-24
+tags: wildfly elytron
+synopsis: An overview of hash character sets and encodings in Elytron Security Realms.
+author: szaldana
+link:
+---
+
+In the legacy security configuration using PicketBox, the
+*https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html-single/login_module_reference/index#usernamepassword_login_module[UsernamePasswordLoginModule]*
+supports storing hashed passwords by specifying the hashing algorithm, encoding and character set to compare
+the client-supplied password to the password stored in the management system.
+
+Previously, Elytron supported specifying the hashing algorithm, but not the string encoding or character set to use
+in its security realms (with the exception of the JDBC realm where configuring the encoding was supported). In WildFly
+24, the Properties Realm, Filesystem Realm, JDBC Realm and LDAP realm all support specifying the encoding and
+charset via the attributes ``hash-encoding`` and ``hash-charset``.
+
+
+== An overview of the new attributes
+
+All realms that support storing hashed passwords (namely the Properties Realm, Filesystem Realm, JDBC Realm and LDAP realm)
+now support the following attributes:
+
+* ``hash-encoding``: This attribute specifies the string format for the hashed password if the
+password is not being stored in plain text. It may specify one of two: ``hex`` or ``base64``. It is set to ``base64`` by default
+with the exception of the Properties Realm where it is set to ``hex`` by default.
+
+* ``hash-charset``: This attribute specifies the name of the character set to use when converting the client provided
+password string to a byte array for hashing calculations. It is set to ``UTF-8`` by default.
+
+NOTE: Some of these realms support using different hashing algorithms with the same realm, i.e. in the filesystem realm,
+you can configure identities within the same realm with different password types. However,
+with the exception of the JDBC realm, the attributes above are resource-wide. Ergo,
+you can only have one ``hash-encoding`` and one ``hash-charset`` throughout the whole
+realm, even if you have different hashing algorithms.
+
+== Reviewing the Elytron Configuration
+
+In the following section, we will review the configuration available in the script for the quickstart
+*https://github.com/wildfly-security-incubator/elytron-examples/blob/master/hash-charset-encoding/configure-elytron.cli[configure-elytron.cli]*. We start our configuration by connecting to the server using the following command:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+==== Note: Use of WILDFLY_HOME
+In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+We first create a filesystem realm under the Elytron subsystem using ``hex`` encoding and the ``KOI8-R``
+character set. We then add an identity ``quickstartUser``, setting a digest password and adding the
+attributes ``Guest`` and ``Admin`` as follows:
+
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-users, relative-to=jboss.server.config.dir, hash-encoding=hex, hash-charset=KOI8-R)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(digest={algorithm=digest-md5, realm=fsRealm, password=пароль}, identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])
+----
+
+NOTE: The password for this identity uses special characters belonging to the ``KOI8-R`` character set.
+
+For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the https://docs.wildfly.org/20/WildFly_Elytron_Security.html[Elytron documentation].
+
+We then configure a simple role decoder and create a new security domain which will make use of our
+filesystem realm and role decoder as follows:
+[source]
+----
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], \
+default-realm=fsRealm,permission-mapper=default-permission-mapper)
+----
+
+
+NOTE: Creating an additional security domain (``fsDomain``in this case) is not necessary.
+We could alternatively take the default ``ApplicationDomain`` and add the
+FileSystem realm and role-decoder to it.
+
+We then add our security domain mapping to the EJB3 subsystem, update the ``sasl-authentication-factory`` to use
+our security domain, add the ``PLAIN`` authentication mechanism and update the ``http-remoting-connector`` to use our ``sasl-authentication-factory``:
+
+
+[source]
+----
+/subsystem=ejb3/application-security-domain=other:add(security-domain=fsDomain)
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:write-attribute(name=security-domain, value=fsDomain)
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:list-add(name=mechanism-configurations, value={mechanism-name=PLAIN})
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory,value=application-sasl-authentication)
+----
+
+NOTE: We add the PLAIN authentication mechanism as it is important that the server receives the
+password in clear-text. We could alternatively use HTTP BASIC.
+
+== Configuring the Client (wildfly-config.xml)
+
+The username and credentials to establish the connection to the application server are configured in the
+``wildfly-config.xml`` file.
+
+[source,xml]
+----
+ <authentication-configurations>
+            <configuration name="default-config">
+                <set-user-name name="quickstartUser"/>
+                <credentials>
+                    <clear-password password="пароль"/>
+                </credentials>
+                <sasl-mechanism-selector selector="PLAIN"/>
+                ...
+            </configuration>
+</authentication-configurations>
+----
+
+Again, it is important we select the PLAIN mechanism as our authentication mechanism, as the server needs
+to receive the password in clear text in order to correctly hash it with the character set we provided in our realm
+configuration.
+
+== Summary
+This blog post has given an overview on how to specify the string encoding and hash character set in Elytron Security Realms.
