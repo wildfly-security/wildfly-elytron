@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 21 Jun 2021 15:39:55 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 24 Jun 2021 13:59:39 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using hash character sets and encodings in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/
+            </link>
+            <description>
+                In the legacy security configuration using PicketBox, the UsernamePasswordLoginModule supports storing hashed passwords by specifying the hashing algorithm, encoding and character set to compare the client-supplied password to the password stored in the management system. Previously, Elytron supported specifying the hashing algorithm, but not the string encoding or character set...
+            </description>
+            <pubDate>Thu, 24 Jun 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/
+            </guid>
+        </item>
         
         <item>
             <title>SSLv2Hello with WildFly</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly 23</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-23/
-            </link>
-            <description>
-                This blog post highlights the new security features that are in WildFly 23 and also gives an update on the new security features that the Elytron team has been working on. New Features in WildFly 23 Encrypted Expression Support WildFly 23 now adds support for encrypted expressions within the management...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-in-wildfly-23/
             </guid>
         </item>
         

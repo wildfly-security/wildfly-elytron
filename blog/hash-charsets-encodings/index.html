@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using hash character sets and encodings in Elytron</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using hash character sets and encodings in Elytron</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/abf96d05af53c494685384d382dba345">
+        
+        <p class="byline">By <a href="https://github.com/SoniaZaldana">Sonia Zaldana Calles</a> | June 24, 2021</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/&title=Using hash character sets and encodings in Elytron" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using hash character sets and encodings in Elytron&url=https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using hash character sets and encodings in Elytron&amp;body=Using hash character sets and encodings in Elytron https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>In the legacy security configuration using PicketBox, the
+<strong><a href="https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.3/html-single/login_module_reference/index#usernamepassword_login_module">UsernamePasswordLoginModule</a></strong>
+supports storing hashed passwords by specifying the hashing algorithm, encoding and character set to compare
+the client-supplied password to the password stored in the management system.</p>
+</div>
+<div class="paragraph">
+<p>Previously, Elytron supported specifying the hashing algorithm, but not the string encoding or character set to use
+in its security realms (with the exception of the JDBC realm where configuring the encoding was supported). In WildFly
+24, the Properties Realm, Filesystem Realm, JDBC Realm and LDAP realm all support specifying the encoding and
+charset via the attributes <code>hash-encoding</code> and <code>hash-charset</code>.</p>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-the-new-attributes"><a class="anchor" href="#an-overview-of-the-new-attributes"></a>An overview of the new attributes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>All realms that support storing hashed passwords (namely the Properties Realm, Filesystem Realm, JDBC Realm and LDAP realm)
+now support the following attributes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>hash-encoding</code>: This attribute specifies the string format for the hashed password if the
+password is not being stored in plain text. It may specify one of two: <code>hex</code> or <code>base64</code>. It is set to <code>base64</code> by default
+with the exception of the Properties Realm where it is set to <code>hex</code> by default.</p>
+</li>
+<li>
+<p><code>hash-charset</code>: This attribute specifies the name of the character set to use when converting the client provided
+password string to a byte array for hashing calculations. It is set to <code>UTF-8</code> by default.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Some of these realms support using different hashing algorithms with the same realm, i.e. in the filesystem realm,
+you can configure identities within the same realm with different password types. However,
+with the exception of the JDBC realm, the attributes above are resource-wide. Ergo,
+you can only have one <code>hash-encoding</code> and one <code>hash-charset</code> throughout the whole
+realm, even if you have different hashing algorithms.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="reviewing-the-elytron-configuration"><a class="anchor" href="#reviewing-the-elytron-configuration"></a>Reviewing the Elytron Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the following section, we will review the configuration available in the script for the quickstart
+<strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/hash-charset-encoding/configure-elytron.cli">configure-elytron.cli</a></strong>. We start our configuration by connecting to the server using the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="note-use-of-wildfly_home"><a class="anchor" href="#note-use-of-wildfly_home"></a>Note: Use of WILDFLY_HOME</h4>
+<div class="paragraph">
+<p>In the following post, replace <code>WILDFLY_HOME</code> with the actual path to your WildFly installation.</p>
+</div>
+<div class="paragraph">
+<p>We first create a filesystem realm under the Elytron subsystem using <code>hex</code> encoding and the <code>KOI8-R</code>
+character set. We then add an identity <code>quickstartUser</code>, setting a digest password and adding the
+attributes <code>Guest</code> and <code>Admin</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-users, relative-to=jboss.server.config.dir, hash-encoding=hex, hash-charset=KOI8-R)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(digest={algorithm=digest-md5, realm=fsRealm, password=пароль}, identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The password for this identity uses special characters belonging to the <code>KOI8-R</code> character set.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the <a href="https://docs.wildfly.org/20/WildFly_Elytron_Security.html">Elytron documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>We then configure a simple role decoder and create a new security domain which will make use of our
+filesystem realm and role decoder as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], \
+default-realm=fsRealm,permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Creating an additional security domain (<code>fsDomain</code>in this case) is not necessary.
+We could alternatively take the default <code>ApplicationDomain</code> and add the
+FileSystem realm and role-decoder to it.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We then add our security domain mapping to the EJB3 subsystem, update the <code>sasl-authentication-factory</code> to use
+our security domain, add the <code>PLAIN</code> authentication mechanism and update the <code>http-remoting-connector</code> to use our <code>sasl-authentication-factory</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=ejb3/application-security-domain=other:add(security-domain=fsDomain)
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:write-attribute(name=security-domain, value=fsDomain)
+/subsystem=elytron/sasl-authentication-factory=application-sasl-authentication:list-add(name=mechanism-configurations, value={mechanism-name=PLAIN})
+/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory,value=application-sasl-authentication)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+We add the PLAIN authentication mechanism as it is important that the server receives the
+password in clear-text. We could alternatively use HTTP BASIC.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-the-client-wildfly-config-xml"><a class="anchor" href="#configuring-the-client-wildfly-config-xml"></a>Configuring the Client (wildfly-config.xml)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The username and credentials to establish the connection to the application server are configured in the
+<code>wildfly-config.xml</code> file.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml"> &lt;authentication-configurations&gt;
+            &lt;configuration name="default-config"&gt;
+                &lt;set-user-name name="quickstartUser"/&gt;
+                &lt;credentials&gt;
+                    &lt;clear-password password="пароль"/&gt;
+                &lt;/credentials&gt;
+                &lt;sasl-mechanism-selector selector="PLAIN"/&gt;
+                ...
+            &lt;/configuration&gt;
+&lt;/authentication-configurations&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Again, it is important we select the PLAIN mechanism as our authentication mechanism, as the server needs
+to receive the password in clear text in order to correctly hash it with the character set we provided in our realm
+configuration.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how to specify the string encoding and hash character set in Elytron Security Realms.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
