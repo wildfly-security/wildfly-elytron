@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -149,7 +150,7 @@ public class OAuth2IntrospectValidator implements TokenValidator {
             if (connection != null && connection.getErrorStream() != null) {
                 InputStream errorStream = connection.getErrorStream();
 
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
                     StringBuffer response = reader.lines().reduce(new StringBuffer(), StringBuffer::append, (buffer1, buffer2) -> buffer1);
                     log.errorf(ioe, "Unexpected response from token introspection endpoint [%s]. Response: [%s]", tokenIntrospectionUrl, response);
                 } catch (IOException e) {
