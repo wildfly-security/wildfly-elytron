@@ -47,7 +47,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class CachingSecurityRealm implements SecurityRealm {
 
-    private final CacheableSecurityRealm realm;
+    private final SecurityRealm realm;
     private final RealmIdentityCache cache;
 
     /**
@@ -56,7 +56,7 @@ public class CachingSecurityRealm implements SecurityRealm {
      * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached.
      * @param cache the {@link RealmIdentityCache} instance
      */
-    public CachingSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
+    public CachingSecurityRealm(SecurityRealm realm, RealmIdentityCache cache) {
         this.realm = checkNotNullParam("realm", realm);
         this.cache = checkNotNullParam("cache", cache);
 
@@ -305,7 +305,7 @@ public class CachingSecurityRealm implements SecurityRealm {
      *
      * @return the wrapped backing realm
      */
-    protected CacheableSecurityRealm getCacheableRealm() {
+    protected SecurityRealm getCacheableRealm() {
         return realm;
     }
 }
