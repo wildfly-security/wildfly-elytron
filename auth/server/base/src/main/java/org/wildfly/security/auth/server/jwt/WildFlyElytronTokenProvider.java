@@ -61,25 +61,40 @@ import io.smallrye.jwt.util.KeyUtils;
 
 /**
  * A token provider which holds information regarding dynamic token issuance
- * including encryption and signing keys. This configuration is mapped to a {@link SecurityDomain}
+ * including encryption and signing keys. This provider is mapped to a {@link SecurityDomain}
  * to use for all tokens generated during the authentication process associated with this Security Domain.
+ *
+ * The token provider only signs tokens by default but it can encrypt them if an encryption alias is specified.
  *
  * @author <a href="mailto:szaldana@redhat.com">Sonia Zaldana</a>
  */
 public class WildFlyElytronTokenProvider implements TokenProvider {
 
+    private static final String ISSUER = "WildFly Elytron";
+    private static final long ACCESS_TOKEN_EXPIRY_TIME = 300;
+    private static final long REFRESH_TOKEN_EXPIRY_TIME = 1209600; // 14 days
+    private static final List<String> AUDIENCE = Arrays.asList("JWT");
+    private static final String KEYSTORE_PASSWORD = "secret";
+    private static final String SIGNING_ALIAS = "serverSigning";
+    private static final Path KEYSTORE_PATH = Paths.get("tokenKeystore.jks");
+    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS256;
+    private static final KeyEncryptionAlgorithm KEY_ENCRYPTION_ALGORITHM = KeyEncryptionAlgorithm.RSA_OAEP_256;
+    private static final int KEY_SIZE = 2048;
+    private static final String SIGNING_DN = "cn=WildFly Elytron Signing";
+    private static final String ENCRYPTION_DN = "cn=WildFly Elytron Encryption";
+
     private KeyStore keyStore;
-    private String issuer = "WildFly Elytron";
-    private long accessTokenExpiryTime = 300;
-    private long refreshTokenExpiryTime = 1209600; // 14 days
-    private List<String> audience = Arrays.asList("JWT");
-    private String keyStorePassword = "secret";
-    private String signingAlias = "serverSigning";
-    private String encryptionAlias = "serverEncryption";
-    private Path keyStorePath = Paths.get("tokenKeystore.jks");
-    private SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256;
-    private KeyEncryptionAlgorithm keyEncryptionAlgorithm = KeyEncryptionAlgorithm.RSA_OAEP_256;
-    private int keySize = 2048;
+    private String issuer;
+    private long accessTokenExpiryTime;
+    private long refreshTokenExpiryTime;
+    private List<String> audience;
+    private String keyStorePassword;
+    private String signingAlias;
+    private String encryptionAlias;
+    private Path keyStorePath;
+    private SignatureAlgorithm signatureAlgorithm;
+    private KeyEncryptionAlgorithm keyEncryptionAlgorithm;
+    private int keySize;
     private PublicKey encryptionKey;
     private PrivateKey decryptionKey;
     private PublicKey verificationKey;
@@ -87,47 +102,34 @@ public class WildFlyElytronTokenProvider implements TokenProvider {
     private SecretKey secretKey;
     private boolean built;
 
-    private final String SIGNING_DN = "cn=WildFly Elytron Signing";
-    private final String ENCRYPTION_DN = "cn=WildFly Elytron Encryption";
-
 
     public WildFlyElytronTokenProvider(Builder builder) throws Exception {
-        if (builder.issuer != null) {
-            this.issuer = builder.issuer;
-        }
-        if (builder.accessTokenExpiryTime != 0) {
-            this.accessTokenExpiryTime = builder.accessTokenExpiryTime;
-        }
-        if (builder.refreshTokenExpiryTime != 0) {
-            this.refreshTokenExpiryTime = builder.refreshTokenExpiryTime;
-        }
-        if (builder.audience != null) {
-            this.audience = builder.audience;
-        }
-        if (builder.keyStorePassword != null) {
-            this.keyStorePassword = builder.keyStorePassword;
-        }
-        if (builder.keyEncryptionAlgorithm != null) {
-            this.keyEncryptionAlgorithm = builder.keyEncryptionAlgorithm;
-        }
-        if (builder.signatureAlgorithm != null) {
-            this.signatureAlgorithm = builder.signatureAlgorithm;
-        }
-        if (builder.keySize != 0) {
-            this.keySize = builder.keySize;
+        this.issuer = builder.issuer != null ? builder.issuer : ISSUER;
+        this.accessTokenExpiryTime = builder.accessTokenExpiryTime != 0 ? builder.accessTokenExpiryTime : ACCESS_TOKEN_EXPIRY_TIME;
+        this.refreshTokenExpiryTime = builder.refreshTokenExpiryTime != 0 ? builder.refreshTokenExpiryTime : REFRESH_TOKEN_EXPIRY_TIME;
+        this.audience = builder.audience != null ? builder.audience : AUDIENCE;
+        this.keyEncryptionAlgorithm = builder.keyEncryptionAlgorithm != null ? builder.keyEncryptionAlgorithm : KEY_ENCRYPTION_ALGORITHM;
+        this.signatureAlgorithm = builder.signatureAlgorithm != null ? builder.signatureAlgorithm : SIGNATURE_ALGORITHM;
+        this.keySize = builder.keySize != 0 ? builder.keySize : KEY_SIZE;
+
+
+        // Do checks for necessary information with user provided keystore
+        if (builder.keyStorePath != null) {
+            if (builder.keyStorePassword == null ) {
+                throw log.missingKeystorePassword();
+            }
+            if (builder.encryptionAlias != null && builder.signingAlias == null) {
+                throw log.missingSigningAlias();
+            }
+            if (builder.encryptionAlias == null && builder.signingAlias == null) {
+                throw log.missingEncryptionAndSigningAlias();
+            }
         }
 
-        // User provided keystore, store its path and respective aliases
-        if (builder.keyStorePath != null) {
-            if (builder.keyStorePassword == null || (builder.encryptionAlias == null && builder.signingAlias == null) ||
-                    (builder.encryptionAlias != null && builder.signingAlias == null)) {
-                throw log.missingInformationForUserKeyStore();
-            }
-            this.keyStorePath = builder.keyStorePath;
-            this.keyStorePassword = builder.keyStorePassword;
-            this.encryptionAlias = builder.encryptionAlias;
-            this.signingAlias = builder.signingAlias;
-        }
+        this.keyStorePath = builder.keyStorePath != null ? builder.keyStorePath : KEYSTORE_PATH;
+        this.keyStorePassword = builder.keyStorePassword != null ? builder.keyStorePassword : KEYSTORE_PASSWORD;
+        this.signingAlias = builder.signingAlias != null ? builder.signingAlias : SIGNING_ALIAS;
+        this.encryptionAlias = builder.encryptionAlias; // This one can be set to null if we don't want encryption
 
         if (builder.secret != null) {
             // If using symmetric encryption and algorithm not specified, we want to use another default
@@ -237,7 +239,9 @@ public class WildFlyElytronTokenProvider implements TokenProvider {
             try {
                 keyStore.load(null, null);
                 keyStore.setKeyEntry(this.signingAlias, certificateSigning.getSigningKey(), password.toCharArray(), certificateChainSigning);
-                keyStore.setKeyEntry(this.encryptionAlias, certificateEncryption.getSigningKey(), password.toCharArray(), certificateChainEncryption);
+                if (this.encryptionAlias != null) {
+                    keyStore.setKeyEntry(this.encryptionAlias, certificateEncryption.getSigningKey(), password.toCharArray(), certificateChainEncryption);
+                }
                 keyStore.store(new FileOutputStream(file), password.toCharArray());
             } catch (NoSuchAlgorithmException e) {
                 throw log.noSuchAlgorithmToCheckKeyStoreIntegrity(e);
@@ -470,7 +474,8 @@ public class WildFlyElytronTokenProvider implements TokenProvider {
         }
 
         /**
-         * Set the alias associated with the encryption keypair entry in the keystore
+         * Set the alias associated with the encryption keypair entry in the keystore.
+         * This is necessary for encryption, otherwise the token only gets signed by default.
          * @param encryptionAlias the alias for the encryption keypair
          * @return this builder
          */

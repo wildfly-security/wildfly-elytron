@@ -19,6 +19,7 @@ package org.wildfly.security.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.wildfly.common.Assert.assertTrue;
 
 import java.io.File;
@@ -151,6 +152,32 @@ public class WildFlyElytronTokenProviderTest {
         deleteKeyStore(tokenProvider.getKeyStorePath());
     }
 
+    /**
+     * The default token provider only signs by default, but they can be encrypted by specifying an encryption alias.
+     * @throws Exception
+     */
+    @Test
+    public void testIssuingTokenWithSigningAndEncryption() throws Exception {
+
+        WildFlyElytronTokenProvider tokenProvider = WildFlyElytronTokenProvider.builder()
+                .setEncryptionAlias("myEncryptionAlias")
+                .build();
+
+        SecurityIdentity identity = fetchSecurityIdentity(tokenProvider);
+        String accessToken = tokenProvider.issueAccessToken(identity);
+        assertNotNull(accessToken);
+
+        // Validate the contents of the access token is what we configured
+        JsonWebToken accessJwt = tokenProvider.parseAndVerifyAccessToken(accessToken);
+        assertNotNull(accessJwt);
+        assertEquals(accessJwt.getIssuer(), ISSUER);
+        assertEquals(accessJwt.getSubject(), USER);
+        assertEquals(accessJwt.getAudience(), new HashSet<>(Arrays.asList(AUDIENCE)));
+        assertEquals(accessJwt.getGroups(), new HashSet<>(Arrays.asList("Employee", "Admin", "Manager")));
+
+        deleteKeyStore(tokenProvider.getKeyStorePath());
+    }
+
 
     /**
      * Test issuing and verifying token using symmetric encryption
@@ -254,20 +281,42 @@ public class WildFlyElytronTokenProviderTest {
     }
 
     /**
-     * Test verifies trying to only encrypt tokens fails, as we only support signing and encryption or
-     * signing alone.
+     * Test verifies we get exceptions when using a user provided keystore and not providing the necessary parameters
      */
-    @Test(expected = IllegalStateException.class)
-    public void testIssuingOnlyEncryptedTokens() throws Exception {
-        generateUserKeyStore("myKeystore.jks", "mySigningAlias", "myEncryptionAlias","mySecret");
+    @Test
+    public void testMissingParametersWithUserProvidedKeystore() throws Exception {
+        generateUserKeyStore("myKeystore.jks", "mySigningAlias", "myEncryptionAlias", "mySecret");
 
-        WildFlyElytronTokenProvider tokenProvider = WildFlyElytronTokenProvider.builder()
-                .setEncryptionAlias("myEncryptionAlias")
-                .setKeyStorePassword("mySecret")
-                .setKeyStorePath(Paths.get("myKeystore.jks"))
-                .build();
+        try {
+            WildFlyElytronTokenProvider missingKeystorePassword = WildFlyElytronTokenProvider.builder()
+                    .setSigningAlias("mySigningAlias")
+                    .setEncryptionAlias("myEncryptionAlias")
+                    .setKeyStorePath(Paths.get("myKeystore.jks"))
+                    .build();
+            fail("IllegalStateException should come up when specifying user provided keystore without a password");
+        } catch (Exception e) {
+        }
 
-        deleteKeyStore(tokenProvider.getKeyStorePath());
+        try {
+            WildFlyElytronTokenProvider onlyEncryption = WildFlyElytronTokenProvider.builder()
+                    .setEncryptionAlias("myEncryptionAlias")
+                    .setKeyStorePassword("mySecret")
+                    .setKeyStorePath(Paths.get("myKeystore.jks"))
+                    .build();
+            fail("IllegalStateException should come up when specifying user provided keystore with an encryption alias and no signing alias");
+        } catch (Exception e) {
+        }
+
+        try {
+            WildFlyElytronTokenProvider missingAliases = WildFlyElytronTokenProvider.builder()
+                    .setKeyStorePassword("mySecret")
+                    .setKeyStorePath(Paths.get("myKeystore.jks"))
+                    .build();
+            fail("IllegalStateException should come up when specifying user provided keystore with missing encryption and signing aliases");
+        } catch (Exception e) {
+        }
+
+        deleteKeyStore(Paths.get("myKeystore.jks"));
 
     }
 

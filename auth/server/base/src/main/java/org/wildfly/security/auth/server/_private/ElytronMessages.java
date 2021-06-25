@@ -195,11 +195,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 16015, value = "Failed to issue Json Web Token")
     JwtException failedToIssueJwt();
 
-    @Message(id = 16016, value = "Failed to parse or validate Json Web Token")
-    JwtException failedToValidateToken();
+    @Message(id = 16016, value = "Missing keystore password for user provided keystore")
+    IllegalStateException missingKeystorePassword();
 
-    @Message(id = 16017, value = "Missing information to use provided keystore")
-    IllegalStateException missingInformationForUserKeyStore();
+    @Message(id = 16017, value = "Encryption alias has been specified but signing alias is missing. Encryption only is not supported")
+    IllegalStateException missingSigningAlias();
+
+    @Message(id = 16018, value = "Missing signing and encryption alias")
+    IllegalStateException missingEncryptionAndSigningAlias();
 
     @LogMessage(level = Logger.Level.WARN)
     @Message(id = 16019, value = "Access token is invalid")
