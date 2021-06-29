@@ -52,7 +52,18 @@ public class CipherUtil {
         Cipher cipher = Cipher.getInstance(TRANSFORMATION);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 
-        byte[] cipherText = cipher.doFinal(clearText.getBytes(StandardCharsets.UTF_8));
+        byte[] result = encrypt(clearText.getBytes(StandardCharsets.UTF_8), secretKey);
+        return ByteIterator.ofBytes(result).base64Encode().drainToString();
+    }
+
+    public static byte[] encrypt(final byte[] clearBytes, final SecretKey secretKey) throws GeneralSecurityException {
+        checkNotNullParam("clearBytes", clearBytes);
+        checkNotNullParam("secretKey", secretKey);
+
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+
+        byte[] cipherText = cipher.doFinal(clearBytes);
         byte[] iv = cipher.getIV();
 
         byte[] result = new byte[iv.length + cipherText.length + 6];
@@ -72,36 +83,27 @@ public class CipherUtil {
         // Cipher Text
         System.arraycopy(cipherText, 0, result, 6 + iv.length, cipherText.length);
 
-        return ByteIterator.ofBytes(result).base64Encode().drainToString();
+        return result;
     }
 
     public static String decrypt(final String token, final SecretKey secretKey) throws GeneralSecurityException {
         checkNotNullParam("secretKey", secretKey);
-
         try {
             ByteIterator byteIterator = CodePointIterator.ofString(checkNotNullParam("token", token)).base64Decode();
-
-            byte[] prefixVersion = byteIterator.drain(5);
-            if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
-                throw log.badKeyPrefix();
-            } else if (prefixVersion[3] != VERSION) {
-                throw log.unsupportedVersion(prefixVersion[3], VERSION);
-            } else if (prefixVersion[4] != CIPHER_TEXT_IDENTIFIER) {
-                throw log.unexpectedTokenType(toName((char) prefixVersion[4]), CIPHER_TEXT_NAME);
-            }
-
-            int ivLength = byteIterator.next();
-            byte[] iv = byteIterator.drain(ivLength);
-            byte[] cipherText = byteIterator.drain();
-
-            // We successfully disected the token, now decrypt the value.
-            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            AlgorithmParameterSpec spec = new IvParameterSpec(iv);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
-
-            byte[] clearText = cipher.doFinal(cipherText);
-
+            byte[] clearText = decrypt(byteIterator, secretKey);
             return new String(clearText, StandardCharsets.UTF_8);
+        } catch (DecodeException e) {
+            throw log.unableToDecodeBase64Token(e);
+        }
+
+    }
+
+    public static byte[] decrypt(final byte[] token, final SecretKey secretKey) throws GeneralSecurityException {
+        checkNotNullParam("secretKey", secretKey);
+
+        try {
+            ByteIterator byteIterator = ByteIterator.ofBytes(token);
+            return decrypt(byteIterator, secretKey);
 
         } catch (DecodeException e) {
             throw log.unableToDecodeBase64Token(e);
@@ -109,5 +111,26 @@ public class CipherUtil {
 
     }
 
+    private static byte[] decrypt(final ByteIterator byteIterator, final SecretKey secretKey) throws GeneralSecurityException {
+        byte[] prefixVersion = byteIterator.drain(5);
+        if (prefixVersion.length < 4 || prefixVersion[0] != 'E' || prefixVersion[1] != 'L' || prefixVersion[2] != 'Y') {
+            throw log.badKeyPrefix();
+        } else if (prefixVersion[3] != VERSION) {
+            throw log.unsupportedVersion(prefixVersion[3], VERSION);
+        } else if (prefixVersion[4] != CIPHER_TEXT_IDENTIFIER) {
+            throw log.unexpectedTokenType(toName((char) prefixVersion[4]), CIPHER_TEXT_NAME);
+        }
+
+        int ivLength = byteIterator.next();
+        byte[] iv = byteIterator.drain(ivLength);
+        byte[] cipherText = byteIterator.drain();
+
+        // We successfully dissected the token, now decrypt the value.
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        AlgorithmParameterSpec spec = new IvParameterSpec(iv);
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+
+        return cipher.doFinal(cipherText);
+    }
 
 }
