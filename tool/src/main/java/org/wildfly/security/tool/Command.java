@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ public abstract class Command {
         Console console = System.console();
         if (echo || console == null) {
             if (console == null && redirectionValues == null) {
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
                     redirectionValues = new ArrayList<>();
                     String value;
                     while ((value = in.readLine()) != null) {
