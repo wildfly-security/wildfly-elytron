@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -155,7 +156,7 @@ public class OAuth2CredentialSource implements CredentialSource {
                     if (connection != null && connection.getErrorStream() != null) {
                         errorStream = connection.getErrorStream();
 
-                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream))) {
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
                             StringBuffer response = reader.lines().reduce(new StringBuffer(), StringBuffer::append, (buffer1, buffer2) -> buffer1);
                             saslOAuth2.errorf(ioe, "Unexpected response from server [%s]. Response: [%s]", tokenEndpointUri, response);
                         } catch (IOException ignore) {
