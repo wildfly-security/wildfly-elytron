@@ -23,8 +23,9 @@ import static org.wildfly.security.credential.store.CredentialStore.getInstance;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -332,7 +333,7 @@ public class VaultCommand extends Command {
     }
 
     private List<Descriptor> parseDescriptorFile(String descriptorFileLocation) throws IOException {
-        try (BufferedReader descriptorFile = new BufferedReader(new FileReader(new File(descriptorFileLocation)))) {
+        try (BufferedReader descriptorFile = new BufferedReader(new InputStreamReader(new FileInputStream(descriptorFileLocation), StandardCharsets.UTF_8))) {
             List<Descriptor> parsedDescriptors = new ArrayList<>();
             String line;
             int vaults = 0;
