@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 24 Jun 2021 13:59:39 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 01 Jul 2021 10:03:30 +0000</lastBuildDate>
+        
+        <item>
+            <title>Installing Keycloak OIDC adaptor using the Galleon CLI</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/galleon-cli-keycloak/
+            </link>
+            <description>
+                Traditionally to install WildFly you would download a complete archive of the application server distribution, unzip it locally and run it directly from where it was unzipped. Subsequently to install the Keycloak adaptor for WildFly a second archive would be downloaded and unzipped on top of the WildFly installation and...
+            </description>
+            <pubDate>Thu, 01 Jul 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/galleon-cli-keycloak/
+            </guid>
+        </item>
         
         <item>
             <title>Using hash character sets and encodings in Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming SSL features: Multiple certificate revocation lists support and SSLv2Hello support</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/
-            </link>
-            <description>
-                Two of the new features regarding SSL that we have been working on include adding support for configuring multiple certificate revocation lists and SSLv2Hello support. These features did not make it into WildFly 23 but we have plans for them to be included in WildFly 24. An Overview of Certificate...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-ssl-features/
             </guid>
         </item>
         
