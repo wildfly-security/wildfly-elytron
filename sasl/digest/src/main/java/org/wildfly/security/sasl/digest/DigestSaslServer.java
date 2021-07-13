@@ -28,8 +28,8 @@ import static org.wildfly.security.sasl.digest._private.DigestUtil.digestRespons
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.Provider;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -221,7 +221,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
         }
 
         byte[] nonceFromClient = parsedDigestResponse.get("nonce");
-        if (!Arrays.equals(nonce, nonceFromClient)) {
+        if (! MessageDigest.isEqual(nonce, nonceFromClient)) {
             throw saslDigest.mechNoncesDoNotMatch().toSaslException();
         }
 
@@ -270,7 +270,7 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
         if (parsedDigestResponse.get("response") == null) {
             throw saslDigest.mechMissingDirective("response").toSaslException();
         }
-        if ( ! Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {
+        if (! MessageDigest.isEqual(expectedResponse, parsedDigestResponse.get("response"))) {
             throw saslDigest.mechAuthenticationRejectedInvalidProof().toSaslException();
         }
 

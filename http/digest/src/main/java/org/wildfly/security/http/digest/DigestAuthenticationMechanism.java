@@ -47,7 +47,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
@@ -227,7 +226,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         byte[] calculatedResponse = calculateResponseDigest(messageDigest, hA1, nonce, request.getRequestMethod(), digestUri, responseTokens.get(QOP), responseTokens.get(CNONCE), responseTokens.get(NC));
 
-        if (Arrays.equals(response, calculatedResponse) == false) {
+        if (MessageDigest.isEqual(response, calculatedResponse) == false) {
             httpDigest.trace("Failed: invalid proof");
             fail();
             request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
