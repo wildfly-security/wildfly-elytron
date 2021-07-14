@@ -30,7 +30,6 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.cache.RealmIdentityCache;
@@ -47,7 +46,7 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link CacheableSecurityRealm} whose {@link RealmIdentity} should be cached..
      * @param cache the {@link RealmIdentityCache} instance
      */
     public CachingModifiableSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
