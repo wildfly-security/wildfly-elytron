@@ -23,6 +23,7 @@ import java.security.DigestException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +33,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.wildfly.common.array.Arrays2;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.mechanism._private.ElytronMessages;
@@ -225,7 +225,9 @@ public class NonceManager {
                 throw log.invalidNonceLength();
             }
 
-            if (Arrays2.equals(nonceBytes, PREFIX_LENGTH, digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest)) == false) {
+            byte[] nonceBytesWithoutPrefix = Arrays.copyOfRange(nonceBytes, PREFIX_LENGTH, nonceBytes.length);
+            byte[] expectedNonce = digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest);
+            if (MessageDigest.isEqual(nonceBytesWithoutPrefix, expectedNonce) == false) {
                 if (log.isTraceEnabled()) {
                     String saltString = salt == null ? "null" : ByteIterator.ofBytes(salt).hexEncode().drainToString();
                     log.tracef("Nonce %s rejected due to failed comparison using secret key with seed %s.", nonce,
