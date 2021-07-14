@@ -23,13 +23,13 @@ import static java.lang.Math.min;
 import static java.util.Arrays.copyOfRange;
 import static org.wildfly.security.mechanism._private.ElytronMessages.saslScram;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -326,8 +326,9 @@ public final class ScramServer {
             }
             final byte[] clientNonce = initialResponse.getRawNonce();
             final byte[] serverNonce = initialChallenge.getRawServerNonce();
-            if (! bi.delimitedBy(',').limitedTo(clientNonce.length).contentEquals(ByteIterator.ofBytes(clientNonce)) ||
-                ! bi.delimitedBy(',').limitedTo(serverNonce.length).contentEquals(ByteIterator.ofBytes(serverNonce))) {
+            final byte[] expectedMessageNonce = ByteBuffer.allocate(clientNonce.length + serverNonce.length).put(clientNonce).put(serverNonce).array();
+            final byte[] messageNonce = bi.delimitedBy(',').drain();
+            if (! MessageDigest.isEqual(messageNonce, expectedMessageNonce)) {
                 throw saslScram.mechNoncesDoNotMatch();
             }
 
@@ -429,7 +430,7 @@ public final class ScramServer {
             byte[] recoveredClientKey = clientSignature.clone();
             ScramUtil.xor(recoveredClientKey, recoveredClientProof);
             if(trace) saslScram.tracef("[S] Recovered client key: %s%n", ByteIterator.ofBytes(recoveredClientKey).hexEncode().drainToString());
-            if (! Arrays.equals(recoveredClientKey, clientKey)) {
+            if (! MessageDigest.isEqual(recoveredClientKey, clientKey)) {
                 throw saslScram.mechAuthenticationRejectedInvalidProof();
             }
 
