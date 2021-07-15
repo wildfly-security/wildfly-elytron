@@ -40,6 +40,7 @@ import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
+import org.wildfly.security.dynamic.ssl.DynamicSSLContextException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -201,4 +202,13 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14004, value = "Password callback handling was unsuccessful")
     ConfigXMLParseException passwordCallbackHandlingWasUnsuccessful();
+
+    @Message(id = 14005, value = "Obtaining of the default SSLContext from current authentication context resulted in exception.")
+    DynamicSSLContextException cannotObtainDefaultSSLContext(@Cause Throwable cause);
+
+    @Message(id = 14006, value = "Obtaining of all configured SSLContexts from current authentication context resulted in exception.")
+    DynamicSSLContextException cannotObtainConfiguredSSLContexts(@Cause Throwable cause);
+
+    @Message(id = 14007, value = "Obtaining of the SSLContext from current authentication context and provided URI resulted in exception.")
+    DynamicSSLContextException cannotObtainSSLContextForGivenURI(@Cause Throwable cause);
 }
