@@ -733,6 +733,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-jwt-build</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- OCSP Responder -->
         <dependency>
             <groupId>org.xipki.pki</groupId>
