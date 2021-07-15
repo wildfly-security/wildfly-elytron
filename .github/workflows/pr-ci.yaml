@@ -18,6 +18,13 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - if: matrix.os == 'macos-latest'
+        name: Install docker
+        run: |
+          brew install docker docker-machine docker-compose
+          brew services start docker-machine
+          docker-machine create --driver virtualbox default
+          docker --version
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
@@ -28,3 +35,7 @@ jobs:
         run: mvn -version
       - name: Build with Maven
         run: mvn -B package --file pom.xml
+      - uses: actions/upload-artifact@v2
+        with:
+          name: surefire-reports
+          path: '**/http/oidc/target/surefire-reports/*.txt'
