@@ -22,6 +22,7 @@ import static org.wildfly.security.auth.realm.ldap.ElytronMessages.log;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -136,8 +137,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         this.nameRewriter = nameRewriter;
         this.identityMapping = identityMapping;
         this.pageSize = pageSize;
-        this.hashCharset = hashCharset;
-        this.hashEncoding = hashEncoding;
+        this.hashCharset = hashCharset != null ? hashCharset : StandardCharsets.UTF_8;
+        this.hashEncoding = hashEncoding != null ? hashEncoding : Encoding.BASE64;
 
         this.credentialLoaders = credentialLoaders;
         this.credentialPersisters = credentialPersisters;
