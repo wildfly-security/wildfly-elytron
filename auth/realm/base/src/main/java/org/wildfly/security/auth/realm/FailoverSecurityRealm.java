@@ -19,6 +19,7 @@ package org.wildfly.security.auth.realm;
 
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -51,6 +52,9 @@ public class FailoverSecurityRealm implements SecurityRealm {
      * @param failoverCallback callback function that gets called in case delegateRealm is unavailable
      */
     public FailoverSecurityRealm(final SecurityRealm delegateRealm, final SecurityRealm failoverRealm, final Consumer<RealmUnavailableException> failoverCallback) {
+        Assert.checkNotNullParam("delegateRealm", delegateRealm);
+        Assert.checkNotNullParam("failoverRealm", failoverRealm);
+
         this.delegateRealm = delegateRealm;
         this.failoverRealm = failoverRealm;
         this.failoverCallback = failoverCallback;
