@@ -201,4 +201,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14004, value = "Password callback handling was unsuccessful")
     ConfigXMLParseException passwordCallbackHandlingWasUnsuccessful();
+
+    @Message(id = 14005, value = "SSL context for security provider creates infinite loop")
+    ConfigXMLParseException sslContextForSecurityProviderCreatesInfiniteLoop();
 }
