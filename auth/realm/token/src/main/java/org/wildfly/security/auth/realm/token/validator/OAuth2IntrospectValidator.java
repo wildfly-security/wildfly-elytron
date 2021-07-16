@@ -69,6 +69,8 @@ public class OAuth2IntrospectValidator implements TokenValidator {
     private final String clientSecret;
     private final SSLContext sslContext;
     private final HostnameVerifier hostnameVerifier;
+    private final int connectionTimeout;
+    private final int readTimeout;
 
     OAuth2IntrospectValidator(Builder configuration) {
         this.tokenIntrospectionUrl = Assert.checkNotNullParam("tokenIntrospectionUrl", configuration.tokenIntrospectionUrl);
@@ -81,6 +83,8 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
         this.sslContext = configuration.sslContext;
         this.hostnameVerifier = configuration.hostnameVerifier;
+        this.connectionTimeout = configuration.connectionTimeout;
+        this.readTimeout = configuration.readTimeout;
     }
 
     @Override
@@ -184,6 +188,8 @@ public class OAuth2IntrospectValidator implements TokenValidator {
                     https.setHostnameVerifier(hostnameVerifier);
                 }
             }
+            connection.setConnectTimeout(connectionTimeout);
+            connection.setReadTimeout(readTimeout);
 
             return connection;
         } catch (IOException cause) {
@@ -211,6 +217,8 @@ public class OAuth2IntrospectValidator implements TokenValidator {
         private URL tokenIntrospectionUrl;
         private SSLContext sslContext;
         private HostnameVerifier hostnameVerifier;
+        private int connectionTimeout;
+        private int readTimeout;
 
         private Builder() {
         }
@@ -274,6 +282,28 @@ public class OAuth2IntrospectValidator implements TokenValidator {
          */
         public Builder useSslHostnameVerifier(HostnameVerifier hostnameVerifier) {
             this.hostnameVerifier = hostnameVerifier;
+            return this;
+        }
+
+        /**
+         * Sets the connection timeout to a specified timeout, in milliseconds. A non-zero value specifies the timeout when connecting
+         * to a resource. A timeout of zero is interpreted as an infinite timeout.
+         * @param connectionTimeout the connection timeout
+         * @return this instance
+         */
+        public Builder connectionTimeout(int connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+            return this;
+        }
+
+        /**
+         * Sets the read timeout to a specified timeout, in milliseconds. A non-zero value specifies the timeout when reading
+         * from Input stream when a connection is established to a resource. A timeout of zero is interpreted as an infinite timeout.
+         * @param readTimeout the read timeout
+         * @return this instance
+         */
+        public Builder readTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
             return this;
         }
 
