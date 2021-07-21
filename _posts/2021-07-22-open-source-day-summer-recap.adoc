@@ -39,7 +39,8 @@ the day, we had merged several pull requests from first time contributors!
 What better way to learn more about how the day went than from our first time contributors themselves? Here's what they
 had to say about Open Source Day.
 
-[quote, Rachel Misurac]
+
+[quote]
 ____
 I had the chance to make my very first contributions to an open source project, and the WildFly Elytron team from
 Red Hat was kind and supportive every step of the way. The group of engineers was so approachable and encouraging that
@@ -50,24 +51,28 @@ patiently. I appreciate that I had the chance to do everything myself, with just
 day into an awesome learning opportunity. When the day was done I had made two PRs that were approved and merged, and I
 felt energized to know that working in the open source community can be fun and accessible. Massive thanks to everyone
 who made the experience so awesome!
+
+*-Rachel Misurac*
 ____
 
-
-[quote, Neha Binwal]
+[quote]
 ____
 Working on the WildFly Elytron project on Open Source Day was a great learning experience! The project representatives
 and mentors made sure that all my doubts were clarified and were very warm and encouraging. Contributing to such a huge
 repository can be intimidating, but the WildFly Elytron team ensured that no one gets left behind. I'm looking forward to
 continuing my exploration of this project.
+
+*-Neha Binwal*
 ____
 
-
-[quote, Stuti Misra]
+[quote]
 ____
 Working with the WildFly Elytron team was also the perfect introduction to open source repositories and open source
 development. Farah, Sonia, Diana, and Ashpan were all patient as we worked through the setup and sent our first pull
 request. Their support and the collaborative environment during the Open Source Day allowed me to merge my first
 open source pull request.
+
+*-Stuti Misra*
 ____
 
 == What's next?
@@ -76,4 +81,3 @@ The WildFly Elytron project will also be participating in the https://ghc.anitab
 that will be held during the upcoming Grace Hopper conference. Whether you're new to open source, new to security,
 or looking to level up your skills, the WildFly Elytron project has you covered! We've got a bunch of issues that are
 perfect for getting started on our project. We hope to see you there!
-
