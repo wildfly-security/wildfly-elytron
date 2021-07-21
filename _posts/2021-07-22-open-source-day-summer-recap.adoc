@@ -52,7 +52,7 @@ day into an awesome learning opportunity. When the day was done I had made two P
 felt energized to know that working in the open source community can be fun and accessible. Massive thanks to everyone
 who made the experience so awesome!
 
-*-Rachel Misurac*
+*-Rachel Misurac, Open Source Day participant*
 ____
 
 [quote]
@@ -62,7 +62,7 @@ and mentors made sure that all my doubts were clarified and were very warm and e
 repository can be intimidating, but the WildFly Elytron team ensured that no one gets left behind. I'm looking forward to
 continuing my exploration of this project.
 
-*-Neha Binwal*
+*-Neha Binwal, Open Source Day participant*
 ____
 
 [quote]
@@ -72,7 +72,7 @@ development. Farah, Sonia, Diana, and Ashpan were all patient as we worked throu
 request. Their support and the collaborative environment during the Open Source Day allowed me to merge my first
 open source pull request.
 
-*-Stuti Misra*
+*-Stuti Misra, Open Source Day participant*
 ____
 
 == What's next?
