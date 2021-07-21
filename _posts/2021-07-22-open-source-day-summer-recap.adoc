@@ -1,0 +1,79 @@
+---
+layout: post
+title: 'Open Source Day Summer 2021 Recap'
+date: 2021-07-22
+tags: elytron wildfly security opensource
+synopsis: A recap of Open Source Day and what first time contributors to the WildFly Elytron project had to say.
+author: fjuma
+---
+
+Last week, the https://wildfly-security.github.io/wildfly-elytron/[WildFly Elytron] team had the pleasure of participating
+in https://anitab-org.github.io/open-source-day/upcoming/#overview[Open Source Day],
+an all-day hackathon hosted by the https://anitab.org/[AnitaB.org] community. It was the very first time that this event,
+known as the largest female-led movement in open source, was held outside of the Grace Hopper conference.
+Participants and open source project representatives and mentors from around the world came together for this virtual event.
+The goal of the event was to guide participants through making contributions to open source projects. This was the first
+time that the WildFly Elytron project has participated in Open Source Day.
+
+== About the day
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/SummerOpenSourceDay2021.png[align="center"]
+
+The day started with some inspiring introductory comments from Rocio Montes, one of the event co-chairs. We then introduced
+our WildFly Elytron team members, gave an introduction to our project, and went over some general information for submitting
+pull requests against the https://github.com/wildfly-security/wildfly-elytron[wildfly-elytron] repository. It was then time
+to start coding for the day!
+
+Prior to the event, we had created a bunch of issues and triaged existing ones that would be suitable for anyone getting
+started on the WildFly Elytron project. We added the https://issues.redhat.com/issues/?filter=12364234["good-first-issue"]
+label to these issues to make them easy to spot. We shared this list of issues with participants and helped them pick which
+ones to work on.
+
+Over the course of the day, the WildFly Elytron team helped participants set up their development environment, answered
+questions about Git and the process of submitting and updating pull requests, and helped participants work on their issues.
+The WildFly Elytron team also fielded general questions on what it's like working on open source projects. By the end of
+the day, we had merged several pull requests from first time contributors!
+
+== Some thoughts from our first time contributors
+
+What better way to learn more about how the day went than from our first time contributors themselves? Here's what they
+had to say about Open Source Day.
+
+[quote, Rachel Misurac]
+____
+I had the chance to make my very first contributions to an open source project, and the WildFly Elytron team from
+Red Hat was kind and supportive every step of the way. The group of engineers was so approachable and encouraging that
+I felt like I belonged right from the very beginning of the day. It was really challenging setting up my dev environment
+(it was my first time working with Java!), but the team provided helpful links and suggestions. Likewise, after making my
+first PR I needed to make some changes to match their preferred formatting and they walked me through the whole process
+patiently. I appreciate that I had the chance to do everything myself, with just the right amount of support to turn the
+day into an awesome learning opportunity. When the day was done I had made two PRs that were approved and merged, and I
+felt energized to know that working in the open source community can be fun and accessible. Massive thanks to everyone
+who made the experience so awesome!
+____
+
+
+[quote, Neha Binwal]
+____
+Working on the WildFly Elytron project on Open Source Day was a great learning experience! The project representatives
+and mentors made sure that all my doubts were clarified and were very warm and encouraging. Contributing to such a huge
+repository can be intimidating, but the WildFly Elytron team ensured that no one gets left behind. I'm looking forward to
+continuing my exploration of this project.
+____
+
+
+[quote, Stuti Misra]
+____
+Working with the WildFly Elytron team was also the perfect introduction to open source repositories and open source
+development. Farah, Sonia, Diana, and Ashpan were all patient as we worked through the setup and sent our first pull
+request. Their support and the collaborative environment during the Open Source Day allowed me to merge my first
+open source pull request.
+____
+
+== What's next?
+
+The WildFly Elytron project will also be participating in the https://ghc.anitab.org/programs-and-awards/open-source-day/[September Open Source Day]
+that will be held during the upcoming Grace Hopper conference. Whether you're new to open source, new to security,
+or looking to level up your skills, the WildFly Elytron project has you covered! We've got a bunch of issues that are
+perfect for getting started on our project. We hope to see you there!
+
