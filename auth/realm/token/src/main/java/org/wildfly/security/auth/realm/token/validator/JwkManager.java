@@ -57,12 +57,15 @@ class JwkManager {
 
     private final long updateTimeout;
 
-    private static final int CONNECTION_TIMEOUT = 2000;//2s
+    private final int connectionTimeout;
+    private final int readTimeout;
 
-    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout) {
+    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int connectionTimeout, int readTimeout) {
         this.sslContext = sslContext;
         this.hostnameVerifier = hostnameVerifier;
         this.updateTimeout = updateTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.readTimeout = readTimeout;
     }
 
     /**
@@ -107,7 +110,7 @@ class JwkManager {
             }
 
             if (lastUpdate + updateTimeout <= System.currentTimeMillis()) {
-                Map<String, RSAPublicKey> newJwks = getJwksFromUrl(url, sslContext, hostnameVerifier);
+                Map<String, RSAPublicKey> newJwks = getJwksFromUrl(url, sslContext, hostnameVerifier, connectionTimeout, readTimeout);
                 if (newJwks == null) {
                     log.unableToFetchJwks(url.toString());
                     return null;
@@ -120,7 +123,7 @@ class JwkManager {
         }
     }
 
-    private static Map<String, RSAPublicKey> getJwksFromUrl(final URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier) {
+    private static Map<String, RSAPublicKey> getJwksFromUrl(final URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier, int connectionTimeout, int readTimeout) {
         JsonObject response = null;
         try {
             URLConnection connection = url.openConnection();
@@ -129,8 +132,8 @@ class JwkManager {
                 conn.setRequestMethod("GET");
                 conn.setSSLSocketFactory(sslContext.getSocketFactory());
                 conn.setHostnameVerifier(hostnameVerifier);
-                conn.setConnectTimeout(CONNECTION_TIMEOUT);
-                conn.setReadTimeout(CONNECTION_TIMEOUT);
+                conn.setConnectTimeout(connectionTimeout);
+                conn.setReadTimeout(readTimeout);
                 conn.connect();
                 InputStream inputStream = conn.getInputStream();
                 response = Json.createReader(inputStream).readObject();
