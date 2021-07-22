@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 01 Jul 2021 10:03:30 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 22 Jul 2021 13:48:13 +0000</lastBuildDate>
+        
+        <item>
+            <title>Open Source Day Summer 2021 Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-summer-recap/
+            </link>
+            <description>
+                Last week, the WildFly Elytron team had the pleasure of participating in Open Source Day, an all-day hackathon hosted by the AnitaB.org community. It was the very first time that this event, known as the largest female-led movement in open source, was held outside of the Grace Hopper conference. Participants...
+            </description>
+            <pubDate>Thu, 22 Jul 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-summer-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Installing Keycloak OIDC adaptor using the Galleon CLI</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Normalize principal propagation/injection across elytron and legacy</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/
-            </link>
-            <description>
-                In WildFly 23 there is a new configuration option in the EJB subsystem that allows to switch between legacy and elytron principal propagation. This blog post will provide an explanation about the difference between these propagation modes and where the configuration can be done. Definition of terms Secured EJB refers...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/normalization-of-EJB-principal-propagation/
             </guid>
         </item>
         
