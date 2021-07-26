@@ -17,7 +17,8 @@
  */
 package org.wildfly.security.tool;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import java.util.Random;
+
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -63,7 +64,11 @@ public class CredentialStoreCommandInputTest extends AbstractCommandTest {
 
     @Test
     public void testLongAliasNameOrValue() throws Exception {
-        testCharactersAliasNameAndAliasValue(RandomStringUtils.randomPrint(COUNT_OF_CHARACTERS));
+        Random random = new Random();
+        String longString = random.ints(32, 127).limit(COUNT_OF_CHARACTERS)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
+        testCharactersAliasNameAndAliasValue(longString);
     }
 
     @Test

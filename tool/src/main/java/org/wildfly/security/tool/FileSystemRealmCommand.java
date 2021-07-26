@@ -39,7 +39,6 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.commons.lang3.ArrayUtils;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -582,7 +581,7 @@ class FileSystemRealmCommand extends Command {
                     usersMap.replace(user, userAttributes);
                 }
                 if (summaryMode) {
-                    summaryString.append(String.format("Added roles: %s for user %s.", ArrayUtils.toString(roles), user));
+                    summaryString.append(String.format("Added roles: %s for user %s.", String.join(",", roles), user));
                     summaryString.append(System.getProperty("line.separator"));
                 }
             }
