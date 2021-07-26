@@ -72,6 +72,7 @@ class FileSystemRealmCommand extends Command {
     private static final String OUTPUT_LOCATION_PARAM = "output-location";
     private static final String FILESYSTEM_REALM_NAME_PARAM = "filesystem-realm-name";
     private static final String SECURITY_DOMAIN_NAME_PARAM = "security-domain-name";
+    private static final String LEVELS_PARAM = "levels";
     private static final String BULK_CONVERT_PARAM = "bulk-convert";
     private static final String FILE_ARG = "file";
     private static final String DIRECTORY_ARG = "directory";
@@ -118,6 +119,10 @@ class FileSystemRealmCommand extends Command {
         option.setArgName(NAME_ARG);
         options.addOption(option);
 
+        option = new Option("l", LEVELS_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmLevelsDesc());
+        option.setArgName(NAME_ARG);
+        options.addOption(option);
+
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
         options.addOption(option);
 
@@ -137,6 +142,7 @@ class FileSystemRealmCommand extends Command {
         private String outputLocation;
         private String fileSystemRealmName;
         private String securityDomainName;
+        private Integer levels;
         private String realmName;
 
         Descriptor() {
@@ -149,10 +155,15 @@ class FileSystemRealmCommand extends Command {
             this.fileSystemRealmName = descriptor.fileSystemRealmName;
             this.securityDomainName = descriptor.securityDomainName;
             this.realmName = descriptor.realmName;
+            this.levels = descriptor.levels;
         }
 
         String getUsersFile() {
             return this.usersFile;
+        }
+
+        Integer getLevels() {
+            return levels;
         }
 
         String getRolesFile() {
@@ -177,6 +188,10 @@ class FileSystemRealmCommand extends Command {
 
         void setUsersFile(String usersFile) {
             this.usersFile = usersFile;
+        }
+
+        void setLevels(Integer levels) {
+            this.levels = levels;
         }
 
         void setRolesFile(String rolesFile) {
@@ -259,6 +274,9 @@ class FileSystemRealmCommand extends Command {
             descriptor.setOutputLocation(outputLocationOption);
             descriptor.setFileSystemRealmName(cmdLine.getOptionValue("f"));
             descriptor.setSecurityDomainName(cmdLine.getOptionValue("s"));
+            if (cmdLine.getOptionValue("l") != null) {
+                descriptor.setLevels(Integer.valueOf(cmdLine.getOptionValue("l")));
+            }
             descriptors.add(descriptor);
 
             findMissingRequiredValuesAndSetValues(0, descriptor);
@@ -383,6 +401,7 @@ class FileSystemRealmCommand extends Command {
             case OUTPUT_LOCATION_PARAM: return descriptor.getOutputLocation();
             case FILESYSTEM_REALM_NAME_PARAM: return descriptor.getFileSystemRealmName();
             case SECURITY_DOMAIN_NAME_PARAM: return descriptor.getSecurityDomainName();
+            case LEVELS_PARAM: return descriptor.getLevels() != null ? Integer.toString(descriptor.getLevels()) : null;
             default: return null;
         }
     }
@@ -540,7 +559,13 @@ class FileSystemRealmCommand extends Command {
                 descriptor.reset();
                 continue;
             }
-            FileSystemSecurityRealm newFileSystemRealm = new FileSystemSecurityRealm(Paths.get(descriptor.getOutputLocation()));
+            FileSystemSecurityRealm tmpFileSystemRealm = null;
+            if (descriptor.getLevels() != null) {
+                tmpFileSystemRealm = new FileSystemSecurityRealm(Paths.get(descriptor.getOutputLocation()), descriptor.getLevels());
+            } else {
+                tmpFileSystemRealm = new FileSystemSecurityRealm(Paths.get(descriptor.getOutputLocation()));
+            }
+            final FileSystemSecurityRealm newFileSystemRealm = tmpFileSystemRealm;
             Map<String, ArrayList<String>> usersMap = new HashMap<>();
             for (String userMapping : usersList) {
                 String[] userStringSplit = userMapping.split("=");
@@ -664,8 +689,14 @@ class FileSystemRealmCommand extends Command {
                 securityDomainName = DEFAULT_SECURITY_DOMAIN_NAME;
             }
 
+            String realmScriptLine = null;
+            if (descriptor.getLevels() != null) {
+                realmScriptLine = String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s,levels=%s)", fileSystemRealmName, fullOutputPath, Integer.toString(descriptor.getLevels()));
+            } else {
+                realmScriptLine = String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s)", fileSystemRealmName, fullOutputPath);
+            }
             List<String> scriptLines = Arrays.asList(
-                String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s)", fileSystemRealmName, fullOutputPath),
+                realmScriptLine,
                 String.format("/subsystem=elytron/security-domain=%1$s:add(realms=[{realm=%2$s}],default-realm=%2$s,permission-mapper=default-permission-mapper)", securityDomainName, fileSystemRealmName)
             );
 

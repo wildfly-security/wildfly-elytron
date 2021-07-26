@@ -413,6 +413,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Name of the security-domain to be configured.")
     String cmdFileSystemRealmSecurityDomainNameDesc();
 
+    @Message(id = NONE, value = "Levels to be configured.")
+    String cmdFileSystemRealmLevelsDesc();
+
     @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
             "The options fileSystemRealmName and securityDomainName are optional. %n" +
             "These optional options have default values of: converted-properties-filesystem-realm and converted-properties-security-domain. %n" +
