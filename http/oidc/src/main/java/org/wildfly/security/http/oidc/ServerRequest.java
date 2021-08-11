@@ -42,7 +42,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
-import org.wildfly.security.json.util.JsonSerialization;
+import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>

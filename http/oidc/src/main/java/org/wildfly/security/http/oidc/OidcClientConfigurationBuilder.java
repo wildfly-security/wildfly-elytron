@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.http.client.HttpClient;
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.json.util.SystemPropertiesJsonParserFactory;
+import org.wildfly.security.jose.util.SystemPropertiesJsonParserFactory;
 import org.wildfly.security.pem.Pem;
 
 import com.fasterxml.jackson.annotation.JsonInclude;

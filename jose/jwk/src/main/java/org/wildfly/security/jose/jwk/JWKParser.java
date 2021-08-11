@@ -32,7 +32,7 @@ import java.security.spec.ECPublicKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
 import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.json.util.JsonSerialization;
+import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * A JWK parser.

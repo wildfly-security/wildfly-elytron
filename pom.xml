@@ -620,6 +620,12 @@
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jose-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jwt</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1413,6 +1419,8 @@
         <module>http/sso</module>
         <module>http/util</module>
         <module>jacc</module>
+        <module>jose/jwk</module>
+        <module>jose/util</module>
         <module>json-util</module>
         <module>jwt</module>
         <module>keystore</module>
