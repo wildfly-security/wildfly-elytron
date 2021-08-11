@@ -90,7 +90,7 @@ public class TokenValidator {
             if (idJwtClaims == null) {
                 throw log.invalidIDTokenClaims();
             }
-            JwtClaims jwtClaims = new JwtConsumerBuilder().setSkipSignatureVerification().build().processToClaims(accessToken);
+            JwtClaims jwtClaims = new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(accessToken);
             return new VerifiedTokens(new IDToken(idJwtClaims), new AccessToken(jwtClaims));
         } catch (InvalidJwtException e) {
             throw log.invalidIDToken(e);

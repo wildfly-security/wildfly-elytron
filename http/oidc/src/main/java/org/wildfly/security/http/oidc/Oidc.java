@@ -33,7 +33,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jose4j.jws.AlgorithmIdentifiers;
-import org.wildfly.security.json.util.JsonSerialization;
+import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * Constants and utility methods related to the OpenID Connect HTTP mechanism.

@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.json.util;
+package org.wildfly.security.jose.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;

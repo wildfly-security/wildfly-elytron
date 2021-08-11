@@ -40,7 +40,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.wildfly.security.json.util.JsonSerialization;
+import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
  * The OpenID Connect (OIDC) configuration for a client application. This class is based on

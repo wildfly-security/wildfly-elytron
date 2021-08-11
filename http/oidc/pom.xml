@@ -50,11 +50,11 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-json-util</artifactId>
+            <artifactId>wildfly-elytron-jose-jwk</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-jose-jwk</artifactId>
+            <artifactId>wildfly-elytron-jose-util</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>

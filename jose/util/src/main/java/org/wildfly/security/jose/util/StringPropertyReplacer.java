@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.json.util;
+package org.wildfly.security.jose.util;
 
 import java.io.File;
 import java.util.Properties;
