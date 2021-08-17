@@ -20,6 +20,8 @@ package org.wildfly.security.auth.realm.token._private;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.net.URL;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -38,7 +40,8 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
  */
 @MessageLogger(projectCode = "ELY", length = 5)
 @ValidIdRanges({
-    @ValidIdRange(min = 1104, max = 1180)
+    @ValidIdRange(min = 1104, max = 1180),
+    @ValidIdRange(min = 1181, max = 1185)
 })
 public interface ElytronMessages extends BasicLogger {
 
@@ -92,5 +95,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1180, value = "Fetched jwk does not contain \"%1$s\" claim, ignoring...")
     void tokenRealmJwkMissingClaim(String claim);
 
+    @LogMessage(level = WARN)
+    @Message(id = 1181, value = "Not sending new request to jwks url \"%s\". Last request time was %d.")
+    void avoidingFetchJwks(URL url, long timestamp);
 }
 
