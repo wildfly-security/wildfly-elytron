@@ -89,7 +89,7 @@ public class JwtValidator implements TokenValidator {
         if (configuration.sslContext != null) {
             this.jwkManager = new JwkManager(configuration.sslContext,
                                             configuration.hostnameVerifier != null ? configuration.hostnameVerifier : HttpsURLConnection.getDefaultHostnameVerifier(),
-                                            configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout);
+                                            configuration.updateTimeout, configuration.connectionTimeout, configuration.readTimeout, configuration.minTimeBetweenRequests);
         }
         else {
             log.tokenRealmJwtNoSSLIgnoringJku();
@@ -325,6 +325,8 @@ public class JwtValidator implements TokenValidator {
 
     public static class Builder {
         private static final int CONNECTION_TIMEOUT = 2000;//2s
+        private static final int MIN_TIME_BETWEEN_REQUESTS = 10000; // 10s
+
         private Set<String> issuers = new LinkedHashSet<>();
         private Set<String> audience = new LinkedHashSet<>();
         private PublicKey publicKey;
@@ -334,6 +336,7 @@ public class JwtValidator implements TokenValidator {
         private long updateTimeout = 120000;
         private int connectionTimeout = CONNECTION_TIMEOUT;
         private int readTimeout = CONNECTION_TIMEOUT;
+        private int minTimeBetweenRequests = MIN_TIME_BETWEEN_REQUESTS;
 
         private Builder() {
         }
@@ -466,6 +469,18 @@ public class JwtValidator implements TokenValidator {
          */
         public Builder readTimeout(int readTimeout) {
             this.readTimeout = readTimeout;
+            return this;
+        }
+
+        /**
+         * <p>The time in which there will be no more requests to retrieve
+         * the keys from the jkws URL.</p>
+         *
+         * @param minTimeBetweenRequests The time in millis
+         * @return this instance
+         */
+        public Builder setJkuMinTimeBetweenRequests(int minTimeBetweenRequests) {
+            this.minTimeBetweenRequests = minTimeBetweenRequests;
             return this;
         }
 
