@@ -626,9 +626,11 @@ class CredentialStoreCommand extends Command {
                 throw ElytronToolMessages.msg.keyFileDoesNotExist(privateKeyFile);
             }
             File keyFile = new File(privateKeyFile);
-            FileInputStream stream = new FileInputStream(keyFile);
-            byte[] keyData = new byte[stream.available()];
+            FileInputStream stream = null;
+            byte[] keyData = null;
             try {
+                stream = new FileInputStream(keyFile);
+                keyData = new byte[stream.available()];
                 stream.read(keyData, 0, stream.available());
             } finally {
                 safeClose(stream);
@@ -652,9 +654,11 @@ class CredentialStoreCommand extends Command {
                 throw ElytronToolMessages.msg.keyFileDoesNotExist(publicKeyFile);
             }
             File keyFile = new File(publicKeyFile);
-            FileInputStream stream = new FileInputStream(keyFile);
-            byte[] keyData = new byte[stream.available()];
+            FileInputStream stream = null;
+            byte[] keyData = null;
             try {
+                stream = new FileInputStream(keyFile);
+                keyData = new byte[stream.available()];
                 stream.read(keyData, 0, stream.available());
             } finally {
                 safeClose(stream);

@@ -174,10 +174,9 @@ public class HttpAuthenticator {
 
         CachedIdentity cachedIdentity = identityCache.get();
         if (cachedIdentity != null) {
-            ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
             SecurityIdentity securityIdentity = cachedIdentity.getSecurityIdentity();
 
-            try {
+            try (final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext()) {
                 boolean authorized = securityIdentity != null && authenticationContext.importIdentity(securityIdentity);
                 boolean cache = false;
 
