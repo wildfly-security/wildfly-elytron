@@ -60,8 +60,12 @@ public class OidcClientConfigurationBuilder {
             oidcClientConfiguration.setRealm(oidcJsonConfiguration.getRealm());
         }
         String resource = oidcJsonConfiguration.getResource();
-        if (resource == null) throw log.resourceMissing();
-        oidcClientConfiguration.setResourceName(resource);
+        String clientId = oidcJsonConfiguration.getClientId();
+        if (resource == null && clientId == null) {
+            throw log.resourceOrClientIdMustBeSet();
+        }
+        oidcClientConfiguration.setResource(resource);
+        oidcClientConfiguration.setClientId(clientId);
 
         String realmKeyPem = oidcJsonConfiguration.getRealmKey();
         if (realmKeyPem != null) {
@@ -133,15 +137,15 @@ public class OidcClientConfigurationBuilder {
         oidcClientConfiguration.setVerifyTokenAudience(oidcJsonConfiguration.isVerifyTokenAudience());
 
         if (realmKeyPem == null && oidcJsonConfiguration.isBearerOnly()
-                && (oidcJsonConfiguration.getAuthServerUrl() == null || oidcJsonConfiguration.getIssuerUrl() == null)) {
+                && (oidcJsonConfiguration.getAuthServerUrl() == null || oidcJsonConfiguration.getProviderUrl() == null)) {
             throw log.invalidConfigurationForBearerAuth();
         }
-        if ((oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getIssuerUrl() == null) && (!oidcClientConfiguration.isBearerOnly() || realmKeyPem == null)) {
-            throw log.authServerUrlOrIssuerUrlMustBeSet();
+        if ((oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getProviderUrl() == null) && (!oidcClientConfiguration.isBearerOnly() || realmKeyPem == null)) {
+            throw log.authServerUrlOrProviderUrlMustBeSet();
         }
         oidcClientConfiguration.setClient(createHttpClientProducer(oidcJsonConfiguration));
         oidcClientConfiguration.setAuthServerBaseUrl(oidcJsonConfiguration);
-        oidcClientConfiguration.setIssuerUrl(oidcJsonConfiguration.getIssuerUrl());
+        oidcClientConfiguration.setProviderUrl(oidcJsonConfiguration.getProviderUrl());
         if (oidcJsonConfiguration.getTurnOffChangeSessionIdOnLogin() != null) {
             oidcClientConfiguration.setTurnOffChangeSessionIdOnLogin(oidcJsonConfiguration.getTurnOffChangeSessionIdOnLogin());
         }

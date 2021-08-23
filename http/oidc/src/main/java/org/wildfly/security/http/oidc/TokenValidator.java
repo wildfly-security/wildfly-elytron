@@ -110,7 +110,7 @@ public class TokenValidator {
     public static class Builder {
         private OidcClientConfiguration clientConfiguration;
         private String expectedIssuer;
-        private String clientID;
+        private String clientId;
         private String expectedJwsAlgorithm;
         private PublicKeyLocator publicKeyLocator;
         private SecretKey clientSecretKey;
@@ -133,12 +133,12 @@ public class TokenValidator {
          * @throws IllegalArgumentException if a required builder parameter is missing or invalid
          */
         public TokenValidator build() throws IllegalArgumentException {
-            expectedIssuer = clientConfiguration.getIssuerUrl();
+            expectedIssuer = clientConfiguration.getProviderUrl();
             if (expectedIssuer == null || expectedIssuer.length() == 0) {
                 throw log.noExpectedIssuerGiven();
             }
-            clientID = clientConfiguration.getResourceName();
-            if (clientID == null || clientID.length() == 0) {
+            clientId = clientConfiguration.getResourceName();
+            if (clientId == null || clientId.length() == 0) {
                 throw log.noClientIDGiven();
             }
             expectedJwsAlgorithm = clientConfiguration.getJwsSignatureAlgorithm();
@@ -156,10 +156,10 @@ public class TokenValidator {
 
             jwtConsumerBuilder = new JwtConsumerBuilder()
                     .setExpectedIssuer(expectedIssuer)
-                    .setExpectedAudience(clientID)
+                    .setExpectedAudience(clientId)
                     .setJwsAlgorithmConstraints(
                             new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, expectedJwsAlgorithm))
-                    .registerValidator(new AzpValidator(clientID))
+                    .registerValidator(new AzpValidator(clientId))
                     .setRequireExpirationTime();
 
             return new TokenValidator(this);

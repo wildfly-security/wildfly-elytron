@@ -54,8 +54,8 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23002, value = "Unexpected error sending request to OIDC provider")
     OidcException unexpectedErrorSendingRequestToOidcProvider(@Cause Exception cause);
 
-    @Message(id = 23003, value = "Either issuer-url or auth-server-url needs to be configured")
-    IllegalArgumentException issuerUrlOrAuthServerUrlNeedsToBeConfigured();
+    @Message(id = 23003, value = "Either provider-url or auth-server-url needs to be configured")
+    IllegalArgumentException providerUrlOrAuthServerUrlNeedsToBeConfigured();
 
     @LogMessage
     @Message(id = 23004, value = "Loaded OpenID provider metadata from '%s'")
@@ -124,14 +124,14 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23022, value = "Must set 'realm' in config")
     RuntimeException keycloakRealmMissing();
 
-    @Message(id = 23023, value = "Must set 'resource' in config")
-    RuntimeException resourceMissing();
+    @Message(id = 23023, value = "Must set 'resource' or 'client-id'")
+    RuntimeException resourceOrClientIdMustBeSet();
 
-    @Message(id = 23024, value = "For bearer auth, you must set the 'realm-public-key' or one of 'auth-server-url' and 'issuer-url'")
+    @Message(id = 23024, value = "For bearer auth, you must set the 'realm-public-key' or one of 'auth-server-url' and 'provider-url'")
     IllegalArgumentException invalidConfigurationForBearerAuth();
 
-    @Message(id = 23025, value = "Must set 'auth-server-url' or 'issuer-url'")
-    RuntimeException authServerUrlOrIssuerUrlMustBeSet();
+    @Message(id = 23025, value = "Must set 'auth-server-url' or 'provider-url'")
+    RuntimeException authServerUrlOrProviderUrlMustBeSet();
 
     @LogMessage(level = WARN)
     @Message(id = 23026, value = "Client '%s' does not have a secret configured")
