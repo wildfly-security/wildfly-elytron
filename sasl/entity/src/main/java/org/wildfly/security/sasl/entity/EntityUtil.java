@@ -25,7 +25,6 @@ import static org.wildfly.security.x500.GeneralName.*;
 import static org.wildfly.security.x500.TrustedAuthority.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -562,13 +561,5 @@ class EntityUtil {
             convertedGeneralNames.add(convertToGeneralName(generalName));
         }
         return convertedGeneralNames;
-    }
-
-    private static void safeClose(Closeable c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (Throwable ignored) {}
-        }
     }
 }

@@ -272,8 +272,4 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
             }
         }
     }
-
-    private interface ResultSetCallback<E> {
-        E handle(ResultSet resultSet) throws SQLException;
-    }
 }

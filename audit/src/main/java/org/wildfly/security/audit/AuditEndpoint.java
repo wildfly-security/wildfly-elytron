@@ -35,6 +35,6 @@ public interface AuditEndpoint extends ExceptionBiConsumer<EventPriority, String
      *
      * @throws IOException if an error occurs closing the endpoint.
      */
-    default void close() throws IOException {};
+    default void close() throws IOException {}
 
 }

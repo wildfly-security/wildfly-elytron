@@ -77,25 +77,6 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         this.log = log;
     }
 
-
-    /**
-     * Construct a new instance.
-     *
-     * @param mechanismName the name of the defined mechanism
-     * @param protocol the protocol
-     * @param serverName the server name
-     * @param callbackHandler the callback handler
-     * @param log mechanism specific logger
-     */
-//    @Deprecated
-//    protected AbstractSaslParticipant(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, ElytronMessages log) {
-//        this.callbackHandler = callbackHandler;
-//        this.mechanismName = mechanismName;
-//        this.protocol = protocol;
-//        this.serverName = serverName;
-//        this.legacyLog = log;
-//    }
-
     /**
      * Construct a new instance.
      *

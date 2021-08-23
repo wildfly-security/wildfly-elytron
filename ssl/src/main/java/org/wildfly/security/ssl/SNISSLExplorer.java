@@ -538,14 +538,6 @@ final class SNISSLExplorer {
         ignoreByteVector(input, getInt8(input));
     }
 
-    private static void ignoreByteVector16(ByteBuffer input) {
-        ignoreByteVector(input, getInt16(input));
-    }
-
-    private static void ignoreByteVector24(ByteBuffer input) {
-        ignoreByteVector(input, getInt24(input));
-    }
-
     private static void ignoreByteVector(ByteBuffer input, int length) {
         if (length != 0) {
             int position = input.position();
