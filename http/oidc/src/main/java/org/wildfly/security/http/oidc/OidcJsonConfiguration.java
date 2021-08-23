@@ -129,8 +129,10 @@ public class OidcJsonConfiguration {
     protected String authServerUrl;
     @JsonProperty("ssl-required")
     protected String sslRequired;
-    @JsonProperty("issuer-url")
-    protected String issuerUrl;
+    @JsonProperty("provider-url")
+    protected String providerUrl;
+    @JsonProperty("client-id")
+    protected String clientId;
 
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
@@ -347,12 +349,12 @@ public class OidcJsonConfiguration {
         this.authServerUrl = authServerUrl;
     }
 
-    public String getIssuerUrl() {
-        return issuerUrl;
+    public String getProviderUrl() {
+        return providerUrl;
     }
 
-    public void setIssuerUrl(String issuerUrl) {
-        this.issuerUrl = issuerUrl;
+    public void setProviderUrl(String providerUrl) {
+        this.providerUrl = providerUrl;
     }
 
     public int getConfidentialPort() {
@@ -369,6 +371,18 @@ public class OidcJsonConfiguration {
 
     public void setResource(String resource) {
         this.resource = resource;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getResourceName() {
+        return resource != null ? resource : clientId;
     }
 
     public boolean isUseResourceRoleMappings() {
