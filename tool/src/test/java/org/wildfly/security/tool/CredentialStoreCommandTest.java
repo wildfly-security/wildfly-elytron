@@ -52,7 +52,7 @@ import org.wildfly.security.credential.store.CredentialStoreException;
  * @author Hynek Švábek <hsvabek@redhat.com>
  */
 public class CredentialStoreCommandTest extends AbstractCommandTest {
-
+    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     public static final String RSA_ALGORITHM = "RSA";
     public static final String DSA_ALGORITHM = "DSA";
     public static final String EC_ALGORITHM = "EC";
@@ -316,6 +316,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
     @Test
     public void testGenerateKeyPairECDSA() throws CredentialStoreException {
+        Assume.assumeFalse(IS_IBM); //Don't run if using IBM JDK https://issues.redhat.com/browse/ELY-2214
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
@@ -353,6 +354,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
     @Test
     public void testImportOpenSSHKeyPairFromFile() throws CredentialStoreException {
+        Assume.assumeFalse(IS_IBM); //Don't run if using IBM JDK https://issues.redhat.com/browse/ELY-2214
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
@@ -372,9 +374,9 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
         Assert.assertEquals(EC_ALGORITHM, keyPair.getPrivate().getAlgorithm());
         Assert.assertEquals(EC_ALGORITHM, keyPair.getPublic().getAlgorithm());
     }
-
     @Test
     public void testImportPKCSKeyPairFromFile() throws CredentialStoreException {
+        Assume.assumeFalse(IS_IBM); //Don't run if using IBM JDK https://issues.redhat.com/browse/ELY-2214
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
@@ -399,6 +401,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
     @Test
     public void testImportOpenSSHKeyPairFromString() throws CredentialStoreException {
+        Assume.assumeFalse(IS_IBM); //Don't run if using IBM JDK https://issues.redhat.com/browse/ELY-2214
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
@@ -429,6 +432,7 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
 
     @Test
     public void testImportPKCSKeyPairFromString() throws CredentialStoreException {
+        Assume.assumeFalse(IS_IBM); //Don't run if using IBM JDK https://issues.redhat.com/browse/ELY-2214
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
         String aliasName = "testalias";
