@@ -82,6 +82,7 @@
 01041 - 01153    wildfly-elytron-realm-ldap
 04025            wildfly-elytron-realm-ldap
 01104 - 01180    wildfly-elytron-realm-token
+01181 - 01185    wildfly-elytron-realm-token
 01157            wildfly-elytron-sasl
 05001 - 05163    wildfly-elytron-sasl
 01066 - 01077    wildfly-elytron-ssl
