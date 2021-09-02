@@ -76,7 +76,7 @@ public class FileSystemSecurityRealmBuilder {
     /**
      * Set the number of levels to be used by the realm.
      *
-     * @param levels the number of levels of directory hashing to apply (must not be {@code null})
+     * @param levels the number of levels of directory hashing to apply
      * @return this builder.
      */
     public FileSystemSecurityRealmBuilder setLevels(final int levels) {

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="clear" format="hex">0170617373776f72642137</password>
+    </credentials>
+    <attributes>
+        <attribute name="Roles" value="Admin"/>
+        <attribute name="Roles" value="Guest"/>
+    </attributes></identity>

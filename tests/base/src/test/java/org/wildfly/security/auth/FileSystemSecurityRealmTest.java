@@ -130,7 +130,7 @@ public class FileSystemSecurityRealmTest {
     @Test
     public void testCreateIdentityWithLevelsEncryption() throws Exception {
         FileSystemSecurityRealm securityRealm = FileSystemSecurityRealm.builder()
-                .setRoot(getRootPath())
+                .setRoot(getRootPath(false))
                 .setLevels(3)
                 .setSecretKey(key)
                 .build();

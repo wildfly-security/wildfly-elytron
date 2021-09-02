@@ -19,6 +19,7 @@ package org.wildfly.security.auth.realm;
 
 
 import java.util.List;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
@@ -32,7 +33,18 @@ import org.wildfly.security.credential.Credential;
  * @author <a href="mailto:araskar@redhat.com">Ashpan Raskar</a>
  */
 public class FileSystemRealmUtil {
+
+    /**
+     * Converts a pre-existing unencrypted {@code FileSystemSecurityRealm} to a newly created encrypted {@code FileSystemSecurityRealm}
+     *
+     * @param unencryptedRealm the {@code FileSystemSecurityRealm} without any encryption applied
+     * @param encryptedRealm the {@code FileSystemSecurityRealm} configured with a SecretKey to encrypt identity data
+     * @throws RealmUnavailableException if either realm is unavailable
+     */
     public static void createEncryptedRealmFromUnencrypted(FileSystemSecurityRealm unencryptedRealm, FileSystemSecurityRealm encryptedRealm) throws RealmUnavailableException {
+        Assert.checkNotNullParam("unencryptedRealm", unencryptedRealm);
+        Assert.checkNotNullParam("encryptedRealm", encryptedRealm);
+
         ModifiableRealmIdentityIterator realmIterator = unencryptedRealm.getRealmIdentityIterator();
 
         while (realmIterator.hasNext()) {
@@ -44,6 +56,7 @@ public class FileSystemRealmUtil {
             newIdentity.create();
             newIdentity.setCredentials(credentials);
             newIdentity.setAttributes(attributes);
+            newIdentity.dispose();
         }
         realmIterator.close();
     }
