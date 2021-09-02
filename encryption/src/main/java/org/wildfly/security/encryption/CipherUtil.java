@@ -49,9 +49,6 @@ public class CipherUtil {
         checkNotNullParam("clearText", clearText);
         checkNotNullParam("secretKey", secretKey);
 
-        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-
         byte[] result = encrypt(clearText.getBytes(StandardCharsets.UTF_8), secretKey);
         return ByteIterator.ofBytes(result).base64Encode().drainToString();
     }
