@@ -17,13 +17,12 @@
  */
 package org.wildfly.security.tool;
 
-import org.apache.commons.cli.AlreadySelectedException;
-import org.apache.commons.cli.Option;
-import org.wildfly.security.WildFlyElytronProvider;
-
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.cli.AlreadySelectedException;
+import org.apache.commons.cli.Option;
+import org.wildfly.security.WildFlyElytronProvider;
 
 /**
  * Elytron Tool main class which drives all registered commands.
@@ -56,6 +55,7 @@ public class ElytronTool {
         commandRegistry.put(MaskCommand.MASK_COMMAND, new MaskCommand()); // uses exit code 7
         commandRegistry.put(VaultCommand.VAULT_COMMAND, new VaultCommand()); // uses exit code 7
         commandRegistry.put(FileSystemRealmCommand.FILE_SYSTEM_REALM_COMMAND, new FileSystemRealmCommand()); // uses exit code 7
+        commandRegistry.put(FileSystemEncryptRealmCommand.FILE_SYSTEM_ENCRYPT_COMMAND, new FileSystemEncryptRealmCommand()); // uses exit code 7
     }
 
     /**

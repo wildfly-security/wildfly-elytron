@@ -19,6 +19,10 @@ package org.wildfly.security.tool;
 
 import static org.jboss.logging.annotations.Message.NONE;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
 import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.MissingOptionException;
 import org.jboss.logging.BasicLogger;
@@ -26,11 +30,6 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Messages for Elytron tool.
@@ -401,6 +400,36 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "The relative or absolute path to the users file.")
     String cmdFileSystemRealmUsersFileDesc();
 
+    @Message(id = NONE, value = "The relative or absolute path to the credential store file that contains the secret key.")
+    String cmdFileSystemEncryptCredentialStoreDesc();
+
+    @Message(id = NONE, value = "The alias of the secret key stored in the credential store file.")
+    String cmdFileSystemEncryptSecretKeyDesc();
+
+    @Message(id = NONE, value = "The hash charset to be used in the filesystem realm. Set to UTF-8 by default.")
+    String cmdFileSystemEncryptHashCharsetDesc();
+
+    @Message(id = NONE, value = "The hash encoding to be used in the filesystem realm. Set to BASE64 by default.")
+    String cmdFileSystemEncryptHashEncodingDesc();
+
+    @Message(id = NONE, value = "If the original realm has encoded set to true. Set to true by default.")
+    String cmdFileSystemEncryptEncodedDesc();
+
+    @Message(id = NONE, value = "The levels to be used in the filesystem realm. Set to 2 by default.")
+    String cmdFileSystemEncryptLevelsDesc();
+
+    @Message(id = NONE, value = "The absolute or relative location of the original filesystem realm.")
+    String cmdFileSystemEncryptInputLocationDesc();
+
+    @Message(id = NONE, value = "The directory where the old filesystem realm resides, relative to the input location")
+    String cmdFileSystemEncryptOldRealmDesc();
+
+    @Message(id = NONE, value = "The directory where the new filesystem realm resides.")
+    String cmdFileSystemEncryptOutputLocationDesc();
+
+    @Message(id = NONE, value = "The name of the new filesystem-realm.")
+    String cmdFileSystemEncryptNewRealmDesc();
+
     @Message(id = NONE, value = "The relative or absolute path to the roles file.")
     String cmdFileSystemRealmRolesFileDesc();
 
@@ -422,6 +451,24 @@ public interface ElytronToolMessages extends BasicLogger {
             "Blocks of options must be separated by a blank line.")
     String cmdFileSystemRealmBulkConvertDesc();
 
+    @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
+            "The options realm-name, hash-charset, hash-encoding, and levels are optional. %n" +
+            "The options credential-store and secret-key are also both optional, but they must either both be unspecified or both be specified. %n" +
+            "The default values of realm-name, hash-charset, hash-encoding, and levels are encrypted-filesystem-realm, BASE64, UTF-8, and 2, respectively. %n" +
+            "If credential-store and secret-key are unspecified, they are set to \"mycredstore.cs\" and \"key\" %n" +
+            "Values are required for the following options: input-location and output-location. %n" +
+            "If one or more these required values are not set, the corresponding block is skipped. %n" +
+            "Each option must be specified in the following format: <option>:<value>. The order of options does not matter. %n" +
+            "Blocks of options must be separated by a blank line.")
+    String cmdFileSystemRealmEncryptBulkConvertDesc();
+
+    // filesystem-realm command
+    @Message(id = NONE, value = "'FileSystemEncrypt' command is used to convert un-encrypted FileSystemRealms to one encrypted with a SecretKey.")
+    String cmdFileSystemEncryptHelpHeader();
+
+    @Message(id = NONE, value = "If specifying either credential-store or secret-key, make sure to also specify the other one as well.")
+    MissingOptionException cmdFileSystemEncryptionKey();
+
     @Message(id = NONE, value = "Suppresses all output except errors and prompts.")
     String cmdFileSystemRealmSilentDesc();
 
@@ -439,6 +486,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Both --bulk-convert and one or more of --users-file, --roles-file, and/or --output-location were specified. Please only use --bulk-convert or all of --users-file, --roles-file, and --output-location.")
     MissingOptionException mutuallyExclusiveOptionsSpecified();
+
+    @Message(id = NONE, value = "Both --bulk-convert and one or more of --old-realm-name, --new-realm-name, --input-location, --output-location, --credential-store, and/or --secret-key were specified. Please only use --bulk-convert or all of the other others.")
+    MissingOptionException mutuallyExclusiveOptionsEncryptSpecified();
 
     @Message(id = NONE, value = "No value found for %s.")
     String noValueFound(String param);

@@ -73,7 +73,7 @@ public class FileSystemSecurityRealmBuilder {
     /**
      * Set the number of levels to be used by the realm.
      *
-     * @param levels the number of levels of directory hashing to apply (must not be {@code null})
+     * @param levels the number of levels of directory hashing to apply
      * @return this builder.
      */
     public FileSystemSecurityRealmBuilder setLevels(final int levels) {
@@ -84,7 +84,7 @@ public class FileSystemSecurityRealmBuilder {
     /**
      * Set whether the identity name should be encoded for the filename in the realm.
      *
-     * @param encoded whether identity names should be BASE32 encoded before using as filename if secretKey is not specified (must not be {@code null})
+     * @param encoded whether identity names should be BASE32 encoded before using as filename if secretKey is not specified
      * @return this builder.
      */
     public FileSystemSecurityRealmBuilder setEncoded(final boolean encoded) {
@@ -135,9 +135,15 @@ public class FileSystemSecurityRealmBuilder {
      */
     public FileSystemSecurityRealm build() {
         encoded = secretKey == null && encoded;
-        nameRewriter = nameRewriter != null ? nameRewriter : NameRewriter.IDENTITY_REWRITER;
-        hashEncoding = hashEncoding != null ? hashEncoding : Encoding.BASE64;
-        hashCharset = hashCharset != null ? hashCharset : StandardCharsets.UTF_8;
+        if (nameRewriter == null) {
+            nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        }
+        if (hashEncoding == null) {
+            hashEncoding = Encoding.BASE64;
+        }
+        if (hashCharset == null) {
+            hashCharset = StandardCharsets.UTF_8;
+        }
         return new FileSystemSecurityRealm(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, secretKey);
     }
 }
