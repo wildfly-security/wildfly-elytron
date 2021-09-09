@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -312,10 +313,16 @@ public class Oidc {
         return url.replaceFirst("[\\?&]" + paramName + "=[^&]*$|" + paramName + "=[^&]*&", "");
     }
 
-    public static void logToken(String name, String token) {
-        log.tracef("\t%s: %s", name, token.substring(0, token.lastIndexOf(".")) + ".signature");
+    public static boolean isOpaqueToken(String token) {
+        return new StringTokenizer(token, ".").countTokens() != 3;
     }
 
-
+    public static void logToken(String name, String token) {
+        if (token == null || isOpaqueToken(token)) {
+            log.tracef("\t%s: %s", name, token);
+        } else {
+            log.tracef("\t%s: %s", name, token.substring(0, token.lastIndexOf(".")) + ".signature");
+        }
+    }
 
 }
