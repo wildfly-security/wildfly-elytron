@@ -18,13 +18,15 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-      - if: matrix.os == 'macos-latest'
-        name: Install docker
-        run: |
-          brew install docker docker-machine docker-compose
-          brew services start docker-machine
-          docker-machine create --driver virtualbox default
-          docker --version
+      # ELY-2204 - Temporarily preventing OidcTest from running on macOS since there
+      # are intermittent issues with starting up the Docker container.
+      #- if: matrix.os == 'macos-latest'
+      #  name: Install docker
+      #  run: |
+      #    brew install docker docker-machine docker-compose
+      #    brew services start docker-machine
+      #    docker-machine create --driver virtualbox default
+      #    docker --version
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
