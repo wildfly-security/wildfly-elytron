@@ -25,6 +25,7 @@ import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLSession;
 
@@ -266,5 +267,13 @@ public interface HttpServerRequest extends HttpServerScopes {
      * @return {@code true} if resuming requests is supported, {@code false} otherwise.
      */
     boolean resumeRequest();
+
+    /**
+     * Set the request input stream supplier. The default implementation does nothing.
+     *
+     * @param requestInputStreamSupplier the request input stream supplier
+     */
+    default void setRequestInputStreamSupplier(Supplier<InputStream> requestInputStreamSupplier) {}
+
 
 }

@@ -27,6 +27,7 @@ import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
@@ -281,5 +282,12 @@ public interface HttpExchangeSpi extends HttpServerScopes {
      default boolean resumeRequest() {
          return false;
      }
+
+    /**
+     * Set the request input stream supplier. The default implementation does nothing.
+     *
+     * @param requestInputStreamSupplier the request input stream supplier
+     */
+    default void setRequestInputStreamSupplier(Supplier<InputStream> requestInputStreamSupplier) {}
 
 }
