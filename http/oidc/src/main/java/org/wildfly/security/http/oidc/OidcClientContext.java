@@ -500,6 +500,16 @@ public class OidcClientContext {
         public void setVerifyTokenAudience(boolean verifyTokenAudience) {
             delegate.setVerifyTokenAudience(verifyTokenAudience);
         }
+
+        @Override
+        public String getTokenSignatureAlgorithm() {
+            return delegate.getTokenSignatureAlgorithm();
+        }
+
+        @Override
+        public void setTokenSignatureAlgorithm(String tokenSignatureAlgorithm) {
+            delegate.setTokenSignatureAlgorithm(tokenSignatureAlgorithm);
+        }
     }
 
     protected String getAuthServerBaseUrl(OidcHttpFacade facade, String base) {

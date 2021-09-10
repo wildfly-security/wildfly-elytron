@@ -23,6 +23,7 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.ACCOUNT_PATH;
 import static org.wildfly.security.http.oidc.Oidc.CLIENTS_MANAGEMENT_REGISTER_NODE_PATH;
 import static org.wildfly.security.http.oidc.Oidc.CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH;
+import static org.wildfly.security.http.oidc.Oidc.DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 import static org.wildfly.security.http.oidc.Oidc.DISCOVERY_PATH;
 import static org.wildfly.security.http.oidc.Oidc.JSON_CONTENT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.KEYCLOAK_REALMS_PATH;
@@ -122,7 +123,7 @@ public class OidcClientConfiguration {
     protected boolean delegateBearerErrorResponseSending = false;
     protected boolean verifyTokenAudience = false;
 
-    protected String jwsSignatureAlgorithm = "RS256";
+    protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 
     public OidcClientConfiguration() {
     }
@@ -616,12 +617,12 @@ public class OidcClientConfiguration {
         client = callable;
     }
 
-    public void setJwsSignatureAlgorithm(String jwsSignatureAlgorithm) {
-        this.jwsSignatureAlgorithm = jwsSignatureAlgorithm;
+    public void setTokenSignatureAlgorithm(String tokenSignatureAlgorithm) {
+        this.tokenSignatureAlgorithm = tokenSignatureAlgorithm;
     }
 
-    public String getJwsSignatureAlgorithm() {
-        return jwsSignatureAlgorithm;
+    public String getTokenSignatureAlgorithm() {
+        return tokenSignatureAlgorithm;
     }
 
 }

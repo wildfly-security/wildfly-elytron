@@ -151,6 +151,8 @@ public class OidcClientConfigurationBuilder {
             oidcClientConfiguration.setTurnOffChangeSessionIdOnLogin(oidcJsonConfiguration.getTurnOffChangeSessionIdOnLogin());
         }
 
+        oidcClientConfiguration.setTokenSignatureAlgorithm(oidcJsonConfiguration.getTokenSignatureAlgorithm());
+
         return oidcClientConfiguration;
     }
 

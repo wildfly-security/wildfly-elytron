@@ -204,6 +204,13 @@ public class OidcTest extends AbstractBaseHttpTest {
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
+    @Test
+    public void testTokenSignatureAlgorithm() throws Exception {
+        // keycloak uses RS256
+        performAuthentication(getOidcConfigurationInputStreamWithTokenSignatureAlgorithm(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
         try {
@@ -289,6 +296,20 @@ public class OidcTest extends AbstractBaseHttpTest {
 
     private InputStream getOidcConfigurationMissingRequiredOption() {
         String oidcConfig = "{\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithTokenSignatureAlgorithm() {
+        String oidcConfig = "{\n" +
+                "    \"token-signature-algorithm\" : \"RS256\",\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
                 "    \"public-client\" : \"false\",\n" +
                 "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "\",\n" +
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
