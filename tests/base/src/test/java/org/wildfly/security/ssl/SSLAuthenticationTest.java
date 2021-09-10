@@ -422,6 +422,8 @@ public class SSLAuthenticationTest {
         WORKING_DIR_ICACRL.delete();
 
         caGenerationTool.close();
+
+        Security.removeProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider().getName());
     }
 
     @Test
@@ -785,14 +787,19 @@ public class SSLAuthenticationTest {
         try {
             testCommunication(serverContext, clientContext, expectedServerPrincipal, expectedClientPrincipal, oneWay);
             if (!expectValid) fail("Expected SSLHandshakeException not thrown");
-        } catch (SSLHandshakeException expected) {
-            if (expectValid) throw new IllegalStateException("Unexpected SSLHandshakeException", expected);
+        } catch (SSLHandshakeException|SocketException expected) {
+            if (expectValid) {
+                throw new IllegalStateException("Unexpected SSLHandshakeException", expected);
+            }
         } catch (SSLException expected) {
             if (expectValid) {
                 throw new IllegalStateException("Unexpected SSLException", expected);
-            } else if (expected.getCause() instanceof SocketException){
+            } else if (expected.getCause() instanceof SocketException) {
                 //expected
             }
+        } finally {
+            System.clearProperty("wildfly.config.url");
+            Security.removeProvider(WildFlyElytronPasswordProvider.getInstance().getName());
         }
     }
 

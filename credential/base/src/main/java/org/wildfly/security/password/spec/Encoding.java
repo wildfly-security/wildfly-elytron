@@ -18,7 +18,17 @@
 
 package org.wildfly.security.password.spec;
 
+/**
+ * List of supported hash encodings to use in security realms that support storing hashed passwords.
+ *
+ */
 public enum Encoding {
+    /**
+     * Base64 encoding
+     */
     BASE64,
+    /**
+     * HEX encoding
+     */
     HEX
 }

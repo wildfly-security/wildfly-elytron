@@ -845,7 +845,7 @@ class CredentialStoreCommand extends Command {
             keyPair = Pem.parsePemOpenSSHContent(CodePointIterator.ofString(privateKeyContent), passwordProvider).next().tryCast(KeyPair.class);
             if (keyPair == null) throw ElytronToolMessages.msg.xmlNoPemContent();
         } catch (IllegalArgumentException e) {
-            if (publicKeyContent.isEmpty()) {
+            if (publicKeyContent == null || publicKeyContent.isEmpty()) {
                 setStatus(GENERAL_CONFIGURATION_ERROR);
                 throw ElytronToolMessages.msg.noPublicKeySpecified();
             }
@@ -922,7 +922,7 @@ class CredentialStoreCommand extends Command {
     }
 
     static String formatPropertiesForCli(Map<String, String> properties) {
-        if (properties != null || !properties.isEmpty()) {
+        if (properties != null && !properties.isEmpty()) {
             properties.remove("create");
             properties.remove("location");
             properties.remove("modifiable");

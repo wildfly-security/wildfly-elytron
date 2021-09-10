@@ -82,6 +82,7 @@
 01041 - 01153    wildfly-elytron-realm-ldap
 04025            wildfly-elytron-realm-ldap
 01104 - 01180    wildfly-elytron-realm-token
+01181 - 01185    wildfly-elytron-realm-token
 01157            wildfly-elytron-sasl
 05001 - 05163    wildfly-elytron-sasl
 01066 - 01077    wildfly-elytron-ssl
@@ -117,9 +118,9 @@
 21000 - 21999
 22000 - 22499    wildfly-elytron-http-form
 22500 - 22999    wildfly-elytron-http-spnego
-23000 - 23999
-24000 - 24999
-25000 - 25999
+23000 - 23999    wildfly-elytron-http-oidc
+24000 - 24999    wildfly-elytron-jose-jwk
+25000 - 25999    wildfly-elytron-jose-jws
 26000 - 26999
 27000 - 27999
 28000 - 28999

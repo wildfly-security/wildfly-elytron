@@ -245,6 +245,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         .setJkuTimeout(0) //refresh jwks every time
+                        .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -257,6 +258,72 @@ public class JwtSecurityRealmTest {
         assertIdentityNotExist(securityRealm, evidence1);
 
         server.setDispatcher(createTokenDispatcher(jwksResponse));
+    }
+
+    @Test
+    public void testNewRotationKeys() throws Exception {
+        // set the jku url only with key 1
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
+
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setJkuTimeout(60000L) // 60s of cache
+                        .setJkuMinTimeBetweenRequests(0) // no time betweeen requests
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // key 1 should exist
+        assertIdentityExist(securityRealm, evidence1);
+
+        // add a new key 2 to the url using normal response
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+
+        // key 1 and 2 should exist now because time between requests is 0
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
+    }
+
+    @Test
+    public void testNewRotationKeysTimeBetweenRequests() throws Exception {
+        // set the jku url only with key 1
+        server.setDispatcher(createTokenDispatcher(jwksToJson(jwk1).toString()));
+
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setJkuTimeout(60000L) // 60s of cache
+                        .setJkuMinTimeBetweenRequests(10000) // 10s between calls
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // key 1 should exist
+        assertIdentityExist(securityRealm, evidence1);
+
+        // add a new key 2 to the url using normal response
+        server.setDispatcher(createTokenDispatcher(jwksResponse));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(createJwt(keyPair2, 60, -1, "2", new URI("https://localhost:50831")));
+
+        // Same result because the minimum time between request avoids the call
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityNotExist(securityRealm, evidence2);
     }
 
     @Test
@@ -362,6 +429,7 @@ public class JwtSecurityRealmTest {
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
                         .setJkuTimeout(0) //Keys will be downloaded on every request
+                        .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();

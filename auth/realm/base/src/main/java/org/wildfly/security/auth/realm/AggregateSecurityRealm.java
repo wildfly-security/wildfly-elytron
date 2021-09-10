@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
@@ -54,20 +56,21 @@ public final class AggregateSecurityRealm implements SecurityRealm {
      * @param authorizationRealm the realm to use for authorization
      */
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm authorizationRealm) {
-        this.authenticationRealm = authenticationRealm;
+        this.authenticationRealm = checkNotNullParam("authenticationRealm", authenticationRealm);
+        checkNotNullParam("authorizationRealm", authorizationRealm);
         this.authorizationRealms = new SecurityRealm[] { authorizationRealm };
         this.principalTransformer = null;
     }
 
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm... authorizationRealms) {
-        this.authenticationRealm = authenticationRealm;
-        this.authorizationRealms = authorizationRealms;
+        this.authenticationRealm = checkNotNullParam("authenticationRealm", authenticationRealm);
+        this.authorizationRealms = checkNotNullParam("authorizationRealms", authorizationRealms);
         this.principalTransformer = null;
 
     }
     public AggregateSecurityRealm(final SecurityRealm authenticationRealm, Function<Principal, Principal> principalTransformer, final SecurityRealm... authorizationRealms) {
-        this.authenticationRealm = authenticationRealm;
-        this.authorizationRealms = authorizationRealms;
+        this.authenticationRealm = checkNotNullParam("authenticationRealm", authenticationRealm);
+        this.authorizationRealms = checkNotNullParam("authorizationRealms", authorizationRealms);
         this.principalTransformer = principalTransformer;
     }
 

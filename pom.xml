@@ -56,6 +56,7 @@
 
     <properties>
         <jdk.min.version>11</jdk.min.version>
+        <version.com.fasterxml.jackson>2.11.3</version.com.fasterxml.jackson>
         <version.commons-cli>1.4</version.commons-cli>
         <version.io.smallrye.jwt>3.1.1</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
@@ -67,6 +68,7 @@
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
         <version.org.eclipse.microprofile.jwt.api>1.2.1</version.org.eclipse.microprofile.jwt.api>
         <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
+        <version.org.apache.httpcomponents.httpclient>4.5.13</version.org.apache.httpcomponents.httpclient>
 
         <version.org.jboss.logging>3.4.2.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.1.18.Final</version.org.jboss.logmanager>
@@ -74,8 +76,9 @@
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.4.GA</version.org.jboss.slf4j>
-        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.1.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
+        <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
+        <version.jakarta.json.jakarta-json-api>1.1.6</version.jakarta.json.jakarta-json-api>
         <version.org.jboss.threads>2.4.0.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
@@ -92,6 +95,11 @@
         <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
+        <version.org.bitbucket.b_c.jose4j>0.7.5</version.org.bitbucket.b_c.jose4j>
+        <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
+        <version.org.keycloak>15.0.2</version.org.keycloak>
+        <version.io.rest-assured>4.3.3</version.io.rest-assured>
+        <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -279,7 +287,10 @@
                             ${project.basedir}/http/form/src/main/java/;
                             ${project.basedir}/http/spnego/src/main/java/;
                             ${project.basedir}/http/sso/src/main/java/;
+                            ${project.basedir}/http/oidc/src/main/java/;
                             ${project.basedir}/http/util/src/main/java/;
+                            ${project.basedir}/jose/jwk/src/main/java/;
+                            ${project.basedir}/jose/util/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
                             ${project.basedir}/jwt/src/main/java/;
                             ${project.basedir}/keystore/src/main/java/;
@@ -540,6 +551,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-oidc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-spnego</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -557,6 +573,18 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-json-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jose-jwk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jose-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -747,6 +775,12 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-tests</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-tests-common</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
@@ -875,9 +909,16 @@
             </dependency>
 
             <dependency>
-                <groupId>org.jboss.spec.javax.json</groupId>
-                <artifactId>jboss-json-api_1.0_spec</artifactId>
-                <version>${version.org.jboss.spec.jboss-json-api_1.0_spec}</version>
+                <groupId>org.jboss.spec.javax.servlet</groupId>
+                <artifactId>jboss-servlet-api_3.1_spec</artifactId>
+                <version>${version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.json</groupId>
+                <artifactId>jakarta.json-api</artifactId>
+                <version>${version.jakarta.json.jakarta-json-api}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -887,6 +928,34 @@
                 <version>${version.org.jboss.threads}</version>
                 <scope>provided</scope>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${version.org.apache.httpcomponents.httpclient}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${version.com.fasterxml.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${version.com.fasterxml.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${version.com.fasterxml.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bitbucket.b_c</groupId>
+                <artifactId>jose4j</artifactId>
+                <version>${version.org.bitbucket.b_c.jose4j}</version>
+            </dependency>
+
 
             <!--
                   Test Scope Only
@@ -1089,6 +1158,46 @@
                 <version>${version.org.mock-server.mockserver-netty}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>${version.io.rest-assured}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${version.org.testcontainers.testcontainers}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-admin-client</artifactId>
+                <version>${version.org.keycloak}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-core</artifactId>
+                <version>${version.org.keycloak}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.htmlunit</groupId>
+                <artifactId>htmlunit</artifactId>
+                <version>${version.net.sourceforge.htmlunit.htmlunit}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpmime</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1239,9 +1348,12 @@
         <module>http/digest</module>
         <module>http/external</module>
         <module>http/form</module>
+        <module>http/oidc</module>
         <module>http/spnego</module>
         <module>http/sso</module>
         <module>http/util</module>
+        <module>jose/jwk</module>
+        <module>jose/util</module>
         <module>json-util</module>
         <module>jwt</module>
         <module>keystore</module>

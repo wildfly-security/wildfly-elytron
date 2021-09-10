@@ -37,9 +37,9 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
 
@@ -50,19 +50,23 @@ import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log
  */
 class JwkManager {
 
-    private final Map<URL, Map<String, RSAPublicKey>> keys = new LinkedHashMap<>();
-    private final Map<URL, Long> timeouts = new ConcurrentHashMap<>();
+    private final Map<URL, CacheEntry> keys = new LinkedHashMap<>();
     private final SSLContext sslContext;
     private final HostnameVerifier hostnameVerifier;
 
     private final long updateTimeout;
+    private final int minTimeBetweenRequests;
 
-    private static final int CONNECTION_TIMEOUT = 2000;//2s
+    private final int connectionTimeout;
+    private final int readTimeout;
 
-    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout) {
+    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int connectionTimeout, int readTimeout, int minTimeBetweenRequests) {
         this.sslContext = sslContext;
         this.hostnameVerifier = hostnameVerifier;
         this.updateTimeout = updateTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.readTimeout = readTimeout;
+        this.minTimeBetweenRequests = minTimeBetweenRequests;
     }
 
     /**
@@ -72,7 +76,7 @@ class JwkManager {
      * @return signature verification public key if found, null otherwise
      */
     public PublicKey getPublicKey(String kid, URL url) {
-        Map<String, RSAPublicKey> urlKeys = checkRemote(url);
+        Map<String, RSAPublicKey> urlKeys = checkRemote(kid, url);
 
         if (urlKeys == null) {
             return null;
@@ -86,41 +90,55 @@ class JwkManager {
         return pk;
     }
 
-    private Map<String, RSAPublicKey> checkRemote(URL url) {
+    private Map<String, RSAPublicKey> checkRemote(String kid, URL url) {
+        Assert.checkNotNullParam("kid", kid);
         Assert.checkNotNullParam("url", url);
 
-        long lastUpdate = 0;
-
+        CacheEntry cacheEntry;
+        long lastUpdate;
         Map<String, RSAPublicKey> urlKeys;
 
         synchronized (keys) {
-            urlKeys = keys.get(url);
-            if (urlKeys == null) {
-                urlKeys = new ConcurrentHashMap<>();
-                keys.put(url, urlKeys);
+            cacheEntry = keys.get(url);
+            if (cacheEntry == null) {
+                cacheEntry = new CacheEntry();
+                keys.put(url, cacheEntry);
             }
+            lastUpdate = cacheEntry.getTimestamp();
+            urlKeys = cacheEntry.getKeys();
         }
 
-        synchronized (urlKeys) {
-            if (timeouts.containsKey(url)) {
-                lastUpdate = timeouts.get(url);
-            }
+        long currentTime = System.currentTimeMillis();
 
-            if (lastUpdate + updateTimeout <= System.currentTimeMillis()) {
-                Map<String, RSAPublicKey> newJwks = getJwksFromUrl(url, sslContext, hostnameVerifier);
+        // check kid is in the entry and lastUpdate is inside the TTL
+        if (urlKeys.containsKey(kid) && lastUpdate + updateTimeout > currentTime) {
+            return urlKeys;
+        }
+
+        // check the minimum timeout to avoid flooding
+        if (lastUpdate + minTimeBetweenRequests > currentTime) {
+            log.avoidingFetchJwks(url, currentTime);
+            return urlKeys;
+        }
+
+        // update the cached entry because cache is not valid
+        synchronized (cacheEntry) {
+            // re-check just in case another thread updated the entry
+            if ((!cacheEntry.getKeys().containsKey(kid) || cacheEntry.getTimestamp() + updateTimeout <= currentTime)
+                    && cacheEntry.getTimestamp() + minTimeBetweenRequests <= currentTime) {
+                Map<String, RSAPublicKey> newJwks = getJwksFromUrl(url, sslContext, hostnameVerifier, connectionTimeout, readTimeout);
                 if (newJwks == null) {
                     log.unableToFetchJwks(url.toString());
                     return null;
                 }
-                urlKeys.clear();
-                urlKeys.putAll(newJwks);
-                timeouts.put(url, System.currentTimeMillis());
+                cacheEntry.setKeys(newJwks);
+                cacheEntry.setTimestamp(currentTime);
             }
-            return urlKeys;
+            return cacheEntry.getKeys();
         }
     }
 
-    private static Map<String, RSAPublicKey> getJwksFromUrl(final URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier) {
+    private static Map<String, RSAPublicKey> getJwksFromUrl(final URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier, int connectionTimeout, int readTimeout) {
         JsonObject response = null;
         try {
             URLConnection connection = url.openConnection();
@@ -129,8 +147,8 @@ class JwkManager {
                 conn.setRequestMethod("GET");
                 conn.setSSLSocketFactory(sslContext.getSocketFactory());
                 conn.setHostnameVerifier(hostnameVerifier);
-                conn.setConnectTimeout(CONNECTION_TIMEOUT);
-                conn.setReadTimeout(CONNECTION_TIMEOUT);
+                conn.setConnectTimeout(connectionTimeout);
+                conn.setReadTimeout(readTimeout);
                 conn.connect();
                 InputStream inputStream = conn.getInputStream();
                 response = Json.createReader(inputStream).readObject();
@@ -182,11 +200,35 @@ class JwkManager {
                 RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
                 res.put(kid, publicKey);
             } catch (InvalidKeySpecException | NoSuchAlgorithmException ex) {
-                log.info("Fetched jwk could not be parsed, ignoring...");
-                ex.printStackTrace();
-                continue;
+                log.info("Fetched jwk could not be parsed, ignoring...", ex);
             }
         }
         return res;
+    }
+
+    private static class CacheEntry {
+        private Map<String, RSAPublicKey> keys;
+        private long timestamp;
+
+        public CacheEntry() {
+            this.keys = Collections.emptyMap();
+            this.timestamp = 0;
+        }
+
+        public Map<String, RSAPublicKey> getKeys() {
+            return keys;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setKeys(Map<String, RSAPublicKey> keys) {
+            this.keys = keys;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 }
