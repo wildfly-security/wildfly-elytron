@@ -18,6 +18,8 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.Oidc.DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -44,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "register-node-at-startup", "register-node-period", "token-store", "adapter-state-cookie-path", "principal-attribute",
         "proxy-url", "turn-off-change-session-id-on-login", "token-minimum-time-to-live",
         "min-time-between-jwks-requests", "public-key-cache-ttl",
-        "ignore-oauth-query-parameter", "verify-token-audience"
+        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm"
 })
 public class OidcJsonConfiguration {
 
@@ -133,6 +135,8 @@ public class OidcJsonConfiguration {
     protected String providerUrl;
     @JsonProperty("client-id")
     protected String clientId;
+    @JsonProperty("token-signature-algorithm")
+    protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
@@ -488,5 +492,14 @@ public class OidcJsonConfiguration {
     public void setRedirectRewriteRules(Map<String, String> redirectRewriteRules) {
         this.redirectRewriteRules = redirectRewriteRules;
     }
+
+    public String getTokenSignatureAlgorithm() {
+        return tokenSignatureAlgorithm;
+    }
+
+    public void setTokenSignatureAlgorithm(String tokenSignatureAlgorithm) {
+        this.tokenSignatureAlgorithm = tokenSignatureAlgorithm;
+    }
+
 }
 

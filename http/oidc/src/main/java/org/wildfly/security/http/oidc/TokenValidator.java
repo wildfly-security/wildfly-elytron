@@ -83,7 +83,7 @@ public class TokenValidator {
                 ClientSecretCredentialsProvider clientSecretCredentialsProvider = (ClientSecretCredentialsProvider) clientConfiguration.getClientAuthenticator();
                 jwtConsumerBuilder.setVerificationKey(clientSecretCredentialsProvider.getClientSecret());
             }
-            jwtConsumerBuilder.registerValidator(new AtHashValidator(accessToken, clientConfiguration.getJwsSignatureAlgorithm()));
+            jwtConsumerBuilder.registerValidator(new AtHashValidator(accessToken, clientConfiguration.getTokenSignatureAlgorithm()));
             // second pass to validate
             jwtConsumerBuilder.build().processContext(idJwtContext);
             JwtClaims idJwtClaims = idJwtContext.getJwtClaims();
@@ -141,7 +141,7 @@ public class TokenValidator {
             if (clientId == null || clientId.length() == 0) {
                 throw log.noClientIDGiven();
             }
-            expectedJwsAlgorithm = clientConfiguration.getJwsSignatureAlgorithm();
+            expectedJwsAlgorithm = clientConfiguration.getTokenSignatureAlgorithm();
             if (expectedJwsAlgorithm == null || expectedJwsAlgorithm.length() == 0) {
                 throw log.noExpectedJwsAlgorithmGiven();
             }
