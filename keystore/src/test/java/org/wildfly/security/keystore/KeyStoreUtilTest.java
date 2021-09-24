@@ -25,11 +25,14 @@ import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.bytes.ByteStringBuilder;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.asn1.ASN1Encodable;
+import org.wildfly.security.pem.Pem;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500AttributeTypeAndValue;
 import org.wildfly.security.x500.X500PrincipalBuilder;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 import javax.security.auth.x500.X500Principal;
@@ -39,12 +42,15 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -228,6 +234,34 @@ public class KeyStoreUtilTest {
             return;
         }
         Assert.fail("Key store detection should fail.");
+    }
+
+    @Test
+    public void testPEM() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
+        SelfSignedX509CertificateAndSigningKey ca = SelfSignedX509CertificateAndSigningKey.builder()
+                .setDn(new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA"))
+                .setKeyAlgorithmName("RSA")
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647")
+                .build();
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        KeyPair generatedKeys = keyPairGenerator.generateKeyPair();
+        PublicKey publicKey = generatedKeys.getPublic();
+        X509Certificate subjectCertificate = new X509CertificateBuilder()
+                .setIssuerDn(ca.getSelfSignedCertificate().getIssuerX500Principal())
+                .setSubjectDn(new X500Principal("O=Elytron, OU=Elytron, C=UK, ST=Elytron, CN=Firefly"))
+                .setSignatureAlgorithmName("SHA256withRSA")
+                .setSigningKey(ca.getSigningKey())
+                .setPublicKey(publicKey)
+                .build();
+        ByteStringBuilder target = new ByteStringBuilder();
+        Pem.generatePemX509Certificate(target, ca.getSelfSignedCertificate());
+        Pem.generatePemX509Certificate(target, subjectCertificate);
+        Files.write(Paths.get(workingDir.getPath(), "pem.pem"), target.toArray());
+        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, "pem.pem")), "pem.pem", "".toCharArray());
+        Assert.assertNotNull(loadedStore);
+        Assert.assertEquals(ca.getSelfSignedCertificate(), loadedStore.getCertificate(ca.getSelfSignedCertificate().getSubjectX500Principal().getName()));
+        Assert.assertEquals(subjectCertificate, loadedStore.getCertificate(subjectCertificate.getSubjectX500Principal().getName()));
     }
 
 
