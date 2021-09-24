@@ -205,12 +205,6 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap, false, true));
 
-        //final Map<String, String> props = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
-        //SaslServerFactory gs2 = new Gs2SaslServerFactory();
-        //for (String name : gs2.getMechanismNames(props)) {
-        //    putService(new Service(this, SASL_SERVER_FACTORY_TYPE, name,  "org.wildfly.security.sasl.gs2.Gs2SaslServerFactory", emptyList, emptyMap));
-        //}
-
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "GSSAPI",  "org.wildfly.security.sasl.gssapi.GssapiServerFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "JBOSS-LOCAL-USER",  "org.wildfly.security.sasl.localuser.LocalUserServerFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_SERVER_FACTORY_TYPE, "OAUTHBEARER",  "org.wildfly.security.sasl.oauth2.OAuth2SaslServerFactory", emptyList, emptyMap, false, true));
@@ -242,11 +236,6 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "EXTERNAL",  "org.wildfly.security.sasl.external.ExternalSaslClientFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5-PLUS",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "GS2-KRB5",  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap, false, true));
-
-        //SaslClientFactory gs2Client = new Gs2SaslClientFactory();
-        //for (String name : gs2Client.getMechanismNames(props)) {
-        //    putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, name,  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory", emptyList, emptyMap));
-        //}
 
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "GSSAPI",  "org.wildfly.security.sasl.gssapi.GssapiClientFactory", emptyList, emptyMap, false, true));
         putService(new ProviderService(this, SASL_CLIENT_FACTORY_TYPE, "JBOSS-LOCAL-USER",  "org.wildfly.security.sasl.localuser.LocalUserClientFactory", emptyList, emptyMap, false, true));

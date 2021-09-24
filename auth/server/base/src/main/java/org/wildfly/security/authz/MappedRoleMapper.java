@@ -33,7 +33,7 @@ import static org.wildfly.security.auth.server._private.ElytronMessages.log;
  */
 public class MappedRoleMapper implements RoleMapper {
 
-    private final Map<String, Set<String>> reverseRoleMap = new LinkedHashMap<>();;
+    private final Map<String, Set<String>> reverseRoleMap = new LinkedHashMap<>();
     private volatile boolean initialized = false;
 
     /**

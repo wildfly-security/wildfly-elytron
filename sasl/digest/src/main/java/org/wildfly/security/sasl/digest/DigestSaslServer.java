@@ -290,10 +290,10 @@ final class DigestSaslServer extends AbstractDigestMechanism implements SaslServ
             throw saslDigest.mechAuthorizationFailed(username, authzid).toSaslException();
         }
 
-        return createResponseAuth(parsedDigestResponse);
+        return createResponseAuth();
     }
 
-    private byte[] createResponseAuth(HashMap<String, byte[]> parsedDigestResponse) {
+    private byte[] createResponseAuth() {
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
 

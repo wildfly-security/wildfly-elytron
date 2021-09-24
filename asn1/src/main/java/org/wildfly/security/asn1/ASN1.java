@@ -324,9 +324,6 @@ public class ASN1 {
                 }
                 default: {
                     throw log.asnUnknownTagType(type);
-//                    builder.append("[unknown(").append(type).append(")]");
-//                    decoder.decodeOctetString();
-//                    break;
                 }
             }
         }

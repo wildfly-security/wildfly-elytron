@@ -23,6 +23,7 @@ import static org.wildfly.security.credential.source.ElytronMessages2.saslOAuth2
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -145,8 +146,9 @@ public class OAuth2CredentialSource implements CredentialSource {
                         outputStream.write(paramBytes);
                     }
 
-                    try (InputStream inputStream = new BufferedInputStream(connection.getInputStream())) {
-                        JsonObject jsonObject = Json.createReader(inputStream).readObject();
+                    try (final InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                            final JsonReader jsonReader = Json.createReader(inputStream)) {
+                        JsonObject jsonObject = jsonReader.readObject();
                         String accessToken = jsonObject.getString("access_token");
                         return credentialType.cast(new BearerTokenCredential(accessToken));
                     }

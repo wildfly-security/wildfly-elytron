@@ -58,10 +58,6 @@ public final class CommandCredentialSource implements CredentialSource {
 
     private static final File NULL_FILE = new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null");
 
-    //private static final File NULL_FILE = new File(
-    //        (WildFlySecurityManager.isChecking() ? doPrivileged((PrivilegedAction<String>) () -> System.getProperty("os.name")) : System.getProperty("os.name"))
-    //        .startsWith("Windows") ? "NUL" : "/dev/null");
-
     private final Function<ProcessBuilder, ProcessBuilder> builderProcessor;
     private final PasswordFactory passwordFactory;
     private final AccessControlContext context;

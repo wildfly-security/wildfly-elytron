@@ -176,8 +176,7 @@ final class SSLExplorer {
         byte thirdByte = input.get();
         if ((firstByte & 0x80) != 0 && thirdByte == 0x01) {
             // looks like a V2ClientHello
-            return exploreV2HelloRecord(input,
-                                    firstByte, secondByte, thirdByte);
+            return exploreV2HelloRecord(input, thirdByte);
         } else if (firstByte == 22) {   // 22: handshake record
             return exploreTLSRecord(input,
                                     firstByte, secondByte, thirdByte);
@@ -237,7 +236,7 @@ final class SSLExplorer {
      * } V2ClientHello;
      */
     private static SSLConnectionInformationImpl exploreV2HelloRecord(
-            ByteBuffer input, byte firstByte, byte secondByte,
+            ByteBuffer input,
             byte thirdByte) throws SSLException {
 
         // We only need the header. We have already had enough source bytes.
@@ -606,14 +605,6 @@ final class SSLExplorer {
 
     private static void ignoreByteVector8(ByteBuffer input) {
         ignoreByteVector(input, getInt8(input));
-    }
-
-    private static void ignoreByteVector16(ByteBuffer input) {
-        ignoreByteVector(input, getInt16(input));
-    }
-
-    private static void ignoreByteVector24(ByteBuffer input) {
-        ignoreByteVector(input, getInt24(input));
     }
 
     private static void ignoreByteVector(ByteBuffer input, int length) {

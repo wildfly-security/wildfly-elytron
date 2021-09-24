@@ -43,7 +43,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -707,49 +706,6 @@ public final class ElytronXmlParser {
                 }
             }
             throw ElytronMessages.log.noDefaultTrustManager();
-        }
-    }
-
-    private static class KeyManagerBuilder {
-        final Supplier<Provider[]> providers;
-        final Location xmlLocation;
-        String providerName = null;
-        String algorithm = null;
-        ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier;
-
-        KeyManagerBuilder(Supplier<Provider[]> providers, Location xmlLocation) {
-            this.providers = providers;
-            this.xmlLocation = xmlLocation;
-        }
-
-        void setProviderName(String providerName) {
-            this.providerName = providerName;
-        }
-
-        void setAlgorithm(String algorithm) {
-            this.algorithm = algorithm;
-        }
-
-        void setKeyStoreSupplier(ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreSupplier) {
-            this.keyStoreSupplier = keyStoreSupplier;
-        }
-
-        X509ExtendedKeyManager build() throws NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException, ConfigXMLParseException {
-            final String algorithm = this.algorithm != null ? this.algorithm : KeyManagerFactory.getDefaultAlgorithm();
-            Provider provider = findProvider(providers, providerName, KeyManagerFactory.class, algorithm);
-            if (provider == null) {
-                throw xmlLog.xmlUnableToIdentifyProvider(xmlLocation, providerName, "KeyManagerFactory", algorithm);
-            }
-
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm, provider);
-            keyManagerFactory.init(keyStoreSupplier != null ? keyStoreSupplier.get() : null, null);
-
-            for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
-                if (keyManager instanceof X509ExtendedKeyManager) {
-                    return (X509ExtendedKeyManager) keyManager;
-                }
-            }
-            throw ElytronMessages.log.noDefaultKeyManager();
         }
     }
 
@@ -1673,7 +1629,6 @@ public final class ElytronXmlParser {
         PrivateKey privateKey = null;
         PublicKey publicKey = null;
         KeyPair keyPair = null;
-        final int attributeCount = reader.getAttributeCount();
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -2236,7 +2191,6 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         final XMLLocation location = reader.getLocation();
         String keyStoreName = null;
-        String alias = null;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
@@ -3397,7 +3351,6 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> parseOAuth2MaskedClientCredentials(ConfigurationXMLStreamReader reader, final ExceptionSupplier<OAuth2CredentialSource.Builder, ConfigXMLParseException> builderSupplier, Version xmlVersion,Supplier<Provider[]> providers) throws ConfigXMLParseException {
-        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
         XMLLocation nestedLocation = null;
         String id = null;
         String secret = null;

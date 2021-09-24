@@ -307,28 +307,34 @@ public final class SecurityDomain {
             securityManager.checkPermission(AUTHENTICATE);
         }
 
-        ServerAuthenticationContext serverAuthenticationContext = new ServerAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
-        if (principal != null) serverAuthenticationContext.setAuthenticationPrincipal(principal);
-        if (serverAuthenticationContext.verifyEvidence(evidence)) {
-            if (serverAuthenticationContext.authorize()) {
-                if (evidence instanceof PasswordGuessEvidence) {
-                    PasswordGuessEvidence passwordGuessEvidence = PasswordGuessEvidence.class.cast(evidence);
-                    serverAuthenticationContext.addPrivateCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordGuessEvidence.getGuess())));
-                } else if (evidence instanceof BearerTokenEvidence) {
-                    BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
-                    serverAuthenticationContext.addPrivateCredential(new BearerTokenCredential(tokenEvidence.getToken()));
+        try (final ServerAuthenticationContext serverAuthenticationContext = new ServerAuthenticationContext(this,
+                MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY))) {
+            if (principal != null)
+                serverAuthenticationContext.setAuthenticationPrincipal(principal);
+            if (serverAuthenticationContext.verifyEvidence(evidence)) {
+                if (serverAuthenticationContext.authorize()) {
+                    if (evidence instanceof PasswordGuessEvidence) {
+                        PasswordGuessEvidence passwordGuessEvidence = PasswordGuessEvidence.class.cast(evidence);
+                        serverAuthenticationContext.addPrivateCredential(new PasswordCredential(
+                                ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, passwordGuessEvidence.getGuess())));
+                    } else if (evidence instanceof BearerTokenEvidence) {
+                        BearerTokenEvidence tokenEvidence = BearerTokenEvidence.class.cast(evidence);
+                        serverAuthenticationContext.addPrivateCredential(new BearerTokenCredential(tokenEvidence.getToken()));
+                    } else {
+                        log.tracef(
+                                "Evidence [%s] does not map to a supported credential type. Credentials are not available from authorized identity and identity propagation may not work",
+                                evidence.getClass().getName());
+                    }
+                    serverAuthenticationContext.succeed();
+                    return serverAuthenticationContext.getAuthorizedIdentity();
                 } else {
-                    log.tracef("Evidence [%s] does not map to a supported credential type. Credentials are not available from authorized identity and identity propagation may not work", evidence.getClass().getName());
+                    serverAuthenticationContext.fail();
+                    throw log.authenticationFailedAuthorization();
                 }
-                serverAuthenticationContext.succeed();
-                return serverAuthenticationContext.getAuthorizedIdentity();
             } else {
                 serverAuthenticationContext.fail();
-                throw log.authenticationFailedAuthorization();
+                throw log.authenticationFailedEvidenceVerification();
             }
-        } else {
-            serverAuthenticationContext.fail();
-            throw log.authenticationFailedEvidenceVerification();
         }
     }
 
