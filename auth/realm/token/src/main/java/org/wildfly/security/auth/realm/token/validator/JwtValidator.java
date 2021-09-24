@@ -30,6 +30,7 @@ import org.wildfly.security.pem.PemEntry;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.net.ssl.HostnameVerifier;
@@ -157,14 +158,21 @@ public class JwtValidator implements TokenValidator {
     }
 
     private JsonObject extractClaims(String encodedClaims) throws RealmUnavailableException {
+        JsonObject retValue = null;
+        JsonReader jsonReader = null;
         try {
             Base64.Decoder urlDecoder = Base64.getUrlDecoder();
             CodePointIterator decodedClaims = CodePointIterator.ofUtf8Bytes(urlDecoder.decode(encodedClaims));
-
-            return Json.createReader(decodedClaims.asUtf8().asInputStream()).readObject();
+            jsonReader = Json.createReader(decodedClaims.asUtf8().asInputStream());
+            retValue = jsonReader.readObject();
         } catch (Exception cause) {
             throw log.tokenRealmJwtParseFailed(cause);
+        } finally {
+            if (jsonReader != null) {
+                jsonReader.close();
+            }
         }
+        return retValue;
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
@@ -240,7 +248,10 @@ public class JwtValidator implements TokenValidator {
     private Signature createSignature(String encodedHeader, String encodedClaims) throws NoSuchAlgorithmException, SignatureException, RealmUnavailableException {
 
         byte[] headerDecoded = Base64.getUrlDecoder().decode(encodedHeader);
-        JsonObject headers = Json.createReader(ByteIterator.ofBytes(headerDecoded).asInputStream()).readObject();
+        JsonObject headers = null;
+        try (final JsonReader jsonReader = Json.createReader(ByteIterator.ofBytes(headerDecoded).asInputStream())) {
+            headers = jsonReader.readObject();
+        }
 
         String headerAlg = resolveAlgorithm(headers);
         Signature signature = Signature.getInstance(headerAlg);

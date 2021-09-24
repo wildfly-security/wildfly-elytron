@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -140,6 +141,7 @@ class JwkManager {
 
     private static Map<String, RSAPublicKey> getJwksFromUrl(final URL url, SSLContext sslContext, HostnameVerifier hostnameVerifier, int connectionTimeout, int readTimeout) {
         JsonObject response = null;
+        JsonReader jsonReader = null;
         try {
             URLConnection connection = url.openConnection();
             if (connection instanceof HttpsURLConnection) {
@@ -151,11 +153,16 @@ class JwkManager {
                 conn.setReadTimeout(readTimeout);
                 conn.connect();
                 InputStream inputStream = conn.getInputStream();
-                response = Json.createReader(inputStream).readObject();
+                jsonReader = Json.createReader(inputStream);
+                response = jsonReader.readObject();
             }
         } catch (IOException e) {
             log.warn("Unable to connect to " + url.toString());
             return null;
+        } finally {
+            if (jsonReader != null) {
+                jsonReader.close();
+            }
         }
 
         if (response == null) {
