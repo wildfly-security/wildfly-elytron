@@ -83,7 +83,7 @@ public interface DirContextFactory {
             } catch (NamingException ignored) {
             }
         }
-    };
+    }
 
     // TODO - Obtaining a DirContext after a referral.
 

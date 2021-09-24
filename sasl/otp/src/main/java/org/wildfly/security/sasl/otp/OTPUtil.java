@@ -440,10 +440,6 @@ class OTPUtil {
         return false;
     }
 
-    private static boolean isDelim(int c) {
-        return isDelim(c, DELIMS);
-    }
-
     private static void reverse(byte[] bytes, int offset, int length) {
         byte tmp;
         int mid = (length / 2) + offset;

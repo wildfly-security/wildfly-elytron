@@ -358,7 +358,6 @@ public abstract class SaslMechanismSelector {
                                         throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                     }
                                 }
-                                //throw Assert.unreachableCode();
                             }
                             case '-': {
                                 this.offs = offs;
@@ -437,7 +436,6 @@ public abstract class SaslMechanismSelector {
                                             return true;
                                         }
                                     }
-                                    //throw Assert.unreachableCode();
                                 } else {
                                     throw sasl.mechSelectorUnexpectedChar(cp, i.getIndex(), string);
                                 }

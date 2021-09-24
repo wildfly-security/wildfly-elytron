@@ -35,7 +35,6 @@ import java.util.Arrays;
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;

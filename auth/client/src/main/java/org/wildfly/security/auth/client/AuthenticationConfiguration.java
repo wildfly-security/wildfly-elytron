@@ -1395,7 +1395,7 @@ public final class AuthenticationConfiguration {
         if (kerberosSecurityFactory != null) {
             return cs != null ? new AuthenticationConfiguration(this, SET_CRED_SOURCE, cs.with(new FactoryCredentialSource(kerberosSecurityFactory))) : new AuthenticationConfiguration(this, SET_CRED_SOURCE, new FactoryCredentialSource(kerberosSecurityFactory));
         }
-        return this; // cs != null ? new AuthenticationConfiguration(this, SET_CRED_SOURCE, cs.without(GSSKerberosCredential.class)) : this;
+        return this;
     }
 
     /**

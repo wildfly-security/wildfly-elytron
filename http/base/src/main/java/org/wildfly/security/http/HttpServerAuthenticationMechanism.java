@@ -78,6 +78,6 @@ public interface HttpServerAuthenticationMechanism {
      * Dispose of any resources currently held by this authentication mechanism.
      */
     default void dispose() {
-    };
+    }
 
 }

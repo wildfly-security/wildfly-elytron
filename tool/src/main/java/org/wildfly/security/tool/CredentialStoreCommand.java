@@ -760,7 +760,6 @@ class CredentialStoreCommand extends Command {
         String cipherTextToken = null;
         if (credentialStore.exists(alias, SecretKeyCredential.class)) {
             final SecretKey secretKey = credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
-            final String encoded = SecretKeyUtil.exportSecretKey(secretKey);
 
             String clearText = cmdLine.getOptionValue(CLEAR_TEXT);
             if (clearText == null) {
