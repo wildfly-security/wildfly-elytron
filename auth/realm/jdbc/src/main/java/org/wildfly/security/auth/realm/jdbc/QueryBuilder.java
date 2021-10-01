@@ -17,6 +17,9 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
+
+import org.wildfly.common.Assert;
+
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +37,17 @@ public class QueryBuilder extends JdbcSecurityRealmBuilder {
     private List<ColumnMapper> mappers = new ArrayList<>();
     private DataSource dataSource;
 
+    /**
+     * Construct new instance.
+     *
+     * @param sql (must not be {@code null})
+     * @param parent (must not be {@code null})
+     *
+     */
     QueryBuilder(String sql, JdbcSecurityRealmBuilder parent) {
+        Assert.checkNotNullParam("sql", sql);
+        Assert.checkNotNullParam("parent", parent);
+
         this.sql = sql;
         this.parent = parent;
     }
