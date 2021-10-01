@@ -214,7 +214,7 @@ public class VaultCommand extends Command {
             }
 
             if (keystorePassword == null) {
-                keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), true, ElytronToolMessages.msg.vaultPasswordPromptConfirm());
+                keystorePassword = prompt(false, ElytronToolMessages.msg.vaultPasswordPrompt(), false, null);
             }
 
             final HashMap<String, String> convertedOptions = convert(keystoreURL, keystorePassword, encryptionDirectory, salt,
