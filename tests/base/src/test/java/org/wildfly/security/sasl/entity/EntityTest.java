@@ -515,7 +515,7 @@ public class EntityTest {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), (KeyStore) null);
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), KeyStore.getInstance(KEYSTORE_TYPE));
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, getX509TrustManager(clientTrustStore));
