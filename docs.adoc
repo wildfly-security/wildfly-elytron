@@ -13,7 +13,7 @@ https://docs.wildfly.org/23/WildFly_Elytron_Security.html[subsystem documentatio
 
 == API References
 
-Javdoc of the public APIs is available for the most recent two major WildFly releases.
+Javadoc of the public APIs is available for the most recent two major WildFly releases.
 
  * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 24 API].
  * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 23 API].
@@ -30,7 +30,7 @@ link:/wildfly-elytron/getting-started-for-developers[Getting Started for Develop
 
 === Full Javadoc
 
-Two versions of the full javdoc (including private APIs) are available.
+Two versions of the full javadoc (including private APIs) are available.
 
  * link:/wildfly-elytron/documentation/api/next/index.html[Next WildFly Release].
  * link:/wildfly-elytron/documentation/api/upstream/index.html[Upstream Javadoc].
