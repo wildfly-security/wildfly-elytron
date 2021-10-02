@@ -97,7 +97,7 @@
         <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
-        <version.org.bitbucket.b_c.jose4j>0.7.5</version.org.bitbucket.b_c.jose4j>
+        <version.org.bitbucket.b_c.jose4j>0.7.9</version.org.bitbucket.b_c.jose4j>
         <version.org.testcontainers.testcontainers>1.15.3</version.org.testcontainers.testcontainers>
         <version.org.keycloak>15.0.2</version.org.keycloak>
         <version.io.rest-assured>4.3.3</version.io.rest-assured>
