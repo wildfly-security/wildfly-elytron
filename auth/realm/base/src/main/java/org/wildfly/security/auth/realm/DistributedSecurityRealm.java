@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.auth.realm;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -38,6 +39,7 @@ public class DistributedSecurityRealm implements SecurityRealm {
     private final SecurityRealm[] securityRealms;
 
     public DistributedSecurityRealm(final SecurityRealm... securityRealms) {
+        Assert.checkNotNullParam("securityRealms", securityRealms);
         this.securityRealms = securityRealms;
     }
 
