@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.realm;
 
-import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
@@ -407,6 +406,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          * @return this {@link Builder}
          */
         public Builder setProviders(Supplier<Provider[]> providers) {
+            Assert.checkNotNullParam("providers", providers);
             this.providers = providers;
 
             return this;
@@ -444,6 +444,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          * @return this {@link Builder}
          */
         public Builder setGroupsAttribute(final String groupsAttribute) {
+            Assert.checkNotNullParam("groupsAttribute", groupsAttribute);
             this.groupsAttribute = groupsAttribute;
 
             return this;
@@ -483,7 +484,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          * @return this {@link Builder}
          */
         public Builder setHashEncoding(Encoding hashEncoding) {
-            assertNotNull(hashEncoding);
+            Assert.checkNotNullParam("hashEncoding", hashEncoding);
             this.hashEncoding = hashEncoding;
 
             return this;
@@ -496,7 +497,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          * @return this {@link Builder}
          */
         public Builder setHashCharset(Charset hashCharset) {
-            assertNotNull(hashCharset);
+            Assert.checkNotNullParam("hashCharset", hashCharset);
             this.hashCharset = hashCharset;
 
             return this;
