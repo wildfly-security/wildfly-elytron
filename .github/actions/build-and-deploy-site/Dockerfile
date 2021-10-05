@@ -6,10 +6,9 @@ RUN apt-get update && \
         build-essential \
         ca-certificates \
         curl \
-        libffi6 \
+        libffi7 \
         make \
         shellcheck \
-        libffi6 \
         git-all \
         rsync \
     && gem install bundler:2.0.2 \
