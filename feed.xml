@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 22 Jul 2021 13:48:13 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 05 Oct 2021 21:07:06 +0000</lastBuildDate>
+        
+        <item>
+            <title>Hacktoberfest Has Begun</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/hacktoberfest-has-begun/
+            </link>
+            <description>
+                The WildFly Elytron project is participating in Hacktoberfest this month and welcomes your contributions! What is Hacktoberfest? Hacktoberfest takes places annually during the month of October. This event encourages open source contributions from the community. To participate in Hacktoberfest, you simply need to: Register on the Hacktoberfest site Submit 4...
+            </description>
+            <pubDate>Tue, 05 Oct 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/hacktoberfest-has-begun/
+            </guid>
+        </item>
         
         <item>
             <title>Open Source Day Summer 2021 Recap</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming SSLContext that supports delegation to alternate instances based on peer information</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/
-            </link>
-            <description>
-                One of the features we have been working on for the Elytron subsytem is the ability to configure SSL context that will delegate to different instances of SSL context based on the host and port of the peer. Background In some cases it can be useful to have SSL context...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/sslcontext-delegation-to-alternate-instances-based-on-peer/
             </guid>
         </item>
         
