@@ -1,0 +1,50 @@
+---
+layout: post
+title: 'Hacktoberfest Has Begun'
+date: 2021-10-05
+tags: elytron wildfly security opensource hacktoberfest
+synopsis: An overview of the WildFly Elytron project's participation in Hacktoberfest.
+author: fjuma
+---
+
+The WildFly Elytron project is participating in Hacktoberfest this month and welcomes your contributions!
+
+== What is Hacktoberfest?
+
+https://hacktoberfest.digitalocean.com/[Hacktoberfest] takes places annually during the month of October.
+This event encourages open source contributions from the community. To participate in Hacktoberfest, you
+simply need to:
+
+. https://hacktoberfest.digitalocean.com/register[Register] on the Hacktoberfest site
+. Submit 4 approved PRs against participating project repositories during the month of October
+. Choose whether you'd like to receive a t-shirt or have a tree planted in your name
+
+== What repositories can you contribute to?
+
+Participating projects have added the "hacktoberfest" topic to their project repos. If you'd like to
+contribute to WildFly Elytron and our related projects, check out these repos:
+
+* https://github.com/wildfly-security/wildfly-elytron[WildFly Elytron]
+* https://github.com/wildfly-security/elytron-web[WildFly Elytron Web]
+* https://github.com/wildfly-security/wildfly-openssl[WildFly OpenSSL]
+
+== How to get started?
+
+Our https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md[contribution guide] will help
+guide you through the steps for getting started on the WildFly Elytron project and will go through how
+to format and submit your first PR.
+
+== How to pick an issue?
+
+We have created a list of https://issues.redhat.com/issues/?filter=12364234[good first issues] to help you get started.
+These also have the `hacktoberfest` label.
+
+== How to reach us?
+
+If you'd like some help or have questions about making contributions to our project, feel free to reach
+us on https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[chat] or add questions
+directly on your PR.
+
+== Happy Hacktoberfest!
+
+We hope you enjoy making contributions to open source projects this month and in the future too!
