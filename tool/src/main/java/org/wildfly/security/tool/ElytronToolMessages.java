@@ -328,9 +328,6 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Vault password: ")
     String vaultPasswordPrompt();
 
-    @Message(id = NONE, value = "Confirm vault password: ")
-    String vaultPasswordPromptConfirm();
-
     @Message(id = 19, value = "Encryption directory \"%s\" does not contain \"VAULT.dat\" file.")
     IllegalArgumentException vaultFileNotFound(String path);
 

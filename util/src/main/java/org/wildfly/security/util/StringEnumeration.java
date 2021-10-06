@@ -62,6 +62,7 @@ public final class StringEnumeration {
      * @return the canonical name (not {@code null})
      */
     public String canonicalName(String str) {
+        Assert.checkNotNullParam("str", str);
         final Data data = index.get(str);
         if (data == null) {
             throw ElytronMessages.log.generalInvalidName(str);
@@ -76,6 +77,7 @@ public final class StringEnumeration {
      * @return the numeric index
      */
     public int indexOf(String str) {
+        Assert.checkNotNullParam("str", str);
         final Data data = index.get(str);
         if (data == null) {
             throw ElytronMessages.log.generalInvalidName(str);

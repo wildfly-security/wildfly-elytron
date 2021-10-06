@@ -202,6 +202,8 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
             //otherwise we assume another method will send the challenge
             String authHeader = request.getFirstRequestHeaderValue(AUTHORIZATION);
             if(authHeader == null) {
+                httpBasic.tracef("BASIC authentication mechanism ignored - " +
+                        "configuration is set to silent and request does not contain Authorization header");
                 return;     //CHALLENGE NOT SENT
             }
         }

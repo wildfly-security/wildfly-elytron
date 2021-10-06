@@ -21,6 +21,7 @@ package org.wildfly.security.pem;
 import static org.wildfly.security.x500.cert._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -31,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -60,6 +62,7 @@ public final class Pem {
     private static final String PUBLIC_KEY_FORMAT = "PUBLIC KEY";
     private static final String CERTIFICATE_FORMAT = "CERTIFICATE";
     private static final String PRIVATE_KEY_FORMAT = "PRIVATE KEY";
+    private static final String RSA_PRIVATE_KEY_FORMAT = "RSA PRIVATE KEY";
     private static final String CERTIFICATE_REQUEST_FORMAT = "CERTIFICATE REQUEST";
     public static final String OPENSSH_PRIVATE_KEY_FORMAT = "OPENSSH PRIVATE KEY";
 
@@ -162,6 +165,10 @@ public final class Pem {
                             }
                             case PRIVATE_KEY_FORMAT: {
                                 final PrivateKey privateKey = parsePemPrivateKey(type, byteIterator);
+                                return new PemEntry<>(privateKey);
+                            }
+                            case RSA_PRIVATE_KEY_FORMAT: {
+                                final PrivateKey privateKey = parsePemRsaPrivateKey(type, byteIterator);
                                 return new PemEntry<>(privateKey);
                             }
                             default: {
@@ -329,6 +336,38 @@ public final class Pem {
             }
 
             throw log.asnUnrecognisedAlgorithm(algorithm);
+        } catch (Exception cause) {
+            throw log.privateKeyParseError(cause);
+        }
+    }
+
+    private static PrivateKey parsePemRsaPrivateKey(String type, ByteIterator byteIterator) throws IllegalArgumentException {
+        if (! type.equals(RSA_PRIVATE_KEY_FORMAT)) {
+            throw log.invalidPemType(RSA_PRIVATE_KEY_FORMAT, type);
+        }
+        try {
+            byte[] der = byteIterator.drain();
+            DERDecoder derDecoder = new DERDecoder(der);
+            derDecoder.startSequence();
+
+            // Version
+            if (derDecoder.peekType() != ASN1.INTEGER_TYPE) throw log.asnUnexpectedTag();
+            derDecoder.skipElement();
+
+            BigInteger modulus = derDecoder.decodeInteger();
+            BigInteger publicExp = derDecoder.decodeInteger();
+            BigInteger privateExp = derDecoder.decodeInteger();
+            BigInteger prime1 = derDecoder.decodeInteger();
+            BigInteger prime2 = derDecoder.decodeInteger();
+            BigInteger exp1 = derDecoder.decodeInteger();
+            BigInteger exp2 = derDecoder.decodeInteger();
+            BigInteger crtCoef = derDecoder.decodeInteger();
+
+            RSAPrivateCrtKeySpec keySpec = new RSAPrivateCrtKeySpec(
+                    modulus, publicExp, privateExp, prime1, prime2,
+                    exp1, exp2, crtCoef);
+
+            return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
         } catch (Exception cause) {
             throw log.privateKeyParseError(cause);
         }

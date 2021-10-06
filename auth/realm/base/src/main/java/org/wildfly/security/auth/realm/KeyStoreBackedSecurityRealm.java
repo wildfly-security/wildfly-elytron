@@ -73,6 +73,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
      * @param providers A supplier of providers for use by this realm
      */
     public KeyStoreBackedSecurityRealm(final KeyStore keyStore, final Supplier<Provider[]> providers) {
+        Assert.checkNotNullParam("keyStore", keyStore);
         this.keyStore = keyStore;
         this.providers = providers;
     }

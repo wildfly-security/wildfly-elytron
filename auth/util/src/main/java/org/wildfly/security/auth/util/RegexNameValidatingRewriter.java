@@ -20,6 +20,7 @@ package org.wildfly.security.auth.util;
 
 import java.util.regex.Pattern;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.NameRewriter;
 
 /**
@@ -36,11 +37,11 @@ public final class RegexNameValidatingRewriter implements NameRewriter {
      * Construct a new instance.  The pattern is a partial pattern; if the whole string is to be matched, then
      * the appropriate regex anchors should be used.
      *
-     * @param pattern the pattern that the name must match (or not match) in order to be considered valid
+     * @param pattern the pattern that the name must match (or not match) in order to be considered valid (must not be {@code null})
      * @param match {@code true} if the pattern must match, {@code false} if the pattern must not match
      */
     public RegexNameValidatingRewriter(final Pattern pattern, final boolean match) {
-        this.pattern = pattern;
+        this.pattern = Assert.checkNotNullParam("pattern", pattern);
         this.match = match;
     }
 

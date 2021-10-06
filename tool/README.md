@@ -27,7 +27,7 @@ $ mvn clean install
 Issue Tracking
 --------------
 
-Bugs and features are tracked within the WildFly Elytron Tool GitHub project https://github.com/wildfly-security/wildfly-elytron-tool/issues
+Bugs and features for the WildFly Elytron Tool are tracked within the Elytron Jira project at https://issues.jboss.org/browse/ELY
 
 
 
