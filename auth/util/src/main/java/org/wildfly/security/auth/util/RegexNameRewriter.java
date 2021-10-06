@@ -21,6 +21,7 @@ package org.wildfly.security.auth.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.NameRewriter;
 
 /**
@@ -34,12 +35,12 @@ public final class RegexNameRewriter implements NameRewriter {
     /**
      * Construct a new instance.
      *
-     * @param pattern the substitution pattern
+     * @param pattern the substitution pattern (must not be {@code null})
      * @param replacement the replacement string
      * @param replaceAll {@code true} to replace all occurrences of the pattern; {@code false} to replace only the first occurrence
      */
     public RegexNameRewriter(final Pattern pattern, final String replacement, final boolean replaceAll) {
-        this.pattern = pattern;
+        this.pattern = Assert.checkNotNullParam("pattern", pattern);
         this.replacement = replacement;
         this.replaceAll = replaceAll;
     }
