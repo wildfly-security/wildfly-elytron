@@ -18,24 +18,28 @@
 
 package org.wildfly.security.util;
 
-import org.junit.Test;
-import org.wildfly.common.bytes.ByteStringBuilder;
-import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.pem.Pem;
-import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
-
-import javax.security.auth.x500.X500Principal;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.Iterator;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import javax.security.auth.x500.X500Principal;
+
+import org.junit.Test;
+import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.pem.Pem;
+import org.wildfly.security.pem.PemEntry;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -163,5 +167,40 @@ public class PemTest {
         Pem.generatePemX509Certificate(target, certificate);
 
         assertEquals(expectedPemCertificate, new String(target.toArray(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testParseRsaPrivateKey() {
+        String pemRsaPrivateKey = "-----BEGIN RSA PRIVATE KEY-----" + System.lineSeparator() +
+                "MIIEogIBAAKCAQEAybCSfHsUDFexy5r+GQa+wLV0xbwawPO7nSGxjj/hgtLPxUpw" + System.lineSeparator() +
+                "+NGyCL90w7vmIObZxij+escO0pVzmYt+ITtO0GLG1I6pMspXYX83wC2ngZv0Q7FA" + System.lineSeparator() +
+                "c1l5yrq027Nyf0XHhkz1VWpmdCElEfGjt4Hs+20/kIhDOw8ho2RSWShK5+luEarz" + System.lineSeparator() +
+                "CfpNhNZvalO6OkytuuvDjxpw/wMVk88VZidlVLHzFFyIkBR/0hr6Fvr10/xwOvgp" + System.lineSeparator() +
+                "qqtWBAH1KlOlXXyRW8oke/QP/wrPY1t4N/oT3fOXcGEsC3SA4c/k/YBFgrsw3O6w" + System.lineSeparator() +
+                "vNRbRhPHya8wzXXmQMQz9shgUwUsuBwLYm+lGwIDAQABAoIBAGf8RnoxhrOaXwuH" + System.lineSeparator() +
+                "fKxwgtaed3cfNXf38engnkel/eHSSNcCO1691pmWBGCKNusNuoflSNcKXEUMUs5+" + System.lineSeparator() +
+                "UehWSJs94h9i8i9CjWyyB49oum0jd/uSnpUaM6XnPynqygR+eJFwiiigs/P5xsAK" + System.lineSeparator() +
+                "oosRTJqQx+3/oxIHCiPQrHhVQtFv6Tmc3iLJS5RHvTBfDdjjN7foMGG7jvQPmMjF" + System.lineSeparator() +
+                "qK1Lv90Fb52Abr7BTq2b7mqmwBQzkuH5pCDpkRFB1ItNk7wSWJPFTCeRVXRmWSkJ" + System.lineSeparator() +
+                "qvLHsBcjyDVDdK8BtJ6fu60ZC6xEJ3Mh8s6ysGCNB7lZqj+qFzdfx8iIU9HIIV5m" + System.lineSeparator() +
+                "FVZOkkECgYEA3qZaybkXnBoxaocG3DITtWr4i6YWO2YfVvMlLYon20lmbdo2NEH8" + System.lineSeparator() +
+                "+4ug45oIcDL+6j7rIMMPiu703x9RO6PqNyr2+W+vycjK5ubAup6aB97LSqCJyWOP" + System.lineSeparator() +
+                "XyUJE6m/Rw5YHrR4frGMp+cSFJEbmYImnNDx6PSWiJMUrJ/XLlttvCECgYEA5+Z9" + System.lineSeparator() +
+                "cpcZwXloncG2TJxNqggcbpcEZrIEN+iF1LbNYc60Orx01ZxNjlwzlNX2KSTM1DrT" + System.lineSeparator() +
+                "Q4MEw89oyu/U9EFHtFOd5hp58/6YPM1Jg4mcg+ziUF1o1JwDIyTll0M/OBIuwBC0" + System.lineSeparator() +
+                "4iFsFvYjYA8pKvySqEpJsFNn1lrY94KvIeToGbsCgYAHisMQikCOfSSnYyOMWfXo" + System.lineSeparator() +
+                "81KwCFRAdtkg7OOZg1COURIzLm0foAydyMEOdK1Mf6266Z61YWYpYqbQ2BK8XnUU" + System.lineSeparator() +
+                "oVP0ZyAhSbf10mM87xpwoc9pG78PH1w/8NU54UolcgryH1Lll8YX+e/W2oOA07PT" + System.lineSeparator() +
+                "JBDNv1tKDRFqN4/mdhplgQKBgFdg++fPk37ZNlgrA3u+cW0d/UiWUqw3a2t9i9/o" + System.lineSeparator() +
+                "uV6fOj3fgM50RKzdhPoR3N0H5r4ZJD2OAp+daUj+MWmPp2sFDrwDQex0A/z1BTww" + System.lineSeparator() +
+                "/+6dtXC+oZ9q4au+XVwvlISWJVNteBq0qTvFpvKtA8AUx1XuF/H+m2Oje5lXfpHw" + System.lineSeparator() +
+                "5Ju9AoGAYM0jl2CNoX09XEp1NZruAntzzFmAZTDbq4Gls/U0FnoYjpYsIekjX+RF" + System.lineSeparator() +
+                "nF6ZfwozZJjJc/UETkggusqtUzca+0y6YASx4ec5EsL26i0l4JpT4RRTLckz4/7i" + System.lineSeparator() +
+                "bg92SjKP6NagJu5+JYJIDtON3SPxK2vWq/T5b6v42ptiAQi5huY=" + System.lineSeparator() +
+                "-----END RSA PRIVATE KEY-----" + System.lineSeparator();
+        Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofString(pemRsaPrivateKey));
+        assertTrue(it.hasNext());
+        assertNotNull(it.next().tryCast(RSAPrivateKey.class));
+
     }
 }

@@ -43,6 +43,10 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-provider-util</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500-cert</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.wildfly.common</groupId>
@@ -78,11 +82,6 @@
         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-x500</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500-cert</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
