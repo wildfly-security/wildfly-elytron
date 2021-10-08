@@ -487,4 +487,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Clear text encrypted to token '%s' using alias '%s'.")
     String encryptedToken(String token, String alias);
+
+    @Message(id = NONE, value = "Location that has been specified '%s' does not exist and automatic storage creation for the Credential Store is disabled.")
+    IllegalArgumentException locationDoesNotExistCreationDisabled(String location);
 }
