@@ -351,6 +351,9 @@ class CredentialStoreCommand extends Command {
             setStatus(GENERAL_CONFIGURATION_ERROR);
             throw ElytronToolMessages.msg.noArgumentOption(CREATE_CREDENTIAL_STORE_PARAM);
         }
+        if (!createStorage && location != null && !Files.exists(Paths.get(location))) {
+            throw ElytronToolMessages.msg.locationDoesNotExistCreationDisabled(location);
+        }
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
         String secret = cmdLine.getOptionValue(PASSWORD_CREDENTIAL_VALUE_PARAM);
         String key = cmdLine.getOptionValue(KEY_PARAM);
