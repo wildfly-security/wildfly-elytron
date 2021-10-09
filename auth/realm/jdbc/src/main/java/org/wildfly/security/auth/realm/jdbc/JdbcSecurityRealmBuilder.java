@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmIdentity;
 
 /**
@@ -67,6 +68,7 @@ public class JdbcSecurityRealmBuilder {
      * @return this builder.
      */
     public JdbcSecurityRealmBuilder setProviders(Supplier<Provider[]> providers) {
+        Assert.checkNotNullParam("providers", providers);
         this.providers = providers;
 
         return this;
@@ -79,6 +81,7 @@ public class JdbcSecurityRealmBuilder {
      * @return this builder
      */
     public JdbcSecurityRealmBuilder setHashCharset(Charset hashCharset) {
+        Assert.checkNotNullParam("hashCharset", hashCharset);
         this.hashCharset = hashCharset;
 
         return this;
