@@ -67,6 +67,7 @@ public class JdbcSecurityRealmBuilder {
      * @return this builder.
      */
     public JdbcSecurityRealmBuilder setProviders(Supplier<Provider[]> providers) {
+        Assert.checkNotNullParam("providers", providers);
         this.providers = providers;
 
         return this;
@@ -79,6 +80,7 @@ public class JdbcSecurityRealmBuilder {
      * @return this builder
      */
     public JdbcSecurityRealmBuilder setHashCharset(Charset hashCharset) {
+        Assert.checkNotNullParam("hashCharset", hashCharset);
         this.hashCharset = hashCharset;
 
         return this;
