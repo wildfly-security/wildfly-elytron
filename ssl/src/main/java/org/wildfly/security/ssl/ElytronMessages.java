@@ -104,8 +104,8 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
-    @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")
-    NoSuchAlgorithmException noAlgorithmForSslProtocol();
+    @Message(id = 4001, value = "No '%s' provided by the configured providers")
+    NoSuchAlgorithmException noSslContextProvided(String type);
 
     @Message(id = 4002, value = "Empty certificate chain is not trusted")
     CertificateException emptyChainNotTrusted();
@@ -190,5 +190,4 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 15000, value = "Uknown cipher suite name '%s' in names string '%s'")
     IllegalArgumentException unknownCipherSuiteName(String name, String string);
-
 }

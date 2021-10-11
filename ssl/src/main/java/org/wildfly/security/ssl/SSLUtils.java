@@ -151,7 +151,7 @@ public final class SSLUtils {
                     log.tracef("No %s provided by providers in %s: %s", SERVICE_TYPE, SSLUtils.class.getSimpleName(), Arrays.toString(providerSupplier.get()));
                 }
 
-                throw ElytronMessages.log.noAlgorithmForSslProtocol();
+                throw ElytronMessages.log.noSslContextProvided(SERVICE_TYPE);
             };
         }
 
@@ -163,7 +163,7 @@ public final class SSLUtils {
     }
 
     private static SSLContext throwIt() throws NoSuchAlgorithmException {
-        throw ElytronMessages.log.noAlgorithmForSslProtocol();
+        throw ElytronMessages.log.noSslContextProvided(SERVICE_TYPE);
     }
 
     /**
