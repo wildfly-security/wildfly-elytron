@@ -26,8 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.RealmIdentity;
 
 /**
  * A builder class to that creates {@link JdbcSecurityRealm} instances.
