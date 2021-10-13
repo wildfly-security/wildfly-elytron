@@ -77,7 +77,7 @@ public class AccessToken extends JsonWebToken {
         }
         Map<String, Object> resourceAccessValueMap = (Map<String, Object>) resourceAccessValue;
         Map<String, RealmAccessClaim> resourceAccessClaim = new HashMap<>(resourceAccessValueMap.size());
-        for (String key : resourceAccessClaim.keySet()) {
+        for (String key : resourceAccessValueMap.keySet()) {
             Object val = resourceAccessValueMap.get(key);
             resourceAccessClaim.put(key, val == null ? null : new RealmAccessClaim((Map<String, Object>)val));
         }
