@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.Locale;
 
 /**
+ * This enum lists server error codes for SCRAM authentication mechanism.
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public enum ScramServerErrorCode {
@@ -65,6 +66,11 @@ public enum ScramServerErrorCode {
         return messageBytes;
     }
 
+    /**
+     * Convert the error string to the respective {@code ScramServerErrorCode} enum value, or to the {@code OTHER_ERROR} value if can't match.
+     * @param value the error value as string
+     * @return the respective {@code ScramServerErrorCode} enum value from error string, {@code OTHER_ERROR} otherwise
+     */
     public static ScramServerErrorCode fromErrorString(String value) {
         try {
             return valueOf(value.replace('-', '_').toUpperCase(Locale.US));
