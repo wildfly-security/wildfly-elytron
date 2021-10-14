@@ -28,6 +28,7 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.math.HashMath;
 
 /**
+ * A {@code SaslClientFactory} that allows properties to be added to a delegate {@code SaslClientFactory}.
  * @author Kabir Khan
  */
 public class PropertiesSaslClientFactory extends AbstractDelegatingSaslClientFactory {
@@ -36,7 +37,7 @@ public class PropertiesSaslClientFactory extends AbstractDelegatingSaslClientFac
 
     /**
      * Constructor
-     * @param delegate the underlying SaslServerFactory
+     * @param delegate the underlying {@code SaslClientFactory}
      * @param properties the properties
      */
     public PropertiesSaslClientFactory(SaslClientFactory delegate, Map<String, ?> properties) {
