@@ -85,7 +85,18 @@
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-common</artifactId>
         </dependency>
-
+        
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmockit</groupId>
+            <artifactId>jmockit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
     </dependencies>
 
 </project>
