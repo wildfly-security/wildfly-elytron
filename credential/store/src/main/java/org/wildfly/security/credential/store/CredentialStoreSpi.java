@@ -149,6 +149,19 @@ public abstract class CredentialStoreSpi {
     }
 
     /**
+     * Returns credential types stored in this store with given alias as {@code Set<String>}.
+     *
+     * It is not mandatory to override this method (throws {@link UnsupportedOperationException} by default).
+     *
+     * @param credentialAlias to find the credentials types in the store
+     * @return {@code Set<String>} of all credential types stored in this store with credential alias
+     * @throws UnsupportedOperationException when this method is not supported by the underlying credential store
+     */
+    public Set<String> getCredentialTypesForAlias(String credentialAlias) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Validate given attributes in credential store implementation.
      *
      * @param attributes attributes to used to pass information to credential store service.
