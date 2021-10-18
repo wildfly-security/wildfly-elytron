@@ -1,0 +1,110 @@
+---
+layout: post
+title: 'Open Source Day 2021 Recap'
+date: 2021-10-18
+tags: elytron wildfly security opensource
+synopsis: A recap of Open Source Day, held during the virtual Grace Hopper Celebration.
+author: fjuma
+---
+
+A couple weeks ago, the https://wildfly-security.github.io/wildfly-elytron/[WildFly Elytron] team had a great time
+participating in https://ghc.anitab.org/programs-and-awards/open-source-day/[Open Source Day],
+an all-day hackathon that took place during the virtual https://ghc.anitab.org/[Grace Hopper Celebration] (vGHC). This was
+the WildFly Elytron team's second time participating in this event, after having been a part of the recent Summer Open
+Source Day as well. Once again, we were thrilled to see participants, project representatives, and mentors
+come together from all over the globe for this virtual event. The goal of Open Source Day is to guide participants through
+making contributions to open source projects.
+
+== How the day went
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/vGHCOpenSourceDay2021.png[align="center"]
+
+From the very beginning of the day, we could tell that this would be an even larger event than the Summer Open Source Day.
+We kicked things off with some introductory comments from Caitlyn Georger, the event program manager, and Rocio Montes, the chair
+of the event. It was then time to
+introduce our WildFly Elytron team members and mentors. Open Source Day mentors are volunteers who assist participants
+with their contributions for a particular project throughout the day. We were lucky to have 4 mentors join our WildFly
+Elytron team members to help our participants. We were also delighted that one of these mentors was actually one of our
+participants during the Summer Open Source Day!
+
+After the initial introductions, it was time to jump into an overview of our project. We then covered some
+general information on how to submit pull requests against the https://github.com/wildfly-security/wildfly-elytron[wildfly-elytron] repository.
+After that, it was time to start the hackathon!
+
+Prior to the event, we had created a bunch of issues and triaged existing ones that would be suitable for anyone getting
+started on the WildFly Elytron project. We made sure that the descriptions of these issues had useful pointers for
+tackling the tasks. We also added the https://issues.redhat.com/issues/?filter=12364234["good-first-issue"]
+label to these issues to make them easy to spot. We shared this list of issues with participants and helped them pick which
+ones to work on.
+
+Throughout the day, the WildFly Elytron team members and mentors helped participants set up their development environment,
+answered questions about Git and the process of submitting and updating pull requests, helped participants work on their
+issues, and provided feedback on their pull requests. There was also some time for general questions about working on
+open source projects. We ended the day with several pull requests submitted from first time contributors (we actually
+doubled our numbers from the Summer Open Source Day)!
+
+== Some thoughts from our first time contributors and mentors
+
+The WildFly Elytron team thoroughly enjoyed being a part of this event! It was a great way to end the virtual Grace Hopper
+Celebration. What did some of our first time contributors and mentors think of the day? Here's what they had to say:
+
+
+[quote]
+____
+I would like to say that as a student that just finished her 2nd year in software engineering in security I learned
+a lot about cyber security and what potential work I could be doing in the future. In the short time I was on call
+with the team, everyone was so supportive and I felt welcome even though I didn’t have a lot of knowledge.
+I really appreciate that as someone who doesn’t have a lot of experience. Working with individuals in the industry
+is a great privilege because I get to learn skills I wouldn’t otherwise learn in the classroom! I hope to keep
+contributing to the wildfly elytron repository as a novice in this field!
+
+*-Suha Siddiqui, Open Source Day participant*
+____
+
+[quote]
+____
+Before participating in the Open Source Day, I had no idea how contributing to Open Source works. Everything seemed
+so complicated that I was seriously doubting I would be able to make a contribution. Luckily, mentors of the
+WildFly Elytron team answered all of my questions and helped me navigate my way through GitHub. In the end, I
+learned how the whole process of contributing to projects looks like and was able to push several commits of my own
+to the project!
+
+*-Yana Z., Open Source Day participant*
+____
+
+[quote]
+____
+It was my first time mentoring for an Open Source Day event, and I couldn't have asked for a better team.
+Every team member of Wildfly Elytron was humble and provided their technical expertise on navigating through docs,
+setting up the project locally, and sharing tips on how to be a successful OSD mentor. I enjoyed my time working with
+WildFly Elytron folks and hope to contribute more in the future!
+
+*-Purva Singh, Open Source Day mentor*
+____
+
+[quote]
+____
+It was an amazing experience for me to work with all the mentors. It was a first time experience for me as a mentor
+in Open Source Day. That helps me to upskill myself. Also I learned a lot about next generation security applications
+through the wildfly-elytron project with the support of you guys. I'm exploring more about this project and looking
+forward to start contributing to this project.
+
+*-Amulya Dixit , Open Source Day mentor*
+____
+
+[quote]
+____
+I first worked with Farah, Ashpan, Sonia, and Diana during OSD summer. Their enthusiasm encouraged me to make my
+first open-source contributions over the summer. To contribute back to the community, I decided to come back to
+the Wildly Elytron project as a mentor during vGHC 2021. It was gratifying introducing people to open source
+development while learning more about the project from the team. Along with more technical details, the team’s
+approach towards introducing open-source development to new contributors is something I’ll take away from this event.
+
+*-Stuti Misra, Open Source Day mentor*
+____
+
+== What's next?
+
+The WildFly Elytron project is participating in https://hacktoberfest.digitalocean.com/[Hacktoberfest] this month
+and welcomes your contributions! Check out this https://wildfly-security.github.io/wildfly-elytron/blog/hacktoberfest-has-begun/[blog post]
+for all the details on how to get started with our project. 
