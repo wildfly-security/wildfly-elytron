@@ -188,7 +188,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, long offset, String string);
 
-    @Message(id = 15000, value = "Uknown cipher suite name '%s' in names string '%s'")
+    @Message(id = 15000, value = "Unknown cipher suite name '%s' in names string '%s'")
     IllegalArgumentException unknownCipherSuiteName(String name, String string);
 
     @Message(id = 15001, value = "No '%s' provided by the configured providers")
