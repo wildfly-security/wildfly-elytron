@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 18 Oct 2021 15:35:52 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 18 Oct 2021 17:30:56 +0000</lastBuildDate>
+        
+        <item>
+            <title>Open Source Day 2021 Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-recap/
+            </link>
+            <description>
+                A couple weeks ago, the WildFly Elytron team had a great time participating in Open Source Day, an all-day hackathon that took place during the virtual Grace Hopper Celebration (vGHC). This was the WildFly Elytron team&#8217;s second time participating in this event, after having been a part of the recent...
+            </description>
+            <pubDate>Mon, 18 Oct 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Hacktoberfest Has Begun</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming hash character sets and hash encodings support in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/
-            </link>
-            <description>
-                One of the features we have been working on for the Elytron subsytem is the ability to specify the hash character set and hash encoding in security realms that support storing hashed passwords. The purpose of this task is to ensure feature parity with legacy security configurations. We have plans...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-hash-encodings/
             </guid>
         </item>
         
