@@ -1,0 +1,100 @@
+---
+layout: post
+title: 'Using distributed realm in Elytron'
+date: 2021-10-21
+tags: elytron wildfly distributed security realm filesystem
+synopsis: An example of distributed realm usage in WildFly.
+author: dvilkola
+---
+
+With a distributed realm you can combine identities located across multiple security realms of any type into a single security realm.
+Identities can be used for both authentication and authorization purposes.
+
+== Add a distributed realm
+
+You can add a `distributed-realm` to the Elytron subsystem by specifying the list of realms to combine. The order of realms is important, as they will be queried sequentially in the order they were provided.
+
+ * `realms` list of realms in the order they should be queried
+
+```
+/subsystem=elytron/distributed-realm=distributedRealmExample:add(realms=securityRealm1,securityRealm2,...,securityRealmN])
+```
+
+The exception will be thrown if any of the queried realms is unavailable. For example, if authentication information for user `user2` is stored in `securityRealm2` and the realm `securityRealm1` is unavailable, then an authenticaion request for `user2` will result in an exception. This is because the `securityRealm1` was configured to be first in the list and therefore was queried first.
+
+== Example
+
+Below is example of adding 2 separate filesystem security realms with different users and combining them in distributed realm.
+
+[source]
+----
+# Add first filesystem realm with user1
+/subsystem=elytron/filesystem-realm=FsRealm1:add(path=demofs-realm-users1,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity(identity=user1)
+/subsystem=elytron/filesystem-realm=FsRealm1:set-password(identity=user1,clear={password="passwordUser1"})
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity-attribute(identity=user1,name=Roles, value=["Admin"])
+
+# Add second filesystem realm with user2
+/subsystem=elytron/filesystem-realm=FsRealm2:add(path=demofs-realm-users2,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity(identity=user2)
+/subsystem=elytron/filesystem-realm=FsRealm2:set-password(identity=user2,clear={password="passwordUser2"})
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity-attribute(identity=user2,name=Roles, value=["Admin"])
+
+# Add distributed realm that combines both filesystem realms
+/subsystem=elytron/distributed-realm=distributedRealm:add(realms=[FsRealm1, FsRealm2])
+----
+
+Now you can add security domain that uses this distributed realm:
+
+[source]
+----
+# Add security domain distributedSD that uses distributedRealm and from-roles-attribute role decoder
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=distributedSD:add(default-realm=distributedRealm,permission-mapper=default-permission-mapper,realms=[{realm=distributedRealm,role-decoder="from-roles-attribute"}])
+----
+
+Accessing both `user1` and `user2` is possible:
+[source]
+----
+/subsystem=elytron/security-domain=distributedSD:read-identity(name=user1)
+
+{
+    "outcome" => "success",
+    "result" => {
+        "name" => "user1",
+        "attributes" => {"Roles" => ["Admin"]},
+        "roles" => ["Admin"]
+    }
+}
+
+/subsystem=elytron/security-domain=distributedSD:read-identity(name=user2)
+
+{
+    "outcome" => "success",
+    "result" => {
+        "name" => "user2",
+        "attributes" => {"Roles" => ["Admin"]},
+        "roles" => ["Admin"]
+    }
+}
+----
+
+You can configure undertow to use this security domain in order to secure your deployed applications.
+
+
+[source]
+----
+# Configure HTTP authentication factory to use distributedSD and BASIC auth mechanism and configure undertow to use this http authentication factory
+
+/subsystem=elytron/http-authentication-factory=example-distributed-http-auth:add(http-server-mechanism-factory="global",mechanism-configurations=[{mechanism-name="BASIC",mechanism-realm-configurations=[{realm-name="FSRealmUsers"}]}],security-domain=distributedSD)
+/subsystem=undertow/application-security-domain=httpSD:add(http-authentication-factory=example-distributed-http-auth)
+----
+
+When you deploy an application that uses this security domain, users from both realms can successfully authorize to access it. To see an example with simple secured servlet that uses above distributed realm you can take a look here: https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm.
+
+**Note** that you can configure distributed realm to be used with the management interface as well and the security realms can be of different types (`ldap-realm`, `jdbc-realm`, etc.). You can also configure more than 2 security realms.
+
+== Summary
+
+This blog post has given an overview of `distributed-realm` in Elytron subsystem.
+You can take a look at a following example https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm for more information.
