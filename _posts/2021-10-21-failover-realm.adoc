@@ -1,0 +1,144 @@
+---
+layout: post
+title: 'Using failover realm in Elytron'
+date: 2021-10-21
+tags: elytron wildfly failover security realm filesystem ldap
+synopsis: An example of failover realm usage in WildFly.
+author: dvilkola
+---
+
+With a failover realm you can configure an alternative realm that will be used if primary realm is not available. A common use case is to fail over to a local file based realm if an LDAP or database server has gone down allowing administrators to retain access to the server.
+
+== Add a failover realm
+
+You can add a `failover-realm` to the Elytron subsystem by specifying the following attributes:
+
+ * `delegate-realm` primary security realm
+ * `failover-realm` alternative realm that will be used when primary realm is not available[1]
+ * `emit-events` configures whether this failover realm should emit https://wildfly-security.github.io/wildfly-elytron/documentation/api/current/org/wildfly/security/auth/server/event/SecurityRealmUnavailableEvent.html[SecurityRealmUnavailableEvent] security event to the corresponding SecurityDomain when it fails over[2].
+
+```
+/subsystem=elytron/failover-realm=failoverRealmExample:add(
+ delegate-realm=LdapRealm,failover-realm=LocalRealm,emit-events=false)
+```
+
+If the delegate throws a https://wildfly-security.github.io/wildfly-elytron/documentation/api/current/org/wildfly/security/auth/server/RealmUnavailableException.html[RealmUnavailableException] during RealmIdentity lookup, it will be caught and failover realm will be used instead.
+
+[1] Realm is unavailable when it throws a https://wildfly-security.github.io/wildfly-elytron/documentation/api/current/org/wildfly/security/auth/server/RealmUnavailableException.html[RealmUnavailableException] during lookup. This exception occurs when the connection to the realm was unsuccessful.
+
+[2] Security events are captured by security event listeners and can be used for audit logging
+
+== Example
+
+Below is an example of adding a `failover-realm` with primary LDAP realm and fail over filesystem realm.
+
+To make this example simple, we are going to use containerised version of OpenLdap. You can use `docker` and run the following:
+
+```
+$ docker run --env LDAP_ORGANISATION="wildfly" --env LDAP_DOMAIN="wildfly.org" --env LDAP_ADMIN_PASSWORD="admin" --detach osixia/openldap
+```
+
+You can check its IP address with the following command:
+
+```
+$ docker inspect --format '{{ .NetworkSettings.IPAddress }}' $(docker ps -q)
+172.17.0.2
+```
+
+Use any LDAP browser to check that the connection is working and to import a sample `ldif` file containing a single user named "user" which is granted the Role “Admin”.
+
+```
+dn: ou=Users,dc=wildfly,dc=org
+objectClass: organizationalUnit
+objectClass: top
+ou: Users
+dn: uid=user,ou=Users,dc=wildfly,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: Jane
+sn: user
+uid: user
+userPassword: secret123
+dn: ou=Roles,dc=wildfly,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: Roles
+dn: cn=Admin,ou=Roles,dc=wildfly,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: Admin
+member: uid=user,ou=Users,dc=wildfly,dc=org
+```
+
+Next, configure the LDAP realm in the elytron subsystem with appropriate identity and attribute mappings.
+
+[source]
+----
+/subsystem=elytron/dir-context=exampleDC:add(url="ldap://172.17.0.2:389",principal="cn=admin,dc=wildfly,dc=org",credential-reference={clear-text="admin"})
+/subsystem=elytron/ldap-realm=exampleLdapRealm:add(dir-context=exampleDC,identity-mapping={search-base-dn="ou=Users,dc=wildfly,dc=org",rdn-identifier="uid",user-password-mapper={from="userPassword"},attribute-mapping=[{filter-base-dn="ou=Roles,dc=wildfly,dc=org",filter="(&(objectClass=groupOfNames)(member={1}))",from="cn",to="Roles"}]})
+----
+
+Add filesystem realm with identity `user` and role `Admin` as well.
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=exampleFSRealm:add(path=demofs-realm-users,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=exampleFSRealm:add-identity(identity=user)
+/subsystem=elytron/filesystem-realm=exampleFSRealm:set-password(identity=user,clear={password="secret123"})
+/subsystem=elytron/filesystem-realm=exampleFSRealm:add-identity-attribute(identity=user,name=Roles, value=["Admin"])
+----
+
+Configure `failover-realm` to use the file system realm as a failover when LDAP realm is not available.
+
+[source]
+----
+/subsystem=elytron/failover-realm=failoverRealm:add(delegate-realm=exampleLdapRealm,failover-realm=exampleFSRealm)
+----
+
+Add a security domain that uses this failover realm and role decoder that decodes roles from the `Roles` attribute.
+
+[source]
+----
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=failoverSD:add(default-realm=failoverRealm,permission-mapper=default-permission-mapper,realms=[{realm=failoverRealm,role-decoder="from-roles-attribute"}])
+----
+
+Add HTTP authentication factory with this new security domain and `BASIC` authentication mechanism. Finally, configure undertow to use this HTTP authentication factory.
+[source]
+----
+/subsystem=elytron/http-authentication-factory=example-failover-http-auth:add(http-server-mechanism-factory="global",mechanism-configurations=[{mechanism-name="BASIC",mechanism-realm-configurations=[{realm-name="RealmUsersRoles"}]}],security-domain=failoverSD)
+/subsystem=undertow/application-security-domain=httpSD:add(http-authentication-factory=example-failover-http-auth)
+----
+
+Clone the example from this link https://github.com/wildfly-security-incubator/elytron-examples/tree/master/failover-realm and deploy it to the running WildFly instance.
+
+[source]
+----
+mvn clean install wildfly:deploy
+----
+
+After the application was successfully deployed you can  access the http://localhost:8080/failover-realm-demo/secure in your browser. You will be prompted to authenticate. Provide username `user` and password `secret123`.
+
+The security domain is configured to use the failover realm. Since the LDAP realm is configured to be the delegate realm, the authentication request was handled by the LDAP realm.
+
+Use docker to pause the OpenLDAP container:
+
+```
+$ docker pause ${CONTAINER}
+```
+
+The docker pause command suspends all processes in the specified container. This will make the LDAP realm unable to establish the connection to the OpenLDAP running in the container.
+
+When you access the http://localhost:8080/failover-realm-demo/secure and try to authenticate again, the LDAP realm will try to establish the connection. You might notice a slight delay in your authentication. After a certain timeout is exceeded, the failover filesystem realm will be used for authentication instead. Since the user is present in the filesystem realm as well, you will be able to connect successfully.
+
+To use `ldap-realm` instead of the `filesystem-realm` again, you can unpause the container.
+
+```
+$ docker unpause ${CONTAINER}
+```
+
+== Summary
+
+This blog post has given an overview of `failover-realm` usage in the Elytron subsystem.
+You can take a look at a following example https://github.com/wildfly-security-incubator/elytron-examples/tree/master/failover-realm for more information.
