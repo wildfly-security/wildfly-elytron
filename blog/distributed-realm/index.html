@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using distributed realm in Elytron</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using distributed realm in Elytron</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/4336bee4b72f539ef5f8cc0d2c6026f5">
+        
+        <p class="byline">By <a href="https://github.com/Skyllarr">Diana Krepinska Vilkolakova</a> | October 21, 2021</p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/&title=Using distributed realm in Elytron" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using distributed realm in Elytron&url=https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using distributed realm in Elytron&amp;body=Using distributed realm in Elytron https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>With a distributed realm you can combine identities located across multiple security realms of any type into a single security realm.
+Identities can be used for both authentication and authorization purposes.</p>
+</div>
+<div class="sect1">
+<h2 id="add-a-distributed-realm"><a class="anchor" href="#add-a-distributed-realm"></a>Add a distributed realm</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can add a <code>distributed-realm</code> to the Elytron subsystem by specifying the list of realms to combine. The order of realms is important, as they will be queried sequentially in the order they were provided.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>realms</code> list of realms in the order they should be queried</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/distributed-realm=distributedRealmExample:add(realms=securityRealm1,securityRealm2,...,securityRealmN])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The exception will be thrown if any of the queried realms is unavailable. For example, if authentication information for user <code>user2</code> is stored in <code>securityRealm2</code> and the realm <code>securityRealm1</code> is unavailable, then an authenticaion request for <code>user2</code> will result in an exception. This is because the <code>securityRealm1</code> was configured to be first in the list and therefore was queried first.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example"><a class="anchor" href="#example"></a>Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Below is example of adding 2 separate filesystem security realms with different users and combining them in distributed realm.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Add first filesystem realm with user1
+/subsystem=elytron/filesystem-realm=FsRealm1:add(path=demofs-realm-users1,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity(identity=user1)
+/subsystem=elytron/filesystem-realm=FsRealm1:set-password(identity=user1,clear={password="passwordUser1"})
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity-attribute(identity=user1,name=Roles, value=["Admin"])
+
+# Add second filesystem realm with user2
+/subsystem=elytron/filesystem-realm=FsRealm2:add(path=demofs-realm-users2,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity(identity=user2)
+/subsystem=elytron/filesystem-realm=FsRealm2:set-password(identity=user2,clear={password="passwordUser2"})
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity-attribute(identity=user2,name=Roles, value=["Admin"])
+
+# Add distributed realm that combines both filesystem realms
+/subsystem=elytron/distributed-realm=distributedRealm:add(realms=[FsRealm1, FsRealm2])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now you can add security domain that uses this distributed realm:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Add security domain distributedSD that uses distributedRealm and from-roles-attribute role decoder
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=distributedSD:add(default-realm=distributedRealm,permission-mapper=default-permission-mapper,realms=[{realm=distributedRealm,role-decoder="from-roles-attribute"}])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Accessing both <code>user1</code> and <code>user2</code> is possible:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=distributedSD:read-identity(name=user1)
+
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "name" =&gt; "user1",
+        "attributes" =&gt; {"Roles" =&gt; ["Admin"]},
+        "roles" =&gt; ["Admin"]
+    }
+}
+
+/subsystem=elytron/security-domain=distributedSD:read-identity(name=user2)
+
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "name" =&gt; "user2",
+        "attributes" =&gt; {"Roles" =&gt; ["Admin"]},
+        "roles" =&gt; ["Admin"]
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can configure undertow to use this security domain in order to secure your deployed applications.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs"># Configure HTTP authentication factory to use distributedSD and BASIC auth mechanism and configure undertow to use this http authentication factory
+
+/subsystem=elytron/http-authentication-factory=example-distributed-http-auth:add(http-server-mechanism-factory="global",mechanism-configurations=[{mechanism-name="BASIC",mechanism-realm-configurations=[{realm-name="FSRealmUsers"}]}],security-domain=distributedSD)
+/subsystem=undertow/application-security-domain=httpSD:add(http-authentication-factory=example-distributed-http-auth)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When you deploy an application that uses this security domain, users from both realms can successfully authorize to access it. To see an example with simple secured servlet that uses above distributed realm you can take a look here: <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm" class="bare">https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>Note</strong> that you can configure distributed realm to be used with the management interface as well and the security realms can be of different types (<code>ldap-realm</code>, <code>jdbc-realm</code>, etc.). You can also configure more than 2 security realms.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of <code>distributed-realm</code> in Elytron subsystem.
+You can take a look at a following example <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm" class="bare">https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm</a> for more information.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

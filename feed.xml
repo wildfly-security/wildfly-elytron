@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 18 Oct 2021 17:30:56 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 21 Oct 2021 15:39:25 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using distributed realm in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/
+            </link>
+            <description>
+                With a distributed realm you can combine identities located across multiple security realms of any type into a single security realm. Identities can be used for both authentication and authorization purposes. Add a distributed realm You can add a distributed-realm to the Elytron subsystem by specifying the list of realms...
+            </description>
+            <pubDate>Thu, 21 Oct 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/
+            </guid>
+        </item>
         
         <item>
             <title>Open Source Day 2021 Recap</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 14 Jun 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/
-            </guid>
-        </item>
-        
-        <item>
-            <title>WildFly Encrypted Expression Support</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
-            </link>
-            <description>
-                With the release of WildFly 23 the WildFly Elytron project and it&#8217;s integration now adds support for encrypted expressions within the management model, this post will describe the steps to quickly get started using this new feature. Introduction The CredentialStore functionality provided by WildFly Elytron provides a mechanism for the...
-            </description>
-            <pubDate>Fri, 19 Mar 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/
             </guid>
         </item>
         
