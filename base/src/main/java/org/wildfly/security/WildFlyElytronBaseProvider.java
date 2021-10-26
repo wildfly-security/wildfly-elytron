@@ -26,7 +26,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.Provider.Service;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

@@ -144,4 +144,6 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="https://www.w3.org/TR/xmldsig-core1/xmldsig11-schema.xsd"/>
+
 </xsd:schema>

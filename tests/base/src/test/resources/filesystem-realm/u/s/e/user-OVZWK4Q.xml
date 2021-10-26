@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="clear" format="base64">AXNlY3JldFBhc3N3b3Jk</password>
+    </credentials>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+            <Reference URI="">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                <DigestValue>xrU4pnFXL7ln3prQzFmmsFciNwRO/cE6TefYad4riho=</DigestValue>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue>INVALID_SIGNATURE</SignatureValue>
+        <KeyInfo>
+            <KeyValue>
+                <RSAKeyValue>
+                    <Modulus>nQWmAHovgGbBjCdk/ihZ7JKr3M+YvXP6H700GQ834vmw8jBogB/D9l7DU5Tv5qcJngTo0haqKpzk&#13;
+    0YIGRApiD2Jcw7D/FgOM+R8FYmjywTC1uKFPxffL2GxXTU1e5r+ds2WcQ1BDcodiNq/tCclQyaXW&#13;
+    ME9o4Z0IPHgRP8N8uC+OkUuuhk0IIhDQyrLhQhDzR8MvDY1vcg9kCsg9t/ELd7VMVcV+QmDXUs+Z&#13;
+    xbdaKnaso2xUw8aHEniy7t6ontc7FMYWVaeF2vptB3tw9bLexynhqE1x53hDl9nDzkd8ah49s+JW&#13;
+    U6drnaYKM0ACXaLbkHjpMvqy1c4DRdqmP8apZw==</Modulus>
+                    <Exponent>AQAB</Exponent>
+                </RSAKeyValue>
+            </KeyValue>
+        </KeyInfo>
+    </Signature>
+</identity>

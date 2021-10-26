@@ -153,6 +153,23 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13006, value = "Filesystem-backed realm unable to encrypt identity")
     RealmUnavailableException fileSystemRealmEncryptionFailed(@Cause Throwable cause);
 
-    @Message(id = 13007, value = "Filesystem-backed realm found an incompatible identity version. Requires at least version: %s")
-    RealmUnavailableException fileSystemRealmIncompatibleIdentityVersion(String expectedVersion);
+    @Message(id = 13007, value = "Signature for the following identity is invalid: %s.")
+    RealmUnavailableException invalidIdentitySignature(String s);
+
+    @Message(id = 13008, value = "Unable to create a signature for the file: %s.")
+    RealmUnavailableException unableToGenerateSignature(String s);
+
+    @Message(id = 13009, value = "Unable to locate the signature element for the file: %s")
+    RealmUnavailableException cannotFindSignature(String s);
+
+    @Message(id = 13010, value = "Both PrivateKey and PublicKey must be defined for realm at: %s")
+    IllegalArgumentException invalidKeyPairArgument(String s);
+
+    @Message(id = 13011, value = "Unable to access master index file: %s")
+    IllegalStateException unableToAccessMainIndex(String s);
+
+    @LogMessage(level = Logger.Level.TRACE)
+    @Message(id = 13012, value = "Unable to write checksum to main index")
+    void unableToWriteToMainIndex();
+
 }

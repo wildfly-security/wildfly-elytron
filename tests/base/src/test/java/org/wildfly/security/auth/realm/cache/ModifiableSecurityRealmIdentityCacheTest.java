@@ -170,7 +170,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
     }
 
     private ModifiableSecurityRealm createSecurityRealm() throws Exception {
-        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true), NameRewriter.IDENTITY_REWRITER, 2, true, Encoding.BASE64, StandardCharsets.UTF_8, ELYTRON_PASSWORD_PROVIDERS, null);
+        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true), NameRewriter.IDENTITY_REWRITER, 2, true, Encoding.BASE64, StandardCharsets.UTF_8, ELYTRON_PASSWORD_PROVIDERS, null, null, null);
 
         addUser(realm, "joe", "User");
 
