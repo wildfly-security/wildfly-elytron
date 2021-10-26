@@ -20,10 +20,12 @@ package org.wildfly.security.authz;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.authz.RoleDecoder.KEY_ROLES;
 import static org.wildfly.security.authz.RoleDecoder.KEY_SOURCE_ADDRESS;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
@@ -34,6 +36,18 @@ import org.junit.Test;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class RoleDecoderTest {
+
+    @Test
+    public void testDefaultRoleDecoder() {
+        Set<String> roles = new HashSet<>(Arrays.asList("employee", "internal"));
+        RoleDecoder roleDecoder = RoleDecoder.DEFAULT;
+
+        MapAttributes attributes = new MapAttributes();
+        attributes.addAll(KEY_ROLES, roles);
+        AuthorizationIdentity identity = AuthorizationIdentity.basicIdentity(attributes);
+
+        assertTrue(roleDecoder.decodeRoles(identity).containsAll(roles));
+    }
 
     @Test
     public void testSourceAddressRoleDecoderExactMatch() {
