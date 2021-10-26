@@ -146,4 +146,11 @@ interface ElytronMessages extends BasicLogger {
     @LogMessage(level = Logger.Level.DEBUG)
     @Message(id = 13004, value = "JAAS logout failed for principal %s")
     void debugInfoJaasLogoutFailure(Principal principal, @Cause Throwable cause);
+
+    @Message(id = 13005, value = "Signature for the following identity is invalid: %s.")
+    IllegalStateException invalidIdentitySignature(String s);
+
+    @Message(id = 13006, value = "Unable to create a signature for the file: %s.")
+    IllegalStateException unableToGenerateSignature(String s);
+
 }

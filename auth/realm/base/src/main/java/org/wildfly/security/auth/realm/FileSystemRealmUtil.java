@@ -34,7 +34,7 @@ import org.wildfly.security.credential.Credential;
 public class FileSystemRealmUtil {
     Identity identity;
     public FileSystemRealmUtil(String name, Path path, IdentitySharedExclusiveLock.IdentityLock lock, Charset hashCharset, Encoding hashEncoding){
-        this.identity = new Identity(name, path, lock, hashCharset, hashEncoding, null);
+        this.identity = new Identity(name, path, lock, hashCharset, hashEncoding, null, null, null, null);
     }
 
     public static void createEncryptedRealmFromUnencrypted(FileSystemSecurityRealm unencryptedRealm, FileSystemSecurityRealm encryptedRealm) throws RealmUnavailableException {
