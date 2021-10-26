@@ -20,7 +20,9 @@ package org.wildfly.security.auth.realm;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.util.function.Supplier;
 
 import javax.crypto.SecretKey;
@@ -44,6 +46,8 @@ public class FileSystemSecurityRealmBuilder {
     private Charset hashCharset;
     private Encoding hashEncoding;
     private SecretKey secretKey;
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
     private Supplier<Provider[]> providers;
 
     FileSystemSecurityRealmBuilder() {
@@ -132,9 +136,39 @@ public class FileSystemSecurityRealmBuilder {
         return this;
     }
 
+    /**
+     * Set the providers to be used by the realm.
+     *
+     * @param providers the provider to be used (must not be {@code null})
+     * @return this builder.
+     */
     public FileSystemSecurityRealmBuilder setProviders(final Supplier<Provider[]> providers) {
         Assert.checkNotNullParam("providers", providers);
         this.providers = providers;
+        return this;
+    }
+
+    /**
+     * Set the PrivateKey to be used by the realm.
+     *
+     * @param privateKey the asymmetric PrivateKey used to sign the identity files used for file integrity (must not be {@code null})
+     * @return this builder.
+     */
+    public FileSystemSecurityRealmBuilder setPrivateKey(final PrivateKey privateKey) {
+        Assert.checkNotNullParam("privateKey", privateKey);
+        this.privateKey = privateKey;
+        return this;
+    }
+
+    /**
+     * Set the PublicKey to be used by the realm.
+     *
+     * @param publicKey the asymmetric PublicKey used to verify the identity files used for file integrity (must not be {@code null})
+     * @return this builder.
+     */
+    public FileSystemSecurityRealmBuilder setPublicKey(final PublicKey publicKey) {
+        Assert.checkNotNullParam("publicKey", publicKey);
+        this.publicKey = publicKey;
         return this;
     }
 
@@ -154,6 +188,10 @@ public class FileSystemSecurityRealmBuilder {
         if (hashCharset == null) {
             hashCharset = StandardCharsets.UTF_8;
         }
-        return new FileSystemSecurityRealm(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, providers, secretKey);
+        if (privateKey == null ^ publicKey == null) {
+            throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
+        }
+
+        return new FileSystemSecurityRealm(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, providers, secretKey, privateKey, publicKey);
     }
 }

@@ -21,6 +21,7 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             targetNamespace="urn:elytron:identity:1.2"
             xmlns="urn:elytron:identity:1.2"
+            xmlns:xmldsig="http://www.w3.org/2000/09/xmldsig#"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified"
             version="1.2">
@@ -28,11 +29,14 @@
     <!-- File-backed realm elements -->
 
     <xsd:element name="identity" type="identity-type"/>
+    <xsd:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd" />
 
     <xsd:complexType name="identity-type">
         <xsd:all minOccurs="1" maxOccurs="1">
+            <xsd:element name="principal" type="name-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="credentials" type="credentials-type" minOccurs="0" maxOccurs="1"/>
             <xsd:element name="attributes" type="attributes-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="Signature" type="xmldsig:SignatureType" minOccurs="0" maxOccurs="1"/>
         </xsd:all>
     </xsd:complexType>
 
@@ -143,5 +147,6 @@
             </xsd:element>
         </xsd:sequence>
     </xsd:complexType>
+
 
 </xsd:schema>
