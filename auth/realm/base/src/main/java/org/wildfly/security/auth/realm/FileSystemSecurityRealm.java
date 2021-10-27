@@ -58,9 +58,11 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -113,11 +115,47 @@ import org.wildfly.security.permission.ElytronPermission;
  */
 public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
-    static final String ELYTRON_1_0 = "urn:elytron:1.0";
-    static final String ELYTRON_1_0_1 = "urn:elytron:1.0.1";
     static final ElytronPermission CREATE_SECURITY_REALM = ElytronPermission.forName("createSecurityRealm");
 
     private final Supplier<Provider[]> providers;
+    static final Map<String, Version> KNOWN_NAMESPACES;
+
+    private enum Version {
+
+        VERSION_1_0("urn:elytron:1.0", null),
+        VERSION_1_0_1("urn:elytron:1.0.1", VERSION_1_0),
+        VERSION_1_1("urn:elytron:identity:1.1", VERSION_1_0_1);
+
+        final String namespace;
+
+        /*
+         * In the future we could support multiple parents but wait until that becomes a reality before adding it.
+         */
+        final Version parent;
+
+        Version(String namespace, Version parent) {
+            this.namespace = namespace;
+            this.parent = parent;
+        }
+
+        String getNamespace() {
+            return namespace;
+        }
+
+        boolean isAtLeast(Version version) {
+            return this.equals(version) || (parent != null ? parent.isAtLeast(version) : false);
+        }
+
+    }
+
+    static {
+        Map<String, Version> knownNamespaces = new HashMap<>();
+        for (Version version : Version.values()) {
+            knownNamespaces.put(version.namespace, version);
+        }
+        KNOWN_NAMESPACES = Collections.unmodifiableMap(knownNamespaces);
+    }
+
     private final Path root;
     private final NameRewriter nameRewriter;
     private final int levels;
@@ -640,7 +678,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         streamWriter.writeCharacters("\n");
                         streamWriter.writeStartElement("identity");
                         // Continue to write using 1.0 as not using any features added in 1.0.1
-                        streamWriter.writeDefaultNamespace(ELYTRON_1_0);
+                        streamWriter.writeDefaultNamespace(Version.VERSION_1_0.getNamespace());
                         streamWriter.writeEndElement();
                         streamWriter.writeEndDocument();
                     } catch (XMLStreamException e) {
@@ -774,12 +812,26 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
+        private Version requiredVersion(final LoadedIdentity identityToWrite) {
+            // As new functionality is added we will identify if we need to use a later version
+            // if new functionality is used then use the required schema version otherwise fallback
+            // to an older version.
+
+            // Do we require version 1.1?
+            // return Version.VERSION_1_1;
+
+            // We would not require 1.0.1 as no realm specific changed were made.
+            //return Version.VERSION_1_0_1;
+
+            return Version.VERSION_1_0;
+        }
+
         private void writeIdentity(final XMLStreamWriter streamWriter, final LoadedIdentity newIdentity) throws XMLStreamException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateEncodingException {
             streamWriter.writeStartDocument();
             streamWriter.writeCharacters("\n");
             streamWriter.writeStartElement("identity");
-            // Continue to write using 1.0 as not using any features added in 1.0.1
-            streamWriter.writeDefaultNamespace(ELYTRON_1_0);
+
+            streamWriter.writeDefaultNamespace(requiredVersion(newIdentity).getNamespace());
 
             if (newIdentity.getCredentials().size() > 0) {
                 streamWriter.writeCharacters("\n    ");
@@ -898,13 +950,18 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int tag = streamReader.nextTag();
-            if (tag != START_ELEMENT || ! validNamespace(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
+            Version version;
+            if (tag != START_ELEMENT || ((version = identifyVersion(streamReader)) == null) || ! "identity".equals(streamReader.getLocalName())) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
-            return parseIdentityContents(streamReader, skipCredentials, skipAttributes);
+            return parseIdentityContents(streamReader, version, skipCredentials, skipAttributes);
         }
 
-        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
+        private Version identifyVersion(final XMLStreamReader streamReader) {
+            return KNOWN_NAMESPACES.get(streamReader.getNamespaceURI());
+        }
+
+        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final Version version, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
@@ -922,7 +979,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     }
                     return new LoadedIdentity(name, credentials, attributes, hashEncoding);
                 }
-                if (! validNamespace(streamReader.getNamespaceURI())) {
+                if (! version.getNamespace().equals(streamReader.getNamespaceURI())) {
+                    // Mixed versions unsupported.
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if (! gotCredentials && "credentials".equals(streamReader.getLocalName())) {
@@ -930,21 +988,21 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     if (skipCredentials) {
                         consumeContent(streamReader);
                     } else {
-                        credentials = parseCredentials(streamReader);
+                        credentials = parseCredentials(streamReader, version);
                     }
                 } else if (! gotAttributes && "attributes".equals(streamReader.getLocalName())) {
                     gotAttributes = true;
                     if (skipAttributes) {
                         consumeContent(streamReader);
                     } else {
-                        attributes = parseAttributes(streamReader);
+                        attributes = parseAttributes(streamReader, version);
                     }
                 }
                 streamReader.nextTag();
             }
         }
 
-        private List<Credential> parseCredentials(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+        private List<Credential> parseCredentials(final XMLStreamReader streamReader, final Version version) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
@@ -954,7 +1012,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
             List<Credential> credentials = new ArrayList<>();
             do {
-                if (! validNamespace(streamReader.getNamespaceURI())) {
+                if (! version.getNamespace().equals(streamReader.getNamespaceURI())) {
+                    // Mixed versions unsupported.
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
@@ -1111,7 +1170,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private Attributes parseAttributes(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+        private Attributes parseAttributes(final XMLStreamReader streamReader, final Version version) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
@@ -1122,7 +1181,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
             Attributes attributes = new MapAttributes();
             do {
-                if (! validNamespace(streamReader.getNamespaceURI())) {
+                if (! version.getNamespace().equals(streamReader.getNamespaceURI())) {
+                    // Mixed versions unsupported.
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("attribute".equals(streamReader.getLocalName())) {
@@ -1177,9 +1237,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private boolean validNamespace(final String namespace) {
-            return ELYTRON_1_0.equals(namespace) || ELYTRON_1_0_1.equals(namespace);
-        }
     }
 
     static final class LoadedIdentity {
