@@ -20,13 +20,13 @@ package org.wildfly.security.x500.cert.acme;
 
 import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+
 import java.math.BigInteger;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
-
-import javax.json.Json;
-import javax.json.JsonObject;
 
 import org.wildfly.common.codec.Base64Alphabet;
 import org.wildfly.common.iteration.ByteIterator;

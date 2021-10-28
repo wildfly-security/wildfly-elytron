@@ -20,10 +20,10 @@ package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 
-import java.util.Map;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import java.util.Map;
 
 import org.jose4j.jwt.JwtClaims;
 

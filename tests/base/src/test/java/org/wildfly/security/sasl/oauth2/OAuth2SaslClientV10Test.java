@@ -24,6 +24,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -33,8 +36,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
