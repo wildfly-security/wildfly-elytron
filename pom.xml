@@ -77,8 +77,6 @@
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
         <version.org.jboss.resteasy>4.7.2.Final</version.org.jboss.resteasy>
         <version.org.jboss.slf4j>1.0.4.GA</version.org.jboss.slf4j>
-        <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
-        <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
         <version.jakarta.json.jakarta-json-api>2.0.0</version.jakarta.json.jakarta-json-api>
         <version.jakarta.servlet.jakarta-servlet-api>5.0.0</version.jakarta.servlet.jakarta-servlet-api>
@@ -268,7 +266,6 @@
                             ${project.basedir}/audit/src/main/java/;
                             ${project.basedir}/auth/base/src/main/java/;
                             ${project.basedir}/auth/client/src/main/java/;
-                            ${project.basedir}/auth/jaspi/src/main/java/;
                             ${project.basedir}/auth/realm/base/src/main/java/;
                             ${project.basedir}/auth/realm/jdbc/src/main/java/;
                             ${project.basedir}/auth/realm/ldap/src/main/java/;
@@ -296,7 +293,6 @@
                             ${project.basedir}/http/sso/src/main/java/;
                             ${project.basedir}/http/oidc/src/main/java/;
                             ${project.basedir}/http/util/src/main/java/;
-                            ${project.basedir}/jacc/src/main/java/;
                             ${project.basedir}/jose/jwk/src/main/java/;
                             ${project.basedir}/jose/util/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
@@ -357,7 +353,6 @@
                                     <include>org/wildfly/security/auth/*.java</include>
                                     <include>org/wildfly/security/auth/callback/*.java</include>
                                     <include>org/wildfly/security/auth/client/*.java</include>
-                                    <include>org/wildfly/security/auth/jaspi/*.java</include>
                                     <include>org/wildfly/security/auth/permission/*.java</include>
                                     <include>org/wildfly/security/auth/principal/*.java</include>
                                     <include>org/wildfly/security/auth/server/*.java</include>
@@ -600,21 +595,10 @@
                 <artifactId>wildfly-elytron-http-sso</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-jacc</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-json-util</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-jaspi</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -964,20 +948,6 @@
                 <artifactId>wildfly-common</artifactId>
                 <version>${version.org.wildfly.common}</version>
                 <!-- scope is compile ELY-1153 -->
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.spec.javax.security.jacc</groupId>
-                <artifactId>jboss-jacc-api_1.5_spec</artifactId>
-                <version>${version.org.jboss.spec.org.jboss.spec.javax.security.jacc}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jboss.spec.javax.security.auth.message</groupId>
-                <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
-                <version>${version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec}</version>
-                <scope>provided</scope>
             </dependency>
 
             <dependency>
@@ -1408,7 +1378,6 @@
         <module>auth/server/sasl</module>
         <module>auth/util</module>
         <module>auth/client</module>
-        <module>auth/jaspi</module>
         <module>base</module>
         <module>credential/base</module>
         <module>credential/store</module>
@@ -1429,7 +1398,6 @@
         <module>http/stateful-basic</module>
         <module>http/sso</module>
         <module>http/util</module>
-        <module>jacc</module>
         <module>jose/jwk</module>
         <module>jose/util</module>
         <module>json-util</module>
