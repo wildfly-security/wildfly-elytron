@@ -492,6 +492,11 @@ public class OidcClientContext {
         }
 
         @Override
+        public Map<String, String> getRedirectRewriteRules() {
+            return delegate.getRedirectRewriteRules();
+        }
+
+        @Override
         public boolean isVerifyTokenAudience() {
             return delegate.isVerifyTokenAudience();
         }
