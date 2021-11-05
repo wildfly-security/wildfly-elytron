@@ -98,6 +98,7 @@ public class OidcClientConfiguration {
     protected String oidcStateCookiePath = "";
     protected String stateCookieName = "OAuth_Token_Request_State";
     protected boolean useResourceRoleMappings;
+    protected boolean useRealmRoleMappings;
     protected boolean cors;
     protected int corsMaxAge = -1;
     protected String corsAllowedHeaders;
@@ -445,6 +446,14 @@ public class OidcClientConfiguration {
 
     public void setUseResourceRoleMappings(boolean useResourceRoleMappings) {
         this.useResourceRoleMappings = useResourceRoleMappings;
+    }
+
+    public boolean isUseRealmRoleMappings() {
+        return useRealmRoleMappings;
+    }
+
+    public void setUseRealmRoleMappings(boolean useRealmRoleMappings) {
+        this.useRealmRoleMappings = useRealmRoleMappings;
     }
 
     public boolean isCors() {
