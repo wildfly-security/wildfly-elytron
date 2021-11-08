@@ -355,6 +355,17 @@ public final class CredentialStore {
     }
 
     /**
+     * Returns {@code Set<String>} of types stored in this store with given alias.
+     *
+     * @param credentialAlias to find the credentials types in the store
+     * @return {@code Set<String>} of all credential types stored in this store with given alias
+     * @throws UnsupportedOperationException when this method is not supported by the underlying credential store
+     */
+    public Set<String> getCredentialTypesForAlias(String credentialAlias) throws UnsupportedOperationException {
+        return spi.getCredentialTypesForAlias(credentialAlias);
+    }
+
+    /**
      * Flush the contents of this credential store to storage.  This method may be a no-op on credential stores
      * without backing storage or which do not buffer changes.
      *

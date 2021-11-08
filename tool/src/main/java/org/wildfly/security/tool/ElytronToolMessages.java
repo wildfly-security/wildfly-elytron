@@ -115,6 +115,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Display all aliases (Action)")
     String cmdLineAliasesDesc();
 
+    @Message(id = NONE, value = "Display all types of stored credentials for given alias (Action)")
+    String cmdLineAliasTypes();
+
     @Message(id = NONE, value = "Generate private and public key pair and store them as a KeyPairCredential")
     String cmdLineGenerateKeyPairDesc();
 
@@ -490,4 +493,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Location that has been specified '%s' does not exist and automatic storage creation for the Credential Store is disabled.")
     IllegalArgumentException locationDoesNotExistCreationDisabled(String location);
+
+    @Message(id = NONE, value = "Credential store contains credentials of types:%s for alias '%s'")
+    String types(String types, String alias);
 }
