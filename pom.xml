@@ -586,6 +586,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-stateful-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1416,6 +1421,7 @@
         <module>http/form</module>
         <module>http/oidc</module>
         <module>http/spnego</module>
+        <module>http/stateful-basic</module>
         <module>http/sso</module>
         <module>http/util</module>
         <module>jacc</module>
