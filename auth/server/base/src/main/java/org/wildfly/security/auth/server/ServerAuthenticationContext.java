@@ -2023,6 +2023,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
 
             SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), IdentityCredentials.NONE, IdentityCredentials.NONE)));
             authorizedIdentity = authorizedIdentity.withPublicCredentials(publicCredentials).withPrivateCredentials(privateCredentials);
+
             if (log.isTraceEnabled()) {
                 log.tracef("Authorizing principal %s.", authenticationPrincipal.getName());
                 if (authorizationIdentity != null) {
@@ -2046,8 +2047,8 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             ElytronMessages.log.trace("Authorization succeed");
             return new AuthorizedAuthenticationState(authorizedIdentity, authenticationPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration, mechanismConfiguration);
         }
-        @Override
 
+        @Override
         boolean authorize(final Principal authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             final AuthorizedAuthenticationState authzState = doAuthorization(true);
             if (authzState == null) {

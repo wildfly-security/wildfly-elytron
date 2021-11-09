@@ -29,10 +29,14 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Param;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -55,7 +59,7 @@ interface ElytronMessages extends BasicLogger {
 
     @LogMessage(level = Logger.Level.DEBUG)
     @Message(id = 1007, value = "JAAS authentication failed for principal %s")
-    void debugJAASAuthenticationFailure(Principal principal, @Cause Throwable cause);
+    void debugInfoJaasAuthenticationFailure(Principal principal, @Cause Throwable cause);
 
     @Message(id = 1008, value = "Failed to create login context")
     RealmUnavailableException failedToCreateLoginContext(@Cause Throwable cause);
@@ -133,4 +137,13 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13001, value = "Realm is failing over.")
     void realmFailover(@Cause RealmUnavailableException rue);
 
+    @Message(id = 13002, value = "%s does not handle a callback of type %s")
+    UnsupportedCallbackException unableToHandleCallback(@Param Callback callback, String callbackHandler, String callbackType);
+
+    @Message(id = 13003, value = "Failed to load JAAS configuration file.")
+    RealmUnavailableException failedToLoadJaasConfigFile();
+
+    @LogMessage(level = Logger.Level.DEBUG)
+    @Message(id = 13004, value = "JAAS logout failed for principal %s")
+    void debugInfoJaasLogoutFailure(Principal principal, @Cause Throwable cause);
 }
