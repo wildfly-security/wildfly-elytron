@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 @JsonPropertyOrder({"realm", "realm-public-key", "auth-server-url", "ssl-required",
         "resource", "public-client", "credentials",
-        "use-resource-role-mappings",
+        "use-resource-role-mappings", "use-realm-role-mappings",
         "enable-cors", "cors-max-age", "cors-allowed-methods", "cors-exposed-headers",
         "expose-token", "bearer-only", "autodetect-bearer-only",
         "connection-pool-size",
@@ -99,6 +99,8 @@ public class OidcJsonConfiguration {
     protected String resource;
     @JsonProperty("use-resource-role-mappings")
     protected boolean useResourceRoleMappings;
+    @JsonProperty("use-realm-role-mappings")
+    protected boolean useRealmRoleMappings = true;
     @JsonProperty("enable-cors")
     protected boolean cors;
     @JsonProperty("cors-max-age")
@@ -395,6 +397,14 @@ public class OidcJsonConfiguration {
 
     public void setUseResourceRoleMappings(boolean useResourceRoleMappings) {
         this.useResourceRoleMappings = useResourceRoleMappings;
+    }
+
+    public boolean isUseRealmRoleMappings() {
+        return useRealmRoleMappings;
+    }
+
+    public void setUseRealmRoleMappings(boolean useRealmRoleMappings) {
+        this.useRealmRoleMappings = useRealmRoleMappings;
     }
 
     public boolean isCors() {
