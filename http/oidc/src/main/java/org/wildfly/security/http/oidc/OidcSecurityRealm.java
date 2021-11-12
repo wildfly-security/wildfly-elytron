@@ -111,7 +111,8 @@ public class OidcSecurityRealm implements SecurityRealm {
             if (resourceAccessClaim != null) {
                 roles = resourceAccessClaim.getRoles().stream().collect(Collectors.toSet());
             }
-        } else {
+        }
+        if (session.getOidcClientConfiguration().isUseRealmRoleMappings()) {
             if (log.isTraceEnabled()) {
                 log.trace("use realm role mappings");
             }
