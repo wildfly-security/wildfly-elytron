@@ -27,6 +27,7 @@ import static org.wildfly.security.http.HttpConstants.HOST;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.http.sfbasic.BasicMechanismFactory.COOKIE_NAME;
 import static org.wildfly.security.http.sfbasic.BasicMechanismFactory.STATEFUL_BASIC_NAME;
 import static org.wildfly.security.mechanism._private.ElytronMessages.httpBasic;
 
@@ -41,9 +42,16 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
+import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.cache.IdentityCache;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpServerCookie;
+import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.sfbasic.IdentityManager.StoredIdentity;
 import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
@@ -57,6 +65,8 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
 
     private static final String CHALLENGE_PREFIX = "Basic ";
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
+
+    private final IdentityManager identityManager;
 
     private final boolean includeCharset;
     private final String configuredRealm;
@@ -76,9 +86,11 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
      * @param configuredRealm a configured realm name from the configuration.
      * @param includeCharset should the charset be included in the challenge.
      */
-    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String configuredRealm, final boolean silent, final boolean includeCharset) {
+    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final IdentityManager identityManager,
+                                 final String configuredRealm, final boolean silent, final boolean includeCharset) {
         super(checkNotNullParam("callbackHandler", callbackHandler));
 
+        this.identityManager = identityManager;
         this.includeCharset = includeCharset;
         this.configuredRealm = configuredRealm;
         this.silent = silent;
@@ -133,6 +145,10 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
             }
         }
 
+        if (attemptReAuthentication(request)) {
+            return;
+        }
+
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
@@ -160,11 +176,14 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
 
                         if (authenticate(mechanismRealm, username, password)) {
                             httpBasic.tracef("User %s authenticated successfully!", username);
-                            if (authorize(username)) {
+
+                            BasicIdentityCache identityCache = new BasicIdentityCache();
+
+                            if (authorize(username, identityCache)) {
                                 httpBasic.debugf("User %s authorization succeeded!", username);
                                 succeed();
 
-                                request.authenticationComplete();
+                                request.authenticationComplete(identityCache, identityCache::remove);
                                 return;
                             } else {
                                 httpBasic.debugf("User %s authorization failed.", username);
@@ -196,7 +215,53 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         request.noAuthenticationInProgress(response -> prepareResponse(request, displayRealmName, response));
     }
 
+    private boolean attemptReAuthentication(final HttpServerRequest request) throws HttpAuthenticationException {
+        String sessionID = null;
+        for (HttpServerCookie cookie : request.getCookies()) {
+           if (COOKIE_NAME.equals(cookie.getName())) {
+               sessionID = cookie.getValue();
+               break;
+           }
+        }
+
+        if (sessionID != null) {
+            BasicIdentityCache identityCache = new BasicIdentityCache(sessionID);
+            CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(identityCache);
+            try {
+                callbackHandler.handle(new Callback[]{authorizeCallback});
+            } catch (IOException | UnsupportedCallbackException e) {
+                throw new HttpAuthenticationException(e);
+            }
+            if (authorizeCallback.isAuthorized()) {
+                try {
+                    succeed();
+                } catch (IOException | UnsupportedCallbackException e) {
+                    throw new HttpAuthenticationException(e);
+                }
+                // We need the cookie to be sent after re-authentication to extend the validity.
+                request.authenticationComplete(identityCache, identityCache::remove);
+                request.resumeRequest();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean authorize(String username, IdentityCache identityCache)
+            throws HttpAuthenticationException {
+        CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(username, identityCache);
+        try {
+            callbackHandler.handle(new Callback[] { authorizeCallback });
+            return authorizeCallback.isAuthorized();
+        } catch (IOException | UnsupportedCallbackException e) {
+            throw new HttpAuthenticationException(e);
+        }
+    }
+
     private void prepareResponse(final HttpServerRequest request, String realmName, HttpServerResponse response) {
+        System.out.println("We are entering challenging times.");
+
         if (silent) {
             //if silent we only send a challenge if the request contained auth headers
             //otherwise we assume another method will send the challenge
@@ -214,6 +279,100 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         }
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setStatusCode(UNAUTHORIZED);
+    }
+
+    private final class BasicIdentityCache implements IdentityCache, HttpServerMechanismsResponder {
+
+        private String sessionID;
+
+        BasicIdentityCache() {
+        }
+
+        BasicIdentityCache(final String sessionID) {
+            this.sessionID = sessionID;
+        }
+
+        @Override
+        public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
+            if (sessionID != null) {
+                response.setResponseCookie(createCookie(COOKIE_NAME, sessionID));
+            }
+        }
+
+        @Override
+        public void put(SecurityIdentity identity) {
+            CachedIdentity cachedIdentity = new CachedIdentity(CHALLENGE_PREFIX, false, identity);
+
+            sessionID = identityManager.storeIdentity(sessionID, cachedIdentity);
+        }
+
+        @Override
+        public CachedIdentity get() {
+            if (sessionID != null) {
+                StoredIdentity storedIdentity = identityManager.retrieveIdentity(sessionID);
+
+                if (storedIdentity != null) {
+                    return storedIdentity.getCachedIdentity();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public CachedIdentity remove() {
+            if (sessionID != null) {
+                return identityManager.removeIdentity(sessionID);
+            }
+
+            return null;
+        }
+
+    }
+
+    private static HttpServerCookie createCookie(final String name, final String value) {
+        return new HttpServerCookie() {
+
+            @Override
+            public boolean isSecure() {
+                return false;
+            }
+
+            @Override
+            public boolean isHttpOnly() {
+                return false;
+            }
+
+            @Override
+            public int getVersion() {
+                return 0;
+            }
+
+            @Override
+            public String getValue() {
+                return value;
+            }
+
+            @Override
+            public String getPath() {
+                return "/";
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public int getMaxAge() {
+                // TODO Do we need age to be configurable.
+                return 900;
+            }
+
+            @Override
+            public String getDomain() {
+                return null;
+            }
+        };
     }
 
 }

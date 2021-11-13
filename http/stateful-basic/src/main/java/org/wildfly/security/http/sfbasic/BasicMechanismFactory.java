@@ -42,6 +42,10 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
 
     public static final String STATEFUL_BASIC_NAME = "STATEFUL_BASIC";
 
+    public static final String COOKIE_NAME = "WILDFLY_AUTH_SESSION";
+
+    private final IdentityManager identityManager = new IdentityManager();
+
     public BasicMechanismFactory() {
     }
 
@@ -66,8 +70,11 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
+        // TODO Do we need to configure the identity manager?  We could use the properties or subset
+        // of to key on the correct identity manager to use.
+
         if (STATEFUL_BASIC_NAME.equals(mechanismName)) {
-            return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM),
+            return new BasicAuthenticationMechanism(callbackHandler, identityManager, (String) properties.get(CONFIG_REALM),
                     Boolean.parseBoolean((String) properties.get(SILENT)), false);
         }
 
