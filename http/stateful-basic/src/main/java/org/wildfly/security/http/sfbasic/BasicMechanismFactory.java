@@ -42,7 +42,7 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
 
     public static final String STATEFUL_BASIC_NAME = "STATEFUL_BASIC";
 
-    public static final String COOKIE_NAME = "WILDFLY_AUTH_SESSION";
+    public static final String COOKIE_NAME = "ELYTRON_AUTH_SESSION";
 
     private final IdentityManager identityManager = new IdentityManager();
 
@@ -79,6 +79,11 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
         }
 
         return null;
+    }
+
+    @Override
+    public void shutdown() {
+        identityManager.shutdown();
     }
 
 }

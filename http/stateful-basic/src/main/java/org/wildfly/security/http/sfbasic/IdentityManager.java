@@ -23,7 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.cache.CachedIdentity;
@@ -31,9 +33,18 @@ import org.wildfly.security.cache.CachedIdentity;
 /**
  * Manager class responsible for handling the cached identities.
  *
+ * This implementation uses a coarse synchronization lock on the whole identity
+ * manager as the operations are largely direct maniuplation of the underlying
+ * collection.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 class IdentityManager {
+
+    /**
+     * Fifteen minutes.
+     */
+    private static final long MAX_VALIDITY = 15 * 60 * 1000;
 
     /**
      * This class is generating session IDs so these must be secure.
@@ -48,7 +59,7 @@ class IdentityManager {
     /**
      * Map of the presently cached identities.
      */
-    private final Map<String, StoredIdentity> cachedIdentities = new HashMap<>();
+    private final Map<String, StoredIdentity> storedIdentities = new HashMap<>();
 
     IdentityManager() {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
@@ -58,22 +69,20 @@ class IdentityManager {
         this.executor = executor;
     }
 
-    String storeIdentity(final String existingSessionID, final CachedIdentity cachedIdentity) {
+    synchronized String storeIdentity(final String existingSessionID, final CachedIdentity cachedIdentity) {
         if (existingSessionID != null) {
-            StoredIdentity storedIdentity = cachedIdentities.get(existingSessionID);
+            StoredIdentity storedIdentity = storedIdentities.get(existingSessionID);
             if (storedIdentity != null) {
                 storedIdentity.setCachedIdentity(cachedIdentity);
-                storedIdentity.setLastAccessed(System.currentTimeMillis());
+                storedIdentity.used(existingSessionID);
 
                 httpBasic.tracef("Updating cached identity for session '%s'", existingSessionID);
                 return existingSessionID;
             }
         }
 
-
-
         String sessionID =  null;
-        while (sessionID == null || cachedIdentities.containsKey(sessionID)) {
+        while (sessionID == null || storedIdentities.containsKey(sessionID)) {
             sessionID = generateSessionID();
         }
 
@@ -81,32 +90,54 @@ class IdentityManager {
             httpBasic.tracef("Creating new session '%s' for identity '%s'.", sessionID, cachedIdentity.getName());
         }
 
-        // TODO Use a synchronized store method, this will also allow us to set a time to
-        // invalidate the session.
-        cachedIdentities.put(sessionID, new StoredIdentity(sessionID, cachedIdentity));
+        StoredIdentity toStore = new StoredIdentity(cachedIdentity);
+        toStore.used(sessionID);
+        storedIdentities.put(sessionID, toStore);
 
         return sessionID;
     }
 
-    CachedIdentity retrieveIdentity(final String sessionID) {
-        // TODO Retrieval will need to rest the last used time and update the eviction task.
+    synchronized CachedIdentity retrieveIdentity(final String sessionID) {
+        StoredIdentity stored = storedIdentities.get(sessionID);
+        if (stored != null) {
+            if (System.currentTimeMillis() - stored.getLastAccessed() > MAX_VALIDITY) {
+                httpBasic.tracef("Removing session '%s' due to request to use beyond validity period.", sessionID);
+                stored.cancelCleanup();
+                storedIdentities.remove(sessionID);
+            } else {
+                stored.used(sessionID);
 
-        // TODO We should still check the last accessed time as it is not guaranteed the eviction task
-        // will have executed on time.
+                return stored.getCachedIdentity();
+            }
+        }
 
-        StoredIdentity stored = cachedIdentities.get(sessionID);
-        return stored != null ? stored.getCachedIdentity() : null;
+        return null;
     }
 
-    CachedIdentity removeIdentity(final String sessionID) {
-        // TODO Any related eviction task will need cancelling.
-
-        StoredIdentity stored = cachedIdentities.remove(sessionID);
+    synchronized CachedIdentity removeIdentity(final String sessionID) {
+        StoredIdentity stored = storedIdentities.remove(sessionID);
         if (stored != null) {
+            stored.cancelCleanup();
             httpBasic.tracef("Removing session '%s' due to request to remove.", sessionID);
         }
 
         return stored != null ? stored.getCachedIdentity() : null;
+    }
+
+    private synchronized void evict(final String sessionID, final long forLastAccessed) {
+        StoredIdentity stored = storedIdentities.get(sessionID);
+        if (stored != null) {
+            if (stored.getLastAccessed() == forLastAccessed) {
+                storedIdentities.remove(sessionID);
+                httpBasic.tracef("Removing session '%s' due to timeout.", sessionID);
+            } else {
+                // To hit this maybe the eviction task could not be successfully cancelled but the session
+                // was subsequently used.
+                httpBasic.tracef("Not evicting session '%s' due to different lastAccessed.", sessionID);
+            }
+        } else {
+            httpBasic.tracef("Session '%s' due for eviction but not in the stored identities.", sessionID);
+        }
     }
 
     private String generateSessionID() {
@@ -118,20 +149,22 @@ class IdentityManager {
         return ByteIterator.ofBytes(rawId).base64Encode().drainToString();
     }
 
-    private static class StoredIdentity {
+    void shutdown() {
+        this.executor.shutdown();
+    }
 
-        private final String sessionID;
-        private volatile CachedIdentity cachedIdentity;
-        private volatile long lastAccessed;
+    private class StoredIdentity {
 
-        StoredIdentity(final String sessionID, final CachedIdentity cachedIdentity) {
-            this.sessionID = sessionID;
+        // This class is only accessed in synchronised methods so we
+        // do not need the member variables to be volatile.
+
+        private CachedIdentity cachedIdentity;
+        private long lastAccessed;
+        private ScheduledFuture<?> futureCleanup;
+
+        StoredIdentity(final CachedIdentity cachedIdentity) {
             this.cachedIdentity = cachedIdentity;
             this.lastAccessed = System.currentTimeMillis();
-        }
-
-        protected String getSessionID() {
-            return sessionID;
         }
 
         protected CachedIdentity getCachedIdentity() {
@@ -142,12 +175,23 @@ class IdentityManager {
             this.cachedIdentity = cachedIdentity;
         }
 
-        void setLastAccessed(long lastAccessed) {
-            this.lastAccessed = lastAccessed;
-        }
-
         protected long getLastAccessed() {
             return lastAccessed;
         }
+
+        void used(final String sessionID) {
+            cancelCleanup();
+            final long ourLastAccessed = lastAccessed = System.currentTimeMillis();
+
+            futureCleanup = executor.schedule(() -> evict(sessionID, ourLastAccessed), 15, TimeUnit.MINUTES);
+        }
+
+        void cancelCleanup() {
+            if (futureCleanup != null) {
+                futureCleanup.cancel(true);
+                futureCleanup = null;
+            }
+        }
+
     }
 }
