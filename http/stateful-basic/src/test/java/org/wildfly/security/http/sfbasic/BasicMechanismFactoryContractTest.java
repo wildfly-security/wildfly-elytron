@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http.basic;
+package org.wildfly.security.http.sfbasic;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
-import org.wildfly.security.http.sfbasic.BasicMechanismFactory;
 
 /**
  * Tests that ServerMechanismFactoryImpl fulfills specified contract by
@@ -90,7 +89,7 @@ public class BasicMechanismFactoryContractTest {
     @Test
     public void testCreateAuthenticationMechanismPropertiesNull() throws HttpAuthenticationException {
         try {
-            httpServerAuthenticationMechanismFactory.createAuthenticationMechanism("BASIC", null, dummyCallbackHandler);
+            httpServerAuthenticationMechanismFactory.createAuthenticationMechanism("STATEFUL_BASIC", null, dummyCallbackHandler);
             Assert.fail("Properties could not be null");
         } catch (IllegalArgumentException e) {
             // OK - expected exception state
@@ -104,7 +103,7 @@ public class BasicMechanismFactoryContractTest {
     @Test
     public void testCreateAuthenticationMechanismCallbackHandlerNull() throws HttpAuthenticationException {
         try {
-            httpServerAuthenticationMechanismFactory.createAuthenticationMechanism("BASIC", new HashMap<String,String>(), null);
+            httpServerAuthenticationMechanismFactory.createAuthenticationMechanism("STATEFUL_BASIC", new HashMap<String,String>(), null);
             Assert.fail("CallbackHandler could not be null");
         } catch (IllegalArgumentException e) {
             // OK - expected exception state
