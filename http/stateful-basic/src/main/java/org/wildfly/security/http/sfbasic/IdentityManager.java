@@ -141,8 +141,7 @@ class IdentityManager {
     }
 
     private String generateSessionID() {
-        // OWASP recommendation of 128 bits minimum.
-        byte[] rawId = new byte[16];
+        byte[] rawId = new byte[32];
         random.nextBytes(rawId);
         // TODO - We could use a counter in addition to the 128 bits to guarantee a unique session ID.
 

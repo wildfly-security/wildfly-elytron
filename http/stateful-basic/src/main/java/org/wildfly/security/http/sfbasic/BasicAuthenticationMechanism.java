@@ -363,8 +363,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
 
             @Override
             public int getMaxAge() {
-                // TODO Do we need age to be configurable.
-                return 900;
+                return -1;
             }
 
             @Override
