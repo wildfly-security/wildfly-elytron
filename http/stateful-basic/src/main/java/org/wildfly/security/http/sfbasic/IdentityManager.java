@@ -16,6 +16,8 @@
 
 package org.wildfly.security.http.sfbasic;
 
+import static org.wildfly.security.mechanism._private.ElytronMessages.httpBasic;
+
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,13 +65,20 @@ class IdentityManager {
                 storedIdentity.setCachedIdentity(cachedIdentity);
                 storedIdentity.setLastAccessed(System.currentTimeMillis());
 
+                httpBasic.tracef("Updating cached identity for session '%s'", existingSessionID);
                 return existingSessionID;
             }
         }
 
+
+
         String sessionID =  null;
         while (sessionID == null || cachedIdentities.containsKey(sessionID)) {
             sessionID = generateSessionID();
+        }
+
+        if (httpBasic.isTraceEnabled()) {
+            httpBasic.tracef("Creating new session '%s' for identity '%s'.", sessionID, cachedIdentity.getName());
         }
 
         // TODO Use a synchronized store method, this will also allow us to set a time to
@@ -93,6 +102,10 @@ class IdentityManager {
         // TODO Any related eviction task will need cancelling.
 
         StoredIdentity stored = cachedIdentities.remove(sessionID);
+        if (stored != null) {
+            httpBasic.tracef("Removing session '%s' due to request to remove.", sessionID);
+        }
+
         return stored != null ? stored.getCachedIdentity() : null;
     }
 

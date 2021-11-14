@@ -237,11 +237,16 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
                 } catch (IOException | UnsupportedCallbackException e) {
                     throw new HttpAuthenticationException(e);
                 }
+                httpBasic.tracef("Authorized existing session '%s'.", sessionID);
                 // We need the cookie to be sent after re-authentication to extend the validity.
                 request.authenticationComplete(identityCache, identityCache::remove);
                 request.resumeRequest();
                 return true;
+            } else {
+                httpBasic.tracef("Unable to authorize session '%s'", sessionID);
             }
+        } else {
+            httpBasic.trace("No authentication session cookie found.");
         }
 
         return false;
@@ -259,8 +264,6 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
     }
 
     private void prepareResponse(final HttpServerRequest request, String realmName, HttpServerResponse response) {
-        System.out.println("We are entering challenging times.");
-
         if (silent) {
             //if silent we only send a challenge if the request contained auth headers
             //otherwise we assume another method will send the challenge
@@ -294,6 +297,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         @Override
         public void sendResponse(HttpServerResponse response) throws HttpAuthenticationException {
             if (sessionID != null) {
+                httpBasic.tracef("Sending session cookie for '%s'", sessionID);
                 response.setResponseCookie(createCookie(COOKIE_NAME, sessionID));
             }
         }
