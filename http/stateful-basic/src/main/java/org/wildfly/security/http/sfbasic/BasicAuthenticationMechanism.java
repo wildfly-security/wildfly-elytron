@@ -51,7 +51,6 @@ import org.wildfly.security.http.HttpServerCookie;
 import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.http.sfbasic.IdentityManager.StoredIdentity;
 import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
@@ -309,11 +308,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         @Override
         public CachedIdentity get() {
             if (sessionID != null) {
-                StoredIdentity storedIdentity = identityManager.retrieveIdentity(sessionID);
-
-                if (storedIdentity != null) {
-                    return storedIdentity.getCachedIdentity();
-                }
+                return identityManager.retrieveIdentity(sessionID);
             }
             return null;
         }

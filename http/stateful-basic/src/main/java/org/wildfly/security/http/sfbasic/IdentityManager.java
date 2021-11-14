@@ -79,15 +79,14 @@ class IdentityManager {
         return sessionID;
     }
 
-    StoredIdentity retrieveIdentity(final String sessionID) {
-        // TODO We may only need to return the SecurityIdentity
-
+    CachedIdentity retrieveIdentity(final String sessionID) {
         // TODO Retrieval will need to rest the last used time and update the eviction task.
 
         // TODO We should still check the last accessed time as it is not guaranteed the eviction task
         // will have executed on time.
 
-        return cachedIdentities.get(sessionID);
+        StoredIdentity stored = cachedIdentities.get(sessionID);
+        return stored != null ? stored.getCachedIdentity() : null;
     }
 
     CachedIdentity removeIdentity(final String sessionID) {
@@ -106,7 +105,7 @@ class IdentityManager {
         return ByteIterator.ofBytes(rawId).base64Encode().drainToString();
     }
 
-    static class StoredIdentity {
+    private static class StoredIdentity {
 
         private final String sessionID;
         private volatile CachedIdentity cachedIdentity;
