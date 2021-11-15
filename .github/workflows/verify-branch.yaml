@@ -1,0 +1,22 @@
+name: verify-branch
+
+on:
+  pull_request_target:
+    types: [opened]
+    branches: [master]
+
+jobs:
+    build:
+        name: Verify a PR was submitted against the correct branch
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/github-script@v5
+            with:
+              github-token: ${{secrets.GITHUB_TOKEN}}
+              script: |
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: 'You have submitted this pull request against the `master` branch. Are you sure this is intended or did you mean to submit the pull request against the `1.x` branch which is the current development branch?'
+                })
