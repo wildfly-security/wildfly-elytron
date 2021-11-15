@@ -85,10 +85,10 @@
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
-	<version.jmockit>1.34</version.jmockit>
+        <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
-        <version.net.minidev.json-smart>2.3</version.net.minidev.json-smart>
+        <version.net.minidev.json-smart>2.4.7</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>8.2.1</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
