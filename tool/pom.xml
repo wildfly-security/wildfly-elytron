@@ -126,6 +126,7 @@
                                         </manifestEntries>
                                     </transformer>
                                 </transformers>
+                                <finalName>${project.artifactId}-shaded-${project.version}</finalName>
                             </configuration>
                         </execution>
                     </executions>
