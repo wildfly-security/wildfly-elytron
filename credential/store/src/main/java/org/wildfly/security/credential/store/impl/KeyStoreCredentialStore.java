@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -819,6 +820,28 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     @Override
     public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
         return cache.keySet();
+    }
+
+    @Override
+    public Set<String> getCredentialTypesForAlias(final String credentialAlias) {
+        final TopEntry topEntry = cache.get(toLowercase(credentialAlias));
+        if (topEntry != null) {
+            if (!topEntry.getMap().isEmpty()) {
+                log.trace("KeyStoreCredentialStore: contains entries for given alias");
+                Set<String> types = new HashSet<>();
+                final Iterator<MidEntry> iterator = topEntry.getMap().values().iterator();
+                while(iterator.hasNext()) {
+                    MidEntry item = iterator.next();
+                    types.add(item.getCredentialType().getSimpleName());
+                }
+                return types;
+            } else {
+                log.trace("KeyStoreCredentialStore: no entry for given alias found");
+            }
+        } else {
+            log.trace("KeyStoreCredentialStore: alias not found in cache");
+        }
+        return null;
     }
 
     private Hold lockForRead() {

@@ -223,4 +223,9 @@ public abstract class AbstractCommandTest extends BaseToolTest {
         CredentialStore store = getCredentialStoreStorageFromExistsFile(storageLocation, storagePassword);
         checkAliasSecretValue(store, aliasName, aliasValue);
     }
+
+    protected void generateSecretKey(String storageLocation, String storagePassword, String aliasName) {
+        String[] args = { "--location=" + storageLocation, "--generate-secret-key", aliasName, "--password", storagePassword };
+        executeCommandAndCheckStatus(args);
+    }
 }

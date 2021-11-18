@@ -252,6 +252,29 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void testTypesList() {
+        String storageLocation = getStoragePathForNewFile();
+        String storagePassword = "cspassword";
+        String aliasName = "example-alias";
+        String aliasSecret = "secret";
+        String[] entryTypes = {"PasswordCredential", "SecretKeyCredential"};
+
+        createStoreAndAddAliasAndCheck(storageLocation, storagePassword, aliasName, aliasSecret);
+        generateSecretKey(storageLocation, storagePassword, aliasName);
+
+        String[] args = new String[] { "--location=" + storageLocation, "--credential-types", aliasName, "--password", storagePassword};
+        executeCommandAndCheckStatus(args);
+
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        assertTrue(output.startsWith("Credential store contains credentials of types:"));
+        for (String entryType : entryTypes) {
+            if (!output.contains(entryType)) {
+                Assert.fail(String.format("Credential store must contain entry type [%s]. But output is [%s].", entryType, output));
+            }
+        }
+    }
+
+    @Test
     public void testGenerateKeyPairDefault() throws CredentialStoreException {
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";

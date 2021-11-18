@@ -21,17 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import org.junit.Test;
 import org.wildfly.security.auth.permission.LoginPermission;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.util.CaseNameRewriter;
 
@@ -120,37 +111,9 @@ public class CaseNameRewriterTest {
     }
 
     private FileSystemSecurityRealm createSecurityRealm() throws Exception {
-        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true));
-        addUser(realm, "ALICE");
-        addUser(realm, "john");
+        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(ServerUtils.getRootPath(true, getClass()));
+        ServerUtils.addUser(realm, "ALICE");
+        ServerUtils.addUser(realm, "john");
         return realm;
-    }
-
-    private Path getRootPath(boolean deleteIfExists) throws Exception {
-        Path rootPath = Paths.get(getClass().getResource(File.separator).toURI())
-                .resolve("filesystem-realm");
-
-        if (rootPath.toFile().exists() && !deleteIfExists) {
-            return rootPath;
-        }
-
-        return Files.walkFileTree(Files.createDirectories(rootPath), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
-
-    private void addUser(ModifiableSecurityRealm realm, String userName) throws RealmUnavailableException {
-        ModifiableRealmIdentity realmIdentity = realm.getRealmIdentityForUpdate(new NamePrincipal(userName));
-        realmIdentity.create();
-        realmIdentity.dispose();
     }
 }

@@ -18,8 +18,12 @@
 package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.wildfly.security.tool.Command.isWindows;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Arrays;
 
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -31,6 +35,7 @@ import org.junit.Assert;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
 public class VaultCommandTest extends AbstractCommandTest {
+
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
     private static final String TARGET_LOCATION = "./target";
@@ -39,6 +44,25 @@ public class VaultCommandTest extends AbstractCommandTest {
     private static File credentialStoreFile1 = null;
     private static File credentialStoreFile2 = null;
     private static File credentialStoreFileMore = null;
+
+    protected static final String SPECIAL_CHARS = "@!#?$^*{}%+-<>&|()/";
+    protected static final String SPECIAL_CHARS_ENC_DIR = "target/test-classes/vault-v1/vault_data_special_chars/";
+    protected static final String CHINESE_CHARS = "用戶名";
+    protected static final String CHINESE_CHARS_ENC_DIR = "target/test-classes/vault-v1/vault_data_chinese_chars/";
+    protected static final String ARABIC_CHARS = "اسمالمستخدم";
+    protected static final String ARABIC_CHARS_ENC_DIR = "target/test-classes/vault-v1/vault_data_arabic_chars/";
+    protected static final String JAPANESE_CHARS = "ユーザー名";
+    protected static final String JAPANESE_CHARS_ENC_DIR = "target/test-classes/vault-v1/vault_data_japanese_chars/";
+
+    private static final String ALIAS = "test";
+    private static final String ENC_DIR = "target/test-classes/vault-v1/vault_data/";
+    private static final String IBM_ENC_DIR = "target/test-classes/vault-v1/vault_data_ibm/";
+    private static final String KEYSTORE = "target/test-classes/vault-v1/vault-jceks.keystore";
+    private static final String IBM_KEYSTORE = "target/test-classes/vault-v1/vault-jceks-ibm.keystore";
+    private static final String KEYSTORE_PASSWORD = "secretsecret";
+    private static final String SALT = "12345678";
+    private static final String ITERATION = "34";
+    private static final String MASK = "MASK-2hKo56F1a3jYGnJwhPmiF5";
 
     @BeforeClass
     public static void beforeTest() throws Exception {
@@ -85,18 +109,11 @@ public class VaultCommandTest extends AbstractCommandTest {
     public void singleConversionBasicTest() throws Exception {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args;
-        if (IS_IBM) {
-            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data_ibm/", "--keystore", "target/test-classes/vault-v1/vault-jceks-ibm.keystore",
-                    "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                    "--location", storeFileName, "--alias", "test"};
-        } else {
-            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore",
-                    "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                    "--location", storeFileName, "--alias", "test"};
-        }
+        String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
         // conversion
-        executeCommandAndCheckStatus(args);
+        executeVaultCommandWithParams(args);
 
         // check result
         args = new String[] { "--location", storeFileName, "--aliases", "--summary",
@@ -112,6 +129,254 @@ public class VaultCommandTest extends AbstractCommandTest {
             }
         }
 
+    }
+
+    /**
+     * Two conversions to the same location test
+     * @throws Exception
+     */
+    @Test
+    public void singleConversionRewriteConvertedFileTest() throws Exception {
+        // init
+        String storeFileName = getStoragePathForNewFile();
+        String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
+        // conversion
+        executeVaultCommandWithParams(args);
+
+        // check result
+        String[] checkResultArgs = new String[] { "--location", storeFileName, "--aliases", "--summary",
+                "--password", "secretsecret"};
+
+        String[] aliasesToCheck = {"vb1::attr11","vb1::attr12"};
+        String output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, checkResultArgs);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasesToCheck) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                        aliasName, output));
+            }
+        }
+
+        // convert again - it must fail because of same storeFileName
+        executeVaultCommandWithParams(args, false,
+                String.format("java.lang.IllegalArgumentException: ELYTOOL00026: Credential store storage file \"%s\" already exists.",
+                storeFileName));
+    }
+
+    /**
+     * Conversion with empty encryption directory test
+     * @throws Exception
+     */
+    @Test
+    public void testEmptyEncDirFolder() throws Exception {
+        String storeFileName = getStoragePathForNewFile();
+        String emptyEncDirFolder = Files.createTempDirectory("testEmptyEncDirFolder").toAbsolutePath().toString();
+
+        String[] args = new String[]{"--enc-dir", emptyEncDirFolder, "--keystore", KEYSTORE,
+                "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                "--location", storeFileName, "--alias", "test"};
+        executeVaultCommandWithParams(args, false, "ELYTOOL00019");
+    }
+
+    /**
+     * Conversion with special characters test
+     * @throws Exception
+     */
+    @Test
+    public void specialCharsTest() throws Exception {
+        // init
+        String storeFileName = getStoragePathForNewFile();
+        String[] args = new String[]{"--enc-dir", SPECIAL_CHARS_ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
+        executeVaultCommandWithParams(args);
+
+        // check result
+        String[] checkResultArgs = new String[] { "--location", storeFileName, "--aliases", "--summary",
+                "--password", "secretsecret"};
+
+        String[] aliasesToCheck = {"sc1::" + SPECIAL_CHARS, SPECIAL_CHARS + "::sc11", "sc2::sc12", SPECIAL_CHARS + "::" + SPECIAL_CHARS };
+        String output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, checkResultArgs);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasesToCheck) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                        aliasName, output));
+            }
+        }
+    }
+
+    /**
+     * Conversion with chinese characters test
+     * @throws Exception
+     */
+    @Test
+    public void chineseCharsTest() throws Exception {
+        assumeFalse("https://issues.redhat.com/browse/ELY-2245", isWindows());
+        // init
+        String storeFileName = getStoragePathForNewFile();
+        String[] args = new String[]{"--enc-dir", CHINESE_CHARS_ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
+        executeVaultCommandWithParams(args);
+
+        // check result
+        String[] checkResultArgs = new String[] { "--location", storeFileName, "--aliases", "--summary",
+                "--password", "secretsecret"};
+
+        String[] aliasesToCheck = {"cn1::" + CHINESE_CHARS, CHINESE_CHARS + "::cn11", "cn2::cn12", CHINESE_CHARS + "::" + CHINESE_CHARS };
+        String output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, checkResultArgs);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasesToCheck) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                        aliasName, output));
+            }
+        }
+    }
+
+    /**
+     * Conversion with arabic characters test
+     * @throws Exception
+     */
+    @Test
+    public void arabicCharsTest() throws Exception {
+        assumeFalse("https://issues.redhat.com/browse/ELY-2245", isWindows());
+        // init
+        String storeFileName = getStoragePathForNewFile();
+        String[] args = new String[]{"--enc-dir", ARABIC_CHARS_ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
+        executeVaultCommandWithParams(args);
+
+        // check result
+        String[] checkResultArgs = new String[] { "--location", storeFileName, "--aliases", "--summary",
+                "--password", "secretsecret"};
+
+        String[] aliasesToCheck = {"ar1::" + ARABIC_CHARS, ARABIC_CHARS + "::ar11", "ar2::ar12", ARABIC_CHARS + "::" + ARABIC_CHARS };
+        String output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, checkResultArgs);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasesToCheck) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                        aliasName, output));
+            }
+        }
+    }
+
+    /**
+     * Conversion with japanese characters test
+     * @throws Exception
+     */
+    @Test
+    public void japaneseCharsTest() throws Exception {
+        assumeFalse("https://issues.redhat.com/browse/ELY-2245", isWindows());
+        // init
+        String storeFileName = getStoragePathForNewFile();
+        String[] args = new String[]{"--enc-dir", JAPANESE_CHARS_ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS};
+        executeVaultCommandWithParams(args);
+
+        // check result
+        String[] checkResultArgs = new String[] { "--location", storeFileName, "--aliases", "--summary",
+                "--password", "secretsecret"};
+
+        String[] aliasesToCheck = {"jp1::" + JAPANESE_CHARS, JAPANESE_CHARS + "::jp11", "jp2::jp12", JAPANESE_CHARS + "::" + JAPANESE_CHARS };
+        String output = executeCommandAndCheckStatusAndGetOutput(CredentialStoreCommand.CREDENTIAL_STORE_COMMAND, checkResultArgs);
+        assertTrue(output.startsWith("Credential store contains following aliases:"));
+        for (String aliasName : aliasesToCheck) {
+            if (!output.contains(aliasName)) {
+                Assert.fail(String.format("Credential store must contain aliasName [%s]. But output is [%s].",
+                        aliasName, output));
+            }
+        }
+    }
+
+    /**
+     * Invalid parameters test
+     * @throws Exception
+     */
+    @Test
+    public void singleConversionInvalidRequiredOptionTest() throws Exception {
+        executeVaultCommandWithParams(("--alias wrongAliasName --keystore-password " + KEYSTORE_PASSWORD + " --enc-dir " + ENC_DIR + " --keystore " + KEYSTORE + " --location any").split(" "),
+                false, "ELYTOOL00008: Cannot locate admin key with alias \"wrongAliasName\" or it is of improper type");
+        executeVaultCommandWithParams(("--alias " + ALIAS + " --keystore-password invalid_password --enc-dir " + ENC_DIR + " --keystore " + KEYSTORE + " --location any").split(" "),
+                false, "Keystore was tampered with, or password was incorrect");
+        executeVaultCommandWithParams(("--alias " + ALIAS + " --keystore-password " + KEYSTORE_PASSWORD + " --enc-dir wrongEncDirName --keystore " + KEYSTORE + " --location any").split(" "),
+                false, "ELYTOOL00019: Encryption directory \"wrongEncDirName\" does not contain \"VAULT.dat\" file");
+        executeVaultCommandWithParams(("--alias " + ALIAS + " --keystore-password " + KEYSTORE_PASSWORD + " --enc-dir " + ENC_DIR + " --keystore wrongKsPath --location any").split(" "),
+                false,  "java.io.FileNotFoundException: wrongKsPath ");
+    }
+
+    /**
+     * Salt and iteration parameters test
+     * @throws Exception
+     */
+    @Test
+    public void testConvertOperationSaltAndIteration() throws Exception {
+        String baseCommand = "--enc-dir " + ENC_DIR + " --keystore " + KEYSTORE + " --keystore-password " + MASK + " --alias " + ALIAS;
+
+        executeVaultCommandWithParams((baseCommand + " --location " + getStoragePathForNewFile() + " --salt 12345678 --iteration 34").split(" "), true);
+        executeVaultCommandWithParams((baseCommand + " --location " + getStoragePathForNewFile() + " --salt --iteration 34").split(" "),
+                false, "Missing argument for option: s");
+        executeVaultCommandWithParams((baseCommand + " --location " + getStoragePathForNewFile() + " --salt 1234567890 --iteration 34").split(" "),
+                false,"Salt must be 8 bytes long");
+        executeVaultCommandWithParams((baseCommand + " --location " + getStoragePathForNewFile() + " --salt 12345678 --iteration abcd").split(" "),
+                false, "NumberFormatException");
+    }
+
+    /**
+     * Help option test
+     * @throws Exception
+     */
+    @Test
+    public void testHelp() throws Exception {
+        executeVaultCommandWithParams(new String[]{"--help"}, true, "command is used convert PicketBox Security Vault to credential store");
+    }
+
+    /**
+     * Summary option test
+     * @throws Exception
+     */
+    @Test
+    public void singleConversionSummaryTest() throws Exception {
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", KEYSTORE_PASSWORD,
+                    "--location", storeFileName, "--alias", ALIAS, "--summary"};
+
+        String expectedSummary = String.format(
+                "/subsystem=elytron/credential-store=test:add(relative-to=jboss.server.data.dir,create=true,modifiable=true,location=\"%s\","
+                        + "implementation-properties={\"keyStoreType\"=>\"JCEKS\"},credential-reference={clear-text=\"%s\"})",
+                storeFileName, "MASK-13KrO2ZNhwNg3UxmIt.02D;12345678;23");
+
+        // conversion
+        executeVaultCommandWithParams(args, true, expectedSummary);
+    }
+
+    /**
+     * Summary option test with masked password
+     * @throws Exception
+     */
+    @Test
+    public void singleConversionSummaryMaskedPasswordTest() throws Exception {
+        String storeFileName = getStoragePathForNewFile();
+
+        String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE,
+                    "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS, "--summary"};
+
+        String expectedSummary = String.format(
+                "/subsystem=elytron/credential-store=test:add(relative-to=jboss.server.data.dir,create=true,modifiable=true,location=\"%s\","
+                        + "implementation-properties={\"keyStoreType\"=>\"JCEKS\"},credential-reference={clear-text=\"%s\"})",
+                storeFileName, MASK + ";" + SALT + ";" + ITERATION);
+
+        // Conversion
+        executeVaultCommandWithParams(args, true, expectedSummary);
     }
 
     /**
@@ -159,25 +424,30 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionWrongOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc", "--location", "target/v1-cs-more.store"};
-        try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            Assert.assertTrue(e.getCause().getMessage().contains("ELYTOOL00013")
-                && e.getCause().getMessage().indexOf("location") > -1);
-        }
+        executeVaultCommandWithParams(args, false, "ELYTOOL00013");
     }
 
+    /**
+     * Bulk vault conversion test with wrong order
+     * @throws Exception when something ges wrong
+     */
+    @Test
+    public void bulkConversionDecsFileWrongOrder() throws Exception {
+        String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-wrong-order"};
+        executeVaultCommandWithParams(args, false);
+    }
+
+    /**
+     * Duplicated options test
+     */
     @Test
     public void testDuplicateOptions() {
         String storeFileName = getStoragePathForNewFile();
 
-        String[] args;
+        String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE, "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
+                    "--location", storeFileName, "--alias", ALIAS, "-e", "dir", "--keystore", "store"};
         if (IS_IBM) {
-            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data_ibm/", "--keystore", "target/test-classes/vault-v1/vault-jceks-ibm.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                    "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
-        } else {
-            args = new String[]{"--enc-dir", "target/test-classes/vault-v1/vault_data/", "--keystore", "target/test-classes/vault-v1/vault-jceks.keystore", "--keystore-password", "MASK-2hKo56F1a3jYGnJwhPmiF5", "--salt", "12345678", "--iteration", "34",
-                    "--location", storeFileName, "--alias", "test", "-e", "dir", "--keystore", "store"};
+            args = changeArgsToIBM(args);
         }
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
@@ -193,16 +463,7 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionMissingAliasOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-alias"};
-        boolean testFailed = true;
-        try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            // Exception is wrapped inside ELYTOOL00012
-            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00020"));
-            testFailed = false;
-        }
-
-        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+        executeVaultCommandWithParams(args, false, "ELYTOOL00020");
     }
 
     /**
@@ -211,16 +472,7 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionMissingLocationOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-location"};
-        boolean testFailed = true;
-        try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            // Exception is wrapped inside ELYTOOL00012
-            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00021"));
-            testFailed = false;
-        }
-
-        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+        executeVaultCommandWithParams(args, false, "ELYTOOL00021");
     }
 
     /**
@@ -229,16 +481,7 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionMissingEncryptionDirOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-enc-dir"};
-        boolean testFailed = true;
-        try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            // Exception is wrapped inside ELYTOOL00012
-            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00022"));
-            testFailed = false;
-        }
-
-        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+        executeVaultCommandWithParams(args, false, "ELYTOOL00022");
     }
 
     /**
@@ -247,16 +490,7 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionMissingKeystorePasswordOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-keystore-password"};
-        boolean testFailed = true;
-        try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            // Exception is wrapped inside ELYTOOL00012
-            Assert.assertTrue(e.getCause().getCause().getMessage().contains("ELYTOOL00023"));
-            testFailed = false;
-        }
-
-        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+        executeVaultCommandWithParams(args, false, "ELYTOOL00023");
     }
 
     /**
@@ -265,15 +499,52 @@ public class VaultCommandTest extends AbstractCommandTest {
     @Test
     public void bulkConversionMissingKeystoreOption() {
         String[] args = {"--bulk-convert", "target/test-classes/bulk-vault-conversion-no-keystore-url"};
-        boolean testFailed = true;
+        executeVaultCommandWithParams(args, false, "ELYTOOL00024");
+    }
+
+    private void executeVaultCommandWithParams(String[] args) {
+        executeVaultCommandWithParams(args, true);
+    }
+
+    private void executeVaultCommandWithParams(String[] args, boolean shouldPass) {
+        executeVaultCommandWithParams(args, shouldPass, null);
+    }
+
+    private void executeVaultCommandWithParams(String[] args, boolean shouldPass, String expectedOutput) {
+        boolean passed = false;
+        String output;
+
+        if (IS_IBM) {
+            args = changeArgsToIBM(args);
+        }
         try {
-            executeCommandAndCheckStatus(args);
-        } catch (Exception e) {
-            testFailed = false;
-            Assert.assertTrue(e.getCause().getMessage().contains("ELYTOOL00024"));
-            testFailed = false;
+            output = executeCommandAndCheckStatusAndGetOutput(args);
+            passed = true;
+        } catch (RuntimeException e) {
+            output = e.getMessage();
+            if (e.getCause().getCause() != null) {
+                output += e.getCause().getCause().getMessage();
+            }
         }
 
-        Assert.assertFalse("Test was supposed to throw exception!", testFailed);
+        String message = "Execution of vault command with arguments {" + String.join(" ", args) + "} should" +
+                (shouldPass? " succeeded ": " failed ") + "but it" + (shouldPass? " failed": " succeeded");
+        Assert.assertTrue(message, passed == shouldPass);
+
+        if (expectedOutput != null) {
+            Assert.assertTrue("Command output should contain \"" + expectedOutput + "\"", output.contains(expectedOutput));
+        }
+    }
+
+    private String[] changeArgsToIBM(String[] args) {
+        int index = Arrays.asList(args).indexOf(ENC_DIR);
+        if (index != -1) {
+            args[index] = IBM_ENC_DIR;
+        }
+        index = Arrays.asList(args).indexOf(KEYSTORE);
+        if (index != -1) {
+            args[index] = IBM_KEYSTORE;
+        }
+        return args;
     }
 }

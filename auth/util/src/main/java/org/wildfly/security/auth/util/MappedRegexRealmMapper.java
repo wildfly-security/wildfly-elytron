@@ -26,8 +26,8 @@ import org.wildfly.security.auth.server.RealmMapper;
 import org.wildfly.security.evidence.Evidence;
 
 /**
- * A simple mapping regular expression-based realm mapper.  The pattern is used to find the realm portion
- * of the user name.  Then, a map is consulted to map this realm portion to an actual configured realm name.
+ * A simple mapping regular expression-based realm mapper. The pattern is used to find the realm portion
+ * of the user name. Then, a map is consulted to map this realm portion to an actual configured realm name.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
