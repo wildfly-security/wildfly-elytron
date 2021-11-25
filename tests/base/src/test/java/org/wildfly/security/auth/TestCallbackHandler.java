@@ -23,7 +23,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import java.io.IOException;
 import java.security.Principal;
 
 import org.wildfly.security.evidence.Evidence;
@@ -57,7 +56,7 @@ public class TestCallbackHandler implements CallbackHandler {
     }
 
     @Override
-    public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+    public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
         if (callbacks == null)
             throw new IllegalArgumentException("The callbacks argument cannot be null");
 
