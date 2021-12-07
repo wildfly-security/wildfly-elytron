@@ -1,0 +1,158 @@
+---
+layout: post
+title: 'Securing WildFly Apps with OpenID Connect'
+date: 2021-12-17
+tags: oidc
+synopsis: An overview of the native support for OpenID Connect in WildFly.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 25 added the ability to secure applications using OpenID Connect, without needing
+to make use of the Keycloak client adapter. This blog post gives an introduction to this feature.
+
+toc::[]
+
+== OpenID Connect
+
+https://openid.net/connect/[OpenID Connect] is an identity layer on top of the OAuth 2.0 protocol.
+OpenID Connect makes it possible for a client to verify a user's identity based on authentication
+that's performed by an OpenID provider.
+
+== New elytron-oidc-client Subsystem
+
+WildFly 25 introduced a new `elytron-oidc-client` subsystem that scans deployments to check if the
+OpenID Connect (OIDC) authentication mechanism is needed. If the subsystem detects that the OIDC
+mechanism is required for a deployment, the subsystem will activate this authentication mechanism
+automatically.
+
+The configuration that indicates that the OIDC authentication mechanism is needed by an
+application can either be provided within the application itself or within the `elytron-client-oidc`
+subsystem.
+
+=== Deployment Configuration
+
+Two steps are needed to specify that the OIDC authentication mechanism should be used to
+secure an application using configuration within the deployment.
+
+First, an `oidc.json` configuration file needs to be added to the application's `WEB-INF` directory.
+There is a sample `oidc.json` configuration file in the https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client[documentation].
+(Note that with the exception of a couple new options, the options that can be specified in the `oidc.json`
+file are the same as the options that could previously be specified in the `keycloak.json` file that was used
+with the Keycloak client adapter.)
+
+Next, the application's `web.xml` file should also specify `OIDC` as the `auth-method`:
+
+[source]
+----
+<login-config>
+    <auth-method>OIDC</auth-method>
+</login-config>
+----
+
+=== Subsystem Configuration
+
+Instead of including the OIDC configuration directly in a deployment, it's also possible to configure
+this via the `elytron-oidc-client` subsystem instead.
+
+For each deployment that is to be secured with OIDC, a `secure-deployment` should be added.
+It is also possible to combine configuration that is common to multiple deployments using
+the `provider` resource.
+
+Sample `elytron-oidc-client` subsystem configuration can also be found in the https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client[documentation].
+The various options that can be specified here correspond to the same options that can be specified in the
+`oidc.json` configuration above.
+
+=== Required Configuration Options
+
+Whether the OIDC configuration is being specified directly in the deployment or via the subsystem
+configuration, there are a couple configuration options that must be specified:
+
+* client-id - This is the client identifier for the application. This is the identifier that
+has been registered with the authorization server.
+
+* provider-url - The URL of the OpenID provider. WildFly will use `provider-url/.well-known/configuration`
+to discover more information about the OpenID provider. As an example, for Keycloak, the `provider-url`
+will look like http://localhost:8080/auth/realms/myrealm.
+
+The rest of the configuration options are optional and are the same as the previous Keycloak
+client adapter.
+
+== OpenID Providers
+
+WildFly 25 and WildFly 26 have been tested with the Keycloak OpenID provider. Although it's now possible
+to configure WildFly to use other OpenID providers, these haven’t been extensively tested yet so the
+use of other OpenID providers should be considered experimental for now and should not be used in a
+production environment yet. Proper support for other OpenID providers will be added in a future WildFly
+release.
+
+== Securing an application using OIDC
+
+In the rest of this post, we'll go through a complete example to see how to secure an application
+deployed to WildFly using OpenID Connect with the Keycloak OpenID provider.
+
+=== Example Project
+
+First, clone the `elytron-examples` repo locally:
+
+[source]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+
+We’re going to be looking at the `simple-webapp-oidc` project.
+
+=== Setting up your Keycloak OpenID provider
+
+It's easy to set up Keycloak using Docker. Follow the steps in Keycloak's https://www.keycloak.org/getting-started/getting-started-docker[getting started guide]
+to start Keycloak, create a realm called `myrealm`, create a user called `myuser`,
+and register a client called `myclient`.
+
+After registering our client, `myclient`, we also need to configure valid redirect URIs. Simply click
+on `Clients` and then on `myclient`. In the `Valid Redirect URIs` field, enter http://localhost:8090/simple-webapp-oidc/*.
+
+=== Deploying the app to WildFly
+
+We're going to use the deployment configuration approach for this example, i.e., our application
+contains an https://github.com/wildfly-security-incubator/elytron-examples/blob/master/simple-webapp-oidc/src/main/webapp/WEB-INF/oidc.json[oidc.json] file and its https://github.com/wildfly-security-incubator/elytron-examples/blob/master/simple-webapp-oidc/src/main/webapp/WEB-INF/web.xml#L18-L20[web.xml] file specifies `OIDC` as the `auth-method`.
+
+Now that we've set up our Keycloak OpenID provider, we just need to deploy our application to WildFly.
+
+First, we're going to start our WildFly instance (notice that we're specifying a port offset here
+since our Keycloak instance is already exposed on port 8080):
+
+[source]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10
+----
+
+Next, we're going to build and deploy our project. From our `elytron-examples` directory, run the
+following commands:
+
+[source]
+----
+cd simple-webapp-oidc
+mvn wildfly:deploy -Dwildfly.port=10000
+----
+
+=== Accessing the app
+
+Now, let's try accessing our application using http://localhost:8090/simple-webapp-oidc/.
+
+Click on "Access Secured Servlet".
+
+Now, you'll be redirected to Keycloak to log in. Log in with `myuser` and the password that you
+set when configuring Keycloak.
+
+Next, you'll be redirected back to our application and you should see the "Secured Servlet" page.
+That means that we've been able to successfully log in to our application using the Keycloak
+OpenID provider!
+
+== Summary
+
+This blog post has given an introduction to the native support for OpenID Connect in WildFly
+and has shown how to secure an application deployed to WildFly with OpenID Connect.
+For more details about this feature, be sure to check out the https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client[documentation].
