@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.function.Consumer;
@@ -1242,7 +1243,12 @@ public final class SecurityDomain {
 
     private static class ScheduledExecutorServiceProvider {
 
-        private static final ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1);
+        private static final ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1, runnable -> {
+            // use daemon thread
+            Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
 
         static {
             INSTANCE.setRemoveOnCancelPolicy(true);
