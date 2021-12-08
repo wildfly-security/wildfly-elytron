@@ -78,16 +78,22 @@
         <version.org.jboss.resteasy>4.7.2.Final</version.org.jboss.resteasy>
         <version.org.jboss.slf4j>1.0.4.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
-        <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
+        <version.org.jboss.spec.javax.security.auth.message>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message>
         <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.2.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
         <version.org.jboss.spec.javax.xml.ws>2.0.5.Final</version.org.jboss.spec.javax.xml.ws>
+        <version.org.jboss.spec.jakarta.xml.ws>1.0.1.Final</version.org.jboss.spec.jakarta.xml.ws>
         <version.jakarta.json.jakarta-json-api>1.1.6</version.jakarta.json.jakarta-json-api>
+        <version.jakarta.security.auth.message>2.0.0-RC1</version.jakarta.security.auth.message>
+        <version.jakarta.authorization>2.0.0</version.jakarta.authorization>
+        <version.jakarta.security.jacc>1.6.1</version.jakarta.security.jacc>
+        <version.jakarta.servlet.jakarta-servlet-api>5.0.0</version.jakarta.servlet.jakarta-servlet-api>
         <version.org.jboss.threads>2.4.0.Final</version.org.jboss.threads>
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.4.0</version.hsqldb>
+        <version.org.glassfish.jakarta.json>2.0.0</version.org.glassfish.jakarta.json>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
         <version.net.minidev.json-smart>2.4.7</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>8.2.1</version.com.nimbusds.nimbus-jose-jwt>
@@ -95,6 +101,7 @@
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.1.Final</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.5.4.Final</version.org.wildfly.common>
+        <version.org.wildfly.extras.batavia>1.0.11.Final</version.org.wildfly.extras.batavia>
         <version.commons-io.commons-io>2.7</version.commons-io.commons-io>
         <version.org.mock-server.mockserver-netty>5.4.1</version.org.mock-server.mockserver-netty>
         <version.org.xipki.pki.ocsp-server>3.0.0</version.org.xipki.pki.ocsp-server>
@@ -446,6 +453,31 @@
                     <artifactId>lifecycle-mapping</artifactId>
                     <version>1.0.0</version>
                 </plugin>
+                <!-- Javax to Jakarta transformation plugin. -->
+                <plugin>
+                    <groupId>org.wildfly.extras.batavia</groupId>
+                    <artifactId>transformer-tools-mvn</artifactId>
+                    <version>${version.org.wildfly.extras.batavia}</version>
+                    <executions>
+                        <execution>
+                            <id>transform-sources</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>transform-sources</goal>
+                            </goals>
+                            <configuration>
+                                <source-project>${jakarta.transformer.input.dir}</source-project>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.wildfly.extras.batavia</groupId>
+                            <artifactId>transformer-impl-eclipse</artifactId>
+                            <version>${version.org.wildfly.extras.batavia}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -463,6 +495,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-audit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-audit-jakarta</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -513,6 +550,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-client-jakarta</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -582,6 +624,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-oidc-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-spnego</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -605,16 +652,31 @@
                 <artifactId>wildfly-elytron-jacc</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jacc-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-json-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-json-util-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-jaspi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-jaspi-jakarta</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -671,6 +733,11 @@
                 <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-mechanism-oauth2-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.wildfly.security</groupId>
@@ -717,6 +784,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-realm-token</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-realm-token-jakarta</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -854,6 +926,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-x500-cert-acme-jakarta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-x500-cert-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -934,6 +1011,24 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <groupId>org.jboss.spec.javax.xml.ws</groupId>
+                <artifactId>jboss-jaxws-api_2.2_spec</artifactId>
+                <version>${version.org.jboss.spec.javax.xml.ws}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.spec.jakarta.xml.ws</groupId>
+                <artifactId>jboss-jakarta-xml-ws-api_3.0_spec</artifactId>
+                <version>${version.org.jboss.spec.jakarta.xml.ws}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.ws</groupId>
+                <artifactId>jbossws-spi</artifactId>
+                <version>${version.org.jboss.ws.jbossws-spi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.jboss.slf4j</groupId>
                 <artifactId>slf4j-jboss-logmanager</artifactId>
                 <version>${version.org.jboss.slf4j}</version>
@@ -974,9 +1069,30 @@
             </dependency>
 
             <dependency>
+                <groupId>jakarta.security.jacc</groupId>
+                <artifactId>jakarta.security.jacc-api</artifactId>
+                <version>${version.jakarta.security.jacc}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.jboss.spec.javax.security.auth.message</groupId>
                 <artifactId>jboss-jaspi-api_1.1_spec</artifactId>
-                <version>${version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec}</version>
+                <version>${version.org.jboss.spec.javax.security.auth.message}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.security.auth.message</groupId>
+                <artifactId>jakarta.security.auth.message-api</artifactId>
+                <version>${version.jakarta.security.auth.message}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.authorization</groupId>
+                <artifactId>jakarta.authorization-api</artifactId>
+                <version>${version.jakarta.authorization}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -984,6 +1100,13 @@
                 <groupId>org.jboss.spec.javax.servlet</groupId>
                 <artifactId>jboss-servlet-api_3.1_spec</artifactId>
                 <version>${version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${version.jakarta.servlet.jakarta-servlet-api}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -1193,6 +1316,13 @@
                 <groupId>org.glassfish</groupId>
                 <artifactId>javax.json</artifactId>
                 <version>${version.org.glassfish.javax.json}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>jakarta.json</artifactId>
+                <version>${version.org.glassfish.jakarta.json}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -1472,5 +1602,6 @@
         <module>tests/base</module>
         <module>tests/common</module>
         <module>wildfly-elytron</module>
+        <module>jakarta</module>
     </modules>
 </project>

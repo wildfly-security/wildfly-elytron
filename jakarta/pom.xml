@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2021 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.wildfly.security</groupId>
+        <artifactId>wildfly-elytron-parent</artifactId>
+        <version>1.18.1.CR1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>wildfly-elytron-parent-jakarta</artifactId>
+    <name>WildFly Elytron (Jakarta Namespace)</name>
+    <description>WildFly Security (Jakarta Namespace)</description>
+    <packaging>pom</packaging>
+
+    <properties>
+        <version.jakarta.json.jakarta-json-api>2.0.0</version.jakarta.json.jakarta-json-api>
+        <version.org.jboss.ws.jbossws-spi>4.0.0.Final</version.org.jboss.ws.jbossws-spi>
+    </properties>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/target/generated-sources/transformed</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/target/generated-resources/transformed</directory>
+                <includes>
+                    <include>**/*.xsd</include>
+                    <include>META-INF/LICENSE.txt</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.wildfly.extras.batavia</groupId>
+                <artifactId>transformer-tools-mvn</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>audit</module>
+        <module>auth/realm/token</module>
+        <module>auth/client</module>
+        <module>auth/jaspi</module>
+        <module>http/oidc</module>
+        <module>jacc</module>
+        <module>json-util</module>
+        <module>mechanism/oauth2</module>
+        <module>x500/cert/acme</module>
+    </modules>
+
+</project>
