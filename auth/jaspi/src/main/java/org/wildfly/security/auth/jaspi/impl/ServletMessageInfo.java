@@ -19,13 +19,14 @@ package org.wildfly.security.auth.jaspi.impl;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.auth.jaspi._private.ElytronMessages.log;
 
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.ServletResponseWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import javax.security.auth.message.MessageInfo;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.ServletResponse;
-import javax.servlet.ServletResponseWrapper;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * A servlet profile specific {@link MessageInfo} that ensures the request and response types remain valid and allows wrapping

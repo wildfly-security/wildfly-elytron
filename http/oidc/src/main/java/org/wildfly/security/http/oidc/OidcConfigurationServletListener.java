@@ -25,9 +25,9 @@ import static org.wildfly.security.http.oidc.Oidc.OIDC_CLIENT_CONTEXT_KEY;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CONFIG_FILE_LOCATION;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_JSON_FILE;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
