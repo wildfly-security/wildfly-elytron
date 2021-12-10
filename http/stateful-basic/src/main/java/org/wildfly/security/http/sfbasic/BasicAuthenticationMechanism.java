@@ -329,48 +329,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
     }
 
     private static HttpServerCookie createCookie(final String name, final String value) {
-        return new HttpServerCookie() {
-
-            @Override
-            public boolean isSecure() {
-                return false;
-            }
-
-            @Override
-            public boolean isHttpOnly() {
-                return false;
-            }
-
-            @Override
-            public int getVersion() {
-                return 0;
-            }
-
-            @Override
-            public String getValue() {
-                return value;
-            }
-
-            @Override
-            public String getPath() {
-                return "/";
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public int getMaxAge() {
-                return -1;
-            }
-
-            @Override
-            public String getDomain() {
-                return null;
-            }
-        };
+        return HttpServerCookie.getInstance(name, value, null, -1, "/", false, 0, false);
     }
 
 }
