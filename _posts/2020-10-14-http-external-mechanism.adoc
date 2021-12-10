@@ -2,7 +2,7 @@
 layout: post
 title: HTTP External Mechanism
 date: 2020-10-14
-tags: elytron http external
+tags: http external
 synopsis: Overview of Elytron support for the HTTP External Mechanism
 author: aabdelsa
 ---

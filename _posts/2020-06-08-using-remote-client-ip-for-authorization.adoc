@@ -2,7 +2,7 @@
 layout: post
 title: 'Using the IP Address of a Remote Client for Authorization Decisions'
 date: 2020-06-08
-tags: elytron wildfly remote client ip authorization
+tags: remote client authorization
 synopsis: An overview of how to make use of a remote client's IP address for authorization decisions.
 author: fjuma
 ---

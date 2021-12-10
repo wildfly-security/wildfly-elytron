@@ -2,7 +2,7 @@
 layout: post
 title: 'New Security Features in WildFly 19'
 date: 2020-03-18
-tags: elytron release wildfly19
+tags: release
 synopsis: An overview of the new security features in WildFly 19.
 author: fjuma
 ---

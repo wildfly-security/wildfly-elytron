@@ -2,7 +2,7 @@
 layout: post
 title: 'Upcoming SSL features: Multiple certificate revocation lists support and SSLv2Hello support'
 date: 2021-03-19
-tags: wildfly elytron
+tags: ssl certificate
 synopsis: An overview of the upcoming SSL/TLS features including the ability to configure multiple certificate revocation lists and SSLv2Hello support.
 author: szaldana
 ---

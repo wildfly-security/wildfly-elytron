@@ -2,7 +2,7 @@
 layout: post
 title: 'WildFly Encrypted Expression Support'
 date: 2021-03-19
-tags: elytron wildfly encryption aes expression management-model
+tags: encryption aes expression management-model
 synopsis: A guide to show how to quickly begin using encrypted expressions in WildFly.
 author: darranl
 ---
@@ -70,7 +70,7 @@ safely.
 
 [source,shell]
 ----
-[standalone@localhost:9990 /] /subsystem=elytron/secret-key-credential-store=initial:export-secret-key(\ 
+[standalone@localhost:9990 /] /subsystem=elytron/secret-key-credential-store=initial:export-secret-key(\
     alias=key)
 {
     "outcome" => "success",
@@ -109,7 +109,7 @@ it to an expression.
 ----
 
 The expression returned here can be used on any attribute in other subsystems which supports
-expressions.  The `read-resource-description` operation can be used on a resource to identify 
+expressions.  The `read-resource-description` operation can be used on a resource to identify
 if it's attributes support expressions.
 
 [source,shell]
@@ -160,7 +160,7 @@ resolver a default.
 
 [source,shell]
 ----
-[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:list-add(\ 
+[standalone@localhost:9990 /] /subsystem=elytron/expression=encryption:list-add(\
     name=resolvers, \
     value={ \
         name=main-resolver, \
@@ -208,7 +208,7 @@ The commands executed in this post have resulted in the following resources bein
 ----
 <credential-stores>
     <credential-store name="main" relative-to="jboss.server.config.dir" path="main.cs" create="true">
-        <credential-reference 
+        <credential-reference
             clear-text="${ENC::initial-resolver:RUxZAUMQEH6CP3xXyAqYzqsC3oNayyeGH32wsdAZ8VLkkxaEmWc=}"/>
     </credential-store>
     <secret-key-credential-store name="initial" relative-to="jboss.server.config.dir" path="initial.cs"/>

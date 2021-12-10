@@ -2,24 +2,24 @@
 layout: post
 title: 'Introduction to Rule Engine & Blacklist IP Dump of Intrusion Detection System'
 date: 2020-07-27
-tags: elytron security-events intrusion detection system rule_engine blacklist-IPs
+tags: intrusion-detection rule-engine
 synopsis: An overview of the Rule Engine and Blacklist IP Dump of Intrusion Detection System using Elytron's security events
 author: piyush-palta
 ---
 
-Earlier we introduced https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/[_Intrusion Detection System_] using Elytron's security events and discussed its architecture. In this blog we'll discuss the implementation of Rule Engine & Blacklist IP Dump.   
+Earlier we introduced https://wildfly-security.github.io/wildfly-elytron/blog/architectural-overview-intrusion-detection-system/[_Intrusion Detection System_] using Elytron's security events and discussed its architecture. In this blog we'll discuss the implementation of Rule Engine & Blacklist IP Dump.
 
 == Rule Engine
 
-_Rule Engine_ comprises of a set of pre-defined rules, which are used to score the event on a scale of 0 to 100. This score helps determine whether an event is safe or risky, this can be decided by setting a risk threshold.   
-Rule Engine is backed by a database that has information such as IP address, user id, event outcome(success or failure) of past security events. Each entry in database has Time to live(TTL) or hop limit of 3 hours, which can be configured based on requirement. 
+_Rule Engine_ comprises of a set of pre-defined rules, which are used to score the event on a scale of 0 to 100. This score helps determine whether an event is safe or risky, this can be decided by setting a risk threshold.
+Rule Engine is backed by a database that has information such as IP address, user id, event outcome(success or failure) of past security events. Each entry in database has Time to live(TTL) or hop limit of 3 hours, which can be configured based on requirement.
 Generally speaking rule based engines are robust but can only take on already identified & can't do much about new attacks. It does only as much as it is asked for, which though results in extremely low false positives doesn't scale well to all situations.
-That's when Machine Learning & anomaly detection engines come into the picture. These engines are currently under development & will be introduced in future posts. 
+That's when Machine Learning & anomaly detection engines come into the picture. These engines are currently under development & will be introduced in future posts.
 
-Coming back to the Rule Engine, current implementation focuses mainly to prevent dictionary & brute force attacks from happening. 
-_There are four rules, each addressing different use cases :_ 
+Coming back to the Rule Engine, current implementation focuses mainly to prevent dictionary & brute force attacks from happening.
+_There are four rules, each addressing different use cases :_
 
-* Multiple login attempts from same IP  
+* Multiple login attempts from same IP
 * Multiple login attempts for same user ID via different IPs
 * Multiple login attempts from IP that was used to access same user ID in past (the risk is relatively low here)
 * Multiple incorrect user ID attempts due to typo (We use edit_distance to subsidize the penalty for each attempt)
@@ -31,7 +31,7 @@ _Implementation available at_ : https://github.com/piyush-palta/risk-analyzer/bl
 == Blacklist IP Dump
 
 Blacklist IP Dump is a database of all the IPs that are blacklisted over the internet for malicious behaviour. One such source of blacklisted IP addresses is https://myip.ms/browse/blacklist/Blacklist_IP_Blacklist_IP_Addresses_Live_Database_Real-time[myip.ms]. These IPs are provided in a text file & stored in a sqlite3 based database. IPs are hashed as integers for easy lookup i.e. O(logN) lookup.
-If an IP is found to be present in this database, highest possible score of 100 is returned and the event is forfeited.   
+If an IP is found to be present in this database, highest possible score of 100 is returned and the event is forfeited.
 _Implementation available at_ : https://github.com/piyush-palta/risk-analyzer/blob/master/risk_calculator/blacklist_ip.py
 
 

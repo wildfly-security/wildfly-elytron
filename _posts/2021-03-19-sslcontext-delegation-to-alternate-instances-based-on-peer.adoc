@@ -2,7 +2,7 @@
 layout: post
 title: 'Upcoming SSLContext that supports delegation to alternate instances based on peer information'
 date: 2021-03-19
-tags: elytron wildfly23 ssl context delegation dynamic peer information
+tags:  ssl-context delegation dynamic peer
 synopsis: An overview of the upcoming SSLContext that delegates to alternative instances based on peer's host and port information
 author: dvilkola
 ---

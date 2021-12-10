@@ -2,7 +2,7 @@
 layout: post
 title: 'New Security Features in WildFly 21'
 date: 2020-10-14
-tags: elytron release wildfly21
+tags: release
 synopsis: An overview of the new security features in WildFly 21.
 author: fjuma
 ---

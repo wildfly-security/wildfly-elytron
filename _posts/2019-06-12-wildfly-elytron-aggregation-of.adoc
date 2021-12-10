@@ -2,7 +2,7 @@
 layout: post
 title: 'WildFly Elytron Aggregation of Attributes'
 date: 2019-06-12
-tags: cli elytron security SecurityRealm wildfly
+tags: cli security-realm
 synopsis: This blog describes the upcoming attribute aggregation feature.
 author: darranl
 link: https://darranl.blogspot.com/2019/06/wildfly-elytron-aggregation-of.html

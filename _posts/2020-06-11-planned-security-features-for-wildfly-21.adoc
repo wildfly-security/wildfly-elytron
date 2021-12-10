@@ -2,7 +2,7 @@
 layout: post
 title: 'Planned Security Features for WildFly'
 date: 2020-06-11
-tags: elytron wildfly security planning
+tags: planning
 synopsis: An overview of the new security features that we will be working on during the WildFly 21 feature development phase.
 author: fjuma
 ---

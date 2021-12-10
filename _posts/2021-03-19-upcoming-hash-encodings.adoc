@@ -2,7 +2,7 @@
 layout: post
 title: "Upcoming hash character sets and hash encodings support in Elytron"
 date: 2021-03-19
-tags: wildfly elytron
+tags: hash encoding realm
 synopsis: An overview of the upcoming hash character set and hash encoding support in Elytron Security Realms.
 author: szaldana
 ---

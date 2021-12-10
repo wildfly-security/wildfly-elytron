@@ -2,7 +2,7 @@
 layout: post
 title: 'Using regex role mapper in Elytron'
 date: 2020-06-16
-tags: elytron wildfly20 regex role mapper
+tags: role-mapper
 synopsis: An overview of the new regex role mapper included in WildFly 20.
 author: dvilkola
 ---

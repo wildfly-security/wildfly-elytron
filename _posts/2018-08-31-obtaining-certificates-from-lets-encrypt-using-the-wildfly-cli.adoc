@@ -2,7 +2,7 @@
 layout: post
 title: 'Obtaining and managing certificates from Let’s Encrypt using the WildFly CLI'
 date: 2018-08-31
-tags: ssl wildfly elytron LetsEncrypt
+tags: ssl lets-encrypt certificate tls
 synopsis: An overview on how to obtain and manage certificates from the Let’s Encrypt certificate authority using the WildFly CLI.
 author: fjuma
 ---

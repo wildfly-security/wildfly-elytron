@@ -2,7 +2,7 @@
 layout: post
 title: 'New Security Features in WildFly 23'
 date: 2021-03-19
-tags: elytron release wildfly23
+tags: release
 synopsis: An overview of the new security features in WildFly 23.
 author: fjuma
 ---

@@ -2,7 +2,7 @@
 layout: post
 title: 'Normalize principal propagation/injection across elytron and legacy'
 date: 2021-03-19
-tags: elytron wildfly23 ejb principal propagation authentication
+tags: ejb principal-propagation authentication
 synopsis: An overview of the new configuration option in the EJB subsystem that allows to switch between legacy and elytron principal propagation
 author: dvilkola
 ---

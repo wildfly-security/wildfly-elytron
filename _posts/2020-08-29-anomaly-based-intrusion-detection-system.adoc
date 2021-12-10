@@ -2,7 +2,7 @@
 layout: post
 title: 'Anomaly based Intrusion Detection System'
 date: 2020-08-29
-tags: anomaly-detection security intrusion detection system machine-learning
+tags: anomaly-detection intrusion-detection machine-learning
 synopsis: An introduction to Anomaly based Intrusion Detection System
 author: piyush-palta
 ---
@@ -11,19 +11,19 @@ _Intrusion Detection_ is the art of sensing when a system or network is being us
 In this blog, we’ll talk about an Anomaly detection based approach for Intrusion Detection System. First of all, let’s discuss what the whole concept of anomaly based intrusion detection is. +
 [quote,]
 ____
-Anomaly based intrusion detection uses statistics to form a baseline usage of the networks at different time intervals. This system uses machine learning to create a model simulating regular activity and then compares new behaviour with the existing model. 
+Anomaly based intrusion detection uses statistics to form a baseline usage of the networks at different time intervals. This system uses machine learning to create a model simulating regular activity and then compares new behaviour with the existing model.
 ____
 
 
 _Before we continue with defining anomaly based IDS, here are a few things you should know:_
 
-* Machine Learning is the field of study that gives computers the capability to learn and improve from experience without being programmed to do so explicitly. 
+* Machine Learning is the field of study that gives computers the capability to learn and improve from experience without being programmed to do so explicitly.
 * The process of learning begins with observations or data to look for patterns in data and make better predictions based on the dataset provided. The primary objective is to allow computers to learn without human assistance and adjust its actions accordingly.
 
 _Machine Learning Algorithms can be broadly classified into:_
 
 * *Supervised machine learning algorithms*: It is called supervised learning because the process of an algorithm learning from the training dataset can be thought of as a teacher supervising the learning process. We know the correct answers, the algorithm iteratively makes predictions on the training data and is corrected by the teacher. Learning stops when the algorithm achieves an acceptable level of performance. The teacher here is the labelled dataset, that provides us with information & facilitates learning.
-* *Unsupervised machine learning algorithms*: are used when the information used to train is neither labelled nor classified. Unattended learning studies how systems can infer a function to describe a hidden structure from unlabeled data. 
+* *Unsupervised machine learning algorithms*: are used when the information used to train is neither labelled nor classified. Unattended learning studies how systems can infer a function to describe a hidden structure from unlabeled data.
 * *Semi-supervised machine learning algorithms*: makes use of unlabeled data for training — with a blend of less labelled data and a lot of unlabeled data. Semi-supervised learning falls between unsupervised learning and supervised learning
 
 == Evaluation of different Machine Learning Models for IDS
@@ -40,12 +40,12 @@ _Code presented here is an implementation to generate csv file from packets capt
 
 Coming back to different models, let’s evaluate how each model fares on KDD99 Dataset (for testing we’ve used KDD99 Dataset). We have used *scikit-learn* models for the evaluation, implementation of all the models can be found in this colab notebook https://colab.research.google.com/drive/1Xc3f1ts_rtL3wsC30StQw1-ER3KxMot8?usp=sharing[here].
 
-Let’s talk in brief about what each model does (we won’t discuss which model is the best here since each model will serve good for different purposes & different datasets, so for now we’ll skip discussing the metrics. Although, if one wishes they can look at the accuracy we are getting for the KDD99 dataset for each model by running the cells in the colab notebook.  
+Let’s talk in brief about what each model does (we won’t discuss which model is the best here since each model will serve good for different purposes & different datasets, so for now we’ll skip discussing the metrics. Although, if one wishes they can look at the accuracy we are getting for the KDD99 dataset for each model by running the cells in the colab notebook.
 
 === Random Forest Classifier :
 
 Random forest, like its name implies, consists of a large number of individual decision trees that operate as an ensemble. Each individual tree in the random forest spits out a class prediction and the class with the most votes becomes our model’s prediction
-It basically is like an election where uncorrelated models votes to choose a class, and the rule is majority wins. 
+It basically is like an election where uncorrelated models votes to choose a class, and the rule is majority wins.
 
 '''
 
@@ -58,7 +58,7 @@ image::https://miro.medium.com/max/750/1*VHDtVaDPNepRglIAv72BFg.jpeg[Random Fore
 
 Naive Bayes classifiers are a collection of classification algorithms based on Bayes’ Theorem. It is not a single algorithm but a family of algorithms where all of them share a common principle, i.e. every pair of features being classified is independent of each other.
 
-=== MLP (Multi-layered Perceptron) : 
+=== MLP (Multi-layered Perceptron) :
 
 A multi-layered perceptron consists of interconnected neurons transferring information to each other, much like the human brain. Each neuron is assigned a value. The network can be divided into three main layers :
 
@@ -70,32 +70,32 @@ A multi-layered perceptron consists of interconnected neurons transferring infor
 .Representation of Multi-layered Perceptron
 image::https://lh6.googleusercontent.com/l-LGvAczEySMbPeddHfA_AYxCb-jGWQTGcdndksrhoCYSO3udPxh15Nw6BoyTmnFXTNznDl7schzDTnjQ1JRnYo0h4ysFMGyNkjIBrKDvKJ6V521V7Z5jGn4DlOKAJ6Nj0dDqUkf[align=center]
 
-'''  
+'''
 
 The MLP is a feedforward neural network, which means that the data is transmitted from the input layer to the output layer in the forward direction. The connections between the layers are assigned weights. These weights are calculated by a mathematical function and adjusted based on the provided dataset to minimize the cost function.
- 
-=== Deep Neural Network 
 
-Deep Neural Network is similar to MLP, it’s just that it supports backpropagation. 
+=== Deep Neural Network
+
+Deep Neural Network is similar to MLP, it’s just that it supports backpropagation.
 Backpropagation is a technique used to optimize the weights of a neural net using the outputs as inputs. Conventionally, random weights are assigned to all the connections. These random weights propagate values through the network to produce the output. Naturally, this output would differ from the expected output. The difference between the two values is called the error. +
-Backpropagation refers to the process of sending this error back through the network, readjusting the weights automatically so that eventually, the error between the actual and expected output is minimized. + 
+Backpropagation refers to the process of sending this error back through the network, readjusting the weights automatically so that eventually, the error between the actual and expected output is minimized. +
 
 === Feature Analysis
 
 Enough on briefing each separate model, let’s have a look at the *feature analysis of KDD dataset*. This brief discussion below is based on https://www.sciencedirect.com/science/article/pii/S1877050915020190[research paper]. +
 
-The KDD data set has 42 attributes. The attribute labeled 42 in the data set is the ‘class’ attribute which indicates whether a given instance is a normal connection instance or an attack. Out of these 42 attributes, 41 attributes can be classified into four different classes as discussed below: 
+The KDD data set has 42 attributes. The attribute labeled 42 in the data set is the ‘class’ attribute which indicates whether a given instance is a normal connection instance or an attack. Out of these 42 attributes, 41 attributes can be classified into four different classes as discussed below:
 
 * *Basic, B* Features are the attributes of individual TCP connections
-* *Content ,C* features are the attributes within a connection suggested by the domain knowledge 
+* *Content ,C* features are the attributes within a connection suggested by the domain knowledge
 * *Traffic, T* features are the attributes computed using a two-second time window
 * *Host, H* features are the attributes designed to assess attacks which last for more than two seconds
- 
+
 '''
 .Attributes in KDD99 Dataset
 image::https://lh6.googleusercontent.com/DotI1Z4AkeXaZ15xwzG9UODf4kKf1gYdaj4lhnKckS9D2voxfR77w3PuTQJUmoL6eovYnIg0hntYYfIrwORcHOvzJzOrMuJSFCVVbTuHRuw5P7ZrtgTyop5O-eF8ks6vyec88TJh[align=center]
 
-'''  
+'''
 
 The conclusion of the result is that Basic features alone results in highest accuracy. One can find more details and all the metrics in the research paper provided above.
 

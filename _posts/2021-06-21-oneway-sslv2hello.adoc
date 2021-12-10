@@ -2,7 +2,7 @@
 layout: post
 title: 'SSLv2Hello with WildFly'
 date: 2021-06-21
-tags: elytron ssl
+tags: ssl
 synopsis: An overview of the new SSLv2Hello support included in WildFly 24.
 author: szaldana
 ---

@@ -2,7 +2,7 @@
 layout: post
 title: "Elytron's ACME Client Implementation"
 date: 2020-05-07
-tags: elytron acme client spi java wildfly certificates
+tags: acme client spi java certificate
 synopsis: An overview of the ACME client SPI provided by Elytron.
 author: fjuma
 ---

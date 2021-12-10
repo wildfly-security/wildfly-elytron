@@ -2,7 +2,7 @@
 layout: post
 title: 'Using distributed realm in Elytron'
 date: 2021-10-21
-tags: elytron wildfly distributed security realm filesystem
+tags: distributed-realm filesystem-realm
 synopsis: An example of distributed realm usage in WildFly.
 author: dvilkola
 ---

@@ -2,7 +2,7 @@
 layout: post
 title: 'An overview of new security realm implementations'
 date: 2020-10-14
-tags: elytron wildfly21 securityrealm realm identity distributed database
+tags: security-realm distributed-realm failover-realm
 synopsis: An overview of the new realm implementations in WildFly Elytron and WildFly 21.
 author: mmazanek
 ---

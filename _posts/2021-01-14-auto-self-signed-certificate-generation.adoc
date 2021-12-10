@@ -2,7 +2,7 @@
 layout: post
 title: 'Automatic Self-Signed Certificate Generation with Elytron'
 date: 2021-01-14
-tags: elytron wildfly22 tls certificates
+tags: tls certificate
 synopsis: An overview of the new automatic self-signed certificate generation included in WildFly 22.
 author: fjuma
 ---

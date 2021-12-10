@@ -2,7 +2,7 @@
 layout: post
 title: "Advanced EJB: Securing EJBs using a FileSystem realm and invoking them from a remote client using a credential store"
 date: 2020-06-11
-tags: wildfly elytron
+tags: ejb filesystem-realm credential-store remote
 synopsis: This blog post describes how to secure EJBs deployed to WildFly using Elytron's FileSystem realm, SASL authentication, and how to invoke them from a standalone remote client using EJB Client libraries.
 author: szaldana
 link:

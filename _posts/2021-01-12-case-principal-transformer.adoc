@@ -2,7 +2,7 @@
 layout: post
 title: "Using case principal transformers in Elytron"
 date: 2021-01-12
-tags: wildfly elytron
+tags: principal-transformer
 synopsis: An overview of the new case principal transformer included in WildFly 22.
 author: szaldana
 link:

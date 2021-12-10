@@ -2,7 +2,7 @@
 layout: post
 title: 'WildFly Elytron - Implementing a Custom HTTP Authentication Mechanism'
 date: 2018-02-08
-tags: authentication custom elytron http undertow wildfly
+tags: authentication custom-component http undertow
 synopsis: How to implement a configure a custom HTTP authentication mechanism.
 author: darranl
 link: https://darranl.blogspot.com/2018/02/wildfly-elytron-implementing-custom.html
