@@ -26,6 +26,63 @@ package org.wildfly.security.http;
 public interface HttpServerCookie {
 
     /**
+     * Returns a new instance representing <code>HttpServerCookie</code>
+     *
+     * @param name the name of the cookie
+     * @param value the current value of this cookie
+     * @param domain the domain name of this cookie
+     * @param maxAge specifying the maximum age of the cookie in seconds
+     * @param path a <code>String</code> specifying a path on the server
+     * @param secure <code>true</code> if the browser uses a secure protocol, <code>false</code> otherwise
+     * @param version the version of the protocol this cookie complies with
+     * @param httpOnly true if this cookie has been marked as <i>HttpOnly</i>, false otherwise
+     * @return a new instance representing <code>HttpServerCookie</code>
+     */
+    static HttpServerCookie getInstance(String name, String value, String domain, int maxAge, String path, boolean secure, int version, boolean httpOnly) {
+        return new HttpServerCookie() {
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public String getValue() {
+                return value;
+            }
+
+            @Override
+            public String getDomain() {
+                return domain;
+            }
+
+            @Override
+            public int getMaxAge() {
+                return maxAge;
+            }
+
+            @Override
+            public String getPath() {
+                return path;
+            }
+
+            @Override
+            public boolean isSecure() {
+                return secure;
+            }
+
+            @Override
+            public int getVersion() {
+                return version;
+            }
+
+            @Override
+            public boolean isHttpOnly() {
+                return httpOnly;
+            }
+        };
+    }
+
+    /**
      * Returns the name of the cookie.
      *
      * @return the name of the cookie
