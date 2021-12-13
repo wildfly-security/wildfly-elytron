@@ -4,6 +4,7 @@ on:
     branches:
       - 1.15.x
       - 1.x
+      - 2.x
       - master
 
 jobs:
