@@ -129,9 +129,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.spec.javax.xml.ws</groupId>
-            <artifactId>jboss-jaxws-api_2.2_spec</artifactId>
-            <version>${version.org.jboss.spec.javax.xml.ws}</version>
+            <groupId>org.jboss.spec.jakarta.xml.ws</groupId>
+            <artifactId>jboss-jakarta-xml-ws-api_3.0_spec</artifactId>
+            <version>${version.org.jboss.spec.jakarta.xml.ws}</version>
             <scope>provided</scope>
         </dependency>
 

@@ -22,10 +22,10 @@ import static org.wildfly.security.x500.cert.acme.Acme.base64UrlEncode;
 import static org.wildfly.security.x500.cert.acme.Acme.getJwk;
 import static org.wildfly.security.x500.cert.acme.ElytronMessages.acme;
 
+import jakarta.json.JsonObject;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import javax.json.JsonObject;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.CodePointIterator;

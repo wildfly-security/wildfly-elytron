@@ -22,6 +22,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -32,8 +35,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 

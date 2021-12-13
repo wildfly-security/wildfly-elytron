@@ -25,13 +25,14 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 
+import jakarta.xml.ws.BindingProvider;
+
 import javax.net.ssl.SSLContext;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.xml.ws.BindingProvider;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -21,10 +21,10 @@ package org.wildfly.security.json.util;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.MapAttributes;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 /**
  * Utilities for JSON manipulation.
