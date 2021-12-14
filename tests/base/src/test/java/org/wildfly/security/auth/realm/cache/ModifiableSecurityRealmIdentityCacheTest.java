@@ -22,9 +22,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,25 +34,23 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.Principal;
-import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.CachingModifiableSecurityRealm;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
-import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
@@ -68,6 +68,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.Encoding;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -76,11 +77,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 public class ModifiableSecurityRealmIdentityCacheTest {
 
     private AtomicInteger realmHitCount = new AtomicInteger();
-
-    @Before
-    public void onBefore() {
-        Security.addProvider(WildFlyElytronPasswordProvider.getInstance());
-    }
 
     @Test
     public void testInvalidateEntryAfterChangingAttributes() throws Exception {
@@ -127,7 +123,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         try {
             credentials = Collections.singletonList(
                     new PasswordCredential(
-                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
                                     new ClearPasswordSpec("password_changed".toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -159,7 +155,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         try {
             credentials = Collections.singletonList(
                     new PasswordCredential(
-                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
                                     new ClearPasswordSpec("password_changed".toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -174,11 +170,11 @@ public class ModifiableSecurityRealmIdentityCacheTest {
     }
 
     private ModifiableSecurityRealm createSecurityRealm() throws Exception {
-        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true));
+        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true), NameRewriter.IDENTITY_REWRITER, 2, true, Encoding.BASE64, StandardCharsets.UTF_8, ELYTRON_PASSWORD_PROVIDERS);
 
         addUser(realm, "joe", "User");
 
-        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(realm), createRealmIdentitySimpleJavaMapCache());
+        return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(realm), createRealmIdentitySimpleJavaMapCache(), ELYTRON_PASSWORD_PROVIDERS);
     }
 
     private void addUser(ModifiableSecurityRealm realm, String userName, String roles) throws RealmUnavailableException {
@@ -186,7 +182,7 @@ public class ModifiableSecurityRealmIdentityCacheTest {
         try {
             credentials = Collections.singletonList(
                     new PasswordCredential(
-                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
                                     new ClearPasswordSpec("password".toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);

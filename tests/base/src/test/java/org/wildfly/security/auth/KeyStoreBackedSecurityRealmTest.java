@@ -26,20 +26,18 @@ import static org.junit.Assert.assertTrue;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.Provider;
-import java.security.Security;
+import java.util.function.Supplier;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.keystore.WildFlyElytronKeyStoreProvider;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.keystore.WildFlyElytronKeyStoreProvider;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 
@@ -51,35 +49,21 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 // has dependency on wildfly-elytron-auth-server, wildfly-elytron-realm, wildfly-elytron-credential,
 public class KeyStoreBackedSecurityRealmTest {
 
-    private static final Provider[] providers = new Provider[] {
+    private static final Supplier<Provider[]> providers = () -> new Provider[] {
             WildFlyElytronKeyStoreProvider.getInstance(),
             WildFlyElytronPasswordProvider.getInstance()
     };
-
-    @BeforeClass
-    public static void register() {
-        for (Provider provider : providers) {
-            Security.addProvider(provider);
-        }
-    }
-
-    @AfterClass
-    public static void remove() {
-        for (Provider provider : providers) {
-            Security.removeProvider(provider.getName());
-        }
-    }
 
     @Test
     public void testPasswordFileKeyStore() throws Exception {
         // initialize the keystore, this time loading the users from a password file.
         final InputStream stream = this.getClass().getResourceAsStream("passwd");
-        final KeyStore keyStore = KeyStore.getInstance("PasswordFile");
+        final KeyStore keyStore = KeyStore.getInstance("PasswordFile", WildFlyElytronKeyStoreProvider.getInstance());
         keyStore.load(stream, null);
         assertEquals("Invalid number of keystore entries", 2, keyStore.size());
 
         // create a realm identity that represents the user "elytron" (password is of type MD5Crypt)
-        SecurityRealm realm = new KeyStoreBackedSecurityRealm(keyStore);
+        SecurityRealm realm = new KeyStoreBackedSecurityRealm(keyStore, providers);
         RealmIdentity realmIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
 
         // only the Password type credential type is supported in the password file keystore.

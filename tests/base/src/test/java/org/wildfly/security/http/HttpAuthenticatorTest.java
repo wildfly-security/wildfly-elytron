@@ -18,33 +18,28 @@
 
 package org.wildfly.security.http;
 
-import mockit.integration.junit4.JMockit;
+import static org.junit.Assert.assertEquals;
+import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
+import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
+import static org.wildfly.security.http.HttpConstants.OK;
+import static org.wildfly.security.http.HttpConstants.SHA256;
+import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
-import org.wildfly.security.http.impl.AbstractBaseHttpTest;
-
-import javax.security.auth.callback.CallbackHandler;
-
-import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
-import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
-import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
-import static org.wildfly.security.http.HttpConstants.SHA256;
-import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
-import static org.wildfly.security.http.HttpConstants.OK;
+import javax.security.auth.callback.CallbackHandler;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.wildfly.security.http.impl.AbstractBaseHttpTest;
+
+import mockit.integration.junit4.JMockit;
 
 /**
  * Test of using multiple HTTP authentication mechanisms.
@@ -69,18 +64,6 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
     private CallbackHandler callbackHandler() {
         return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
-    }
-
-    private static final Provider provider = WildFlyElytronHttpDigestProvider.getInstance();
-
-    @BeforeClass
-    public static void registerPasswordProvider() {
-        Security.insertProviderAt(provider, 1);
-    }
-
-    @AfterClass
-    public static void removePasswordProvider() {
-        Security.removeProvider(provider.getName());
     }
 
     private void testOneOfThree() throws Exception {

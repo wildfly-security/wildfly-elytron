@@ -48,7 +48,7 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link CacheableSecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link CacheableSecurityRealm} whose {@link RealmIdentity} should be cached.
      * @param cache the {@link RealmIdentityCache} instance
      */
     public CachingModifiableSecurityRealm(CacheableSecurityRealm realm, RealmIdentityCache cache) {
@@ -58,7 +58,7 @@ public class CachingModifiableSecurityRealm extends CachingSecurityRealm impleme
     /**
      * Creates a new instance.
      *
-     * @param realm the {@link CacheableSecurityRealm} whose {@link RealmIdentity} should be cached..
+     * @param realm the {@link CacheableSecurityRealm} whose {@link RealmIdentity} should be cached.
      * @param cache the {@link RealmIdentityCache} instance
      * @param providerSupplier the provider supplier to use for verification purposes (must not be {@code null})
      */
