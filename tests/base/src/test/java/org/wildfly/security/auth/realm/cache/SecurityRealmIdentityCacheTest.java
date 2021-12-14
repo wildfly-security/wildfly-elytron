@@ -21,9 +21,9 @@ package org.wildfly.security.auth.realm.cache;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.security.Principal;
-import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,9 +32,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
@@ -66,11 +64,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 public class SecurityRealmIdentityCacheTest {
 
     private AtomicInteger realmHitCount = new AtomicInteger();
-
-    @Before
-    public void onBefore() {
-        Security.addProvider(WildFlyElytronPasswordProvider.getInstance());
-    }
 
     @Test
     public void testRealmIdentitySimpleJavaMapCache() throws Exception {
@@ -176,7 +169,7 @@ public class SecurityRealmIdentityCacheTest {
             public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
                 return getEvidenceVerifySupport(evidenceType, algorithmName);
             }
-        }, cache) {
+        }, cache, ELYTRON_PASSWORD_PROVIDERS) {
         };
     }
 
@@ -185,7 +178,7 @@ public class SecurityRealmIdentityCacheTest {
         try {
             credentials = Collections.singletonList(
                     new PasswordCredential(
-                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                            PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
                                     new ClearPasswordSpec("password".toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -19,19 +19,17 @@ package org.wildfly.security.auth.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.security.PrivilegedActionException;
 import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
@@ -44,6 +42,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.permission.PermissionVerifier;
@@ -63,15 +62,13 @@ public class IdentitySwitchingTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        Security.addProvider(provider);
-
-        SimpleMapBackedSecurityRealm usersRealm = new SimpleMapBackedSecurityRealm();
+        SimpleMapBackedSecurityRealm usersRealm = new SimpleMapBackedSecurityRealm(NameRewriter.IDENTITY_REWRITER, ELYTRON_PASSWORD_PROVIDERS);
         Map<String, SimpleRealmEntry> users = new HashMap<>();
         addUser(users, "joe", "User");
         addUser(users, "bob", "User");
         usersRealm.setIdentityMap(users);
 
-        SimpleMapBackedSecurityRealm adminsRealm = new SimpleMapBackedSecurityRealm();
+        SimpleMapBackedSecurityRealm adminsRealm = new SimpleMapBackedSecurityRealm(NameRewriter.IDENTITY_REWRITER, ELYTRON_PASSWORD_PROVIDERS);
         Map<String, SimpleRealmEntry> admins = new HashMap<>();
         addUser(admins, "admin", "Admin");
         adminsRealm.setIdentityMap(admins);
@@ -88,11 +85,6 @@ public class IdentitySwitchingTest {
         builder.addRealm("admins", adminsRealm).build();
         builder.setDefaultRealmName("admins");
         adminsDomain = builder.build();
-    }
-
-    @AfterClass
-    public static void clean() {
-        Security.removeProvider(provider.getName());
     }
 
     @Test
@@ -160,7 +152,7 @@ public class IdentitySwitchingTest {
         List<Credential> credentials;
         credentials = Collections.singletonList(
                 new PasswordCredential(
-                        PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                        PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
                                 new ClearPasswordSpec("password".toCharArray()))));
         MapAttributes attributes = new MapAttributes();
         attributes.addAll(RoleDecoder.KEY_ROLES, Collections.singletonList(roles));
