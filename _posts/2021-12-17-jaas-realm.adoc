@@ -1,0 +1,86 @@
+---
+layout: post
+title: 'Using a JAAS realm in Elytron'
+date: 2021-12-17
+tags: jaas security-realm login-module login-context
+synopsis: An example of how to use a JAAS realm in WildFly.
+author: dvilkola
+---
+
+The Elytron subsystem already provides various security realms like LDAP realm, JDBC realm, filesystem realm, and others for common use cases. Starting from WildFly 26, you can also configure a JAAS security realm in the Elytron subsystem in order to use custom Login Modules for authentication and authorization.
+
+A JAAS realm utilizes a https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/security/auth/login/LoginContext.html[LoginContext] initialized from a https://docs.oracle.com/en/java/javase/17/security/appendix-b-jaas-login-configuration-file.html[JAAS configuration file] to authenticate and authorize users with custom https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/security/auth/spi/LoginModule.html[Login Modules]. Flags and options can be specified in a https://docs.oracle.com/en/java/javase/17/security/appendix-b-jaas-login-configuration-file.html[JAAS configuration file] according to the https://docs.oracle.com/en/java/javase/17/security/appendix-b-jaas-login-configuration-file.html[Java documentation].
+
+== Add a JAAS realm
+
+You can add a `jaas-realm` to the Elytron subsystem by specifying the following attributes:
+
+ * `entry` JAAS configuration file entry name
+ * `path` Path to the JAAS configuration file. You can also specify the location of the configuration with java system property "java.security.auth.login.config" or with java security property "login.config.url"
+ * `relative-to` Optional base folder for the `path`.
+ * `module` The WildFly module with Login Module implementations and Callback Handler implementation.
+ * `callback-handler` Callback handler to use with the Login Context. Security property "auth.login.defaultCallbackHandler" can be used instead. The default callback handler of the realm will be used if none of these are defined.
+
+Attribute `entry` is required and all other attributes are optional.
+
+Example of configuration via CLI:
+
+[source,shell]
+```
+/subsystem=elytron/jaas-realm=jaasRealmExample:add(
+        entry=Entry1,
+        path=/path/to/JAAS-config-file.conf,
+        module=moduleContainingCustomImpls,
+        callback-handler=loginmodules.CustomCallbackHandler)
+```
+
+== Principals to attributes mapping
+
+The Elytron subsystem can have attributes associated with authenticated users. These attributes can be for example a name, email, phone number.
+
+https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/security/auth/spi/LoginModule.html[Login Modules] use https://docs.oracle.com/en/java/javase/17/docs/api/java.base/javax/security/auth/Subject.html[Subjects] to represent the user currently being authenticated. Subject's
+https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Principal.html[principals] are mapped to user's attributes with the following rule:
+
+ * *key* of the attribute is principal’s simple classname, so the value of `principal.getClass().getSimpleName())`
+
+ * *value* is principal’s name, so the result of `principal.getName()` call. For principals of the same type / key, the values will be appended to the collection under this attribute key.
+
+*Example*: Authenticated Subject contains 2 principals of type `org.my.principal.Email`. First principal has name `first@email.com` and second `second@email.com`. The result will be a single attribute with a name `Email` and its value will be collection containing values first@email.com and second@email.com.
+
+== Roles for authorization
+
+Attributes can be used to associate roles with the authenticated user. The default attribute name for roles in the Elytron subsystem is `Roles`. This means that users can create their own implementation of https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Principal.html[Principal interface] that will be named Roles. Each instance of this principal contains a name, which should be the role belonging to the authenticated user.  To associate multiple roles with the authenticated user, multiple principals of type `Roles` have to be added to the subject.
+
+*Example*:
+
+[source,java]
+```
+private static class Roles implements Principal {
+
+        private final String name;
+
+        Roles(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+}
+```
+
+In the Login Module implementation, you can add roles to your Subject with the following:
+```
+this.subject.getPrincipals().add(new Roles("Admin"));
+this.subject.getPrincipals().add(new Roles("Guest"));
+```
+
+**Note:** You can define role decoders in the Elytron subsystem to use different attribute for role mapping.
+
+== Example
+
+You can take a look at a following https://github.com/wildfly-security-incubator/elytron-examples/tree/master/jaas-realm[example] that uses `jaas-realm` with custom LoginModule implementations.
+
+== Summary
+
+This blog post has given an overview of `jaas-realm` usage in the Elytron subsystem. You can check out https://docs.wildfly.org/26/WildFly_Elytron_Security.html#jaas-security-realm[Elytron documentation] for more information.
