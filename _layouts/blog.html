@@ -23,7 +23,7 @@ layout: default
             <small>{{ post.date | date: '%B %d, %Y' }} |
               {% if post.tags %}
                 {% for tag in post.tags %}
-                  <a class="tags" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}">#{{ tag | downcase }} </a>
+                  <a class="tags" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}"> #{{ tag | downcase }}</a>
                 {% endfor %}
             {% endif %}
             </small>
