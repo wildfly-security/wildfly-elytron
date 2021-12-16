@@ -7,14 +7,15 @@ synopsis:  An overview of the upcoming Elytron client default SSL context provid
 author: dvilkola
 ---
 
-Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs. For future WildFly release we will provide ability to register JVM wide default SSL context that other libraries can obtain without the need to use Elytron client API.
+Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs.
+In a future WildFly release, we will provide the ability to register a JVM wide default SSL context that other libraries can obtain without the need to use the Elytron client API.
 
-A new https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Provider.html[java security provider] will be added for this purpose. This provider loads https://docs.wildfly.org/26/Client_Guide.html[Elytron client configuration] from a file and registers SSLContext as a default SSLContext for the JVM.
+A new https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Provider.html[java security provider] will be added for this purpose. This provider loads https://docs.wildfly.org/26/Client_Guide.html[Elytron client configuration] from a file and registers an `SSLContext` as the default SSLContext for the JVM.
 
-When this provider has high enough priority, all client libraries that use `SSLContext.getDefault()` will obtain SSL context instantiated and configured by Elytron client without having to modify their code.
+When this provider has high enough priority, all client libraries that use `SSLContext.getDefault()` will obtain an SSL context instantiated and configured by the Elytron client without having to modify their code.
 
-Providers can be registered statically in `java.security` file or dynamically in the code by using standard https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Security.html[java provider registration API].
+Providers can be registered statically in `java.security` file or dynamically in the code by using the standard https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Security.html[java provider registration API].
 
 == Summary
 
-This blog post has given an overview of upcoming JVM wide default SSL context provider in the Elytron client which will be included in a future WildFly release.
+This blog post has given an overview of the upcoming JVM wide default SSL context provider in the Elytron client which will be included in a future WildFly release.
