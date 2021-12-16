@@ -2,7 +2,7 @@
 layout: post
 title: 'Open Source Day Summer 2021 Recap'
 date: 2021-07-22
-tags: elytron wildfly security opensource
+tags: opensource
 synopsis: A recap of Open Source Day and what first time contributors to the WildFly Elytron project had to say.
 author: fjuma
 ---

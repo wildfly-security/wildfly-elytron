@@ -2,7 +2,7 @@
 layout: post
 title: 'Secure WildFly CLI with Keycloak'
 date: 2021-06-15
-tags: elytron wildfly cli keycloak oath2 sso management-model
+tags: cli keycloak oath2 sso management
 synopsis: A guide to show how to secure WildFly CLI using Keycloak.
 author: dvilkola
 ---

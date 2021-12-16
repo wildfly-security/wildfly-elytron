@@ -11,7 +11,15 @@ layout: default
         {% if author.emailhash %}
           <img class="headshot" src="https://www.gravatar.com/avatar/{{ author.emailhash }}">
         {% endif %}
-        <p class="byline">By <a href="{{ author.bio }}">{{ author.name }}</a> | {{ page.date | date: '%B %d, %Y' }}</p>
+        <p class="byline">
+          By <a href="{{ author.bio }}">{{ author.name }}</a> | {{ page.date | date: '%B %d, %Y' }}
+          <br>
+          {% if page.tags %}
+            {% for tag in page.tags %}
+              <a style="font-size: 0.9em;" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}">#{{ tag | downcase }} </a>
+            {% endfor %}
+          {% endif %}
+        </p>
       </div>
       {% capture page_url %}{{ site.url }}{{ page.url | relative_url }}{% endcapture %}
       <div class="grid__item width-4-12 width-12-12-m">{% include share-page.html url=page_url title=page.title %}</div>

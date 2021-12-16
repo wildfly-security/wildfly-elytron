@@ -2,7 +2,7 @@
 layout: post
 title: 'Server Side SNI Matching with WildFly'
 date: 2020-04-22
-tags: elytron wildfly ssl sni
+tags: ssl tls sni
 synopsis: An overview on how to use server side SNI matching with WildFly.
 author: fjuma
 ---

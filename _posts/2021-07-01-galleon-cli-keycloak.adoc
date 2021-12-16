@@ -2,7 +2,7 @@
 layout: post
 title: 'Installing Keycloak OIDC adaptor using the Galleon CLI'
 date: 2021-07-01
-tags: elytron wildfly24 galleon OIDC Keycloak
+tags: galleon oidc keycloak
 synopsis: How to make use of the Galleon CLI to install the Keycloak OpenID Connect adaptor.
 author: darranl
 ---
@@ -13,10 +13,10 @@ be downloaded and unzipped on top of the WildFly installation and a CLI script e
 
 Although this approach has certainly stood the test of time it does have a couple of limitations.  Firstly these steps need to be
 repeated each time a new version of the application server or Keycloak adaptors are released.  Secondly the installed application
-server contains all of the various supported subsystems even if only a small subset are required.  The Galleon project 
+server contains all of the various supported subsystems even if only a small subset are required.  The Galleon project
 provides an alternative installation approach addressing both of these limitations.
 
-This blog post illustrates how a slimed WildFly installation can be performed with the addition of the Keycloak client adaptors 
+This blog post illustrates how a slimed WildFly installation can be performed with the addition of the Keycloak client adaptors
 using the Galleon command line tools.
 
 == Galleon
@@ -25,24 +25,24 @@ This blog post is not intended to be a replacment for the already published Gall
 the https://docs.wildfly.org/24/Galleon_Guide.html[Galleon Provisioning Guide].
 
 This blog post assumes you already have Java 8 or Java 11 installed locally, the first step is to download and unzip the latest release
-from the Galleon project to make the CLI tools available.  The latest version can be downloaded from the 
+from the Galleon project to make the CLI tools available.  The latest version can be downloaded from the
 https://github.com/wildfly/galleon/releases[Galleon Releases] page.
 
 == Installing the "web-server" layer.
 
 Using the Galleon CLI is a two step process to install a slimmed WildFly server followed by the Keycloak adaptors.
 
-The Galleon CLI can be used both in an interactive and non-interactive mode, both of which are covered in more detail in the Galleon 
+The Galleon CLI can be used both in an interactive and non-interactive mode, both of which are covered in more detail in the Galleon
 documentation, the examples in this blog post will just be using non-interactive mode.
 
 [source,shell]
 ----
 $GALLEON_HOME/bin/galleon.sh install wildfly:current --dir=wildfly --layers=web-server
-Feature pack installed.d. 
-======= ============ ============== 
-Product Build        Update Channel 
-======= ============ ============== 
-wildfly 24.0.0.Final current    
+Feature pack installed.d.
+======= ============ ==============
+Product Build        Update Channel
+======= ============ ==============
+wildfly 24.0.0.Final current
 ----
 
 This command will have provisioned a slimed WildFly server which can be used to deploy simple servlet based web applications, this installation
@@ -57,15 +57,15 @@ the fully qualified Maven group, artifact and version to reference the Keycloak 
 [source,shell]
 ----
 $GALLEON_HOME/bin/galleon.sh install org.keycloak:keycloak-adapter-galleon-pack:14.0.0 --dir=wildfly --layers=keycloak-client-oidc
-Feature-packs resolved. 
-Feature-packs resolved. 
-Packages installed. 
-JBoss modules installed. 
-Configurations generated. 
+Feature-packs resolved.
+Feature-packs resolved.
+Packages installed.
+JBoss modules installed.
+Configurations generated.
 Feature pack installed.
 ----
 
-In addition to adding the required modules to the WildFly installation this second command will have also added the WildFly Elytron subsystem to 
+In addition to adding the required modules to the WildFly installation this second command will have also added the WildFly Elytron subsystem to
 secure deployments by default, the Keycloak adapter subsystem and configuration to make the Keycloak OpenID Connect authentication mechanism available
 for deployments.
 
@@ -87,7 +87,7 @@ even present.
 
 Finally a web application can now be deployed to WildFly.
 
-There are two different approaches that can be taken to configure a web application to use the Keycloak OpenID Connect authentication mechanism as described 
+There are two different approaches that can be taken to configure a web application to use the Keycloak OpenID Connect authentication mechanism as described
 in https://www.keycloak.org/docs/latest/securing_apps/index.html#jboss-sso[JBoss SSO].
 
 _Note: The preceding section in the Keycloak documentation is skipped as Galleon has replaced the installation steps described there._
@@ -119,7 +119,7 @@ The authentication mechanism is activate by setting the `auth-method` in the `we
 After a web application with these changes is built it can be copied to the `standalone\deployments` directory of the WildFly installation where it will
 be automatically deployed, the application will be secured by Keycloak using the embedded configuration.
 
-Additional configuration options are also described in the Keycloak documentation in the 
+Additional configuration options are also described in the Keycloak documentation in the
 https://www.keycloak.org/docs/latest/securing_apps/index.html#_java_adapter_config[Java Adapter Config] section, also instead of using the `keycloak.json`
 descriptor the configuration could have been contained in the `urn:jboss:domain:keycloak:1.1` subsystem as described in https://www.keycloak.org/docs/latest/securing_apps/index.html#securing-wars-via-adapter-subsystem[Securing WARs via Adapter Subsystem] but overall the purpose of this blog post was to illustrate how to get started installing the Keycloak client adapters and WildFly using Galleon.
 

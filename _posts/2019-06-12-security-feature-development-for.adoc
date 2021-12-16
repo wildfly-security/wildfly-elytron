@@ -2,7 +2,7 @@
 layout: post
 title: 'Security Feature Development for WildFly 17'
 date: 2019-06-12
-tags: planning elytron wildfly17
+tags: planning
 synopsis: An update on the security feature development during WildFly 17.
 author: darranl
 link: https://darranl.blogspot.com/2019/06/security-feature-development-for.html

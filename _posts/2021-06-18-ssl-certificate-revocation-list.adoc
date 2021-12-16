@@ -2,7 +2,7 @@
 layout: post
 title: 'SSL Certificate Revocation Lists with WildFly'
 date: 2021-06-18
-tags: elytron ssl
+tags: ssl tls
 synopsis: An overview of the certificate revocation lists support included in WildFly 24.
 author: szaldana
 ---

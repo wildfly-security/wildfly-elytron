@@ -2,7 +2,7 @@
 layout: post
 title: 'SSH Authentication with Git Persistence'
 date: 2020-10-14
-tags: elytron wildfly client ssh git-persistence
+tags: client ssh git-persistence
 synopsis: An overview on how to use SSH credentials with the Elytron client to connect to a git repository that manages the WildFly server configuration file history.
 author: aabdelsa
 ---

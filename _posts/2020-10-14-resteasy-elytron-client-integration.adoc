@@ -2,7 +2,7 @@
 layout: post
 title: 'RESTEasy client integration with WildFly Elytron client'
 date: 2020-10-14
-tags: elytron wildfly21 resteasy client bearer token basic authentication ssl tls context spi
+tags: resteasy client bearer token basic authentication ssl tls
 synopsis: An overview of the new RESTEasy client integration with WildFly Elytron client
 author: dvilkola
 ---

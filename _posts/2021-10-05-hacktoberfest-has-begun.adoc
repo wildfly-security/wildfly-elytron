@@ -2,7 +2,7 @@
 layout: post
 title: 'Hacktoberfest Has Begun'
 date: 2021-10-05
-tags: elytron wildfly security opensource hacktoberfest
+tags: opensource hacktoberfest
 synopsis: An overview of the WildFly Elytron project's participation in Hacktoberfest.
 author: fjuma
 ---

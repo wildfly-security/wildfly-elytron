@@ -2,7 +2,7 @@
 layout: post
 title: 'Web Services client integration with Elytron'
 date: 2020-03-18
-tags: elytron wildfly19 webservices client configuration integration
+tags: webservices client-config
 synopsis: An overview of the new integration with Web Services client included in WildFly 19.
 author: dvilkola
 ---

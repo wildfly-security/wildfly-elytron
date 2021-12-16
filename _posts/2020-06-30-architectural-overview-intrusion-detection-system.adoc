@@ -2,7 +2,7 @@
 layout: post
 title: 'An Introduction to Intrusion Detection System using Elytron'
 date: 2020-06-30
-tags: elytron security-events intrusion detection system architecture
+tags: security-events intrusion-detection
 synopsis: An architectural overview of the Intrusion Detection System using Elytron's security events
 author: piyush-palta
 ---
@@ -20,10 +20,10 @@ image::https://lh4.googleusercontent.com/bMXnpJs10co0hM9fbgDNzkjMLkhBc54WgxuW1eE
 '''
 
 The proposed architecture is as depicted in Figure 1.  The idea here is to evaluate the risk posed by an authentication & authorization event based on its attributes & forfeit the event auth if the posed risk is above set threshold limits.
-`NOTE:` A general IDS like any other auditing systems, consists of three parts: an agent, a director, and a notifier. 
-The agent corresponds to the logger. It acquires information from the target. The director corresponds to the analyzer. 
-It analyzes the data from the agents to determine if an attack is in progress or has occurred. The director then passes 
-this information to the notifier, which determines whether and how to notify the requisite entity. 
+`NOTE:` A general IDS like any other auditing systems, consists of three parts: an agent, a director, and a notifier.
+The agent corresponds to the logger. It acquires information from the target. The director corresponds to the analyzer.
+It analyzes the data from the agents to determine if an attack is in progress or has occurred. The director then passes
+this information to the notifier, which determines whether and how to notify the requisite entity.
 
 _The various components of our Intrusion Detection System (IDS) are :_
 
@@ -31,12 +31,12 @@ _The various components of our Intrusion Detection System (IDS) are :_
 * Risk Analyzer (Director & Notifier)
 * Syslog Server (Passive Agent)
 * Elytron’s Syslogger (Agent)
- 
+
 In this architecture, Elytron’s Query System acts as a trigger, it resides inside of Elytron & queries the IDS for risk analysis of an event. Risk Analyzer has two submodules & acts as a Director i.e. it receives the query & analyses it for threats; as well as Notifier i.e. it provides the system with risk analysis. Elytron’s Syslogger resides inside Elytron and acts as Agent by logging every security event to an external Syslog server, which is a part of IDS & acts as a passive agent. Let’s discuss each component in greater detail.
- 
+
 == Elytron’s Query System (Risk Role Decoder)
 
-Elytron’s Query System resides in Elytron & implemented as a RoleDecoder. An Elytron `RoleDecoder` takes the raw `AuthorizationIdentity` return from `SecurityRealm` and converts its attributes into roles. `RiskRoleDecoder` makes use of runtime attributes to get hold of remote client’s IP addresses & provides a way to query the Risk Analyzer via Sockets to receive a risk score. 
+Elytron’s Query System resides in Elytron & implemented as a RoleDecoder. An Elytron `RoleDecoder` takes the raw `AuthorizationIdentity` return from `SecurityRealm` and converts its attributes into roles. `RiskRoleDecoder` makes use of runtime attributes to get hold of remote client’s IP addresses & provides a way to query the Risk Analyzer via Sockets to receive a risk score.
 `RiskRoleDecoder` is provided with a threshold risk score, exceeding which leads to assigning empty roles to the auth event, which ultimately leads to authorization failure and further access is denied. In case an event is deemed safe, roles are assigned accordingly. +
 _RiskRoleDecoder's implementation can be found_ https://github.com/piyush-palta/wildfly-elytron/blob/ca675a791ee5084ca5ca3a9edd84a95ab15c38d0/auth/server/base/src/main/java/org/wildfly/security/authz/RiskRoleDecoder.java[here].
 
@@ -45,7 +45,7 @@ _RiskRoleDecoder's implementation can be found_ https://github.com/piyush-palta/
 Risk Analyzer is a server module that acts as Director as well as Notifier in IDS. It takes in an IP address & returns a risk score in the range of 0 to 100. The risk score is used to make the authorization decisions based on a set threshold risk. Risk Analyzer comprises several different components : Risk Server Socket, Main Analyzer & Risk Calculator.
 
 * Risk Server Socket :
-Risk Server Socket is used to declare a socket server instance, required to open connection to the client. Once the socket has been set up, it will listen for connection until terminated. Current maximum connection limit has been set at 5. While introducing socket threading in future, a more versatile approach will be taken. 
+Risk Server Socket is used to declare a socket server instance, required to open connection to the client. Once the socket has been set up, it will listen for connection until terminated. Current maximum connection limit has been set at 5. While introducing socket threading in future, a more versatile approach will be taken.
 * Risk Calculator :
 When Risk Analyzer receives a query, it sends the IP Address to Risk Calculator, which is backed by Blacklist IP dump, Rule Engine & a Learning Module. Results from all these will be aggregated & returned to the client.
 
@@ -56,16 +56,16 @@ _Implementation available at_ : https://github.com/piyush-palta/risk-analyzer
 .Architecture of Risk Analyzer
 image::https://lh3.googleusercontent.com/H-WnFK8GQji_VO6tk95HhoXFlqD8ZFn54HHuUmadJXu1FWEJW_khRU5xZr66QN7c69AH8EV0y_FQzcK5af76rd_l22bZYmvKiymC4WEbHwFY8e96RhRLsOcp0cxCXv8-UOxdbnrj[align=center]
 
-''' 
+'''
 
 == Syslog Server
- 
-Syslog server is a python based external server for syslogging of Elytron security events and acts as a Passive Agent. These events are logged using the inherent syslogging capabilities of the wildfly or undertow server. For now we’re using an undertow server, due to its sheer versatility. Both TCP & UDP syslogging is possible & with connections served as threads, it will easily scale for practical applications. + 
+
+Syslog server is a python based external server for syslogging of Elytron security events and acts as a Passive Agent. These events are logged using the inherent syslogging capabilities of the wildfly or undertow server. For now we’re using an undertow server, due to its sheer versatility. Both TCP & UDP syslogging is possible & with connections served as threads, it will easily scale for practical applications. +
 _Implementation available at_ : https://github.com/piyush-palta/syslog-server
 
 == Elytron’s Syslogger (Inbuilt Syslog Auditing)
- 
-Elytron’s Syslogger acts as an agent and logs security events directly to the Syslog server. We are using inbuilt syslog auditing capabilities of the server. Undertow Standalone is a servlet implementation, which uses Wildfly Elytron. We are using this implementation to emit the security events. + 
+
+Elytron’s Syslogger acts as an agent and logs security events directly to the Syslog server. We are using inbuilt syslog auditing capabilities of the server. Undertow Standalone is a servlet implementation, which uses Wildfly Elytron. We are using this implementation to emit the security events. +
 _Implementation available at_ : https://github.com/piyush-palta/undertow-standalone
 
 ## Summary:
