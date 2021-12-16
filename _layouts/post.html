@@ -16,7 +16,7 @@ layout: default
           <br>
           {% if page.tags %}
             {% for tag in page.tags %}
-              <a style="font-size: 0.9em;" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}">#{{ tag | downcase }} </a>
+              <a style="font-size: 0.9em;" href="{{site.baseurl}}/blog/tag/{{tag | downcase | replace: '.', '-'}}"> #{{ tag | downcase }}</a>
             {% endfor %}
           {% endif %}
         </p>
