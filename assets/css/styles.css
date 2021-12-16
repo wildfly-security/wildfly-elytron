@@ -220,6 +220,8 @@ body.post div.post-page .note, body.post div.post-page .colist { overflow: auto;
 
 .blog-page .blog-list-item p.byline { font-size: 1.3em; }
 
+.blog-page .blog-list-item .tags { font-size: 1em; }
+
 .blog-page .blog-list-item .post-title a { font-size: 1.8rem; text-decoration: none; }
 
 .blog-page .fa-rss-square { font-size: 2rem; color: #ee802f; float: right; }
