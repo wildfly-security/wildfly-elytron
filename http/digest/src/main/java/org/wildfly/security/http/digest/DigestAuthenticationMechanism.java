@@ -56,15 +56,18 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 
+import org.jboss.logging.Logger;
 import org.wildfly.common.iteration.ByteIterator;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
+import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
@@ -76,6 +79,8 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 final class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+
+    private static final Logger log = Logger.getLogger("org.wildfly.security.http.digest");
 
     private static final String CHALLENGE_PREFIX = "Digest ";
     private static final String OPAQUE_VALUE = "00000000000000000000000000000000";
@@ -114,6 +119,13 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
+        // Ensure a session is created to have stickiness through loadbalancers
+        try {
+            HttpScope sessionScope = getSessionScope(request, true);
+        } catch (Exception e) {
+            log.debug("Exception acquiring session. Digest auth may fail without stickied session.", e);
+        }
+
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
 
         if (authorizationValues != null) {
@@ -433,5 +445,15 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         int languageEnd = encoded.indexOf('\'', charsetEnd + 1);
         String charset = encoded.substring(0, charsetEnd);
         return URLDecoder.decode(encoded.substring(languageEnd + 1), charset);
+    }
+
+    private HttpScope getSessionScope(HttpServerRequest request, boolean createSession) {
+        HttpScope scope = request.getScope(Scope.SESSION);
+
+        if (scope != null &&!scope.exists() && createSession) {
+            scope.create();
+        }
+
+        return scope;
     }
 }
