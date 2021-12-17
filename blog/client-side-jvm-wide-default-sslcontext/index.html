@@ -151,22 +151,23 @@
 </div>
       <div class="grid__item width-12-12">
           <div class="paragraph">
-<p>Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs. For future WildFly release we will provide ability to register JVM wide default SSL context that other libraries can obtain without the need to use Elytron client API.</p>
+<p>Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs.
+In a future WildFly release, we will provide the ability to register a JVM wide default SSL context that other libraries can obtain without the need to use the Elytron client API.</p>
 </div>
 <div class="paragraph">
-<p>A new <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Provider.html">java security provider</a> will be added for this purpose. This provider loads <a href="https://docs.wildfly.org/26/Client_Guide.html">Elytron client configuration</a> from a file and registers SSLContext as a default SSLContext for the JVM.</p>
+<p>A new <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Provider.html">java security provider</a> will be added for this purpose. This provider loads <a href="https://docs.wildfly.org/26/Client_Guide.html">Elytron client configuration</a> from a file and registers an <code>SSLContext</code> as the default SSLContext for the JVM.</p>
 </div>
 <div class="paragraph">
-<p>When this provider has high enough priority, all client libraries that use <code>SSLContext.getDefault()</code> will obtain SSL context instantiated and configured by Elytron client without having to modify their code.</p>
+<p>When this provider has high enough priority, all client libraries that use <code>SSLContext.getDefault()</code> will obtain an SSL context instantiated and configured by the Elytron client without having to modify their code.</p>
 </div>
 <div class="paragraph">
-<p>Providers can be registered statically in <code>java.security</code> file or dynamically in the code by using standard <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Security.html">java provider registration API</a>.</p>
+<p>Providers can be registered statically in <code>java.security</code> file or dynamically in the code by using the standard <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Security.html">java provider registration API</a>.</p>
 </div>
 <div class="sect1">
 <h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This blog post has given an overview of upcoming JVM wide default SSL context provider in the Elytron client which will be included in a future WildFly release.</p>
+<p>This blog post has given an overview of the upcoming JVM wide default SSL context provider in the Elytron client which will be included in a future WildFly release.</p>
 </div>
 </div>
 </div>

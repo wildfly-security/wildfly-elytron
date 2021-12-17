@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing WildFly Apps with OpenID Connect</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing WildFly Apps with OpenID Connect</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | December 17, 2021
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/&title=Securing WildFly Apps with OpenID Connect" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Apps with OpenID Connect&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing WildFly Apps with OpenID Connect&amp;body=Securing WildFly Apps with OpenID Connect https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly 25 added the ability to secure applications using OpenID Connect, without needing
+to make use of the Keycloak client adapter. This blog post gives an introduction to this feature.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#openid-connect">OpenID Connect</a></li>
+<li><a href="#new-elytron-oidc-client-subsystem">New elytron-oidc-client Subsystem</a>
+<ul class="sectlevel2">
+<li><a href="#deployment-configuration">Deployment Configuration</a></li>
+<li><a href="#subsystem-configuration">Subsystem Configuration</a></li>
+<li><a href="#required-configuration-options">Required Configuration Options</a></li>
+</ul>
+</li>
+<li><a href="#openid-providers">OpenID Providers</a></li>
+<li><a href="#securing-an-application-using-oidc">Securing an application using OIDC</a>
+<ul class="sectlevel2">
+<li><a href="#example-project">Example Project</a></li>
+<li><a href="#setting-up-your-keycloak-openid-provider">Setting up your Keycloak OpenID provider</a></li>
+<li><a href="#deploying-the-app-to-wildfly">Deploying the app to WildFly</a></li>
+<li><a href="#accessing-the-app">Accessing the app</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="openid-connect"><a class="anchor" href="#openid-connect"></a>OpenID Connect</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://openid.net/connect/">OpenID Connect</a> is an identity layer on top of the OAuth 2.0 protocol.
+OpenID Connect makes it possible for a client to verify a user&#8217;s identity based on authentication
+that&#8217;s performed by an OpenID provider.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="new-elytron-oidc-client-subsystem"><a class="anchor" href="#new-elytron-oidc-client-subsystem"></a>New elytron-oidc-client Subsystem</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>WildFly 25 introduced a new <code>elytron-oidc-client</code> subsystem that scans deployments to check if the
+OpenID Connect (OIDC) authentication mechanism is needed. If the subsystem detects that the OIDC
+mechanism is required for a deployment, the subsystem will activate this authentication mechanism
+automatically.</p>
+</div>
+<div class="paragraph">
+<p>The configuration that indicates that the OIDC authentication mechanism is needed by an
+application can either be provided within the application itself or within the <code>elytron-client-oidc</code>
+subsystem.</p>
+</div>
+<div class="sect2">
+<h3 id="deployment-configuration"><a class="anchor" href="#deployment-configuration"></a>Deployment Configuration</h3>
+<div class="paragraph">
+<p>Two steps are needed to specify that the OIDC authentication mechanism should be used to
+secure an application using configuration within the deployment.</p>
+</div>
+<div class="paragraph">
+<p>First, an <code>oidc.json</code> configuration file needs to be added to the application&#8217;s <code>WEB-INF</code> directory.
+There is a sample <code>oidc.json</code> configuration file in the <a href="https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client">documentation</a>.
+(Note that with the exception of a couple new options, the options that can be specified in the <code>oidc.json</code>
+file are the same as the options that could previously be specified in the <code>keycloak.json</code> file that was used
+with the Keycloak client adapter.)</p>
+</div>
+<div class="paragraph">
+<p>Next, the application&#8217;s <code>web.xml</code> file should also specify <code>OIDC</code> as the <code>auth-method</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">&lt;login-config&gt;
+    &lt;auth-method&gt;OIDC&lt;/auth-method&gt;
+&lt;/login-config&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="subsystem-configuration"><a class="anchor" href="#subsystem-configuration"></a>Subsystem Configuration</h3>
+<div class="paragraph">
+<p>Instead of including the OIDC configuration directly in a deployment, it&#8217;s also possible to configure
+this via the <code>elytron-oidc-client</code> subsystem instead.</p>
+</div>
+<div class="paragraph">
+<p>For each deployment that is to be secured with OIDC, a <code>secure-deployment</code> should be added.
+It is also possible to combine configuration that is common to multiple deployments using
+the <code>provider</code> resource.</p>
+</div>
+<div class="paragraph">
+<p>Sample <code>elytron-oidc-client</code> subsystem configuration can also be found in the <a href="https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client">documentation</a>.
+The various options that can be specified here correspond to the same options that can be specified in the
+<code>oidc.json</code> configuration above.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="required-configuration-options"><a class="anchor" href="#required-configuration-options"></a>Required Configuration Options</h3>
+<div class="paragraph">
+<p>Whether the OIDC configuration is being specified directly in the deployment or via the subsystem
+configuration, there are a couple configuration options that must be specified:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>client-id - This is the client identifier for the application. This is the identifier that
+has been registered with the authorization server.</p>
+</li>
+<li>
+<p>provider-url - The URL of the OpenID provider. WildFly will use <code>provider-url/.well-known/configuration</code>
+to discover more information about the OpenID provider. As an example, for Keycloak, the <code>provider-url</code>
+will look like <a href="http://localhost:8080/auth/realms/myrealm" class="bare">http://localhost:8080/auth/realms/myrealm</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The rest of the configuration options are optional and are the same as the previous Keycloak
+client adapter.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="openid-providers"><a class="anchor" href="#openid-providers"></a>OpenID Providers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>WildFly 25 and WildFly 26 have been tested with the Keycloak OpenID provider. Although it&#8217;s now possible
+to configure WildFly to use other OpenID providers, these haven’t been extensively tested yet so the
+use of other OpenID providers should be considered experimental for now and should not be used in a
+production environment yet. Proper support for other OpenID providers will be added in a future WildFly
+release.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="securing-an-application-using-oidc"><a class="anchor" href="#securing-an-application-using-oidc"></a>Securing an application using OIDC</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the rest of this post, we&#8217;ll go through a complete example to see how to secure an application
+deployed to WildFly using OpenID Connect with the Keycloak OpenID provider.</p>
+</div>
+<div class="sect2">
+<h3 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h3>
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We’re going to be looking at the <code>simple-webapp-oidc</code> project.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="setting-up-your-keycloak-openid-provider"><a class="anchor" href="#setting-up-your-keycloak-openid-provider"></a>Setting up your Keycloak OpenID provider</h3>
+<div class="paragraph">
+<p>It&#8217;s easy to set up Keycloak using Docker. Follow the steps in Keycloak&#8217;s <a href="https://www.keycloak.org/getting-started/getting-started-docker">getting started guide</a>
+to start Keycloak, create a realm called <code>myrealm</code>, create a user called <code>myuser</code>,
+and register a client called <code>myclient</code>.</p>
+</div>
+<div class="paragraph">
+<p>After registering our client, <code>myclient</code>, we also need to configure valid redirect URIs. Simply click
+on <code>Clients</code> and then on <code>myclient</code>. In the <code>Valid Redirect URIs</code> field, enter <a href="http://localhost:8090/simple-webapp-oidc/*" class="bare">http://localhost:8090/simple-webapp-oidc/*</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-the-app-to-wildfly"><a class="anchor" href="#deploying-the-app-to-wildfly"></a>Deploying the app to WildFly</h3>
+<div class="paragraph">
+<p>We&#8217;re going to use the deployment configuration approach for this example, i.e., our application
+contains an <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/simple-webapp-oidc/src/main/webapp/WEB-INF/oidc.json">oidc.json</a> file and its <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/simple-webapp-oidc/src/main/webapp/WEB-INF/web.xml#L18-L20">web.xml</a> file specifies <code>OIDC</code> as the <code>auth-method</code>.</p>
+</div>
+<div class="paragraph">
+<p>Now that we&#8217;ve set up our Keycloak OpenID provider, we just need to deploy our application to WildFly.</p>
+</div>
+<div class="paragraph">
+<p>First, we&#8217;re going to start our WildFly instance (notice that we&#8217;re specifying a port offset here
+since our Keycloak instance is already exposed on port 8080):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">./bin/standalone.sh -Djboss.socket.binding.port-offset=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;re going to build and deploy our project. From our <code>elytron-examples</code> directory, run the
+following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd simple-webapp-oidc
+mvn wildfly:deploy -Dwildfly.port=10000</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="accessing-the-app"><a class="anchor" href="#accessing-the-app"></a>Accessing the app</h3>
+<div class="paragraph">
+<p>Now, let&#8217;s try accessing our application using <a href="http://localhost:8090/simple-webapp-oidc/" class="bare">http://localhost:8090/simple-webapp-oidc/</a>.</p>
+</div>
+<div class="paragraph">
+<p>Click on "Access Secured Servlet".</p>
+</div>
+<div class="paragraph">
+<p>Now, you&#8217;ll be redirected to Keycloak to log in. Log in with <code>myuser</code> and the password that you
+set when configuring Keycloak.</p>
+</div>
+<div class="paragraph">
+<p>Next, you&#8217;ll be redirected back to our application and you should see the "Secured Servlet" page.
+That means that we&#8217;ve been able to successfully log in to our application using the Keycloak
+OpenID provider!</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an introduction to the native support for OpenID Connect in WildFly
+and has shown how to secure an application deployed to WildFly with OpenID Connect.
+For more details about this feature, be sure to check out the <a href="https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client">documentation</a>.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
