@@ -1,0 +1,103 @@
+---
+layout: post
+title: "Upcoming filesystem realm encryption and integrity support in Elytron"
+date: 2021-12-17
+tags: filesystem-realm encryption integrity
+synopsis: An overview of the upcoming encryption and integrity support in Elytron Filesystem Security Realms.
+author: araskar
+---
+
+Two features that we have been working during the WildFly 26 development phase is the ability to encrypt filesystem security realms with a SecretKey, and the ability to verify filesystem integrity with a KeyPair. This feature will be included in a future WildFly release.
+
+== An Overview of Filesystem Realm Encryption and Integrity
+Currently the filesystem realm does not offer support for encryption of the entire filesystem. For example, a sample identity file could contain the following information. The file name here would be `quickstartuser-OF2WSY3LON2GC4TUKVZWK4Q.xml`.
+[source, xml]
+----
+<?xml version='1.0' encoding='UTF-8'?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="clear" format="base64">AXF1aWNrc3RhcnRQd2QxIQ==</password>
+    </credentials>
+    <attributes>
+        <attribute name="Roles" value="guest"/>
+    </attributes></identity>
+----
+This poses a security issue as if anyone has access to the filesystem, they could find the base64 encoded password of the user, and all their attributes in plaintext. To fix this issue, if encryption is now enabled, it will encrypt the passwords, and all attributes with a SecretKey, and the filename will no longer contain their username in plaintext form, but instead a base64 encoding of the name.
+
+If that same identity was encrypted with a SecretKey, this is what the identity file would be, with the filename `OF2WSY3LON2GC4TUKVZWK4Q.xml`.
+
+[source, xml]
+----
+<?xml version='1.0' encoding='UTF-8'?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="clear" format="enc_base64">bgKRfndfcJwdA+8lpHpjtQ==</password>
+    </credentials>
+    <attributes>
+        <attribute name="ngnS0g/i9xfK1yPEs0gd5Q==" value="01GCn5bePl8gvnvpyVTN2g=="/>
+    </attributes></identity>
+----
+
+Filesystem integrity was also added into this feature. This is very important as it ensures that the filesystem data has not been tampered with since the last time it was written to. This works by generating a signature using a KeyPair that contains a PrivateKey and PublicKey. This signature is generated based on the file contents. A single character change in the file will regenerate the signature to something completely different. This allows us to ensure the file is exactly how we expect it to be. The signature will be in the identity before the end of the file. The identity file with integrity verification enabled would look like the following.
+[source, xml]
+----
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="bcrypt" format="base64">BQoQX9aqzoP3jgFXIWh9GOlIq1secNEbRofmD9lKHUd+/clh+dMwhusP</password>
+        <otp algorithm="otp-sha1" hash="UF2In5AIWEc=" seed="a2UxMjM0" sequence="500"/>
+    </credentials>
+    <attributes>
+        <attribute name="firstName" value="John"/>
+        <attribute name="lastName" value="Smith"/>
+        <attribute name="roles" value="Employee"/>
+        <attribute name="roles" value="Manager"/>
+        <attribute name="roles" value="Admin"/>
+    </attributes>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+            <Reference URI="">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+                <DigestValue>Vt9Hea6ZOmYH9riBadwPNL2yY49B7X6S2OVfG4/1h4U=</DigestValue>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue>
+            Z+oXEAyowAMsnp6Myi2+8igRivY2LVeHy3OfxfAn/43v6hm4KLqb2rCFROMT9SrwowdIA0Ds9l0P&#13;46EXmsYeTXHJjsS0fI7fmpP6UpyHjslpOHuSIbOOrsk2zZRPNEoMoWzgwx8xRJb9AP/Ut89ZJ66i&#13;klKih2xncnr2hnjDjKBsX+McIl9oB3JQwDFtFkfW5OxmOGbNkftN7wH7nepfBYkdAog81zPYsDgy&#13;JC7JPOLW4M4e2AgUrApbsR/9D80zW80rsZJ0ifRUhMeBG/PQ8LTLuLOKyp6NXB5V/U++LwmH09Bb&#13;KrzDb51mdabo/+gx1FtV64AHAW+F8f3fHcE3A==
+        </SignatureValue>
+        <KeyInfo>
+            <KeyValue>
+                <RSAKeyValue>
+                    <Modulus>
+                        j5K7L63eAwjCZLEZfJH7CwG6bFhUeE/ewzILiSSLcPxM7rG4xY6QgGlPzQ5mu+G31aHdlLrG9yWt&#13;Wazz1LsWFAi9NJJt3TEZ0PA8UdWUPeo5ddqpGPcjbpdOp1MgTyOqmYnJ3vXQYYsBGr+LCSfitATV&#13;mG8qbtz0DWneybWByh9osWRtjt/nd2HiFyKn/E0/kXY2eIuz/MO/LG+b28bTpX3WUR5/gJnNdxWe&#13;giVJmFk0vNf+cS5BQmMp3HUKl1hHihT+oTkUHBwGr0Ovbw33/8g97pqSf1itv0DBuL0TVg27hgq2&#13;KXWgdxmWsjEyTI6q2kjoY6ANopnXHR9b3AV5Tw==
+                    </Modulus>
+                    <Exponent>AQAB</Exponent>
+                </RSAKeyValue>
+            </KeyValue>
+        </KeyInfo>
+    </Signature>
+</identity>
+----
+
+== Filesystem Realm Encryption and Integrity Configuration
+To configure filesystem encryption, the follwing two attributes will be required:
+
+* ``credential-store``: This attribute is a reference to the credential store that contains the SecretKey to be used to encrypt and decrypt the filesystem-realm.
+
+* ``secret-key``: This attribute is an alias for the secret key to be used to encrypt and decrypt the filesystem-realm. If the credential-store attribute is specified, this attribute is required.
+
+To configure filesystem integrity, another two attributes will be required:
+
+* ``key-store``: This attribute is a reference to the KeyStore that contains the key pair to be used to sign and verify the signature of each identity.
+
+* ``key-alias``: This attribute is an alias to the keypair in the key-store used to sign and verify the signature of each identity. If the key-pair attribute is specified, this attribute is required.
+
+== Summary
+This post has given a quick rundown of the new Filesystem realm encryption and integrity features for the Elytron subsystem that we have been working to complete.
+
+For more details and updates on the status of this feature,
+keep an eye on https://issues.redhat.com/browse/WFCORE-5530[WFCORE-5530].
