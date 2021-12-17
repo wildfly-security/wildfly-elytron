@@ -2,7 +2,7 @@
 layout: post
 title: 'New Security Features in WildFly'
 date: 2021-12-17
-tags: release jaas security-realm oidc filesystem-realm
+tags: release jaas security-realm oidc filesystem-realm ssl tls
 synopsis: An overview of some new security features in WildFly.
 author: fjuma
 ---
@@ -31,7 +31,7 @@ We will be adding the ability to encrypt the identities that are stored in Elytr
 security realm. In addition to this, we will be adding the ability to verify the integrity of these
 identities as well. For all the details on this upcoming feature, check out this https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-filesystem-encryption-integrity[blog post].
 
-== Upcoming Client Side Default SSL Context Provider
+== Upcoming SSL/TLS Enhancement
 
 We will be adding a Java security provider that loads Elytron client configuration and registers a default
 SSL context for the JVM. When this provider is registered with high enough priority, client libraries that
