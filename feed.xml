@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 17 Dec 2021 15:58:53 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 17 Dec 2021 15:59:52 +0000</lastBuildDate>
         
         <item>
             <title>Upcoming filesystem realm encryption and integrity support in Elytron</title>
@@ -18,6 +18,20 @@
             <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-filesystem-encryption-integrity/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Using a JAAS realm in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/
+            </link>
+            <description>
+                The Elytron subsystem already provides various security realms like LDAP realm, JDBC realm, filesystem realm, and others for common use cases. Starting from WildFly 26, you can also configure a JAAS security realm in the Elytron subsystem in order to use custom Login Modules for authentication and authorization. A JAAS...
+            </description>
+            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/
             </guid>
         </item>
         
@@ -130,20 +144,6 @@
             <pubDate>Mon, 21 Jun 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/
-            </guid>
-        </item>
-        
-        <item>
-            <title>SSL Certificate Revocation Lists with WildFly</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/
-            </link>
-            <description>
-                An Overview of Certificate Revocation Lists Configuring CRLs on the Client Side Back Up Your Standalone Server Configuration Pre-requisite Server Configuration Pre-requisite Client Configuration Configure the Server Create the Certificate Revocation Lists Configure a Client that verifies certificates against CRLs Build and Deploy the Application Run the Client and Verify...
-            </description>
-            <pubDate>Fri, 18 Jun 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/
             </guid>
         </item>
         
