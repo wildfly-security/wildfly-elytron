@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 17 Dec 2021 15:59:52 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 17 Dec 2021 16:00:41 +0000</lastBuildDate>
         
         <item>
             <title>Upcoming filesystem realm encryption and integrity support in Elytron</title>
@@ -32,6 +32,20 @@
             <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Upcoming client side default SSL context provider</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/client-side-jvm-wide-default-sslcontext/
+            </link>
+            <description>
+                Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs. For future WildFly release we will provide ability to register JVM wide default SSL context that other libraries can obtain without the need to...
+            </description>
+            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/client-side-jvm-wide-default-sslcontext/
             </guid>
         </item>
         
@@ -130,20 +144,6 @@
             <pubDate>Thu, 24 Jun 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/hash-charsets-encodings/
-            </guid>
-        </item>
-        
-        <item>
-            <title>SSLv2Hello with WildFly</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/
-            </link>
-            <description>
-                It is now possible to use SSLv2Hello with WildFly. This blog post will give an introduction to this new feature, but it will assume previous knowledge on how to configure SSL in Elytron. For more information on how to configure SSL, refer to the elytron documentation. An Overview of SSLv2Hello...
-            </description>
-            <pubDate>Mon, 21 Jun 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/oneway-sslv2hello/
             </guid>
         </item>
         
