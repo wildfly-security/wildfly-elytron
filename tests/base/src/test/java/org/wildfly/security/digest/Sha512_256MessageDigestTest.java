@@ -18,16 +18,12 @@
 
 package org.wildfly.security.digest;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.wildfly.common.iteration.ByteIterator;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.Provider;
-import java.security.Security;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.wildfly.common.iteration.ByteIterator;
 
 /**
  * SHA-512/256 hashing test
@@ -35,22 +31,10 @@ import java.security.Security;
 // has dependency on wildfly-elytron-base
 public class Sha512_256MessageDigestTest {
 
-    private static final Provider provider = WildFlyElytronDigestProvider.getInstance();
-
-    @BeforeClass
-    public static void register() {
-        Security.addProvider(provider);
-    }
-
-    @AfterClass
-    public static void remove() {
-        Security.removeProvider(provider.getName());
-    }
-
     // For reference output: http://emn178.github.io/online-tools/
     @Test
     public void testSha512_256() throws Exception {
-        MessageDigest md = MessageDigest.getInstance("SHA-512-256");
+        MessageDigest md = MessageDigest.getInstance("SHA-512-256", WildFlyElytronDigestProvider.getInstance());
 
         byte[] digest = md.digest(new byte[]{});
         Assert.assertEquals("c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a", ByteIterator.ofBytes(digest).hexEncode().drainToString());

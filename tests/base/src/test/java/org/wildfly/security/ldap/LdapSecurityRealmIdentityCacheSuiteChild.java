@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.wildfly.common.Assert.assertNotNull;
 import static org.wildfly.common.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttribute;
@@ -170,6 +171,7 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
 
     private ModifiableSecurityRealm createSecurityRealm(boolean credentialLoader, boolean directVerification) {
         LdapSecurityRealmBuilder builder = LdapSecurityRealmBuilder.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
@@ -178,7 +180,7 @@ public class LdapSecurityRealmIdentityCacheSuiteChild {
         if (credentialLoader) builder.userPasswordCredentialLoader().build();
         if (directVerification) builder.addDirectEvidenceVerification();
         return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(builder.build()),
-                createRealmIdentitySimpleJavaMapCache());
+                createRealmIdentitySimpleJavaMapCache(), ELYTRON_PASSWORD_PROVIDERS);
     }
 
     private class MockCacheableModifiableSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {

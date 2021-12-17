@@ -75,7 +75,9 @@ public interface Credential extends Cloneable {
      * @param evidence the evidence to verify (must not be {@code null})
      *
      * @return {@code true} if the evidence is verified, {@code false} otherwise
+     * @deprecated use {@link #verify(Supplier, Evidence)} instead
      */
+    @Deprecated
     default boolean verify(Evidence evidence) {
         return verify(INSTALLED_PROVIDERS, evidence);
     }

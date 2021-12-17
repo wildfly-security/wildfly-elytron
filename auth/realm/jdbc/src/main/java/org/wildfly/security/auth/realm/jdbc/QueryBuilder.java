@@ -21,9 +21,12 @@ package org.wildfly.security.auth.realm.jdbc;
 import org.wildfly.common.Assert;
 
 import javax.sql.DataSource;
+
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A builder class with different configuration options to configure queries.
@@ -78,6 +81,11 @@ public class QueryBuilder extends JdbcSecurityRealmBuilder {
     @Override
     public QueryBuilder principalQuery(String sql) {
         return this.parent.principalQuery(sql);
+    }
+
+    @Override
+    public JdbcSecurityRealmBuilder setProviders(Supplier<Provider[]> providers) {
+        return this.parent.setProviders(providers);
     }
 
     @Override
