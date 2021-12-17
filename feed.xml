@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 16 Dec 2021 22:56:29 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 17 Dec 2021 15:58:53 +0000</lastBuildDate>
+        
+        <item>
+            <title>Upcoming filesystem realm encryption and integrity support in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-filesystem-encryption-integrity/
+            </link>
+            <description>
+                Two features that we have been working during the WildFly 26 development phase is the ability to encrypt filesystem security realms with a SecretKey, and the ability to verify filesystem integrity with a KeyPair. This feature will be included in a future WildFly release. An Overview of Filesystem Realm Encryption...
+            </description>
+            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-filesystem-encryption-integrity/
+            </guid>
+        </item>
         
         <item>
             <title>Using failover realm in Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 18 Jun 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ssl-certificate-revocation-list/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Secure WildFly CLI with Keycloak</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/secure-wildfly-cli-with-keycloak/
-            </link>
-            <description>
-                This blog post gives an example of how to secure WildFly CLI using Keycloak and Elytron. Keycloak&#8217;s Wildfly Elytron Adapter Download WildFly server, Keycloak server and the WildFly OpenID Connect client adapter for WildFly from keycloak.org. Make sure your versions are compatible. Then, extract the contents of the client adapter...
-            </description>
-            <pubDate>Tue, 15 Jun 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/secure-wildfly-cli-with-keycloak/
             </guid>
         </item>
         
