@@ -1,0 +1,20 @@
+---
+layout: post
+title: 'Upcoming client side default SSL context provider'
+date: 2021-12-17
+tags: ssl tls ssl-context client client-config
+synopsis:  An overview of the upcoming Elytron client default SSL context provider.
+author: dvilkola
+---
+
+Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs. For future WildFly release we will provide ability to register JVM wide default SSL context that other libraries can obtain without the need to use Elytron client API.
+
+A new https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Provider.html[java security provider] will be added for this purpose. This provider loads https://docs.wildfly.org/26/Client_Guide.html[Elytron client configuration] from a file and registers SSLContext as a default SSLContext for the JVM.
+
+When this provider has high enough priority, all client libraries that use `SSLContext.getDefault()` will obtain SSL context instantiated and configured by Elytron client without having to modify their code.
+
+Providers can be registered statically in `java.security` file or dynamically in the code by using standard https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/Security.html[java provider registration API].
+
+== Summary
+
+This blog post has given an overview of upcoming JVM wide default SSL context provider in the Elytron client which will be included in a future WildFly release.
