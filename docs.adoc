@@ -9,7 +9,7 @@ permalink: /docs/
 = WildFly Elytron Documentation
 
 For information regarding using WildFly Elytron within the WildFly application server please consult the
-https://docs.wildfly.org/23/WildFly_Elytron_Security.html[subsystem documentation].
+https://docs.wildfly.org/26/WildFly_Elytron_Security.html[subsystem documentation].
 
 == API References
 

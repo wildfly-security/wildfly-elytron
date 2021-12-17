@@ -1,0 +1,66 @@
+---
+layout: post
+title: 'New Security Features in WildFly'
+date: 2021-12-17
+tags: release jaas security-realm oidc filesystem-realm
+synopsis: An overview of some new security features in WildFly.
+author: fjuma
+---
+
+Since WildFly 26 was just released, we wanted to highlight a new security feature included
+in this release and a few other security features as well.
+
+== Support for JAAS Security Realms in WildFly 26
+
+WildFly 26 now adds support for JAAS security realms to the Elytron subsystem. This means that
+it's possible to use custom LoginModules for authentication and authorization. More information,
+including an example on how to quickly get started with this new feature, can be found in this
+https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/[blog post].
+
+== Support for OpenID Connect
+
+WildFly 25 added the ability to secure applications deployed to WildFly with OpenID Connect,
+without needing to use the Keycloak client adapter. For more details about this recent
+feature and an example that shows how to secure an application deployed to WildFly with
+the Keycloak OpenID provider, take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/[blog post].
+
+== Upcoming Filesystem Realm Enhancements
+
+We will be adding the ability to encrypt the identities that are stored in Elytron's filesystem-based
+security realm. In addition to this, we will be adding the ability to verify the integrity of these
+identities as well. For all the details on this upcoming feature, check out this https://wildfly-security.github.io/wildfly-elytron/blog/upcoming-filesystem-encryption-integrity[blog post].
+
+== Upcoming Client Side Default SSL Context Provider
+
+We will be adding a Java security provider that loads Elytron client configuration and registers a default
+SSL context for the JVM. When this provider is registered with high enough priority, client libraries that
+use `SSLContext.getDefault()` will obtain an SSL context instantiated and configured by the Elytron client.
+For all the details on this upcoming feature, check out this https://wildfly-security.github.io/wildfly-elytron/blog/client-side-jvm-wide-default-sslcontext/[blog post].
+
+== Contributing to Elytron
+
+As always, the WildFly Elytron project welcomes your contributions!
+
+=== How to get started?
+Our https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md[contribution guide] helps guide you through the steps for getting started on the WildFly Elytron project and goes through how to format and submit your first PR.
+
+=== How to pick an issue?
+We have created a list of https://issues.redhat.com/issues/?filter=12364234[good first issues]  to help you get started.
+
+=== How to reach us?
+If you’d like some help or have questions about making contributions to our project, feel free to reach us on https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[chat] or add questions directly on your PR.
+
+Thanks to everyone who contributed to the WildFly Elytron project this year!
+
+== Where to Find More Information
+
+This blog post has given an overview of some new security features in WildFly. Be sure to check out our
+https://wildfly-security.github.io/wildfly-elytron/blog/[blog posts] page, where we have all our
+blog posts on Elytron features. If there is an Elytron topic you’d like to see a blog post on, feel free to
+let us know on WildFly’s https://groups.google.com/forum/#!forum/wildfly[user forum].
+
+To learn more about Elytron, check out our https://wildfly-security.github.io/wildfly-elytron/[site].
+
+
+
