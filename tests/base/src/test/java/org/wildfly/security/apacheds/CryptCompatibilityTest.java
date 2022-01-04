@@ -19,21 +19,17 @@
 package org.wildfly.security.apacheds;
 
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
-import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 
 import org.apache.directory.api.ldap.model.constants.LdapSecurityConstants;
 import org.apache.directory.api.ldap.model.password.PasswordUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.util.ModularCrypt;
 
@@ -45,18 +41,6 @@ import org.wildfly.security.password.util.ModularCrypt;
  */
 public class CryptCompatibilityTest {
 
-    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
-
-    @BeforeClass
-    public static void register() {
-        Security.addProvider(provider);
-    }
-
-    @AfterClass
-    public static void remove() {
-        Security.removeProvider(provider.getName());
-    }
-
     private static final String PASSWORD = "cryptIt";
     private static final String LONG_PASSWORD = "cryptPassword"; // more than 8 characters
 
@@ -67,7 +51,7 @@ public class CryptCompatibilityTest {
         System.out.println(new String(forStorage, StandardCharsets.UTF_8));
 
         UnixDESCryptPassword testPass = (UnixDESCryptPassword) ModularCrypt.createPassword(forStorage, UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
-        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
+        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, ELYTRON_PASSWORD_PROVIDERS);
 
         assertTrue(pf.verify(pf.translate(testPass), (PASSWORD).toCharArray()));
         System.out.println("Have something split out.");
@@ -80,7 +64,7 @@ public class CryptCompatibilityTest {
         System.out.println(new String(forStorage, StandardCharsets.UTF_8));
 
         UnixDESCryptPassword testPass = (UnixDESCryptPassword) ModularCrypt.createPassword(forStorage, UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
-        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
+        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, ELYTRON_PASSWORD_PROVIDERS);
 
         assertTrue(pf.verify(pf.translate(testPass), (LONG_PASSWORD).toCharArray()));
     }

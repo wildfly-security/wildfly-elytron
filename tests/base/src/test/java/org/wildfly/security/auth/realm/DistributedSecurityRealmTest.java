@@ -17,14 +17,21 @@
  */
 package org.wildfly.security.auth.realm;
 
-import org.junit.AfterClass;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
+import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
+
+import java.security.Principal;
+import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Collections;
+
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -36,14 +43,6 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 
-import java.security.Principal;
-import java.security.Provider;
-import java.security.Security;
-import java.security.spec.AlgorithmParameterSpec;
-import java.util.Collections;
-
-import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
-
 /**
  * Simple test case to test DistributedSecurityRealm
  *
@@ -51,16 +50,6 @@ import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_C
  */
 public class DistributedSecurityRealmTest {
     private static final Provider provider = new WildFlyElytronProvider();
-
-    @BeforeClass
-    public static void registerProvider() {
-        Security.insertProviderAt(provider, 1);
-    }
-
-    @AfterClass
-    public static void removeProvider() {
-        Security.removeProvider(provider.getName());
-    }
 
     SecurityRealm realm1;
     SecurityRealm realm2;
@@ -94,9 +83,9 @@ public class DistributedSecurityRealmTest {
         RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("user1"));
         Assert.assertTrue(identity.exists());
         PasswordCredential credential = identity.getCredential(PasswordCredential.class);
-        Assert.assertTrue(credential.verify(new PasswordGuessEvidence(pass1)));
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass2)));
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass3)));
+        Assert.assertTrue(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass1)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass2)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass3)));
         identity.dispose();
     }
 
@@ -105,9 +94,9 @@ public class DistributedSecurityRealmTest {
         RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("user2"));
         Assert.assertTrue(identity.exists());
         PasswordCredential credential = identity.getCredential(PasswordCredential.class);
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass1)));
-        Assert.assertTrue(credential.verify(new PasswordGuessEvidence(pass2)));
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass3)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass1)));
+        Assert.assertTrue(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass2)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass3)));
         identity.dispose();
     }
 
@@ -116,9 +105,9 @@ public class DistributedSecurityRealmTest {
         RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("user3"));
         Assert.assertTrue(identity.exists());
         PasswordCredential credential = identity.getCredential(PasswordCredential.class);
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass1)));
-        Assert.assertFalse(credential.verify(new PasswordGuessEvidence(pass2)));
-        Assert.assertTrue(credential.verify(new PasswordGuessEvidence(pass3)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass1)));
+        Assert.assertFalse(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass2)));
+        Assert.assertTrue(credential.verify(ELYTRON_PASSWORD_PROVIDERS, new PasswordGuessEvidence(pass3)));
         identity.dispose();
     }
 
@@ -140,14 +129,14 @@ public class DistributedSecurityRealmTest {
 
 
     private static PasswordCredential createPasswordCredential(char[] password) throws Exception {
-        PasswordFactory pf = PasswordFactory.getInstance(ALGORITHM_CLEAR);
+        PasswordFactory pf = PasswordFactory.getInstance(ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
         PasswordSpec ps = new ClearPasswordSpec(password);
 
         return new PasswordCredential(pf.generatePassword(ps));
     }
 
     private static SecurityRealm createRealmWithIdentity(String identityName, Credential identityCredential) {
-        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
+        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm(NameRewriter.IDENTITY_REWRITER, ELYTRON_PASSWORD_PROVIDERS);
         if (identityName != null) {
             realm.setIdentityMap(Collections.singletonMap(identityName, new SimpleRealmEntry(Collections.singletonList(identityCredential))));
         } else {

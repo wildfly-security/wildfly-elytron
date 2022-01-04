@@ -671,7 +671,6 @@ public class PlainTest {
     }
 
     static class DataSourceRule implements TestRule {
-        private final Provider provider = WildFlyElytronPasswordProvider.getInstance();
         private JDBCDataSource dataSource;
 
         @Override
@@ -680,19 +679,13 @@ public class PlainTest {
 
                 @Override
                 public void evaluate() throws Throwable {
-                    Security.addProvider(provider);
-
                     dataSource = new JDBCDataSource();
-
                     dataSource.setDatabase("mem:elytron-jdbc-realm-test");
                     dataSource.setUser("sa");
-
                     try {
                         current.evaluate();
                     } catch (Exception e) {
                         throw e;
-                    } finally {
-                        Security.removeProvider(provider.getName());
                     }
                 }
             };

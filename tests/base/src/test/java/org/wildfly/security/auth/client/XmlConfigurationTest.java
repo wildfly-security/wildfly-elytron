@@ -34,9 +34,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,9 +53,9 @@ import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.store.CredentialStoreBuilder;
+import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
@@ -70,8 +68,6 @@ public class XmlConfigurationTest {
 
     static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
     static final String NS_ELYTRON_1_0_1 = "urn:elytron:1.0.1";
-
-    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
 
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/ca/jks";
@@ -148,10 +144,10 @@ public class XmlConfigurationTest {
         ladybirdFile = new File(workingDirCA, LADYBIRD_LOCATION);
         createLadybirdKeyStore(ladybirdFile);
 
-        Security.addProvider(provider);
         cleanCredentialStores();
         // setup vaults that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("ONE"))
+                .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_ONE")
                 .addPassword("ladybird", "Elytron")
@@ -161,7 +157,6 @@ public class XmlConfigurationTest {
 
     @AfterClass
     public static void tearDown() {
-        Security.removeProvider(provider.getName());
         ladybirdFile.delete();
         ladybirdFile = null;
         workingDirCA.delete();

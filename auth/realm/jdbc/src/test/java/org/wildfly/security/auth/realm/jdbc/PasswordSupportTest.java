@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.realm.jdbc.DataSourceRule.ELYTRON_PASSWORD_PROVIDERS;
 import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SALT_SIZE;
 
 import java.nio.charset.Charset;
@@ -76,6 +77,7 @@ public class PasswordSupportTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(dataSourceRule.getDataSource())
@@ -87,7 +89,7 @@ public class PasswordSupportTest {
 
         assertTrue(realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR, null).isDefinitelySupported());
 
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
 
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
@@ -118,6 +120,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT password FROM user_bcrypt_modular_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
@@ -156,6 +159,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
@@ -191,6 +195,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_encoded_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
@@ -227,6 +232,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_encoded_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT, null));
@@ -268,6 +274,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT digest, salt FROM user_salted_digest_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null));
@@ -306,6 +313,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT digest FROM user_simple_digest_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm, null));
@@ -339,6 +347,7 @@ public class PasswordSupportTest {
                 .principalQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
                 .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .build();
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, null));
@@ -372,7 +381,7 @@ public class PasswordSupportTest {
             byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
             SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
             EncryptablePasswordSpec eps = new EncryptablePasswordSpec(userPassword.toCharArray(), spac);
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, ELYTRON_PASSWORD_PROVIDERS);
             SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) passwordFactory.generatePassword(eps);
 
             preparedStatement.setString(1, userName);
@@ -398,7 +407,7 @@ public class PasswordSupportTest {
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_simple_digest_password (name, digest) VALUES (?, ?)");
         ) {
             EncryptablePasswordSpec eps = new EncryptablePasswordSpec(userPassword.toCharArray(), null);
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, ELYTRON_PASSWORD_PROVIDERS);
             SimpleDigestPassword tsdp = (SimpleDigestPassword) passwordFactory.generatePassword(eps);
 
             preparedStatement.setString(1, userName);
@@ -423,7 +432,7 @@ public class PasswordSupportTest {
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_scram_digest_password (name, digest, salt, iterationCount) VALUES (?, ?, ?, ?)");
         ) {
             byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
-            PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
+            PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, ELYTRON_PASSWORD_PROVIDERS);
             IteratedSaltedPasswordAlgorithmSpec algoSpec = new IteratedSaltedPasswordAlgorithmSpec(4096, salt);
             EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(userPassword.toCharArray(), algoSpec);
             ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
@@ -453,7 +462,7 @@ public class PasswordSupportTest {
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_modular_password (name, password) VALUES (?, ?)");
         ) {
             byte[] salt = generateRandomSalt(BCRYPT_SALT_SIZE);
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT, ELYTRON_PASSWORD_PROVIDERS);
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, salt))
             );
@@ -480,7 +489,7 @@ public class PasswordSupportTest {
                 Connection connection = dataSourceRule.getDataSource().getConnection();
                 PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_password (name, password, salt, iterationCount) VALUES (?, ?, ?, ?)");
         ) {
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT, ELYTRON_PASSWORD_PROVIDERS);
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt))
             );
@@ -510,7 +519,7 @@ public class PasswordSupportTest {
                 Connection connection = dataSourceRule.getDataSource().getConnection();
                 PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_encoded_password (name, password, salt, iterationCount) VALUES (?, ?, ?, ?)");
         ) {
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT, ELYTRON_PASSWORD_PROVIDERS);
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt),
                             hashCharset));
