@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.credential.store;
 
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ public class CredentialStoreBuilder {
     private char[] storagePassword;
 
     private ArrayList<Data> data = new ArrayList<>();
+    private Provider[] providers;
 
     public CredentialStoreBuilder() { }
 
@@ -110,6 +112,11 @@ public class CredentialStoreBuilder {
         return addPassword(alias, password.toCharArray());
     }
 
+    public CredentialStoreBuilder setProviders(Provider... providers) {
+        this.providers = providers;
+        return this;
+    }
+
     public void build() throws Exception {
         if (file == null) {
             throw new IllegalStateException("file has to be specified");
@@ -125,7 +132,7 @@ public class CredentialStoreBuilder {
             map,
             new CredentialStore.CredentialSourceProtectionParameter(
                 IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, storagePassword)))),
-            null
+            providers
             );
 
         for (Data item : data) {

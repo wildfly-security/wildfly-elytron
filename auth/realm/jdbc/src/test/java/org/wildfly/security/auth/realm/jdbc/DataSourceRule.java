@@ -17,22 +17,26 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
+import java.security.Provider;
+import java.util.function.Supplier;
+
+import javax.sql.DataSource;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 
-import javax.sql.DataSource;
-import java.security.Provider;
-import java.security.Security;
-
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class DataSourceRule implements TestRule {
 
-    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
+    public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
+            WildFlyElytronPasswordProvider.getInstance()
+    };
+
     private JDBCDataSource dataSource;
 
     @Override
@@ -41,8 +45,6 @@ public class DataSourceRule implements TestRule {
 
             @Override
             public void evaluate() throws Throwable {
-                Security.addProvider(provider);
-
                 dataSource = new JDBCDataSource();
 
                 dataSource.setDatabase("mem:elytron-jdbc-realm-test");
@@ -52,8 +54,6 @@ public class DataSourceRule implements TestRule {
                     current.evaluate();
                 } catch (Exception e) {
                     throw e;
-                } finally {
-                    Security.removeProvider(provider.getName());
                 }
             }
         };

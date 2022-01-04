@@ -17,27 +17,6 @@
  */
 package org.wildfly.security.ldap;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-import org.wildfly.common.function.ExceptionSupplier;
-import org.wildfly.common.iteration.ByteIterator;
-import org.wildfly.common.iteration.CodePointIterator;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
-import org.wildfly.security.apacheds.LdapService;
-import org.wildfly.security.auth.realm.ldap.DirContextFactory;
-import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
-import org.wildfly.security.x500.cert.BasicConstraintsExtension;
-import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
-import org.wildfly.security.x500.cert.X509CertificateBuilder;
-
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import javax.security.auth.x500.X500Principal;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -53,11 +32,29 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.regex.Pattern;
+
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import javax.security.auth.x500.X500Principal;
+
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.common.iteration.ByteIterator;
+import org.wildfly.common.iteration.CodePointIterator;
+import org.wildfly.security.apacheds.LdapService;
+import org.wildfly.security.auth.realm.ldap.DirContextFactory;
+import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
+import org.wildfly.security.x500.cert.BasicConstraintsExtension;
+import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -68,7 +65,6 @@ public class DirContextFactoryRule implements TestRule {
     static final String SERVER_CREDENTIAL = "serverPassword";
     static final int LDAP_PORT = 11390;
 
-    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String LDAP_DIRECTORY_LOCATION = "./target/test-classes/ldap";
     private static final String LDIF_LOCATION = "/elytron-x509-verification.ldif";
@@ -211,7 +207,6 @@ public class DirContextFactoryRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 setUp();
-                Security.addProvider(provider);
                 LdapService embeddedServer = startEmbeddedServer();
 
                 try {
@@ -222,8 +217,6 @@ public class DirContextFactoryRule implements TestRule {
                     if (embeddedServer != null) {
                         embeddedServer.close();
                     }
-
-                    Security.removeProvider(provider.getName());
                 }
             }
         };

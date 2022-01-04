@@ -22,6 +22,7 @@ import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import org.wildfly.common.Assert;
@@ -346,16 +348,46 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
     /**
      * Verify the given evidence.
      *
+     * @param providerSupplier the provider supplier to use for verification purposes (must not be {@code null})
+     * @param evidence the evidence to verify (must not be {@code null})
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
+    public boolean verify(Supplier<Provider[]> providerSupplier, Evidence evidence) {
+        return verify(providerSupplier, evidence, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Verify the given evidence.
+     *
      * @param evidence the evidence to verify (must not be {@code null})
      * @oaram hashCharset the name of the character set (must not be {@code null})
      * @return {@code true} if the evidence is verified, {@code false} otherwise
+     * @deprecated use {@link #verify(Supplier, Evidence, Charset)} instead
      */
+    @Deprecated
     public boolean verify(Evidence evidence, Charset hashCharset) {
         return StreamSupport.stream(spliterator(), false)
                 .filter(credential -> credential.canVerify(evidence))
                 .filter(credential ->
                         credential instanceof PasswordCredential ?
                                 ((PasswordCredential)credential).verify(evidence, hashCharset) : credential.verify(evidence))
+                .count() != 0;
+    }
+
+    /**
+     * Verify the given evidence.
+     *
+     * @param providerSupplier the provider supplier to use for verification purposes (must not be {@code null})
+     * @param evidence the evidence to verify (must not be {@code null})
+     * @oaram hashCharset the name of the character set (must not be {@code null})
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
+    public boolean verify(Supplier<Provider[]> providerSupplier, Evidence evidence, Charset hashCharset) {
+        return StreamSupport.stream(spliterator(), false)
+                .filter(credential -> credential.canVerify(evidence))
+                .filter(credential ->
+                        credential instanceof PasswordCredential ?
+                                ((PasswordCredential)credential).verify(providerSupplier, evidence, hashCharset) : credential.verify(providerSupplier, evidence))
                 .count() != 0;
     }
 

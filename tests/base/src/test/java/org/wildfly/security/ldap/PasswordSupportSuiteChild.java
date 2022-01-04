@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -74,6 +76,7 @@ public class PasswordSupportSuiteChild {
     @BeforeClass
     public static void createRealm() {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
+            .setProviders(ELYTRON_PASSWORD_PROVIDERS)
             .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
@@ -91,6 +94,7 @@ public class PasswordSupportSuiteChild {
             .build();
 
         charsetDnRealm = LdapSecurityRealmBuilder.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .setHashCharset(Charset.forName("gb2312"))
                 .identityMapping()
@@ -109,6 +113,7 @@ public class PasswordSupportSuiteChild {
                 .build();
 
         encodingDnRealm = LdapSecurityRealmBuilder.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .setHashEncoding(Encoding.HEX)
                 .setHashCharset(Charset.forName("gb2312"))
@@ -254,7 +259,7 @@ public class PasswordSupportSuiteChild {
     @Test
     public void testOneTimePasswordUser1Update() throws Exception {
         OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'i', 'j', 'k' }, "lmn", 4321);
-        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1", WildFlyElytronPasswordProvider.getInstance());
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
@@ -281,7 +286,7 @@ public class PasswordSupportSuiteChild {
     @Test
     public void testOneTimePasswordUser2SetCredentials() throws Exception {
         OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'o', 'p', 'q' }, "rst", 65);
-        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1", WildFlyElytronPasswordProvider.getInstance());
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
@@ -308,7 +313,7 @@ public class PasswordSupportSuiteChild {
     @Test
     public void testUserPasswordUserUpdate() throws Exception {
 
-        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, WildFlyElytronPasswordProvider.getInstance());
         ClearPassword password = (ClearPassword) factory.generatePassword(new ClearPasswordSpec("createdPassword".toCharArray()));
         assertNotNull(password);
 
@@ -351,7 +356,7 @@ public class PasswordSupportSuiteChild {
     private void verifyPassword(RealmIdentity identity, String algorithm, char[] password, Charset hashCharset) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         Password loadedPassword = identity.getCredential(PasswordCredential.class).getPassword();
 
-        PasswordFactory factory = PasswordFactory.getInstance(algorithm);
+        PasswordFactory factory = PasswordFactory.getInstance(algorithm, WildFlyElytronPasswordProvider.getInstance());
         final Password translated = factory.translate(loadedPassword);
         assertTrue("Valid Password", factory.verify(translated, password, hashCharset));
         assertFalse("Invalid Password", factory.verify(translated, "LetMeIn".toCharArray()));
