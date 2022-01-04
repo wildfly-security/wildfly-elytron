@@ -20,9 +20,12 @@ package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
+import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.security.Principal;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.function.Supplier;
 
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -47,6 +50,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class CachingSecurityRealm implements SecurityRealm {
 
+    private final Supplier<Provider[]> providerSupplier;
     private final SecurityRealm realm;
     private final RealmIdentityCache cache;
 
@@ -57,8 +61,20 @@ public class CachingSecurityRealm implements SecurityRealm {
      * @param cache the {@link RealmIdentityCache} instance
      */
     public CachingSecurityRealm(SecurityRealm realm, RealmIdentityCache cache) {
+        this(realm, cache, INSTALLED_PROVIDERS);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param realm the {@link SecurityRealm} whose {@link RealmIdentity} should be cached.
+     * @param cache the {@link RealmIdentityCache} instance
+     * @param providerSupplier the provider supplier to use for verification purposes (must not be {@code null})
+     */
+    public CachingSecurityRealm(SecurityRealm realm, RealmIdentityCache cache, Supplier<Provider[]> providerSupplier) {
         this.realm = checkNotNullParam("realm", realm);
         this.cache = checkNotNullParam("cache", cache);
+        this.providerSupplier = checkNotNullParam("providers", providerSupplier);
 
         if (realm instanceof CacheableSecurityRealm) {
             CacheableSecurityRealm cacheable = CacheableSecurityRealm.class.cast(realm);
@@ -212,14 +228,14 @@ public class CachingSecurityRealm implements SecurityRealm {
                 if (evidence instanceof PasswordGuessEvidence) {
                     if (credentials.canVerify(evidence)) {
                         log.tracef("verifyEvidence For principal='%s' using cached credential", principal);
-                        return credentials.verify(evidence);
+                        return credentials.verify(providerSupplier, evidence);
                     }
                     Credential credential = identity.getCredential(PasswordCredential.class);
                     if (credential != null) {
                         log.tracef("verifyEvidence Credential obtained from identity and cached for principal='%s'", principal);
                         credentials = credentials.withCredential(credential);
                         if (credential.canVerify(evidence)) {
-                            return credential.verify(evidence);
+                            return credential.verify(providerSupplier, evidence);
                         }
                     }
                     char[] guess = ((PasswordGuessEvidence) evidence).getGuess();

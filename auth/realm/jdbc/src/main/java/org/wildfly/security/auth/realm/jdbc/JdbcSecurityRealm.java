@@ -179,7 +179,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
             JdbcIdentity identity = getIdentity();
             if (identity != null) {
-                return identity.identityCredentials.verify(evidence, hashCharset);
+                return identity.identityCredentials.verify(providers, evidence, hashCharset);
             }
 
             return false;

@@ -19,6 +19,7 @@ package org.wildfly.security.auth.realm.jdbc;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.realm.jdbc.DataSourceRule.ELYTRON_PASSWORD_PROVIDERS;
 
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -46,6 +47,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(getDataSource())
@@ -69,6 +71,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .withMapper(new AttributeMapper(2, "firstName"))
@@ -97,6 +100,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(getDataSource())
@@ -131,6 +135,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(getDataSource())
@@ -158,6 +163,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
         insertUserRole("plainUser", "user");
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT role_name FROM role_mapping_table WHERE user_name = ?")
                 .withMapper(new AttributeMapper(1, RoleDecoder.KEY_ROLES))
                 .from(getDataSource())
@@ -184,6 +190,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
         String allInOneAttributeName = "all-in-one";
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT role_name FROM role_mapping_table WHERE user_name = ?")
                     .withMapper(new AttributeMapper(1, allInOneAttributeName))
                     .from(getDataSource())
