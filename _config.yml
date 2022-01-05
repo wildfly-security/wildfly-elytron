@@ -26,6 +26,7 @@ theme: minima
 plugins:
   - jekyll-feed
   - jekyll-archives
+  - jekyll-seo-tag
 
 asciidoctor:
   base_dir: :docdir
@@ -99,6 +100,7 @@ defaults:
       type: "posts"
     values:
       permalink: /blog/:title/
+      image: /assets/images/wildfly-elytron-logo.jpg
 
 ############################################################
 
