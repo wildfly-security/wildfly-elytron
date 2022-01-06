@@ -27,6 +27,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
+import static org.wildfly.security.util.PasswordUtil.generateSecureRandomString;
+
 /**
  * Mask Command
  *
@@ -45,6 +47,8 @@ class MaskCommand extends Command {
     static final String SECRET_PARAM = "secret";
     static final String HELP_PARAM = "help";
     static final String DEBUG_PARAM = "debug";
+
+    private final int defaultIterationCount = 10000;
 
     private final Options options;
     private CommandLineParser parser = new DefaultParser();
@@ -80,8 +84,8 @@ class MaskCommand extends Command {
 
         String salt = cmdLine.getOptionValue(SALT_PARAM);
         if (salt == null) {
-            setStatus(GENERAL_CONFIGURATION_ERROR);
-            throw ElytronToolMessages.msg.saltNotSpecified();
+            salt = generateSecureRandomString(8);
+            System.out.println(ElytronToolMessages.msg.invalidParameterGeneratedWillBeUsed(SALT_PARAM, salt));
         }
         String sIteration = cmdLine.getOptionValue(ITERATION_PARAM);
         int iterationCount = -1;
@@ -89,13 +93,15 @@ class MaskCommand extends Command {
             try {
                 iterationCount = Integer.parseInt(sIteration);
                 if (iterationCount < 1) {
-                    setStatus(GENERAL_CONFIGURATION_ERROR);
-                    throw ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE);
+                    System.out.println(ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE));
                 }
             } catch (NumberFormatException e) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE);
+                System.out.println(ElytronToolMessages.msg.invalidParameterMustBeIntBetween(ITERATION_PARAM, 1, Integer.MAX_VALUE));
             }
+        }
+        if (iterationCount < 1) {
+            System.out.println(ElytronToolMessages.msg.invalidParameterDefaultWillBeUsed(ITERATION_PARAM, Integer.toString(defaultIterationCount)));
+            iterationCount = defaultIterationCount;
         }
 
         String secret = cmdLine.getOptionValue(SECRET_PARAM);
