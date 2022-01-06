@@ -115,38 +115,6 @@
             <!-- scope is compile ELY-1153 -->
         </dependency>
 
-        <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.jboss.resteasy/resteasy-client -->
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.spec.jakarta.xml.ws</groupId>
-            <artifactId>jboss-jakarta-xml-ws-api_3.0_spec</artifactId>
-            <version>${version.org.jboss.spec.jakarta.xml.ws}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.ws</groupId>
-            <artifactId>jbossws-spi</artifactId>
-            <version>${version.org.jboss.ws.jbossws-spi}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
         <!--Test scope-->
         <dependency>
             <groupId>junit</groupId>
