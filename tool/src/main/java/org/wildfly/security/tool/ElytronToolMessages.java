@@ -496,4 +496,10 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Credential store contains credentials of types:%s for alias '%s'")
     String types(String types, String alias);
+
+    @Message(id = NONE, value = "Invalid \"%s\" parameter. Default value \"%s\" will be used.")
+    String invalidParameterDefaultWillBeUsed(String parameter, String value);
+
+    @Message(id = NONE, value = "Invalid \"%s\" parameter. Generated value \"%s\" will be used.")
+    String invalidParameterGeneratedWillBeUsed(String parameter, String value);
 }
