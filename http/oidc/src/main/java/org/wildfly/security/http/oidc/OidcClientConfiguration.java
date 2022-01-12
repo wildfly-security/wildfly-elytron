@@ -166,28 +166,37 @@ public class OidcClientConfiguration {
 
     public void setProviderUrl(String providerUrl) {
         this.providerUrl = providerUrl;
+        resetUrls();
     }
 
 
     public void setAuthServerBaseUrl(OidcJsonConfiguration config) {
         this.authServerBaseUrl = config.getAuthServerUrl();
-        if (authServerBaseUrl == null) return;
+        resetUrls();
+    }
+
+    /**
+     * Resets all calculated urls to null and sets the relativeUrls field
+     * depending the value of the current discovery URL in the configuration.
+     * If it is relative is set to ALWAYS and if absolute is set to NEVER.
+     */
+    protected void resetUrls() {
         authUrl = null;
-        providerUrl = null;
         tokenUrl = null;
         logoutUrl = null;
         accountUrl = null;
         registerNodeUrl = null;
         unregisterNodeUrl = null;
         jwksUrl = null;
-
-        URI authServerUri = URI.create(authServerBaseUrl);
-
-        if (authServerUri.getHost() == null) {
-            relativeUrls = RelativeUrlsUsed.ALWAYS;
-        } else {
-            // We have absolute URI in config
-            relativeUrls = RelativeUrlsUsed.NEVER;
+        relativeUrls = null;
+        if (providerUrl != null || authServerBaseUrl != null) {
+            URI uri = URI.create(providerUrl != null? providerUrl : authServerBaseUrl);
+            if (uri.getHost() == null) {
+                relativeUrls = RelativeUrlsUsed.ALWAYS;
+            } else {
+                // We have absolute URI in config
+                relativeUrls = RelativeUrlsUsed.NEVER;
+            }
         }
     }
 
