@@ -216,6 +216,8 @@ public class OidcTest extends AbstractBaseHttpTest {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
+            assertEquals(OidcClientConfiguration.RelativeUrlsUsed.NEVER, oidcClientConfiguration.getRelativeUrls());
+
             OidcClientContext oidcClientContext = new OidcClientContext(oidcClientConfiguration);
             oidcFactory = new OidcMechanismFactory(oidcClientContext);
             HttpServerAuthenticationMechanism mechanism = oidcFactory.createAuthenticationMechanism(OIDC_NAME, props, getCallbackHandler());
