@@ -495,7 +495,7 @@ public class OidcHttpFacade {
         return this.securityIdentity != null;
     }
 
-    interface Request {
+    public interface Request {
 
         String getMethod();
         /**
@@ -538,7 +538,7 @@ public class OidcHttpFacade {
         void setError(LogoutError error);
     }
 
-    interface Response {
+    public interface Response {
         void setStatus(int status);
         void addHeader(String name, String value);
         void setHeader(String name, String value);

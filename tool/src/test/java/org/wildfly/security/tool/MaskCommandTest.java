@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -55,46 +54,45 @@ public class MaskCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-1057")
     public void testMissingSaltAndIteration() {
+        final String defaultIteration = "10000";
 
         String[] args = { "--secret", "super_secret" };
 
-        String output = executeCommandAndCheckStatusAndGetOutput(args);
-        if (!(output.contains("salt") && output.contains("iteration"))) {
-            Assert.fail("There must be message about required SALT and ITERATION or at least one of them.");
-        }
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("Message about invalid salt parameter must be present", retValLines[0].contains("Invalid \"salt\" parameter. Generated value"));
+        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertTrue("Message about invalid salt parameter must be present", retValLines[2].contains("MASK-"));
     }
 
     @Test
     public void testMissingIteration() {
-        String[] args = { "--secret", "super_secret", "--salt", "1234ABCD" };
+        final String secret = "super_secret";
+        final String salt = "1234ABCD";
+        final String defaultIteration = "10000";
+        final String pregenerated = "2U6f.QN7bARXA0/hsLXC0H";
 
-        try {
-            executeCommandAndCheckStatus(args);
-            Assert.fail("It must fail.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
-            Assert.assertEquals(e.getCause().getMessage(),
-                "ELY03025: Iteration count not specified for password based encryption");
-        }
+        String[] args = { "--secret", secret, "--salt", salt };
+
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[0]));
+        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[1]));
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-1057")
     public void testMissingSalt() {
 
         String[] args = { "--secret", "super_secret", "--iteration", "123" };
 
-        try {
-            executeCommandAndCheckStatus(args);
-            Assert.fail("It must fail.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(
-                String.format("We expect [%s] but was [%s].", IllegalArgumentException.class, e.getCause().getClass()),
-                e.getCause() instanceof IllegalArgumentException);
-            Assert.assertEquals(e.getCause().getMessage(), "Salt not specified for password based encryption");
-        }
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("Message about invalid salt parameter must be present", retValLines[0].contains("Invalid \"salt\" parameter. Generated value"));
+        assertTrue("Message about invalid salt parameter must be present", retValLines[1].contains("MASK-"));
     }
 
     @Test
@@ -117,45 +115,54 @@ public class MaskCommandTest extends AbstractCommandTest {
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-1058")
     public void testIterationAsStringValue() {
-        String[] args = { "--secret", "super_secret", "--salt", "1234ABCD", "--iteration", "abcd" };
+        final String secret = "super_secret";
+        final String salt = "1234ABCD";
+        final String defaultIteration = "10000";
+        final String pregenerated = "2U6f.QN7bARXA0/hsLXC0H";
 
-        try {
-            executeCommandAndCheckStatus(args);
-            Assert.fail("It must fail.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(String.format("[%s]", e.getCause()), e.getCause() instanceof NumberFormatException);
-            Assert.assertEquals(e.getCause().getMessage(),
-                "Iteration count parser exception");
-        }
+        String[] args = { "--secret", secret, "--salt", salt, "--iteration", "abcd" };
+
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
+        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-1058")
     public void testIterationAsLongMax() {
-        String[] args = { "--secret", "super_secret", "--salt", "1234ABCD", "--iteration", String.valueOf(Long.MAX_VALUE) };
+        final String secret = "super_secret";
+        final String salt = "1234ABCD";
+        final String defaultIteration = "10000";
+        final String pregenerated = "2U6f.QN7bARXA0/hsLXC0H";
 
-        try {
-            executeCommandAndCheckStatus(args);
-            Assert.fail("It must fail.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(String.format("[%s]", e.getCause()), e.getCause() instanceof NumberFormatException);
-            Assert.assertEquals(e.getCause().getMessage(), "Iteration count parser exception");
-        }
+        String[] args = { "--secret", secret, "--salt", salt, "--iteration", String.valueOf(Long.MAX_VALUE) };
+
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
+        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
     }
 
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-1059")
     public void testIterationAsNegativeValue() {
-        String[] args = { "--secret", "super_secret", "--salt", "1234ABCD", "--iteration", "-123" };
-        try {
-            executeCommandAndCheckStatus(args);
-            Assert.fail("It must fail.");
-        } catch (RuntimeException e) {
-            Assert.assertTrue(String.format("[%s]", e.getCause()), e.getCause() instanceof NumberFormatException);
-            Assert.assertEquals(e.getCause().getMessage(), "Iteration count parser exception");
-        }
+        final String secret = "super_secret";
+        final String salt = "1234ABCD";
+        final String defaultIteration = "10000";
+        final String pregenerated = "2U6f.QN7bARXA0/hsLXC0H";
+
+        String[] args = { "--secret", secret, "--salt", salt, "--iteration", "-123" };
+
+        String retVal = executeCommandAndCheckStatusAndGetOutput(args);
+        String[] retValLines = retVal.split(System.getProperty("line.separator"));
+
+        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
+        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
     }
 
     @Test
