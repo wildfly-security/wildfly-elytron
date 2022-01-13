@@ -1,0 +1,170 @@
+---
+layout: post
+title: 'Multi-tenancy Support for OpenID Connect Applications'
+date: 2022-01-21
+tags: oidc
+synopsis: An overview of multi-tenancy support for OpenID Connect applications deployed to WildFly.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+As mentioned in my last https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/[blog post],
+applications deployed to WildFly can be secured with OpenID Connect, without needing to use the Keycloak
+client adapter.
+
+WildFly 26.0.1.Final, which was just released, includes a fix for multi-tenancy support for OpenID Connect
+applications. This blog post gives an overview of how to configure OpenID Connect applications deployed to
+WildFly so they can support multi-tenancy.
+
+toc::[]
+
+== Multi-tenancy
+
+Multi-tenancy allows a single application to serve multiple tenants. This means that it's possible to use
+a different authentication policy for each tenant. In other words, it's possible for a single application
+to be associated with multiple OpenID Connect configuration files. As an example,
+when using the Keycloak OpenID provider, you might want a different `oidc.json` file to be used
+depending on the request that was received in order to authenticate users from multiple Keycloak realms.
+The `elytron-oidc-client` subsystem allows your application to support multi-tenancy by making it
+possible to use a custom configuration resolver so you can define which configuration file to use for
+each request.
+
+== Using a Custom Configuration Resolver
+
+To add multi-tenancy support to your OpenID Connect application, two steps are needed.
+
+First, you'll need to create a class that implements the `org.wildfly.security.http.oidc.OidcClientConfigurationResolver` interface,
+as shown in the example below:
+
+[source,java]
+----
+package org.wildfly.security.examples;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.wildfly.security.http.oidc.OidcClientConfiguration;
+import org.wildfly.security.http.oidc.OidcClientConfigurationBuilder;
+import org.wildfly.security.http.oidc.OidcClientConfigurationResolver;
+import org.wildfly.security.http.oidc.OidcHttpFacade;
+
+public class MyCustomConfigResolver implements OidcClientConfigurationResolver {
+
+    private final Map<String, OidcClientConfiguration> cache = new ConcurrentHashMap<>();
+
+    @Override
+    public OidcClientConfiguration resolve(OidcHttpFacade.Request request) {
+        String path = request.getURI();
+        String tenant = ... // determine the tenant from the request
+        OidcClientConfiguration clientConfiguration = cache.get(tenant);
+        if (clientConfiguration == null) {
+            InputStream is = getClass().getResourceAsStream("/oidc-" + tenant + ".json"); // config to use based on the tenant
+            clientConfiguration = OidcClientConfigurationBuilder.build(is);
+            cache.put(tenant, clientConfiguration);
+        }
+        return clientConfiguration;
+    }
+}
+----
+
+Next, to specify that you want to make use of your custom configuration resolver, you'll need to set
+the `oidc.config.resolver` `context-param` in your application's `web.xml` file, as shown in the example below:
+
+[source,xml]
+----
+<web-app>
+    ...
+    <context-param>
+        <param-name>oidc.config.resolver</param-name>
+        <param-value>org.wildfly.security.examples.MyCustomConfigResolver</param-value>
+    </context-param>
+    ...
+</web-app>
+----
+
+== A Complete Example with Multiple Keycloak Realms
+
+In the rest of this post, we'll go through an example to see how to add support
+for multi-tenancy to an OpenID Connect application that will be deployed to WildFly.
+Our tenants will be multiple Keycloak realms.
+
+=== Example Project
+
+First, clone the `elytron-examples` repo locally:
+
+[source]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+
+We’re going to be looking at the https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc[multi-tenancy-oidc] project.
+
+=== Setting up your Keycloak OpenID provider
+
+It's easy to set up Keycloak using Docker. Follow the steps in Keycloak's https://www.keycloak.org/getting-started/getting-started-docker[getting started guide]
+to start Keycloak, create a realm called `tenant1`, create a user called `alice`, and register a client called `myclient`. After registering our client,
+`myclient`, we also need to configure valid redirect URIs. Simply click on `Clients` and then on `myclient`. In the `Valid Redirect URIs` field,
+enter http://localhost:8090/multi-tenancy-oidc/*.
+
+Now, because we're going to make use of two Keycloak realms, let's repeat these steps again to create a second realm called
+`tenant2`, create a user called `bob`, and register a client with the same name we used above, `myclient`.
+After registering our client, `myclient`, we also need to configure valid redirect URIs. Simply click on `Clients` and then
+on `myclient`. In the `Valid Redirect URIs` field, enter http://localhost:8090/multi-tenancy-oidc/*.
+
+=== Deploying the app to WildFly
+
+Take a look at the https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/java/org/wildfly/security/examples/PathBasedOidcConfigResolver.java[custom configuration resovler]
+defined in our application. Notice that the https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/resources/oidc-tenant1.json[oidc-tenant1.json] configuration file will be used for requests of the form
+http://localhost:8090/multi-tenancy-oidc/tenant1. Similarly, the https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/resources/oidc-tenant2.json[oidc-tenant2.json] configuration file will be used for
+requests of the form http://localhost:8090/multi-tenancy-oidc/tenant2.
+
+Finally, notice that we've specified that we want to use our custom configuration resolver in our application's https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/webapp/WEB-INF/web.xml#L8-L11[web.xml] file.
+
+Now let's deploy our application to WildFly.
+
+First, we're going to start our WildFly instance (notice that we're specifying a port offset here
+since our Keycloak instance is already exposed on port 8080):
+
+[source]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10
+----
+
+Next, we're going to build and deploy our project. From our `elytron-examples` directory, run the
+following commands:
+
+[source]
+----
+cd multi-tenancy-oidc
+mvn wildfly:deploy -Dwildfly.port=10000
+----
+
+=== Accessing the app
+
+Now, let's try accessing our application using http://localhost:8090/multi-tenancy-oidc/tenant1.
+
+Click on "Access Secured Servlet".
+
+Now, you'll be redirected to Keycloak to log in. Log in with `alice` and the password that you
+set when configuring Keycloak.
+
+Next, you'll be redirected back to our application and you should see the "Secured Servlet" page.
+That means that we've been able to successfully log in to our application using the `tenant1`
+Keycloak realm. If you repeat the process and try logging in as `bob`, authentication will
+fail because `bob` is not a user in the `tenant1` realm.
+
+Now, let's try accessing our application using http://localhost:8090/multi-tenancy-oidc/tenant2.
+
+This time, after clicking on "Access Secured Servlet", log in with `bob` and the password you
+set when configuring Keycloak. Now, because `bob` is a user in the `tenant2` realm, you'll be
+redirected back to our application and you should see the "Secured Servlet" page.
+
+== Summary
+
+This blog post has given an overview of how to add support for multi-tenancy to an OpenID Connect
+application deployed to WildFly. For more information, be sure to check out the
+https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client[documentation].
