@@ -191,12 +191,16 @@ public class OidcClientConfiguration {
         jwksUrl = null;
         relativeUrls = null;
         if (providerUrl != null || authServerBaseUrl != null) {
-            URI uri = URI.create(providerUrl != null? providerUrl : authServerBaseUrl);
-            if (uri.getHost() == null) {
-                relativeUrls = RelativeUrlsUsed.ALWAYS;
-            } else {
-                // We have absolute URI in config
-                relativeUrls = RelativeUrlsUsed.NEVER;
+            try {
+                URI uri = URI.create(providerUrl != null ? providerUrl : authServerBaseUrl);
+                if (uri.getHost() == null) {
+                    relativeUrls = RelativeUrlsUsed.ALWAYS;
+                } else {
+                    // We have absolute URI in config
+                    relativeUrls = RelativeUrlsUsed.NEVER;
+                }
+            } catch (Exception e) {
+                log.invalidAuthServerUrlOrProviderUrl(providerUrl != null ? providerUrl : authServerBaseUrl);
             }
         }
     }
