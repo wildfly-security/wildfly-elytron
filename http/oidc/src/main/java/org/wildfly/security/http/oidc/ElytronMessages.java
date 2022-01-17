@@ -204,7 +204,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23048, value = "Invalid URI: '%s'")
     RuntimeException invalidUri(String uri);
 
-
+    @LogMessage(level = WARN)
+    @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
+    void invalidAuthServerUrlOrProviderUrl(String url);
 
 }
 
