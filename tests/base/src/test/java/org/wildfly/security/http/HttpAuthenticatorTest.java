@@ -111,11 +111,15 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
     public void testBasic() throws Exception {
         testOneOfThree();
 
+        Assert.assertFalse(authenticator.authenticate());
+        List<String> responses = exchangeSpi.getResponseAuthenticateHeaders();
+        assertEquals("Basic authentication sends challenge when AUTHORIZATION header is present", 6, responses.size());
+        Assert.assertEquals(UNAUTHORIZED, exchangeSpi.getStatusCode());
+
         exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(
                 "Basic TXVmYXNhOkNpcmNsZSBvZiBMaWZl"
         ));
         Assert.assertTrue("Basic successful", authenticator.authenticate());
-        Assert.assertEquals(0, exchangeSpi.getStatusCode());
         Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
     }
 
