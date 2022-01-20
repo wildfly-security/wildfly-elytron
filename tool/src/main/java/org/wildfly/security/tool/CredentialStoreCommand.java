@@ -24,13 +24,8 @@ import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidParameterException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,8 +47,6 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
-import org.apache.sshd.common.config.keys.PublicKeyEntry;
-import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.util.ElytronFilePasswordProvider;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
@@ -64,9 +57,9 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.encryption.CipherUtil;
+import org.wildfly.security.encryption.KeyPairUtil;
 import org.wildfly.security.encryption.SecretKeyUtil;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.pem.Pem;
 
 /**
  * Credential Store Command
@@ -79,10 +72,6 @@ class CredentialStoreCommand extends Command {
     public static int ACTION_NOT_DEFINED = 5;
     public static int ALIAS_NOT_FOUND = 6;
     public static int GENERAL_CONFIGURATION_ERROR = 7;
-
-    public static final String RSA_ALGORITHM = "RSA";
-    public static final String DSA_ALGORITHM = "DSA";
-    public static final String EC_ALGORITHM = "EC";
 
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
 
@@ -594,7 +583,7 @@ class CredentialStoreCommand extends Command {
         }
         int size = getArgumentAsInt(cmdLine.getOptionValue(SIZE_PARAM));
         String algorithm = cmdLine.getOptionValue(ALGORITHM_PARAM);
-        if (algorithm == null) algorithm = RSA_ALGORITHM;
+        if (algorithm == null) algorithm = KeyPairUtil.RSA_ALGORITHM;
         credentialStore.store(alias, createKeyPairCredential(algorithm, size));
         credentialStore.flush();
         System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
@@ -609,7 +598,7 @@ class CredentialStoreCommand extends Command {
         }
         if (credentialStore.exists(alias, KeyPairCredential.class)) {
             KeyPairCredential credential = credentialStore.retrieve(alias, KeyPairCredential.class);
-            System.out.println(PublicKeyEntry.toString(credential.getKeyPair().getPublic()));
+            System.out.println(KeyPairUtil.exportPublicKey(credential.getKeyPair().getPublic()));
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
         } else {
             setStatus(ALIAS_NOT_FOUND);
@@ -691,7 +680,12 @@ class CredentialStoreCommand extends Command {
             publicKeyContent = publicKeyString;
         }
 
-        keyPairCredential = parseKeyPairCredential(privateKeyContent, publicKeyContent, passwordProvider);
+        try {
+            keyPairCredential = parseKeyPairCredential(privateKeyContent, publicKeyContent, passwordProvider);
+        } catch (Exception e) {
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw e;
+        }
         credentialStore.store(alias, keyPairCredential);
         credentialStore.flush();
         System.out.println(ElytronToolMessages.msg.aliasStored(alias, KeyPairCredential.class.getName()));
@@ -820,67 +814,12 @@ class CredentialStoreCommand extends Command {
     }
 
     private KeyPairCredential createKeyPairCredential(String algorithm, int size) throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGenerator;
-
-        switch (algorithm) {
-            case RSA_ALGORITHM: {
-                /* Size must range from 512 to 16384. Default size: 2048
-                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-7093246A-31A3-4304-AC5F-5FB6400405E2
-                 */
-                size = (512 <= size && size <= 16384) ? size : 2048;
-                break;
-            }
-            case DSA_ALGORITHM: {
-                /* Size must be multiple of 64 ranging from 512 to 1024, plus 2048 and 3072. Default size: 2048
-                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-3A80CC46-91E1-4E47-AC51-CB7B782CEA7D
-                 */
-                size = (512 <= size && size <= 1024 && (size % 64) == 0) || size == 2048  || size == 3072 ? size : 2048;
-                break;
-            }
-            case EC_ALGORITHM: {
-                /* Size must range from 112 to 571. Default size: 256
-                 * see: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html#GUID-091BF58C-82AB-4C9C-850F-1660824D5254
-                 */
-                size = (112 <= size && size <= 571) ? size : 256;
-                break;
-            }
-            default: {
-                algorithm = RSA_ALGORITHM;
-                size = 2048;
-                break;
-            }
-        }
-
-        try {
-             keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
-        } catch (NoSuchAlgorithmException e) {
-            throw ElytronToolMessages.msg.unknownKeyPairAlgorithm(algorithm);
-        }
-        try {
-            keyPairGenerator.initialize(size, new SecureRandom());
-        } catch (InvalidParameterException e) {
-            throw ElytronToolMessages.msg.invalidKeySize(e.getMessage());
-        }
-        KeyPairCredential keyPairCredential = new KeyPairCredential(keyPairGenerator.generateKeyPair());
-        return keyPairCredential;
+        KeyPair keyPair = KeyPairUtil.generateKeyPair(algorithm, size);
+        return new KeyPairCredential(keyPair);
     }
 
     private KeyPairCredential parseKeyPairCredential(String privateKeyContent, String publicKeyContent, FilePasswordProvider passwordProvider) throws Exception {
-        KeyPair keyPair;
-        try {
-            keyPair = Pem.parsePemOpenSSHContent(CodePointIterator.ofString(privateKeyContent), passwordProvider).next().tryCast(KeyPair.class);
-            if (keyPair == null) throw ElytronToolMessages.msg.xmlNoPemContent();
-        } catch (IllegalArgumentException e) {
-            if (publicKeyContent == null || publicKeyContent.isEmpty()) {
-                setStatus(GENERAL_CONFIGURATION_ERROR);
-                throw ElytronToolMessages.msg.noPublicKeySpecified();
-            }
-            PrivateKey privateKey = Pem.parsePemContent(CodePointIterator.ofString(privateKeyContent)).next().tryCast(PrivateKey.class);
-            if (privateKey == null) throw ElytronToolMessages.msg.xmlNoPemContent();
-            PublicKey publicKey = Pem.parsePemContent(CodePointIterator.ofString(publicKeyContent)).next().tryCast(PublicKey.class);
-            if (publicKey == null) throw ElytronToolMessages.msg.xmlNoPemContent();
-            keyPair = new KeyPair(publicKey, privateKey);
-        }
+        KeyPair keyPair = KeyPairUtil.parseKeyPair(privateKeyContent, publicKeyContent, passwordProvider);
         return new KeyPairCredential(keyPair);
     }
 

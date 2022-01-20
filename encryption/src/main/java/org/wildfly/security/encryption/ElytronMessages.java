@@ -19,7 +19,9 @@
 package org.wildfly.security.encryption;
 
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.cli.MissingArgumentException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -56,4 +58,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 19004, value = "Unable to decode Base64 token.")
     GeneralSecurityException unableToDecodeBase64Token(@Cause Throwable cause);
 
+    @Message(id = 19005, value = "Key Pair Algorithm: '%s' is not supported.")
+    NoSuchAlgorithmException unknownKeyPairAlgorithm(String algorithm);
+
+    @Message(id = 19006, value = "Invalid keysize provided: %s")
+    NoSuchAlgorithmException invalidKeySize(String message);
+
+    @Message(id = 19007, value = "No PEM content found")
+    MissingArgumentException xmlNoPemContent();
+
+    @Message(id = 19008, value = "No public key specified for importing.")
+    MissingArgumentException noPublicKeySpecified();
 }
