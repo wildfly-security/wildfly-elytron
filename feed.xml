@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 12 Jan 2022 22:25:35 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 20 Jan 2022 14:41:54 +0000</lastBuildDate>
         
         <item>
             <title>Upcoming filesystem realm encryption and integrity support in Elytron</title>
