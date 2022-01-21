@@ -83,6 +83,8 @@ class FileSystemEncryptRealmCommand extends Command {
     private static final String BULK_CONVERT_PARAM = "bulk-convert";
     private static final String FILE_ARG = "file";
     private static final String DIRECTORY_ARG = "directory";
+    private static final String BOOLEAN_ARG = "boolean";
+    private static final String INT_ARG = "number";
     private static final String NAME_ARG = "name";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "encrypted-filesystem-realm";
     public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
@@ -109,7 +111,7 @@ class FileSystemEncryptRealmCommand extends Command {
         options.addOption(option);
 
         option = new Option("r", REALM_NAME_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptNewRealmDesc());
-        option.setArgName(DIRECTORY_ARG);
+        option.setArgName(NAME_ARG);
         options.addOption(option);
 
         option = new Option("o", OUTPUT_REALM_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptOutputLocationDesc());
@@ -121,27 +123,27 @@ class FileSystemEncryptRealmCommand extends Command {
         options.addOption(option);
 
         option = new Option("s", SECRET_KEY_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptSecretKeyDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(NAME_ARG);
         options.addOption(option);
 
         option = new Option("h", HASH_CHARSET_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptHashCharsetDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(NAME_ARG);
         options.addOption(option);
 
         option = new Option("e", HASH_ENCODING_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptHashEncodingDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(NAME_ARG);
         options.addOption(option);
 
         option = new Option("f", ENCODED_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptEncodedDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(BOOLEAN_ARG);
         options.addOption(option);
 
         option = new Option("l", LEVELS_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptLevelsDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(INT_ARG);
         options.addOption(option);
 
         option = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmEncryptBulkConvertDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(FILE_ARG);
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -318,7 +320,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 try {
                     descriptor.setHashCharset(Charset.forName(hashCharsetOption));
                 } catch (UnsupportedCharsetException e) {
-//                    Error
+                    errorHandler(e);
                 }
             }
             if (hashEncodingOption == null) {
@@ -327,7 +329,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 try {
                     descriptor.setHashEncoding(Encoding.valueOf(hashEncodingOption.toUpperCase()));
                 } catch (IllegalArgumentException | NullPointerException e) {
-//                    Error
+                    errorHandler(e);
                 }
             }
             if (levelsOption == null) {
@@ -336,7 +338,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 try {
                     descriptor.setLevels(Integer.parseInt(levelsOption));
                 } catch (NumberFormatException e) {
-//                    Error
+                    errorHandler(e);
                 }
             }
             if (encodedOption == null) {
@@ -572,15 +574,15 @@ class FileSystemEncryptRealmCommand extends Command {
     private void findMissingRequiredValuesAndSetValues(int count, Descriptor descriptor) {
         boolean missingRequiredValue = false;
         if (descriptor.getInputRealmLocation() == null) {
-            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlock(count, "missing input realm location"));
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockMissingInputRealm(count));
             missingRequiredValue = true;
         }
         if (descriptor.getOutputRealmLocation() == null) {
-            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlock(count, "missing output realm location"));
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockMissingOutputRealm(count));
             missingRequiredValue = true;
         }
         if (descriptor.getFileSystemRealmName() == null) {
-            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlock(count, "missing new filesystem realm name"));
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockMissingRealmName(count));
             missingRequiredValue = true;
         }
         if(descriptor.getHashCharset() == null) {

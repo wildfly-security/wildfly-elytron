@@ -406,16 +406,16 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "The alias of the secret key stored in the credential store file.")
     String cmdFileSystemEncryptSecretKeyDesc();
 
-    @Message(id = NONE, value = "The hash charset to be used in the filesystem realm. Set to UTF-8 by default.")
+    @Message(id = NONE, value = "The hash charset used in the original filesystem realm. Set to UTF-8 by default.")
     String cmdFileSystemEncryptHashCharsetDesc();
 
-    @Message(id = NONE, value = "The hash encoding to be used in the filesystem realm. Set to BASE64 by default.")
+    @Message(id = NONE, value = "The hash encoding used in the original filesystem realm. Set to BASE64 by default.")
     String cmdFileSystemEncryptHashEncodingDesc();
 
     @Message(id = NONE, value = "If the original realm has encoded set to true. Set to true by default.")
     String cmdFileSystemEncryptEncodedDesc();
 
-    @Message(id = NONE, value = "The levels to be used in the filesystem realm. Set to 2 by default.")
+    @Message(id = NONE, value = "The levels used in the original filesystem realm. Set to 2 by default.")
     String cmdFileSystemEncryptLevelsDesc();
 
     @Message(id = NONE, value = "The absolute or relative location of the original filesystem realm.")
@@ -498,6 +498,15 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Skipping descriptor file block number %d due to %s.")
     String skippingDescriptorBlock(Integer blockNumber, String reason);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing input realm location.")
+    String skippingDescriptorBlockMissingInputRealm(Integer blockNumber);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing output realm location..")
+    String skippingDescriptorBlockMissingOutputRealm(Integer blockNumber);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing new filesystem realm name.")
+    String skippingDescriptorBlockMissingRealmName(Integer blockNumber);
 
     @Message(id = NONE, value = "Should file %s be overwritten? (y/n) ")
     String shouldFileBeOverwritten(String file);

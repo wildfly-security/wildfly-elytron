@@ -88,8 +88,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         for (String file: files) {
             if(!fileExists("target/test-classes/filesystem-encrypt/fs-encrypted-realms/"+file)){
                 throw new FileNotFoundException("Missing file from Bulk Descriptor File: " + file);
-            } else {
-                System.out.println("Found file: " + file);
             }
         }
     }
@@ -103,8 +101,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/single-user/N/B/NBSWY3DP.xml";
         if(!fileExists(file)){
             throw new FileNotFoundException("Missing file: " + file);
-        } else {
-            System.out.println("Found file: " + file);
         }
     }
 
@@ -117,8 +113,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/single-user-with-role/O/B/S/OBSXE43PNYYTEMY.xml";
         if(!fileExists(file)){
             throw new FileNotFoundException("Missing file: " + file);
-        } else {
-            System.out.println("Found file: " + file);
         }
     }
 
@@ -133,8 +127,6 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/single-user-with-key/O/N/ONSWG4TFORYGK4TTN5XA.xml";
         if(!fileExists(file)){
             throw new FileNotFoundException("Missing file: " + file);
-        } else {
-            System.out.println("Found file: " + file);
         }
     }
 

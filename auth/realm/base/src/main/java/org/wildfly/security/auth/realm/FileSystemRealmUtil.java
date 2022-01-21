@@ -32,10 +32,6 @@ import org.wildfly.security.credential.Credential;
  * @author <a href="mailto:araskar@redhat.com">Ashpan Raskar</a>
  */
 public class FileSystemRealmUtil {
-    Identity identity;
-    public FileSystemRealmUtil(String name, Path path, IdentitySharedExclusiveLock.IdentityLock lock, Charset hashCharset, Encoding hashEncoding){
-        this.identity = new Identity(name, path, lock, hashCharset, hashEncoding, null, null, null, null);
-    }
 
     public static void createEncryptedRealmFromUnencrypted(FileSystemSecurityRealm unencryptedRealm, FileSystemSecurityRealm encryptedRealm) throws RealmUnavailableException {
         ModifiableRealmIdentityIterator realmIterator = unencryptedRealm.getRealmIdentityIterator();

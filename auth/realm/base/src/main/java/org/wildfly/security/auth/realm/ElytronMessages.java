@@ -22,7 +22,8 @@ import java.nio.file.Path;
 import java.security.KeyStoreException;
 import java.security.Principal;
 import java.util.NoSuchElementException;
-
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -34,9 +35,6 @@ import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -147,10 +145,18 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13004, value = "JAAS logout failed for principal %s")
     void debugInfoJaasLogoutFailure(Principal principal, @Cause Throwable cause);
 
-    @Message(id = 13005, value = "Signature for the following identity is invalid: %s.")
+    @Message(id = 13005, value = "Signature for the following identity is invalid: %s")
     IllegalStateException invalidIdentitySignature(String s);
 
-    @Message(id = 13006, value = "Unable to create a signature for the file: %s.")
+    @Message(id = 13006, value = "Unable to create a signature for the file: %s")
     IllegalStateException unableToGenerateSignature(String s);
+
+    @Message(id = 13007, value = "Unable to location the signature element for the file: %s")
+    RealmUnavailableException cannotFindSignature(String s);
+
+    @Message(id = 13008, value = "Both PrivateKey and PublicKey must be defined for realm at: %s")
+    IllegalArgumentException invalidKeyPairArgument(String s);
+
+
 
 }

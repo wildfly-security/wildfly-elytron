@@ -190,6 +190,11 @@ public class FileSystemSecurityRealmBuilder {
         if (providers == null) {
             providers = INSTALLED_PROVIDERS;
         }
+
+        if (privateKey == null ^ publicKey == null) {
+            throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
+        }
+
         return new FileSystemSecurityRealm(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, providers, secretKey, privateKey, publicKey);
     }
 }

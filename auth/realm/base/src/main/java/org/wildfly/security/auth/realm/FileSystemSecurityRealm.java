@@ -141,6 +141,7 @@ import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.permission.ElytronPermission;
+import org.xml.sax.SAXException;
 
 /**
  * A simple filesystem-backed security realm.
@@ -223,8 +224,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param hashEncoding the string format for the hashed passwords. Uses Base64 by default.
      * @param providers The providers supplier
      * @param secretKey the SecretKey used to encrypt and decrypt the security realm (if {@code null}, the security realm will be unencrypted)
+     * @param privateKey the PrivateKey used for writing the signature of the identities in security realm (if {@code null}, the security realm will not have integrity enabled)
+     * @param publicKey the PublicKey used for verifying the signature of the identities in security realm (if {@code null}, the security realm will not have integrity enabled)
      */
-    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded, final Encoding hashEncoding, final Charset hashCharset, Supplier<Provider[]> providers, final SecretKey secretKey, final PrivateKey privateKey, final PublicKey publicKey) {
+    FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded, final Encoding hashEncoding, final Charset hashCharset, Supplier<Provider[]> providers, final SecretKey secretKey, final PrivateKey privateKey, final PublicKey publicKey) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(CREATE_SECURITY_REALM);
@@ -232,14 +235,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         this.root = root;
         this.nameRewriter = nameRewriter;
         this.levels = levels;
-        this.encoded = secretKey == null && encoded;
-        this.hashCharset = hashCharset != null ? hashCharset : StandardCharsets.UTF_8;
-        this.hashEncoding = hashEncoding != null ? hashEncoding : Encoding.BASE64;
-        this.providers = providers != null ? providers : INSTALLED_PROVIDERS;
+        this.encoded = encoded;
+        this.hashCharset = hashCharset;
+        this.hashEncoding = hashEncoding;
+        this.providers = providers;
         this.secretKey = secretKey;
-        this.privateKey = publicKey != null ? privateKey : null;
-        this.publicKey = privateKey != null ? publicKey : null;
-        // last 2 lines are to make sure both private key and public key have values, if not then both are set to null
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
     }
 
     /**
@@ -255,7 +257,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param hashEncoding the string format for the hashed passwords. Uses Base64 by default.
      */
     public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded, final Encoding hashEncoding, final Charset hashCharset) {
-        this(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, INSTALLED_PROVIDERS);
+        this(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, INSTALLED_PROVIDERS, null, null, null);
     }
 
     /**
@@ -351,7 +353,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     .toLowerCase(Locale.ROOT)
                     .replaceAll("[^a-z0-9]", "_");
         }
-        if (secretKey != null | encoded) {
+        if (secretKey != null || encoded) {
             String base32 = ByteIterator.ofBytes(new ByteStringBuilder().append(name).toArray())
                     .base32Encode(Base32Alphabet.STANDARD, false).drainToString();
             normalizedName = secretKey != null ? base32 : normalizedName + "-" + base32;
@@ -724,9 +726,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     } catch (IllegalStateException e) {
                         throw ElytronMessages.log.unableToGenerateSignature(path.toString());
                     }
-                    if ( this.publicKey != null && ! validateDigitalSignature(this.path.toString(), this.name)) {
-                        throw ElytronMessages.log.invalidIdentitySignature(this.name);
-                    }
                 }
                 return;
             }
@@ -878,9 +877,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         // nothing we can do
                     }
                     if ( this.publicKey != null ) { createDigitalSignature(this.path.toString(), this.name); }
-                    if ( this.publicKey != null && ! validateDigitalSignature(this.path.toString(), this.name)) {
-                        throw ElytronMessages.log.invalidIdentitySignature(this.name);
-                    }
                     return null;
                 } catch (Throwable t) {
                     try {
@@ -899,8 +895,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             // to an older version.
 
             // Do we require version 1.1?
-            // return Version.VERSION_1_1;
-
+            if (this.publicKey != null && this.privateKey != null) {
+                return Version.VERSION_1_1;
+            }
             // We would not require 1.0.1 as no realm specific changed were made.
             //return Version.VERSION_1_0_1;
 
@@ -1350,6 +1347,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
+        // Process for updating identity:
+        // 1. Validate current identity digital signature
+        // 2. Update identity with new data
+        // 3. Create new digital signature
+
         private boolean validateDigitalSignature(String path, String name) throws IllegalStateException {
             try {
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -1357,15 +1359,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 Document doc = dbf.newDocumentBuilder().parse(path);
                 NodeList nl = doc.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature");
                 if (nl.getLength() == 0) {
-                    throw new RealmUnavailableException("Cannot find Signature element");
+                    throw ElytronMessages.log.cannotFindSignature(path);
                 }
                 XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
                 DOMValidateContext valContext = new DOMValidateContext(publicKey, nl.item(0));
                 XMLSignature signature = fac.unmarshalXMLSignature(valContext);
                 boolean coreValidity = signature.validate(valContext);
-                ElytronMessages.log.tracef("FileSystemSecurityRealm - verification against signature for credential [%s] = %b", name, coreValidity);
+                ElytronMessages.log.tracef("FileSystemSecurityRealm - verification against signature for user [%s] = %b", name, coreValidity);
                 return coreValidity;
-           } catch (ParserConfigurationException | IOException | MarshalException | XMLSignatureException | org.xml.sax.SAXException e) {
+           } catch (ParserConfigurationException | IOException | MarshalException | XMLSignatureException | SAXException e) {
                 throw ElytronMessages.log.invalidIdentitySignature(path);
             }
         }
@@ -1420,7 +1422,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 writer.close();
 
            } catch (ParserConfigurationException | IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException |
-                    KeyException | XMLSignatureException | MarshalException | TransformerException | org.xml.sax.SAXException e) {
+                    KeyException | XMLSignatureException | MarshalException | TransformerException | SAXException e) {
                 throw ElytronMessages.log.unableToGenerateSignature(path);
             }
         }

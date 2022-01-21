@@ -170,8 +170,15 @@ public class ModifiableSecurityRealmIdentityCacheTest {
     }
 
     private ModifiableSecurityRealm createSecurityRealm() throws Exception {
-        FileSystemSecurityRealm realm = new FileSystemSecurityRealm(getRootPath(true), NameRewriter.IDENTITY_REWRITER, 2, true, Encoding.BASE64, StandardCharsets.UTF_8, ELYTRON_PASSWORD_PROVIDERS, null, null, null);
-
+        FileSystemSecurityRealm realm = FileSystemSecurityRealm.builder()
+                        .setRoot(getRootPath(true))
+                        .setNameRewriter(NameRewriter.IDENTITY_REWRITER)
+                        .setLevels(2)
+                        .setEncoded(true)
+                        .setHashEncoding(Encoding.BASE64)
+                        .setHashCharset(StandardCharsets.UTF_8)
+                        .setProviders(ELYTRON_PASSWORD_PROVIDERS)
+                        .build();
         addUser(realm, "joe", "User");
 
         return new CachingModifiableSecurityRealm(new MockCacheableModifiableSecurityRealm(realm), createRealmIdentitySimpleJavaMapCache(), ELYTRON_PASSWORD_PROVIDERS);

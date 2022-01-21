@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><identity xmlns="urn:elytron:1.0">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><identity xmlns="urn:elytron:identity:1.0.1">
     <credentials>
         <password algorithm="clear" format="base64">AXNlY3JldFBhc3N3b3Jk</password>
     </credentials>
