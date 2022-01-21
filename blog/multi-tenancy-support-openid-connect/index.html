@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Multi-tenancy Support for OpenID Connect Applications</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Multi-tenancy Support for OpenID Connect Applications | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.1" />
+<meta property="og:title" content="Multi-tenancy Support for OpenID Connect Applications" />
+<meta name="author" content="Farah Juma" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="As mentioned in my last blog post, applications deployed to WildFly can be secured with OpenID Connect, without needing to use the Keycloak client adapter." />
+<meta property="og:description" content="As mentioned in my last blog post, applications deployed to WildFly can be secured with OpenID Connect, without needing to use the Keycloak client adapter." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-21T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Multi-tenancy Support for OpenID Connect Applications" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"Farah Juma"},"image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","description":"As mentioned in my last blog post, applications deployed to WildFly can be secured with OpenID Connect, without needing to use the Keycloak client adapter.","url":"https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/","@type":"BlogPosting","headline":"Multi-tenancy Support for OpenID Connect Applications","dateModified":"2022-01-21T00:00:00+00:00","datePublished":"2022-01-21T00:00:00+00:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Multi-tenancy Support for OpenID Connect Applications</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | January 21, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/&title=Multi-tenancy Support for OpenID Connect Applications" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Multi-tenancy Support for OpenID Connect Applications&url=https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Multi-tenancy Support for OpenID Connect Applications&amp;body=Multi-tenancy Support for OpenID Connect Applications https://wildfly-security.github.io/wildfly-elytron/blog/multi-tenancy-support-openid-connect/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>As mentioned in my last <a href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/">blog post</a>,
+applications deployed to WildFly can be secured with OpenID Connect, without needing to use the Keycloak
+client adapter.</p>
+</div>
+<div class="paragraph">
+<p>WildFly 26.0.1.Final, which was just released, includes a fix for multi-tenancy support for OpenID Connect
+applications. This blog post gives an overview of how to configure OpenID Connect applications deployed to
+WildFly so they can support multi-tenancy.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#multi-tenancy">Multi-tenancy</a></li>
+<li><a href="#using-a-custom-configuration-resolver">Using a Custom Configuration Resolver</a></li>
+<li><a href="#a-complete-example-with-multiple-keycloak-realms">A Complete Example with Multiple Keycloak Realms</a>
+<ul class="sectlevel2">
+<li><a href="#example-project">Example Project</a></li>
+<li><a href="#setting-up-your-keycloak-openid-provider">Setting up your Keycloak OpenID provider</a></li>
+<li><a href="#deploying-the-app-to-wildfly">Deploying the app to WildFly</a></li>
+<li><a href="#accessing-the-app">Accessing the app</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="multi-tenancy"><a class="anchor" href="#multi-tenancy"></a>Multi-tenancy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Multi-tenancy allows a single application to serve multiple tenants. This means that it&#8217;s possible to use
+a different authentication policy for each tenant. In other words, it&#8217;s possible for a single application
+to be associated with multiple OpenID Connect configuration files. As an example,
+when using the Keycloak OpenID provider, you might want a different <code>oidc.json</code> file to be used
+depending on the request that was received in order to authenticate users from multiple Keycloak realms.
+The <code>elytron-oidc-client</code> subsystem allows your application to support multi-tenancy by making it
+possible to use a custom configuration resolver so you can define which configuration file to use for
+each request.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="using-a-custom-configuration-resolver"><a class="anchor" href="#using-a-custom-configuration-resolver"></a>Using a Custom Configuration Resolver</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To add multi-tenancy support to your OpenID Connect application, two steps are needed.</p>
+</div>
+<div class="paragraph">
+<p>First, you&#8217;ll need to create a class that implements the <code>org.wildfly.security.http.oidc.OidcClientConfigurationResolver</code> interface,
+as shown in the example below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package org.wildfly.security.examples;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.wildfly.security.http.oidc.OidcClientConfiguration;
+import org.wildfly.security.http.oidc.OidcClientConfigurationBuilder;
+import org.wildfly.security.http.oidc.OidcClientConfigurationResolver;
+import org.wildfly.security.http.oidc.OidcHttpFacade;
+
+public class MyCustomConfigResolver implements OidcClientConfigurationResolver {
+
+    private final Map&lt;String, OidcClientConfiguration&gt; cache = new ConcurrentHashMap&lt;&gt;();
+
+    @Override
+    public OidcClientConfiguration resolve(OidcHttpFacade.Request request) {
+        String path = request.getURI();
+        String tenant = ... // determine the tenant from the request
+        OidcClientConfiguration clientConfiguration = cache.get(tenant);
+        if (clientConfiguration == null) {
+            InputStream is = getClass().getResourceAsStream("/oidc-" + tenant + ".json"); // config to use based on the tenant
+            clientConfiguration = OidcClientConfigurationBuilder.build(is);
+            cache.put(tenant, clientConfiguration);
+        }
+        return clientConfiguration;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, to specify that you want to make use of your custom configuration resolver, you&#8217;ll need to set
+the <code>oidc.config.resolver</code> <code>context-param</code> in your application&#8217;s <code>web.xml</code> file, as shown in the example below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;web-app&gt;
+    ...
+    &lt;context-param&gt;
+        &lt;param-name&gt;oidc.config.resolver&lt;/param-name&gt;
+        &lt;param-value&gt;org.wildfly.security.examples.MyCustomConfigResolver&lt;/param-value&gt;
+    &lt;/context-param&gt;
+    ...
+&lt;/web-app&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="a-complete-example-with-multiple-keycloak-realms"><a class="anchor" href="#a-complete-example-with-multiple-keycloak-realms"></a>A Complete Example with Multiple Keycloak Realms</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the rest of this post, we&#8217;ll go through an example to see how to add support
+for multi-tenancy to an OpenID Connect application that will be deployed to WildFly.
+Our tenants will be multiple Keycloak realms.</p>
+</div>
+<div class="sect2">
+<h3 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h3>
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We’re going to be looking at the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc">multi-tenancy-oidc</a> project.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="setting-up-your-keycloak-openid-provider"><a class="anchor" href="#setting-up-your-keycloak-openid-provider"></a>Setting up your Keycloak OpenID provider</h3>
+<div class="paragraph">
+<p>It&#8217;s easy to set up Keycloak using Docker. Follow the steps in Keycloak&#8217;s <a href="https://www.keycloak.org/getting-started/getting-started-docker">getting started guide</a>
+to start Keycloak, create a realm called <code>tenant1</code>, create a user called <code>alice</code>, and register a client called <code>myclient</code>. After registering our client,
+<code>myclient</code>, we also need to configure valid redirect URIs. Simply click on <code>Clients</code> and then on <code>myclient</code>. In the <code>Valid Redirect URIs</code> field,
+enter <a href="http://localhost:8090/multi-tenancy-oidc/*" class="bare">http://localhost:8090/multi-tenancy-oidc/*</a>.</p>
+</div>
+<div class="paragraph">
+<p>Now, because we&#8217;re going to make use of two Keycloak realms, let&#8217;s repeat these steps again to create a second realm called
+<code>tenant2</code>, create a user called <code>bob</code>, and register a client with the same name we used above, <code>myclient</code>.
+After registering our client, <code>myclient</code>, we also need to configure valid redirect URIs. Simply click on <code>Clients</code> and then
+on <code>myclient</code>. In the <code>Valid Redirect URIs</code> field, enter <a href="http://localhost:8090/multi-tenancy-oidc/*" class="bare">http://localhost:8090/multi-tenancy-oidc/*</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-the-app-to-wildfly"><a class="anchor" href="#deploying-the-app-to-wildfly"></a>Deploying the app to WildFly</h3>
+<div class="paragraph">
+<p>Take a look at the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/java/org/wildfly/security/examples/PathBasedOidcConfigResolver.java">custom configuration resovler</a>
+defined in our application. Notice that the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/resources/oidc-tenant1.json">oidc-tenant1.json</a> configuration file will be used for requests of the form
+<a href="http://localhost:8090/multi-tenancy-oidc/tenant1" class="bare">http://localhost:8090/multi-tenancy-oidc/tenant1</a>. Similarly, the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/resources/oidc-tenant2.json">oidc-tenant2.json</a> configuration file will be used for
+requests of the form <a href="http://localhost:8090/multi-tenancy-oidc/tenant2" class="bare">http://localhost:8090/multi-tenancy-oidc/tenant2</a>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, notice that we&#8217;ve specified that we want to use our custom configuration resolver in our application&#8217;s <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/multi-tenancy-oidc/src/main/webapp/WEB-INF/web.xml#L8-L11">web.xml</a> file.</p>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s deploy our application to WildFly.</p>
+</div>
+<div class="paragraph">
+<p>First, we&#8217;re going to start our WildFly instance (notice that we&#8217;re specifying a port offset here
+since our Keycloak instance is already exposed on port 8080):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">./bin/standalone.sh -Djboss.socket.binding.port-offset=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;re going to build and deploy our project. From our <code>elytron-examples</code> directory, run the
+following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd multi-tenancy-oidc
+mvn wildfly:deploy -Dwildfly.port=10000</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="accessing-the-app"><a class="anchor" href="#accessing-the-app"></a>Accessing the app</h3>
+<div class="paragraph">
+<p>Now, let&#8217;s try accessing our application using <a href="http://localhost:8090/multi-tenancy-oidc/tenant1" class="bare">http://localhost:8090/multi-tenancy-oidc/tenant1</a>.</p>
+</div>
+<div class="paragraph">
+<p>Click on "Access Secured Servlet".</p>
+</div>
+<div class="paragraph">
+<p>Now, you&#8217;ll be redirected to Keycloak to log in. Log in with <code>alice</code> and the password that you
+set when configuring Keycloak.</p>
+</div>
+<div class="paragraph">
+<p>Next, you&#8217;ll be redirected back to our application and you should see the "Secured Servlet" page.
+That means that we&#8217;ve been able to successfully log in to our application using the <code>tenant1</code>
+Keycloak realm. If you repeat the process and try logging in as <code>bob</code>, authentication will
+fail because <code>bob</code> is not a user in the <code>tenant1</code> realm.</p>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s try accessing our application using <a href="http://localhost:8090/multi-tenancy-oidc/tenant2" class="bare">http://localhost:8090/multi-tenancy-oidc/tenant2</a>.</p>
+</div>
+<div class="paragraph">
+<p>This time, after clicking on "Access Secured Servlet", log in with <code>bob</code> and the password you
+set when configuring Keycloak. Now, because <code>bob</code> is a user in the <code>tenant2</code> realm, you&#8217;ll be
+redirected back to our application and you should see the "Secured Servlet" page.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of how to add support for multi-tenancy to an OpenID Connect
+application deployed to WildFly. For more information, be sure to check out the
+<a href="https://docs.wildfly.org/26/Admin_Guide.html#Elytron_OIDC_Client">documentation</a>.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
