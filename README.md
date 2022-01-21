@@ -8,7 +8,7 @@ An "elytron" (ĕl´·ĭ·trŏn, plural "elytra") is the hard, protective casing 
 Building From Source
 --------------------
 
-```console
+ ```console
 $ git clone git@github.com:wildfly-security/wildfly-elytron.git
 ```
 
