@@ -21,7 +21,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,15 +35,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang.RandomStringUtils;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
@@ -56,11 +54,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
  *         <a href="mailto:hsvabek@redhat.com">Hynek Svabek</a>.
  */
 public class KeystorePasswordStoreTest {
-
-    private static final Provider[] providers = new Provider[] {
-            WildFlyElytronPasswordProvider.getInstance(),
-            WildFlyElytronCredentialStoreProvider.getInstance()
-    };
 
     private static Map<String, String> stores = new HashMap<>();
     private static String BASE_STORE_DIRECTORY = "target/ks-cred-stores";
@@ -85,7 +78,7 @@ public class KeystorePasswordStoreTest {
     }
 
     private static CredentialStore newCredentialStoreInstance() throws NoSuchAlgorithmException {
-        return CredentialStore.getInstance(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
+        return CredentialStore.getInstance(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE, WildFlyElytronCredentialStoreProvider.getInstance());
     }
 
     /**
@@ -96,7 +89,7 @@ public class KeystorePasswordStoreTest {
      */
     private PasswordCredential createCredentialFromPassword(char[] password) throws UnsupportedCredentialTypeException {
         try {
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, WildFlyElytronPasswordProvider.getInstance());
             return new PasswordCredential(passwordFactory.generatePassword(new ClearPasswordSpec(password)));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new UnsupportedCredentialTypeException(e);
@@ -118,18 +111,17 @@ public class KeystorePasswordStoreTest {
      */
     @BeforeClass
     public static void setup() throws Exception {
-        for (Provider provider : providers) {
-            Security.addProvider(provider);
-        }
         cleanCredentialStores();
         // setup vaults that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("TWO"))
+                .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_TWO")
                 .addPassword("alias1", "secret-password-1")
                 .addPassword("alias2", "secret-password-2")
                 .build();
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("THREE"))
+                .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_THREE")
                 .addPassword("db-pass-1", "1-secret-info")
@@ -139,21 +131,12 @@ public class KeystorePasswordStoreTest {
                 .addPassword("db-pass-5", "5-secret-info")
                 .build();
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("TO_DELETE"))
+                .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
                 .setKeyStorePassword("secret_store_DELETE")
                 .addPassword("alias1", "secret-password-1")
                 .addPassword("alias2", "secret-password-2")
                 .build();
 
-    }
-
-    /**
-     * Remove security provider.
-     */
-    @AfterClass
-    public static void remove() {
-        for (Provider provider : providers) {
-            Security.removeProvider(provider.getName());
-        }
     }
 
     /**
@@ -188,7 +171,9 @@ public class KeystorePasswordStoreTest {
         cs.initialize(csAttributes,
             new CredentialStore.CredentialSourceProtectionParameter(
                 IdentityCredentials.NONE.withCredential(new PasswordCredential(
-                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_DELETE".toCharArray())))));
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_DELETE".toCharArray())))),
+                new Provider[]{WildFlyElytronPasswordProvider.getInstance()}
+        );
 
         cs.store(passwordAlias1, createCredentialFromPassword(password1));
         cs.store(passwordAlias2, createCredentialFromPassword(password2));
@@ -266,7 +251,8 @@ public class KeystorePasswordStoreTest {
         cs.initialize(csAttributes,
             new CredentialStore.CredentialSourceProtectionParameter(
                 IdentityCredentials.NONE.withCredential(new PasswordCredential(
-                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray())))));
+                    ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray())))),
+                new Provider[]{WildFlyElytronPasswordProvider.getInstance()});
 
         // store test
         String caseSensitive1 = "caseSensitiveName";
@@ -341,7 +327,7 @@ public class KeystorePasswordStoreTest {
         CredentialStore cs = newCredentialStoreInstance();
         cs.initialize(csAttributes, new CredentialStore.CredentialSourceProtectionParameter(
             IdentityCredentials.NONE.withCredential(createCredentialFromPassword("test".toCharArray()))
-        ));
+        ), new Provider[] {WildFlyElytronPasswordProvider.getInstance()});
 
         cs.store(passwordAlias1, createCredentialFromPassword(password1));
         cs.store(passwordAlias2, createCredentialFromPassword(password2));
@@ -388,7 +374,7 @@ public class KeystorePasswordStoreTest {
             IdentityCredentials.NONE.withCredential(
                 new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "secret_store_TWO".toCharArray()))
             )
-        ));
+        ), new Provider[]{WildFlyElytronPasswordProvider.getInstance()});
 
         // expected entries there
         Assert.assertArrayEquals("secret-password-1".toCharArray(), getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
@@ -434,7 +420,9 @@ public class KeystorePasswordStoreTest {
 
         CredentialStore cs = newCredentialStoreInstance();
         cs.initialize(csAttributes, new CredentialStore.CredentialSourceProtectionParameter(
-            IdentityCredentials.NONE.withCredential(createCredentialFromPassword("test".toCharArray()))));
+            IdentityCredentials.NONE.withCredential(createCredentialFromPassword("test".toCharArray()))),
+                new Provider[]{WildFlyElytronPasswordProvider.getInstance()}
+        );
 
         cs.flush();
 

@@ -28,15 +28,15 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 import java.io.IOException;
 import java.security.Principal;
-import java.security.acl.Group;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.credential.BearerTokenCredential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * A {@link javax.security.auth.spi.LoginModule} implementation used in the JAAS security realm tests. It uses a static
@@ -46,8 +46,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
  */
 public class TestLoginModule implements LoginModule {
 
-    private final Map<String, char[]> usersMap = new HashMap<String, char[]>();
-    private Principal principal;
+    private final Map<String, char[]> usersMap = new HashMap<>();
     private Subject subject;
     private CallbackHandler handler;
 
@@ -73,20 +72,22 @@ public class TestLoginModule implements LoginModule {
         }
 
         final String username = nameCallback.getName();
-        this.principal = new NamePrincipal(username);
         final char[] password = passwordCallback.getPassword();
 
         char[] storedPassword = this.usersMap.get(username);
-        return Arrays.equals(storedPassword, password);
+        return password != null && username != null && Arrays.equals(storedPassword, password);
     }
 
     @Override
     public boolean commit() throws LoginException {
-        this.subject.getPrincipals().add(this.principal);
-        // add a caller principal group for testing purposes.
-        final Group group = new TestGroup("CallerPrincipal");
-        group.addMember(new NamePrincipal("auth-caller"));
-        this.subject.getPrincipals().add(group);
+        this.subject.getPrincipals().add(new NamePrincipal("whoami"));
+        this.subject.getPrincipals().add(new AnonymousPrincipal());
+        this.subject.getPrincipals().add(new Roles("Admin"));
+        this.subject.getPrincipals().add( new Roles("User"));
+        this.subject.getPrincipals().add(new Roles("Guest"));
+        subject.getPrivateCredentials().add(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, "myPrivatePassword".toCharArray())));
+        subject.getPrivateCredentials().add(new BearerTokenCredential("myPrivateToken"));
+        subject.getPublicCredentials().add(new BearerTokenCredential("myPublicToken"));
         return true;
     }
 
@@ -101,42 +102,16 @@ public class TestLoginModule implements LoginModule {
         return true;
     }
 
-    /**
-     * A {@code Group} implementation used in the tests to store the caller principal.
-     */
-    private class TestGroup implements Group {
+    private static class Roles implements Principal {
 
-        private String name;
-        private HashSet<Principal> principals;
+        private final String name;
 
-        public TestGroup(final String name) {
+        Roles(final String name) {
             this.name = name;
-            this.principals = new HashSet<Principal>();
         }
 
-        @Override
         public String getName() {
             return this.name;
-        }
-
-        @Override
-        public boolean addMember(Principal user) {
-            return this.principals.add(user);
-        }
-
-        @Override
-        public boolean removeMember(Principal user) {
-            return this.principals.remove(user);
-        }
-
-        @Override
-        public boolean isMember(Principal member) {
-            return this.principals.contains(member);
-        }
-
-        @Override
-        public Enumeration<? extends Principal> members() {
-            return Collections.enumeration(this.principals);
         }
     }
 }

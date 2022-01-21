@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.impl;
 
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 import static org.wildfly.security.http.HttpConstants.AUTHENTICATION_INFO;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.LOCATION;
@@ -84,9 +85,9 @@ import mockit.MockUp;
 // has dependency on wildfly-elytron-sasl, wildfly-elytron-http-basic and wildfly-elytron-digest
 public class AbstractBaseHttpTest {
 
-    protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
-    protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();
-    protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory();
+    protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
 
     protected void mockDigestNonce(final String nonce){
         new MockUp<NonceManager>(){
@@ -407,7 +408,7 @@ public class AbstractBaseHttpTest {
                         throw new UnsupportedCallbackException(callback);
                     }
                     try {
-                        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
                         Password pass = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
                         ((CredentialCallback) callback).setCredential(new PasswordCredential(pass));
                     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {

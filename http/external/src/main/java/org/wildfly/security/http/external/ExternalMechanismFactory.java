@@ -42,7 +42,7 @@ public class ExternalMechanismFactory implements HttpServerAuthenticationMechani
     public ExternalMechanismFactory() {
     }
 
-    public ExternalMechanismFactory(final Provider provider) {
+    public ExternalMechanismFactory(final Provider... providers) {
     }
 
     /**

@@ -19,36 +19,20 @@
 package org.wildfly.security.auth.server;
 
 import static org.junit.Assert.assertNotNull;
+import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.Provider;
-import java.security.Security;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 public class IdentityCredentialsTest {
-
-    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
-
-    @BeforeClass
-    public static void registerProvider() {
-        Security.addProvider(provider);
-    }
-
-    @AfterClass
-    public static void removeProvider() {
-        Security.removeProvider(provider.getName());
-    }
 
     @Test
     public void testLooseMatches() throws GeneralSecurityException {
@@ -84,6 +68,6 @@ public class IdentityCredentialsTest {
     private static Password generatePassword(String algorithm, String password, String salt, int iterationCount) throws GeneralSecurityException {
         IteratedSaltedPasswordAlgorithmSpec algoSpec = new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt.getBytes(StandardCharsets.UTF_8));
         EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(password.toCharArray(), algoSpec);
-        return PasswordFactory.getInstance(algorithm).generatePassword(encSpec);
+        return PasswordFactory.getInstance(algorithm, ELYTRON_PASSWORD_PROVIDERS).generatePassword(encSpec);
     }
 }

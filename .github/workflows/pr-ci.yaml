@@ -2,8 +2,10 @@ name: Pull Request CI
 on:
   pull_request:
     branches:
+      - 1.17.x
       - 1.15.x
       - 1.x
+      - 2.x
       - master
 
 jobs:

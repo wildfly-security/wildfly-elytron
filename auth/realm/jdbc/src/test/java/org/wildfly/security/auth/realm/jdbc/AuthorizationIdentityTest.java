@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.auth.realm.jdbc.DataSourceRule.ELYTRON_PASSWORD_PROVIDERS;
 
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -45,6 +46,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(getDataSource())
@@ -68,6 +70,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
             .build();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
                     .withMapper(passwordKeyMapper)
                     .from(getDataSource())

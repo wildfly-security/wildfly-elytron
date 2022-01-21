@@ -97,6 +97,7 @@ class CredentialStoreCommand extends Command {
     public static final String ALIAS_ARGUMENT = "alias";
     public static final String CHECK_ALIAS_PARAM = "exists";
     public static final String ALIASES_PARAM = "aliases";
+    public static final String CREDENTIAL_TYPES = "credential-types";
     public static final String REMOVE_ALIAS_PARAM = "remove";
     public static final String CREATE_CREDENTIAL_STORE_PARAM = "create";
     public static final String HELP_PARAM = "help";
@@ -211,7 +212,8 @@ class CredentialStoreCommand extends Command {
         Option r = new Option("r", REMOVE_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdLineRemoveAliasDesc());
         r.setArgName("alias");
         Option v = new Option("v", ALIASES_PARAM, false, ElytronToolMessages.msg.cmdLineAliasesDesc());
-
+        Option st = new Option("st", CREDENTIAL_TYPES, true, ElytronToolMessages.msg.cmdLineAliasTypes());
+        st.setArgName("alias");
         Option g = new Option("g", GENERATE_KEY_PAIR_PARAM, true, ElytronToolMessages.msg.cmdLineGenerateKeyPairDesc());
         g.setOptionalArg(false);
         g.setArgName("alias");
@@ -226,6 +228,7 @@ class CredentialStoreCommand extends Command {
         og.addOption(e);
         og.addOption(r);
         og.addOption(v);
+        og.addOption(st);
         og.addOption(g);
         og.addOption(xp);
         og.addOption(ikp);
@@ -334,7 +337,7 @@ class CredentialStoreCommand extends Command {
         printDuplicatesWarning(cmdLine);
 
         String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
-        if ((cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM)) && location != null && !Files.exists(Paths.get(location))) {
+        if ((cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM) || cmdLine.hasOption(CREDENTIAL_TYPES)) && location != null && !Files.exists(Paths.get(location))) {
             setStatus(GENERAL_CONFIGURATION_ERROR);
             throw ElytronToolMessages.msg.storageFileDoesNotExist(location);
         }
@@ -422,6 +425,8 @@ class CredentialStoreCommand extends Command {
             checkAlias(credentialStore, entryType, csType);
         } else if (cmdLine.hasOption(ALIASES_PARAM)) {
             aliases(credentialStore);
+        } else if (cmdLine.hasOption(CREDENTIAL_TYPES)) {
+            aliasCredentialTypes(credentialStore);
         } else if (cmdLine.hasOption(GENERATE_KEY_PAIR_PARAM)) {
             generateKeyPair(credentialStore);
         } else if (cmdLine.hasOption(EXPORT_KEY_PAIR_PUBLIC_KEY_PARAM)) {
@@ -562,6 +567,21 @@ class CredentialStoreCommand extends Command {
             System.out.println(ElytronToolMessages.msg.aliases(list.toString()));
         } else {
             System.out.println(ElytronToolMessages.msg.noAliases());
+        }
+        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+    }
+
+    private void aliasCredentialTypes(CredentialStore credentialStore) {
+        String alias = cmdLine.getOptionValue(CREDENTIAL_TYPES);
+        Set<String> types = credentialStore.getCredentialTypesForAlias(alias);
+        if (types.size() != 0) {
+            StringBuilder list = new StringBuilder();
+            for (String type: types) {
+                list.append(" ").append(type);
+            }
+            System.out.println(ElytronToolMessages.msg.types(list.toString(), alias));
+        } else {
+            System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
         }
         setStatus(ElytronTool.ElytronToolExitStatus_OK);
     }

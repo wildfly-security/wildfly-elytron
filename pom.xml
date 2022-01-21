@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron-parent</artifactId>
-    <version>1.17.3.CR1-SNAPSHOT</version>
+    <version>1.18.4.CR1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>WildFly Elytron Parent</name>
@@ -67,7 +67,7 @@
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
         <version.org.eclipse.microprofile.jwt.api>1.2.2</version.org.eclipse.microprofile.jwt.api>
-        <version.org.apache.sshd.common>2.3.0</version.org.apache.sshd.common>
+        <version.org.apache.sshd.common>2.7.0</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.13</version.org.apache.httpcomponents.httpclient>
 
         <version.org.jboss.logging>3.4.2.Final</version.org.jboss.logging>
@@ -75,6 +75,7 @@
         <version.org.jboss.logmanager.log4j-jboss>1.1.6.Final</version.org.jboss.logmanager.log4j-jboss>
         <version.org.jboss.logging.tools>2.2.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.9.2.Final</version.org.jboss.modules>
+        <version.org.jboss.resteasy>4.7.4.Final</version.org.jboss.resteasy>
         <version.org.jboss.slf4j>1.0.4.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>2.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>2.0.1.Final</version.org.jboss.spec.javax.security.auth.message.jboss-jaspi-api_1.1_spec>
@@ -85,10 +86,10 @@
         <version.org.jboss.ws.jbossws-spi>3.3.0.Final</version.org.jboss.ws.jbossws-spi>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
-	<version.jmockit>1.34</version.jmockit>
+        <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
-        <version.net.minidev.json-smart>2.3</version.net.minidev.json-smart>
+        <version.net.minidev.json-smart>2.4.7</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>8.2.1</version.com.nimbusds.nimbus-jose-jwt>
         <version.com.squareup.okhttp3.mockwebserver>3.8.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.8.Final</version.org.wildfly.checkstyle-config>
@@ -586,6 +587,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-stateful-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -920,6 +926,12 @@
                 <groupId>org.jboss.logmanager</groupId>
                 <artifactId>jboss-logmanager</artifactId>
                 <version>${version.org.jboss.logmanager}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-client</artifactId>
+                <version>${version.org.jboss.resteasy}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.jboss.slf4j</groupId>
@@ -1414,6 +1426,7 @@
         <module>http/form</module>
         <module>http/oidc</module>
         <module>http/spnego</module>
+        <module>http/stateful-basic</module>
         <module>http/sso</module>
         <module>http/util</module>
         <module>jacc</module>

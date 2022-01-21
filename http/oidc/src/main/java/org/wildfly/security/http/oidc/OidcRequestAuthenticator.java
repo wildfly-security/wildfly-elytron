@@ -387,20 +387,24 @@ public class OidcRequestAuthenticator {
 
     private String rewrittenRedirectUri(String originalUri) {
         Map<String, String> rewriteRules = deployment.getRedirectRewriteRules();
-        if (rewriteRules != null && ! rewriteRules.isEmpty()) {
-            try {
-                URL url = new URL(originalUri);
-                Map.Entry<String, String> rule =  rewriteRules.entrySet().iterator().next();
-                StringBuilder redirectUriBuilder = new StringBuilder(url.getProtocol());
-                redirectUriBuilder.append("://"+ url.getAuthority());
-                redirectUriBuilder.append(url.getPath().replaceFirst(rule.getKey(), rule.getValue()));
-                return redirectUriBuilder.toString();
-            } catch (MalformedURLException ex) {
-                log.error("Not a valid request url");
-                throw new RuntimeException(ex);
+        try {
+            URL url = new URL(originalUri);
+            Map.Entry<String, String> rule = null;
+            if (rewriteRules != null && ! rewriteRules.isEmpty()) {
+                rule =  rewriteRules.entrySet().iterator().next();
             }
+            StringBuilder redirectUriBuilder = new StringBuilder(url.getProtocol());
+            redirectUriBuilder.append("://").append(url.getAuthority());
+            if (rule != null) {
+                redirectUriBuilder.append(url.getPath().replaceFirst(rule.getKey(), rule.getValue()));
+            } else {
+                redirectUriBuilder.append(url.getPath());
+            }
+            return redirectUriBuilder.toString();
+        } catch (MalformedURLException ex) {
+            log.error("Not a valid request url");
+            throw new RuntimeException(ex);
         }
-        return originalUri;
     }
 
     private static String addOidcScopeIfNeeded(String scope) {
