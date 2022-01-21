@@ -37,7 +37,10 @@ import javax.security.auth.callback.CallbackHandler;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
+import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 
 import mockit.integration.junit4.JMockit;
 
@@ -219,6 +222,37 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
     public void testBasicSilentWithDigest() throws Exception{
         // authenticate using only DIGEST mechanism
         prepareSilentBasicWithDigestMechanisms();
+        authenticateWithDigestMD5();
+    }
+
+    public void prepareSecurityProviderServerMechanismWithDigestMD5() throws Exception {
+        mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");
+
+        final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
+        Map<String, Object> digestProps = new HashMap<>();
+        digestProps.put(CONFIG_REALM, "http-auth@example.org");
+        digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
+        HttpServerAuthenticationMechanismFactory fact = new SecurityProviderServerMechanismFactory(WildFlyElytronHttpDigestProvider.getInstance());
+        mechanisms.add(fact.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler()));
+
+        authenticator = HttpAuthenticator.builder()
+                .setMechanismSupplier(() -> mechanisms)
+                .setHttpExchangeSpi(exchangeSpi)
+                .setRequired(true)
+                .build();
+    }
+
+    @Test
+    public void testUsingSecurityProviderServerMechanismWithDigestMD5() throws Exception {
+        prepareSecurityProviderServerMechanismWithDigestMD5();
+
+        Assert.assertFalse(authenticator.authenticate());
+        List<String> responses = exchangeSpi.getResponseAuthenticateHeaders();
+        assertEquals("DIGEST response is received", 1, responses.size());
+        Assert.assertEquals(UNAUTHORIZED, exchangeSpi.getStatusCode());
+        Assert.assertEquals(null, exchangeSpi.getResult());
+        exchangeSpi.setStatusCode(0);
+
         authenticateWithDigestMD5();
     }
 
