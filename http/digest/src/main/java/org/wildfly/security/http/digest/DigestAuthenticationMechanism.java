@@ -119,7 +119,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
-                if (current.startsWith(CHALLENGE_PREFIX)) {
+                if (current.regionMatches(true, 0, CHALLENGE_PREFIX, 0, CHALLENGE_PREFIX.length())) {
                     byte[] rawHeader = current.substring(CHALLENGE_PREFIX.length()).getBytes(UTF_8);
                     try {
                         HashMap<String, byte[]> responseTokens = parseResponse(rawHeader, UTF_8, false, httpDigest);
