@@ -18,6 +18,7 @@
 package org.wildfly.security.tool;
 
 import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -71,6 +72,10 @@ class MaskCommand extends Command {
 
     @Override
     public void execute(String[] args) throws Exception {
+        if (new SecureRandom().getProvider().getName().toLowerCase().contains("fips")) {
+            System.out.println(ElytronToolMessages.msg.fipsModeNotAllowed());
+            return;
+        }
         setStatus(GENERAL_CONFIGURATION_ERROR);
         cmdLine = parser.parse(options, args, false);
         setEnableDebug(cmdLine.hasOption(DEBUG_PARAM));
