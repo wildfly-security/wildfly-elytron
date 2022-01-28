@@ -138,6 +138,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param encoded whether identity names should be BASE32 encoded before using as filename
      * @param hashCharset the character set to use when converting password strings to a byte array. Uses UTF-8 by default.
      * @param hashEncoding the string format for the hashed passwords. Uses Base64 by default.
+     * @param providers The providers supplier
      */
     public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded, final Encoding hashEncoding, final Charset hashCharset, Supplier<Provider[]> providers) {
         final SecurityManager sm = System.getSecurityManager();
@@ -151,6 +152,22 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         this.hashCharset = hashCharset != null ? hashCharset : StandardCharsets.UTF_8;
         this.hashEncoding = hashEncoding != null ? hashEncoding : Encoding.BASE64;
         this.providers = providers;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * Construction with enabled security manager requires {@code createSecurityRealm} {@link ElytronPermission}.
+     *
+     * @param root the root path of the identity store
+     * @param nameRewriter the name rewriter to apply to looked up names
+     * @param levels the number of levels of directory hashing to apply
+     * @param encoded whether identity names should be BASE32 encoded before using as filename
+     * @param hashCharset the character set to use when converting password strings to a byte array. Uses UTF-8 by default.
+     * @param hashEncoding the string format for the hashed passwords. Uses Base64 by default.
+     */
+    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels, final boolean encoded, final Encoding hashEncoding, final Charset hashCharset) {
+        this(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, INSTALLED_PROVIDERS);
     }
 
     /**
