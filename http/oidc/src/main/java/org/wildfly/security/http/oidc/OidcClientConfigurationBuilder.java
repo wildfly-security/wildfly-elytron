@@ -108,6 +108,7 @@ public class OidcClientConfigurationBuilder {
 
         oidcClientConfiguration.setPublicClient(oidcJsonConfiguration.isPublicClient());
         oidcClientConfiguration.setUseResourceRoleMappings(oidcJsonConfiguration.isUseResourceRoleMappings());
+        oidcClientConfiguration.setUseRealmRoleMappings(oidcJsonConfiguration.isUseRealmRoleMappings());
 
         oidcClientConfiguration.setExposeToken(oidcJsonConfiguration.isExposeToken());
 

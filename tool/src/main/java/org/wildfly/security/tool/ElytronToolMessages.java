@@ -487,4 +487,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Clear text encrypted to token '%s' using alias '%s'.")
     String encryptedToken(String token, String alias);
+
+    @Message(id = NONE, value = "Mask password operation is not allowed in FIPS mode.")
+    String fipsModeNotAllowed();
 }

@@ -346,6 +346,16 @@ public class OidcClientContext {
         }
 
         @Override
+        public boolean isUseRealmRoleMappings() {
+            return delegate.isUseRealmRoleMappings();
+        }
+
+        @Override
+        public void setUseRealmRoleMappings(boolean useRealmRoleMappings) {
+            delegate.setUseRealmRoleMappings(useRealmRoleMappings);
+        }
+
+        @Override
         public boolean isCors() {
             return delegate.isCors();
         }
@@ -489,6 +499,11 @@ public class OidcClientContext {
         @Override
         public void setPublicKeyCacheTtl(int publicKeyCacheTtl) {
             delegate.setPublicKeyCacheTtl(publicKeyCacheTtl);
+        }
+
+        @Override
+        public Map<String, String> getRedirectRewriteRules() {
+            return delegate.getRedirectRewriteRules();
         }
 
         @Override
