@@ -1,0 +1,98 @@
+---
+layout: post
+title: "Encrypting Pre-Existing Filesystem realms"
+date: 2022-02-01
+tags: filesystem-realm encryption tool
+synopsis: An overview of the new filesystem realm encryption tool for the Elytron Filesystem Security Realm.
+author: araskar
+link:
+---
+== Overview
+
+With the addition of the filesystem realm encryption feature *https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-integrity/[outlined here]*, a feature was added to the Elytron Tool to encrypt a pre-existing filesystem realm.
+
+== Method to run the tool
+
+There are two methods to run the tool, one is on the command line, that only lets you apply encryption to one filesystem realm at a time, and the other way is to use a descriptor file which allows you to convert multiple filesystem realms at the same time.
+
+Regardless of the method you choose, there are certain options that only work on the command line outlined below
+
+- ``--help``: Get help with usage of this command
+- ``--debug``: Print stack trace when error occurs.
+- ``--silent``: Suppresses all output except errors and prompts.
+- ``--summary``: Provides a detailed summary of all operations performed, once the command finishes.
+
+The example command would be run like the following
+[source]
+----
+$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --help
+----
+NOTE: In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+The following options are required for both methods:
+
+- ``--input-location``: The absolute or relative location of the original filesystem realm.
+- ``--output-location``: The directory where the new filesystem realm resides.
+
+The following options are optional for both methods, and have their defaults listed:
+
+- ``--realm-name``: The name of the new filesystem-realm (default: ``encrypted-filesystem-realm``).
+- ``--credential-store``: The relative or absolute path to the credential store file that contains the secret key (default: ``OUTPUT_LOCATION/mycredstore.cs``).
+- ``--secret-key``: The alias of the secret key stored in the credential store file (default: ``key``).
+- ``--hash-encoding``: The hash encoding used in the original filesystem realm (default: ``BASE64``).
+- ``--hash-charset``: The hash charset used in the original filesystem realm (default: ``UTF-8``).
+- ``--encoded``: If the original realm has encoded set to true (default: ``true``).
+- ``--levels``: The levels used in the original filesystem realm (default: ``2``).
+
+=== Command Line
+To run in command line mode, specify the 2 mandatory options, and any optional ones applicable to your use case. For example:
+
+[source]
+----
+$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --input-location fs-unencrypted-realm --output-location fs-encrypted-realm --realm-name new-realm --encoded false --levels 4 --hash-encoding HEX
+----
+This command will encrypt a filesystem
+
+- Located at ``./fs-unencrypted-realm``
+- Encrypted to ``./fs-encrypted-realm/new-realm``
+- ``encoded`` in the original realm set to ``false``
+- ``levels`` in the original realm set to ``4``
+- ``hash-encoding`` used in the orignal realm set to ``HEX``
+
+=== Bulk Convert
+A descriptor file will allow you to convert multiple realms all at once from unencrypted to encrypted filesystem realms.
+To do this you will create a file in a specific format. Enter all the filesystem-encrypt options on a line with a ``:`` after with the value you want to set it to. To seperate realms, leave a blank line between the blocks.
+For example, if you wanted to encrypt 4 realms, the below file could be created. Here it shows setting different levels, hash-charsets, and hash-encodings in the realms.
+
+This filename is ``bulk-encryption-conversion-desc``.
+[source]
+----
+input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/multiple-credential-types
+output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+realm-name:multiple-credential-types
+levels:1
+
+input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/level-4
+output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+realm-name:level-4
+levels:4
+
+input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/hashcharset
+output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+realm-name:hash-charset
+hash-charset:KOI8-R
+
+input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/hashencoding
+output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+realm-name:hash-encoding
+hash-encoding:hex
+----
+To make sure of this descriptor file, the following command would be run:
+[source]
+----
+$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --bulk-convert ./bulk-encryption-conversion-desc
+----
+
+
+== Summary
+This blog post has given an overview on how to encrypt a filesystem realm that was previously configured without encryption for both command line mode and bulk convert mode.
