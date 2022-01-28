@@ -502,4 +502,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Invalid \"%s\" parameter. Generated value \"%s\" will be used.")
     String invalidParameterGeneratedWillBeUsed(String parameter, String value);
+
+    @Message(id = NONE, value = "Mask password operation is not allowed in FIPS mode.")
+    String fipsModeNotAllowed();
 }
