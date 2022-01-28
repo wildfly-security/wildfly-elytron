@@ -1,0 +1,110 @@
+---
+layout: post
+title: "Encrypting Filesystem realms"
+date: 2022-04-19
+tags: filesystem-realm encryption
+synopsis: An overview of the new filesystem realm encryption in the Elytron Filesystem Security Realm.
+author: araskar
+link:
+---
+
+Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey.
+
+== An overview of the new attributes
+
+The filesystem realm now supports the following attributes
+
+=== Encryption
+
+* ``credential-store``: This attribute specifies the credential store resource where the secret key resides in. This credential store must be configured prior to creating the filesystem realm. This attribute is optional and if not specified, the filesystem realm will not be encrypted.
+
+* ``secret-key``: This attribute specifies the alias to the secret key in the credential store to encrypt the realm. The default value is ``key``.
+
+== A Complete Example
+
+In this post we go through an example of setting up a filesystem realm with encryption enabled on a web application.
+
+=== Example Project
+Clone the ``elytron-examples`` repo locally:
+
+[source]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+We'll be looking at the *https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm[encryption-filesystem-realm]*
+
+=== Server Configuration
+
+In the following section, we will review the configuration available in the script for the quickstart
+*https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm/configure-elytron.cli[configure-elytron.cli]*. We start our configuration by connecting to the server using the following command:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+==== Note: Use of WILDFLY_HOME
+In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+
+First we create a credential store and secret key under the Elytron subsystem, with the name `credstore`, and secret key alias `key`
+[source]
+----
+/subsystem=elytron/secret-key-credential-store=credstore:add(path=mycredstore.cs, relative-to=jboss.server.config.dir, create=true, populate=true)
+----
+
+NOTE: Here we specify the ``create``, and ``populate`` attributes as ``true``. The ``create`` attribute will create the credential store file if it doesn't already exist. The ``populate`` attribute will add an alias if the default-alias does not already exist. The default alias is set to ``key``.
+
+Then we create a filesystem realm under the Elytron subsystem using the credential-store, and secret-key specified above. We then add an identity ``quickstartUser``, setting a digest password and adding the
+attributes ``Guest`` and ``Admin`` as follows:
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm,relative-to=jboss.server.config.dir, key-store=keystore, key-store-alias=user, credential-store=credstore, secret-key=key)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(digest={algorithm=digest-md5, realm=fsRealm, password=password123!}, identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])
+----
+
+For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the https://docs.wildfly.org/26/WildFly_Elytron_Security.html[Elytron documentation].
+
+We then configure a simple role decoder and create a new security domain which will make use of our
+filesystem realm and role decoder as follows:
+[source]
+----
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+----
+
+
+NOTE: Creating an additional security domain (``fsDomain``in this case) is not necessary.
+We could alternatively take the default ``ApplicationDomain`` and add the
+FileSystem realm and role-decoder to it.
+
+We then add our security domain mapping to the Undertow subsystem:
+
+[source]
+----
+/subsystem=undertow/application-security-domain=other:write-attribute(name=security-domain, value=fsDomain)
+----
+
+=== Deploying to app to WildFly
+
+From the root directory of the *https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm/[quickstart example]* run the following command the deploy the web application to wildfly
+[source]
+----
+mvn clean install wildfly:deploy
+----
+
+=== Verifying Encryption
+
+Now you may navigate to ``http://localhost:8080/encryption-filesystem``, and when it prompt's you to enter a username and password, put in the credentials we specified earlier, ``quickstartUser``, and ``password123!``. This should authenticate you to a page that shows you the principal you're logged in with.
+
+The successful login indicates that encryption has been configured correctly.
+
+In order to further verify that these features are being used correctly we can navigate to the identity file and check the contents. The file should be located at ``WILDFLY_HOME/standalone/configuration/fs-realm/O/F/OF2WSY3LON2GC4TUKVZWK4Q.xml`` if the same filesystem realm and identity configuration was used.
+
+Here we can see the format for the password is ``enc_base64`` specifying that the credentials are encrypted. The attributes should also be stored encrypted instead of plain text.
+
+== Summary
+This blog post has given an overview on how to configure a filesystem realm to enable encryption support.
