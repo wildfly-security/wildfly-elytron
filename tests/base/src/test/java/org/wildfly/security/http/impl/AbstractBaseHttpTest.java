@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ import org.junit.Assert;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
@@ -87,6 +89,7 @@ public class AbstractBaseHttpTest {
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory();
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory();
     protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory();
+    protected HttpServerAuthenticationMechanismFactory statefulBasicFactory = new org.wildfly.security.http.sfbasic.BasicMechanismFactory();
 
     protected void mockDigestNonce(final String nonce){
         new MockUp<NonceManager>(){
@@ -99,6 +102,15 @@ public class AbstractBaseHttpTest {
                 return true;
             }
         };
+    }
+
+    protected SecurityIdentity mockSecurityIdentity(Principal p) {
+        return new MockUp<SecurityIdentity>() {
+            @Mock
+            public Principal getPrincipal() {
+                return p;
+            }
+        }.getMockInstance();
     }
 
     protected enum Status {
@@ -121,22 +133,31 @@ public class AbstractBaseHttpTest {
         public TestingHttpServerRequest(String[] authorization) {
             this.authorization = authorization;
             this.remoteUser = null;
+            this.cookies = new ArrayList<>();
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI) {
             this.authorization = authorization;
             this.remoteUser = null;
             this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
+            this.authorization = authorization;
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = cookies;
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie) {
             this.authorization = authorization;
             this.remoteUser = null;
             this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
             if (cookie != null) {
                 final String cookieName = cookie.substring(0, cookie.indexOf('='));
                 final String cookieValue = cookie.substring(cookie.indexOf('=') + 1);
-                cookies = new ArrayList<>();
                 cookies.add(new HttpServerCookie() {
                     @Override
                     public String getName() {
@@ -285,7 +306,7 @@ public class AbstractBaseHttpTest {
         }
 
         public boolean resumeRequest() {
-            throw new IllegalStateException();
+            return true;
         }
 
         public HttpScope getScope(Scope scope) {
@@ -431,6 +452,16 @@ public class AbstractBaseHttpTest {
                         ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {
                         ((AuthorizeCallback) callback).setAuthorized(false);
+                    }
+                } else if (callback instanceof CachedIdentityAuthorizeCallback) {
+                    CachedIdentityAuthorizeCallback ciac = (CachedIdentityAuthorizeCallback) callback;
+                    if(ciac.getAuthorizationPrincipal() != null &&
+                            username.equals(ciac.getAuthorizationPrincipal().getName())) {
+                        ciac.setAuthorized(mockSecurityIdentity(ciac.getAuthorizationPrincipal()));
+                    } else if (ciac.getIdentity() != null && username.equals(ciac.getIdentity().getPrincipal().getName())) {
+                        ciac.setAuthorized(ciac.getIdentity());
+                    } else {
+                        ciac.setAuthorized(null);
                     }
                 } else {
                     throw new UnsupportedCallbackException(callback);
