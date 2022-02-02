@@ -45,6 +45,9 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
     public BasicMechanismFactory() {
     }
 
+    public BasicMechanismFactory(final Provider provider) {
+    }
+
     public BasicMechanismFactory(final Provider... providers) {
     }
 

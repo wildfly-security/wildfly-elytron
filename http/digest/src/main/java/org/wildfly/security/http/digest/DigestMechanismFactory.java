@@ -57,6 +57,10 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
         providers = INSTALLED_PROVIDERS;
     }
 
+    public DigestMechanismFactory(final Provider provider) {
+        this(new Provider[] { provider });
+    }
+
     public DigestMechanismFactory(final Provider... providers) {
         this.providers = () -> providers;
     }
