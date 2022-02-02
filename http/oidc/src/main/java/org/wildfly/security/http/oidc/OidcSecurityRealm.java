@@ -22,9 +22,8 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -101,28 +100,26 @@ public class OidcSecurityRealm implements SecurityRealm {
     }
 
     private static Set<String> getRolesFromSecurityContext(RefreshableOidcSecurityContext session) {
-        Set<String> roles = null;
-        AccessToken accessToken = session.getToken();
-        if (session.getOidcClientConfiguration().isUseResourceRoleMappings()) {
+        final Set<String> roles = new HashSet<>();
+        final AccessToken accessToken = session.getToken();
+        final OidcClientConfiguration oidcClientConfig = session.getOidcClientConfiguration();
+        if (oidcClientConfig.isUseResourceRoleMappings()) {
             if (log.isTraceEnabled()) {
-                log.trace("useResourceRoleMappings");
+                log.trace("use resource role mappings");
             }
-            RealmAccessClaim resourceAccessClaim = accessToken.getResourceAccessClaim(session.getOidcClientConfiguration().getResourceName());
+            RealmAccessClaim resourceAccessClaim = accessToken.getResourceAccessClaim(oidcClientConfig.getResourceName());
             if (resourceAccessClaim != null) {
-                roles = resourceAccessClaim.getRoles().stream().collect(Collectors.toSet());
+                roles.addAll(resourceAccessClaim.getRoles());
             }
         }
-        if (session.getOidcClientConfiguration().isUseRealmRoleMappings()) {
+        if (oidcClientConfig.isUseRealmRoleMappings()) {
             if (log.isTraceEnabled()) {
                 log.trace("use realm role mappings");
             }
             RealmAccessClaim realmAccessClaim = accessToken.getRealmAccessClaim();
             if (realmAccessClaim != null) {
-                roles = realmAccessClaim.getRoles().stream().collect(Collectors.toSet());
+                roles.addAll(realmAccessClaim.getRoles());
             }
-        }
-        if (roles == null) {
-            roles = Collections.emptySet();
         }
         if (log.isTraceEnabled()) {
             log.trace("Setting roles: ");
