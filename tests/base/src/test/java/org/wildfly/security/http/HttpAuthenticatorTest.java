@@ -37,7 +37,10 @@ import javax.security.auth.callback.CallbackHandler;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
+import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 
 import mockit.integration.junit4.JMockit;
 
@@ -49,9 +52,9 @@ import mockit.integration.junit4.JMockit;
 @RunWith(JMockit.class)
 public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
-    private TestingHttpExchangeSpi exchangeSpi = new TestingHttpExchangeSpi();
+    private final TestingHttpExchangeSpi exchangeSpi = new TestingHttpExchangeSpi();
     private HttpAuthenticator authenticator;
-    private String digestHeader = "Digest username=\"Mufasa\",\n" +
+    private final String digestHeader = "Digest username=\"Mufasa\",\n" +
             "       realm=\"http-auth@example.org\",\n" +
             "       uri=\"/dir/index.html\",\n" +
             "       algorithm=MD5,\n" +
@@ -61,6 +64,16 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
             "       qop=auth,\n" +
             "       response=\"8ca523f5e9506fed4657c9700eebdbec\",\n" +
             "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
+    private final String digestSha256Header  = "Digest username=\"Mufasa\",\n"
+            + "       realm=\"http-auth@example.org\",\n"
+            + "       uri=\"/dir/index.html\",\n"
+            + "       algorithm=SHA-256,\n"
+            + "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n"
+            + "       nc=00000001,\n"
+            + "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n"
+            + "       qop=auth,\n"
+            + "       response=\"753927fa0e85d155564e2e272a28d1802ca10daf4496794697cf8db5856cb6c1\",\n"
+            + "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
 
     private CallbackHandler callbackHandler() {
         return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
@@ -120,21 +133,32 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
     }
 
     @Test
-    public void testDigestSha256() throws Exception {
+    public void testBasicCaseInsensitive() throws Exception {
         testOneOfThree();
 
         exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(
-                "Digest username=\"Mufasa\",\n" +
-                        "       realm=\"http-auth@example.org\",\n" +
-                        "       uri=\"/dir/index.html\",\n" +
-                        "       algorithm=SHA-256,\n" +
-                        "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n" +
-                        "       nc=00000001,\n" +
-                        "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n" +
-                        "       qop=auth,\n" +
-                        "       response=\"753927fa0e85d155564e2e272a28d1802ca10daf4496794697cf8db5856cb6c1\",\n" +
-                        "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\""
+                "BASIC TXVmYXNhOkNpcmNsZSBvZiBMaWZl"
         ));
+        Assert.assertTrue("Basic successful", authenticator.authenticate());
+        Assert.assertEquals(0, exchangeSpi.getStatusCode());
+        Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
+    }
+
+    @Test
+    public void testDigestSha256() throws Exception {
+        testOneOfThree();
+
+        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList(digestSha256Header));
+        Assert.assertTrue("Digest-SHA-256 successful", authenticator.authenticate());
+        Assert.assertEquals(0, exchangeSpi.getStatusCode());
+        Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
+    }
+
+    @Test
+    public void testDigestSha256CaseInsensitive() throws Exception {
+        testOneOfThree();
+
+        exchangeSpi.setRequestAuthorizationHeaders(Collections.singletonList("DIGEST " + digestSha256Header.substring(7)));
         Assert.assertTrue("Digest-SHA-256 successful", authenticator.authenticate());
         Assert.assertEquals(0, exchangeSpi.getStatusCode());
         Assert.assertEquals(Status.COMPLETE, exchangeSpi.getResult());
@@ -198,6 +222,37 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
     public void testBasicSilentWithDigest() throws Exception{
         // authenticate using only DIGEST mechanism
         prepareSilentBasicWithDigestMechanisms();
+        authenticateWithDigestMD5();
+    }
+
+    public void prepareSecurityProviderServerMechanismWithDigestMD5() throws Exception {
+        mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");
+
+        final List<HttpServerAuthenticationMechanism> mechanisms = new LinkedList<>();
+        Map<String, Object> digestProps = new HashMap<>();
+        digestProps.put(CONFIG_REALM, "http-auth@example.org");
+        digestProps.put("org.wildfly.security.http.validate-digest-uri", "false");
+        HttpServerAuthenticationMechanismFactory fact = new SecurityProviderServerMechanismFactory(WildFlyElytronHttpDigestProvider.getInstance());
+        mechanisms.add(fact.createAuthenticationMechanism(DIGEST_NAME, digestProps, callbackHandler()));
+
+        authenticator = HttpAuthenticator.builder()
+                .setMechanismSupplier(() -> mechanisms)
+                .setHttpExchangeSpi(exchangeSpi)
+                .setRequired(true)
+                .build();
+    }
+
+    @Test
+    public void testUsingSecurityProviderServerMechanismWithDigestMD5() throws Exception {
+        prepareSecurityProviderServerMechanismWithDigestMD5();
+
+        Assert.assertFalse(authenticator.authenticate());
+        List<String> responses = exchangeSpi.getResponseAuthenticateHeaders();
+        assertEquals("DIGEST response is received", 1, responses.size());
+        Assert.assertEquals(UNAUTHORIZED, exchangeSpi.getStatusCode());
+        Assert.assertEquals(null, exchangeSpi.getResult());
+        exchangeSpi.setStatusCode(0);
+
         authenticateWithDigestMD5();
     }
 

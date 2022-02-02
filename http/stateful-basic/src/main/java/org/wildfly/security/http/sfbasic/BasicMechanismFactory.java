@@ -52,6 +52,9 @@ public class BasicMechanismFactory implements HttpServerAuthenticationMechanismF
     public BasicMechanismFactory(final Provider provider) {
     }
 
+    public BasicMechanismFactory(final Provider... providers) {
+    }
+
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
      */
