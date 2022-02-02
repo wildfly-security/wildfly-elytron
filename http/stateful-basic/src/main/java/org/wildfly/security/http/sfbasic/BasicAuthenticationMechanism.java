@@ -151,7 +151,7 @@ final class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationM
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
-                if (current.startsWith(CHALLENGE_PREFIX)) {
+                if (current.regionMatches(true, 0, CHALLENGE_PREFIX, 0, PREFIX_LENGTH)) {
                     byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).asUtf8String().base64Decode().drain();
 
                     // Note: A ':' can not be present in the username but it can be present in the password so the first ':' is the delimiter.
