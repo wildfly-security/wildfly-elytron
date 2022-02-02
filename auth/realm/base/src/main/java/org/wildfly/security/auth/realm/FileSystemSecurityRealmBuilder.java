@@ -22,9 +22,14 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import javax.crypto.SecretKey;
 import org.wildfly.common.Assert;
@@ -84,6 +89,7 @@ public class FileSystemSecurityRealmBuilder {
      * @return this builder.
      */
     public FileSystemSecurityRealmBuilder setLevels(final int levels) {
+        Assert.checkMinimumParameter("levels", 0, levels);
         this.levels = levels;
         return this;
     }
@@ -193,6 +199,26 @@ public class FileSystemSecurityRealmBuilder {
 
         if (privateKey == null ^ publicKey == null) {
             throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
+        }
+
+        // Validate KeyPair
+        if (privateKey != null) {
+            try {
+                byte[] challenge = new byte[10000];
+                ThreadLocalRandom.current().nextBytes(challenge);
+                Signature sig = Signature.getInstance("SHA256withRSA");
+                sig.initSign(privateKey);
+                sig.update(challenge);
+                byte[] signature = sig.sign();
+                sig.initVerify(publicKey);
+                sig.update(challenge);
+                boolean keyPairMatches = sig.verify(signature);
+                if (!keyPairMatches) {
+                    throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
+                }
+            } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
+            }
         }
 
         return new FileSystemSecurityRealm(root, nameRewriter, levels, encoded, hashEncoding, hashCharset, providers, secretKey, privateKey, publicKey);

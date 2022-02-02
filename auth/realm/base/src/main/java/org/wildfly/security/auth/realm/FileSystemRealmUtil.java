@@ -45,6 +45,7 @@ public class FileSystemRealmUtil {
             newIdentity.create();
             newIdentity.setCredentials(credentials);
             newIdentity.setAttributes(attributes);
+            newIdentity.dispose();
         }
         realmIterator.close();
     }

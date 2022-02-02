@@ -157,6 +157,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13008, value = "Both PrivateKey and PublicKey must be defined for realm at: %s")
     IllegalArgumentException invalidKeyPairArgument(String s);
 
+    @Message(id = 13009, value = "Unable to access master index file: %s")
+    IllegalStateException unableToAccessMainIndex(String s);
+
 
 
 }
