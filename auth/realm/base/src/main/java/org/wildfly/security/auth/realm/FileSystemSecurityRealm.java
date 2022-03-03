@@ -48,6 +48,7 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -533,7 +534,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             this.lock = lock;
             this.hashCharset = hashCharset;
             this.hashEncoding = hashEncoding;
-            this.providers = providers != null ? providers : INSTALLED_PROVIDERS;
+            this.providers = providers;
             this.secretKey = secretKey;
         }
 
@@ -738,7 +739,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
 
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials), loadedIdentity.getAttributes(), hashEncoding, providers);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials), loadedIdentity.getAttributes(), hashEncoding);
             replaceIdentity(newIdentity);
         }
 
@@ -748,7 +749,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes, hashEncoding, providers);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes, hashEncoding);
             replaceIdentity(newIdentity);
         }
 
@@ -784,8 +785,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
                         try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
                             writeIdentity(holder.getXmlStreamWriter(), newIdentity);
-                        } catch (XMLStreamException | GeneralSecurityException e) {
+                        } catch (XMLStreamException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateEncodingException e) {
                             throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
+                        } catch (GeneralSecurityException e) {
+                            throw ElytronMessages.log.fileSystemRealmEncryptionFailed(e);
                         }
                     } catch (FileAlreadyExistsException ignored) {
                         // try a new name
@@ -837,7 +840,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             // if new functionality is used then use the required schema version otherwise fallback
             // to an older version.
 
-            // Do we require version 1.1?
             if (secretKey != null) {
                 return Version.VERSION_1_1;
             }
@@ -1001,7 +1003,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         //modifiable version of Attributes;
                         attributes = new MapAttributes();
                     }
-                    return new LoadedIdentity(name, credentials, attributes, hashEncoding, providers);
+                    return new LoadedIdentity(name, credentials, attributes, hashEncoding);
                 }
                 if (! version.getNamespace().equals(streamReader.getNamespaceURI())) {
                     // Mixed versions unsupported.
@@ -1041,7 +1043,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
-                    parsePassword(credentials, streamReader);
+                    parsePassword(credentials, streamReader, version);
                 } else if ("public-key".equals(streamReader.getLocalName())) {
                     parsePublicKey(credentials, streamReader);
                 } else if ("certificate".equals(streamReader.getLocalName())) {
@@ -1115,16 +1117,24 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             });
         }
 
-        private void parsePassword(final List<Credential> credentials, final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+        private void parsePassword(final List<Credential> credentials, final XMLStreamReader streamReader, final Version version) throws XMLStreamException, RealmUnavailableException {
             parseCredential(streamReader, (algorithm, format, text) -> {
                 try {
                     if (ENCRYPTION_FORMAT.equals(format)) {
+                        if (! version.isAtLeast(Version.VERSION_1_1)) {
+                            throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                        }
                         if (algorithm == null) {
                             throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
                         }
                         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, providers);
                         byte[] encryptedPasswordBytes = CodePointIterator.ofChars(text.toCharArray()).base64Decode().drain();
-                        byte[] decryptedPasswordBytes = CipherUtil.decrypt(encryptedPasswordBytes, secretKey);
+                        byte[] decryptedPasswordBytes;
+                        try {
+                            decryptedPasswordBytes = CipherUtil.decrypt(encryptedPasswordBytes, secretKey);
+                        } catch (GeneralSecurityException e) {
+                            throw ElytronMessages.log.fileSystemRealmDecryptionFailed(e);
+                        }
                         PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(decryptedPasswordBytes);
 
                         if (passwordSpec != null) {
@@ -1155,7 +1165,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     } else {
                         throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                     }
-                } catch (GeneralSecurityException e) {
+                } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             });
@@ -1256,14 +1266,14 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             if (value == null) {
                 throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path, streamReader.getLocation().getLineNumber(), this.name);
             }
-            try {
-                if (secretKey != null) {
+            if (secretKey != null) {
+                try {
                     attributes.addLast(CipherUtil.decrypt(name, secretKey), CipherUtil.decrypt(value, secretKey));
-                } else {
-                    attributes.addLast(name, value);
+                } catch (GeneralSecurityException e){
+                    throw ElytronMessages.log.fileSystemRealmDecryptionFailed(e);
                 }
-            } catch (GeneralSecurityException e) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
+            } else {
+                attributes.addLast(name, value);
             }
             if (streamReader.nextTag() != END_ELEMENT) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
@@ -1291,14 +1301,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private final List<Credential> credentials;
         private final Attributes attributes;
         private final Encoding hashEncoding;
-        private final Supplier<Provider[]> providers;
 
-        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes, final Encoding hashEncoding, final Supplier<Provider[]> providers) {
+        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes, final Encoding hashEncoding) {
             this.name = name;
             this.credentials = credentials;
             this.attributes = attributes;
             this.hashEncoding = hashEncoding;
-            this.providers = providers;
         }
 
         public String getName() {
@@ -1315,10 +1323,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         public Encoding getHashEncoding() {
             return hashEncoding;
-        }
-
-        public Supplier<Provider[]> getProviders() {
-            return providers;
         }
 
     }

@@ -80,6 +80,7 @@ public class FileSystemSecurityRealmBuilder {
      * @return this builder.
      */
     public FileSystemSecurityRealmBuilder setLevels(final int levels) {
+        Assert.checkMinimumParameter("levels", 0, levels);
         this.levels = levels;
         return this;
     }
