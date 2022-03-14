@@ -86,6 +86,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Password credential value")
     String cmdLinePasswordCredentialValueDesc();
 
+    @Message(id = NONE, value = "The alias of the existing password entry to encrypt")
+    String cmdLineEntryDesc();
+
     @Message(id = NONE, value = "Type of entry in credential store")
     String cmdLineEntryTypeDesc();
 
@@ -201,6 +204,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Confirm secret to store: ")
     String secretToStorePromptConfirm();
+
+    @Message(id = NONE, value = "The retrieved PasswordCredential does not contain a ClearTextPassword")
+    String passwordCredentialNotClearText();
 
     // mask command
     @Message(id = NONE, value = "\"mask\" command is used to get MASK- string encrypted using PBEWithMD5AndDES in PicketBox compatible way.")
@@ -490,4 +496,8 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Mask password operation is not allowed in FIPS mode.")
     String fipsModeNotAllowed();
+    
+    // Numeric Errors
+    @Message(id = 35, value = "Only one of '%s' and '%s' can be specified at the same time")
+    IllegalArgumentException mutuallyExclusiveOptions(String first, String second);
 }
