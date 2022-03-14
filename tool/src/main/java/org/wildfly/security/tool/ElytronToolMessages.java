@@ -602,7 +602,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "No Credential Store location or Secret Key Alias specified.")
     MissingOptionException missingCredentialStoreSecretKey();
-    
+
     // Numeric Errors
     @Message(id = 35, value = "Only one of '%s' and '%s' can be specified at the same time")
     IllegalArgumentException mutuallyExclusiveOptions(String first, String second);
