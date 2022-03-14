@@ -496,7 +496,7 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Mask password operation is not allowed in FIPS mode.")
     String fipsModeNotAllowed();
-    
+
     // Numeric Errors
     @Message(id = 35, value = "Only one of '%s' and '%s' can be specified at the same time")
     IllegalArgumentException mutuallyExclusiveOptions(String first, String second);
