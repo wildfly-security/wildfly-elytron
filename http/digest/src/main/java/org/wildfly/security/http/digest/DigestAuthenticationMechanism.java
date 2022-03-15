@@ -281,9 +281,9 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
             String relativeRequestUri;
             String query = requestURI.getQuery();
             if (query == null || query.isEmpty()) {
-                relativeRequestUri = requestURI.getPath();
+                relativeRequestUri = requestURI.getRawPath();
             } else {
-                relativeRequestUri = requestURI.getPath() + "?" + requestURI.getRawQuery();
+                relativeRequestUri = requestURI.getRawPath() + "?" + requestURI.getRawQuery();
             }
 
             return relativeRequestUri.equals(digestUriStr);
