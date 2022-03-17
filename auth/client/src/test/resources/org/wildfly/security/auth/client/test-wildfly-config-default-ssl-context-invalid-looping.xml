@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.7">
+        <ssl-contexts>
+            <default-ssl-context name="looping-default-sslcontext"/>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="looping-default-sslcontext">
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

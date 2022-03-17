@@ -201,4 +201,16 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14004, value = "Password callback handling was unsuccessful")
     ConfigXMLParseException passwordCallbackHandlingWasUnsuccessful();
+
+    @Message(id = 14005, value = "Default SSL context in security provider creates infinite loop")
+    NoSuchAlgorithmException sslContextForSecurityProviderCreatesInfiniteLoop();
+
+    @Message(id = 14006, value = "Configuration file path passed to WildFlyElytronClientDefaultSSLContextProvider not found")
+    IllegalArgumentException clientConfigurationFileNotFound();
+
+    @Message(id = 14007, value = "Invalid path passed to WildFlyElytronClientDefaultSSLContextProvider")
+    IllegalArgumentException clientConfigurationFileNotValid();
+
+    @Message(id = 14008, value = "WildFlyElytronClientDefaultSSLContextProvider could not obtain client default SSLContext")
+    NoSuchAlgorithmException couldNotObtainClientDefaultSSLContext();
 }

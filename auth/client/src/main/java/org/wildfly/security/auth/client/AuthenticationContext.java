@@ -244,8 +244,15 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
     RuleNode<SecurityFactory<SSLContext>> sslRuleMatching(URI uri, String abstractType, String abstractTypeAuthority) {
         RuleNode<SecurityFactory<SSLContext>> node = this.sslRules;
         while (node != null) {
-            if (node.getRule().matches(uri, abstractType, abstractTypeAuthority)) return node;
-            node = node.getNext();
+            if (uri == null) {
+                if (node.getRule().equals(MatchRule.ALL)) {
+                    return node;
+                }
+                node = node.getNext();
+            } else {
+                if (node.getRule().matches(uri, abstractType, abstractTypeAuthority)) return node;
+                node = node.getNext();
+            }
         }
         return null;
     }

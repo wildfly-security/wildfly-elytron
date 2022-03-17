@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.7">
+        <key-stores>
+            <key-store name="keystore1" type="JKS">
+                <file name="src/test/resources/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <default-ssl-context name="other-provider-default-sslcontext"/>
+            <ssl-context name="default-context">
+                <providers>
+                    <global/>
+                </providers>
+                <key-store-ssl-certificate key-store-name="keystore1">
+                    <key-store-clear-password password="password"/>
+                </key-store-ssl-certificate>
+                <protocol names="TLSv1.2" />
+                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256" />
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="other-provider-default-sslcontext">
+                <match-port number="12345"/>
+            </rule>
+            <rule use-ssl-context="default-context">
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>
