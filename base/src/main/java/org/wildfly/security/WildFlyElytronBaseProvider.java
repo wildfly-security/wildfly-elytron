@@ -61,7 +61,6 @@ public abstract class WildFlyElytronBaseProvider extends VersionedProvider {
 
     protected WildFlyElytronBaseProvider(final String name, final String version, final String info) {
         super(name, version, info);
-        put("Alg.Alias.Data.OID.1.2.840.113549.1.7.1", "Data");
     }
 
     protected void putPasswordImplementations() {

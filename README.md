@@ -15,7 +15,7 @@ $ git clone git@github.com:wildfly-security/wildfly-elytron.git
 Setup the JBoss Maven Repository
 --------------------------------
 
-To use dependencies from JBoss.org, you need to add the JBoss Maven Repositories to your Maven settings.xml. For details see http://community.jboss.org/wiki/MavenGettingStarted-Users
+To use dependencies from JBoss.org, you need to add the JBoss Maven Repositories to your Maven settings.xml. For details see [Maven Getting Started - Users](https://developer.jboss.org/docs/DOC-15169)
 
 Build with Maven
 ----------------
