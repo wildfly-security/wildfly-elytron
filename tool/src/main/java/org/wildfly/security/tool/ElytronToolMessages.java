@@ -19,6 +19,10 @@ package org.wildfly.security.tool;
 
 import static org.jboss.logging.annotations.Message.NONE;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
 import org.apache.commons.cli.MissingArgumentException;
 import org.apache.commons.cli.MissingOptionException;
 import org.jboss.logging.BasicLogger;
@@ -26,11 +30,6 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Messages for Elytron tool.
@@ -401,6 +400,51 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "The relative or absolute path to the users file.")
     String cmdFileSystemRealmUsersFileDesc();
 
+    @Message(id = NONE, value = "The relative or absolute path to the credential store file that contains the secret key.")
+    String cmdFileSystemEncryptCredentialStoreDesc();
+
+    @Message(id = NONE, value = "The alias of the secret key stored in the credential store file. Set to key by default")
+    String cmdFileSystemEncryptSecretKeyDesc();
+
+    @Message(id = NONE, value = "Whether or not the credential store should be populated with a Secret Key. Set to true by default.")
+    String cmdFileSystemRealmEncryptPopulateDesc();
+
+    @Message(id = NONE, value = "Whether or not the credential store should be dynamically created if it doesn't exist. Set to true by default.")
+    String cmdFileSystemEncryptCreateCredentialStoreDesc();
+
+    @Message(id = NONE, value = "Input Realm location not specified.")
+    MissingArgumentException inputLocationNotSpecified();
+
+    @Message(id = NONE, value = "Input Realm location directory does not exist.")
+    MissingArgumentException inputLocationDoesNotExist();
+
+    @Message(id = NONE, value = "Output Realm location not specified.")
+    MissingArgumentException outputLocationNotSpecified();
+
+    @Message(id = NONE, value = "Credential Store location not specified.")
+    MissingArgumentException credentialStoreDoesNotExist();
+
+    @Message(id = NONE, value = "A required parameter is not specified.")
+    String fileSystemEncryptRequiredParametersNotSpecified();
+
+    @Message(id = NONE, value = "The hash encoding to be used in the filesystem realm. Set to BASE64 by default.")
+    String cmdFileSystemEncryptHashEncodingDesc();
+
+    @Message(id = NONE, value = "If the original realm has encoded set to true. Set to true by default.")
+    String cmdFileSystemEncryptEncodedDesc();
+
+    @Message(id = NONE, value = "The levels to be used in the filesystem realm. Set to 2 by default.")
+    String cmdFileSystemEncryptLevelsDesc();
+
+    @Message(id = NONE, value = "The absolute or relative location of the original filesystem realm.")
+    String cmdFileSystemEncryptInputLocationDesc();
+
+    @Message(id = NONE, value = "The directory where the new filesystem realm resides.")
+    String cmdFileSystemEncryptOutputLocationDesc();
+
+    @Message(id = NONE, value = "The name of the new filesystem-realm.")
+    String cmdFileSystemEncryptNewRealmDesc();
+
     @Message(id = NONE, value = "The relative or absolute path to the roles file.")
     String cmdFileSystemRealmRolesFileDesc();
 
@@ -422,6 +466,25 @@ public interface ElytronToolMessages extends BasicLogger {
             "Blocks of options must be separated by a blank line.")
     String cmdFileSystemRealmBulkConvertDesc();
 
+    @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
+            "The options realm-name, hash-encoding, levels, secret-key, create, and populate are optional. %n" +
+            "Values are required for the following options: input-location, output-location, and credential-store. %n" +
+            "The default values of realm-name, hash-encoding, levels, secret-key, create, and populate are encrypted-filesystem-realm, BASE64, 2, key, true, and true respectively. %n" +
+            "If one or more these required values are not set, the corresponding block is skipped. %n" +
+            "Each option must be specified in the following format: <option>:<value>. The order of options does not matter. %n" +
+            "Blocks of options must be separated by a blank line.")
+    String cmdFileSystemRealmEncryptBulkConvertDesc();
+
+    // filesystem-realm encrypt command
+    @Message(id = NONE, value = "'FileSystemRealmEncrypt' command is used to convert un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
+    String cmdFileSystemEncryptHelpHeader();
+
+    @Message(id = NONE, value = "The populate parameter was set to false and the Secret Key did not exist in the Credential Store.")
+    MissingOptionException cmdFileSystemPopulateUnspecified();
+
+    @Message(id = NONE, value = "Unable to locate Secret Key with Credential Store located at %s. Skipping realm located at %s.")
+    String cmdFileSystemEncryptionNoSecretKey(String credentialStore, String realmLocation);
+
     @Message(id = NONE, value = "Suppresses all output except errors and prompts.")
     String cmdFileSystemRealmSilentDesc();
 
@@ -440,6 +503,9 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Both --bulk-convert and one or more of --users-file, --roles-file, and/or --output-location were specified. Please only use --bulk-convert or all of --users-file, --roles-file, and --output-location.")
     MissingOptionException mutuallyExclusiveOptionsSpecified();
 
+    @Message(id = NONE, value = "Both --bulk-convert and one or more of --old-realm-name, --new-realm-name, --input-location, --output-location, --credential-store, and/or --secret-key were specified. Please only use --bulk-convert or all of the other others.")
+    MissingOptionException mutuallyExclusiveOptionsEncryptSpecified();
+
     @Message(id = NONE, value = "No value found for %s.")
     String noValueFound(String param);
 
@@ -448,6 +514,22 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Skipping descriptor file block number %d due to %s.")
     String skippingDescriptorBlock(Integer blockNumber, String reason);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing input realm location.")
+    String skippingDescriptorBlockInputLocation(Integer blockNumber);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing credential store location.")
+    String skippingDescriptorBlockCredentialStoreLocation(Integer blockNumber);
+
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing output realm location.")
+    String skippingDescriptorBlockOutputLocation(Integer blockNumber);
+
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to missing new filesystem realm name.")
+    String skippingDescriptorBlockFilesystemRealmName(Integer blockNumber);
+
+    @Message(id = NONE, value = "Creating encrypted realm for: %s")
+    String fileSystemRealmEncryptCreatingRealm(String realmName);
 
     @Message(id = NONE, value = "Should file %s be overwritten? (y/n) ")
     String shouldFileBeOverwritten(String file);
@@ -505,4 +587,13 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Mask password operation is not allowed in FIPS mode.")
     String fipsModeNotAllowed();
+
+    @Message(id = NONE, value = "Found credential store and alias, using pre-existing key")
+    String existingCredentialStore();
+
+    @Message(id = NONE, value = "Could not find credential store and secret key alias, skipping block")
+    String skippingBlockMissingCredentialStore();
+
+    @Message(id = NONE, value = "No Credential Store location or Secret Key Alias specified.")
+    MissingOptionException missingCredentialStoreSecretKey();
 }

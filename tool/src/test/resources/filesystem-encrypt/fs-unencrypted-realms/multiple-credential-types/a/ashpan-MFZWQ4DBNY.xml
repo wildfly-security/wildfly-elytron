@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="bcrypt" format="base64">BQoQPTAZ4HQKs98fdp+VZtkuL0s3Um1M2Iqcyu40/dMZx+m3U5g6mTIi</password>
+    </credentials>
+    <attributes>
+        <attribute name="firstName" value="John"></attribute>
+        <attribute name="lastName" value="Smith"></attribute>
+        <attribute name="roles" value="Employee"></attribute>
+        <attribute name="roles" value="Admin"></attribute>
+    </attributes></identity>
