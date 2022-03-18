@@ -946,6 +946,8 @@
                                 </includes>
                                 <excludes>
                                     <exclude>org.wildfly.security.auth.client.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.auth.util.ElytronMessages_$logger</exclude>
+                                    <exclude>org.wildfly.security.auth.util.GSSCredentialSecurityFactory</exclude>
                                 </excludes>
                                 <includeExclusively>true</includeExclusively>
                             </parameter>
