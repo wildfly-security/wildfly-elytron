@@ -118,6 +118,32 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
     }
 
     @Test
+    public void testRfc2617EncodedPath() throws Exception {
+        mockDigestNonce("AAAAAQABsxiWa25/kpFxsPCrpDCFsjkTzs/Xr7RPsi/VVN6faYp21Hia3h4=");
+        Map<String, Object> props = new HashMap<>();
+        props.put(CONFIG_REALM, "testrealm@host.com");
+        props.put("org.wildfly.security.http.validate-digest-uri", "true");
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+
+        String path = "/dir/foo%2Fr/index.html?foo=b%2Fr";
+        String uri = "http://localhost" + path;
+        TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
+                "Digest username=\"Mufasa\",\n" +
+                        "                 realm=\"testrealm@host.com\",\n" +
+                        "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
+                        "                 uri=\"" + path + "\",\n" +
+                        "                 qop=auth,\n" +
+                        "                 nc=00000001,\n" +
+                        "                 cnonce=\"0a4f113b\",\n" +
+                        "                 response=\"cc3261565007973c9d647333822091ad\",\n" +
+                        "                 opaque=\"00000000000000000000000000000000\",\n" +
+                        "                 algorithm=MD5"
+        }, new URI(uri));
+        mechanism.evaluateRequest(request2);
+        Assert.assertEquals(Status.COMPLETE, request2.getResult());
+    }
+
+    @Test
     public void testRfc7616sha256() throws Exception {
         mockDigestNonce("7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v");
         Map<String, Object> props = new HashMap<>();
