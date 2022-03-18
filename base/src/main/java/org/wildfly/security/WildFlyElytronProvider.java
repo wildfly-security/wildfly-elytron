@@ -67,7 +67,6 @@ public class WildFlyElytronProvider extends VersionedProvider {
         putSaslMechanismImplementations();
         putCredentialStoreProviderImplementations();
         putAlgorithmParametersImplementations();
-        put("Alg.Alias.Data.OID.1.2.840.113549.1.7.1", "Data");
         putService(new Service(this, "SecretKeyFactory", "1.2.840.113549.1.7.1", "org.wildfly.security.key.RawSecretKeyFactory", Collections.emptyList(), Collections.emptyMap()));
         putService(new Service(this, "MessageDigest", "SHA-512-256", "org.wildfly.security.digest.SHA512_256MessageDigest", Collections.emptyList(), Collections.emptyMap()));
     }

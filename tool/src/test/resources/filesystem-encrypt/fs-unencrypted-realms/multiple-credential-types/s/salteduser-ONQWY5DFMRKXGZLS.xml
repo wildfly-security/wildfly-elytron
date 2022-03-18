@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="password-salt-digest-sha-512" format="hex">0410fc3e25f50290748f5b561fa185fe64596e6b1656aeb3a2e9caf399d70f21d099a59a59ec65a8614ac3c2143b3ce30c6b9b0d6101a7ea96ace244665d49c5f6213da823fe2c95efbd549a638e42ce2d38</password>
+    </credentials></identity>

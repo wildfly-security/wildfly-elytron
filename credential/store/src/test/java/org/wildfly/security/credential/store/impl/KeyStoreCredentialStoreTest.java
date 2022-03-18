@@ -81,12 +81,12 @@ public class KeyStoreCredentialStoreTest {
     @Parameters(name = "format={0}")
     public static Iterable<Object[]> keystoreFormats() {
         final String vendor = System.getProperty("java.vendor");
-        if ("Oracle Corporation".equals(vendor)) {
-            return Arrays.asList(new Object[] { "JCEKS" }, new Object[] { "PKCS12" });
-        } else {
+        if (vendor.contains("IBM") || vendor.toLowerCase().contains("hewlett")) {
             // IBM PKCS12 does not allow storing PasswordCredential (and requires singed JAR)
             // HP requires signed JAR
             return Collections.singletonList(new Object[] { "JCEKS" });
+        } else {
+            return Arrays.asList(new Object[] { "JCEKS" }, new Object[] { "PKCS12" });
         }
     }
 
