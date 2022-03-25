@@ -29,6 +29,9 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
@@ -77,15 +80,15 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
         TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
                 "Digest username=\"Mufasa\",\n" +
-                "                 realm=\"testrealm@host.com\",\n" +
-                "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
-                "                 uri=\"/dir/index.html\",\n" +
-                "                 qop=auth,\n" +
-                "                 nc=00000001,\n" +
-                "                 cnonce=\"0a4f113b\",\n" +
-                "                 response=\"6629fae49393a05397450978507c4ef1\",\n" +
-                "                 opaque=\"00000000000000000000000000000000\",\n" +
-                "                 algorithm=MD5"
+                        "                 realm=\"testrealm@host.com\",\n" +
+                        "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
+                        "                 uri=\"/dir/index.html\",\n" +
+                        "                 qop=auth,\n" +
+                        "                 nc=00000001,\n" +
+                        "                 cnonce=\"0a4f113b\",\n" +
+                        "                 response=\"" + computeDigest("/dir/index.html", "dcd98b7102dd2f0e8b11d0f600bfb0c093", "0a4f113b", "00000001", "Mufasa", "Circle Of Life", "MD5", "testrealm@host.com", "auth", "GET") + "\",\n" +
+                        "                 opaque=\"00000000000000000000000000000000\",\n" +
+                        "                 algorithm=MD5"
         });
         mechanism.evaluateRequest(request2);
         Assert.assertEquals(Status.COMPLETE, request2.getResult());
@@ -105,11 +108,11 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
                 "Digest username=\"Mufasa\",\n" +
                         "                 realm=\"testrealm@host.com\",\n" +
                         "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
-                        "                 uri=\"" + path + "\",\n" +
+                        "                 uri=\"" + uri + "\",\n" +
                         "                 qop=auth,\n" +
                         "                 nc=00000001,\n" +
                         "                 cnonce=\"0a4f113b\",\n" +
-                        "                 response=\"9f4c595c275c13d41d65043d3a509abe\",\n" +
+                        "                 response=\"" + computeDigest("http://localhost/dir/index.html?foo=b%2Fr", "dcd98b7102dd2f0e8b11d0f600bfb0c093", "0a4f113b", "00000001", "Mufasa", "Circle Of Life", "MD5", "testrealm@host.com", "auth", "GET") + "\",\n" +
                         "                 opaque=\"00000000000000000000000000000000\",\n" +
                         "                 algorithm=MD5"
         }, new URI(uri));
@@ -131,11 +134,11 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
                 "Digest username=\"Mufasa\",\n" +
                         "                 realm=\"testrealm@host.com\",\n" +
                         "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
-                        "                 uri=\"" + path + "\",\n" +
+                        "                 uri=\"" + uri + "\",\n" +
                         "                 qop=auth,\n" +
                         "                 nc=00000001,\n" +
                         "                 cnonce=\"0a4f113b\",\n" +
-                        "                 response=\"cc3261565007973c9d647333822091ad\",\n" +
+                        "                 response=\"" + computeDigest("http://localhost/dir/foo%2Fr/index.html?foo=b%2Fr", "dcd98b7102dd2f0e8b11d0f600bfb0c093", "0a4f113b", "00000001", "Mufasa", "Circle Of Life", "MD5", "testrealm@host.com", "auth", "GET") + "\",\n" +
                         "                 opaque=\"00000000000000000000000000000000\",\n" +
                         "                 algorithm=MD5"
         }, new URI(uri));
@@ -160,15 +163,15 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
         TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
                 "Digest username=\"Mufasa\",\n" +
-                "       realm=\"http-auth@example.org\",\n" +
-                "       uri=\"/dir/index.html\",\n" +
-                "       algorithm=SHA-256,\n" +
-                "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n" +
-                "       nc=00000001,\n" +
-                "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n" +
-                "       qop=auth,\n" +
-                "       response=\"753927fa0e85d155564e2e272a28d1802ca10daf4496794697cf8db5856cb6c1\",\n" +
-                "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\""
+                        "       realm=\"http-auth@example.org\",\n" +
+                        "       uri=\"/dir/index.html\",\n" +
+                        "       algorithm=SHA-256,\n" +
+                        "       nonce=\"7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v\",\n" +
+                        "       nc=00000001,\n" +
+                        "       cnonce=\"f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ\",\n" +
+                        "       qop=auth,\n" +
+                        "       response=\"" + computeDigest("/dir/index.html", "7ypf/xlj9XXwfDPEoM4URrv/xwf94BcCAzFZH4GiTo0v", "f2/wE4q74E6zIJEtWaHKaf5wv/H5QzzpXusqGemxURZJ", "00000001", "Mufasa", "Circle of Life", "SHA-256", "http-auth@example.org", "auth", "GET") + "\",\n" +
+                        "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\""
         });
         mechanism.evaluateRequest(request2);
         Assert.assertEquals(Status.COMPLETE, request2.getResult());
@@ -191,18 +194,48 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
         TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
                 "Digest username*=UTF-8''J%C3%A4s%C3%B8n%20Doe,\n" +
-                "       realm=\"api@example.org\",\n" +
-                "       uri=\"/doe.json\",\n" +
-                "       algorithm=SHA-512-256,\n" +
-                "       nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\",\n" +
-                "       nc=00000001,\n" +
-                "       cnonce=\"NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v\",\n" +
-                "       qop=auth,\n" +
-                "       response=\"3798d4131c277846293534c3edc11bd8a5e4cdcbff78b05db9d95eeb1cec68a5\",\n" +
-                "       opaque=\"00000000000000000000000000000000\",\n" +
-                "       userhash=false"
+                        "       realm=\"api@example.org\",\n" +
+                        "       uri=\"/doe.json\",\n" +
+                        "       algorithm=SHA-512-256,\n" +
+                        "       nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\",\n" +
+                        "       nc=00000001,\n" +
+                        "       cnonce=\"NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v\",\n" +
+                        "       qop=auth,\n" +
+                        "       response=\"" + computeDigest("/doe.json", "5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK", "NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v", "00000001", "J\u00E4s\u00F8n Doe", "Secret, or not?", "SHA-512-256", "api@example.org", "auth", "GET") + "\",\n" +
+                        "       opaque=\"00000000000000000000000000000000\",\n" +
+                        "       userhash=false"
         });
         mechanism.evaluateRequest(request2);
         Assert.assertEquals(Status.COMPLETE, request2.getResult());
+    }
+
+    private String computeDigest(String uri, String nonce, String cnonce, String nc, String username, String password, String algorithm, String realm, String qop, String method) throws NoSuchAlgorithmException {
+        String A1, HashA1, A2, HashA2;
+        MessageDigest md = MessageDigest.getInstance(algorithm);
+        A1 = username + ":" + realm + ":" + password;
+        HashA1 = encode(A1, md);
+        A2 = method + ":" + uri;
+        HashA2 = encode(A2, md);
+        String combo, finalHash;
+        combo = HashA1 + ":" + nonce + ":" + nc + ":" + cnonce + ":" + qop + ":" + HashA2;
+        finalHash = encode(combo, md);
+        return finalHash;
+    }
+
+    private String encode(String src, MessageDigest md) {
+        char[] charArray = {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+        };
+        md.update(src.getBytes(StandardCharsets.UTF_8));
+        byte[] digest = md.digest();
+        StringBuilder res = new StringBuilder(digest.length * 2);
+        for (byte b : digest) {
+            int hashChar = ((b >>> 4) & 0xf);
+            res.append(charArray[hashChar]);
+            hashChar = (b & 0xf);
+            res.append(charArray[hashChar]);
+        }
+        return res.toString();
     }
 }
