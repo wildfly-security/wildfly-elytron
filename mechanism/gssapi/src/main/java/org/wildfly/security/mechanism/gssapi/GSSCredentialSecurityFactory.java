@@ -29,11 +29,15 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
+import javax.security.auth.RefreshFailedException;
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.security.auth.kerberos.KerberosTicket;
@@ -64,6 +68,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final String KRB5LoginModule = "com.sun.security.auth.module.Krb5LoginModule";
     private static final String IBMKRB5LoginModule = "com.ibm.security.auth.module.Krb5LoginModule";
+    private static final long ONE_SECOND = 1000;
 
     public static final Oid KERBEROS_V5;
     public static final Oid SPNEGO;
@@ -80,32 +85,94 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
     private final int minimumRemainingLifetime;
     private final ExceptionSupplier<GSSKerberosCredential, GeneralSecurityException> rawSupplier;
 
-    private volatile GSSKerberosCredential cachedCredential;
+    private final AtomicReference<GSSKerberosCredential> cachedCredentialReference = new AtomicReference<>();
+    private final UnaryOperator<GSSKerberosCredential> credentialOperator;
+
 
     GSSCredentialSecurityFactory(final int minimumRemainingLifetime, final ExceptionSupplier<GSSKerberosCredential, GeneralSecurityException> rawSupplier) {
         this.minimumRemainingLifetime = minimumRemainingLifetime;
         this.rawSupplier = rawSupplier;
+        credentialOperator = this::update;
+    }
+
+    private GSSKerberosCredential update(GSSKerberosCredential original) {
+        GSSKerberosCredential result = null;
+        try {
+            if (original != null) {
+                if (testIsValid(original.getGssCredential()) && testIsValid(original.getKerberosTicket())) {
+                    result = original;
+                }
+            }
+
+            if (result == null) {
+                log.trace("No valid cached credential, obtaining new one...");
+                result = rawSupplier.get();
+                log.tracef("Obtained GSSCredentialCredential [%s]", result);
+            } else {
+                log.tracef("Used cached GSSCredential [%s]", result);
+            }
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException(e);
+        }
+
+        return result;
+    }
+
+    private boolean testIsValid(GSSCredential gssCredential) throws GeneralSecurityException {
+        checkNotNullParam("gssCredential", gssCredential);
+        boolean stillValid;
+        try {
+            int remainingLifetime = gssCredential.getRemainingLifetime();
+            log.tracef("Remaining GSSCredential Lifetime = %d", remainingLifetime);
+            stillValid = remainingLifetime >= minimumRemainingLifetime;
+        } catch (GSSException e) {
+            throw new GeneralSecurityException(e);
+        }
+
+        log.tracef("testIsValid(GSSCredential)=%b", stillValid);
+        return stillValid;
+    }
+
+    private boolean testIsValid(KerberosTicket ticket) {
+        if (ticket == null) {
+            log.trace("No cached KerberosTicket");
+            return true; // If there is no ticket it is not "invalid".
+        }
+
+        Date endTime = ticket.getEndTime();
+        log.tracef("KerberosTicket.getEndTime()=%s", endTime);
+        boolean stillValid = endTime != null && System.currentTimeMillis() < endTime.getTime() - (minimumRemainingLifetime * ONE_SECOND);
+
+        if (!stillValid) {
+            log.trace("Attempting to refresh existing KerberosTicket.");
+            try {
+                ticket.refresh();
+                log.tracef("KerberosTicket refreshed until %s", ticket.getEndTime());
+                stillValid = true;
+            } catch (RefreshFailedException e) {
+                log.tracef("Unable to refresh KerberosTicket.", e);
+            }
+        }
+
+        log.tracef("testIsValid(KerberosTicket)=%b", stillValid);
+        return stillValid;
     }
 
     @Override
     public GSSKerberosCredential create() throws GeneralSecurityException {
-        GSSKerberosCredential currentCredentialCredential = cachedCredential;
-        GSSCredential currentCredential = currentCredentialCredential != null ? currentCredentialCredential.getGssCredential() : null;
         try {
-            if (currentCredential != null && currentCredential.getRemainingLifetime() >= minimumRemainingLifetime) {
-                log.tracef("Used cached GSSCredential [%s]", currentCredential);
-                return currentCredentialCredential;
+            return cachedCredentialReference.updateAndGet(credentialOperator);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof GSSException) {
+                throw new GeneralSecurityException(e.getCause());
+            } else if (e.getCause() instanceof GeneralSecurityException) {
+                throw (GeneralSecurityException) e.getCause();
             }
-            log.tracef("No valid cached credential, obtaining new one...");
-            currentCredentialCredential = rawSupplier.get();
-            log.tracef("Obtained GSSCredentialCredential [%s]", currentCredentialCredential);
-            this.cachedCredential = currentCredentialCredential;
 
-            return currentCredentialCredential;
-        } catch (GSSException e) {
-            throw new GeneralSecurityException(e);
+            throw e;
         }
     }
+
 
     /**
      * Obtain a new {@link Builder} capable of building a {@link GSSCredentialSecurityFactory}.
