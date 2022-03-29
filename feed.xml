@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 21 Jan 2022 15:20:27 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 29 Mar 2022 18:50:29 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Securing a WildFly Application with OpenID Connect on OpenShift</title>
+            <link>
+                https://www.youtube.com/watch?v=2gQO4_7Z5CI
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Tue, 29 Mar 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=2gQO4_7Z5CI
+            </guid>
+        </item>
         
         <item>
             <title>Multi-tenancy Support for OpenID Connect Applications</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 18 Oct 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-recap/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Hacktoberfest Has Begun</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/hacktoberfest-has-begun/
-            </link>
-            <description>
-                The WildFly Elytron project is participating in Hacktoberfest this month and welcomes your contributions! What is Hacktoberfest? Hacktoberfest takes places annually during the month of October. This event encourages open source contributions from the community. To participate in Hacktoberfest, you simply need to: Register on the Hacktoberfest site Submit 4...
-            </description>
-            <pubDate>Tue, 05 Oct 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/hacktoberfest-has-begun/
             </guid>
         </item>
         
