@@ -20,11 +20,11 @@ toc::[]
 == Goals
 
 There are two connected goals that I sought to achieve. First one is to add ability to omit HEX based fields from certificate read operations. Those are simply not needed to check metadata of certificate.
-Second was slightly connected, namely "read-aliases" command indiscrepancy had to go - this command read names, not content.
+Second was slightly connected, namely _read-aliases_ command indiscrepancy had to go - this command read names, not content.
 
 ==== Reducing hex footprint
 
-The culprit: 'read-alias'. read-alias dumps content of certificate, this includes all metadata and public-key/encoded field. This is somewhat annoying, but not a huge deal when key for instance is short, but when its 4Kb ? 
+The culprit: _read-alias_. _read-alias_ dumps content of certificate, this includes all metadata and *public-key*/*encoded field*. This is somewhat annoying, but not a huge deal when key for instance is short, but when its 4Kb ? 
 Example:
 [source]
 ----
@@ -111,7 +111,7 @@ It is now possible to reduce the verbosity of the output, making this command mo
 
 ==== Making 'read-aliases' even better
 
-As mentioned above - the *read-aliases* command bugged me, its name just does not align with output. So, a new *recursive* option has now been added to this command to actually display information about the aliases. On top of it, in order to take advantage of first improvement a *verbose* option has also been added:
+As mentioned above - the _read-aliases_ command bugged me, its name just does not align with output. So, a new *recursive* option has now been added to this command to actually display information about the aliases. On top of it, in order to take advantage of first improvement a *verbose* option has also been added:
 [source]
 ----
 [standalone@localhost:9990 key-store=serverKS] :read-aliases
@@ -199,9 +199,9 @@ could expand into:
 == Drawbacks
 
 Only one, but this stems from requirement of backwards compatibility. Commands must behave in consistent manner. So in this case, users have to punch extra characters to get rid of excess of characters - kind of ironic, but it can not be helped.
-This means that in case of both commands, default value for 'verbose', is 'true'.
+This means that in case of both commands, default value for *verbose*, is _true_.
 
 == Summary
 
-This blog post has given an overview of how 'read-alias' and 'read-aliases' commands were improved to better user experience.
+This blog post has given an overview of how _read-alias_ and _read-aliases_ commands were improved to better user experience.
 
