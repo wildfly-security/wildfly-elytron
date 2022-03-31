@@ -58,7 +58,6 @@
         <jdk.min.version>11</jdk.min.version>
         <version.com.fasterxml.jackson>2.11.4</version.com.fasterxml.jackson>
         <version.commons-cli>1.4</version.commons-cli>
-        <version.io.smallrye.jwt>3.1.1</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
@@ -66,7 +65,6 @@
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
-        <version.org.eclipse.microprofile.jwt.api>1.2.2</version.org.eclipse.microprofile.jwt.api>
         <version.org.apache.sshd.common>2.7.0</version.org.apache.sshd.common>
         <version.org.apache.httpcomponents.httpclient>4.5.13</version.org.apache.httpcomponents.httpclient>
 
@@ -293,7 +291,6 @@
                             ${project.basedir}/jose/jwk/src/main/java/;
                             ${project.basedir}/jose/util/src/main/java/;
                             ${project.basedir}/json-util/src/main/java/;
-                            ${project.basedir}/jwt/src/main/java/;
                             ${project.basedir}/keystore/src/main/java/;
                             ${project.basedir}/manager/action/src/main/java/;
                             ${project.basedir}/manager/base/src/main/java9/; <!--java9/ must be before java/-->
@@ -610,13 +607,7 @@
                 <artifactId>wildfly-elytron-jose-util</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.wildfly.security</groupId>
-                <artifactId>wildfly-elytron-jwt</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
+            
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-keystore</artifactId>
@@ -860,21 +851,9 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>io.smallrye</groupId>
-                <artifactId>smallrye-jwt-cdi-extension</artifactId>
-                <version>${version.io.smallrye.jwt}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${version.org.apache.commons}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.microprofile.jwt</groupId>
-                <artifactId>microprofile-jwt-auth-api</artifactId>
-                <version>${version.org.eclipse.microprofile.jwt.api}</version>
-                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.sshd</groupId>
@@ -1392,7 +1371,6 @@
         <module>jose/jwk</module>
         <module>jose/util</module>
         <module>json-util</module>
-        <module>jwt</module>
         <module>keystore</module>
         <module>manager/base</module>
         <module>manager/action</module>
