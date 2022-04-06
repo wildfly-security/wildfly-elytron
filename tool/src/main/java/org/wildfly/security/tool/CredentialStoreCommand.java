@@ -497,7 +497,10 @@ class CredentialStoreCommand extends Command {
         }
 
         // Get the original attributes of the credential store
-        Map<String, Object> locationAttributes = readAttributesForPreservation(Paths.get(location));
+        Map<String, Object> locationAttributes = null;
+        if (location != null) {
+            locationAttributes = readAttributesForPreservation(Paths.get(location));
+        }
 
         credentialStore.store(alias, createCredential(secret, entryType));
         credentialStore.flush();
@@ -509,7 +512,9 @@ class CredentialStoreCommand extends Command {
         setStatus(ElytronTool.ElytronToolExitStatus_OK);
 
         // Restore the original attributes of the credential store
-        setAttributesForPreservation(Paths.get(location), locationAttributes);
+        if (location != null) {
+            setAttributesForPreservation(Paths.get(location), locationAttributes);
+        }
     }
 
     private void removeAlias(CredentialStore credentialStore, String entryType, String storeType) throws Exception {
