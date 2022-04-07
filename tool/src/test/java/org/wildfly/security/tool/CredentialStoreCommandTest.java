@@ -221,6 +221,24 @@ public class CredentialStoreCommandTest extends AbstractCommandTest {
     }
 
     @Test
+    public void testAddAliasCustomWithoutLocation() throws Exception {
+        String storagePassword = "cspassword";
+        String aliasName = "testalias";
+        String aliasValue = "secret";
+
+        // just create the alias with no location, it should work on memory
+        String[] argsCreate = {
+            "--create",
+            "--credential-store-provider=" + CustomPropertiesProvider.CUSTOM_PROPERTIES_PROVIDER,
+            "--type=" + CustomPropertiesCredentialStore.CUSTOM_PROPERTIES_CREDENTIAL_STORE,
+            "--add", aliasName,
+            "--secret", aliasValue,
+            "--summary",
+            "--password", storagePassword};
+        executeCommandAndCheckStatus(argsCreate);
+    }
+
+    @Test
     public void testAliasesList() {
         String storageLocation = getStoragePathForNewFile();
         String storagePassword = "cspassword";
