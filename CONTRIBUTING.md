@@ -40,9 +40,9 @@ To create a new issue, comment on an existing issue, or assign an issue to yours
 ### Good First Issues
 Want to contribute to the WildFly Elytron project but aren't quite sure where to start? Check out our issues with the `good-first-issue` label. These are a triaged set of issues that are great for getting started on our project. These can be found [here](https://issues.redhat.com/issues/?filter=12383825). 
 
-Once you have selected an issue you'd like to work on, make sure it's not already assigned to someone else. Then, remember to assign it to yourself, by clicking on "Assign to me", to prevent someone else from also working on the same issue.
+Once you have selected an issue you'd like to work on, make sure it's not already assigned to someone else. To assign an issue to yourself, simply click on "Start Progress". This will automatically assign the issue to you.
 
-![jira](assets/images/jira.png)
+![jira](assets/images/jira_start_progress.png)
 
 It is recommended that you use a separate branch for every issue you work on. To keep things straightforward and memorable, you can name each branch using the JIRA issue number. This way, you can have multiple PRs open for different issues. For example, if you were working on [ELY-2127](https://issues.redhat.com/browse/ELY-2127), you could use ELY-2127 as your branch name.
 
