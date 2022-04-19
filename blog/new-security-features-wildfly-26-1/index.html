@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: New Security Features in WildFly 26.1</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>New Security Features in WildFly 26.1 | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="New Security Features in WildFly 26.1" />
+<meta name="author" content="Farah Juma" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Since WildFly 26.1 was just released, we wanted to highlight some new security features included in this release." />
+<meta property="og:description" content="Since WildFly 26.1 was just released, we wanted to highlight some new security features included in this release." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-04-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="New Security Features in WildFly 26.1" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Farah Juma"},"dateModified":"2022-04-19T00:00:00+00:00","datePublished":"2022-04-19T00:00:00+00:00","description":"Since WildFly 26.1 was just released, we wanted to highlight some new security features included in this release.","headline":"New Security Features in WildFly 26.1","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>New Security Features in WildFly 26.1</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | April 19, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/release"> #release</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ssl"> #ssl</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/tls"> #tls</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/security-realm"> #security-realm</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/filesystem-realm"> #filesystem-realm</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/&title=New Security Features in WildFly 26.1" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=New Security Features in WildFly 26.1&url=https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=New Security Features in WildFly 26.1&amp;body=New Security Features in WildFly 26.1 https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Since WildFly 26.1 was just released, we wanted to highlight some new security features included
+in this release.</p>
+</div>
+<div class="sect1">
+<h2 id="new-features"><a class="anchor" href="#new-features"></a>New Features</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="automatic-registration-of-a-client-side-default-sslcontext"><a class="anchor" href="#automatic-registration-of-a-client-side-default-sslcontext"></a>Automatic Registration of a Client Side Default SSLContext</h3>
+<div class="paragraph">
+<p>The Elytron authentication client now provides a Java security provider that can be used
+to register a JVM wide default <code>SSLContext</code>. When this provider is registered with high enough
+priority, all client libraries that use <code>SSLContext.getDefault()</code> will obtain an <code>SSLContext</code> instance
+using the configuration from your Elytron client configuration file. For more details about this new feature
+and an example of how to use it, check out this
+<a href="https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context">blog post</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="support-for-encrypting-filesystem-security-realms"><a class="anchor" href="#support-for-encrypting-filesystem-security-realms"></a>Support for Encrypting Filesystem Security Realms</h3>
+<div class="paragraph">
+<p>It&#8217;s now possible to encrypt the identity files that back filesystem security realms using a secret key.
+For all the details about this new feature and a complete guide on how to configure a <code>filesystem-realm</code>
+with encryption enabled, take a look at this <a href="https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption">blog post</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="encrypting-an-existing-realm"><a class="anchor" href="#encrypting-an-existing-realm"></a>Encrypting an Existing Realm</h4>
+<div class="paragraph">
+<p>If you already have a <code>filesystem-realm</code> configured, it&#8217;s possible to encrypt it using a new Elytron Tool
+command. Check out this <a href="https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool">blog post</a>
+for all the details on how to do this.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="enhancements-for-keystore-cli-operations"><a class="anchor" href="#enhancements-for-keystore-cli-operations"></a>Enhancements for Keystore CLI Operations</h3>
+<div class="paragraph">
+<p>The <code>read-alias</code> and <code>read-aliases</code> operations for key stores in the Elytron subsystem have been updated
+to improve usability. Check out this <a href="https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands">blog post</a> to learn more.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="securing-wildfly-applications-with-openid-connect-on-openshift"><a class="anchor" href="#securing-wildfly-applications-with-openid-connect-on-openshift"></a>Securing WildFly Applications with OpenID Connect on OpenShift</h3>
+<div class="paragraph">
+<p>Since WildFly 25, applications deployed to WildFly can be secured with OpenID Connect, without needing to use
+the Keycloak client adapter.</p>
+</div>
+<div class="paragraph">
+<p>In a recent <a href="https://www.youtube.com/watch?v=2gQO4_7Z5CI&amp;t=1s">vlog</a>, we show how to use this feature with WildFly on OpenShift.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="contributing-to-elytron"><a class="anchor" href="#contributing-to-elytron"></a>Contributing to Elytron</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As always, the WildFly Elytron project welcomes your contributions!</p>
+</div>
+<div class="sect2">
+<h3 id="how-to-get-started"><a class="anchor" href="#how-to-get-started"></a>How to get started?</h3>
+<div class="paragraph">
+<p>Our <a href="https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md">contribution guide</a> helps guide you through the steps for getting started on the WildFly Elytron project and goes through how to format and submit your first PR.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="how-to-pick-an-issue"><a class="anchor" href="#how-to-pick-an-issue"></a>How to pick an issue?</h3>
+<div class="paragraph">
+<p>We have created a list of <a href="https://issues.redhat.com/issues/?filter=12364234">good first issues</a>  to help you get started.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="how-to-reach-us"><a class="anchor" href="#how-to-reach-us"></a>How to reach us?</h3>
+<div class="paragraph">
+<p>If you’d like some help or have questions about making contributions to our project, feel free to reach us on <a href="https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron">chat</a> or add questions directly on your PR.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="where-to-find-more-information"><a class="anchor" href="#where-to-find-more-information"></a>Where to Find More Information</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of some new security features in WildFly. Be sure to check out our
+<a href="https://wildfly-security.github.io/wildfly-elytron/blog/">blog posts</a> page, where we have all our
+blog posts on Elytron features. If there is an Elytron topic you’d like to see a blog post on, feel free to
+let us know on WildFly’s <a href="https://groups.google.com/forum/#!forum/wildfly">user forum</a>.</p>
+</div>
+<div class="paragraph">
+<p>To learn more about Elytron, check out our <a href="https://wildfly-security.github.io/wildfly-elytron/">site</a>.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

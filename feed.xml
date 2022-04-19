@@ -5,7 +5,77 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 12 Apr 2022 13:45:51 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 19 Apr 2022 21:20:32 +0000</lastBuildDate>
+        
+        <item>
+            <title>New Security Features in WildFly 26.1</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/
+            </link>
+            <description>
+                Since WildFly 26.1 was just released, we wanted to highlight some new security features included in this release. New Features Automatic Registration of a Client Side Default SSLContext The Elytron authentication client now provides a Java security provider that can be used to register a JVM wide default SSLContext. When...
+            </description>
+            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Improving readability of certificate read commands</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/
+            </link>
+            <description>
+                Any one who has experience with network hardware or console administration knows the Achilles' heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines. This...
+            </description>
+            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Encrypting Filesystem realms</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/
+            </link>
+            <description>
+                Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey. An overview of the new attributes The filesystem realm now...
+            </description>
+            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Encrypting Pre-Existing Filesystem realms</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool/
+            </link>
+            <description>
+                Overview With the addition of the filesystem realm encryption feature outlined here, a feature was added to the Elytron Tool to encrypt a pre-existing filesystem realm. Method to run the tool There are two methods to run the tool, one is on the command line, that only lets you apply...
+            </description>
+            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool/
+            </guid>
+        </item>
+        
+        <item>
+            <title>Client side default SSL context provider</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/
+            </link>
+            <description>
+                Elytron client now provides a java security provider which can be used to register a JVM wide default SSLContext. When this provider is registered with high enough priority and the method SSLContext.getDefault() is called, the provider instantiates and returns an SSLContext based on an Elytron client configuration file. So all...
+            </description>
+            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Securing a WildFly Application with OpenID Connect on OpenShift</title>
@@ -74,76 +144,6 @@
             <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using a JAAS realm in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/
-            </link>
-            <description>
-                The Elytron subsystem already provides various security realms like LDAP realm, JDBC realm, filesystem realm, and others for common use cases. Starting from WildFly 26, you can also configure a JAAS security realm in the Elytron subsystem in order to use custom Login Modules for authentication and authorization. A JAAS...
-            </description>
-            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/jaas-realm/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Upcoming client side default SSL context provider</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/client-side-jvm-wide-default-sslcontext/
-            </link>
-            <description>
-                Currently it is possible to configure SSL contexts in the Elytron client configuration which can be used by interacting with the Elytron client and its APIs. In a future WildFly release, we will provide the ability to register a JVM wide default SSL context that other libraries can obtain without...
-            </description>
-            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/client-side-jvm-wide-default-sslcontext/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using failover realm in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/failover-realm/
-            </link>
-            <description>
-                With a failover realm you can configure an alternative realm that will be used if primary realm is not available. A common use case is to fail over to a local file based realm if an LDAP or database server has gone down allowing administrators to retain access to the...
-            </description>
-            <pubDate>Thu, 21 Oct 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/failover-realm/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using distributed realm in Elytron</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/
-            </link>
-            <description>
-                With a distributed realm you can combine identities located across multiple security realms of any type into a single security realm. Identities can be used for both authentication and authorization purposes. Add a distributed realm You can add a distributed-realm to the Elytron subsystem by specifying the list of realms...
-            </description>
-            <pubDate>Thu, 21 Oct 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Open Source Day 2021 Recap</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-recap/
-            </link>
-            <description>
-                A couple weeks ago, the WildFly Elytron team had a great time participating in Open Source Day, an all-day hackathon that took place during the virtual Grace Hopper Celebration (vGHC). This was the WildFly Elytron team&#8217;s second time participating in this event, after having been a part of the recent...
-            </description>
-            <pubDate>Mon, 18 Oct 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/open-source-day-recap/
             </guid>
         </item>
         

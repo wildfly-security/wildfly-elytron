@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Encrypting Filesystem realms</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Encrypting Filesystem realms | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Encrypting Filesystem realms" />
+<meta name="author" content="Ashpan Raskar" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey." />
+<meta property="og:description" content="Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-04-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Encrypting Filesystem realms" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Ashpan Raskar"},"dateModified":"2022-04-19T00:00:00+00:00","datePublished":"2022-04-19T00:00:00+00:00","description":"Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey.","headline":"Encrypting Filesystem realms","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Encrypting Filesystem realms</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/9fa88b105a019dccd6ab8db410e67123">
+        
+        <p class="byline">
+          By <a href="https://github.com/ashpan">Ashpan Raskar</a> | April 19, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/filesystem-realm"> #filesystem-realm</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/encryption"> #encryption</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/&title=Encrypting Filesystem realms" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Encrypting Filesystem realms&url=https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Encrypting Filesystem realms&amp;body=Encrypting Filesystem realms https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey.</p>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-the-new-attributes"><a class="anchor" href="#an-overview-of-the-new-attributes"></a>An overview of the new attributes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The filesystem realm now supports the following attributes</p>
+</div>
+<div class="sect2">
+<h3 id="encryption"><a class="anchor" href="#encryption"></a>Encryption</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>credential-store</code>: This attribute specifies the credential store resource where the secret key resides in. This credential store must be configured prior to creating the filesystem realm. This attribute is optional and if not specified, the filesystem realm will not be encrypted.</p>
+</li>
+<li>
+<p><code>secret-key</code>: This attribute specifies the alias to the secret key in the credential store to encrypt the realm. The default value is <code>key</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="a-complete-example"><a class="anchor" href="#a-complete-example"></a>A Complete Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this post we go through an example of setting up a filesystem realm with encryption enabled on a web application.</p>
+</div>
+<div class="sect2">
+<h3 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h3>
+<div class="paragraph">
+<p>Clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll be looking at the <strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm">encryption-filesystem-realm</a></strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="server-configuration"><a class="anchor" href="#server-configuration"></a>Server Configuration</h3>
+<div class="paragraph">
+<p>In the following section, we will review the configuration available in the script for the quickstart
+<strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm/configure-elytron.cli">configure-elytron.cli</a></strong>. We start our configuration by connecting to the server using the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="note-use-of-wildfly_home"><a class="anchor" href="#note-use-of-wildfly_home"></a>Note: Use of WILDFLY_HOME</h4>
+<div class="paragraph">
+<p>In the following post, replace <code>WILDFLY_HOME</code> with the actual path to your WildFly installation.</p>
+</div>
+<div class="paragraph">
+<p>First we create a credential store and secret key under the Elytron subsystem, with the name <code>credstore</code>, and secret key alias <code>key</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/secret-key-credential-store=credstore:add(path=mycredstore.cs, relative-to=jboss.server.config.dir, create=true, populate=true)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Here we specify the <code>create</code>, and <code>populate</code> attributes as <code>true</code>. The <code>create</code> attribute will create the credential store file if it doesn&#8217;t already exist. The <code>populate</code> attribute will add an alias if the default-alias does not already exist. The default alias is set to <code>key</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Then we create a filesystem realm under the Elytron subsystem using the credential-store, and secret-key specified above. We then add an identity <code>quickstartUser</code>, setting a digest password and adding the
+attributes <code>Guest</code> and <code>Admin</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm,relative-to=jboss.server.config.dir, key-store=keystore, key-store-alias=user, credential-store=credstore, secret-key=key)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(digest={algorithm=digest-md5, realm=fsRealm, password=password123!}, identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the <a href="https://docs.wildfly.org/26/WildFly_Elytron_Security.html">Elytron documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>We then configure a simple role decoder and create a new security domain which will make use of our
+filesystem realm and role decoder as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Creating an additional security domain (<code>fsDomain</code>in this case) is not necessary.
+We could alternatively take the default <code>ApplicationDomain</code> and add the
+FileSystem realm and role-decoder to it.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We then add our security domain mapping to the Undertow subsystem:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=undertow/application-security-domain=other:write-attribute(name=security-domain, value=fsDomain)</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-to-app-to-wildfly"><a class="anchor" href="#deploying-to-app-to-wildfly"></a>Deploying to app to WildFly</h3>
+<div class="paragraph">
+<p>From the root directory of the <strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/encryption-filesystem-realm/">quickstart example</a></strong> run the following command the deploy the web application to wildfly</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">mvn clean install wildfly:deploy</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="verifying-encryption"><a class="anchor" href="#verifying-encryption"></a>Verifying Encryption</h3>
+<div class="paragraph">
+<p>Now you may navigate to <code><a href="http://localhost:8080/encryption-filesystem" class="bare">http://localhost:8080/encryption-filesystem</a></code>, and when it prompt&#8217;s you to enter a username and password, put in the credentials we specified earlier, <code>quickstartUser</code>, and <code>password123!</code>. This should authenticate you to a page that shows you the principal you&#8217;re logged in with.</p>
+</div>
+<div class="paragraph">
+<p>The successful login indicates that encryption has been configured correctly.</p>
+</div>
+<div class="paragraph">
+<p>In order to further verify that these features are being used correctly we can navigate to the identity file and check the contents. The file should be located at <code>WILDFLY_HOME/standalone/configuration/fs-realm/O/F/OF2WSY3LON2GC4TUKVZWK4Q.xml</code> if the same filesystem realm and identity configuration was used.</p>
+</div>
+<div class="paragraph">
+<p>Here we can see the format for the password is <code>enc_base64</code> specifying that the credentials are encrypted. The attributes should also be stored encrypted instead of plain text.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview on how to configure a filesystem realm to enable encryption support.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

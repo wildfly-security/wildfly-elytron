@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Improving readability of certificate read commands</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Improving readability of certificate read commands | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Improving readability of certificate read commands" />
+<meta name="author" content="Bartosz Baranowski" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Any one who has experience with network hardware or console administration knows the Achilles&#39; heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines. This limits usability of console with conjunction with such commands. Furthermore, often this wrapped data has very little use except specific cases and is irrelevant in most." />
+<meta property="og:description" content="Any one who has experience with network hardware or console administration knows the Achilles&#39; heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines. This limits usability of console with conjunction with such commands. Furthermore, often this wrapped data has very little use except specific cases and is irrelevant in most." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-04-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Improving readability of certificate read commands" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Bartosz Baranowski"},"dateModified":"2022-04-19T00:00:00+00:00","datePublished":"2022-04-19T00:00:00+00:00","description":"Any one who has experience with network hardware or console administration knows the Achilles&#39; heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines. This limits usability of console with conjunction with such commands. Furthermore, often this wrapped data has very little use except specific cases and is irrelevant in most.","headline":"Improving readability of certificate read commands","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Improving readability of certificate read commands</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/63a1027f6f22d9bbbb10fcd469c78136">
+        
+        <p class="byline">
+          By <a href="https://github.com/baranowb">Bartosz Baranowski</a> | April 19, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ux,"> #ux,</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/certificate,"> #certificate,</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/cli"> #cli</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/&title=Improving readability of certificate read commands" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Improving readability of certificate read commands&url=https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Improving readability of certificate read commands&amp;body=Improving readability of certificate read commands https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Any one who has experience with network hardware or console administration knows the Achilles' heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines.
+This limits usability of console with conjunction with such commands. Furthermore, often this wrapped data has very little use except specific cases and is irrelevant in most.</p>
+</div>
+<div class="paragraph">
+<p>Above can be often observed with tools that deal with SSL/certificates. Elytron is not an exception. Since I often dabble in elytron CLI and found this problem slightly annoying, I decided it is time to improve it a bit.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#goals">Goals</a>
+<ul class="sectlevel3">
+<li><a href="#reducing-hex-footprint">Reducing hex footprint</a></li>
+<li><a href="#making-read-aliases-even-better">Making 'read-aliases' even better</a></li>
+</ul>
+</li>
+<li><a href="#drawbacks">Drawbacks</a></li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="goals"><a class="anchor" href="#goals"></a>Goals</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are two connected goals that I sought to achieve. First one is to add ability to omit HEX based fields from certificate read operations. Those are simply not needed to check metadata of certificate.
+Second was slightly connected, namely <em>read-aliases</em> command indiscrepancy had to go - this command read names, not content.</p>
+</div>
+<div class="sect3">
+<h4 id="reducing-hex-footprint"><a class="anchor" href="#reducing-hex-footprint"></a>Reducing hex footprint</h4>
+<div class="paragraph">
+<p>The culprit: <em>read-alias</em>. <em>read-alias</em> dumps content of certificate, this includes all metadata and <strong>public-key</strong>/<strong>encoded field</strong>. This is somewhat annoying, but not a huge deal when key for instance is short, but when its 4Kb ?
+Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">[standalone@localhost:9990 key-store=serverKS] :read-alias(alias="server1")
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "alias" =&gt; "server1",
+        "entry-type" =&gt; "PrivateKeyEntry",
+        "creation-date" =&gt; "2022-03-28T10:21:44.568+0200",
+        "certificate-chain" =&gt; [{
+            "type" =&gt; "X.509",
+            "algorithm" =&gt; "DSA",
+            "format" =&gt; "X.509",
+            "public-key" =&gt; "30:82:03:42:30:82:02:35:06:07:2a:86:48:ce:38:04:01:30:82:02:28:02:82:01:01:00:8f:79:35:d9:b9:aa:e9:bf:ab:ed:88:7a:cf:49:51:b6:f3:2e:c5:9e:3b:af:37:18:e8:ea:c4:96:1f:3e:fd:36:06:e7:43:51:a9:c4:18:33:39:b8:09:e7:c2:ae
+:1c:53:9b:a7:47:5b:85:d0:11:ad:b8:b4:79:87:75:49:84:69:5c:ac:0e:8f:14:b3:36:08:28:a2:2f:fa:27:11:0a:3d:62:a9:93:45:34:09:a0:fe:69:6c:46:58:f8:4b:dd:20:81:9c:37:09:a0:10:57:b1:95:ad:cd:00:23:3d:ba:54:84:b6:29:1f:9d:64:8e:f8:83:44:86:77:97:9c:ec:
+04:b4:34:a6:ac:2e:75:e9:98:5d:e2:3d:b0:29:2f:c1:11:8c:9f:fa:9d:81:81:e7:33:8d:b7:92:b7:30:d7:b9:e3:49:59:2f:68:09:98:72:15:39:15:ea:3d:6b:8b:46:53:c6:33:45:8f:80:3b:32:a4:c2:e0:f2:72:90:25:6e:4e:3f:8a:3b:08:38:a1:c4:50:e4:e1:8c:1a:29:a3:7d:df:5
+e:a1:43:de:4b:66:ff:04:90:3e:d5:cf:16:23:e1:58:d4:87:c6:08:e9:7f:21:1c:d8:1d:ca:23:cb:6e:38:07:65:f8:22:e3:42:be:48:4c:05:76:39:39:60:1c:d6:67:02:1d:00:ba:f6:96:a6:85:78:f7:df:de:e7:fa:67:c9:77:c7:85:ef:32:b2:33:ba:e5:80:c0:bc:d5:69:5d:02:82:01
+:00:16:a6:5c:58:20:48:50:70:4e:75:02:a3:97:57:04:0d:34:da:3a:34:78:c1:54:d4:e4:a5:c0:2d:24:2e:e0:4f:96:e6:1e:4b:d0:90:4a:bd:ac:8f:37:ee:b1:e0:9f:31:82:d2:3c:90:43:cb:64:2f:88:00:41:60:ed:f9:ca:09:b3:20:76:a7:9c:32:a6:27:f2:47:3e:91:87:9b:a2:c4:
+e7:44:bd:20:81:54:4c:b5:5b:80:2c:36:8d:1f:a8:3e:d4:89:e9:4e:0f:a0:68:8e:32:42:8a:5c:78:c4:78:c6:8d:05:27:b7:1c:9a:3a:bb:0b:0b:e1:2c:44:68:96:39:e7:d3:ce:74:db:10:1a:65:aa:2b:87:f6:4c:68:26:db:3e:c7:2f:4b:55:99:83:4b:b4:ed:b0:2f:7c:90:e9:a4:96:d
+3:a5:5d:53:5b:eb:fc:45:d4:f6:19:f6:3f:3d:ed:bb:87:39:25:c2:f2:24:e0:77:31:29:6d:a8:87:ec:1e:47:48:f8:7e:fb:5f:de:b7:54:84:31:6b:22:32:de:e5:53:dd:af:02:11:2b:0d:1f:02:da:30:97:32:24:fe:27:ae:da:8b:9d:4b:29:22:d9:ba:8b:e3:9e:d9:e1:03:a6:3c:52:81
+:0b:c6:88:b7:e2:ed:43:16:e1:ef:17:db:de:03:82:01:05:00:02:82:01:00:44:9a:19:f7:20:16:ab:f3:74:d9:17:93:b6:48:d0:53:f6:e9:b7:b5:82:64:17:f9:de:e6:ab:5d:80:d7:ef:52:a1:b1:3e:f3:35:f2:31:7c:82:dd:57:78:30:b6:ae:2b:6c:ab:01:57:eb:2e:25:c3:69:2a:91:
+f8:67:fc:49:e2:31:7a:06:8f:ed:9f:58:d3:8a:75:3c:f2:9d:70:b1:4c:2f:3a:71:b4:e4:01:22:be:16:1a:f3:14:40:12:22:f1:82:94:da:fd:bf:b8:9c:c7:af:92:bc:24:ca:ae:32:03:9b:5f:8d:0e:5f:56:71:b4:39:6d:27:d0:68:19:dd:42:d4:d3:0f:61:76:39:f6:ad:f3:95:e5:30:0
+e:70:6e:ce:7c:aa:49:4d:24:4d:ad:4e:5f:a8:e7:42:bc:67:ba:8f:df:90:5f:6a:6c:f8:75:c5:31:b3:67:f9:b9:e7:6a:fa:44:35:85:d1:36:46:db:0b:51:58:6a:ae:f5:4d:ad:d8:65:8a:e1:68:04:34:bf:1b:d2:f2:60:f5:4f:33:df:c5:a1:7a:de:8e:54:7b:e5:20:29:eb:e9:40:11:15
+:07:aa:0c:f7:ba:69:00:60:98:44:73:e0:92:7f:a3:42:32:0c:a9:91:d6:7d:06:04:54:5c:21:dd:1d:f6:f4:96:3a:65",
+            "sha-1-digest" =&gt; "c5:cb:aa:b8:f9:4b:b0:44:59:ed:76:cd:ca:03:7d:df:d5:f6:ef:41",
+            "sha-256-digest" =&gt; "de:ef:8e:51:07:9e:f7:3a:aa:59:c5:13:3f:33:4d:bd:1b:8e:8c:34:50:36:89:2a:53:96:eb:7a:f9:ba:9e:ca",
+            "encoded" =&gt; "30:82:04:33:30:82:03:e1:a0:03:02:01:02:02:08:08:f6:f0:9b:2c:35:23:9d:30:0b:06:09:60:86:48:01:65:03:04:03:02:30:1a:31:18:30:16:06:03:55:04:03:13:0f:77:77:77:2e:65:78:61:6d:70:6c:65:2e:63:6f:6d:30:22:18:0f:32:30:32:32:30
+:33:32:38:30:38:32:31:34:34:5a:18:0f:32:30:32:32:30:36:32:36:30:38:32:31:34:34:5a:30:1a:31:18:30:16:06:03:55:04:03:13:0f:77:77:77:2e:65:78:61:6d:70:6c:65:2e:63:6f:6d:30:82:03:42:30:82:02:35:06:07:2a:86:48:ce:38:04:01:30:82:02:28:02:82:01:01:00:
+8f:79:35:d9:b9:aa:e9:bf:ab:ed:88:7a:cf:49:51:b6:f3:2e:c5:9e:3b:af:37:18:e8:ea:c4:96:1f:3e:fd:36:06:e7:43:51:a9:c4:18:33:39:b8:09:e7:c2:ae:1c:53:9b:a7:47:5b:85:d0:11:ad:b8:b4:79:87:75:49:84:69:5c:ac:0e:8f:14:b3:36:08:28:a2:2f:fa:27:11:0a:3d:62:a
+9:93:45:34:09:a0:fe:69:6c:46:58:f8:4b:dd:20:81:9c:37:09:a0:10:57:b1:95:ad:cd:00:23:3d:ba:54:84:b6:29:1f:9d:64:8e:f8:83:44:86:77:97:9c:ec:04:b4:34:a6:ac:2e:75:e9:98:5d:e2:3d:b0:29:2f:c1:11:8c:9f:fa:9d:81:81:e7:33:8d:b7:92:b7:30:d7:b9:e3:49:59:2f
+:68:09:98:72:15:39:15:ea:3d:6b:8b:46:53:c6:33:45:8f:80:3b:32:a4:c2:e0:f2:72:90:25:6e:4e:3f:8a:3b:08:38:a1:c4:50:e4:e1:8c:1a:29:a3:7d:df:5e:a1:43:de:4b:66:ff:04:90:3e:d5:cf:16:23:e1:58:d4:87:c6:08:e9:7f:21:1c:d8:1d:ca:23:cb:6e:38:07:65:f8:22:e3:
+42:be:48:4c:05:76:39:39:60:1c:d6:67:02:1d:00:ba:f6:96:a6:85:78:f7:df:de:e7:fa:67:c9:77:c7:85:ef:32:b2:33:ba:e5:80:c0:bc:d5:69:5d:02:82:01:00:16:a6:5c:58:20:48:50:70:4e:75:02:a3:97:57:04:0d:34:da:3a:34:78:c1:54:d4:e4:a5:c0:2d:24:2e:e0:4f:96:e6:1
+e:4b:d0:90:4a:bd:ac:8f:37:ee:b1:e0:9f:31:82:d2:3c:90:43:cb:64:2f:88:00:41:60:ed:f9:ca:09:b3:20:76:a7:9c:32:a6:27:f2:47:3e:91:87:9b:a2:c4:e7:44:bd:20:81:54:4c:b5:5b:80:2c:36:8d:1f:a8:3e:d4:89:e9:4e:0f:a0:68:8e:32:42:8a:5c:78:c4:78:c6:8d:05:27:b7
+:1c:9a:3a:bb:0b:0b:e1:2c:44:68:96:39:e7:d3:ce:74:db:10:1a:65:aa:2b:87:f6:4c:68:26:db:3e:c7:2f:4b:55:99:83:4b:b4:ed:b0:2f:7c:90:e9:a4:96:d3:a5:5d:53:5b:eb:fc:45:d4:f6:19:f6:3f:3d:ed:bb:87:39:25:c2:f2:24:e0:77:31:29:6d:a8:87:ec:1e:47:48:f8:7e:fb:
+5f:de:b7:54:84:31:6b:22:32:de:e5:53:dd:af:02:11:2b:0d:1f:02:da:30:97:32:24:fe:27:ae:da:8b:9d:4b:29:22:d9:ba:8b:e3:9e:d9:e1:03:a6:3c:52:81:0b:c6:88:b7:e2:ed:43:16:e1:ef:17:db:de:03:82:01:05:00:02:82:01:00:44:9a:19:f7:20:16:ab:f3:74:d9:17:93:b6:4
+8:d0:53:f6:e9:b7:b5:82:64:17:f9:de:e6:ab:5d:80:d7:ef:52:a1:b1:3e:f3:35:f2:31:7c:82:dd:57:78:30:b6:ae:2b:6c:ab:01:57:eb:2e:25:c3:69:2a:91:f8:67:fc:49:e2:31:7a:06:8f:ed:9f:58:d3:8a:75:3c:f2:9d:70:b1:4c:2f:3a:71:b4:e4:01:22:be:16:1a:f3:14:40:12:22
+:f1:82:94:da:fd:bf:b8:9c:c7:af:92:bc:24:ca:ae:32:03:9b:5f:8d:0e:5f:56:71:b4:39:6d:27:d0:68:19:dd:42:d4:d3:0f:61:76:39:f6:ad:f3:95:e5:30:0e:70:6e:ce:7c:aa:49:4d:24:4d:ad:4e:5f:a8:e7:42:bc:67:ba:8f:df:90:5f:6a:6c:f8:75:c5:31:b3:67:f9:b9:e7:6a:fa:
+44:35:85:d1:36:46:db:0b:51:58:6a:ae:f5:4d:ad:d8:65:8a:e1:68:04:34:bf:1b:d2:f2:60:f5:4f:33:df:c5:a1:7a:de:8e:54:7b:e5:20:29:eb:e9:40:11:15:07:aa:0c:f7:ba:69:00:60:98:44:73:e0:92:7f:a3:42:32:0c:a9:91:d6:7d:06:04:54:5c:21:dd:1d:f6:f4:96:3a:65:a3:2
+1:30:1f:30:1d:06:03:55:1d:0e:04:16:04:14:9c:85:1e:20:7f:82:fb:34:09:b2:8e:ad:30:9b:5d:60:e9:0c:13:2c:30:0b:06:09:60:86:48:01:65:03:04:03:02:03:3f:00:30:3c:02:1c:56:d1:21:21:47:29:76:15:88:c2:7f:d8:2e:0c:82:d3:fb:40:39:d8:f9:9a:2a:f7:87:1f:5b:ab
+:02:1c:54:66:42:6e:55:08:d5:4e:85:e3:e7:66:9f:8b:d8:ad:11:5e:63:91:60:9d:c2:a7:7b:ed:59:ce",
+            "subject" =&gt; "CN=www.example.com",
+            "issuer" =&gt; "CN=www.example.com",
+            "not-before" =&gt; "2022-03-28T10:21:44.000+0200",
+            "not-after" =&gt; "2022-06-26T10:21:44.000+0200",
+            "serial-number" =&gt; "08:f6:f0:9b:2c:35:23:9d",
+            "signature-algorithm" =&gt; "SHA256withDSA",
+            "signature" =&gt; "30:3c:02:1c:56:d1:21:21:47:29:76:15:88:c2:7f:d8:2e:0c:82:d3:fb:40:39:d8:f9:9a:2a:f7:87:1f:5b:ab:02:1c:54:66:42:6e:55:08:d5:4e:85:e3:e7:66:9f:8b:d8:ad:11:5e:63:91:60:9d:c2:a7:7b:ed:59:ce",
+            "version" =&gt; "v3"
+        }]
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It is now possible to reduce the verbosity of the output, making this command more user friendly. For instance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">[standalone@localhost:9990 key-store=serverKS] :read-alias(alias="server1", verbose=false)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "alias" =&gt; "server1",
+        "entry-type" =&gt; "PrivateKeyEntry",
+        "creation-date" =&gt; "2022-03-28T10:21:44.568+0200",
+        "certificate-chain" =&gt; [{
+            "type" =&gt; "X.509",
+            "algorithm" =&gt; "DSA",
+            "format" =&gt; "X.509",
+            "sha-1-digest" =&gt; "c5:cb:aa:b8:f9:4b:b0:44:59:ed:76:cd:ca:03:7d:df:d5:f6:ef:41",
+            "sha-256-digest" =&gt; "de:ef:8e:51:07:9e:f7:3a:aa:59:c5:13:3f:33:4d:bd:1b:8e:8c:34:50:36:89:2a:53:96:eb:7a:f9:ba:9e:ca",
+            "subject" =&gt; "CN=www.example.com",
+            "issuer" =&gt; "CN=www.example.com",
+            "not-before" =&gt; "2022-03-28T10:21:44.000+0200",
+            "not-after" =&gt; "2022-06-26T10:21:44.000+0200",
+            "serial-number" =&gt; "08:f6:f0:9b:2c:35:23:9d",
+            "signature-algorithm" =&gt; "SHA256withDSA",
+            "signature" =&gt; "30:3c:02:1c:56:d1:21:21:47:29:76:15:88:c2:7f:d8:2e:0c:82:d3:fb:40:39:d8:f9:9a:2a:f7:87:1f:5b:ab:02:1c:54:66:42:6e:55:08:d5:4e:85:e3:e7:66:9f:8b:d8:ad:11:5e:63:91:60:9d:c2:a7:7b:ed:59:ce",
+            "version" =&gt; "v3"
+        }]
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="making-read-aliases-even-better"><a class="anchor" href="#making-read-aliases-even-better"></a>Making 'read-aliases' even better</h4>
+<div class="paragraph">
+<p>As mentioned above - the <em>read-aliases</em> command bugged me, its name just does not align with output. So, a new <strong>recursive</strong> option has now been added to this command to actually display information about the aliases. On top of it, in order to take advantage of first improvement a <strong>verbose</strong> option has also been added:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">[standalone@localhost:9990 key-store=serverKS] :read-aliases
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; [
+        "backup",
+        "server2",
+        "server1"
+    ]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>could expand into:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">[standalone@localhost:9990 key-store=serverKS] :read-aliases(recursive=true, verbose=false)
+{
+    "outcome" =&gt; "success",
+    "result" =&gt; {
+        "backup" =&gt; {
+            "alias" =&gt; "backup",
+            "entry-type" =&gt; "PrivateKeyEntry",
+            "creation-date" =&gt; "2019-05-27T08:29:42.093+0200",
+            "certificate-chain" =&gt; [{
+                "type" =&gt; "X.509",
+                "algorithm" =&gt; "DSA",
+                "format" =&gt; "X.509",
+                "sha-1-digest" =&gt; "4d:a9:16:f9:6d:39:da:03:a1:f0:56:bd:58:46:6c:12:16:59:72:f0",
+                "sha-256-digest" =&gt; "73:ea:31:e9:9d:de:38:1a:66:06:e7:66:a6:7d:fe:5d:b6:95:02:58:4f:8e:e0:01:19:ee:90:96:e0:18:2d:a1",
+                "subject" =&gt; "CN=www.example.com",
+                "issuer" =&gt; "CN=www.example.com",
+                "not-before" =&gt; "2019-05-27T08:29:42.000+0200",
+                "not-after" =&gt; "2019-08-25T08:29:42.000+0200",
+                "serial-number" =&gt; "c9:97:3f:38:fe:50:17:2c",
+                "signature-algorithm" =&gt; "SHA256withDSA",
+                "signature" =&gt; "30:3c:02:1c:4f:1a:e9:ea:c2:0a:23:21:91:e8:aa:58:ce:df:b8:a1:ff:02:90:cb:33:b1:99:b2:ca:16:f6:5a:02:1c:38:2a:19:17:fa:c3:a1:1a:dd:bb:fe:96:e9:3a:6d:fa:e9:a6:63:4c:9f:fb:db:ec:dc:49:1e:35",
+                "version" =&gt; "v3"
+            }]
+        },
+        "server2" =&gt; {
+            "alias" =&gt; "server2",
+            "entry-type" =&gt; "PrivateKeyEntry",
+            "creation-date" =&gt; "2019-05-27T08:29:35.118+0200",
+            "certificate-chain" =&gt; [{
+                "type" =&gt; "X.509",
+                "algorithm" =&gt; "DSA",
+                "format" =&gt; "X.509",
+                "sha-1-digest" =&gt; "4e:f9:b4:b4:b3:73:71:36:55:c9:fd:51:d8:62:72:b5:1b:68:00:db",
+                "sha-256-digest" =&gt; "38:a7:22:39:7f:2a:c2:ff:05:71:07:92:ac:b2:1d:b9:e2:0a:f0:b3:46:bf:f8:98:53:7e:d8:27:2d:61:e0:69",
+                "subject" =&gt; "CN=www.example.com",
+                "issuer" =&gt; "CN=www.example.com",
+                "not-before" =&gt; "2019-05-27T08:29:35.000+0200",
+                "not-after" =&gt; "2019-08-25T08:29:35.000+0200",
+                "serial-number" =&gt; "f2:b1:8f:7e:b1:e2:81:07",
+                "signature-algorithm" =&gt; "SHA256withDSA",
+                "signature" =&gt; "30:3d:02:1d:00:b8:c5:7e:32:d4:d0:89:da:5d:aa:3a:ad:a7:fd:ea:43:15:7a:97:72:b9:5f:57:cf:9b:87:23:03:02:1c:43:0c:c2:da:ab:20:cb:9f:2b:e5:42:d3:55:ad:b7:38:21:ff:9d:83:4f:c7:20:30:d2:0a:0b:b5",
+                "version" =&gt; "v3"
+            }]
+        },
+        "server1" =&gt; {
+            "alias" =&gt; "server1",
+            "entry-type" =&gt; "PrivateKeyEntry",
+            "creation-date" =&gt; "2019-05-27T08:29:31.156+0200",
+            "certificate-chain" =&gt; [{
+                "type" =&gt; "X.509",
+                "algorithm" =&gt; "DSA",
+                "format" =&gt; "X.509",
+                "sha-1-digest" =&gt; "5b:dd:a9:06:22:37:03:2e:d0:c8:43:07:38:23:0d:5e:66:cb:a0:a4",
+                "sha-256-digest" =&gt; "e7:41:a2:bc:6d:32:50:09:96:24:9f:83:0d:ef:a4:cb:62:de:38:61:0c:28:c0:d7:a1:10:c2:b1:91:66:72:f2",
+                "subject" =&gt; "CN=www.example.com",
+                "issuer" =&gt; "CN=www.example.com",
+                "not-before" =&gt; "2019-05-27T08:29:31.000+0200",
+                "not-after" =&gt; "2019-08-25T08:29:31.000+0200",
+                "serial-number" =&gt; "f0:2c:f7:ba:47:a2:33:c1",
+                "signature-algorithm" =&gt; "SHA256withDSA",
+                "signature" =&gt; "30:3d:02:1d:00:94:ba:8e:2f:40:34:f6:fe:9f:30:9e:69:36:58:fa:88:bb:f5:78:67:5a:92:cd:89:3e:a9:e1:ba:02:1c:1c:6f:d9:27:db:54:79:2d:76:80:5e:b2:60:0c:60:90:d0:fb:be:cf:03:91:8b:0a:ef:af:58:40",
+                "version" =&gt; "v3"
+            }]
+        }
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="drawbacks"><a class="anchor" href="#drawbacks"></a>Drawbacks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Only one, but this stems from requirement of backwards compatibility. Commands must behave in consistent manner. So in this case, users have to punch extra characters to get rid of excess of characters - kind of ironic, but it can not be helped.
+This means that in case of both commands, default value for <strong>verbose</strong>, is <em>true</em>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of how <em>read-alias</em> and <em>read-aliases</em> commands were improved to better user experience.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
