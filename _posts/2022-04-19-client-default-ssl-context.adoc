@@ -1,0 +1,59 @@
+---
+layout: post
+title: 'Client side default SSL context provider'
+date: 2022-04-19
+tags: ssl tls ssl-context client client-config provider
+synopsis:  An overview of the Elytron client default SSL context provider.
+author: dvilkola
+---
+
+Elytron client now provides a java security provider which can be used to register a JVM wide default `SSLContext`. When this provider is registered with high enough priority and the method SSLContext.getDefault() is called, the provider instantiates and returns an `SSLContext` based on an Elytron client configuration file. So all client libraries that use `SSLContext.getDefault()` will use the Elytron client configuration without having to use Elytron client APIs in their code.
+
+To register this `org.wildfly.security.auth.client.WildFlyElytronClientDefaultSSLContextProvider` provider, a runtime dependency on `wildfly-elytron-client` and `wildfly-client-config` is needed. Then it can be registered the usual way, either statically or dynamically.
+
+The provider loads the SSL context from either the current authentication context obtained from the classpath, or from the authentication context obtained from the file whose path is passed into the security provider either programmatically or as an argument in the `java.security` file. Configuration file passed to the provider directly has precedence over the authentication context from the classpath.
+
+The SSL context configured to match all rules is the one that will be initialized and returned by this provider, see below example:
+
+[source,xml,options="nowrap"]
+----
+<rule use-ssl-context="ssl-context-for-client-provider" />
+----
+
+Or:
+
+[source,java,options="nowrap"]
+----
+myAuthenticationContext.withSsl(MatchRule.ALL, myDefaultSslContext);
+----
+
+To register the provider programmatically and optionally specify the path to an Elytron client configuration file, the following code can be used:
+
+[source,java,options="nowrap"]
+----
+Security.insertProviderAt(new WildFlyElytronClientDefaultSSLContextProvider(CONFIG_FILE_PATH), 1);
+----
+
+Alternatively, the provider can be registered in the `java.security` file and the path to an Elytron client configuration file can be optionally specified as shown below:
+
+[source,bash,options="nowrap"]
+----
+security.provider.1=org.wildfly.security.auth.client.WildFlyElytronClientDefaultSSLContextProvider CONFIG_FILE_PATH
+----
+
+When the provider is registered without a path to file, you can configure the authentication context and surround the `SSLContext.getDefault()` call programmatically, eg.:
+
+[source,java,options="nowrap"]
+----
+myAuthenticationContext.run(() -> {
+    SSLContext.getDefault();
+}
+----
+
+== Example
+
+You can take a look at the example https://github.com/wildfly-security-incubator/elytron-examples/tree/master/client-default-ssl-context-provider[here].
+
+== Summary
+
+New JVM wide default SSL context provider was added to the Elytron client in the WildFly 26.1 release. When you have an SSL context matching all rules configured in Elytron client and you register the `WildFlyElytronClientDefaultSSLContextProvider` provider with high enough priority, then all client libraries that use `SSLContext.getDefault()` will use make use of it.

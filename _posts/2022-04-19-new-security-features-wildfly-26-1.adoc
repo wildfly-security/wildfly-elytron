@@ -1,0 +1,71 @@
+---
+layout: post
+title: 'New Security Features in WildFly 26.1'
+date: 2022-04-19
+tags: release ssl tls security-realm filesystem-realm
+synopsis: An overview of some new security features in WildFly.
+author: fjuma
+---
+
+Since WildFly 26.1 was just released, we wanted to highlight some new security features included
+in this release.
+
+== New Features
+
+=== Automatic Registration of a Client Side Default SSLContext
+
+The Elytron authentication client now provides a Java security provider that can be used
+to register a JVM wide default `SSLContext`. When this provider is registered with high enough
+priority, all client libraries that use `SSLContext.getDefault()` will obtain an `SSLContext` instance
+using the configuration from your Elytron client configuration file. For more details about this new feature
+and an example of how to use it, check out this
+https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context[blog post].
+
+=== Support for Encrypting Filesystem Security Realms
+
+It's now possible to encrypt the identity files that back filesystem security realms using a secret key.
+For all the details about this new feature and a complete guide on how to configure a `filesystem-realm`
+with encryption enabled, take a look at this https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption[blog post].
+
+==== Encrypting an Existing Realm
+
+If you already have a `filesystem-realm` configured, it's possible to encrypt it using a new Elytron Tool
+command. Check out this https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool[blog post]
+for all the details on how to do this.
+
+=== Enhancements for Keystore CLI Operations
+
+The `read-alias` and `read-aliases` operations for key stores in the Elytron subsystem have been updated
+to improve usability. Check out this https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands[blog post] to learn more.
+
+=== Securing WildFly Applications with OpenID Connect on OpenShift
+
+Since WildFly 25, applications deployed to WildFly can be secured with OpenID Connect, without needing to use
+the Keycloak client adapter.
+
+In a recent https://www.youtube.com/watch?v=2gQO4_7Z5CI&t=1s[vlog], we show how to use this feature with WildFly on OpenShift.
+
+== Contributing to Elytron
+
+As always, the WildFly Elytron project welcomes your contributions!
+
+=== How to get started?
+Our https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md[contribution guide] helps guide you through the steps for getting started on the WildFly Elytron project and goes through how to format and submit your first PR.
+
+=== How to pick an issue?
+We have created a list of https://issues.redhat.com/issues/?filter=12364234[good first issues]  to help you get started.
+
+=== How to reach us?
+If you’d like some help or have questions about making contributions to our project, feel free to reach us on https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[chat] or add questions directly on your PR.
+
+== Where to Find More Information
+
+This blog post has given an overview of some new security features in WildFly. Be sure to check out our
+https://wildfly-security.github.io/wildfly-elytron/blog/[blog posts] page, where we have all our
+blog posts on Elytron features. If there is an Elytron topic you’d like to see a blog post on, feel free to
+let us know on WildFly’s https://groups.google.com/forum/#!forum/wildfly[user forum].
+
+To learn more about Elytron, check out our https://wildfly-security.github.io/wildfly-elytron/[site].
+
+
+
