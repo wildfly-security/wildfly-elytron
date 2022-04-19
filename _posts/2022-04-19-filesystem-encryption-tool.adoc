@@ -3,7 +3,7 @@ layout: post
 title: "Encrypting Pre-Existing Filesystem realms"
 date: 2022-04-19
 tags: filesystem-realm encryption tool
-synopsis: An overview of the new filesystem realm encryption tool for the Elytron Filesystem Security Realm.
+synopsis: An overview of the new support for encrypting an existing filesystem realm.
 author: araskar
 link:
 ---
