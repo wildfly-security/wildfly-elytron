@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 'New Security Features in WildFly 26.1'
-date: 2022-04-13
+date: 2022-04-19
 tags: release ssl tls security-realm filesystem-realm
 synopsis: An overview of some new security features in WildFly.
 author: fjuma
