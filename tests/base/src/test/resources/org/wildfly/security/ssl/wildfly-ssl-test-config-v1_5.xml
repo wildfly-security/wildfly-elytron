@@ -36,10 +36,17 @@
                 <trust-store key-store-name="scarab"/>
                 <cipher-suite names="TLS_AES_128_GCM_SHA256"/>
             </ssl-context>
+            <ssl-context name="one-way-ssl-tls13">
+                <trust-store key-store-name="scarab"/>
+                <cipher-suite names="TLS_AES_128_GCM_SHA256"/>
+            </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
             <rule use-ssl-context="two-way-ssl-tls13">
                 <match-host name="test-two-way-tls13.org"/>
+            </rule>
+            <rule use-ssl-context="one-way-ssl-tls13">
+                <match-host name="test-one-way-tls13.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

@@ -90,6 +90,29 @@ public class TLS13AuthenticationTest {
     }
 
     @Test
+    public void testOneWayTLS13() throws Exception {
+        final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/jks/beetles.keystore"));
+
+        SecurityDomain securityDomain = SecurityDomain.builder()
+                .addRealm("KeystoreRealm", securityRealm)
+                .build()
+                .setDefaultRealmName("KeystoreRealm")
+                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
+                .build();
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(CIPHER_SUITE))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE);
+    }
+
+    @Test
     public void testTwoWayTLS13() throws Exception {
         Assume.assumeTrue("Skipping testTwoWayTLS13, test is not being run on JDK 11.",
                 System.getProperty("java.specification.version").equals("11"));
