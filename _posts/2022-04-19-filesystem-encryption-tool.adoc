@@ -9,7 +9,7 @@ link:
 ---
 == Overview
 
-With the addition of the filesystem realm encryption feature *https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-integrity/[outlined here]*, a feature was added to the Elytron Tool to encrypt a pre-existing filesystem realm.
+With the addition of the filesystem realm encryption feature *https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/[outlined here]*, a feature was added to the Elytron Tool to encrypt a pre-existing filesystem realm.
 
 == Method to run the tool
 
@@ -87,7 +87,7 @@ output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
 realm-name:hash-encoding
 hash-encoding:hex
 ----
-To make sure of this descriptor file, the following command would be run:
+To make use of this descriptor file, the following command would be run:
 [source]
 ----
 $ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --bulk-convert ./bulk-encryption-conversion-desc
