@@ -31,11 +31,9 @@ import static org.apache.xml.security.signature.XMLSignature.ALGO_ID_MAC_HMAC_SH
 import static org.apache.xml.security.signature.XMLSignature.ALGO_ID_SIGNATURE_DSA_SHA256;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,7 +76,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
@@ -210,7 +207,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     private final SecretKey secretKey;
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
-    private final File mainIndex;
+    private final ConcurrentHashMap<String, String> mainIndex;
     private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
 
     /**
@@ -221,6 +218,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     public static FileSystemSecurityRealmBuilder builder() {
         return new FileSystemSecurityRealmBuilder();
     }
+
     /**
      * Construct a new instance.
      *
@@ -349,8 +347,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         this(root, nameRewriter, levels, true, hashEncoding, hashCharset, INSTALLED_PROVIDERS, null, null, null);
     }
 
-
-
     /**
      * Construct a new instance.
      *
@@ -360,7 +356,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     public FileSystemSecurityRealm(final Path root, final int levels) {
         this(root, NameRewriter.IDENTITY_REWRITER, levels, true);
     }
-
 
     /**
      * Construct a new instance.
@@ -392,11 +387,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
      * @param hashCharset the character set to use when converting password strings to a byte array. Uses UTF-8 by default and must not be {@code null}
      */
     public FileSystemSecurityRealm(final Path root, final Encoding hashEncoding, final Charset hashCharset) {
-        this(root, NameRewriter.IDENTITY_REWRITER, 2, true, hashEncoding, hashCharset, INSTALLED_PROVIDERS, null, null, null);
+        this(root, NameRewriter.IDENTITY_REWRITER, 2, true, hashEncoding, hashCharset, INSTALLED_PROVIDERS, null, null,
+                null);
     }
 
     public FileSystemSecurityRealm(Path root, int levels, Supplier<Provider[]> providers) {
-        this(root, NameRewriter.IDENTITY_REWRITER, levels, true, Encoding.BASE64, StandardCharsets.UTF_8, providers, null, null, null);
+        this(root, NameRewriter.IDENTITY_REWRITER, levels, true, Encoding.BASE64, StandardCharsets.UTF_8, providers,
+                null, null, null);
     }
 
     public boolean hasIntegrityEnabled() {
@@ -480,7 +477,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         } else {
             lock = realmIdentityLock.lockShared();
         }
-        return new Identity(finalName, pathFor(finalName), lock, hashCharset, hashEncoding, providers, secretKey, privateKey, publicKey, mainIndex);
+        return new Identity(finalName, pathFor(finalName), lock, hashCharset, hashEncoding, providers, secretKey,
+                privateKey, publicKey, mainIndex);
     }
 
     public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
@@ -619,6 +617,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             throw ElytronMessages.log.invalidKeyPairArgument(root.toString());
         }
         ModifiableRealmIdentityIterator realmIterator = this.getRealmIdentityIterator();
+        mainIndex.clear();
         while (realmIterator.hasNext()) {
             Identity identity = (Identity) realmIterator.next();
             identity.writeDigitalSignature(String.valueOf(identity.path), identity.name);
@@ -667,9 +666,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private final SecretKey secretKey;
         private final PrivateKey privateKey;
         private final PublicKey publicKey;
-        private final File mainIndex;
+        private final ConcurrentHashMap<String, String> mainIndex;
 
-        Identity(final String name, final Path path, final IdentityLock lock, final Charset hashCharset, final Encoding hashEncoding, Supplier<Provider[]> providers, final SecretKey secretKey, final PrivateKey privateKey, final PublicKey publicKey, final File mainIndex) {
+        Identity(final String name, final Path path, final IdentityLock lock, final Charset hashCharset,
+                final Encoding hashEncoding, Supplier<Provider[]> providers, final SecretKey secretKey,
+                final PrivateKey privateKey, final PublicKey publicKey,
+                final ConcurrentHashMap<String, String> mainIndex) {
             this.name = name;
             this.path = path;
             this.lock = lock;
@@ -686,7 +688,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return new NamePrincipal(name);
         }
 
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType,
+                final String algorithmName, final AlgorithmParameterSpec parameterSpec)
+                throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
@@ -701,11 +705,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return getCredential(credentialType, null);
         }
 
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName)
+                throws RealmUnavailableException {
             return getCredential(credentialType, algorithmName, null);
         }
 
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName,
+                final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
@@ -716,7 +722,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return null;
         }
 
-        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType,
+                final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidenceType", evidenceType);
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
@@ -755,7 +762,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 if (credential.canVerify(evidence)) {
                     boolean verified = false;
                     if (credential instanceof PasswordCredential) {
-                        verified = ((PasswordCredential )credential).verify(providers, evidence, hashCharset);
+                        verified = ((PasswordCredential) credential).verify(providers, evidence, hashCharset);
                     } else {
                         verified = credential.verify(providers, evidence);
                     }
@@ -768,9 +775,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         List<Credential> loadCredentials() throws RealmUnavailableException {
-            if (!verifyIntegrity()) {
-                throw ElytronMessages.log.invalidIdentitySignature(name);
-            }
             final LoadedIdentity loadedIdentity = loadIdentity(false, true);
             return loadedIdentity == null ? Collections.emptyList() : loadedIdentity.getCredentials();
         }
@@ -785,13 +789,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         public void delete() throws RealmUnavailableException {
             if (System.getSecurityManager() == null) {
                 deletePrivileged();
-                try {
-                    if(publicKey != null) {
-                        deleteMainIndexEntry(mainIndex, path);
-                    }
-                } catch (IOException e) {
-                    throw ElytronMessages.log.unableToAccessMainIndex(mainIndex.toString());
-                }
                 return;
             }
             try {
@@ -807,6 +804,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private Void deletePrivileged() throws RealmUnavailableException {
             try {
                 Files.delete(path);
+                if (publicKey != null) {
+                    mainIndex.remove(path.getFileName().toString());
+                }
                 return null;
             } catch (NoSuchFileException e) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
@@ -818,7 +818,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private String tempSuffix() {
             final ThreadLocalRandom random = ThreadLocalRandom.current();
             char[] array = new char[12];
-            for (int i = 0; i < array.length; i ++) {
+            for (int i = 0; i < array.length; i++) {
                 int idx = random.nextInt(36);
                 if (idx < 26) {
                     array[i] = (char) ('A' + idx);
@@ -841,19 +841,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         public void create() throws RealmUnavailableException {
             if (System.getSecurityManager() == null) {
                 createPrivileged();
-                if(privateKey != null) {
-                    try {
-                        createDigitalSignature(path.toString(), this.name);
-                        writeToMainIndex(this.mainIndex, this.path, this.secretKey);
-                    } catch (IllegalStateException e) {
-                        throw ElytronMessages.log.unableToGenerateSignature(path.toString());
-                    } catch (IOException | GeneralSecurityException e) {
-                        throw ElytronMessages.log.unableToAccessMainIndex(this.mainIndex.toString());
-                    }
-                    if (!verifyIntegrity()) {
-                        throw ElytronMessages.log.invalidIdentitySignature(this.name);
-                    }
-                }
                 return;
             }
             try {
@@ -870,8 +857,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             for (;;) {
                 final Path tempPath = tempPath();
                 final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
-                try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
-                    try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
+                try (OutputStream outputStream = new BufferedOutputStream(
+                        Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
+                    try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(
+                            xmlOutputFactory.createXMLStreamWriter(outputStream))) {
                         String namespace = "";
                         if (privateKey != null) {
                             namespace = Version.VERSION_1_2.getNamespace();
@@ -914,7 +903,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } catch (IOException ignored) {
                     // nothing we can do
                 }
-                if(privateKey != null) {
+                if (privateKey != null) {
                     try {
                         writeDigitalSignature(path.toString(), this.name);
                         writeToMainIndex(this.mainIndex, this.path, this.secretKey);
@@ -928,14 +917,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        public void setCredentials(final Collection<? extends Credential> credentials) throws RealmUnavailableException {
+        public void setCredentials(final Collection<? extends Credential> credentials)
+                throws RealmUnavailableException {
             Assert.checkNotNullParam("credential", credentials);
             final LoadedIdentity loadedIdentity = loadIdentity(false, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
 
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials), loadedIdentity.getAttributes(), hashEncoding);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials),
+                    loadedIdentity.getAttributes(), hashEncoding);
             replaceIdentity(newIdentity);
         }
 
@@ -945,7 +936,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes, hashEncoding);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes,
+                    hashEncoding);
             replaceIdentity(newIdentity);
         }
 
@@ -964,7 +956,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 return;
             }
             try {
-                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> replaceIdentityPrivileged(newIdentity));
+                AccessController
+                        .doPrivileged((PrivilegedExceptionAction<Void>) () -> replaceIdentityPrivileged(newIdentity));
             } catch (PrivilegedActionException e) {
                 if (e.getException() instanceof RealmUnavailableException) {
                     throw (RealmUnavailableException) e.getException();
@@ -981,10 +974,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 final Path tempPath = tempPath();
                 try {
                     final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
-                    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
-                        try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
+                    try (OutputStream outputStream = new BufferedOutputStream(
+                            Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
+                        try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(
+                                xmlOutputFactory.createXMLStreamWriter(outputStream))) {
                             writeIdentity(holder.getXmlStreamWriter(), newIdentity);
-                        } catch (XMLStreamException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateEncodingException e) {
+                        } catch (XMLStreamException | InvalidKeySpecException | NoSuchAlgorithmException
+                                | CertificateEncodingException e) {
                             throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
                         } catch (GeneralSecurityException e) {
                             throw ElytronMessages.log.fileSystemRealmEncryptionFailed(e);
@@ -1046,8 +1042,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         private Version requiredVersion(final LoadedIdentity identityToWrite) {
-            // As new functionality is added we will identify if we need to use a later version
-            // if new functionality is used then use the required schema version otherwise fallback
+            // As new functionality is added we will identify if we need to use a later
+            // version
+            // if new functionality is used then use the required schema version otherwise
+            // fallback
             // to an older version.
 
             if (privateKey != null) {
@@ -1059,7 +1057,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private void writeIdentity(final XMLStreamWriter streamWriter, final LoadedIdentity newIdentity) throws XMLStreamException, GeneralSecurityException {
+        private void writeIdentity(final XMLStreamWriter streamWriter, final LoadedIdentity newIdentity)
+                throws XMLStreamException, InvalidKeySpecException, NoSuchAlgorithmException, GeneralSecurityException {
             streamWriter.writeStartDocument();
             streamWriter.writeCharacters("\n");
             streamWriter.writeStartElement("identity");
@@ -1077,8 +1076,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                             final OneTimePassword otp = (OneTimePassword) password;
                             streamWriter.writeStartElement("otp");
                             streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
-                            streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
-                            streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed().getBytes(StandardCharsets.US_ASCII)).base64Encode().drainToString());
+                            streamWriter.writeAttribute("hash",
+                                    ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
+                            streamWriter.writeAttribute("seed",
+                                    ByteIterator.ofBytes(otp.getSeed().getBytes(StandardCharsets.US_ASCII))
+                                            .base64Encode().drainToString());
                             streamWriter.writeAttribute("sequence", Integer.toString(otp.getSequenceNumber()));
                             streamWriter.writeEndElement();
                         } else {
@@ -1090,7 +1092,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
                             if (secretKey != null) {
                                 format = ENCRYPTION_FORMAT;
-                                passwordString = ByteIterator.ofBytes(CipherUtil.encrypt(encoded, secretKey)).base64Encode().drainToString();
+                                passwordString = ByteIterator.ofBytes(CipherUtil.encrypt(encoded, secretKey))
+                                        .base64Encode().drainToString();
                             } else if (encoded != null) {
                                 if (newIdentity.getHashEncoding() == Encoding.HEX) {
                                     format = HEX;
@@ -1124,8 +1127,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     for (String value : entry) {
                         streamWriter.writeCharacters("\n        ");
                         streamWriter.writeStartElement("attribute");
-                        streamWriter.writeAttribute("name", secretKey != null ? CipherUtil.encrypt(entry.getKey(), secretKey) : entry.getKey());
-                        streamWriter.writeAttribute("value", secretKey != null ? CipherUtil.encrypt(value, secretKey) : value);
+                        streamWriter.writeAttribute("name",
+                                secretKey != null ? CipherUtil.encrypt(entry.getKey(), secretKey) : entry.getKey());
+                        streamWriter.writeAttribute("value",
+                                secretKey != null ? CipherUtil.encrypt(value, secretKey) : value);
                         streamWriter.writeEndElement();
                     }
                 } while (entryIter.hasNext());
@@ -1147,15 +1152,19 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             final LoadedIdentity loadedIdentity = loadIdentity(true, false);
-            return loadedIdentity == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
+            return loadedIdentity == null ? AuthorizationIdentity.EMPTY
+                    : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
         }
 
-        private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
+        private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes)
+                throws RealmUnavailableException {
             if (System.getSecurityManager() == null) {
                 return loadIdentityPrivileged(skipCredentials, skipAttributes);
             }
             try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<LoadedIdentity>) () -> loadIdentityPrivileged(skipCredentials, skipAttributes));
+                return AccessController.doPrivileged(
+                        (PrivilegedExceptionAction<LoadedIdentity>) () -> loadIdentityPrivileged(skipCredentials,
+                                skipAttributes));
             } catch (PrivilegedActionException e) {
                 if (e.getException() instanceof RealmUnavailableException) {
                     throw (RealmUnavailableException) e.getException();
@@ -1164,7 +1173,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        protected LoadedIdentity loadIdentityPrivileged(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
+        protected LoadedIdentity loadIdentityPrivileged(final boolean skipCredentials, final boolean skipAttributes)
+                throws RealmUnavailableException {
             if (!verifyIntegrity()) {
                 throw new RealmUnavailableException(ElytronMessages.log.invalidIdentitySignature(name));
             }
@@ -1174,7 +1184,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
                 inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
                 inputFactory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);
-                try (final AutoCloseableXMLStreamReaderHolder holder = new AutoCloseableXMLStreamReaderHolder(inputFactory.createXMLStreamReader(inputStream, "UTF-8"))) {
+                try (final AutoCloseableXMLStreamReaderHolder holder = new AutoCloseableXMLStreamReaderHolder(
+                        inputFactory.createXMLStreamReader(inputStream, "UTF-8"))) {
                     final XMLStreamReader streamReader = holder.getXmlStreamReader();
                     return parseIdentity(streamReader, skipCredentials, skipAttributes);
                 } catch (XMLStreamException e) {
@@ -1187,11 +1198,14 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
+        private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials,
+                final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int tag = streamReader.nextTag();
             Version version;
-            if (tag != START_ELEMENT || ((version = identifyVersion(streamReader)) == null) || ! "identity".equals(streamReader.getLocalName())) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+            if (tag != START_ELEMENT || ((version = identifyVersion(streamReader)) == null)
+                    || !"identity".equals(streamReader.getLocalName())) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), name);
             }
             return parseIdentityContents(streamReader, version, skipCredentials, skipAttributes);
         }
@@ -1200,10 +1214,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return KNOWN_NAMESPACES.get(streamReader.getNamespaceURI());
         }
 
-        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final Version version, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
+        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final Version version,
+                final boolean skipCredentials, final boolean skipAttributes)
+                throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), name);
             }
             List<Credential> credentials = Collections.emptyList();
             Attributes attributes = Attributes.EMPTY;
@@ -1212,24 +1229,27 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             for (;;) {
                 if (streamReader.isEndElement()) {
                     if (attributes == Attributes.EMPTY && !skipAttributes) {
-                        //Since this could be a use-case wanting to modify the attributes, make sure that we have a
-                        //modifiable version of Attributes;
+                        // Since this could be a use-case wanting to modify the attributes, make sure
+                        // that we have a
+                        // modifiable version of Attributes;
                         attributes = new MapAttributes();
                     }
                     return new LoadedIdentity(name, credentials, attributes, hashEncoding);
                 }
-                if ( !(version.getNamespace().equals(streamReader.getNamespaceURI())) && !(XMLSignature.XMLNS.equals(streamReader.getNamespaceURI())) ) {
+                if (!(version.getNamespace().equals(streamReader.getNamespaceURI()))
+                        && !(XMLSignature.XMLNS.equals(streamReader.getNamespaceURI()))) {
                     // Mixed versions unsupported.
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
-                if (! gotCredentials && "credentials".equals(streamReader.getLocalName())) {
+                if (!gotCredentials && "credentials".equals(streamReader.getLocalName())) {
                     gotCredentials = true;
                     if (skipCredentials) {
                         consumeContent(streamReader);
                     } else {
                         credentials = parseCredentials(streamReader, version);
                     }
-                } else if (! gotAttributes && "attributes".equals(streamReader.getLocalName())) {
+                } else if (!gotAttributes && "attributes".equals(streamReader.getLocalName())) {
                     gotAttributes = true;
                     if (skipAttributes) {
                         consumeContent(streamReader);
@@ -1241,19 +1261,22 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private List<Credential> parseCredentials(final XMLStreamReader streamReader, final Version version) throws RealmUnavailableException, XMLStreamException {
+        private List<Credential> parseCredentials(final XMLStreamReader streamReader, final Version version)
+                throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), name);
             }
             if (streamReader.nextTag() == END_ELEMENT) {
                 return Collections.emptyList();
             }
             List<Credential> credentials = new ArrayList<>();
             do {
-                if (! version.getNamespace().equals(streamReader.getNamespaceURI()) ) {
+                if (!version.getNamespace().equals(streamReader.getNamespaceURI())) {
                     // Mixed versions unsupported.
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
                     parsePassword(credentials, streamReader, version);
@@ -1264,21 +1287,24 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } else if ("otp".equals(streamReader.getLocalName())) {
                     parseOtp(credentials, streamReader);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             } while (streamReader.nextTag() != END_ELEMENT);
             return credentials;
         }
 
-        private void parseCredential(final XMLStreamReader streamReader, CredentialParseFunction function) throws RealmUnavailableException, XMLStreamException {
+        private void parseCredential(final XMLStreamReader streamReader, CredentialParseFunction function)
+                throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             String name = null;
             String algorithm = null;
             String format = null;
-            for (int i = 0; i < attributeCount; i ++) {
+            for (int i = 0; i < attributeCount; i++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
                 if ("name".equals(localName)) {
@@ -1288,60 +1314,76 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } else if ("format".equals(localName)) {
                     format = streamReader.getAttributeValue(i);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             }
             final String text = streamReader.getElementText().trim();
             function.parseCredential(algorithm, format, text);
         }
 
-        private void parseCertificate(final List<Credential> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+        private void parseCertificate(final List<Credential> credentials, final XMLStreamReader streamReader)
+                throws RealmUnavailableException, XMLStreamException {
             parseCredential(streamReader, (algorithm, format, text) -> {
-                if (algorithm == null) algorithm = "X.509";
-                if (format == null) format = X509_FORMAT;
+                if (algorithm == null)
+                    algorithm = "X.509";
+                if (format == null)
+                    format = X509_FORMAT;
                 try {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
-                    credentials.add(new X509CertificateChainPublicCredential((X509Certificate) certificateFactory.generateCertificate(
-                        CodePointIterator.ofString(text).base64Decode().asInputStream())));
+                    credentials.add(new X509CertificateChainPublicCredential(
+                            (X509Certificate) certificateFactory.generateCertificate(
+                                    CodePointIterator.ofString(text).base64Decode().asInputStream())));
                 } catch (CertificateException | ClassCastException e) {
-                    throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
 
-        private void parsePublicKey(final List<Credential> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+        private void parsePublicKey(final List<Credential> credentials, final XMLStreamReader streamReader)
+                throws RealmUnavailableException, XMLStreamException {
             parseCredential(streamReader, (algorithm, format, text) -> {
                 if (algorithm == null) {
-                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 if (format == null) {
                     format = X509_FORMAT;
                 } else if (!X509_FORMAT.equals(format)) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 try {
                     KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
-                    credentials.add(new PublicKeyCredential(keyFactory.generatePublic(new PKCS8EncodedKeySpec(CodePointIterator.ofString(text).base64Decode().drain()))));
+                    credentials.add(new PublicKeyCredential(keyFactory.generatePublic(
+                            new PKCS8EncodedKeySpec(CodePointIterator.ofString(text).base64Decode().drain()))));
                 } catch (NoSuchAlgorithmException e) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), name, e);
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path,
+                            streamReader.getLocation().getLineNumber(), name, e);
                 } catch (InvalidKeySpecException e) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
 
-        private void parsePassword(final List<Credential> credentials, final XMLStreamReader streamReader, final Version version) throws XMLStreamException, RealmUnavailableException {
+        private void parsePassword(final List<Credential> credentials, final XMLStreamReader streamReader,
+                final Version version) throws XMLStreamException, RealmUnavailableException {
             parseCredential(streamReader, (algorithm, format, text) -> {
                 try {
                     if (ENCRYPTION_FORMAT.equals(format)) {
-                        if (! version.isAtLeast(Version.VERSION_1_1)) {
-                            throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                        if (!version.isAtLeast(Version.VERSION_1_1)) {
+                            throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                                    streamReader.getLocation().getLineNumber(), name);
                         }
                         if (algorithm == null) {
-                            throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                            throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path,
+                                    streamReader.getLocation().getLineNumber(), name);
                         }
                         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, providers);
-                        byte[] encryptedPasswordBytes = CodePointIterator.ofChars(text.toCharArray()).base64Decode().drain();
+                        byte[] encryptedPasswordBytes = CodePointIterator.ofChars(text.toCharArray()).base64Decode()
+                                .drain();
                         byte[] decryptedPasswordBytes;
                         try {
                             decryptedPasswordBytes = CipherUtil.decrypt(encryptedPasswordBytes, secretKey);
@@ -1353,11 +1395,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         if (passwordSpec != null) {
                             credentials.add(new PasswordCredential(passwordFactory.generatePassword(passwordSpec)));
                         } else {
-                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name);
+                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path,
+                                    streamReader.getLocation().getLineNumber(), name);
                         }
                     } else if (BASE64_FORMAT.equals(format) || HEX.equals(format)) {
                         if (algorithm == null) {
-                            throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                            throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path,
+                                    streamReader.getLocation().getLineNumber(), name);
                         }
                         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, providers);
                         byte[] passwordBytes;
@@ -1371,20 +1415,24 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         if (passwordSpec != null) {
                             credentials.add(new PasswordCredential(passwordFactory.generatePassword(passwordSpec)));
                         } else {
-                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name);
+                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path,
+                                    streamReader.getLocation().getLineNumber(), name);
                         }
                     } else if (MCF_FORMAT.equals(format)) {
                         credentials.add(new PasswordCredential(ModularCrypt.decode(text)));
                     } else {
-                        throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), name);
+                        throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path,
+                                streamReader.getLocation().getLineNumber(), name);
                     }
                 } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
 
-        private void parseOtp(final List<Credential> credentials, final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+        private void parseOtp(final List<Credential> credentials, final XMLStreamReader streamReader)
+                throws XMLStreamException, RealmUnavailableException {
             String name = null;
             String algorithm = null;
             byte[] hash = null;
@@ -1392,10 +1440,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             int sequenceNumber = 0;
 
             final int attributeCount = streamReader.getAttributeCount();
-            for (int i = 0; i < attributeCount; i ++) {
+            for (int i = 0; i < attributeCount; i++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
                 if ("name".equals(localName)) {
@@ -1403,38 +1452,48 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 } else if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("hash".equals(localName)) {
-                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Base64Alphabet.STANDARD, false).drain();
+                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i))
+                            .base64Decode(Base64Alphabet.STANDARD, false).drain();
                 } else if ("seed".equals(localName)) {
-                    seed = new String(CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode(Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII);
+                    seed = new String(CodePointIterator.ofString(streamReader.getAttributeValue(i))
+                            .base64Decode(Base64Alphabet.STANDARD, false).drain(), StandardCharsets.US_ASCII);
                 } else if ("sequence".equals(localName)) {
                     sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             }
 
             if (streamReader.nextTag() != END_ELEMENT) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), name);
             }
 
             try {
                 if (algorithm == null) {
-                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, providers);
-                Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
+                Password password = passwordFactory
+                        .generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
                 credentials.add(new PasswordCredential(password));
             } catch (InvalidKeySpecException e) {
-                throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path, streamReader.getLocation().getLineNumber(), name, e);
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path,
+                        streamReader.getLocation().getLineNumber(), name, e);
             } catch (NoSuchAlgorithmException e) {
-                throw ElytronMessages.log.fileSystemRealmInvalidOtpAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name, e);
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpAlgorithm(algorithm, path,
+                        streamReader.getLocation().getLineNumber(), name, e);
             }
         }
 
-        private Attributes parseAttributes(final XMLStreamReader streamReader, final Version version) throws RealmUnavailableException, XMLStreamException {
+        private Attributes parseAttributes(final XMLStreamReader streamReader, final Version version)
+                throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), name);
             }
             int tag = streamReader.nextTag();
             if (tag == END_ELEMENT) {
@@ -1442,54 +1501,62 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
             Attributes attributes = new MapAttributes();
             do {
-                if (! version.getNamespace().equals(streamReader.getNamespaceURI()) ) {
+                if (!version.getNamespace().equals(streamReader.getNamespaceURI())) {
 
                     // Mixed versions unsupported.
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("attribute".equals(streamReader.getLocalName())) {
                     parseAttribute(streamReader, attributes);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), name);
                 }
             } while (streamReader.nextTag() == START_ELEMENT);
             return attributes;
         }
 
-        private void parseAttribute(final XMLStreamReader streamReader, final Attributes attributes) throws XMLStreamException, RealmUnavailableException {
+        private void parseAttribute(final XMLStreamReader streamReader, final Attributes attributes)
+                throws XMLStreamException, RealmUnavailableException {
             String name = null;
             String value = null;
             final int attributeCount = streamReader.getAttributeCount();
             for (int i = 0; i < attributeCount; i++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), this.name);
                 }
                 if ("name".equals(streamReader.getAttributeLocalName(i))) {
                     name = streamReader.getAttributeValue(i);
                 } else if ("value".equals(streamReader.getAttributeLocalName(i))) {
                     value = streamReader.getAttributeValue(i);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                            streamReader.getLocation().getLineNumber(), this.name);
                 }
             }
             if (name == null) {
-                throw ElytronMessages.log.fileSystemRealmMissingAttribute("name", path, streamReader.getLocation().getLineNumber(), this.name);
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("name", path,
+                        streamReader.getLocation().getLineNumber(), this.name);
             }
             if (value == null) {
-                throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path, streamReader.getLocation().getLineNumber(), this.name);
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path,
+                        streamReader.getLocation().getLineNumber(), this.name);
             }
             if (secretKey != null) {
                 try {
                     attributes.addLast(CipherUtil.decrypt(name, secretKey), CipherUtil.decrypt(value, secretKey));
-                } catch (GeneralSecurityException e){
+                } catch (GeneralSecurityException e) {
                     throw ElytronMessages.log.fileSystemRealmDecryptionFailed(e);
                 }
             } else {
                 attributes.addLast(name, value);
             }
             if (streamReader.nextTag() != END_ELEMENT) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path,
+                        streamReader.getLocation().getLineNumber(), this.name);
             }
         }
 
@@ -1552,9 +1619,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 DOMValidateContext valContext = new DOMValidateContext(publicKey, nl.item(0));
                 XMLSignature signature = fac.unmarshalXMLSignature(valContext);
                 boolean coreValidity = signature.validate(valContext);
-                ElytronMessages.log.tracef("FileSystemSecurityRealm - verification against signature for credential [%s] = %b", name, coreValidity);
+                ElytronMessages.log.tracef(
+                        "FileSystemSecurityRealm - verification against signature for credential [%s] = %b", name,
+                        coreValidity);
                 return coreValidity;
-           } catch (ParserConfigurationException | IOException | MarshalException | XMLSignatureException | SAXException e) {
+            } catch (ParserConfigurationException | IOException | MarshalException | XMLSignatureException
+                    | SAXException e) {
                 return false;
             }
         }
@@ -1573,11 +1643,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 }
                 DOMSignContext dsc = new DOMSignContext(this.privateKey, elem);
                 XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
-                Reference ref = fac.newReference
-                        ("", fac.newDigestMethod(DigestMethod.SHA256, null),
-                                Collections.singletonList
-                                        (fac.newTransform(Transform.ENVELOPED,
-                                                (TransformParameterSpec) null)), null, null);
+                Reference ref = fac.newReference("", fac.newDigestMethod(DigestMethod.SHA256, null),
+                        Collections.singletonList(fac.newTransform(Transform.ENVELOPED,
+                                (TransformParameterSpec) null)),
+                        null, null);
                 String signatureMethod = "";
                 switch (this.publicKey.getAlgorithm()) {
                     case "DSA":
@@ -1593,12 +1662,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         signatureMethod = ALGO_ID_SIGNATURE_ECDSA_SHA256;
                         break;
                 }
-                SignedInfo si = fac.newSignedInfo
-                        (fac.newCanonicalizationMethod
-                                        (CanonicalizationMethod.INCLUSIVE,
-                                                (C14NMethodParameterSpec) null),
-                                fac.newSignatureMethod(signatureMethod, null),
-                                Collections.singletonList(ref));
+                SignedInfo si = fac.newSignedInfo(fac.newCanonicalizationMethod(CanonicalizationMethod.INCLUSIVE,
+                        (C14NMethodParameterSpec) null),
+                        fac.newSignatureMethod(signatureMethod, null),
+                        Collections.singletonList(ref));
                 KeyInfoFactory kif = fac.getKeyInfoFactory();
                 KeyValue kv = kif.newKeyValue(this.publicKey);
                 KeyInfo ki = kif.newKeyInfo(Collections.singletonList(kv));
@@ -1613,94 +1680,46 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                 ElytronMessages.log.tracef("FileSystemSecurityRealm - signature against file updated [%s]", name);
                 writer.close();
 
-            } catch (ParserConfigurationException | IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException |
-                    KeyException | XMLSignatureException | MarshalException | TransformerException | SAXException e) {
+            } catch (ParserConfigurationException | IOException | NoSuchAlgorithmException
+                    | InvalidAlgorithmParameterException | KeyException | XMLSignatureException | MarshalException
+                    | TransformerException | SAXException e) {
                 throw ElytronMessages.log.unableToGenerateSignature(path);
             }
         }
 
-        private static void writeToMainIndex(File mainIndex, Path path, SecretKey secretKey) throws IOException, GeneralSecurityException {
-            FileWriter mainIndexWriter = new FileWriter(mainIndex, true);
+        private static void writeToMainIndex(ConcurrentHashMap<String, String> mainIndex, Path path,
+                SecretKey secretKey) throws IOException, GeneralSecurityException {
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
             String checksum = getChecksum(messageDigest, new File(path.toString()));
             String identityFilename = path.getFileName().toString();
-            if(secretKey != null) {
+            if (secretKey != null) {
                 checksum = CipherUtil.encrypt(checksum, secretKey);
-                identityFilename = CipherUtil.encrypt(identityFilename, secretKey);
             }
-            mainIndexWriter.append(identityFilename).append(":").append(checksum).append('\n');
-            mainIndexWriter.close();
+            mainIndex.put(identityFilename, checksum);
         }
 
-        private static void updateMainIndex(File mainIndex, Path path, SecretKey secretKey) throws IOException, GeneralSecurityException {
-            BufferedReader reader = new BufferedReader(new FileReader(mainIndex));
+        private static boolean validateChecksum(ConcurrentHashMap<String, String> mainIndex, Path path,
+                SecretKey secretKey) throws IOException, GeneralSecurityException {
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-            String checksum = getChecksum(messageDigest, new File(path.toString()));
+            String currentFileChecksum = getChecksum(messageDigest, new File(path.toString()));
             String identityFilename = path.getFileName().toString();
-            String line;
-            ArrayList<String> fileContents = new ArrayList<String>();
-            while((line = reader.readLine()) != null) {
-                fileContents.add(line);
-            }
-            reader.close();
+            String mainIndexChecksum = "";
 
-            for (int i = 0; i < fileContents.size(); i++) {
-                String currentIdentity = fileContents.get(i).split(":")[0];
-                if (secretKey != null) {
-                    currentIdentity = CipherUtil.decrypt(currentIdentity, secretKey);
-                    checksum = CipherUtil.encrypt(checksum, secretKey);
-                }
-                if (currentIdentity.equals(identityFilename)) {
-                    fileContents.set(i, fileContents.get(i).split(":")[0] + ":" + checksum);
-                    break;
-                }
+            if (secretKey != null) {
+                mainIndexChecksum = CipherUtil.decrypt(mainIndex.get(identityFilename), secretKey);
+            } else {
+                mainIndexChecksum = mainIndex.get(identityFilename);
             }
-            FileWriter writer = new FileWriter(mainIndex);
-            writer.write(String.join("\n", fileContents));
-            writer.close();
+            // If identity entry not found in main index return false
+            if (mainIndexChecksum == null) {
+                return false;
+            }
+            return mainIndexChecksum.equals(currentFileChecksum);
         }
 
-        private static boolean validateChecksum(File mainIndex, Path path, SecretKey secretKey) throws IOException, GeneralSecurityException {
-            try {
-                Scanner mainIndexScanner = new Scanner(mainIndex);
-                MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-                String currentFileChecksum = getChecksum(messageDigest, new File(path.toString()));
-                String identityFilename = path.getFileName().toString();
-                String data, mainIndexFilename, mainIndexChecksum;
-                while (mainIndexScanner.hasNextLine()) {
-                    data = mainIndexScanner.nextLine();
-                    mainIndexFilename = data.split(":")[0];
-                    mainIndexChecksum = data.split(":")[1];
-                    if(secretKey != null) {
-                        mainIndexFilename = CipherUtil.decrypt(mainIndexFilename, secretKey);
-                        mainIndexChecksum = CipherUtil.decrypt(mainIndexChecksum, secretKey);
-                    }
-                    if(mainIndexFilename.equals(identityFilename)) {
-                        mainIndexScanner.close();
-                        return mainIndexChecksum.equals(currentFileChecksum);
-                    }
-                }
-                mainIndexScanner.close();
-            } catch (FileNotFoundException e) {
-                throw ElytronMessages.log.unableToAccessMainIndex(path.toString());
-            }
-            return false;
-        }
-
-        private static void deleteMainIndexEntry(File mainIndex, Path path) throws IOException {
-            BufferedReader reader = new BufferedReader(new FileReader(mainIndex));
-            String line;
-            StringBuilder fileContents = new StringBuilder();
-            while((line = reader.readLine()) != null) {
-                fileContents.append(line).append("\r\n");
-            }
-            reader.close();
-            int beginningIndex = fileContents.indexOf(path.getFileName().toString());
-            int endIndex = fileContents.indexOf("\n", beginningIndex);
-            fileContents.delete(beginningIndex, endIndex+"\n".length());
-            FileWriter writer = new FileWriter(mainIndex);
-            writer.write(fileContents.toString());
-            writer.close();
+        private static void deleteMainIndexEntry(ConcurrentHashMap<String, String> mainIndex, Path path)
+                throws IOException {
+            mainIndex.remove(path.getFileName().toString());
         }
 
         private static String getChecksum(MessageDigest digest, File file) throws IOException {
@@ -1731,7 +1750,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private final Attributes attributes;
         private final Encoding hashEncoding;
 
-        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes, final Encoding hashEncoding) {
+        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes,
+                final Encoding hashEncoding) {
             this.name = name;
             this.credentials = credentials;
             this.attributes = attributes;
