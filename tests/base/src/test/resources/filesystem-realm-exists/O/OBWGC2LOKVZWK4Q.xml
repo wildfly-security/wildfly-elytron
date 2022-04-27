@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:identity:1.1">
+    <credentials>
+        <password algorithm="bcrypt" format="enc_base64">RUxZAUMQRPYts0Gi2Q6araZKf827kci9VHQGuFP9oKwFEWL8qZ6WuumKy22bUXuCkTk1yTs28FRS7LchPwVznTTmiCm6pg==</password>
+    </credentials>
+    <attributes>
+        <attribute name="RUxZAUMQPpksaqQzQH+JBQKj0tj8ZTdaqTEA4jrffEtjy353054=" value="RUxZAUMQceRnAqRIqP+RlLsEpk2XcPRHSxGER4YaaPbbD4xULG8="></attribute>
+        <attribute name="RUxZAUMQua+3lCKWCx0RtACYfdgmKtPPU4MJJrn0ymRxbvmXKA8=" value="RUxZAUMQP9mDah/SF0vW2gAr2ExPF8pzCq03YEmatLK6z3f1NOI="></attribute>
+        <attribute name="RUxZAUMQ87/ut3L8jNM2HeguOwAB67FHdrCNxX9XnzVovgB3G1M=" value="RUxZAUMQ4YPOwH33KepL5p2kd6w2vDyxTscZZ+vWcF73IoZJ7nU="></attribute>
+        <attribute name="RUxZAUMQaOgye6ZWQXS1MBRxvQLDRJsGMoYNZSGnVolMcRV+AxA=" value="RUxZAUMQspw8QNKi8iDxXNuKmg7JH7TdQS0nr+4srjWCYvyC2KY="></attribute>
+        <attribute name="RUxZAUMQi3gxFNSmroo+WAJIt0/JsD4NstD/YHljkgmdysZN86g=" value="RUxZAUMQKO//xtTco9R2X96eH3+wEp3CJfhML3uLgd9ruPstDe8="></attribute>
+    </attributes>
+</identity>
