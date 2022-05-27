@@ -75,13 +75,28 @@ public class TLS13AuthenticationTest {
     private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
 
     private static CAGenerationTool caGenerationTool = null;
+    private static SecurityDomain securityDomain = null;
 
     @BeforeClass
     public static void setUp() throws Exception{
+        Assume.assumeTrue("Skipping TLS13AuthenticationTest suite, tests are not being run on JDK 11.",
+                System.getProperty("java.specification.version").equals("11"));
+
         caGenerationTool = CAGenerationTool.builder()
                 .setBaseDir(CA_JKS_LOCATION)
                 .setRequestIdentities(Identity.LADYBIRD, Identity.SCARAB)
                 .build();
+
+        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/jks/beetles.keystore"));
+        securityDomain = SecurityDomain.builder()
+                .addRealm("KeystoreRealm", securityRealm)
+                .build()
+                .setDefaultRealmName("KeystoreRealm")
+                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
+                .build();
+
     }
 
     @AfterClass
@@ -91,20 +106,7 @@ public class TLS13AuthenticationTest {
 
     @Test
     public void testTwoWayTLS13() throws Exception {
-        Assume.assumeTrue("Skipping testTwoWayTLS13, test is not being run on JDK 11.",
-                System.getProperty("java.specification.version").equals("11"));
-
         final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
-        SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/jks/beetles.keystore"));
-
-        SecurityDomain securityDomain = SecurityDomain.builder()
-                .addRealm("KeystoreRealm", securityRealm)
-                .build()
-                .setDefaultRealmName("KeystoreRealm")
-                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
-                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
-                .build();
 
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
@@ -114,12 +116,69 @@ public class TLS13AuthenticationTest {
                 .setNeedClientAuth(true)
                 .build().create();
 
-        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE);
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-two-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
     }
 
-    private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, String clientConfigFileName, String expectedCipherSuite) throws Exception {
+    @Test
+    public void testDifferentPreferredTLS13Suites() throws Exception {
+        final String REQUIRED_CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
+        final String PREFERRED_CIPHER_SUITE = "TLS_AES_256_GCM_SHA384";
+        final String SERVER_CIPHER_SUITE = String.format("%s:%s", PREFERRED_CIPHER_SUITE, REQUIRED_CIPHER_SUITE);
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(SERVER_CIPHER_SUITE))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-different-preferred-tls13-suites.org", "wildfly-ssl-test-config-v1_5.xml", REQUIRED_CIPHER_SUITE, true);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testClientTLS12Only() throws Exception {
+        final String TLS13_CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
+        final String TLS12_CIPHER_SUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256"; // TLS v1.2
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setCipherSuiteSelector(CipherSuiteSelector.aggregate(
+                                CipherSuiteSelector.fromNamesString(TLS13_CIPHER_SUITE),
+                                CipherSuiteSelector.fromString(TLS12_CIPHER_SUITE)
+                ))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-client-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", TLS12_CIPHER_SUITE, false);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testServerTLS12Only() throws Exception {
+        final String SERVER_CIPHER_SUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256"; // TLS v1.2
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(securityDomain)
+                .setCipherSuiteSelector(CipherSuiteSelector.fromString(SERVER_CIPHER_SUITE))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", SERVER_CIPHER_SUITE, false);
+        assertNotNull(identity);
+        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+    }
+
+    private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, String clientConfigFileName, String expectedCipherSuite, boolean expectTLS13) throws Exception {
         System.setProperty("wildfly.config.url", SSLAuthenticationTest.class.getResource(clientConfigFileName).toExternalForm());
         AccessController.doPrivileged((PrivilegedAction<Integer>) () -> Security.insertProviderAt(new WildFlyElytronProvider(), 1));
 
@@ -153,10 +212,16 @@ public class TLS13AuthenticationTest {
 
         try {
             if (expectedCipherSuite != null) {
-                assertEquals("TLSv1.3", serverSession.getProtocol());
-                assertEquals("TLSv1.3", clientSession.getProtocol());
-                assertEquals("TLS_AES_128_GCM_SHA256", clientSession.getCipherSuite());
-                assertEquals("TLS_AES_128_GCM_SHA256", serverSession.getCipherSuite());
+                if(expectTLS13) {
+                    assertEquals("TLSv1.3", serverSession.getProtocol());
+                    assertEquals("TLSv1.3", clientSession.getProtocol());
+                } else {
+                    assertEquals("TLSv1.2", serverSession.getProtocol());
+                    assertEquals("TLSv1.2", clientSession.getProtocol());
+                }
+
+                assertEquals(expectedCipherSuite, serverSession.getCipherSuite());
+                assertEquals(expectedCipherSuite, clientSession.getCipherSuite());
             }
             return (SecurityIdentity) serverSession.getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
         } finally {
