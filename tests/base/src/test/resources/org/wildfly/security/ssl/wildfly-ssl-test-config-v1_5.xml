@@ -36,10 +36,40 @@
                 <trust-store key-store-name="scarab"/>
                 <cipher-suite names="TLS_AES_128_GCM_SHA256"/>
             </ssl-context>
+            <ssl-context name="client-tls12-only">
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="scarab"/>
+                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256"/>
+            </ssl-context>
+            <ssl-context name="server-tls12-only">
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="scarab"/>
+                <cipher-suite selector="TLS_RSA_WITH_AES_128_CBC_SHA256" names="TLS_AES_128_GCM_SHA256"/>
+            </ssl-context>
+            <ssl-context name="different-preferred-tls13-suites">
+                <key-store-ssl-certificate key-store-name="ladybird" alias="ladybird">
+                    <key-store-clear-password password="Elytron"/>
+                </key-store-ssl-certificate>
+                <trust-store key-store-name="scarab"/>
+                <cipher-suite names="TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"/>
+            </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
             <rule use-ssl-context="two-way-ssl-tls13">
                 <match-host name="test-two-way-tls13.org"/>
+            </rule>
+            <rule use-ssl-context="client-tls12-only">
+                <match-host name="test-client-tls12-only.org"/>
+            </rule>
+            <rule use-ssl-context="server-tls12-only">
+                <match-host name="test-server-tls12-only.org"/>
+            </rule>
+            <rule use-ssl-context="different-preferred-tls13-suites">
+                <match-host name="test-different-preferred-tls13-suites.org"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>
