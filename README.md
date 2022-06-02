@@ -38,3 +38,11 @@ All new features and enhancements should be submitted to 1.x branch only.
 Our [contribution guide](https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md) will guide you through the steps for getting started on the WildFly Elytron project and will go through how to format and submit your first PR.
  
 For more details, check out our [getting started guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/) for developers.
+
+Get Help
+--------
+There are a couple ways to get in touch with us.
+
+Feel free to ask questions on the WildFly user [forum](https://groups.google.com/g/wildfly).  
+
+The WildFly Elytron team also has an open chat room where you can listen in and ask questions. Join us on [Zulip chat](https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron).
