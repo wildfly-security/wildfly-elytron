@@ -16,6 +16,7 @@
 
 package org.wildfly.security.tool;
 
+import static org.junit.Assume.assumeTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -47,8 +48,11 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
 
     private static final String ALIAS = "testkey";
     private static final String PASSWORD = "cspassword";
-    // TODO We need to check clear text with spaces.
+
     private static final String CLEAR_TEXT = "SomeSecretPassword";
+
+    private static final String PASSWORD_ALIAS = "MyPassword";
+    private static final String CLEAR_TEXT_WITH_SPACE = "Some Secret Password";
 
     private static final String KEY_STORE_CS = "KeyStoreCredentialStore";
     private static final String PROPERTIES_CS = "PropertiesCredentialStore";
@@ -133,6 +137,32 @@ public class SecretKeyCommandTest extends AbstractCommandTest {
 
         String decrypted = CipherUtil.decrypt(token, secretKeyCredential.getSecretKey());
         assertEquals("Expected original clear text", CLEAR_TEXT, decrypted);
+    }
+
+    @Test
+    public void testEncryptClearTextEntry() throws Exception {
+        // This test can only run on a credential store that supports PasswordCredential storage.
+        assumeTrue(KEY_STORE_CS.equals(credentialStoreType));
+
+        String storageLocation = getStoragePathForNewFile();
+
+        String[] args = getArgs(storageLocation, true, "--create", "--generate-secret-key", ALIAS);
+        executeCommandAndCheckStatus(args);
+
+        args = getArgs(storageLocation, true, "--add", PASSWORD_ALIAS, "--secret", CLEAR_TEXT_WITH_SPACE);
+        executeCommandAndCheckStatus(args);
+
+        args = getArgs(storageLocation, false, "--encrypt", ALIAS, "--entry", PASSWORD_ALIAS);
+        String output = executeCommandAndCheckStatusAndGetOutput(args);
+        int start = output.indexOf('\'');
+        int end = output.indexOf('\'', start + 1);
+        String token = output.substring(start + 1, end);
+
+        CredentialStore store = getExistingCredentialStore(storageLocation);
+        SecretKeyCredential secretKeyCredential = store.retrieve(ALIAS, SecretKeyCredential.class);
+
+        String decrypted = CipherUtil.decrypt(token, secretKeyCredential.getSecretKey());
+        assertEquals("Expected original clear text", CLEAR_TEXT_WITH_SPACE, decrypted);
     }
 
     @Test
