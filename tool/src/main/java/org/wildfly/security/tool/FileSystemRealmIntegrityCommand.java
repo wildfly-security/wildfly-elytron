@@ -72,7 +72,6 @@ import javax.crypto.SecretKey;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
@@ -80,6 +79,10 @@ import org.wildfly.security.auth.realm.FileSystemRealmUtil;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealmBuilder;
 import org.wildfly.security.password.spec.Encoding;
+import org.wildfly.security.tool.help.DescriptionSection;
+import org.wildfly.security.tool.help.HelpCommand;
+import org.wildfly.security.tool.help.OptionsSection;
+import org.wildfly.security.tool.help.UsageSection;
 
 /**
  * Elytron Tool command to enable integrity checking in filesystem realms that previously did not have it enabled. If
@@ -610,13 +613,15 @@ public class FileSystemRealmIntegrityCommand extends Command {
     /** Displays the help screen for the command */
     @Override
     public void help() {
-        HelpFormatter help = new HelpFormatter();
-        help.setWidth(WIDTH);
-        help.printHelp(ElytronToolMessages.msg.cmdHelp(getToolCommand(), FILE_SYSTEM_REALM_INTEGRITY_COMMAND),
-                ElytronToolMessages.msg.cmdFileSystemIntegrityHelpHeader(),
-                options,
-                "",
-                true);
+        OptionsSection optionsSection = new OptionsSection(ElytronToolMessages.msg.cmdLineActionsHelpHeader(), options);
+        UsageSection usageSection = new UsageSection(FILE_SYSTEM_REALM_INTEGRITY_COMMAND, null);
+        DescriptionSection descriptionSection = new DescriptionSection(ElytronToolMessages.msg.cmdFileSystemIntegrityHelpHeader());
+        HelpCommand helpCommand = HelpCommand.HelpCommandBuilder.builder()
+                .description(descriptionSection)
+                .usage(usageSection)
+                .options(optionsSection)
+                .build();
+        helpCommand.printHelp();
     }
 
     /**
