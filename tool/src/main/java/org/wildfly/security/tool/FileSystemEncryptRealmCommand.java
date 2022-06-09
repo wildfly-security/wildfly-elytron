@@ -17,8 +17,11 @@
  */
 package org.wildfly.security.tool;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,6 +66,9 @@ class FileSystemEncryptRealmCommand extends Command {
     static final String FILE_SYSTEM_ENCRYPT_COMMAND = "filesystem-realm-encrypt";
     static final int SUMMARY_WIDTH = 100;
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/WildFly_Elytron_Security.html";
+
     private static final String HELP_PARAM = "help";
     private static final String DEBUG_PARAM = "debug";
     private static final String SILENT_PARAM = "silent";
@@ -82,6 +88,7 @@ class FileSystemEncryptRealmCommand extends Command {
     private static final String DIRECTORY_ARG = "directory";
     private static final String NAME_ARG = "name";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "encrypted-filesystem-realm";
+    private static final String WEB_PARAM = "web";
     public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
             WildFlyElytronPasswordProvider.getInstance()
     };
@@ -143,6 +150,9 @@ class FileSystemEncryptRealmCommand extends Command {
 
         option = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmEncryptBulkConvertDesc());
         option.setArgName(FILE_ARG);
+        options.addOption(option);
+
+        option = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -288,6 +298,24 @@ class FileSystemEncryptRealmCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI +
+                                "#converting-an-unencrypted-filesystem-realm-into-an-encrypted-filesystem-realm"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
         if (cmdLine.hasOption(SILENT_PARAM)) {
             silentMode = true;

@@ -603,6 +603,12 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "No Credential Store location or Secret Key Alias specified.")
     MissingOptionException missingCredentialStoreSecretKey();
 
+    @Message(id = NONE, value = "Open online documentation for the command (Action)")
+    String cmdWebDesc();
+
+    @Message(id = NONE, value = "Unable to open the browser.")
+    IOException unableToOpenBrowser();
+
     // Numeric Errors
     @Message(id = 35, value = "Only one of '%s' and '%s' can be specified at the same time")
     IllegalArgumentException mutuallyExclusiveOptions(String first, String second);

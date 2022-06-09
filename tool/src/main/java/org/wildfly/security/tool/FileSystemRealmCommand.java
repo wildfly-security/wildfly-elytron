@@ -17,7 +17,10 @@
  */
 package org.wildfly.security.tool;
 
+import java.awt.Desktop;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +67,9 @@ class FileSystemRealmCommand extends Command {
     static final String FILE_SYSTEM_REALM_COMMAND = "filesystem-realm";
     static final int SUMMARY_WIDTH = 100;
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/WildFly_Elytron_Security.html";
+
     private static final String HELP_PARAM = "help";
     private static final String DEBUG_PARAM = "debug";
     private static final String SILENT_PARAM = "silent";
@@ -79,6 +85,7 @@ class FileSystemRealmCommand extends Command {
     private static final String NAME_ARG = "name";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "converted-properties-filesystem-realm";
     private static final String DEFAULT_SECURITY_DOMAIN_NAME = "converted-properties-security-domain";
+    private static final String WEB_PARAM = "web";
 
     private List<Descriptor> descriptors = new ArrayList<>();
     private final List<String> PARAMS_LIST = new ArrayList<>(Arrays.asList(USERS_FILE_PARAM, ROLES_FILE_PARAM, OUTPUT_LOCATION_PARAM, FILESYSTEM_REALM_NAME_PARAM, SECURITY_DOMAIN_NAME_PARAM));
@@ -117,6 +124,9 @@ class FileSystemRealmCommand extends Command {
 
         option = new Option("s", SECURITY_DOMAIN_NAME_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmSecurityDomainNameDesc());
         option.setArgName(NAME_ARG);
+        options.addOption(option);
+
+        option = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -219,6 +229,23 @@ class FileSystemRealmCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI + "#Properties_File_Based_Authentication_Migration"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
         if (cmdLine.hasOption(SILENT_PARAM)) {
             silentMode = true;
