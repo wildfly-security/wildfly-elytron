@@ -129,6 +129,13 @@ public class ElytronXmlParserTest {
     }
 
     @Test
+    public void testKeyStoreEmptyType() throws ConfigXMLParseException, URISyntaxException {
+        URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
+        SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        Assert.assertNotNull(authContext);
+    }
+
+    @Test
     public void testClearCredential() throws Exception {
         URL config = getClass().getResource("test-wildfly-config-v1_4.xml");
         SecurityFactory<AuthenticationContext> authContext = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
