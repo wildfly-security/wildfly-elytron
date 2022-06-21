@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 22 Apr 2022 13:53:10 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 21 Jun 2022 21:31:56 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing Jakarta Enterprise Beans with mutual TLS authentication</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/
+            </link>
+            <description>
+                The ejb-mutual-tls example demonstrates how to use Elytron to secure EJBs with mutual TLS authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to...
+            </description>
+            <pubDate>Tue, 21 Jun 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/
+            </guid>
+        </item>
         
         <item>
             <title>New Security Features in WildFly 26.1</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-openid-connect/
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly/
-            </link>
-            <description>
-                Since WildFly 26 was just released, we wanted to highlight a new security feature included in this release and a few other security features as well. Support for JAAS Security Realms in WildFly 26 WildFly 26 now adds support for JAAS security realms to the Elytron subsystem. This means that...
-            </description>
-            <pubDate>Fri, 17 Dec 2021 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly/
             </guid>
         </item>
         

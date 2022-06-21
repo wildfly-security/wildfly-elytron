@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing Jakarta Enterprise Beans with mutual TLS authentication</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Securing Jakarta Enterprise Beans with mutual TLS authentication | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Securing Jakarta Enterprise Beans with mutual TLS authentication" />
+<meta name="author" content="Cameron Rodriguez" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="The ejb-mutual-tls example demonstrates how to use Elytron to secure EJBs with mutual TLS authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to learn more you can refer to blog posts on configuring the FileSystem realm and SASL mechanism, and on connecting with HTTP." />
+<meta property="og:description" content="The ejb-mutual-tls example demonstrates how to use Elytron to secure EJBs with mutual TLS authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to learn more you can refer to blog posts on configuring the FileSystem realm and SASL mechanism, and on connecting with HTTP." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-21T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Securing Jakarta Enterprise Beans with mutual TLS authentication" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Cameron Rodriguez"},"dateModified":"2022-06-21T00:00:00+00:00","datePublished":"2022-06-21T00:00:00+00:00","description":"The ejb-mutual-tls example demonstrates how to use Elytron to secure EJBs with mutual TLS authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to learn more you can refer to blog posts on configuring the FileSystem realm and SASL mechanism, and on connecting with HTTP.","headline":"Securing Jakarta Enterprise Beans with mutual TLS authentication","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing Jakarta Enterprise Beans with mutual TLS authentication</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/aba64bbfde66646d5b5bc40d23b7e0de">
+        
+        <p class="byline">
+          By <a href="https://github.com/cam-rod">Cameron Rodriguez</a> | June 21, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ejb"> #ejb</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/tls"> #tls</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/sasl"> #sasl</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/https"> #https</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/credential-store"> #credential-store</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/keystore"> #keystore</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/truststore"> #truststore</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/&title=Securing Jakarta Enterprise Beans with mutual TLS authentication" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing Jakarta Enterprise Beans with mutual TLS authentication&url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing Jakarta Enterprise Beans with mutual TLS authentication&amp;body=Securing Jakarta Enterprise Beans with mutual TLS authentication https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>The <strong><a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ejb-mutual-tls">ejb-mutual-tls</a></strong> example
+demonstrates how to use Elytron to secure EJBs with mutual TLS
+authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL
+authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to
+learn more you can refer to blog posts on
+<a href="https://wildfly-security.github.io/wildfly-elytron/blog/advanced-ejb-security/">configuring the FileSystem realm and SASL mechanism</a>,
+and on <a href="https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/">connecting with HTTP</a>.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#an-overview-of-mutual-tls-authentication">An Overview of Mutual TLS authentication</a>
+<ul class="sectlevel2">
+<li><a href="#generating-the-client-certificate">Generating the Client Certificate</a></li>
+<li><a href="#generating-the-server-certificate">Generating the Server Certificate</a></li>
+<li><a href="#importing-the-certificates">Importing the Certificates</a></li>
+</ul>
+</li>
+<li><a href="#configuring-the-credential-store">Configuring the Credential Store</a></li>
+<li><a href="#configuring-the-wildfly-client">Configuring the WildFly Client</a></li>
+<li><a href="#configuring-the-server">Configuring the Server</a>
+<ul class="sectlevel2">
+<li><a href="#configuring-the-security-domain">Configuring the Security Domain</a></li>
+<li><a href="#enabling-scram-sha-512-plus">Enabling SCRAM-SHA-512-PLUS</a></li>
+<li><a href="#configuring-the-remote-connector">Configuring the Remote Connector</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="an-overview-of-mutual-tls-authentication"><a class="anchor" href="#an-overview-of-mutual-tls-authentication"></a>An Overview of Mutual TLS authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a standard TLS handshake, the server presents its certificate to the client, which then inspects the contents and
+signature. If the certificate matches one that the client trusts, or is signed by an entity that it trusts, the server&#8217;s
+identity is verified and a key exchange is performed to secure the session. In mutual TLS authentication, the client also
+presents its own certificate, which the server will then use to verify the identity of the client.</p>
+</div>
+<div class="paragraph">
+<p>Using the Elytron subsystem, a WildFly server can form a mutual TLS connection with a remote client. To do so, the client
+will generate a certificate, which the server will import into its truststore. The client will be configured to present
+the certificate when performing the TLS handshake, which the server will verify using its truststore.</p>
+</div>
+<div class="sect2">
+<h3 id="generating-the-client-certificate"><a class="anchor" href="#generating-the-client-certificate"></a>Generating the Client Certificate</h3>
+<div class="paragraph">
+<p>In order for the client to use a certificate, it must be signed by a server-trusted entity. For the purposes of this
+demonstration, we will self-sign a certificate and then import it into the server&#8217;s truststore. However, such
+certificates are generally treated as insecure since the identity cannot be externally verified. To use a certificate
+signed by a trusted Certificate Authority, take a look at this <a href="https://wildfly-security.github.io/wildfly-elytron/blog/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli/">blog post</a>.</p>
+</div>
+<div class="paragraph">
+<p>We will begin by generating a 2048-bit key pair, and saving it to a local file with the alias <code>client</code>. Using the
+Java <strong>keytool</strong>, we store it in a PKCS #12 keystore:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ keytool -genkeypair -alias client -keyalg RSA -keysize 2048 -validity 365 -keystore /PATH/TO/tlsClient.keystore -dname "CN=client" -storepass clientKeySecret</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that we have also set the common name on the key to <code>client</code> (using the option <code>-dname "CN=client"</code>). Once the key
+pair is created, we export the certificate to a file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ keytool -exportcert -keystore /PATH/TO/tlsClient.keystore -alias client -storepass clientKeySecret -file /PATH/TO/tlsClient.cer</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="generating-the-server-certificate"><a class="anchor" href="#generating-the-server-certificate"></a>Generating the Server Certificate</h3>
+<div class="paragraph">
+<p>We will now perform a similar configuration for the WildFly server. Start the server, and then in another terminal
+connect to it using the management CLI:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>(<em>Note: In this post, replace</em>  <code>WILDFLY_HOME</code> <em>with the actual path to your WildFly installation.</em>)</p>
+</div>
+<div class="paragraph">
+<p>We will use the Elytron subsystem to create a keystore to hold the server&#8217;s key pair. The keystore will be
+saved in the server configuration directory, relative to <code>jboss.server.config.dir</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=tlsKeyStore:add(path=tlsServer.keystore,relative-to=jboss.server.config.dir,credential-reference={clear-text=serverKeySecret})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, we generate a key pair with alias <code>localhost</code>, and save it to the keystore. Like with the client,
+we also specify the server&#8217;s common name (<code>distinguished-name="CN=localhost"</code>).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=tlsKeyStore:generate-key-pair(alias=localhost,algorithm=RSA,key-size=2048,validity=365,credential-reference={clear-text=serverKeySecret},distinguished-name="CN=localhost")
+
+/subsystem=elytron/key-store=tlsKeyStore:store()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The self-signed certificate is exported to a file in the configuration directory:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=tlsKeyStore:export-certificate(alias=localhost,path=tlsServer.cer,relative-to=jboss.server.config.dir)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, we create a key manager, which will be used to access the keystore during the TLS handshake:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-manager=tlsKM:add(key-store=tlsKeyStore,credential-reference={clear-text=serverKeySecret})</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="importing-the-certificates"><a class="anchor" href="#importing-the-certificates"></a>Importing the Certificates</h3>
+<div class="paragraph">
+<p>Since we are already connected to the server, we will import the client certificate first. We configure a new truststore for holding certificates:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=tlsTrustStore:add(path=tlsServer.truststore,relative-to=jboss.server.config.dir,credential-reference={clear-text=serverTrustSecret})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We import the client certificate, specifying it with its alias, and then save it to the truststore file. Since this is
+a self-signed certificate, we will not validate its authenticity.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=tlsTrustStore:import-certificate(alias=client,path=/PATH/TO/tlsClient.cer,credential-reference={clear-text=serverTrustSecret},trust-cacerts=true,validate=false)
+
+/subsystem=elytron/key-store=tlsTrustStore:store()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We also configure a trust manager, which will verify the certificate during the TLS handshake:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/trust-manager=tlsTM:add(key-store=tlsTrustStore)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With the server now setup, we return to the client. Open a new terminal and navigate to the root folder of this
+example. We use the <strong>keytool</strong> once again, identify the server&#8217;s certificate by its alias and importing it into a client
+truststore:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ keytool -importcert -keystore /PATH/TO/tlsClient.truststore -storepass clientTrustSecret -alias localhost -trustcacerts -file /WILDFLY_HOME/standalone/configuration/tlsServer.cer -noprompt</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this point, the client and server both have their corresponding key pairs, and trust the certificates of the other.
+The TLS configuration is complete.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-the-credential-store"><a class="anchor" href="#configuring-the-credential-store"></a>Configuring the Credential Store</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will now setup the client login using the SASL authentication mechanism. First, we use the <strong>elytron-tool</strong> to generate a
+credential store to securely store the login details:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/tlsCredStore.cs" --password clientStorePassword</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, we add the <code>example_user</code> identity to this credential store:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-shell hljs" data-lang="shell">$ WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/tlsCredStore.cs" --password clientStorePassword --add example_user --secret examplePwd1!</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-the-wildfly-client"><a class="anchor" href="#configuring-the-wildfly-client"></a>Configuring the WildFly Client</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that we have our keystore, truststore, and credential store configured, we need to tell the Elytron client how to
+access them. From the root of this example, navigate to the directory at <code>src/main/resources</code> and open the
+<code>wildfly-config.xml</code> configuration file in a text editor. Upon inspecting the file, we note the credential store
+configuration, which will be used to access the client&#8217;s credentials when establishing a connection to the server:</p>
+</div>
+<div class="listingblock">
+<div class="title">wildfly-config.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;credential-stores&gt;
+    &lt;credential-store name="tlsCredStore"&gt;
+        &lt;attributes&gt;
+            &lt;attribute name="keyStoreType" value="JCEKS"/&gt;
+            &lt;attribute name="location" value="/PATH/TO/tlsCredStore.cs"/&gt;
+        &lt;/attributes&gt;
+        &lt;protection-parameter-credentials&gt;
+            &lt;clear-password password="clientStorePassword"/&gt;
+        &lt;/protection-parameter-credentials&gt;
+    &lt;/credential-store&gt;
+&lt;/credential-stores&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Similarly, the client also records the location of the PKCS #12 keystore and truststore. This will be used to access the key pair and server certificate during connection establishment:</p>
+</div>
+<div class="listingblock">
+<div class="title">wildfly-config.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;key-stores&gt;
+    &lt;key-store name="tlsClientTrustStore" type="PKCS12"&gt;
+        &lt;file name="/PATH/TO/tlsClient.truststore"/&gt;
+        &lt;key-store-clear-password password="clientTrustSecret"/&gt;
+    &lt;/key-store&gt;
+    &lt;key-store name="tlsClientKeyStore" type="PKCS12"&gt;
+        &lt;file name="/PATH/TO/tlsClient.keystore"/&gt;
+        &lt;key-store-clear-password password="clientKeySecret"/&gt;
+    &lt;/key-store&gt;
+&lt;/key-stores&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In all three locations, we will need to replace <code>/PATH/TO</code> with the filepath to the various stores.</p>
+</div>
+<div class="paragraph">
+<p>Looking further into the configuration, we notice the setup for the user authentication under the
+<code>&lt;authentication-configurations&gt;</code> tag. The client uses the configured username, and then retrieves the password from the
+credential store. It also specifies the SASL authentication mechanism to use, in this case <code>SCRAM-SHA-512-PLUS</code>.
+Finally, note that the <code>&lt;providers&gt;</code> tag configures the client to register the Elytron providers.</p>
+</div>
+<div class="listingblock">
+<div class="title">wildfly-config.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;authentication-configurations&gt;
+    &lt;configuration name="example-config"&gt;
+        &lt;set-user-name name="example_user"/&gt;
+        &lt;credentials&gt;
+            &lt;credential-store-reference store="tlsCredStore" alias="example_user"/&gt;
+        &lt;/credentials&gt;
+        &lt;sasl-mechanism-selector selector="SCRAM-SHA-512-PLUS"/&gt;
+        &lt;providers&gt;
+            &lt;use-service-loader/&gt;
+        &lt;/providers&gt;
+    &lt;/configuration&gt;
+&lt;/authentication-configurations&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Below this is the configuration for the TLS connection, under the <code>&lt;ssl-contexts&gt;</code> tag. The configuration specifies both
+the truststore and keystore to use for the connection. It also specifies the cipher suites and protocols it supports.</p>
+</div>
+<div class="listingblock">
+<div class="title">wildfly-config.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;ssl-contexts&gt;
+    &lt;ssl-context name="example-tls"&gt;
+        &lt;key-store-ssl-certificate key-store-name="tlsClientKeyStore" alias="client"&gt;
+            &lt;key-store-clear-password password="clientKeySecret"/&gt;
+        &lt;/key-store-ssl-certificate&gt;
+        &lt;trust-store key-store-name="tlsClientTrustStore"/&gt;
+        &lt;cipher-suite names="TLS_AES_128_GCM_SHA256" selector="DEFAULT"/&gt;
+        &lt;protocol names="TLSv1.3 TLSv1.2"/&gt;
+    &lt;/ssl-context&gt;
+&lt;/ssl-contexts&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Elytron does not enable TLS 1.3 by default, so we manually do so using the <code>&lt;cipher-suite names&gt;</code> attribute. For more
+information on configuring TLS 1.3, take a look at this
+<a href="https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/">blog post</a>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, under the <code>&lt;jboss-ejb-client&gt;</code> tag, the client will attempt to access the EJB on localhost port 8443, the
+WildFly server default for HTTP over TLS connections.</p>
+</div>
+<div class="listingblock">
+<div class="title">wildfly-config.xml</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;jboss-ejb-client xmlns="urn:jboss:wildfly-client-ejb:3.2"&gt;
+    &lt;connections&gt;
+        &lt;connection uri="remote+https://127.0.0.1:8443"/&gt;
+    &lt;/connections&gt;
+&lt;/jboss-ejb-client&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuring-the-server"><a class="anchor" href="#configuring-the-server"></a>Configuring the Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will now configure the server to require a login. Returning to the terminal with the management CLI.</p>
+</div>
+<div class="sect2">
+<h3 id="configuring-the-security-domain"><a class="anchor" href="#configuring-the-security-domain"></a>Configuring the Security Domain</h3>
+<div class="paragraph">
+<p>We create a FileSystem realm called <code>tlsFsRealm</code> in the server configuration directory:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=tlsFsRealm:add(path=tlsFsRealmUsers, relative-to=jboss.server.config.dir)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, we add the <code>example_user</code> identity to the realm, and give it the <code>guest</code> role:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity(identity=example_user)
+
+/subsystem=elytron/filesystem-realm=tlsFsRealm:set-password(identity=example_user, clear={password=examplePwd1!})
+
+/subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity-attribute(identity=example_user, name=Roles, value=[guest])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we will configure the security domain to use the filesystem realm:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=tlsFsSD:add(realms=[{realm=tlsFsRealm}],default-realm=tlsFsRealm,permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Afterwards, we add a mapping to the security domain into the <code>ejb3</code> subsystem, for securing the EJB:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=ejb3/application-security-domain=tlsApp:add(security-domain=tlsFsSD)</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="enabling-scram-sha-512-plus"><a class="anchor" href="#enabling-scram-sha-512-plus"></a>Enabling SCRAM-SHA-512-PLUS</h3>
+<div class="paragraph">
+<p>Elytron supports two types of authentication: <code>HTTP authentication</code> and <code>SASL authentication</code>. We will use the SASL
+authentication mechanism <code>SCRAM-SHA-512-PLUS</code>, which performs channel binding with the TLS session. We create a
+<code>sasl-authentication-factory</code> that uses the security domain we configured previously:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/sasl-authentication-factory=tlsSASLFactory:add(sasl-server-factory=configured,security-domain=tlsFsSD,mechanism-configurations=[{mechanism-name=SCRAM-SHA-512-PLUS}])</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="configuring-the-remote-connector"><a class="anchor" href="#configuring-the-remote-connector"></a>Configuring the Remote Connector</h3>
+<div class="paragraph">
+<p>The final step is to configure a remote connector that makes use of both an HTTPS listener and the SASL
+authentication factory. We add a <code>server-ssl-context</code> that references both the keystore and truststore used by
+the server, and manually enable TLS 1.3 support:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/server-ssl-context=tlsSSC:add(key-manager=tlsKM,protocols=["TLSv1.3","TLSv1.2"],cipher-suite-names=TLS_AES_128_GCM_SHA256,trust-manager=tlsTM,need-client-auth=true)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We then configure the <code>https-listener</code> in the <code>undertow</code> subsystem to use this SSL context:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=tlsSSC)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, we configure a new <code>http-connector</code> called <code>tlsConnector</code>, which references both the <code>https-listener</code> and the
+<code>sasl-authentication-factory</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=remoting/http-connector=tlsConnector:add(connector-ref=https,sasl-authentication-factory=tlsSASLFactory)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Lastly, we add the connector to the <code>ejb3</code> subsystem to be used when the remote client attempts to connect:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=ejb3/service=remote:write-attribute(name=connectors,value=[tlsConnector])</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has demonstrated how to configure the WildFly server and client to perform mutual TLS authentication for
+forming connections, and how to use SASL authentication and a credential store to securely invoke an EJB with privileged
+identities. Although this post focused on mutual TLS authentication, similar steps can be followed for traditional
+connections. For example, if only the server will present a certificate, then we do not need to export a client certificate,
+and then import it into the server truststore.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
