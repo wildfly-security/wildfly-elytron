@@ -1,0 +1,343 @@
+---
+layout: post
+title: "Securing Jakarta Enterprise Beans with mutual TLS authentication"
+date: 2022-06-21
+tags: ejb tls sasl https credential-store keystore truststore
+synopsis: A demonstration on how to configure Elytron for secure connections to EJBs, using mutual TLS, SASL authentication mechanisms, and credential stores.
+author: cam-rod
+---
+
+:toc: macro
+:toc-title:
+
+The *https://github.com/wildfly-security-incubator/elytron-examples/tree/master/ejb-mutual-tls[ejb-mutual-tls]* example
+demonstrates how to use Elytron to secure EJBs with mutual TLS
+authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL
+authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to
+learn more you can refer to blog posts on
+https://wildfly-security.github.io/wildfly-elytron/blog/advanced-ejb-security/[configuring the FileSystem realm and SASL mechanism],
+and on https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-http/[connecting with HTTP].
+
+toc::[]
+
+== An Overview of Mutual TLS authentication
+
+In a standard TLS handshake, the server presents its certificate to the client, which then inspects the contents and
+signature. If the certificate matches one that the client trusts, or is signed by an entity that it trusts, the server's
+identity is verified and a key exchange is performed to secure the session. In mutual TLS authentication, the client also
+presents its own certificate, which the server will then use to verify the identity of the client.
+
+Using the Elytron subsystem, a WildFly server can form a mutual TLS connection with a remote client. To do so, the client
+will generate a certificate, which the server will import into its truststore. The client will be configured to present
+the certificate when performing the TLS handshake, which the server will verify using its truststore.
+
+=== Generating the Client Certificate
+
+In order for the client to use a certificate, it must be signed by a server-trusted entity. For the purposes of this
+demonstration, we will self-sign a certificate and then import it into the server's truststore. However, such
+certificates are generally treated as insecure since the identity cannot be externally verified. To use a certificate
+signed by a trusted Certificate Authority, take a look at this https://wildfly-security.github.io/wildfly-elytron/blog/obtaining-certificates-from-lets-encrypt-using-the-wildfly-cli/[blog post].
+
+We will begin by generating a 2048-bit key pair, and saving it to a local file with the alias `client`. Using the
+Java *keytool*, we store it in a PKCS #12 keystore:
+
+[source,shell]
+----
+$ keytool -genkeypair -alias client -keyalg RSA -keysize 2048 -validity 365 -keystore /PATH/TO/tlsClient.keystore -dname "CN=client" -storepass clientKeySecret
+----
+
+Note that we have also set the common name on the key to `client` (using the option `-dname "CN=client"`). Once the key 
+pair is created, we export the certificate to a file:
+
+[source,shell]
+----
+$ keytool -exportcert -keystore /PATH/TO/tlsClient.keystore -alias client -storepass clientKeySecret -file /PATH/TO/tlsClient.cer
+----
+
+=== Generating the Server Certificate
+
+We will now perform a similar configuration for the WildFly server. Start the server, and then in another terminal
+connect to it using the management CLI:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+
+(_Note: In this post, replace_  `WILDFLY_HOME` _with the actual path to your WildFly installation._)
+
+We will use the Elytron subsystem to create a keystore to hold the server's key pair. The keystore will be
+saved in the server configuration directory, relative to `jboss.server.config.dir`:
+
+[source]
+----
+/subsystem=elytron/key-store=tlsKeyStore:add(path=tlsServer.keystore,relative-to=jboss.server.config.dir,credential-reference={clear-text=serverKeySecret})
+----
+
+Then, we generate a key pair with alias `localhost`, and save it to the keystore. Like with the client,
+we also specify the server's common name (`distinguished-name="CN=localhost"`).
+
+[source]
+----
+/subsystem=elytron/key-store=tlsKeyStore:generate-key-pair(alias=localhost,algorithm=RSA,key-size=2048,validity=365,credential-reference={clear-text=serverKeySecret},distinguished-name="CN=localhost")
+
+/subsystem=elytron/key-store=tlsKeyStore:store()
+----
+
+The self-signed certificate is exported to a file in the configuration directory:
+
+[source]
+----
+/subsystem=elytron/key-store=tlsKeyStore:export-certificate(alias=localhost,path=tlsServer.cer,relative-to=jboss.server.config.dir)
+----
+
+Finally, we create a key manager, which will be used to access the keystore during the TLS handshake:
+
+[source]
+----
+/subsystem=elytron/key-manager=tlsKM:add(key-store=tlsKeyStore,credential-reference={clear-text=serverKeySecret})
+----
+
+=== Importing the Certificates
+
+Since we are already connected to the server, we will import the client certificate first. We configure a new truststore for holding certificates:
+
+[source]
+----
+/subsystem=elytron/key-store=tlsTrustStore:add(path=tlsServer.truststore,relative-to=jboss.server.config.dir,credential-reference={clear-text=serverTrustSecret})
+----
+
+We import the client certificate, specifying it with its alias, and then save it to the truststore file. Since this is
+a self-signed certificate, we will not validate its authenticity.
+
+[source]
+----
+/subsystem=elytron/key-store=tlsTrustStore:import-certificate(alias=client,path=/PATH/TO/tlsClient.cer,credential-reference={clear-text=serverTrustSecret},trust-cacerts=true,validate=false)
+
+/subsystem=elytron/key-store=tlsTrustStore:store()
+----
+
+We also configure a trust manager, which will verify the certificate during the TLS handshake:
+
+[source]
+----
+/subsystem=elytron/trust-manager=tlsTM:add(key-store=tlsTrustStore)
+----
+
+With the server now setup, we return to the client. Open a new terminal and navigate to the root folder of this
+example. We use the *keytool* once again, identify the server's certificate by its alias and importing it into a client
+truststore:
+
+[source,shell]
+----
+$ keytool -importcert -keystore /PATH/TO/tlsClient.truststore -storepass clientTrustSecret -alias localhost -trustcacerts -file /WILDFLY_HOME/standalone/configuration/tlsServer.cer -noprompt
+----
+
+At this point, the client and server both have their corresponding key pairs, and trust the certificates of the other.
+The TLS configuration is complete.
+
+== Configuring the Credential Store
+
+We will now setup the client login using the SASL authentication mechanism. First, we use the *elytron-tool* to generate a
+credential store to securely store the login details:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location "/PATH/TO/tlsCredStore.cs" --password clientStorePassword
+----
+
+Then, we add the `example_user` identity to this credential store:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/elytron-tool.sh credential-store --location "/PATH/TO/tlsCredStore.cs" --password clientStorePassword --add example_user --secret examplePwd1!
+----
+
+== Configuring the WildFly Client
+
+Now that we have our keystore, truststore, and credential store configured, we need to tell the Elytron client how to
+access them. From the root of this example, navigate to the directory at `src/main/resources` and open the
+`wildfly-config.xml` configuration file in a text editor. Upon inspecting the file, we note the credential store
+configuration, which will be used to access the client's credentials when establishing a connection to the server:
+
+[source,xml]
+.wildfly-config.xml
+----
+<credential-stores>
+    <credential-store name="tlsCredStore">
+        <attributes>
+            <attribute name="keyStoreType" value="JCEKS"/>
+            <attribute name="location" value="/PATH/TO/tlsCredStore.cs"/>
+        </attributes>
+        <protection-parameter-credentials>
+            <clear-password password="clientStorePassword"/>
+        </protection-parameter-credentials>
+    </credential-store>
+</credential-stores>
+----
+
+Similarly, the client also records the location of the PKCS #12 keystore and truststore. This will be used to access the key pair and server certificate during connection establishment:
+
+[source,xml]
+.wildfly-config.xml
+----
+<key-stores>
+    <key-store name="tlsClientTrustStore" type="PKCS12">
+        <file name="/PATH/TO/tlsClient.truststore"/>
+        <key-store-clear-password password="clientTrustSecret"/>
+    </key-store>
+    <key-store name="tlsClientKeyStore" type="PKCS12">
+        <file name="/PATH/TO/tlsClient.keystore"/>
+        <key-store-clear-password password="clientKeySecret"/>
+    </key-store>
+</key-stores>
+----
+
+In all three locations, we will need to replace `/PATH/TO` with the filepath to the various stores.
+
+Looking further into the configuration, we notice the setup for the user authentication under the
+`<authentication-configurations>` tag. The client uses the configured username, and then retrieves the password from the
+credential store. It also specifies the SASL authentication mechanism to use, in this case `SCRAM-SHA-512-PLUS`.
+Finally, note that the `<providers>` tag configures the client to register the Elytron providers.
+
+[source,xml]
+.wildfly-config.xml
+----
+<authentication-configurations>
+    <configuration name="example-config">
+        <set-user-name name="example_user"/>
+        <credentials>
+            <credential-store-reference store="tlsCredStore" alias="example_user"/>
+        </credentials>
+        <sasl-mechanism-selector selector="SCRAM-SHA-512-PLUS"/>
+        <providers>
+            <use-service-loader/>
+        </providers>
+    </configuration>
+</authentication-configurations>
+----
+
+Below this is the configuration for the TLS connection, under the `<ssl-contexts>` tag. The configuration specifies both
+the truststore and keystore to use for the connection. It also specifies the cipher suites and protocols it supports.
+
+[source,xml]
+.wildfly-config.xml
+----
+<ssl-contexts>
+    <ssl-context name="example-tls">
+        <key-store-ssl-certificate key-store-name="tlsClientKeyStore" alias="client">
+            <key-store-clear-password password="clientKeySecret"/>
+        </key-store-ssl-certificate>
+        <trust-store key-store-name="tlsClientTrustStore"/>
+        <cipher-suite names="TLS_AES_128_GCM_SHA256" selector="DEFAULT"/>
+        <protocol names="TLSv1.3 TLSv1.2"/>
+    </ssl-context>
+</ssl-contexts>
+----
+
+Elytron does not enable TLS 1.3 by default, so we manually do so using the `<cipher-suite names>` attribute. For more
+information on configuring TLS 1.3, take a look at this
+https://wildfly-security.github.io/wildfly-elytron/blog/tls-13-with-wildfly/[blog post].
+
+Finally, under the `<jboss-ejb-client>` tag, the client will attempt to access the EJB on localhost port 8443, the
+WildFly server default for HTTP over TLS connections.
+
+[source,xml]
+.wildfly-config.xml
+----
+<jboss-ejb-client xmlns="urn:jboss:wildfly-client-ejb:3.2">
+    <connections>
+        <connection uri="remote+https://127.0.0.1:8443"/>
+    </connections>
+</jboss-ejb-client>
+----
+
+== Configuring the Server
+
+We will now configure the server to require a login. Returning to the terminal with the management CLI.
+
+=== Configuring the Security Domain
+
+We create a FileSystem realm called `tlsFsRealm` in the server configuration directory:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=tlsFsRealm:add(path=tlsFsRealmUsers, relative-to=jboss.server.config.dir)
+----
+
+Then, we add the `example_user` identity to the realm, and give it the `guest` role:
+
+[source]
+----
+/subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity(identity=example_user)
+
+/subsystem=elytron/filesystem-realm=tlsFsRealm:set-password(identity=example_user, clear={password=examplePwd1!})
+
+/subsystem=elytron/filesystem-realm=tlsFsRealm:add-identity-attribute(identity=example_user, name=Roles, value=[guest])
+----
+
+Next, we will configure the security domain to use the filesystem realm:
+
+[source]
+----
+/subsystem=elytron/security-domain=tlsFsSD:add(realms=[{realm=tlsFsRealm}],default-realm=tlsFsRealm,permission-mapper=default-permission-mapper)
+----
+
+Afterwards, we add a mapping to the security domain into the `ejb3` subsystem, for securing the EJB:
+
+[source]
+----
+/subsystem=ejb3/application-security-domain=tlsApp:add(security-domain=tlsFsSD)
+----
+
+=== Enabling SCRAM-SHA-512-PLUS
+
+Elytron supports two types of authentication: `HTTP authentication` and `SASL authentication`. We will use the SASL
+authentication mechanism `SCRAM-SHA-512-PLUS`, which performs channel binding with the TLS session. We create a
+`sasl-authentication-factory` that uses the security domain we configured previously:
+
+[source]
+----
+/subsystem=elytron/sasl-authentication-factory=tlsSASLFactory:add(sasl-server-factory=configured,security-domain=tlsFsSD,mechanism-configurations=[{mechanism-name=SCRAM-SHA-512-PLUS}])
+----
+
+=== Configuring the Remote Connector
+
+The final step is to configure a remote connector that makes use of both an HTTPS listener and the SASL
+authentication factory. We add a `server-ssl-context` that references both the keystore and truststore used by
+the server, and manually enable TLS 1.3 support:
+
+[source]
+----
+/subsystem=elytron/server-ssl-context=tlsSSC:add(key-manager=tlsKM,protocols=["TLSv1.3","TLSv1.2"],cipher-suite-names=TLS_AES_128_GCM_SHA256,trust-manager=tlsTM,need-client-auth=true)
+----
+
+We then configure the `https-listener` in the `undertow` subsystem to use this SSL context:
+
+[source]
+----
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=tlsSSC)
+----
+
+Now, we configure a new `http-connector` called `tlsConnector`, which references both the `https-listener` and the
+`sasl-authentication-factory`:
+
+[source]
+----
+/subsystem=remoting/http-connector=tlsConnector:add(connector-ref=https,sasl-authentication-factory=tlsSASLFactory)
+----
+
+Lastly, we add the connector to the `ejb3` subsystem to be used when the remote client attempts to connect:
+
+[source]
+----
+/subsystem=ejb3/service=remote:write-attribute(name=connectors,value=[tlsConnector])
+----
+
+== Summary
+
+This blog post has demonstrated how to configure the WildFly server and client to perform mutual TLS authentication for
+forming connections, and how to use SASL authentication and a credential store to securely invoke an EJB with privileged
+identities. Although this post focused on mutual TLS authentication, similar steps can be followed for traditional
+connections. For example, if only the server will present a certificate, then we do not need to export a client certificate,
+and then import it into the server truststore.
