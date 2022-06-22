@@ -3576,8 +3576,9 @@ public final class ElytronXmlParser {
                 }
                 keyStore = KeyStoreUtil.loadKeyStore(providers, providerName, fin, fileName, passwordFactory.get());
             } catch (Exception e) {
-                safeClose(fin);
                 throw xmlLog.xmlFailedToCreateKeyStore(location, e);
+            } finally {
+                safeClose(fin);
             }
             return keyStore;
         }
