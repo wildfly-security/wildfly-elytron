@@ -56,7 +56,7 @@
 
     <properties>
         <jdk.min.version>11</jdk.min.version>
-        <version.com.fasterxml.jackson>2.13.1</version.com.fasterxml.jackson>
+        <version.com.fasterxml.jackson>2.13.3</version.com.fasterxml.jackson>
         <version.commons-cli>1.4</version.commons-cli>
         <version.io.smallrye.jwt>3.1.1</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
