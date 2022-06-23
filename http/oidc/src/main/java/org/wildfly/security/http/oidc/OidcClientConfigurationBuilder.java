@@ -139,7 +139,7 @@ public class OidcClientConfigurationBuilder {
         oidcClientConfiguration.setVerifyTokenAudience(oidcJsonConfiguration.isVerifyTokenAudience());
 
         if (realmKeyPem == null && oidcJsonConfiguration.isBearerOnly()
-                && (oidcJsonConfiguration.getAuthServerUrl() == null || oidcJsonConfiguration.getProviderUrl() == null)) {
+                && (oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getProviderUrl() == null)) {
             throw log.invalidConfigurationForBearerAuth();
         }
         if ((oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getProviderUrl() == null) && (!oidcClientConfiguration.isBearerOnly() || realmKeyPem == null)) {
