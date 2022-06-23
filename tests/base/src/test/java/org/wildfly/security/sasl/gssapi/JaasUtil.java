@@ -46,8 +46,6 @@ public class JaasUtil {
 
     private static Logger log = Logger.getLogger(JaasUtil.class);
 
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
-
     public static Subject loginClient() throws LoginException {
         log.debug("loginClient");
         return login("jduke", "theduke".toCharArray(), false, null);
@@ -87,15 +85,9 @@ public class JaasUtil {
                 options.put("debug", "true");
                 options.put("refreshKrb5Config", "true");
 
-                if (IS_IBM) {
-                    options.put("noAddress", "true");
-                    options.put("credsType", server ? "acceptor" : "initiator");
-                    entries[0] = new AppConfigurationEntry("com.ibm.security.auth.module.Krb5LoginModule", REQUIRED, options);
-                } else {
-                    options.put("storeKey", "true");
-                    options.put("isInitiator", server ? "false" : "true");
-                    entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
-                }
+                options.put("storeKey", "true");
+                options.put("isInitiator", server ? "false" : "true");
+                entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
 
                 return entries;
             }
@@ -118,19 +110,12 @@ public class JaasUtil {
                 options.put("refreshKrb5Config", "true");
                 options.put("principal", principal);
 
-                if (IS_IBM) {
-                    options.put("useKeytab", keyTabFile);
-                    options.put("noAddress", "true");
-                    options.put("credsType", "acceptor");
-                    entries[0] = new AppConfigurationEntry("com.ibm.security.auth.module.Krb5LoginModule", REQUIRED, options);
-                } else {
-                    options.put("useKeyTab", "true");
-                    options.put("keyTab", keyTabFile);
-                    options.put("doNotPrompt", "true");
-                    options.put("storeKey", "true");
-                    options.put("isInitiator", "false");
-                    entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
-                }
+                options.put("useKeyTab", "true");
+                options.put("keyTab", keyTabFile);
+                options.put("doNotPrompt", "true");
+                options.put("storeKey", "true");
+                options.put("isInitiator", "false");
+                entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
 
                 return entries;
             }

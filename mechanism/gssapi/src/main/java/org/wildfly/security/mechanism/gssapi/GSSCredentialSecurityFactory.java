@@ -65,9 +65,7 @@ import org.wildfly.security.manager.action.SetContextClassLoaderAction;
  */
 public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKerberosCredential> {
 
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final String KRB5LoginModule = "com.sun.security.auth.module.Krb5LoginModule";
-    private static final String IBMKRB5LoginModule = "com.ibm.security.auth.module.Krb5LoginModule";
     private static final long ONE_SECOND = 1000;
 
     public static final Oid KERBEROS_V5;
@@ -467,17 +465,10 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 options.put("debug", "true");
             }
             options.put("principal", principal);
-
-            if (IS_IBM) {
-                options.put("noAddress", "true");
-                options.put("credsType", (isServer && !obtainKerberosTicket) ? "acceptor" : "both");
-                if (keyTab != null) options.put("useKeytab", keyTab.toURI().toURL().toString());
-            } else {
-                options.put("storeKey", "true");
-                options.put("useKeyTab", "true");
-                if (keyTab != null) options.put("keyTab", keyTab.getAbsolutePath());
-                options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
-            }
+            options.put("storeKey", "true");
+            options.put("useKeyTab", "true");
+            if (keyTab != null) options.put("keyTab", keyTab.getAbsolutePath());
+            options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
 
             if (this.options != null) {
                 options.putAll(this.options);
@@ -486,7 +477,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             log.tracef("Created LoginContext configuration: %s", options.toString());
 
             final AppConfigurationEntry[] aceArray = new AppConfigurationEntry[] {
-                    new AppConfigurationEntry(IS_IBM ? IBMKRB5LoginModule : KRB5LoginModule, REQUIRED, options)
+                    new AppConfigurationEntry(KRB5LoginModule, REQUIRED, options)
             };
 
             return new Configuration() {

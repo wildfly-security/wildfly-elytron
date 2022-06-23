@@ -23,7 +23,6 @@ import static org.wildfly.security.tool.Command.isWindows;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
 
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -35,8 +34,6 @@ import org.junit.Assert;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
 public class VaultCommandTest extends AbstractCommandTest {
-
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
     private static final String TARGET_LOCATION = "./target";
 
@@ -56,9 +53,7 @@ public class VaultCommandTest extends AbstractCommandTest {
 
     private static final String ALIAS = "test";
     private static final String ENC_DIR = "target/test-classes/vault-v1/vault_data/";
-    private static final String IBM_ENC_DIR = "target/test-classes/vault-v1/vault_data_ibm/";
     private static final String KEYSTORE = "target/test-classes/vault-v1/vault-jceks.keystore";
-    private static final String IBM_KEYSTORE = "target/test-classes/vault-v1/vault-jceks-ibm.keystore";
     private static final String KEYSTORE_PASSWORD = "secretsecret";
     private static final String SALT = "12345678";
     private static final String ITERATION = "34";
@@ -385,22 +380,12 @@ public class VaultCommandTest extends AbstractCommandTest {
      */
     @Test
     public void bulkConversionBasicTest() throws Exception {
-        String[] args;
-        if (IS_IBM) {
-            args = new String[]{"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc-ibm"};
-        } else {
-            args = new String[]{"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc"};
-        }
+        String[] args = new String[]{"--bulk-convert", "target/test-classes/bulk-vault-conversion-desc"};
         // conversion
         String output = executeCommandAndCheckStatusAndGetOutput(args);
         String[] parts = output.split("converted to credential store");
         Assert.assertTrue("Three credential stores has to be created", parts.length == 4);
-        if (IS_IBM) {
-            Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks-ibm.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks-ibm.keystore") > 0);
-        } else {
-            Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
-        }
-
+        Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
 
         // check result
         args = new String[] { "--location", "target/v1-cs-more.store" , "--aliases", "--summary",
@@ -446,9 +431,6 @@ public class VaultCommandTest extends AbstractCommandTest {
 
         String[] args = new String[]{"--enc-dir", ENC_DIR, "--keystore", KEYSTORE, "--keystore-password", MASK, "--salt", SALT, "--iteration", "34",
                     "--location", storeFileName, "--alias", ALIAS, "-e", "dir", "--keystore", "store"};
-        if (IS_IBM) {
-            args = changeArgsToIBM(args);
-        }
 
         String output = executeCommandAndCheckStatusAndGetOutput(args);
 
@@ -514,9 +496,6 @@ public class VaultCommandTest extends AbstractCommandTest {
         boolean passed = false;
         String output;
 
-        if (IS_IBM) {
-            args = changeArgsToIBM(args);
-        }
         try {
             output = executeCommandAndCheckStatusAndGetOutput(args);
             passed = true;
@@ -534,17 +513,5 @@ public class VaultCommandTest extends AbstractCommandTest {
         if (expectedOutput != null) {
             Assert.assertTrue("Command output should contain \"" + expectedOutput + "\"", output.contains(expectedOutput));
         }
-    }
-
-    private String[] changeArgsToIBM(String[] args) {
-        int index = Arrays.asList(args).indexOf(ENC_DIR);
-        if (index != -1) {
-            args[index] = IBM_ENC_DIR;
-        }
-        index = Arrays.asList(args).indexOf(KEYSTORE);
-        if (index != -1) {
-            args[index] = IBM_KEYSTORE;
-        }
-        return args;
     }
 }

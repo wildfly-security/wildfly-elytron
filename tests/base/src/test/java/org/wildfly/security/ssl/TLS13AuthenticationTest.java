@@ -70,7 +70,6 @@ import org.wildfly.security.x500.principal.X500AttributePrincipalDecoder;
  */
 public class TLS13AuthenticationTest {
 
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final char[] PASSWORD = "Elytron".toCharArray();
     private static final String CA_JKS_LOCATION = "./target/test-classes/jks";
 
@@ -238,7 +237,7 @@ public class TLS13AuthenticationTest {
      * @return the initialised key manager.
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
         keyManagerFactory.init(loadKeyStore(keystorePath), PASSWORD);
 
         for (KeyManager current : keyManagerFactory.getKeyManagers()) {
@@ -257,7 +256,7 @@ public class TLS13AuthenticationTest {
      * @throws KeyStoreException
      */
     private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
         trustManagerFactory.init(loadKeyStore("/jks/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
