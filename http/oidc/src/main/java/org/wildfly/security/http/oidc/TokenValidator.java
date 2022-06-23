@@ -93,6 +93,7 @@ public class TokenValidator {
             JwtClaims jwtClaims = new JwtConsumerBuilder().setSkipSignatureVerification().setSkipAllValidators().build().processToClaims(accessToken);
             return new VerifiedTokens(new IDToken(idJwtClaims), new AccessToken(jwtClaims));
         } catch (InvalidJwtException e) {
+            log.tracef("Problem parsing ID token: " + idToken, e);
             throw log.invalidIDToken(e);
         }
     }
