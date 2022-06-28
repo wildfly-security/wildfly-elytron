@@ -208,5 +208,22 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
     void invalidAuthServerUrlOrProviderUrl(String url);
 
+    @Message(id = 23050, value = "Invalid bearer token claims")
+    OidcException invalidBearerTokenClaims();
+
+    @Message(id = 23051, value = "Invalid bearer token")
+    OidcException invalidBearerToken(@Cause Throwable cause);
+
+    @LogMessage(level = WARN)
+    @Message(id = 23052, value = "No trusted certificates in token")
+    void noTrustedCertificatesInToken();
+
+    @LogMessage(level = WARN)
+    @Message(id = 23053, value = "No peer certificates established on the connection")
+    void noPeerCertificatesEstablishedOnConnection();
+
+    @Message(id = 23054, value = "Unexpected value for typ claim")
+    String unexpectedValueForTypeClaim();
+
 }
 

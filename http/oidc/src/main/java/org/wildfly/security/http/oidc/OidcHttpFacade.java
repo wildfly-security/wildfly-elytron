@@ -19,7 +19,7 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
-import static org.wildfly.security.http.oidc.Oidc.HTML_CONTEXT_TYPE;
+import static org.wildfly.security.http.oidc.Oidc.HTML_CONTENT_TYPE;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +33,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 
 import java.security.Principal;
+import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +44,6 @@ import java.util.function.Supplier;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.cert.X509Certificate;
 import javax.security.sasl.AuthorizeCallback;
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -455,7 +455,7 @@ public class OidcHttpFacade {
             public void sendError(final int code, final String message) {
                 responseConsumer = responseConsumer.andThen(response -> {
                     response.setStatusCode(code);
-                    response.addResponseHeader("Content-Type", HTML_CONTEXT_TYPE);
+                    response.addResponseHeader("Content-Type", HTML_CONTENT_TYPE);
                     try {
                         response.getOutputStream().write(message.getBytes());
                     } catch (IOException e) {
@@ -471,8 +471,8 @@ public class OidcHttpFacade {
         };
     }
 
-    public X509Certificate[] getCertificateChain() {
-        return new X509Certificate[0];
+    public Certificate[] getCertificateChain() {
+        return request.getPeerCertificates();
     }
 
     public OidcSecurityContext getSecurityContext() {
