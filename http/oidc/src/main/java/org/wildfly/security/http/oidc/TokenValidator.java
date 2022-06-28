@@ -22,6 +22,7 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.IDToken.AT_HASH;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_AT_HASH_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.INVALID_ISSUED_FOR_CLAIM;
+import static org.wildfly.security.http.oidc.Oidc.INVALID_TYPE_CLAIM;
 import static org.wildfly.security.http.oidc.Oidc.getJavaAlgorithmForHash;
 import static org.wildfly.security.jose.jwk.JWKUtil.BASE64_URL;
 
@@ -44,7 +45,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.ByteIterator;
 
 /**
- * Validator for an ID token, as per <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>.
+ * Validator for an ID token or bearer token, as per <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>
+ * and <a href="https://datatracker.ietf.org/doc/html/rfc7523">RFC 7523</a></a>.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
@@ -63,26 +65,14 @@ public class TokenValidator {
      * Parse and verify the given ID token.
      *
      * @param idToken the ID token
-     * @return the {@code JwtContext} if the ID token was valid
+     * @return the {@code VerifiedTokens} if the ID token was valid
      * @throws OidcException if the ID token is invalid
      */
     public VerifiedTokens parseAndVerifyToken(final String idToken, final String accessToken) throws OidcException {
         try {
-            // first pass to determine the kid, if present
-            JwtConsumer firstPassJwtConsumer = new JwtConsumerBuilder()
-                    .setSkipAllValidators()
-                    .setDisableRequireSignature()
-                    .setSkipSignatureVerification()
-                    .build();
-            JwtContext idJwtContext = firstPassJwtConsumer.process(idToken);
-            String kid =  idJwtContext.getJoseObjects().get(HEADER_INDEX).getKeyIdHeaderValue();
-            if (kid != null && clientConfiguration.getPublicKeyLocator() != null) {
-                jwtConsumerBuilder.setVerificationKey(clientConfiguration.getPublicKeyLocator().getPublicKey(kid, clientConfiguration));
-            } else {
-                // secret key
-                ClientSecretCredentialsProvider clientSecretCredentialsProvider = (ClientSecretCredentialsProvider) clientConfiguration.getClientAuthenticator();
-                jwtConsumerBuilder.setVerificationKey(clientSecretCredentialsProvider.getClientSecret());
-            }
+            JwtContext idJwtContext = setVerificationKey(idToken, jwtConsumerBuilder);
+            jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
+            jwtConsumerBuilder.registerValidator(new AzpValidator(clientConfiguration.getResourceName()));
             jwtConsumerBuilder.registerValidator(new AtHashValidator(accessToken, clientConfiguration.getTokenSignatureAlgorithm()));
             // second pass to validate
             jwtConsumerBuilder.build().processContext(idJwtContext);
@@ -95,6 +85,55 @@ public class TokenValidator {
         } catch (InvalidJwtException e) {
             throw log.invalidIDToken(e);
         }
+    }
+
+    /**
+     * Parse and verify the given bearer token.
+     *
+     * @param bearerToken the bearer token
+     * @return the {@code AccessToken} if the bearer token was valid
+     * @throws OidcException if the bearer token is invalid
+     */
+    public AccessToken parseAndVerifyToken(final String bearerToken) throws OidcException {
+        try {
+            JwtContext jwtContext = setVerificationKey(bearerToken, jwtConsumerBuilder);
+            jwtConsumerBuilder.setRequireSubject();
+            jwtConsumerBuilder.registerValidator(new TypeValidator("Bearer"));
+            if (clientConfiguration.isVerifyTokenAudience()) {
+                jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
+            } else {
+                jwtConsumerBuilder.setSkipDefaultAudienceValidation();
+            }
+            // second pass to validate
+            jwtConsumerBuilder.build().processContext(jwtContext);
+            JwtClaims jwtClaims = jwtContext.getJwtClaims();
+            if (jwtClaims == null) {
+                throw log.invalidBearerTokenClaims();
+            }
+            return new AccessToken(jwtClaims);
+        } catch (InvalidJwtException e) {
+            log.tracef("Problem parsing bearer token: " + bearerToken, e);
+            throw log.invalidBearerToken(e);
+        }
+    }
+
+    private JwtContext setVerificationKey(final String token, final JwtConsumerBuilder jwtConsumerBuilder) throws InvalidJwtException {
+        // first pass to determine the kid, if present
+        JwtConsumer firstPassJwtConsumer = new JwtConsumerBuilder()
+                .setSkipAllValidators()
+                .setDisableRequireSignature()
+                .setSkipSignatureVerification()
+                .build();
+        JwtContext jwtContext = firstPassJwtConsumer.process(token);
+        String kid =  jwtContext.getJoseObjects().get(HEADER_INDEX).getKeyIdHeaderValue();
+        if (kid != null && clientConfiguration.getPublicKeyLocator() != null) {
+            jwtConsumerBuilder.setVerificationKey(clientConfiguration.getPublicKeyLocator().getPublicKey(kid, clientConfiguration));
+        } else {
+            // secret key
+            ClientSecretCredentialsProvider clientSecretCredentialsProvider = (ClientSecretCredentialsProvider) clientConfiguration.getClientAuthenticator();
+            jwtConsumerBuilder.setVerificationKey(clientSecretCredentialsProvider.getClientSecret());
+        }
+        return jwtContext;
     }
 
     /**
@@ -127,9 +166,9 @@ public class TokenValidator {
         }
 
         /**
-         * Create an ID token validator.
+         * Create an ID token or bearer token validator.
          *
-         * @return the newly created ID token validator
+         * @return the newly created token validator
          * @throws IllegalArgumentException if a required builder parameter is missing or invalid
          */
         public TokenValidator build() throws IllegalArgumentException {
@@ -156,10 +195,8 @@ public class TokenValidator {
 
             jwtConsumerBuilder = new JwtConsumerBuilder()
                     .setExpectedIssuer(expectedIssuer)
-                    .setExpectedAudience(clientId)
                     .setJwsAlgorithmConstraints(
                             new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, expectedJwsAlgorithm))
-                    .registerValidator(new AzpValidator(clientId))
                     .setRequireExpirationTime();
 
             return new TokenValidator(this);
@@ -217,6 +254,27 @@ public class TokenValidator {
             }
             if (! valid) {
                 return new ErrorCodeValidator.Error(INVALID_AT_HASH_CLAIM, log.unexpectedValueForAtHashClaim());
+            }
+            return null;
+        }
+    }
+
+    private static class TypeValidator implements ErrorCodeValidator {
+        public static final String TYPE = "typ";
+        private final String expectedType;
+
+        public TypeValidator(String expectedType) {
+            this.expectedType = expectedType;
+        }
+
+        public ErrorCodeValidator.Error validate(JwtContext jwtContext) throws MalformedClaimException {
+            JwtClaims jwtClaims = jwtContext.getJwtClaims();
+            boolean valid = false;
+            if (jwtClaims.hasClaim(TYPE)) {
+                valid = jwtClaims.getStringClaimValue(TYPE).equals(expectedType);
+            }
+            if (! valid) {
+                return new ErrorCodeValidator.Error(INVALID_TYPE_CLAIM, log.unexpectedValueForTypeClaim());
             }
             return null;
         }
