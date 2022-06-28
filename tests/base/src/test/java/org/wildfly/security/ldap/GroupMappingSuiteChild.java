@@ -32,7 +32,15 @@ public class GroupMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
     public void testMultipleGroupsWithUniqueMember() throws Exception {
         assertAttributes(attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
-            assertAttributeValue(attributes.get("Groups"), "GroupOne", "GroupTwo", "GroupThree");
+            assertAttributeValue(attributes.get("Groups"), "GroupOne", "GroupTwo", "GroupThree", "GroupOneInGroupThree");
         }, AttributeMapping.fromFilter("(&(objectClass=groupOfUniqueNames)(uniqueMember={1}))").from("CN").to("Groups").build());
+    }
+
+    @Test
+    public void testMultipleGroupsWithUniqueMemberExtractRdn() throws Exception {
+        assertAttributes(attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get("Groups"), "GroupOne", "GroupTwo", "GroupThree", "GroupOneInGroupThree");
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfUniqueNames)(uniqueMember={1}))").to("Groups").extractRdn("CN").build());
     }
 }
