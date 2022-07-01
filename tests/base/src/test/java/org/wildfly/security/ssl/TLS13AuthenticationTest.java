@@ -19,6 +19,7 @@ package org.wildfly.security.ssl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -176,6 +177,19 @@ public class TLS13AuthenticationTest {
         SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-server-tls12-only.org", "wildfly-ssl-test-config-v1_5.xml", SERVER_CIPHER_SUITE, false);
         assertNotNull(identity);
         assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
+    }
+
+    @Test
+    public void testOneWayTLS13() throws Exception {
+        final String CIPHER_SUITE = "TLS_AES_128_GCM_SHA256";
+
+        SSLContext serverContext = new SSLContextBuilder()
+                .setCipherSuiteSelector(CipherSuiteSelector.fromNamesString(CIPHER_SUITE))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .build().create();
+
+        SecurityIdentity identity = performConnectionTest(serverContext, "protocol://test-one-way-tls13.org", "wildfly-ssl-test-config-v1_5.xml", CIPHER_SUITE, true);
+        assertNull(identity);
     }
 
     private SecurityIdentity performConnectionTest(SSLContext serverContext, String clientUri, String clientConfigFileName, String expectedCipherSuite, boolean expectTLS13) throws Exception {
