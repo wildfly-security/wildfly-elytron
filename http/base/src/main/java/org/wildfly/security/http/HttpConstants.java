@@ -187,6 +187,7 @@ public class HttpConstants {
      */
 
     public static final String POST = "POST";
+    public static final String OPTIONS = "OPTIONS";
 
     /*
      * Algorithms
