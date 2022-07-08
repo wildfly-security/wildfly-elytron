@@ -110,6 +110,24 @@ public class RequestAuthenticator {
             log.debug("Bearer AUTHENTICATED");
             return AuthOutcome.AUTHENTICATED;
         }
+
+        QueryParameterTokenRequestAuthenticator queryParamAuth = new QueryParameterTokenRequestAuthenticator(facade, deployment);
+        if (log.isTraceEnabled()) {
+            log.trace("try query parameter auth");
+        }
+
+        outcome = queryParamAuth.authenticate();
+        if (outcome == AuthOutcome.FAILED) {
+            challenge = queryParamAuth.getChallenge();
+            log.debug("QueryParamAuth auth FAILED");
+            return AuthOutcome.FAILED;
+        } else if (outcome == AuthOutcome.AUTHENTICATED) {
+            if (verifySSL()) return AuthOutcome.FAILED;
+            log.debug("QueryParamAuth AUTHENTICATED");
+            completeAuthentication(queryParamAuth);
+            return AuthOutcome.AUTHENTICATED;
+        }
+
         if (deployment.isBearerOnly()) {
             challenge = bearer.getChallenge();
             log.debug("NOT_ATTEMPTED: bearer only");
