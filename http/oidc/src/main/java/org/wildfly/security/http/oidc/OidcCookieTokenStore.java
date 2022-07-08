@@ -36,7 +36,7 @@ import org.wildfly.security.http.Scope;
 public class OidcCookieTokenStore implements OidcTokenStore {
 
     private final OidcHttpFacade httpFacade;
-    private static final String DELIM = "___";
+    private static final String DELIM = "###";
     private static final int EXPECTED_NUM_TOKENS = 3;
     private static final int ACCESS_TOKEN_INDEX = 0;
     private static final int ID_TOKEN_INDEX = 1;
@@ -206,7 +206,8 @@ public class OidcCookieTokenStore implements OidcTokenStore {
         String cookieVal = cookie.getValue();
         String[] tokens = cookieVal.split(DELIM);
         if (tokens.length != EXPECTED_NUM_TOKENS) {
-            log.warnf("Invalid format of %s cookie. Count of tokens: %s, expected 3", OIDC_STATE_COOKIE, tokens.length);
+            log.warnf("Invalid format of %s cookie. Count of tokens: %s, expected %s", OIDC_STATE_COOKIE, tokens.length, EXPECTED_NUM_TOKENS);
+            log.debugf("Value of %s cookie is: %s", OIDC_STATE_COOKIE, cookieVal);
             return null;
         }
         String accessTokenString = tokens[ACCESS_TOKEN_INDEX];
