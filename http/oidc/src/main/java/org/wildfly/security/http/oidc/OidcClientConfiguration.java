@@ -143,7 +143,7 @@ public class OidcClientConfiguration {
     }
 
     public String getClientId() {
-        return clientId;
+        return clientId != null ? clientId : resource;
     }
 
     public String getRealm() {
