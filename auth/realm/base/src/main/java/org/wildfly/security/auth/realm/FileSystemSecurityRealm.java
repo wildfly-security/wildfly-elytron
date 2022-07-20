@@ -316,7 +316,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     .toLowerCase(Locale.ROOT)
                     .replaceAll("[^a-z0-9]", "_");
         }
-        if (secretKey != null | encoded) {
+        if (secretKey != null || encoded) {
             String base32 = ByteIterator.ofBytes(new ByteStringBuilder().append(name).toArray())
                     .base32Encode(Base32Alphabet.STANDARD, false).drainToString();
             normalizedName = secretKey != null ? base32 : normalizedName + "-" + base32;
