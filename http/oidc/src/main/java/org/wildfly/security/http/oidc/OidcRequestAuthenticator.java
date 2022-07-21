@@ -21,6 +21,7 @@ package org.wildfly.security.http.oidc;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
+import static org.wildfly.security.http.oidc.Oidc.DOMAIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.ERROR;
 import static org.wildfly.security.http.oidc.Oidc.KC_IDP_HINT;
 import static org.wildfly.security.http.oidc.Oidc.LOGIN_HINT;
@@ -163,7 +164,7 @@ public class OidcRequestAuthenticator {
                 url = uriBuilder.build().toString();
             }
 
-            List<String> forwardableQueryParams = Arrays.asList(LOGIN_HINT, KC_IDP_HINT, PROMPT, MAX_AGE, UI_LOCALES, SCOPE);
+            List<String> forwardableQueryParams = Arrays.asList(LOGIN_HINT, DOMAIN_HINT, KC_IDP_HINT, PROMPT, MAX_AGE, UI_LOCALES, SCOPE);
             List<NameValuePair> forwardedQueryParams = new ArrayList<>(forwardableQueryParams.size());
             for (String paramName : forwardableQueryParams) {
                 String paramValue = getQueryParamValue(facade, paramName);

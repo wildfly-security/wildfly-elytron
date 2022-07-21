@@ -60,6 +60,7 @@ public class Oidc {
     public static final String ERROR = "error";
     public static final String GRANT_TYPE = "grant_type";
     public static final String LOGIN_HINT = "login_hint";
+    public static final String DOMAIN_HINT = "domain_hint";
     public static final String MAX_AGE = "max_age";
     public static final String PROMPT = "prompt";
     public static final String SCOPE = "scope";
