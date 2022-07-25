@@ -63,9 +63,11 @@ public class Oidc {
     public static final String GRANT_TYPE = "grant_type";
     public static final String LOGIN_HINT = "login_hint";
     public static final String MAX_AGE = "max_age";
+    public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
+    public static final String USERNAME = "username";
     public static final String OIDC_SCOPE = "openid";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";

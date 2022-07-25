@@ -128,6 +128,25 @@ public class RequestAuthenticator {
             return AuthOutcome.AUTHENTICATED;
         }
 
+        if (deployment.isEnableBasicAuth()) {
+            BasicAuthRequestAuthenticator basicAuth = new BasicAuthRequestAuthenticator(facade, deployment);
+            if (log.isTraceEnabled()) {
+                log.trace("try basic auth");
+            }
+
+            outcome = basicAuth.authenticate();
+            if (outcome == AuthOutcome.FAILED) {
+                challenge = basicAuth.getChallenge();
+                log.debug("BasicAuth FAILED");
+                return AuthOutcome.FAILED;
+            } else if (outcome == AuthOutcome.AUTHENTICATED) {
+                if (verifySSL()) return AuthOutcome.FAILED;
+                log.debug("BasicAuth AUTHENTICATED");
+                completeAuthentication(basicAuth);
+                return AuthOutcome.AUTHENTICATED;
+            }
+        }
+
         if (deployment.isBearerOnly()) {
             challenge = bearer.getChallenge();
             log.debug("NOT_ATTEMPTED: bearer only");
