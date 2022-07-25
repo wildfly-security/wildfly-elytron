@@ -155,6 +155,7 @@ public class HttpConstants {
     public static final String ERROR_DESCRIPTION = "error_description";
     public static final String INVALID_TOKEN = "invalid_token";
     public static final String STALE_TOKEN = "Stale token";
+    public static final String NO_TOKEN = "no_token";
 
     /*
      * Mechanism Names
