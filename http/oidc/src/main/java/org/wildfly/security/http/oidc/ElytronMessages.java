@@ -22,6 +22,8 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 import static org.jboss.logging.annotations.Message.NONE;
 
+import java.io.IOException;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -224,6 +226,12 @@ interface ElytronMessages extends BasicLogger {
 
     @Message(id = 23054, value = "Unexpected value for typ claim")
     String unexpectedValueForTypeClaim();
+
+    @Message(id = 23055, value = "Unable to obtain token: %d")
+    IOException unableToObtainToken(int status);
+
+    @Message(id = 23056, value = "No message entity")
+    IOException noMessageEntity();
 
 }
 

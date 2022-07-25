@@ -18,11 +18,14 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.AUTHORIZATION_CODE;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
 import static org.wildfly.security.http.oidc.Oidc.GRANT_TYPE;
 import static org.wildfly.security.http.oidc.Oidc.KEYCLOAK_CLIENT_CLUSTER_HOST;
+import static org.wildfly.security.http.oidc.Oidc.PASSWORD;
 import static org.wildfly.security.http.oidc.Oidc.REDIRECT_URI;
+import static org.wildfly.security.http.oidc.Oidc.USERNAME;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -42,6 +45,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.wildfly.security.jose.util.JsonSerialization;
 
 /**
@@ -241,4 +245,39 @@ public class ServerRequest {
         }
     }
 
+    public static AccessAndIDTokenResponse getBearerToken(OidcClientConfiguration oidcClientConfiguration, String username, String password) throws Exception {
+        AccessAndIDTokenResponse tokenResponse;
+        HttpClient client = oidcClientConfiguration.getClient();
+
+        HttpPost post = new HttpPost(oidcClientConfiguration.getTokenUrl());
+        List<NameValuePair> formparams = new ArrayList<>();
+        formparams.add(new BasicNameValuePair(GRANT_TYPE, PASSWORD));
+        formparams.add(new BasicNameValuePair(USERNAME, username));
+        formparams.add(new BasicNameValuePair(PASSWORD, password));
+
+        ClientCredentialsProviderUtils.setClientCredentials(oidcClientConfiguration, post, formparams);
+        UrlEncodedFormEntity form = new UrlEncodedFormEntity(formparams, "UTF-8");
+        post.setEntity(form);
+
+        HttpResponse response = client.execute(post);
+        int status = response.getStatusLine().getStatusCode();
+        HttpEntity entity = response.getEntity();
+        if (status != HttpStatus.SC_OK) {
+            EntityUtils.consumeQuietly(entity);
+            throw log.unableToObtainToken(status);
+        }
+        if (entity == null) {
+            throw log.noMessageEntity();
+        }
+        InputStream is = entity.getContent();
+        try {
+            tokenResponse = JsonSerialization.readValue(is, AccessAndIDTokenResponse.class);
+        } finally {
+            try {
+                is.close();
+            } catch (java.io.IOException ignored) {
+            }
+        }
+        return tokenResponse;
+    }
 }
