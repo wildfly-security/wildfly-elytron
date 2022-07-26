@@ -40,7 +40,7 @@ import org.wildfly.security.http.HttpConstants;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class BearerTokenRequestAuthenticator {
+class BearerTokenRequestAuthenticator {
     protected OidcHttpFacade facade;
     protected OidcClientConfiguration oidcClientConfiguration;
     protected AuthChallenge challenge;

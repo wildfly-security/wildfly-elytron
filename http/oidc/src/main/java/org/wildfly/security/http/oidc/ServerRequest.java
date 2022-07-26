@@ -269,14 +269,8 @@ public class ServerRequest {
         if (entity == null) {
             throw log.noMessageEntity();
         }
-        InputStream is = entity.getContent();
-        try {
+        try (InputStream is = entity.getContent()) {
             tokenResponse = JsonSerialization.readValue(is, AccessAndIDTokenResponse.class);
-        } finally {
-            try {
-                is.close();
-            } catch (java.io.IOException ignored) {
-            }
         }
         return tokenResponse;
     }

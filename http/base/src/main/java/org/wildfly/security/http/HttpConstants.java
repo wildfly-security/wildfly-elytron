@@ -207,6 +207,9 @@ public class HttpConstants {
 
     /**
      * Bearer token pattern.
+     * The Bearer token authorization header is of the form "Bearer", followed by optional whitespace, followed by
+     * the token itself, followed by optional whitespace. The token itself must be one or more characters and must
+     * not contain any whitespace.
      */
     public static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
