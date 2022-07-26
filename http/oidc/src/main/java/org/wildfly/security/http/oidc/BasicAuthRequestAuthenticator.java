@@ -34,7 +34,7 @@ import org.wildfly.security.http.HttpConstants;
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class BasicAuthRequestAuthenticator extends BearerTokenRequestAuthenticator {
+class BasicAuthRequestAuthenticator extends BearerTokenRequestAuthenticator {
 
     private static final String CHALLENGE_PREFIX = "Basic ";
 

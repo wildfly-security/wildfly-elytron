@@ -24,7 +24,7 @@ package org.wildfly.security.http.oidc;
  * @author <a href="mailto:john.ament@spartasystems.com">John D. Ament</a>
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class QueryParameterTokenRequestAuthenticator extends BearerTokenRequestAuthenticator {
+class QueryParameterTokenRequestAuthenticator extends BearerTokenRequestAuthenticator {
     public static final String ACCESS_TOKEN = "access_token";
 
     public QueryParameterTokenRequestAuthenticator(OidcHttpFacade facade, OidcClientConfiguration oidcClientConfiguration) {

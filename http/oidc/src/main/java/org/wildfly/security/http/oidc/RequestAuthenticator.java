@@ -152,7 +152,7 @@ public class RequestAuthenticator {
             log.debug("NOT_ATTEMPTED: bearer only");
             return AuthOutcome.NOT_ATTEMPTED;
         }
-        if (isAutodetectedBearerOnly(facade.getRequest())) {
+        if (isAutodetectedBearerOnly()) {
             challenge = bearer.getChallenge();
             log.debug("NOT_ATTEMPTED: Treating as bearer only");
             return AuthOutcome.NOT_ATTEMPTED;
@@ -214,7 +214,7 @@ public class RequestAuthenticator {
         log.debugv("User ''{0}'' invoking ''{1}'' on client ''{2}''", principal.getName(), facade.getRequest().getURI(), deployment.getResourceName());
     }
 
-    protected boolean isAutodetectedBearerOnly(OidcHttpFacade.Request request) {
+    protected boolean isAutodetectedBearerOnly() {
         if (! deployment.isAutodetectBearerOnly()) return false;
 
         String headerValue = facade.getRequest().getHeader(X_REQUESTED_WITH);
