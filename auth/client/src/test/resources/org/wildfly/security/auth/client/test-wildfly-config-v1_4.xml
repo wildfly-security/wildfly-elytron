@@ -37,6 +37,10 @@
                 <file name="./target/keystore/client.keystore"/>
                 <key-store-masked-password algorithm="masked-HMAC-SHA1-AES-128" key-material="testingKeyMaterial" iteration-count="12" salt="12345678" masked-password="9EQZkSe7w+VHasVXbNxuJA==" initialization-vector="QXRFBhXc7Z8dkQaFn1yRzQ=="/>
             </key-store>
+            <key-store name="empty-type-keystore">
+                <file name="./target/keystore/client.keystore"/>
+                <key-store-clear-password password="password"/>
+            </key-store>
         </key-stores>
         <ssl-contexts>
             <ssl-context name="client-ssl-context-clear">
@@ -47,6 +51,11 @@
             <ssl-context name="client-ssl-context-masked">
                 <key-store-ssl-certificate key-store-name="masked-keystore" alias="testclient1">
                     <key-store-masked-password algorithm="masked-HMAC-SHA1-AES-128" key-material="testingKeyMaterial" iteration-count="12" salt="12345678" masked-password="9EQZkSe7w+VHasVXbNxuJA==" initialization-vector="QXRFBhXc7Z8dkQaFn1yRzQ=="/>
+                </key-store-ssl-certificate>
+            </ssl-context>
+            <ssl-context name="client-ssl-context-empty-type">
+                <key-store-ssl-certificate key-store-name="empty-type-keystore" alias="testclient1">
+                    <key-store-clear-password password="password"/>
                 </key-store-ssl-certificate>
             </ssl-context>
         </ssl-contexts>
@@ -64,6 +73,9 @@
             </rule>
             <rule use-ssl-context="client-ssl-context-masked">
                 <match-host name="masked"/>
+            </rule>
+            <rule use-ssl-context="client-ssl-context-empty-type">
+                <match-host name="empty"/>
             </rule>
         </ssl-context-rules>
     </authentication-client>

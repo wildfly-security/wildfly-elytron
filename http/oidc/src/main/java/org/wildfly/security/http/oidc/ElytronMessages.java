@@ -22,6 +22,8 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 import static org.jboss.logging.annotations.Message.NONE;
 
+import java.io.IOException;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -207,6 +209,29 @@ interface ElytronMessages extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 23049, value = "Invalid 'auth-server-url' or 'provider-url': '%s'")
     void invalidAuthServerUrlOrProviderUrl(String url);
+
+    @Message(id = 23050, value = "Invalid bearer token claims")
+    OidcException invalidBearerTokenClaims();
+
+    @Message(id = 23051, value = "Invalid bearer token")
+    OidcException invalidBearerToken(@Cause Throwable cause);
+
+    @LogMessage(level = WARN)
+    @Message(id = 23052, value = "No trusted certificates in token")
+    void noTrustedCertificatesInToken();
+
+    @LogMessage(level = WARN)
+    @Message(id = 23053, value = "No peer certificates established on the connection")
+    void noPeerCertificatesEstablishedOnConnection();
+
+    @Message(id = 23054, value = "Unexpected value for typ claim")
+    String unexpectedValueForTypeClaim();
+
+    @Message(id = 23055, value = "Unable to obtain token: %d")
+    IOException unableToObtainToken(int status);
+
+    @Message(id = 23056, value = "No message entity")
+    IOException noMessageEntity();
 
 }
 
