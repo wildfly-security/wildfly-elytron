@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -124,35 +125,52 @@ public class AbstractBaseHttpTest {
 
     protected static class TestingHttpServerRequest implements HttpServerRequest {
 
-        private String[] authorization;
         private Status result;
         private HttpServerMechanismsResponder responder;
         private String remoteUser;
         private URI requestURI;
         private List<HttpServerCookie> cookies;
+        private String requestMethod = "GET";
+        private Map<String, List<String>> requestHeaders = new HashMap<>();
 
         public TestingHttpServerRequest(String[] authorization) {
-            this.authorization = authorization;
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
             this.remoteUser = null;
             this.cookies = new ArrayList<>();
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI) {
-            this.authorization = authorization;
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
-            this.authorization = authorization;
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = cookies;
         }
 
+        public TestingHttpServerRequest(Map<String, List<String>> requestHeaders, URI requestURI, String requestMethod) {
+            this.requestHeaders = requestHeaders;
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+            this.requestMethod = requestMethod;
+        }
+
         public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie) {
-            this.authorization = authorization;
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
@@ -215,14 +233,12 @@ public class AbstractBaseHttpTest {
         }
 
         public List<String> getRequestHeaderValues(String headerName) {
-            if (AUTHORIZATION.equals(headerName)) {
-                return authorization == null ? null : Arrays.asList(authorization);
-            }
-            return null;
+            return requestHeaders.get(headerName);
         }
 
         public String getFirstRequestHeaderValue(String headerName) {
-            throw new IllegalStateException();
+            List<String> headerValues = requestHeaders.get(headerName);
+            return headerValues != null ? headerValues.get(0) : null;
         }
 
         public SSLSession getSSLSession() {
@@ -263,7 +279,7 @@ public class AbstractBaseHttpTest {
         }
 
         public String getRequestMethod() {
-            return "GET";
+            return requestMethod;
         }
 
         public URI getRequestURI() {
@@ -367,9 +383,8 @@ public class AbstractBaseHttpTest {
     protected static class TestingHttpServerResponse implements HttpServerResponse {
 
         private int statusCode;
-        private String authenticate;
-        private String location;
         private List<HttpServerCookie> cookies;
+        private Map<String, List<String>> responseHeaders = new HashMap<>();
 
         public void setStatusCode(int statusCode) {
             this.statusCode = statusCode;
@@ -380,19 +395,22 @@ public class AbstractBaseHttpTest {
         }
 
         public void addResponseHeader(String headerName, String headerValue) {
-            if (WWW_AUTHENTICATE.equals(headerName)) {
-                authenticate = headerValue;
-            } else if (LOCATION.equals(headerName)) {
-                location = headerValue;
+            if (headerValue != null) {
+                responseHeaders.put(headerName, Collections.singletonList(headerValue));
             }
         }
 
         public String getAuthenticateHeader() {
-            return authenticate;
+            return getFirstResponseHeaderValue(WWW_AUTHENTICATE);
         }
 
         public String getLocation() {
-            return location;
+            return getFirstResponseHeaderValue(LOCATION);
+        }
+
+        public String getFirstResponseHeaderValue(String headerName) {
+            List<String> headerValue = responseHeaders.get(headerName);
+            return headerValue == null ? null : headerValue.get(0);
         }
 
         public List<HttpServerCookie> getCookies() {
@@ -473,11 +491,12 @@ public class AbstractBaseHttpTest {
 
     public class TestingHttpExchangeSpi implements HttpExchangeSpi {
 
-        private List<String> requestAuthorizationHeaders = Collections.emptyList();
+        private Map<String, List<String>> requestHeaders = new HashMap<>();
         private List<String> responseAuthenticateHeaders = new LinkedList<>();
         private List<String> responseAuthenticationInfoHeaders = new LinkedList<>();
         private int statusCode;
         private Status result;
+        private String requestMethod = "GET";
 
         public int getStatusCode() {
             return statusCode;
@@ -496,17 +515,27 @@ public class AbstractBaseHttpTest {
         }
 
         public void setRequestAuthorizationHeaders(List<String> requestAuthorizationHeaders) {
-            this.requestAuthorizationHeaders = requestAuthorizationHeaders;
+            requestHeaders.put(AUTHORIZATION, requestAuthorizationHeaders);
+        }
+
+        public void setHeader(String headerName, String headerValue) {
+            if (headerValue != null) {
+                setHeader(headerName, Collections.singletonList(headerValue));
+            }
+        }
+
+        public void setHeader(String headerName, List<String> headerValue) {
+            requestHeaders.put(headerName, headerValue);
+        }
+
+        public void setRequestMethod(String requestMethod) {
+            this.requestMethod = requestMethod;
         }
 
         // ------
 
         public List<String> getRequestHeaderValues(String headerName) {
-            if (AUTHORIZATION.equals(headerName)) {
-                return requestAuthorizationHeaders;
-            } else {
-                throw new IllegalStateException();
-            }
+            return requestHeaders.get(headerName);
         }
 
         public void addResponseHeader(String headerName, String headerValue) {
@@ -536,7 +565,7 @@ public class AbstractBaseHttpTest {
         }
 
         public String getRequestMethod() {
-            return "GET";
+            return requestMethod;
         }
 
         public URI getRequestURI() {

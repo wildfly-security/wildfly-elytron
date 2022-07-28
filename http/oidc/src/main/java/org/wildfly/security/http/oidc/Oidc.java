@@ -46,7 +46,9 @@ public class Oidc {
 
     public static final String OIDC_NAME = "OIDC";
     public static final String JSON_CONTENT_TYPE = "application/json";
-    public static final String HTML_CONTEXT_TYPE = "text/html";
+    public static final String HTML_CONTENT_TYPE = "text/html";
+    public static final String WILDCARD_CONTENT_TYPE = "*/*";
+    public static final String TEXT_CONTENT_TYPE = "text/*";
     public static final String DISCOVERY_PATH = ".well-known/openid-configuration";
     public static final String KEYCLOAK_REALMS_PATH = "realms/";
     public static final String JSON_CONFIG_CONTEXT_PARAM = "org.wildfly.security.http.oidc.json.config";
@@ -61,9 +63,11 @@ public class Oidc {
     public static final String GRANT_TYPE = "grant_type";
     public static final String LOGIN_HINT = "login_hint";
     public static final String MAX_AGE = "max_age";
+    public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
+    public static final String USERNAME = "username";
     public static final String OIDC_SCOPE = "openid";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
@@ -72,6 +76,7 @@ public class Oidc {
     public static final String STATE = "state";
     public static final int INVALID_ISSUED_FOR_CLAIM = -1;
     public static final int INVALID_AT_HASH_CLAIM = -2;
+    public static final int INVALID_TYPE_CLAIM = -3;
     static final String OIDC_CLIENT_CONFIG_RESOLVER = "oidc.config.resolver";
     static final String OIDC_CONFIG_FILE_LOCATION = "oidc.config.file";
     static final String OIDC_JSON_FILE = "/WEB-INF/oidc.json";

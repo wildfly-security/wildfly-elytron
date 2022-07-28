@@ -2007,7 +2007,7 @@ public final class ElytronXmlParser {
                 ExceptionSupplier<KeyStore, ConfigXMLParseException> keyStoreFactory = null;
                 if (type == null || type.equalsIgnoreCase("automatic")) {
                     keyStoreFactory = new UnknownTypeFileKeyStoreFactory(providers, provider, passwordFactory, fileSource, resourceSource, uriSource, location);
-                    if (wrap) {
+                    if (wrap == Boolean.TRUE) {
                         keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
                     }
                 } else {
@@ -3576,8 +3576,9 @@ public final class ElytronXmlParser {
                 }
                 keyStore = KeyStoreUtil.loadKeyStore(providers, providerName, fin, fileName, passwordFactory.get());
             } catch (Exception e) {
-                safeClose(fin);
                 throw xmlLog.xmlFailedToCreateKeyStore(location, e);
+            } finally {
+                safeClose(fin);
             }
             return keyStore;
         }

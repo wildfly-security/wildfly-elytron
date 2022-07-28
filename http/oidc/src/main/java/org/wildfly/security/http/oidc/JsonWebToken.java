@@ -44,10 +44,17 @@ import org.wildfly.common.Assert;
  */
 public class JsonWebToken {
 
+    public static final String EMAIL = "email";
     public static final String EXP = "exp";
-    public static final String NBF = "nbf";
+    public static final String FAMILY_NAME = "family_name";
+    public static final String GIVEN_NAME = "given_name";
     public static final String IAT = "iat";
-
+    public static final String MIDDLE_NAME = "middle_name";
+    public static final String NAME = "name";
+    public static final String NICKNAME = "nickname";
+    public static final String NBF = "nbf";
+    public static final String PREFERRED_USERNAME = "preferred_username";
+    public static final String SUB = "sub";
 
     private final JwtClaims jwtClaims;
 
@@ -253,6 +260,99 @@ public class JsonWebToken {
         } catch (MalformedClaimException e) {
             throw log.invalidTokenClaimValue();
         }
+    }
+
+    /**
+     * Get the name claim.
+     *
+     * @return the name claim
+     */
+    public String getName() {
+        return getClaimValueAsString(NAME);
+    }
+
+    /**
+     * Get the principal name.
+     * @param deployment the OIDC client configuration that should be used to determine the principal
+     * @return the principal name
+     */
+    public String getPrincipalName(OidcClientConfiguration deployment) {
+        String attr = SUB;
+        if (deployment.getPrincipalAttribute() != null) {
+            attr = deployment.getPrincipalAttribute();
+        }
+        switch (attr) {
+            case SUB:
+                return getSubject();
+            case EMAIL:
+                return getEmail();
+            case PREFERRED_USERNAME:
+                return getPreferredUsername();
+            case NAME:
+                return getName();
+            case GIVEN_NAME:
+                return getGivenName();
+            case FAMILY_NAME:
+                return getFamilyName();
+            case NICKNAME:
+                return getNickName();
+            default:
+                return getSubject();
+        }
+    }
+
+    /**
+     * Get the given name claim.
+     *
+     * @return the given name claim
+     */
+    public String getGivenName() {
+        return getClaimValueAsString(GIVEN_NAME);
+    }
+
+    /**
+     * Get the family name claim.
+     *
+     * @return the family name claim
+     */
+    public String getFamilyName() {
+        return getClaimValueAsString(FAMILY_NAME);
+    }
+
+    /**
+     * Get the middle name claim.
+     *
+     * @return the middle name claim
+     */
+    public String getMiddleName() {
+        return getClaimValueAsString(MIDDLE_NAME);
+    }
+
+    /**
+     * Get the nick name claim.
+     *
+     * @return the nick name claim
+     */
+    public String getNickName() {
+        return getClaimValueAsString(NICKNAME);
+    }
+
+    /**
+     * Get the preferred username claim.
+     *
+     * @return the preferred username claim
+     */
+    public String getPreferredUsername() {
+        return getClaimValueAsString(PREFERRED_USERNAME);
+    }
+
+    /**
+     * Get the email claim.
+     *
+     * @return the email claim
+     */
+    public String getEmail() {
+        return getClaimValueAsString(EMAIL);
     }
 
     private static int getCurrentTimeInSeconds() {
