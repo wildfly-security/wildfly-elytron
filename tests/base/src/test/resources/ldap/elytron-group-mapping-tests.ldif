@@ -23,4 +23,8 @@ objectClass: groupOfUniqueNames
 cn: GroupThree
 uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org
 
-
+dn: cn=GroupOneInGroupThree,cn=GroupThree,ou=Groups,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: groupOfUniqueNames
+cn: GroupOneInGroupThree
+uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org
