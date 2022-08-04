@@ -26,21 +26,44 @@ import static org.wildfly.security.http.HttpConstants.OK;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 
+import java.security.Provider;
+import java.security.Security;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsInstanceOf;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.wildfly.security.auth.permission.LoginPermission;
+import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.realm.SimpleRealmEntry;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationSuccessfulEvent;
+import org.wildfly.security.auth.server.event.SecurityPermissionCheckSuccessfulEvent;
+import org.wildfly.security.auth.server.event.SecurityEvent;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 import mockit.integration.junit4.JMockit;
 
@@ -74,6 +97,18 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
             + "       qop=auth,\n"
             + "       response=\"753927fa0e85d155564e2e272a28d1802ca10daf4496794697cf8db5856cb6c1\",\n"
             + "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
+
+    private static final Provider provider = WildFlyElytronPasswordProvider.getInstance();
+
+    @BeforeClass
+    public static void registerPasswordProvider() {
+        Security.insertProviderAt(provider, 1);
+    }
+
+    @AfterClass
+    public static void removePasswordProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     private CallbackHandler callbackHandler() {
         return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
@@ -256,4 +291,42 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         authenticateWithDigestMD5();
     }
 
+    @Test
+    public void testLoginInSecurityDomain() throws Exception {
+        SimpleMapBackedSecurityRealm usersRealm = new SimpleMapBackedSecurityRealm();
+        usersRealm.setIdentityMap(Collections.singletonMap("Mufasa",
+                new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(
+                        PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                                new ClearPasswordSpec("Circle of Life".toCharArray())))))));
+        List<SecurityEvent> events = new ArrayList<>();
+        Consumer<SecurityEvent> listener = event -> events.add(event);
+        SecurityDomain secDomain = SecurityDomain.builder()
+                .addRealm("http-auth@example.org", usersRealm).build()
+                .setDefaultRealmName("http-auth@example.org")
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .setSecurityEventListener(listener)
+                .build();
+
+        authenticator = HttpAuthenticator.builder()
+                .setHttpExchangeSpi(exchangeSpi)
+                .setSecurityDomain(secDomain)
+                .build();
+
+        SecurityIdentity identity = authenticator.login("Mufasa", "wrong-password");
+        Assert.assertNull(identity);
+        Assert.assertEquals(1, events.size());
+        MatcherAssert.assertThat(events.get(0), IsInstanceOf.instanceOf(SecurityAuthenticationFailedEvent.class));
+        Assert.assertEquals("Mufasa", ((SecurityAuthenticationFailedEvent) events.get(0)).getPrincipal().getName());
+
+        events.clear();
+
+        identity = authenticator.login("Mufasa", "Circle of Life");
+        Assert.assertNotNull(identity);
+        Assert.assertEquals(2, events.size());
+        MatcherAssert.assertThat(events.get(0), IsInstanceOf.instanceOf(SecurityPermissionCheckSuccessfulEvent.class));
+        Assert.assertEquals("Mufasa", ((SecurityPermissionCheckSuccessfulEvent) events.get(0)).getSecurityIdentity().getPrincipal().getName());
+        MatcherAssert.assertThat(((SecurityPermissionCheckSuccessfulEvent) events.get(0)).getPermission(), IsInstanceOf.instanceOf(LoginPermission.class));
+        MatcherAssert.assertThat(events.get(1), IsInstanceOf.instanceOf(SecurityAuthenticationSuccessfulEvent.class));
+        Assert.assertEquals("Mufasa", ((SecurityAuthenticationSuccessfulEvent) events.get(1)).getSecurityIdentity().getPrincipal().getName());
+    }
 }
