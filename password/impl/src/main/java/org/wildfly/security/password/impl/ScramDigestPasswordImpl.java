@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -284,38 +285,72 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
      * </p>
      *
      * @param algorithm the algorithm that should be used to hash the password.
-     * @param password the password to be hashed.
+     * @param password the password to be hashed. It will be padded according to the HMAC block size.
      * @return the constructed {@link Mac} instance.
      */
     private static Mac getMacInstance(final String algorithm, final byte[] password) throws NoSuchAlgorithmException, InvalidKeyException {
+        byte[] padded = hmacPad(algorithm, password);
+        //byte[] padded = password;
         switch (algorithm) {
             case ALGORITHM_SCRAM_SHA_1: {
                 Mac hmac = Mac.getInstance(HMAC_SHA1_ALGORITHM);
-                Key key = new SecretKeySpec(password, HMAC_SHA1_ALGORITHM);
+                Key key = new SecretKeySpec(padded, HMAC_SHA1_ALGORITHM);
                 hmac.init(key);
                 return hmac;
             }
             case ALGORITHM_SCRAM_SHA_256: {
                 Mac hmac = Mac.getInstance(HMAC_SHA256_ALGORITHM);
-                Key key = new SecretKeySpec(password, HMAC_SHA256_ALGORITHM);
+                Key key = new SecretKeySpec(padded, HMAC_SHA256_ALGORITHM);
                 hmac.init(key);
                 return hmac;
             }
             case ALGORITHM_SCRAM_SHA_384: {
                 Mac hmac = Mac.getInstance(HMAC_SHA384_ALGORITHM);
-                Key key = new SecretKeySpec(password, HMAC_SHA384_ALGORITHM);
+                Key key = new SecretKeySpec(padded, HMAC_SHA384_ALGORITHM);
                 hmac.init(key);
                 return hmac;
             }
             case ALGORITHM_SCRAM_SHA_512: {
                 Mac hmac = Mac.getInstance(HMAC_SHA512_ALGORITHM);
-                Key key = new SecretKeySpec(password, HMAC_SHA512_ALGORITHM);
+                Key key = new SecretKeySpec(padded, HMAC_SHA512_ALGORITHM);
                 hmac.init(key);
                 return hmac;
             }
             default:
                 throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    private static byte[] hmacPad(final String algorithm, byte[] password) throws NoSuchAlgorithmException {
+        int blockSize;
+        String digestAlgo;
+        switch (algorithm) {
+            case ScramDigestPassword.ALGORITHM_SCRAM_SHA_1:
+                blockSize = 64;
+                digestAlgo = "SHA-1";
+                break;
+            case ScramDigestPassword.ALGORITHM_SCRAM_SHA_256:
+                blockSize = 64;
+                digestAlgo = "SHA-256";
+                break;
+            case ScramDigestPassword.ALGORITHM_SCRAM_SHA_384:
+                blockSize = 128;
+                digestAlgo = "SHA-384";
+                break;
+            case ScramDigestPassword.ALGORITHM_SCRAM_SHA_512:
+                blockSize = 128;
+                digestAlgo = "SHA-512";
+                break;
+            default:
+                throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
+        }
+        byte[] bytes =  new byte[blockSize];
+        if (password.length > blockSize) {
+            MessageDigest md = MessageDigest.getInstance(digestAlgo);
+            password = md.digest(password);
+        }
+        System.arraycopy(password, 0, bytes, 0, Math.min(password.length, blockSize));
+        return bytes;
     }
 
     public int hashCode() {
