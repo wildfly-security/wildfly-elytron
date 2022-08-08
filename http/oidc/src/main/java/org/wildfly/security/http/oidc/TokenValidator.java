@@ -172,7 +172,7 @@ public class TokenValidator {
          * @throws IllegalArgumentException if a required builder parameter is missing or invalid
          */
         public TokenValidator build() throws IllegalArgumentException {
-            expectedIssuer = clientConfiguration.getProviderUrl();
+            expectedIssuer = clientConfiguration.getIssuerUrl();
             if (expectedIssuer == null || expectedIssuer.length() == 0) {
                 throw log.noExpectedIssuerGiven();
             }
