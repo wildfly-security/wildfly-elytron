@@ -478,6 +478,11 @@ td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.li
   @media screen and (max-width: 1024px) { width: 80vw; }
 }
 
+.banner>.content>img {
+  width: 100%;
+  height: auto;
+}
+
 .quoteblock blockquote::before {
   content: "\201c";
   float: left;
