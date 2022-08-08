@@ -79,6 +79,7 @@ public class OidcClientConfiguration {
     protected String registerNodeUrl;
     protected String unregisterNodeUrl;
     protected String jwksUrl;
+    protected String issuerUrl;
     protected String principalAttribute = "sub";
 
     protected String resource;
@@ -218,15 +219,13 @@ public class OidcClientConfiguration {
                     OidcProviderMetadata config = getOidcProviderMetadata(discoveryUrl);
 
                     authUrl = config.getAuthorizationEndpoint();
-                    if (providerUrl == null) {
-                        providerUrl = config.getIssuer();
-                    }
+                    issuerUrl = config.getIssuer();
                     tokenUrl = config.getTokenEndpoint();
                     logoutUrl = config.getLogoutEndpoint();
                     jwksUrl = config.getJwksUri();
                     if (authServerBaseUrl != null) {
                         // keycloak-specific properties
-                        accountUrl = getUrl(providerUrl, ACCOUNT_PATH);
+                        accountUrl = getUrl(issuerUrl, ACCOUNT_PATH);
                         registerNodeUrl = getUrl(authServerBaseUrl, KEYCLOAK_REALMS_PATH + getRealm(), CLIENTS_MANAGEMENT_REGISTER_NODE_PATH);
                         unregisterNodeUrl = getUrl(authServerBaseUrl, KEYCLOAK_REALMS_PATH + getRealm(), CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH);
                     }
@@ -323,6 +322,11 @@ public class OidcClientConfiguration {
     public String getJwksUrl() {
         resolveUrls();
         return jwksUrl;
+    }
+
+    public String getIssuerUrl() {
+        resolveUrls();
+        return issuerUrl;
     }
 
     public void setResource(String resource) {
