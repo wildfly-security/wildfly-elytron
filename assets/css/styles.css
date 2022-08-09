@@ -178,6 +178,8 @@ td.content > .title, .audioblock > .title, .exampleblock > .title, .imageblock >
 
 @media screen and (max-width: 1024px) { .responsive-img > .content > img { width: 80vw; } }
 
+.banner > .content > img { width: 100%; height: auto; }
+
 .quoteblock blockquote::before { content: "\201c"; float: left; font-size: 2.75em; font-weight: bold; line-height: .6em; margin-left: -.6em; color: #004153; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); padding-left: 30px; }
 
 .text-center { text-align: center !important; }
