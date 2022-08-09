@@ -1,0 +1,62 @@
+---
+layout: post
+title: 'Top 5 Reasons To Join Us At Open Source Day'
+date: 2022-08-09
+tags: opensource ghc opensourceday
+synopsis: Learn why you should join the WildFly Elytron project at this year's Grace Hopper Open Source Day.
+author: fjuma
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDayProject2022.png
+---
+
+[.banner]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDayBanner2022.png[align="left"]
+
+Last month, we were thrilled to announce that the https://wildfly-security.github.io/wildfly-elytron/[WildFly Elytron] project
+was selected for https://ghc.anitab.org/programs-and-awards/open-source-day/[Open Source Day], an all-day hackathon hosted
+by https://anitab.org/[AnitaB.org] as part of the https://ghc.anitab.org/[Grace Hopper Celebration]. This is our third
+time taking part in this event, after having participated in the Summer Open Source Day and the Grace Hopper Open Source Day last year.
+
+As a female project maintainer myself, it's very inspiring to be part of the largest female-led movement in open source!
+With a little over a month left before the big day, we wanted to let you know our top 5 reasons for joining us on the
+WildFly Elytron project at Open Source Day in September.
+
+== 1. Guided Introduction To Open Source
+
+Have you ever wanted to contribute to an open source project but weren't quite sure where to start? This is finally
+your chance to have a guided introduction to open source. We will have a wide variety of good first issues to choose from
+and we will help you pick and work on issues. Have a question on how to solve an issue? Don't worry! We'll be there to help
+answer your questions, help with setting up your developer environment, and help you submit your pull requests all day.
+
+== 2. Hone Your Skills
+
+Want to learn more about Java? Have questions about Git or Maven? Want to learn how to create a nicely formatted
+pull request that's easy to review? We will have WildFly Elytron project maintainers and mentors available to
+discuss these concepts and help answer any questions you might have.
+
+== 3. No Prior Experience Needed
+
+Not familiar with security yet? Are you new to Java? That's totally fine! We will have lots of different issues to
+choose from and will be happy to help you work on them. No prior experience is needed. A lot of contributors to
+the WildFly Elytron project are brand new to security when they begin.
+
+== 4. Ask Us Anything
+
+Have general questions about contributing to open source projects or wonder what it's like having a full-time job
+in open source? Want to get a maintainer's perspective on the pull request review process? This is your chance to ask
+absolutely anything you'd like to! Take advantage of this time.
+
+== 5. Have An Impact
+
+WildFly Elytron is the security framework that's used by the WildFly application server. It's used to secure
+apps that are deployed to the server and to secure access to the server itself. Banks, retail stores, and
+governments are just some examples of end-users of the enterprise version of WildFly. Your contributions
+to the WildFly Elytron project will have an impact for these end-users!
+
+== We hope to see you in September!
+
+We hope you enjoyed checking out our top 5 reasons to join the WildFly Elytron project at the Grace
+Hopper Open Source Day on September 16th! We hope to see you there! In the meantime, if you have any
+questions or want to learn more, feel free to reach out to us on the
+https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron[WildFly Elytron channel] on
+Zulip chat.
