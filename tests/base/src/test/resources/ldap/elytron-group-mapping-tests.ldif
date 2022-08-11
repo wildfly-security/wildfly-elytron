@@ -9,22 +9,26 @@ dn: cn=GroupOne,ou=Groups,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: GroupOne
+businessCategory: oneAndTwo
 uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org
 
 dn: cn=GroupTwo,ou=Groups,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: GroupTwo
+businessCategory: oneAndTwo
 uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org
 
 dn: cn=GroupThree,ou=Groups,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: GroupThree
+businessCategory: three
 uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org
 
 dn: cn=GroupOneInGroupThree,cn=GroupThree,ou=Groups,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: groupOfUniqueNames
 cn: GroupOneInGroupThree
+businessCategory: three
 uniqueMember: uid=plainUser,dc=elytron,dc=wildfly,dc=org

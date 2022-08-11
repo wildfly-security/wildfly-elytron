@@ -771,7 +771,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         private Map<String, Collection<String>> extractFilteredAttributes(SearchResult identityEntry, DirContext context, DirContext identityContext) {
             return extractAttributes(AttributeMapping::isFilteredOrReference, mapping -> {
-                Collection<String> values = mapping.getRoleRecursionDepth() == 0 ? new ArrayList<>() : new HashSet<>();
+                Collection<String> values = new HashSet<>();
                 final String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
 
                 List<SearchResult> toSearch = new LinkedList<>();
