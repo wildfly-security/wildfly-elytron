@@ -21,6 +21,7 @@ package org.wildfly.security.http.oidc;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.CLIENT_ID;
 import static org.wildfly.security.http.oidc.Oidc.CODE;
+import static org.wildfly.security.http.oidc.Oidc.DOMAIN_HINT;
 import static org.wildfly.security.http.oidc.Oidc.ERROR;
 import static org.wildfly.security.http.oidc.Oidc.KC_IDP_HINT;
 import static org.wildfly.security.http.oidc.Oidc.LOGIN_HINT;
@@ -42,10 +43,15 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.wildfly.security.http.HttpConstants;
 
 /**
@@ -157,23 +163,19 @@ public class OidcRequestAuthenticator {
                 }
                 url = uriBuilder.build().toString();
             }
-            String loginHint = getQueryParamValue(facade, LOGIN_HINT);
-            url = stripQueryParam(url, LOGIN_HINT);
 
-            String idpHint = getQueryParamValue(facade, KC_IDP_HINT);
-            url = stripQueryParam(url, KC_IDP_HINT);
-
-            String scope = getQueryParamValue(facade, SCOPE);
-            url = stripQueryParam(url, SCOPE);
-
-            String prompt = getQueryParamValue(facade, PROMPT);
-            url = stripQueryParam(url, PROMPT);
-
-            String maxAge = getQueryParamValue(facade, MAX_AGE);
-            url = stripQueryParam(url, MAX_AGE);
-
-            String uiLocales = getQueryParamValue(facade, UI_LOCALES);
-            url = stripQueryParam(url, UI_LOCALES);
+            List<String> forwardableQueryParams = Arrays.asList(LOGIN_HINT, DOMAIN_HINT, KC_IDP_HINT, PROMPT, MAX_AGE, UI_LOCALES, SCOPE);
+            List<NameValuePair> forwardedQueryParams = new ArrayList<>(forwardableQueryParams.size());
+            for (String paramName : forwardableQueryParams) {
+                String paramValue = getQueryParamValue(facade, paramName);
+                if (SCOPE.equals(paramName)) {
+                    paramValue = addOidcScopeIfNeeded(paramValue);
+                }
+                if (paramValue != null && !paramValue.isEmpty()) {
+                    forwardedQueryParams.add(new BasicNameValuePair(paramName, paramValue));
+                }
+                url = stripQueryParam(url, paramName);
+            }
 
             if (deployment.getAuthUrl() == null) {
                 return null;
@@ -183,22 +185,7 @@ public class OidcRequestAuthenticator {
                     .addParameter(CLIENT_ID, deployment.getResourceName())
                     .addParameter(REDIRECT_URI, rewrittenRedirectUri(url))
                     .addParameter(STATE, state);
-            if (loginHint != null && loginHint.length() > 0) {
-                redirectUriBuilder.addParameter(LOGIN_HINT, loginHint);
-            }
-            if (idpHint != null && idpHint.length() > 0) {
-                redirectUriBuilder.addParameter(KC_IDP_HINT, idpHint);
-            }
-            if (prompt != null && prompt.length() > 0) {
-                redirectUriBuilder.addParameter(PROMPT, prompt);
-            }
-            if (maxAge != null && maxAge.length() > 0) {
-                redirectUriBuilder.addParameter(MAX_AGE, maxAge);
-            }
-            if (uiLocales != null && uiLocales.length() > 0) {
-                redirectUriBuilder.addParameter(UI_LOCALES, uiLocales);
-            }
-            redirectUriBuilder.addParameter(SCOPE, addOidcScopeIfNeeded(scope));
+            redirectUriBuilder.addParameters(forwardedQueryParams);
             return redirectUriBuilder.build().toString();
         } catch (URISyntaxException e) {
             throw log.unableToCreateRedirectResponse(e);
