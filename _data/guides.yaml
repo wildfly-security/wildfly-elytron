@@ -1,0 +1,22 @@
+classname: guides
+header: Wild<strong>Fly</strong> Elytron Developer Guides 
+description: >
+  Find the guide for your operating system to get your development environment set up,
+  and then check out our <a href="/wildfly-elytron/getting-started-for-developers"><strong>
+  getting started for developers guide</strong></a> to get familiar with the WildFly Elytron project.
+  You can also look at our guide to <a href="/wildfly-elytron/guides/restoring-configuration/">restore
+  your system configuration</a> if needed.
+  
+elements:
+  - header: <a href="/wildfly-elytron/guides/setup-elytron-windows/"><strong>Windows 10/11</strong></a>
+    icon: /assets/images/guides/icon-windows.png
+    icon_link: /wildfly-elytron/guides/setup-elytron-windows/
+    classname: windows
+  - header: <a href="/wildfly-elytron/guides/setup-elytron-linux/"><strong>Linux & WSL</strong></a>
+    icon: /assets/images/guides/icon-linux.png
+    icon_link: /wildfly-elytron/guides/setup-elytron-linux/
+    classname: linux
+  - header: <a href="/wildfly-elytron/guides/setup-elytron-macos/"><strong>macOS</strong></a>
+    icon: /assets/images/guides/icon-macos.png
+    icon_link: /wildfly-elytron/guides/setup-elytron-macos/
+    classname: macos

@@ -1,0 +1,32 @@
+{% assign datafile = include.datafile %}
+{% assign blank_170px_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAACqCAIAAACyFEPVAAABhmlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw1AUhU9TpSoVQSuIOGSo4mBBVMRRq1CECqFWaNXB5KV/0KQhSXFxFFwLDv4sVh1cnHV1cBUEwR8QRycnRRcp8b6k0CLWC4/3cd49h/fuA4RqkWlW2zig6baZiEXFVHpVDLyiEz70oh+jMrOMOUmKo2V93VMv1V2EZ7Xu+7O61YzFAJ9IPMsM0ybeIJ7etA3O+8QhlpdV4nPiMZMuSPzIdcXjN845lwWeGTKTiXniELGYa2KliVne1IiniMOqplO+kPJY5bzFWSuWWf2e/IXBjL6yzHVaQ4hhEUuQIEJBGQUUYSNCu06KhQSdR1v4B12/RC6FXAUwciygBA2y6wf/g9+ztbKTE15SMAq0vzjOxzAQ2AVqFcf5Pnac2gngfwau9Ia/VAVmPkmvNLTwEdCzDVxcNzRlD7jcAQaeDNmUXclPS8hmgfcz+qY00HcLdK15c6uf4/QBSNKs4jfAwSEwkqPs9Rbv7mie27899fn9AE1icphAIL/FAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAB3RJTUUH5gkBEhYZ3jQ9IgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAEaSURBVHja7dEBDQAACMMwwL/no4PQStg6SfHVSGA/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mM/9mO//diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/diP/dhvP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/ZjP/Zjv/3Yj/3Yj/3Yj/3Yj/3Yj/3Yj/3Yz10L9R4EUXCSIPsAAAAASUVORK5CYII=' %}
+<!-- header and description fields support full HTML -->
+<div class="{{datafile.classname}}-page grid-wrapper">
+    <div class="grid__item width-12-12 {{datafile.classname}}-title">
+        <h1>{{datafile.header}}</h1>
+    </div>
+    {% if datafile.description %}
+        <div class="grid__item width-12-12 {{datafile.classname}}-description">
+            <p>{{datafile.description}}</p>
+        </div>
+    {% endif %}
+    {% for element in datafile.elements %}
+        {% unless element.header == "blank" %}
+            <div class="grid__item width-4-12 width-12-12-m {{datafile.classname}}-block {{datafile.classname}}-block_{{element.classname}}">
+                {% if element.icon_link %}
+                    <a href="{{element.icon_link}}"><img src="{{site.baseurl}}{{element.icon}}"/></a>
+                {% else %}
+                    <img src="{{site.baseurl}}{{element.icon}}"/>
+                {% endif %}
+                <h3>{{element.header}}</h3>
+                <p>{{element.description}}</p>
+            </div>
+        {% else %}
+            <div class="grid__item width-4-12 width-12-12-m {{datafile.classname}}-block  {{datafile.classname}}-block_blank">
+                <img src="{{blank_170px_image}}"/>
+                <h3></h3>
+                <p></p>
+            </div>
+        {% endunless %}
+    {% endfor %}
+</div>

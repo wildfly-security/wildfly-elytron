@@ -88,6 +88,8 @@ You will need:
 * An https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java[IDE]
 (e.g., https://www.jetbrains.com/idea/download/[IntelliJ IDEA], https://www.eclipse.org/downloads/[Eclipse], etc.)
 
+For instructions that will walk you through installing Java, Maven, and Git for your operating system and show you how to fork and clone the WildFly Elytron project, take a look at our link:../guides/[setup guides].
+
 Fork https://github.com/wildfly-security/wildfly-elytron[wildfly-elytron], https://github.com/wildfly/wildfly-core[wildfly-core],
 and https://github.com/wildfly/wildfly[wildfly] to your GitHub account and clone your newly forked repositories into
 your local workspace. Then, for each repository, add a remote ref to upstream, for pulling future updates.

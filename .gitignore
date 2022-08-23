@@ -1,6 +1,9 @@
 .project
+.idea
+.vscode
 target
 _site
+vendor/
 .sass-cache
 .jekyll-cache
 .jekyll-metadata

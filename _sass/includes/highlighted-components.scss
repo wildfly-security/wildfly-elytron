@@ -1,0 +1,133 @@
+$yellow-idle: #F4c44c;
+
+/* Navigation buttons */
+
+@mixin highlight-button-mixin {
+
+  border: 2px solid $accent-yellow  !important;
+  border-radius: 10px;
+  padding: 0 17px;
+  font-weight: 600;
+  line-height: 32px;
+  transition-duration: 0.2s;
+
+  &:hover, &:active, &:focus {
+    transition-duration: 0.2s;
+    background-color: $accent-yellow;
+    color: $blue;
+  }
+}
+
+@mixin highlight-sidebar-mixin {
+  
+  font-weight: 600;
+  transition-duration: 0.2s;
+
+  &:hover, &:active, &:focus {
+    transition-duration: 0.2s;
+    background-color: $accent-yellow !important;
+    color: $blue !important;
+  }
+}
+
+a.mdl-navigation__link.highlight-button {
+  @include highlight-button-mixin;
+
+  background-color: $blue;
+  color: $accent-yellow;
+}
+
+a.mdl-navigation__link--current.highlight-button {
+  @include highlight-button-mixin;
+  
+  background-color: $accent-yellow !important;
+  color: $blue !important;
+}
+
+a.mdl-navigation__link.highlight-sidebar {
+  @include highlight-sidebar-mixin;
+
+  background-color: $yellow-idle !important;
+  color: $blue !important;
+}
+
+a.mdl-navigation__link--current.highlight-sidebar {
+  @include highlight-sidebar-mixin;
+
+  background-color: $accent-yellow !important;
+  color: $blue !important;
+}
+
+/* MDL chip button */
+
+// Copied from MDL definitions
+$shadow-key-umbra-opacity: 0.2 !default;
+$shadow-key-penumbra-opacity: 0.14 !default;
+$shadow-ambient-shadow-opacity: 0.12 !default;
+
+@mixin shadow-2dp() {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, $shadow-key-penumbra-opacity),
+              0 3px 1px -2px rgba(0, 0, 0, $shadow-key-umbra-opacity),
+              0 1px 5px 0 rgba(0, 0, 0, $shadow-ambient-shadow-opacity);
+}
+
+div.highlight-chip {
+  margin: 24px 6px 0px 6px;
+  text-align: center;
+  max-width: 100%;
+  
+  button.mdl-chip {
+    background-color: $accent-yellow;
+    max-width: 100%;
+    transition-duration: 0.2s;
+    
+    &:hover {
+      cursor: pointer;
+      transition-duration: 0.2s;
+      outline: 0;
+      background-color: #A3DBE8;
+      @include shadow-2dp();
+    }
+    
+    &:active {
+      cursor: pointer;
+      background-color: #88c5d3;
+      box-shadow: none;
+    }
+  
+    span {
+      color: $blue;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    &.highlight-chip{
+  
+      &_tiny, &_large {
+        display: none;
+      }
+      
+      @media screen and (min-width: 650px) {
+        &_tiny, &_small {
+          display: none;
+        }
+  
+        &_large {
+          display: initial;
+        }
+      }
+
+      @media screen and (max-width: 350px) {
+        &_small, &_large {
+          display: none;
+        }
+
+        &_tiny {
+          display: initial;
+        }
+      }
+    }
+  }
+
+  
+}

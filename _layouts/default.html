@@ -44,10 +44,15 @@
                         {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
                     {% elsif page.url contains 'blog' and item.name == 'Blog' %}
                         {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+                    {% elsif page.url contains 'OSD-2022' and item.name == 'OSD 2022' %}
+                        {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
                     {% else %}
                         {% assign class = 'mdl-navigation__link' %}
                     {% endif %}
-                    {% if item.name == 'Docs' or item.name == 'GitHub' %}
+                    {% if item.name == 'OSD 2022' %}
+                        {% assign class = class | append: " highlight-button" %}
+                    {% endif %}
+                    {% if item.name == 'GitHub' %}
                          <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
                     {% else %}
                          <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
@@ -61,13 +66,18 @@
         <nav class="mdl-navigation">
             {% for item in site.data.navigation %}
             {% if page.url == item.link %}
-            {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+                {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
             {% elsif page.url contains 'blog' and item.name == 'Blog' %}
-            {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+                {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
+            {% elsif page.url contains 'OSD-2022' and item.name == 'OSD 2022' %}
+                {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
             {% else %}
-            {% assign class = 'mdl-navigation__link' %}
+                {% assign class = 'mdl-navigation__link' %}
             {% endif %}
-            {% if item.name == 'Docs' or item.name == 'GitHub' %}
+            {% if item.name == 'OSD 2022' %}
+                {% assign class = class | append: " highlight-sidebar" %}
+            {% endif %}
+            {% if item.name == 'GitHub' %}
                 <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link }}">{{ item.name }}</a>
             {% else %}
                 <a class="{{class}} {{ item.name }}-menuitem" href="{{ item.link | relative_url }}">{{ item.name }}</a>
