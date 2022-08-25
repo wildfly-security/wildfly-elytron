@@ -1,0 +1,169 @@
+---
+layout: post
+title: 'Bearer Support for the Elytron OIDC Client Subsystem'
+date: 2022-09-01
+tags: oidc bearer
+synopsis: An overview of bearer support for applications when using the Elytron OIDC Client subsystem.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer
+tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview
+of how to configure applications deployed to WildFly so they can support Bearer Token Authentication.
+
+toc::[]
+
+== Bearer Token Authentication
+
+Bearer Token Authentication involves authenticating HTTP requests that include a security token
+called a "bearer token". A bearer token is used to determine whether or not to provide access
+to an HTTP resource. As an example, a bearer token could be used to invoke a web service. You
+might be wondering, where does the bearer token that's used in the HTTP request come from?
+The token can be obtained from any OAuth2 compliant authorization server. For instance,
+after logging in to an application that's secured using OpenID Connect, we receive an access token.
+This token is a bearer token and it can be used to invoke something else that's secured using
+Bearer Token Authentication.
+
+The `elytron-oidc-client` subsystem now allows applications to be secured using Bearer Token
+Authentication.
+
+== Securing an Application Using Bearer Token Authentication
+
+The configuration that indicates that an application should be secured using Bearer
+Token Authentication with the `elytron-oidc-client` subsystem can either be provided
+within the application itself or within the `elytron-oidc-client` subsystem.
+
+=== Deployment Configuration
+
+The `bearer-only` option can now be specified in an application's `WEB-INF/oidc.json` file.
+Setting this to `true` indicates that an application should be secured using Bearer Token
+Authentication. In other words, when a user attempts to access this application,
+they won't be redirected to an OpenID provider to log in. Instead, the `elytron-oidc-client`
+subsystem will attempt to verify the user's bearer token. Like with the Keycloak client
+adapter, the default value for `bearer-only` is false.
+
+For more details on how to configure an `oidc.json` file and how to specify `OIDC` in an
+application's `web.xml` file, check out the documentation https://docs.wildfly.org/26.1/Admin_Guide.html#deployment-configuration[here].
+
+=== Subsystem Configuration
+
+Instead of including OIDC configuration directly in a deployment, it's also possible to configure
+this via the `elytron-oidc-client` subsystem instead.
+
+For a `secure-deployment` in the `elytron-oidc-client` subsystem, it's now possible to specify
+the `bearer-only` option.
+
+More details on how to configure a `secure-deployment` can also be found in the https://docs.wildfly.org/26.1/Admin_Guide.html#subsystem-configuration[documentation].
+
+== A Complete Example with Bearer Token Authentication
+
+In the rest of this post, we'll go through an example to see how to secure a JAX-RS service deployed to WildFly
+with Bearer Token Authentication.
+
+To invoke our JAX-RS service, we're going to use another application that will be secured using OpenID Connect.
+This application will include the access token obtained from the Keycloak OpenID provider when invoking the service.
+
+=== Example Project
+
+First, clone the `elytron-examples` repo locally:
+
+[source]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+
+We’re going to be looking at the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/oidc-with-bearer[oidc-with-bearer] project.
+
+=== Setting up your Keycloak OpenID provider
+
+It's easy to set up Keycloak using Docker. Follow the steps in Keycloak's https://www.keycloak.org/getting-started/getting-started-docker[getting started guide]
+to start Keycloak and create a realm called `myrealm`.
+
+Next, create a client called `service`. If you're using Keycloak 19.0.0 or later, in the `Capability config`, be sure to uncheck `Standard flow`
+and `Direct access grants` (when no authentication flows are specified, this indicates that the client is a bearer only client). For older
+versions of Keycloak, change the `Access Type` to `bearer-only`.
+
+Now, we're going to create a second client called `app`. If you're using Keycloak 19.0.0 or later, in the `Capability config`,
+turn on `Client authentication`. For older versions of Keycloak, change the `Access Type` to `confidential`.
+
+For the `app` client, we also need to set the valid redirect URIs to `http://localhost:8090/oidc-app/*` and set the
+`Web origins` to `+` to permit all origins of Valid Redirect URIs.
+
+Now, click on `Realm roles` and create two roles, `user` and `admin`.
+
+Finally, create a user called `alice` and assign her the `user` and `admin` roles. Then, create a user called `bob`
+and assign him only the `user` role. Steps for assigning roles can be found in the https://www.keycloak.org/docs/latest/server_admin/#proc-assigning-role-mappings_server_administration_guide[Keycloak documentation].
+
+=== JAX-RS Service
+
+Take a look at the 3 https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/service/src/main/java/org/wildfly/security/examples/jaxrs/Resource.java[endpoints] that are provided by our JAX-RS service:
+
+* `public` - This endpoint requires no authentication.
+* `secured` - This endpoint can be invoked by users with the `user` role.
+* `admin` - This endpoint can be invoked by users with the `admin` role.
+
+Each endpoint just returns a message that contains the name of the endpoint, e.g., `{ "message":"public" }`.
+
+=== OIDC Application
+
+The https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/app[OIDC application] provides
+a Login button that allows users to log in using the Keycloak OpenID provider and also provides 3 buttons
+for invoking each of the endpoints described in the previous section.
+
+=== Deploying the JAX-RS Service and the OIDC Application
+
+Now let's deploy our service and application to WildFly.
+
+When starting our WildFly instance, we're going to specify the `oidc.client.secret` system
+property. Notice that this is https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/app/src/main/webapp/WEB-INF/oidc.json[specified] in the OIDC application's `oidc.json` file
+and is used to specify the secret that should be used when communicating with the Keycloak OpenID provider. From the Keycloak Admin
+Console, navigate to the `app` client that we created earlier, then click on `Credentials`, and copy
+the value for the `Client secret`. We're going to start our WildFly instance using this copied value. Notice that we're
+specifying a port offset here since our Keycloak instance is already exposed on port 8080:
+
+[source]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10 -Doidc.client.secret=COPIED_VALUE
+----
+
+Next, we're going to build and deploy our service. From the `elytron-examples` directory, run the
+following commands:
+
+[source]
+----
+cd oidc-with-bearer/service
+mvn wildfly:deploy -Dwildfly.port=10000
+----
+
+Now let's deploy our OIDC application. From the `elytron-examples` directory, run the
+following commands:
+
+[source]
+----
+cd oidc-with-bearer/app
+mvn wildfly:deploy -Dwildfly.port=10000
+----
+
+=== Accessing the app
+
+Now, let's try accessing our application using http://localhost:8090/oidc-app.
+
+Try invoking the different endpoints without logging in. You'll only be able to successfully invoke
+the `public` endpoint.
+
+Now try logging in as `alice`. You'll be redirected to Keycloak to log in. Then try invoking
+the different endpoints again. This time, you'll be able to successfully invoke all three endpoints
+because `alice` has both `user` and `admin` roles.
+
+Finally, try accessing the application again but this time, log in as `bob`. When you try invoking
+the endpoints this time, you'll see that you can only invoke the `public` and `secured` endpoints
+since `bob` does not have the `admin` role.
+
+== Summary
+
+This blog post has given an overview of how to secure an application with Bearer Token Authentication
+when using the Elytron OIDC Client subsystem.
