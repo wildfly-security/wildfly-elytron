@@ -61,6 +61,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -111,6 +112,10 @@ public class AbstractBaseHttpTest {
             @Mock
             public Principal getPrincipal() {
                 return p;
+            }
+            @Mock
+            public Roles getRoles() {
+                return Roles.NONE;
             }
         }.getMockInstance();
     }
