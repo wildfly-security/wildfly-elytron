@@ -45,6 +45,7 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.cache.CachedIdentity;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.permission.ElytronPermission;
@@ -60,6 +61,7 @@ public class JaspiAuthenticationContext {
     private final SecurityDomain securityDomain;
     private final boolean integrated;
 
+    private CachedIdentity cachedIdentity = null;
     private volatile SecurityIdentity securityIdentity = null;
     private final Set<String> roles = new HashSet<>();
 
@@ -69,6 +71,11 @@ public class JaspiAuthenticationContext {
         this.integrated = integrated;
     }
 
+    JaspiAuthenticationContext(SecurityDomain securityDomain, boolean integrated, CachedIdentity cachedIdentity) {
+        this.securityDomain = securityDomain;
+        this.integrated = integrated;
+        this.cachedIdentity = cachedIdentity;
+    }
     /*
      * Having a few options makes it feel like we should use a Builder, however that would lead to one more object per request.
      *
@@ -84,6 +91,14 @@ public class JaspiAuthenticationContext {
             sm.checkPermission(CREATE_AUTH_CONTEXT);
         }
         return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated);
+    }
+
+    public static JaspiAuthenticationContext newInstance(final SecurityDomain securityDomain, final boolean integrated, CachedIdentity cachedIdentity) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
+        return new JaspiAuthenticationContext(checkNotNullParam("securityDomain", securityDomain), integrated, cachedIdentity);
     }
 
     public CallbackHandler createCallbackHandler() {
@@ -130,6 +145,7 @@ public class JaspiAuthenticationContext {
                         SecurityIdentity authenticated = securityDomain.authenticate(username, evidence);
                         pvc.setResult(true);
                         securityIdentity = authenticated;  // Take a PasswordValidationCallback as always starting authentication again.
+                        cachedIdentity = new CachedIdentity("JASPI", true, authenticated);
                     } catch (Exception e) {
                         log.trace("Authentication failed", e);
                         pvc.setResult(false);
@@ -144,20 +160,26 @@ public class JaspiAuthenticationContext {
                     log.tracef("Original Principal = '%s', Caller Name = '%s', Resulting Principal = '%s'", originalPrincipal, callerName, callerPrincipal);
 
                     SecurityIdentity authorizedIdentity = null;
-                    if (securityIdentity != null) {
+                    SecurityIdentity securityIdentityToImport = null;
+                    if (cachedIdentity != null) {
+                        if (cachedIdentity.getSecurityIdentity() == null) {
+                            securityIdentityToImport = securityDomain.createAdHocIdentity(cachedIdentity.getName());
+                        } else {
+                            securityIdentityToImport = cachedIdentity.getSecurityIdentity();
+                        }
                         if (callerPrincipal != null) {
-                            boolean authorizationRequired = (integrated && !securityIdentity.getPrincipal().equals(callerPrincipal));
+                            boolean authorizationRequired = (integrated && !securityIdentityToImport.getPrincipal().equals(callerPrincipal));
                          // If we are integrated we want an authorization check.
-                            authorizedIdentity =  securityIdentity.createRunAsIdentity(callerPrincipal, authorizationRequired);
+                            authorizedIdentity =  cachedIdentity.getSecurityIdentity().createRunAsIdentity(callerPrincipal, authorizationRequired);
                         } else if (integrated) {
                             // Authorize as the authenticated identity.
                             try (final ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext()) {
-                                sac.importIdentity(securityIdentity);
+                                sac.importIdentity(securityIdentityToImport);
                                 sac.authorize();
                                 authorizedIdentity = sac.getAuthorizedIdentity();
                             }
                         } else {
-                            authorizedIdentity = securityIdentity;
+                            authorizedIdentity = cachedIdentity.getSecurityIdentity();
                         }
                     } else {
                         if (callerPrincipal == null) {
@@ -179,7 +201,7 @@ public class JaspiAuthenticationContext {
                     }
 
                     if (authorizedIdentity != null) {
-                        securityIdentity = authorizedIdentity;
+                        cachedIdentity = new CachedIdentity("JASPI", true, authorizedIdentity);
                         final Subject subject = cpc.getSubject();
                         if (subject != null && !subject.isReadOnly()) {
                             subject.getPrincipals().add(authorizedIdentity.getPrincipal());
@@ -213,7 +235,7 @@ public class JaspiAuthenticationContext {
      * @throws IllegalStateException if the authentication is incomplete
      */
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
-        SecurityIdentity securityIdentity = this.securityIdentity;
+        SecurityIdentity securityIdentity = this.cachedIdentity.getSecurityIdentity();
         if (securityIdentity != null && roles.size() > 0) {
             if (log.isTraceEnabled()) {
                 Iterator<String> rolesIterator = roles.iterator();
