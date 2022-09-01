@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Bearer Support for the Elytron OIDC Client Subsystem'
+title: 'Bearer Token Support when using the Elytron OIDC Client Subsystem'
 date: 2022-09-01
 tags: oidc bearer
-synopsis: An overview of bearer support for applications when using the Elytron OIDC Client subsystem.
+synopsis: An overview of how to secure an application with Bearer Token Authentication when using the Elytron OIDC Client subsystem.
 author: fjuma
 ---
 
