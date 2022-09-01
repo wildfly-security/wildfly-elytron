@@ -5,10 +5,10 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 01 Sep 2022 13:58:21 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 01 Sep 2022 14:10:21 +0000</lastBuildDate>
         
         <item>
-            <title>Bearer Support for the Elytron OIDC Client Subsystem</title>
+            <title>Bearer Token Support when using the Elytron OIDC Client Subsystem</title>
             <link>
                 https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/
             </link>
