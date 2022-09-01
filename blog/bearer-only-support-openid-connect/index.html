@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Bearer Support for the Elytron OIDC Client Subsystem</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Bearer Support for the Elytron OIDC Client Subsystem | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Bearer Support for the Elytron OIDC Client Subsystem" />
+<meta name="author" content="Farah Juma" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview of how to configure applications deployed to WildFly so they can support Bearer Token Authentication." />
+<meta property="og:description" content="WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview of how to configure applications deployed to WildFly so they can support Bearer Token Authentication." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-09-01T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Bearer Support for the Elytron OIDC Client Subsystem" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Farah Juma"},"dateModified":"2022-09-01T00:00:00+00:00","datePublished":"2022-09-01T00:00:00+00:00","description":"WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview of how to configure applications deployed to WildFly so they can support Bearer Token Authentication.","headline":"Bearer Support for the Elytron OIDC Client Subsystem","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Bearer Support for the Elytron OIDC Client Subsystem</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | September 01, 2022
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/bearer"> #bearer</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/&title=Bearer Support for the Elytron OIDC Client Subsystem" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Bearer Support for the Elytron OIDC Client Subsystem&url=https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Bearer Support for the Elytron OIDC Client Subsystem&amp;body=Bearer Support for the Elytron OIDC Client Subsystem https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer
+tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview
+of how to configure applications deployed to WildFly so they can support Bearer Token Authentication.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#bearer-token-authentication">Bearer Token Authentication</a></li>
+<li><a href="#securing-an-application-using-bearer-token-authentication">Securing an Application Using Bearer Token Authentication</a>
+<ul class="sectlevel2">
+<li><a href="#deployment-configuration">Deployment Configuration</a></li>
+<li><a href="#subsystem-configuration">Subsystem Configuration</a></li>
+</ul>
+</li>
+<li><a href="#a-complete-example-with-bearer-token-authentication">A Complete Example with Bearer Token Authentication</a>
+<ul class="sectlevel2">
+<li><a href="#example-project">Example Project</a></li>
+<li><a href="#setting-up-your-keycloak-openid-provider">Setting up your Keycloak OpenID provider</a></li>
+<li><a href="#jax-rs-service">JAX-RS Service</a></li>
+<li><a href="#oidc-application">OIDC Application</a></li>
+<li><a href="#deploying-the-jax-rs-service-and-the-oidc-application">Deploying the JAX-RS Service and the OIDC Application</a></li>
+<li><a href="#accessing-the-app">Accessing the app</a></li>
+</ul>
+</li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="bearer-token-authentication"><a class="anchor" href="#bearer-token-authentication"></a>Bearer Token Authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Bearer Token Authentication involves authenticating HTTP requests that include a security token
+called a "bearer token". A bearer token is used to determine whether or not to provide access
+to an HTTP resource. As an example, a bearer token could be used to invoke a web service. You
+might be wondering, where does the bearer token that&#8217;s used in the HTTP request come from?
+The token can be obtained from any OAuth2 compliant authorization server. For instance,
+after logging in to an application that&#8217;s secured using OpenID Connect, we receive an access token.
+This token is a bearer token and it can be used to invoke something else that&#8217;s secured using
+Bearer Token Authentication.</p>
+</div>
+<div class="paragraph">
+<p>The <code>elytron-oidc-client</code> subsystem now allows applications to be secured using Bearer Token
+Authentication.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="securing-an-application-using-bearer-token-authentication"><a class="anchor" href="#securing-an-application-using-bearer-token-authentication"></a>Securing an Application Using Bearer Token Authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The configuration that indicates that an application should be secured using Bearer
+Token Authentication with the <code>elytron-oidc-client</code> subsystem can either be provided
+within the application itself or within the <code>elytron-oidc-client</code> subsystem.</p>
+</div>
+<div class="sect2">
+<h3 id="deployment-configuration"><a class="anchor" href="#deployment-configuration"></a>Deployment Configuration</h3>
+<div class="paragraph">
+<p>The <code>bearer-only</code> option can now be specified in an application&#8217;s <code>WEB-INF/oidc.json</code> file.
+Setting this to <code>true</code> indicates that an application should be secured using Bearer Token
+Authentication. In other words, when a user attempts to access this application,
+they won&#8217;t be redirected to an OpenID provider to log in. Instead, the <code>elytron-oidc-client</code>
+subsystem will attempt to verify the user&#8217;s bearer token. Like with the Keycloak client
+adapter, the default value for <code>bearer-only</code> is false.</p>
+</div>
+<div class="paragraph">
+<p>For more details on how to configure an <code>oidc.json</code> file and how to specify <code>OIDC</code> in an
+application&#8217;s <code>web.xml</code> file, check out the documentation <a href="https://docs.wildfly.org/26.1/Admin_Guide.html#deployment-configuration">here</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="subsystem-configuration"><a class="anchor" href="#subsystem-configuration"></a>Subsystem Configuration</h3>
+<div class="paragraph">
+<p>Instead of including OIDC configuration directly in a deployment, it&#8217;s also possible to configure
+this via the <code>elytron-oidc-client</code> subsystem instead.</p>
+</div>
+<div class="paragraph">
+<p>For a <code>secure-deployment</code> in the <code>elytron-oidc-client</code> subsystem, it&#8217;s now possible to specify
+the <code>bearer-only</code> option.</p>
+</div>
+<div class="paragraph">
+<p>More details on how to configure a <code>secure-deployment</code> can also be found in the <a href="https://docs.wildfly.org/26.1/Admin_Guide.html#subsystem-configuration">documentation</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="a-complete-example-with-bearer-token-authentication"><a class="anchor" href="#a-complete-example-with-bearer-token-authentication"></a>A Complete Example with Bearer Token Authentication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the rest of this post, we&#8217;ll go through an example to see how to secure a JAX-RS service deployed to WildFly
+with Bearer Token Authentication.</p>
+</div>
+<div class="paragraph">
+<p>To invoke our JAX-RS service, we&#8217;re going to use another application that will be secured using OpenID Connect.
+This application will include the access token obtained from the Keycloak OpenID provider when invoking the service.</p>
+</div>
+<div class="sect2">
+<h3 id="example-project"><a class="anchor" href="#example-project"></a>Example Project</h3>
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We’re going to be looking at the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/oidc-with-bearer">oidc-with-bearer</a> project.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="setting-up-your-keycloak-openid-provider"><a class="anchor" href="#setting-up-your-keycloak-openid-provider"></a>Setting up your Keycloak OpenID provider</h3>
+<div class="paragraph">
+<p>It&#8217;s easy to set up Keycloak using Docker. Follow the steps in Keycloak&#8217;s <a href="https://www.keycloak.org/getting-started/getting-started-docker">getting started guide</a>
+to start Keycloak and create a realm called <code>myrealm</code>.</p>
+</div>
+<div class="paragraph">
+<p>Next, create a client called <code>service</code>. If you&#8217;re using Keycloak 19.0.0 or later, in the <code>Capability config</code>, be sure to uncheck <code>Standard flow</code>
+and <code>Direct access grants</code> (when no authentication flows are specified, this indicates that the client is a bearer only client). For older
+versions of Keycloak, change the <code>Access Type</code> to <code>bearer-only</code>.</p>
+</div>
+<div class="paragraph">
+<p>Now, we&#8217;re going to create a second client called <code>app</code>. If you&#8217;re using Keycloak 19.0.0 or later, in the <code>Capability config</code>,
+turn on <code>Client authentication</code>. For older versions of Keycloak, change the <code>Access Type</code> to <code>confidential</code>.</p>
+</div>
+<div class="paragraph">
+<p>For the <code>app</code> client, we also need to set the valid redirect URIs to <code><a href="http://localhost:8090/oidc-app/*" class="bare">http://localhost:8090/oidc-app/*</a></code> and set the
+<code>Web origins</code> to <code>+</code> to permit all origins of Valid Redirect URIs.</p>
+</div>
+<div class="paragraph">
+<p>Now, click on <code>Realm roles</code> and create two roles, <code>user</code> and <code>admin</code>.</p>
+</div>
+<div class="paragraph">
+<p>Finally, create a user called <code>alice</code> and assign her the <code>user</code> and <code>admin</code> roles. Then, create a user called <code>bob</code>
+and assign him only the <code>user</code> role. Steps for assigning roles can be found in the <a href="https://www.keycloak.org/docs/latest/server_admin/#proc-assigning-role-mappings_server_administration_guide">Keycloak documentation</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jax-rs-service"><a class="anchor" href="#jax-rs-service"></a>JAX-RS Service</h3>
+<div class="paragraph">
+<p>Take a look at the 3 <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/service/src/main/java/org/wildfly/security/examples/jaxrs/Resource.java">endpoints</a> that are provided by our JAX-RS service:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>public</code> - This endpoint requires no authentication.</p>
+</li>
+<li>
+<p><code>secured</code> - This endpoint can be invoked by users with the <code>user</code> role.</p>
+</li>
+<li>
+<p><code>admin</code> - This endpoint can be invoked by users with the <code>admin</code> role.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Each endpoint just returns a message that contains the name of the endpoint, e.g., <code>{ "message":"public" }</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="oidc-application"><a class="anchor" href="#oidc-application"></a>OIDC Application</h3>
+<div class="paragraph">
+<p>The <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/app">OIDC application</a> provides
+a Login button that allows users to log in using the Keycloak OpenID provider and also provides 3 buttons
+for invoking each of the endpoints described in the previous section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="deploying-the-jax-rs-service-and-the-oidc-application"><a class="anchor" href="#deploying-the-jax-rs-service-and-the-oidc-application"></a>Deploying the JAX-RS Service and the OIDC Application</h3>
+<div class="paragraph">
+<p>Now let&#8217;s deploy our service and application to WildFly.</p>
+</div>
+<div class="paragraph">
+<p>When starting our WildFly instance, we&#8217;re going to specify the <code>oidc.client.secret</code> system
+property. Notice that this is <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/master/oidc-with-bearer/app/src/main/webapp/WEB-INF/oidc.json">specified</a> in the OIDC application&#8217;s <code>oidc.json</code> file
+and is used to specify the secret that should be used when communicating with the Keycloak OpenID provider. From the Keycloak Admin
+Console, navigate to the <code>app</code> client that we created earlier, then click on <code>Credentials</code>, and copy
+the value for the <code>Client secret</code>. We&#8217;re going to start our WildFly instance using this copied value. Notice that we&#8217;re
+specifying a port offset here since our Keycloak instance is already exposed on port 8080:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">./bin/standalone.sh -Djboss.socket.binding.port-offset=10 -Doidc.client.secret=COPIED_VALUE</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;re going to build and deploy our service. From the <code>elytron-examples</code> directory, run the
+following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd oidc-with-bearer/service
+mvn wildfly:deploy -Dwildfly.port=10000</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s deploy our OIDC application. From the <code>elytron-examples</code> directory, run the
+following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd oidc-with-bearer/app
+mvn wildfly:deploy -Dwildfly.port=10000</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="accessing-the-app"><a class="anchor" href="#accessing-the-app"></a>Accessing the app</h3>
+<div class="paragraph">
+<p>Now, let&#8217;s try accessing our application using <a href="http://localhost:8090/oidc-app" class="bare">http://localhost:8090/oidc-app</a>.</p>
+</div>
+<div class="paragraph">
+<p>Try invoking the different endpoints without logging in. You&#8217;ll only be able to successfully invoke
+the <code>public</code> endpoint.</p>
+</div>
+<div class="paragraph">
+<p>Now try logging in as <code>alice</code>. You&#8217;ll be redirected to Keycloak to log in. Then try invoking
+the different endpoints again. This time, you&#8217;ll be able to successfully invoke all three endpoints
+because <code>alice</code> has both <code>user</code> and <code>admin</code> roles.</p>
+</div>
+<div class="paragraph">
+<p>Finally, try accessing the application again but this time, log in as <code>bob</code>. When you try invoking
+the endpoints this time, you&#8217;ll see that you can only invoke the <code>public</code> and <code>secured</code> endpoints
+since <code>bob</code> does not have the <code>admin</code> role.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This blog post has given an overview of how to secure an application with Bearer Token Authentication
+when using the Elytron OIDC Client subsystem.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
