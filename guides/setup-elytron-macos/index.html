@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Setting up WildFly Elytron on macOS</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Setting up WildFly Elytron on macOS | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Setting up WildFly Elytron on macOS" />
+<meta property="og:locale" content="en_US" />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/guides/setup-elytron-macos/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/guides/setup-elytron-macos/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Setting up WildFly Elytron on macOS" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","headline":"Setting up WildFly Elytron on macOS","url":"https://wildfly-security.github.io/wildfly-elytron/guides/setup-elytron-macos/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button OSD 2022-menuitem" href="/wildfly-elytron/OSD-2022/">OSD 2022</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar OSD 2022-menuitem" href="/wildfly-elytron/OSD-2022/">OSD 2022</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="setup-elytron setup-elytron-linux">
+    <h1>Setting up WildFly Elytron on macOS</h1>
+    <div class="paragraph">
+<p>This page will guide you through the steps needed to setup a development environment for WildFly Elytron on macOS.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#installing-java">Installing Java</a></li>
+<li><a href="#installing-maven">Installing Maven</a></li>
+<li><a href="#installing-git">Installing Git</a></li>
+<li><a href="#cloning-wildfly-elytron">Cloning WildFly Elytron</a></li>
+<li><a href="#building-wildfly-elytron">Building WildFly Elytron</a></li>
+<li><a href="#restoring-configuration">Restoring Configuration</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="installing-java"><a class="anchor" href="#installing-java"></a>Installing Java</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>First, let&#8217;s check if you already have Java installed.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Open a terminal and run <code>java --version</code>.</p>
+</li>
+<li>
+<p>If the output shows a version number, check to make sure it is Java 11 (e.g., "11.0.15.1"). If so, Java 11 is already installed and you can jump to the <a href="#installing-maven">Installing Maven</a> section. If the output is not Java 11, or if the output is <code>command not found: java</code> or a similar message indicating you do not have Java installed, then continue with the following steps.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>It is easiest to install Java using the <a href="https://brew.sh/">Homebrew</a> package manager. (If you&#8217;d prefer to install Java manually, check out this <a href="https://java.tutorials24x7.com/blog/how-to-install-java-11-on-mac">guide</a>.)</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If you don&#8217;t already have brew installed, run the following command:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>If you run <code>brew -v</code> and you get an error, you need to add Homebrew to your path. The output of the Homebrew installation will give you the commands needed to add to your path.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Install Java: <code>brew install java11</code></p>
+</li>
+<li>
+<p>Create a symbolic link at <em>/Library/Java/JavaVirtualMachines/openjdk.jdk</em>:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Configure <code>JAVA_HOME</code> and <code>PATH</code> environment variables for Java  (or <a href="../restoring-configuration/#temporary-environment-variable-configuration">use a temporary configuration</a>):</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Open the configuration file for your shell, which you can identify by typing <code>echo $0</code>. If the response is <code>zsh</code>, open the file <em>~/.zshrc</em>, and if it is <code>sh</code>, edit <em>~/.profile</em>. You can look up config files for other shells by searching the name of the shell, followed by "config file" (ex. "bash config file").</p>
+</li>
+<li>
+<p>Go to the end of the config file, and add the following lines:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">export JAVA_HOME=$(/usr/libexec/java_home)
+export PATH=$JAVA_HOME/bin:$PATH</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Run <code>source &lt;config file&gt;</code>, substituting in your config file, to load the changes into the terminal.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Now run <code>java --version</code> again. You should now successfully see the Java 11 version that was installed.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="installing-maven"><a class="anchor" href="#installing-maven"></a>Installing Maven</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>First, let&#8217;s check if you already have Maven installed.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Open a terminal, and run <code>mvn -v</code>.</p>
+</li>
+<li>
+<p>If the output shows a version number, Maven is already installed and you can jump to the <a href="#installing-git">Installing Git</a> section. If you get <code>command not found: mvn</code> or a similar message indicating you do not have maven installed, then continue with the following steps.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>It is easiest to install Maven using the <a href="https://brew.sh/">Homebrew</a> package manager. (If you&#8217;d prefer to install Maven manually, check out <a href="https://mkyong.com/maven/install-maven-on-mac-osx/#install-maven-manually">this guide</a>. Also consider <a href="../restoring-configuration/#temporary-environment-variable-configuration">a temporary configuration</a>.)</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">brew install maven</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Now run <code>mvn -v</code> again. You should now successfully see the Maven version that was installed.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="installing-git"><a class="anchor" href="#installing-git"></a>Installing Git</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>First, let&#8217;s check if you already have Git installed.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Open a terminal and run <code>git --version</code>.</p>
+</li>
+<li>
+<p>If the output shows a version number, Git is already installed and you can jump to the <a href="#cloning-wildfly-elytron">Cloning WildFly Elytron</a> section. If you get <code>command not found: git</code> or a similar message indicating you do not have Git installed, then continue with the following steps.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>It is easiest to install git using the <a href="https://brew.sh/">Homebrew</a> package manager. (If you&#8217;d prefer to install using a different approach, there are some more options <a href="https://git-scm.com/download/mac">here</a>.)</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">brew install git</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Now run <code>git --version</code> again. You should now successfully see the Git version that was installed.</p>
+</li>
+<li>
+<p>If you already had any IDEs open, close and reopen them now to load your changes.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="cloning-wildfly-elytron"><a class="anchor" href="#cloning-wildfly-elytron"></a>Cloning WildFly Elytron</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>First, configure Git so that it can attribute your commits to you. Run the following commands in the terminal, substituting your own name and email:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">git config --global user.email "&lt;you@example.com&gt;"
+git config --global user.name "&lt;Your Name&gt;"</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Next, you&#8217;ll need a GitHub account. If you don&#8217;t already have one, sign up for one at <a href="https://github.com/">github.com</a>. Otherwise, make sure you&#8217;re logged in.</p>
+</li>
+<li>
+<p>Fork the <a href="https://github.com/wildfly-security/wildfly-elytron">WildFly Elytron project</a> into your GitHub account by clicking on the "Fork" button at the top right.</p>
+<div class="paragraph responsive_img_capped_50-width text-center">
+<p><span class="image"><img src="../../assets/images/setup-elytron/setup-elytron_fork-repo.png" alt="Screenshot of buttons at top of wildfly-elytron repo, including &quot;Fork&quot; button"></span></p>
+</div>
+</li>
+<li>
+<p>Now go to your fork of the repository, the URL will be <strong><a href="https://github.com//wildfly-elytron" class="bare">https://github.com//wildfly-elytron</a></strong>. Replace <code>&lt;USERNAME&gt;</code> with your GitHub username.</p>
+</li>
+<li>
+<p>At the top right, you&#8217;ll see there is a green "Code" button. Click on that, and for the easiest setup choose the "HTTPS" tab. Click on the button next to the URL to copy it.</p>
+<div class="imageblock responsive-img_capped text-center">
+<div class="content">
+<img src="../../assets/images/setup-elytron/setup-elytron_github-clone.png" alt="Screenshot of options under &quot;Code&quot; button, under HTTPS tab.Default URL is https://github.com//wildfly-elytron.git">
+</div>
+</div>
+</li>
+<li>
+<p>Open your terminal and navigate to the directory where you want to clone this project. Then enter <code>git clone [URL]</code> and replace <code>[URL]</code> with the URL you copied in step 4. Now you should see a directory called <code>wildfly-elytron</code> that contains the code for the WildFly Elytron project.</p>
+</li>
+<li>
+<p>Next, add a remote reference to upstream, for pulling future updates from the source repository. Execute the following command in the terminal:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">cd wildfly-elytron
+git remote add upstream https://github.com/wildfly-security/wildfly-elytron.git</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="building-wildfly-elytron"><a class="anchor" href="#building-wildfly-elytron"></a>Building WildFly Elytron</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Open a terminal.</p>
+</li>
+<li>
+<p>Navigate to the wildfly-elytron project directory and run <code>mvn clean install</code>. This will build the project.</p>
+</li>
+<li>
+<p>Check out the <a href="../../getting-started-for-developers/"><strong>Getting Started for Developers guide</strong></a> to learn more about the WildFly Elytron project and how to run tests.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="restoring-configuration"><a class="anchor" href="#restoring-configuration"></a>Restoring Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you need to restore your original system configuration at some point, <a href="../restoring-configuration/">you can follow the steps here</a>.</p>
+</div>
+</div>
+</div>
+</div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
