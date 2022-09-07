@@ -1,0 +1,72 @@
+.guides-page {
+
+  h1 {
+    strong {
+        color: $title-colour;
+    }
+  }
+
+  .guides-block {
+    text-align:center;
+    p {
+      text-align: left;
+      padding: 0 20px;
+      font-size: 18px;
+    }
+    h3 {
+        line-height: initial;
+        margin: 16px 0px 8px 0px;
+        font-weight: 600;
+    }
+
+    @media screen and (min-width: 2000px) {
+      grid-column: span 2 !important;
+  
+      &_windows {
+        grid-column: 4 / 6 !important;
+      }
+    }
+  }
+
+  .guides-description {
+    @extend .guides-block;
+    
+    p {
+      text-align:center
+    }
+
+    @media screen and (min-width: 2000px) {
+      grid-column: span 12 !important;
+    }
+  }
+}
+
+ul.guide-icon {
+  margin-bottom: 9px;
+
+  li {
+    list-style: none;
+    
+    &::before {
+      content: '';
+      display: inline-block;
+      height: 30px;
+      width: 30px;
+      background-size: contain;
+      vertical-align: middle;
+      margin: 0px 5px 7px 0px;
+
+      &.guide-icon_linux {
+        background-image: url(../../assets/images/guides/icon-linux.png);
+      }
+      
+      &.guide-icon_windows {
+        background-image: url(../../assets/images/guides/icon-windows.png);
+      }
+      
+      &.guide-icon_macos {
+        background-image: url(../../assets/images/guides/icon-macos.png);
+      }   
+    }
+  }
+}

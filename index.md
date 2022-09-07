@@ -7,6 +7,23 @@ title: Home
   <h1>WildFly Elytron</h1>
 </div-->  
 
+<div class="highlight-chip" >
+  <a href="{{site.baseurl}}/OSD-2022/">
+    <button type="button" class="mdl-chip mdl-chip--contact highlight-chip highlight-chip_large">
+      <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
+      <span class="mdl-chip__text">Welcome Open Source Day participants! Click here to get started</span>
+    </button>
+    <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_small">
+      <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
+      <span class="mdl-chip__text">Tap here for Open Source Day!</span>
+    </button>
+    <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_tiny">
+      <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
+      <span class="mdl-chip__text">Open Source Day!</span>
+    </button>
+  </a>
+</div>
+
 <h1 class="title">
 Wild<b>Fly</b> Elytron is a set of Java APIs and SPIs for application server and client side security.
 </h1>

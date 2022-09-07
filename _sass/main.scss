@@ -37,9 +37,15 @@ h5 {
   font-size: 16px;
 }
 
+.nowrap>code {
+  white-space: nowrap;
+}
 
 a:not(.mdl-navigation__link) {
     color: $title-colour;
+    strong, strong>em, em, em>strong {
+      @extend a, :not(.mdl-navigation__link);
+    }
 }
 
 .mdl-navigation {
@@ -436,14 +442,14 @@ table code {
   color: $yellow;
 }
 
-.blog-page, .post-page, .getting-started-page, .documentation {
+.blog-page, .post-page, .getting-started-page, .documentation, .OSD-2022-page, .guides-page, .setup-elytron {
   padding: 10px 20px;
   a, p {
     font-size: 18px;
   }
 }
 
-.getting-started-page, .documentation {
+.getting-started-page, .setup-elytron, .OSD-2022-page, .documentation {
    h1 {
        color: $title-colour;
        font-size: 35px;
@@ -467,16 +473,17 @@ table code {
    font-family: "Titillium Web", sans-serif;
 }
 
+.OSD-2022-page {
+  strong>a {
+    font-weight: bold;
+  }
+}
+
 td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;font-weight:400;margin-top:0;margin-bottom:.25em}
 
 details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
 
 td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-size:1rem;font-style:italic}
-
-.responsive-img>.content>img {
-  width: 30vw;
-  @media screen and (max-width: 1024px) { width: 80vw; }
-}
 
 .banner>.content>img {
   width: 100%;
@@ -501,4 +508,42 @@ td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.li
 
 .quoteblock blockquote::after {
   content: "";
+}
+
+// Responsive Images
+
+@mixin responsive-images($width: 30vw) {
+  max-width: 100%;
+  width: $width;
+  
+  @media screen and (max-width: 1024px) {
+    max-width: 100%;
+    width: $width + 50vw; 
+  }
+}
+
+@mixin responsive-images-capped($width: 30vw) {
+  @include responsive-images($width);
+
+  @media screen and (min-width: 2100px) { // QHD (1440p) at 100% scaling
+    max-width: 100%;
+    width: $width - 10vw;
+  }
+  
+  @media screen and (min-width: 3000px) { // UHD (2160p) at 100% scaling
+    max-width: 100%;
+    width: $width - 15vw;
+  }
+}
+
+.responsive-img>.content>img, span.responsive-img>img {
+  @include responsive-images();
+}
+
+.responsive-img_capped>.content>img, span.responsive-img_capped>img {
+  @include responsive-images-capped(30vw);
+}
+
+.responsive-img_capped_50-width>.content>img, span.responsive-img_50-mobile>img {
+  @include responsive-images-capped(50vw);
 }

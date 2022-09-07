@@ -1,0 +1,120 @@
+---
+layout: setup-elytron
+title: Setting up WildFly Elytron on macOS
+permalink: /guides/setup-elytron-macos/
+os: linux
+---
+:imagesdir: ../../assets/images/setup-elytron/
+
+:toc: macro
+:toc-title:
+
+This page will guide you through the steps needed to setup a development environment for WildFly Elytron on macOS.
+
+toc::[]
+
+== Installing Java
+
+
+. First, let's check if you already have Java installed.
+    .. Open a terminal and run `java --version`.
+    .. If the output shows a version number, check to make sure it is Java 11 (e.g., "11.0.15.1"). If so, Java 11 is already installed and you can jump to the <<installing-maven>> section. If the output is not Java 11, or if the output is `command not found: java` or a similar message indicating you do not have Java installed, then continue with the following steps.
+. It is easiest to install Java using the https://brew.sh/[Homebrew] package manager. (If you'd prefer to install Java manually, check out this https://java.tutorials24x7.com/blog/how-to-install-java-11-on-mac[guide].)
+    .. If you don't already have brew installed, run the following command:
++
+[source,zsh]
+----
+/bin/zsh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+----
+
+    .. If you run `brew -v` and you get an error, you need to add Homebrew to your path. The output of the Homebrew installation will give you the commands needed to add to your path.
+. Install Java: `brew install java11`
+. Create a symbolic link at _/Library/Java/JavaVirtualMachines/openjdk.jdk_:
++
+[source,zsh]
+----
+sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+----
+
+. Configure `JAVA_HOME` and `PATH` environment variables for Java  (or link:../restoring-configuration/#temporary-environment-variable-configuration[use a temporary configuration]):
+    .. Open the configuration file for your shell, which you can identify by typing `echo $0`. If the response is `zsh`, open the file _~/.zshrc_, and if it is `sh`, edit _~/.profile_. You can look up config files for other shells by searching the name of the shell, followed by "config file" (ex. "bash config file").
+    .. Go to the end of the config file, and add the following lines:
++
+[source,zsh]
+----
+export JAVA_HOME=$(/usr/libexec/java_home)
+export PATH=$JAVA_HOME/bin:$PATH
+----
+
+    .. Run `source <config file>`, substituting in your config file, to load the changes into the terminal.
+. Now run `java --version` again. You should now successfully see the Java 11 version that was installed.
+
+== Installing Maven
+
+. First, let's check if you already have Maven installed.
+    .. Open a terminal, and run `mvn -v`.
+    .. If the output shows a version number, Maven is already installed and you can jump to the <<installing-git>> section. If you get `command not found: mvn` or a similar message indicating you do not have maven installed, then continue with the following steps.
+. It is easiest to install Maven using the https://brew.sh/[Homebrew] package manager. (If you'd prefer to install Maven manually, check out https://mkyong.com/maven/install-maven-on-mac-osx/#install-maven-manually[this guide]. Also consider link:../restoring-configuration/#temporary-environment-variable-configuration[a temporary configuration].)
++
+[source,zsh]
+----
+brew install maven
+----
+
+. Now run `mvn -v` again. You should now successfully see the Maven version that was installed.
+
+== Installing Git
+
+. First, let's check if you already have Git installed.
+    .. Open a terminal and run `git --version`.
+    .. If the output shows a version number, Git is already installed and you can jump to the <<cloning-wildfly-elytron>> section. If you get `command not found: git` or a similar message indicating you do not have Git installed, then continue with the following steps.
+. It is easiest to install git using the https://brew.sh/[Homebrew] package manager. (If you'd prefer to install using a different approach, there are some more options https://git-scm.com/download/mac[here].)
++
+[source,zsh]
+----
+brew install git
+----
+
+. Now run `git --version` again. You should now successfully see the Git version that was installed.
+. If you already had any IDEs open, close and reopen them now to load your changes.
+
+== Cloning WildFly Elytron
+
+. First, configure Git so that it can attribute your commits to you. Run the following commands in the terminal, substituting your own name and email:
++
+[source,zsh]
+----
+git config --global user.email "<you@example.com>"
+git config --global user.name "<Your Name>"
+----
+
+. Next, you'll need a GitHub account. If you don't already have one, sign up for one at https://github.com/[github.com]. Otherwise, make sure you're logged in.
+. Fork the https://github.com/wildfly-security/wildfly-elytron[WildFly Elytron project] into your GitHub account by clicking on the "Fork" button at the top right.
++
+[.responsive_img_capped_50-width.text-center]
+image:setup-elytron_fork-repo.png['Screenshot of buttons at top of wildfly-elytron repo, including "Fork" button']
+
+. Now go to your fork of the repository, the URL will be *https://github.com//wildfly-elytron*. Replace `<USERNAME>` with your GitHub username.
+. At the top right, you'll see there is a green "Code" button. Click on that, and for the easiest setup choose the "HTTPS" tab. Click on the button next to the URL to copy it.
++
+[.responsive-img_capped.text-center]
+image::setup-elytron_github-clone.png['Screenshot of options under "Code" button, under HTTPS tab.Default URL is https://github.com//wildfly-elytron.git']
+
+. Open your terminal and navigate to the directory where you want to clone this project. Then enter `git clone [URL]` and replace `[URL]` with the URL you copied in step 4. Now you should see a directory called `wildfly-elytron` that contains the code for the WildFly Elytron project.
+. Next, add a remote reference to upstream, for pulling future updates from the source repository. Execute the following command in the terminal:
++
+[source,zsh]
+----
+cd wildfly-elytron
+git remote add upstream https://github.com/wildfly-security/wildfly-elytron.git
+----
+
+== Building WildFly Elytron
+
+. Open a terminal.
+. Navigate to the wildfly-elytron project directory and run `mvn clean install`. This will build the project.
+. Check out the link:../../getting-started-for-developers/[*Getting Started for Developers guide*] to learn more about the WildFly Elytron project and how to run tests.
+
+== Restoring Configuration
+
+If you need to restore your original system configuration at some point, link:../restoring-configuration/[you can follow the steps here].
