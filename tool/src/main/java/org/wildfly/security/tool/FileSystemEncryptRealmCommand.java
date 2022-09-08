@@ -393,9 +393,9 @@ class FileSystemEncryptRealmCommand extends Command {
             }
             descriptors.add(descriptor);
             checkDescriptorFields(descriptor);
-        } else if (inputRealmLocationOption != null | outputRealmLocationOption != null | secretKeyAliasOption != null |
-                realmNameOption != null | credentialStoreOption != null | createCredentialStore != null |
-                hashEncodingOption != null | encodedOption != null | levelsOption != null | populateOption != null) {
+        } else if (inputRealmLocationOption != null || outputRealmLocationOption != null || secretKeyAliasOption != null ||
+                realmNameOption != null || credentialStoreOption != null || createCredentialStore != null ||
+                hashEncodingOption != null || encodedOption != null || levelsOption != null || populateOption != null) {
             throw ElytronToolMessages.msg.mutuallyExclusiveOptionsEncryptSpecified();
         } else {
             if (summaryMode) {
