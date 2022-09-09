@@ -5,7 +5,7 @@ Welcome to the WildFly Elytron project! We welcome contributions from the commun
 
 - [Forking the Project](#forking-the-project)
 - [Issues](#issues)
-  * [Good First Issues](#good-first-issues)
+  - [Good First Issues](#good-first-issues)
 - [Setting up your Developer Environment](#setting-up-your-developer-environment)
 - [Contributing Guidelines](#contributing-guidelines)
 - [Community](#community)
@@ -54,6 +54,8 @@ You will need:
 * Maven 3.3.9 or later
 * An [IDE](https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java)
 (e.g., [IntelliJ IDEA](https://www.jetbrains.com/idea/download/), [Eclipse](https://www.eclipse.org/downloads/), etc.)
+
+For instructions that will walk you through how to install Git, Java, and Maven for your operating system, and show you how to fork and clone the WildFly Elytron project, take a look at our [setup guides](https://wildfly-security.github.io/wildfly-elytron/guides/).
 
 First `cd` to the directory where you cloned the project (eg: `cd wildfly-elytron`)
 
