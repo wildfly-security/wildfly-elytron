@@ -22,7 +22,7 @@ To get started, follow the steps below:
 . *Start contributing!* Whether you're new to security, new to Java, or new to tools like Git or Maven, we have a bunch of issues that are perfect for getting started on our project, no prior experience is needed. Check out our list of https://issues.redhat.com/issues/?filter=12364234[good first issues]. Once you have selected an issue you'd like to work on, make sure it's not already assigned to someone else. To assign an issue to yourself, simply click on "Start Progress". This will automatically assign the issue to you. +
 Our https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md#contributing-guidelines[contribution guide] has all the information you need on how to format your PRs.
 
-If you have any questions, feel free to ask us on Slack or on Zoom.
+If you have any questions, we'll be happy to help on Slack or on Zoom.
 
 To get more familiar with WildFly, our link:../getting-started-for-developers/[Getting Started] page has some resources to help you learn more about the project. Want to get started quickly? Check out these sections:
 
