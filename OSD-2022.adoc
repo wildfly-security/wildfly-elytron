@@ -2,6 +2,8 @@
 layout: OSD-2022
 title: Open Source Day 2022
 permalink: /OSD-2022/
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDayProject2022.png
 ---
 :page-liquid:
 
