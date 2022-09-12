@@ -20,11 +20,13 @@ package org.wildfly.security.authz;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.common.Assert.checkNotEmptyParam;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import org.wildfly.common.Assert;
@@ -128,6 +130,30 @@ public interface Roles extends Iterable<String> {
                 return set.isEmpty();
             }
         };
+    }
+
+    /**
+     * Returns a set (immutable) containing roles from a roles collection.
+     *
+     * @param roles collection (not {@code null})
+     * @return the set of role names (must not be {@code null})
+     */
+    static Set<String> toSet(Roles roles) {
+        Assert.checkNotNullParam("roles", roles);
+        Iterator<String> iterator = roles.iterator();
+        if (!iterator.hasNext()) {
+            return Collections.emptySet();
+        }
+        String role = iterator.next();
+        if (!iterator.hasNext()) {
+            return Collections.singleton(role);
+        }
+        Set<String> result = new TreeSet<>();
+        result.add(role);
+        while (iterator.hasNext()) {
+            result.add(iterator.next());
+        }
+        return Collections.unmodifiableSet(result);
     }
 
     /**
