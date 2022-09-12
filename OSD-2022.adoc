@@ -10,7 +10,7 @@ Welcome Open Source Day participants! We're glad to have you join us for the hac
 
 To get started, follow the steps below:
 
-. *Set up your development environment to get started.* We use Java 11, Maven, and Git. Follow our setup guide for your operating system:
+. *Set up your development environment.* We use Java 11, Maven, and Git. Follow our setup guide for your operating system:
 +
 ++++
 {% include OSD-2022-logo-bullets.html %}
