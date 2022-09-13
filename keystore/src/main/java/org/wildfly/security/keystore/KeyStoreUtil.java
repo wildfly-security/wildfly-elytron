@@ -150,7 +150,7 @@ public class KeyStoreUtil {
     private static KeyStore loadPemAsKeyStore(FileInputStream is, char[] password) throws KeyStoreException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         try {
-            keyStore.load(null);
+            keyStore.load(null, null);
         } catch (Exception e) {
             // won't happen
         }

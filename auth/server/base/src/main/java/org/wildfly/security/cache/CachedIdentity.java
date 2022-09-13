@@ -22,8 +22,11 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.io.Serializable;
 import java.security.Principal;
+import java.util.Collections;
+import java.util.Set;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.authz.Roles;
 
 /**
  * Represents a cached identity, managed by an {@link IdentityCache}.
@@ -41,6 +44,7 @@ public final class CachedIdentity implements Serializable {
     private final boolean programmatic;
     private final String name;
     private final transient SecurityIdentity securityIdentity;
+    private final Set<String> roles;
 
     /**
      * Creates a new instance based on the given <code>mechanismName</code> and <code>securityIdentity</code>.
@@ -64,11 +68,36 @@ public final class CachedIdentity implements Serializable {
         this(mechanismName, programmatic, null, principal);
     }
 
+    /**
+     * Creates a new instance based on the given <code>mechanismName</code> and <code>principal</code>.
+     *
+     * @param mechanismName the name of the authentication mechanism used to authenticate/authorize the identity
+     * @param programmatic indicates if this identity was created as a result of programmatic authentication
+     * @param principal the principal of this cached identity
+     * @param roles the roles assigned to this cached identity
+     */
+    public CachedIdentity(String mechanismName, boolean programmatic, Principal principal, Set<String> roles) {
+        this(mechanismName, programmatic, null, principal, roles);
+    }
+
     private CachedIdentity(String mechanismName, boolean programmatic, SecurityIdentity securityIdentity, Principal principal) {
         this.mechanismName = checkNotNullParam("mechanismName", mechanismName);
         this.programmatic = programmatic;
         this.name = checkNotNullParam("name", checkNotNullParam("principal", principal).getName());
         this.securityIdentity = securityIdentity;
+        if (securityIdentity != null && securityIdentity.getPrincipal() != null) {
+            this.roles = Roles.toSet(securityIdentity.getRoles());
+        } else {
+            this.roles = Collections.emptySet();
+        }
+    }
+
+    private CachedIdentity(String mechanismName, boolean programmatic, SecurityIdentity securityIdentity, Principal principal, Set<String> roles) {
+        this.mechanismName = checkNotNullParam("mechanismName", mechanismName);
+        this.programmatic = programmatic;
+        this.name = checkNotNullParam("name", checkNotNullParam("principal", principal).getName());
+        this.securityIdentity = securityIdentity;
+        this.roles = roles;
     }
 
     /**
@@ -105,6 +134,19 @@ public final class CachedIdentity implements Serializable {
      */
     public boolean isProgrammatic() {
         return programmatic;
+    }
+
+    /**
+     * Returns the roles associated with the cached identity.
+     *
+     * @return the roles associated with the cached identity.
+     */
+    public Set<String> getRoles() {
+        if (this.securityIdentity != null) {
+            return Roles.toSet(this.securityIdentity.getRoles());
+        } else {
+            return this.roles;
+        }
     }
 
     @Override

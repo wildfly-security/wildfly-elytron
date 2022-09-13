@@ -185,7 +185,7 @@ public class KeyStoreSuiteChild {
 
     @Test
     public void testSetKeyEntry() throws Exception {
-        keyStore.load(null);
+        keyStore.load(null, null);
         Certificate[] chain = keyStore.getCertificateChain("firefly");
         Key key = keyStore.getKey("firefly", "Elytron".toCharArray());
         keyStore.setKeyEntry("newkey", key, "Elytron".toCharArray(), chain);
