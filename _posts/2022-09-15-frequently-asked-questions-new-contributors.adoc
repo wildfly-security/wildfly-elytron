@@ -1,0 +1,46 @@
+---
+layout: post
+title: 'FAQ for New Contributors'
+date: 2022-09-01
+tags: faq opensource
+synopsis: Answers to frequently asked questions from new contributors.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+It's very common for new contributors to any project to have questions on how to get started. In this post,
+we thought we'd capture some frequently asked questions we've received from new contributors to the WildFly
+Elytron project.
+
+toc::[]
+
+== How do I find an issue to work on?
+
+This video shows how to find a project's contribution guide and how to identify good first issues to work on. It also shows how to navigate JIRA, create a JIRA account, and assign an issue to yourself.
+
+video::EBHov-Gj82g[youtube]
+
+== How do I import a project into an IDE?
+
+This video shows how to fork a project's repo and how to clone your fork onto your machine. It also shows how to import the project into IntelliJ IDEA.
+
+video::M11wyQILXBE[youtube]
+
+== How do I get started with git?
+
+This video has lots of tips for getting started with git! Learn how to create a new branch, make a change, amend a commit,
+push a change to the remote repo, submit a PR, work on another issue, and update a PR.
+
+video::GM9hAfyV5MI[youtube]
+
+== How do I squash commits in my PR?
+
+This video walks you through squashing commits and pushing the changes to your remote repo.
+
+video::GM9hAfyV5MI[youtube]
+
+== Summary
+
+We hope these answers are useful! If you think of a question that you would like to see covered in a short video, let us know. Happy contributing!
