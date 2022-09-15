@@ -278,6 +278,8 @@ body.post div.post-page .note, body.post div.post-page .colist { overflow: auto;
 
 @media screen and (max-width: 48em) { .blog-list-item .share-page, .post-page .share-page { text-align: left; } .blog-page p.byline { font-size: 1rem; line-height: 1.25rem; } .post-page, .blog-page { padding: 0px 10px; } }
 
+.videoblock iframe { width: auto; }
+
 .guides-page h1 strong { color: #004153 !important; }
 
 .guides-page .guides-block, .guides-page .guides-description { text-align: center; }

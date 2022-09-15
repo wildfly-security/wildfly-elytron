@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 12 Sep 2022 15:17:44 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 15 Sep 2022 22:37:11 +0000</lastBuildDate>
+        
+        <item>
+            <title>FAQ for New Contributors</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/
+            </link>
+            <description>
+                It&#8217;s very common for new contributors to any project to have questions on how to get started. In this post, we thought we&#8217;d capture some frequently asked questions we&#8217;ve received from new contributors to the WildFly Elytron project. How do I find an issue to work on? How do I...
+            </description>
+            <pubDate>Thu, 01 Sep 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/
+            </guid>
+        </item>
         
         <item>
             <title>Bearer Token Support for the Elytron OIDC Client Subsystem</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Securing a WildFly Application with OpenID Connect on OpenShift</title>
-            <link>
-                https://www.youtube.com/watch?v=2gQO4_7Z5CI
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Tue, 29 Mar 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=2gQO4_7Z5CI
             </guid>
         </item>
         
