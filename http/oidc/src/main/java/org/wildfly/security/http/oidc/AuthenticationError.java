@@ -26,7 +26,7 @@ package org.wildfly.security.http.oidc;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class AuthenticationError {
-    public static enum Reason {
+    public enum Reason {
         NO_BEARER_TOKEN,
         NO_REDIRECT_URI,
         INVALID_STATE_COOKIE,
