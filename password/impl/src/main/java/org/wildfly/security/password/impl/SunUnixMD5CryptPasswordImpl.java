@@ -187,7 +187,7 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyCannotVerifyPassword(e);
         }
-        return Arrays.equals(getHash(), test);
+        return MessageDigest.isEqual(getHash(), test);
     }
 
     @Override
@@ -292,7 +292,7 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
             return false;
         }
         SunUnixMD5CryptPasswordImpl other = (SunUnixMD5CryptPasswordImpl) obj;
-        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
+        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && MessageDigest.isEqual(hash, other.hash) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
