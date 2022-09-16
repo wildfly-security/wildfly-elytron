@@ -187,7 +187,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
         String uri = facade.getRequest().getURI();
         String path = null;
         try {
-            new URIBuilder(uri).build().getPath();
+            path = new URIBuilder(uri).build().getPath();
         } catch (URISyntaxException e) {
             throw log.invalidUri(uri);
         }
