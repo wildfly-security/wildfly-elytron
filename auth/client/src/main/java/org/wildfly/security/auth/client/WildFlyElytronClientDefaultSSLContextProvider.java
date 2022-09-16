@@ -38,6 +38,9 @@ public final class WildFlyElytronClientDefaultSSLContextProvider extends Provide
 
     private static final long serialVersionUID = -8281186085283177185L;
     public static final String ELYTRON_CLIENT_DEFAULT_SSL_CONTEXT_PROVIDER_NAME = "WildFlyElytronClientDefaultSSLContextProvider";
+    public static final String SSL_CONTEXT_SERVICE_TYPE = "SSLContext";
+    public static final String DEFAULT_ALGORITHM_NAME = "Default";
+    public static final String SERVICE_IMPLEMENTATION_CLASS = "org.wildfly.security.auth.client.provider.WildFlyElytronClientDefaultSSLContextSpi";
 
     /**
      * WildFlyElytronClientDefaultSSLContextProvider that uses Elytron client configuration found on classpath.
@@ -53,7 +56,7 @@ public final class WildFlyElytronClientDefaultSSLContextProvider extends Provide
      */
     public WildFlyElytronClientDefaultSSLContextProvider(String configPath) {
         super(ELYTRON_CLIENT_DEFAULT_SSL_CONTEXT_PROVIDER_NAME, 1.0, "Elytron client provider for default SSLContext");
-        putService(new ClientSSLContextProviderService(this, "SSLContext", "Default", "org.wildfly.security.auth.client.provider.WildFlyElytronClientDefaultSSLContextSpi", null, null, configPath));
+        putService(new ClientSSLContextProviderService(this, SSL_CONTEXT_SERVICE_TYPE, DEFAULT_ALGORITHM_NAME, SERVICE_IMPLEMENTATION_CLASS, null, null, configPath));
     }
 
     /**
