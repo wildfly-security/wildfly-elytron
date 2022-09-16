@@ -58,6 +58,6 @@ class RawSaltedSimpleDigestPassword extends RawPassword implements SaltedSimpleD
         }
         RawSaltedSimpleDigestPassword other = (RawSaltedSimpleDigestPassword) obj;
         return getAlgorithm().equals(other.getAlgorithm()) && MessageDigest.isEqual(digest, other.digest)
-                && MessageDigest.isEqual(salt, other.salt);
+                && Arrays.equals(salt, other.salt);
     }
 }
