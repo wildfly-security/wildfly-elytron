@@ -137,7 +137,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
                 return;
             }
             OidcClientConfiguration deployment = httpFacade.getOidcClientConfiguration();
-            if (! deployment.isBearerOnly() && securityContext != null && securityContext instanceof RefreshableOidcSecurityContext) {
+            if (! deployment.isBearerOnly() && securityContext instanceof RefreshableOidcSecurityContext) {
                 ((RefreshableOidcSecurityContext) securityContext).logout(deployment);
             }
         }
