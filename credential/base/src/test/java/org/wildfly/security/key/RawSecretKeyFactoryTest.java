@@ -28,7 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.junit.Test;
 
 import static org.hamcrest.core.IsSame.sameInstance;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RawSecretKeyFactoryTest {
 
