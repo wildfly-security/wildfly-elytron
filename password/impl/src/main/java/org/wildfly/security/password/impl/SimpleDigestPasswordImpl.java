@@ -101,7 +101,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
 
     boolean verify(final char[] guess) throws InvalidKeyException {
         try {
-            return Arrays.equals(digest, getDigestOf(algorithm, guess));
+            return MessageDigest.isEqual(digest, getDigestOf(algorithm, guess));
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -128,7 +128,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
             return false;
         }
         SimpleDigestPasswordImpl other = (SimpleDigestPasswordImpl) obj;
-        return algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest);
+        return algorithm.equals(other.algorithm) && MessageDigest.isEqual(digest, other.digest);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
