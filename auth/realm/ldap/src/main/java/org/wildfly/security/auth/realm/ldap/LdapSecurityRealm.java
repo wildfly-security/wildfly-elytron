@@ -103,7 +103,7 @@ import org.wildfly.security.password.spec.Encoding;
  */
 class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
-    private final String ENV_BINARY_ATTRIBUTES = "java.naming.ldap.attributes.binary";
+    private static final String ENV_BINARY_ATTRIBUTES = "java.naming.ldap.attributes.binary";
 
     private final Supplier<Provider[]> providers;
     private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
@@ -1007,7 +1007,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
     private class LdapSearch {
 
-        private final String NO_FILTER = "(objectclass=*)";
+        private static final String NO_FILTER = "(objectclass=*)";
 
         private final String searchDn;
         private final int searchScope;
