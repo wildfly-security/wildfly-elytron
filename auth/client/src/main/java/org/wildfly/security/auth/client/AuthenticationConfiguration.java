@@ -1655,7 +1655,8 @@ public final class AuthenticationConfiguration {
             if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
             if (webServicesProperties != null && ! webServicesProperties.isEmpty()) b.append("webservices-properties=").append(webServicesProperties).append(',');
             b.setLength(b.length() - 1);
-            return this.toString = b.toString();
+            this.toString = b.toString();
+            return this.toString;
         }
         return toString;
     }
