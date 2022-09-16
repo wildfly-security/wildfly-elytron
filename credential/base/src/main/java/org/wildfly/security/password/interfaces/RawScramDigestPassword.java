@@ -65,6 +65,6 @@ class RawScramDigestPassword extends RawPassword implements ScramDigestPassword 
         }
         RawScramDigestPassword other = (RawScramDigestPassword) obj;
         return iterationCount == other.iterationCount && getAlgorithm().equals(other.getAlgorithm())
-                && MessageDigest.isEqual(digest, other.digest) && MessageDigest.isEqual(salt, other.salt);
+                && MessageDigest.isEqual(digest, other.digest) && Arrays.equals(salt, other.salt);
     }
 }
