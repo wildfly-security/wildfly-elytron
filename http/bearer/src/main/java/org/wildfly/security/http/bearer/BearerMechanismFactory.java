@@ -46,6 +46,9 @@ public class BearerMechanismFactory implements HttpServerAuthenticationMechanism
     public BearerMechanismFactory(final Provider provider) {
     }
 
+    public BearerMechanismFactory(final Provider... providers) {
+    }
+
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
      */
