@@ -207,7 +207,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         if (guess.length == 0) return false;
         try {
             byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess, hashCharset), this.getSalt(), this.getIterationCount());
-            return Arrays.equals(this.digest, output);
+            return MessageDigest.isEqual(this.digest, output);
         } catch (NoSuchAlgorithmException nsae) {
             throw new InvalidKeyException(nsae);
         }
@@ -362,7 +362,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
             return false;
         }
         ScramDigestPasswordImpl other = (ScramDigestPasswordImpl) obj;
-        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest) && Arrays.equals(salt, other.salt);
+        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && MessageDigest.isEqual(digest, other.digest) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
