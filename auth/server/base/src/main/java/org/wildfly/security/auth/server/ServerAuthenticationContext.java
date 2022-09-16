@@ -974,7 +974,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     if (credential != null) {
                         if (credential instanceof PasswordCredential) {
                             Password password = ((PasswordCredential) credential).getPassword();
-                            if (password != null && password instanceof DigestPassword) {
+                            if (password instanceof DigestPassword) {
                                 String providedRealm = ((DigestPassword) password).getRealm();
                                 if ( ! providedRealm.equals(requestedRealm)) {
                                     log.tracef("Handling CredentialCallback: credential for realm \"%s\" is not available (\"%s\" provided)", requestedRealm, providedRealm);
