@@ -1266,7 +1266,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         private void parseCertificate(final List<Credential> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             parseCredential(streamReader, (algorithm, format, text) -> {
-                if (algorithm == null) algorithm = "X.509";
+                if (algorithm == null) algorithm = X509_FORMAT;
                 if (format == null) format = X509_FORMAT;
                 try {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
