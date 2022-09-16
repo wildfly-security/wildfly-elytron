@@ -32,17 +32,19 @@ public class DefaultSSLContextNonexistentConfigFileTest {
 
     private static final String CONFIG_FILE = "./src/test/resources/org/wildfly/security/auth/client/wildfly-config-invalid-path.xml";
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void defaultSSLContextNonexistentConfigFileTest() {
         Security.insertProviderAt(new WildFlyElytronClientDefaultSSLContextProvider(CONFIG_FILE), 1);
         Assert.assertNotNull(Security.getProvider("WildFlyElytronClientDefaultSSLContextProvider"));
         AuthenticationContext authenticationContext = AuthenticationContext.captureCurrent();
         authenticationContext.run(() -> {
+            Assert.assertThrows(IllegalArgumentException.class, () -> {
             try {
                 SSLContext.getDefault();
             } catch (NoSuchAlgorithmException e) {
                 Assert.fail("Obtaining default SSL context from provider with invalid path threw incorrect exception");
             }
+          });
         });
     }
 }
