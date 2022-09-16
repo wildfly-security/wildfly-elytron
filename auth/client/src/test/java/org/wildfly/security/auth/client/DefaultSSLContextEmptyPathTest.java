@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 
@@ -30,17 +31,20 @@ import java.security.Security;
  */
 public class DefaultSSLContextEmptyPathTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void defaultSSLContextNonexistentConfigFileTest() {
         Security.insertProviderAt(new WildFlyElytronClientDefaultSSLContextProvider(""), 1);
         Assert.assertNotNull(Security.getProvider("WildFlyElytronClientDefaultSSLContextProvider"));
         AuthenticationContext authenticationContext = AuthenticationContext.captureCurrent();
+
         authenticationContext.run(() -> {
-            try {
-                SSLContext.getDefault();
-            } catch (NoSuchAlgorithmException e) {
-                Assert.fail("Obtaining default SSL context from provider with invalid path threw incorrect exception");
-            }
+            Assert.assertThrows(IllegalArgumentException.class, () -> {
+                try {
+                    SSLContext.getDefault();
+                } catch (NoSuchAlgorithmException e) {
+                    Assert.fail("Obtaining default SSL context from provider with invalid path threw incorrect exception");
+                }
+            });
         });
     }
 }
