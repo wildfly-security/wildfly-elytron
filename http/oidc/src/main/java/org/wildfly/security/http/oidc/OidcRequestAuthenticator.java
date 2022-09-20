@@ -374,6 +374,9 @@ public class OidcRequestAuthenticator {
 
     private String rewrittenRedirectUri(String originalUri) {
         Map<String, String> rewriteRules = deployment.getRedirectRewriteRules();
+        if (rewriteRules == null || rewriteRules.isEmpty()) {
+            return originalUri;
+        }
         try {
             URL url = new URL(originalUri);
             Map.Entry<String, String> rule = null;
@@ -386,6 +389,9 @@ public class OidcRequestAuthenticator {
                 redirectUriBuilder.append(url.getPath().replaceFirst(rule.getKey(), rule.getValue()));
             } else {
                 redirectUriBuilder.append(url.getPath());
+            }
+            if(url.getQuery()!=null && !url.getQuery().isEmpty()) {
+                redirectUriBuilder.append("?").append(url.getQuery());
             }
             return redirectUriBuilder.toString();
         } catch (MalformedURLException ex) {
