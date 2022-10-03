@@ -2,6 +2,8 @@
 layout: hacktoberfest
 title: Hacktoberfest
 permalink: /hacktoberfest/
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/hacktoberfest2022.png
 ---
 :page-liquid:
 
