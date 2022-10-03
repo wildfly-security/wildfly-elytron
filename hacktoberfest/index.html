@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: WildFly Elytron Documentation</title>
+    <title>Elytron: Hacktoberfest</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -26,18 +26,18 @@
         gtag('config', 'UA-135301155-1');
     </script>
     <!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>WildFly Elytron Documentation | WildFly Elytron</title>
+<title>Hacktoberfest | WildFly Elytron</title>
 <meta name="generator" content="Jekyll v4.2.2" />
-<meta property="og:title" content="WildFly Elytron Documentation" />
+<meta property="og:title" content="Hacktoberfest" />
 <meta property="og:locale" content="en_US" />
-<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/docs/" />
-<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/docs/" />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/" />
 <meta property="og:site_name" content="WildFly Elytron" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="WildFly Elytron Documentation" />
+<meta property="twitter:title" content="Hacktoberfest" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","headline":"WildFly Elytron Documentation","url":"https://wildfly-security.github.io/wildfly-elytron/docs/"}</script>
+{"@context":"https://schema.org","@type":"WebPage","headline":"Hacktoberfest","url":"https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/"}</script>
 <!-- End Jekyll SEO tag -->
 
 </head>
@@ -57,7 +57,7 @@
                     
                     
                     
-                         <a class="mdl-navigation__link highlight-button Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+                         <a class="mdl-navigation__link mdl-navigation__link--current highlight-button Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
                     
                 
                     
@@ -75,7 +75,7 @@
                     
                     
                     
-                         <a class="mdl-navigation__link mdl-navigation__link--current Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
                     
                 
                     
@@ -106,7 +106,7 @@
             
             
             
-                <a class="mdl-navigation__link highlight-sidebar Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+                <a class="mdl-navigation__link mdl-navigation__link--current highlight-sidebar Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
             
             
             
@@ -124,7 +124,7 @@
             
             
             
-                <a class="mdl-navigation__link mdl-navigation__link--current Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
             
             
             
@@ -152,80 +152,80 @@
         <div class="page-content">
             
             <div class="content">
-                <div class="documentation">
-  <h1 id="wildfly-elytron-documentation" class="sect0"><a class="anchor" href="#wildfly-elytron-documentation"></a>WildFly Elytron Documentation</h1>
-<div class="paragraph">
-<p>For information regarding using WildFly Elytron within the WildFly application server please consult the
-<a href="https://docs.wildfly.org/26.1/WildFly_Elytron_Security.html">subsystem documentation</a>.</p>
+                <div class="hacktoberfest-page">
+  <h1>Hacktoberfest 2022</h1>
+  <div class="paragraph">
+<p>Welcome Hacktoberfest participants! We&#8217;re glad to have you join us.</p>
 </div>
 <div class="sect1">
-<h2 id="api-references"><a class="anchor" href="#api-references"></a>API References</h2>
+<h2 id="getting-started"><a class="anchor" href="#getting-started"></a>Getting Started</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Javadoc of the public APIs is available for the most recent two major WildFly releases.</p>
+<p>To get started, follow the steps below:</p>
 </div>
-<div class="ulist">
-<ul>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p><a href="/wildfly-elytron/documentation/api/current/index.html">WildFly 26 API</a>.</p>
-</li>
-<li>
-<p><a href="/wildfly-elytron/documentation/api/previous/index.html">WildFly 25 API</a>.</p>
-</li>
+<p><strong>Set up your development environment.</strong> We use Java 11, Maven, and Git. Follow our setup guide for your operating system:</p>
+<!-- A small hack to make the bullet points use the OS logos -->
+<ul class="guide-icon">
+  <li class="guide-icon_linux"><a href="/wildfly-elytron/guides/setup-elytron-linux">Linux & WSL</a></li>
+  <li class="guide-icon_windows"><a href="/wildfly-elytron/guides/setup-elytron-windows">Windows 10/11</a></li>
+  <li class="guide-icon_macos"><a href="/wildfly-elytron/guides/setup-elytron-macos">macOS</a></li>
 </ul>
+</li>
+<li>
+<p><strong>Pick your <a href="https://en.wikipedia.org/wiki/Comparison_of_integrated_development_environments#Java">IDE</a>.</strong> We recommend <a href="https://www.jetbrains.com/idea/">IDEA</a> or <a href="https://www.eclipse.org/ide/">Eclipse</a>, but feel free to use whatever you&#8217;d like.</p>
+</li>
+<li>
+<p><strong>Start contributing!</strong> Whether you&#8217;re new to security, new to Java, or new to tools like Git or Maven, we have a bunch of issues that are perfect for getting started on our project, no prior experience is needed. Check out our list of <a href="https://issues.redhat.com/issues/?filter=12364234">good first issues</a>. Once you have selected an issue you&#8217;d like to work on, make sure it&#8217;s not already assigned to someone else. To assign an issue to yourself, simply click on "Start Progress". This will automatically assign the issue to you.<br>
+Our <a href="https://github.com/wildfly-security/wildfly-elytron/blob/1.x/CONTRIBUTING.md#contributing-guidelines">contribution guide</a> has all the information you need on how to format your PRs.</p>
+</li>
+</ol>
 </div>
 <div class="paragraph">
-<p>Javadoc of the public APIs is also available for the versions of WildFly Elytron included in JBoss EAP.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="/wildfly-elytron/documentation/api/eap74/index.html">JBoss EAP 7.4 API</a>.</p>
-</li>
-<li>
-<p><a href="/wildfly-elytron/documentation/api/eap73/index.html">JBoss EAP 7.3 API</a>.</p>
-</li>
-<li>
-<p><a href="/wildfly-elytron/documentation/api/eap72/index.html">JBoss EAP 7.2 API</a>.</p>
-</li>
-</ul>
+<p>If you have any questions, we&#8217;ll be happy to help on <a href="https://wildfly.zulipchat.com/#narrow/stream/173102-wildfly-elytron">Zulip chat</a>.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="developing-wildfly-elytron"><a class="anchor" href="#developing-wildfly-elytron"></a>Developing WildFly Elytron</h2>
+<h2 id="faq-for-new-contributors"><a class="anchor" href="#faq-for-new-contributors"></a>FAQ for New Contributors</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>For information on getting started developing WildFly Elytron please see
-<a href="/wildfly-elytron/getting-started-for-developers">Getting Started for Developers</a>.</p>
+<p>Check out these <a href="https://fjuma.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/">frequently asked questions</a> from new contributors.</p>
 </div>
-<div class="sect2">
-<h3 id="full-javadoc"><a class="anchor" href="#full-javadoc"></a>Full Javadoc</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="future-opportunities-to-contribute"><a class="anchor" href="#future-opportunities-to-contribute"></a>Future Opportunities to Contribute</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>Two versions of the full javadoc (including private APIs) are available.</p>
+<p>Want to find out about future events we&#8217;ll be participating in like Hacktoberfest, Google Summer of Code, or other Open Source Days? Subscribe to this <a href="https://listman.redhat.com/mailman/listinfo/wildfly-elytron-dev">mailing list</a>.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re interested, check out our <a href="https://wildfly-security.github.io/wildfly-elytron/community/">Community</a> page for all the information you need on how to stay involved
+in the WildFly Elytron project.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="where-to-learn-more"><a class="anchor" href="#where-to-learn-more"></a>Where to Learn More</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To get more familiar with WildFly, our <a href="../getting-started-for-developers/">Getting Started</a> page has some resources to help you learn more about the project. Want to get started quickly? Check out these sections:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="/wildfly-elytron/documentation/api/next/index.html">WildFly 26</a>.</p>
+<p><a href="../getting-started-for-developers/#a-quick-introduction-to-the-project">WildFly Project Introductions</a></p>
 </li>
 <li>
-<p><a href="/wildfly-elytron/documentation/api/upstream/index.html">Upstream Javadoc</a>.</p>
+<p><a href="../getting-started-for-developers/#getting-familiar-with-elytron">Getting familiar with Elytron</a></p>
+</li>
+<li>
+<p><a href="../getting-started-for-developers/#getting-your-developer-environment-set-up">Building and testsuite comamnds</a></p>
 </li>
 </ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-This full javadoc includes private API which may be subject to change.
-</td>
-</tr>
-</table>
-</div>
 </div>
 </div>
 </div>
