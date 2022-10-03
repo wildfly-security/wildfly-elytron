@@ -8,18 +8,18 @@ title: Home
 </div-->  
 
 <div class="highlight-chip" >
-  <a href="{{site.baseurl}}/OSD-2022/">
+  <a href="{{site.baseurl}}/hacktoberfest/">
     <button type="button" class="mdl-chip mdl-chip--contact highlight-chip highlight-chip_large">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Welcome Open Source Day participants! Click here to get started</span>
+      <span class="mdl-chip__text">Welcome Hacktoberfest participants! Click here to get started</span>
     </button>
     <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_small">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Tap here for Open Source Day!</span>
+      <span class="mdl-chip__text">Tap here for Hacktoberfest!</span>
     </button>
     <button type="button" class="mdl-chip mdl-chip--contact highlight_chip highlight-chip_tiny">
       <img class="mdl-chip__contact" src="{{site.baseurl}}/assets/images/icon-wildfly.png" >
-      <span class="mdl-chip__text">Open Source Day!</span>
+      <span class="mdl-chip__text">Hacktoberfest!</span>
     </button>
   </a>
 </div>
