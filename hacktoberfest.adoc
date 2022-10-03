@@ -10,6 +10,16 @@ image:
 
 Welcome Hacktoberfest participants! We're glad to have you join us.
 
+== What is Hacktoberfest?
+
+https://hacktoberfest.com/[Hacktoberfest] takes places annually during the month of October. This event encourages open source contributions from the community. To participate in Hacktoberfest, you simply need to:
+
+1. Register on the https://hacktoberfest.com/[Hacktoberfest] site
+
+2. Submit 4 approved PRs against participating project repositories during the month of October
+
+3. Choose whether you’d like to receive a Hacktoberfest t-shirt or have a tree planted in your name
+
 == Getting Started
 
 To get started, follow the steps below:
