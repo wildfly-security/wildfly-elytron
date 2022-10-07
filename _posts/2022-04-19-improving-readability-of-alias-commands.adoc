@@ -2,7 +2,7 @@
 layout: post
 title: 'Improving readability of certificate read commands'
 date: 2022-04-19
-tags: ux, certificate, cli
+tags: ux certificate cli
 synopsis: Improving user experience and reducing console clutter.
 author: baranowb
 ---
