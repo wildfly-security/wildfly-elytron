@@ -255,7 +255,8 @@ public class DERDecoder implements ASN1Decoder {
             throw log.asnInvalidNumberOfUnusedBits();
         }
 
-        int k = 0, next;
+        int k = 0;
+        int next;
         int numBits = (length - 1) * 8 - numUnusedBits;
         StringBuilder result = new StringBuilder(numBits);
         for (int i = 0; i < (length - 1); i++) {
