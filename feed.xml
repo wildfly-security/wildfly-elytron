@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 03 Oct 2022 21:45:32 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 07 Oct 2022 20:22:21 +0000</lastBuildDate>
+        
+        <item>
+            <title>Hacktoberfest Has Started</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Fri, 07 Oct 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/
+            </guid>
+        </item>
         
         <item>
             <title>FAQ for New Contributors</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Client side default SSL context provider</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/
-            </link>
-            <description>
-                Elytron client now provides a java security provider which can be used to register a JVM wide default SSLContext. When this provider is registered with high enough priority and the method SSLContext.getDefault() is called, the provider instantiates and returns an SSLContext based on an Elytron client configuration file. So all...
-            </description>
-            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/
             </guid>
         </item>
         
