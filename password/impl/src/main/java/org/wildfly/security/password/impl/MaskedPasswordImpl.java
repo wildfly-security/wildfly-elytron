@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
@@ -216,7 +217,9 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
             return false;
         }
         MaskedPasswordImpl other = (MaskedPasswordImpl) obj;
-        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && Arrays.equals(initializationVector, other.initializationVector) && algorithm.equals(other.algorithm);
+        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial)
+                && MessageDigest.isEqual(salt, other.salt) && MessageDigest.isEqual(maskedPasswordBytes, other.maskedPasswordBytes)
+                && MessageDigest.isEqual(initializationVector, other.initializationVector) && algorithm.equals(other.algorithm);
     }
 
     Object writeReplace() {
