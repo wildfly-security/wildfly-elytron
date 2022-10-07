@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Hacktoberfest Has Started'
+date: 2022-10-07
+tags: hacktoberfest opensource
+synopsis: All the details on how to get started, pick an issue to work on, and submit your first PR.
+author: fjuma
+link: https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/
+---
