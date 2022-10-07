@@ -74,6 +74,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         this.principalTransformer = principalTransformer;
     }
 
+    @Override
     public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(evidence);
@@ -99,6 +100,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
+    @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
         boolean ok = false;
         final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(principal);
@@ -160,6 +162,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
+    @Override
     public void handleRealmEvent(final RealmEvent event) {
         if (event instanceof RealmAuthenticationEvent) {
             authenticationRealm.handleRealmEvent(event);
@@ -221,10 +224,12 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             return authenticationIdentity.verifyEvidence(evidence);
         }
 
+        @Override
         public boolean exists() throws RealmUnavailableException {
             return authenticationIdentity.exists();
         }
 
+        @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             if (authorizationIdentities.length == 1) {
                 return authorizationIdentities[0].getAuthorizationIdentity();
@@ -248,6 +253,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             return AggregateAttributes.aggregateOf(attributes);
         }
 
+        @Override
         public void dispose() {
             authenticationIdentity.dispose();
             for (RealmIdentity current : authorizationIdentities) {
