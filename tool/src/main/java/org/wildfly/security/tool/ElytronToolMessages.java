@@ -254,7 +254,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Iteration count (defaults to \"23\")")
     String cmdLineVaultIterationCount();
 
-    @Message(id = NONE, value = "Vault master key alias within key store (defaults to \"vault\")")
+    @Message(id = NONE, value = "Vault key alias within key store (defaults to \"vault\")")
     String cmdLineVaultKeyStoreAlias();
 
     @Message(id = NONE, value = "Configuration parameters for credential store in form of: \"parameter1=value1; ... ;parameterN=valueN\"%n" +
