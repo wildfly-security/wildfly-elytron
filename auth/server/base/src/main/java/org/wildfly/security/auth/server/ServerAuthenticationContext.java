@@ -1525,7 +1525,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             boolean ok = false;
             try {
                 if (! realmIdentity.exists()) {
-                    ElytronMessages.log.tracef("Authorization failed - identity does not exists");
+                    ElytronMessages.log.tracef("Authorization failed - identity does not exist");
                     return false;
                 }
                 // check the run-as permission on the old identity
