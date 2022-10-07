@@ -294,28 +294,34 @@ public class DERDecoder implements ASN1Decoder {
         return result;
     }
 
+    @Override
     public String decodeUniversalString() throws ASN1Exception {
         return new String(decodeUniversalStringAsBytes(), UTF_32BE);
     }
 
+    @Override
     public byte[] decodeUniversalStringAsBytes() throws ASN1Exception {
         readTag(UNIVERSAL_STRING_TYPE);
         return decodeUncheckedStringAsBytes();
     }
 
+    @Override
     public String decodeUtf8String() throws ASN1Exception {
         return new String(decodeUtf8StringAsBytes(), StandardCharsets.UTF_8);
     }
 
+    @Override
     public byte[] decodeUtf8StringAsBytes() throws ASN1Exception {
         readTag(UTF8_STRING_TYPE);
         return decodeUncheckedStringAsBytes();
     }
 
+    @Override
     public String decodeBMPString() throws ASN1Exception {
         return new String(decodeBMPStringAsBytes(), StandardCharsets.UTF_16BE);
     }
 
+    @Override
     public byte[] decodeBMPStringAsBytes() throws ASN1Exception {
         readTag(BMP_STRING_TYPE);
         return decodeUncheckedStringAsBytes();
