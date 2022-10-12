@@ -138,7 +138,9 @@ public class MapAttributes implements Attributes {
         if (list == null) {
             map.put(key, list = new EntriesList());
         }
-        list.add(idx, value);
+        if (!list.contains(value)) {
+            list.add(idx, value);
+        }
     }
 
     public String get(final String key, final int idx) {
@@ -227,7 +229,9 @@ public class MapAttributes implements Attributes {
         if (list == null) {
             map.put(key, list = new EntriesList());
         }
-        list.add(0, value);
+        if (!list.contains(value)) {
+            list.add(0, value);
+        }
     }
 
     public void addLast(final String key, final String value) {
@@ -235,7 +239,9 @@ public class MapAttributes implements Attributes {
         if (list == null) {
             map.put(key, list = new EntriesList());
         }
-        list.add(value);
+        if (!list.contains(value)) {
+            list.add(value);
+        }
     }
 
     public boolean removeFirst(final String key, final String value) {
@@ -334,7 +340,7 @@ public class MapAttributes implements Attributes {
         map.clear();
     }
 
-    static final class EntriesList extends ArrayList<String> implements Set<String> {
+    static final class EntriesList extends ArrayList<String> {
 
         private static final long serialVersionUID = 8113580421577650775L;
 

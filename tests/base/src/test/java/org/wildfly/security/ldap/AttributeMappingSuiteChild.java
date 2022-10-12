@@ -74,8 +74,8 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
     public void testAttributeFilterAttribute() throws Exception {
         assertAttributes("userWithRdnAttribute", attributes -> {
             assertEquals("Expected one attribute.", 1, attributes.size());
-            assertAttributeValue(attributes.get("roles"), "Manager", "Manager");
-            assertEquals("Expected two roles.", 2, attributes.get("roles").size());
+            assertAttributeValue(attributes.get("roles"), "Manager");
+            assertEquals("Expected two roles.", 1, attributes.get("roles").size());
         }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").to("roles").build()
          , AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("roles").build());
     }
