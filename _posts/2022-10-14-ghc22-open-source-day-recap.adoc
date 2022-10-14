@@ -6,7 +6,7 @@ tags: opensource ghc22 opensourceday
 synopsis: A recap of the GHC22 Open Source Day.
 author: fjuma
 image:
-  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2022.png[align="center"]
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2022.png
 ---
 
 [.banner]
