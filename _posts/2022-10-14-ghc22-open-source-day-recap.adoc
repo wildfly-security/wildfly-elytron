@@ -1,0 +1,119 @@
+---
+layout: post
+title: 'Open Source Day 2022 Recap'
+date: 2022-10-14
+tags: opensource ghc22 opensourceday
+synopsis: A recap of the GHC22 Open Source Day.
+author: fjuma
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2022.png[align="center"]
+---
+
+[.banner]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDayProjectBanner2022.png[align="left"]
+
+Last month, the https://wildfly-security.github.io/wildfly-elytron/[WildFly Elytron] team had the great pleasure
+of participating in https://ghc.anitab.org/programs-and-awards/open-source-day/[Open Source Day],
+an all-day hackathon that took place as a pre-event before the 2022 https://ghc.anitab.org/[Grace Hopper Celebration]. This was
+the WildFly Elytron team's third time participating in this event, after having participated in the Summer Open Source Day and the
+Grace Hopper Open Source Day last year. It's always exciting participating in events like this because it gives
+us the opportunity to help others get started on their own open source journeys.
+
+== Preparation
+
+Prior to the day of the event, we created lots of issues and triaged existing ones that would be suitable
+for new contributors to our project. We tried to make sure that the descriptions of these issues had lots of
+details and helpful pointers for getting started. We identified these issues using the https://issues.redhat.com/issues/?filter=12364234["good-first-issue"]
+label in our issue tracker. We also created detailed set up https://wildfly-security.github.io/wildfly-elytron/guides/[guides] for different operating systems to help
+participants set up their developer environments quickly. Inspired by questions received during past events, we started a playlist of
+videos on the https://www.youtube.com/c/WildFlyAS[WildFly YouTube channel] with answers to https://wildfly-security.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/[frequently asked questions]
+on topics like picking an issue to work on, importing a project into an IDE, and how to work with git. We hope
+to continue adding more tips for contributing to open source projects to this playlist over time.
+
+== The Day Overall
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2022.png[align="center"]
+
+The day began with a powerful opening ceremony that featured Anne Neuberger (Deputy Assistant to the President
+& Deputy National Security Advisor for Cyber & Emerging Technologies at the White House), Nithya Ruff (Head of the
+Open Source Program Office at Amazon), and Mishi Choudhary (SVP and General Counsel at Virtru). Hearing from
+these amazing women was very inspiring and it was definitely a great way to start the day!
+
+After the opening ceremony, it was time for us to introduce ourselves and give an overview of the WildFly
+Elytron project. We then covered some general information on how to make contributions to our project.
+After that, it was time to officially start the hackathon!
+
+During the hackathon, the WildFly Elytron team members and mentors helped participants set up their development environment,
+answered questions about git and the process of submitting and updating pull requests, helped participants pick and work on their
+issues, and provided feedback on their pull requests. We ended the day with 30 pull requests submitted from first
+time contributors!
+
+== Our First Time Contributors' Experience
+
+Wondering what the day was like for our first time contributors? After all, our participants are the most important
+part of Open Source Day! Here's what some of our first time contributors had to say about the day:
+
+
+[quote]
+____
+It was an amazing experience to work with the WildFly Elytron team during OSD. The team was very easy to work with,
+answered all questions and solved everyone’s problems with patience. Contributing to open source could be a
+nerve-racking experience but this team definitely knows the magic to make it fun and enjoyable
+
+*-Anupama Bhardwaj*
+____
+
+[quote]
+____
+Let me begin by saying it was my first Open Source Contribution. The GHC 22 Open Source Day environment was very
+positive. The mentors from RedHat Inc. were very calm and friendly. They supported us with the issues we wanted to
+pick up, explained to us the concept of why the given ticket is a problem, and what can be changed to correct the bug.
+They clarified our doubts in that short period.
+
+Whenever we made a mistake, they took the time to explain to us where we went wrong and how can we improve on it.
+
+They explained to us GIT concepts too.
+
+The best part of the session was we felt heard. Our opinions were taken into account and for each PR merge, they celebrated
+it as our accomplishment.
+
+It was a great learning experience and kudos to the mentors to make us learn and grow in just a few hours.
+I will actively participate in other Open Source Days as the thrill and learning experience graph is exponential.
+
+*-Monika Bhardwaj*
+____
+
+[quote]
+____
+WildFly Elytron is my first contribution to an Open Source project. I am grateful to Farah and team for helping me to
+get over my fear of open source and guiding me. Apart from working on issues, I learned GIT rebase, squash and maven
+commands. If someone is looking to contribute to an Open source Java project, then add WildFly Elytron in your list.
+
+*-Laxmi Vaka*
+____
+
+[quote]
+____
+For the very first time, I participated in the GHC Open Source Day Contribution Track: WildFly Elytron where I got the
+chance to interact with an amazing bunch of people. I learnt about various new things like git commands which can be
+really helpful in our day-to-day task, how one should approach Jira issues while contributing to open source community etc. Most importantly, it’s an awesome experience to code at midnight and overcame my fear of “my first” commit to the open source community. I started from minor good first issue and then moved to medium range issue. Overall, it was an amazing learning experience.
+Thank you WildFly Elytron team.
+
+*-Aishwarya Mittal*
+____
+
+[quote]
+____
+It was a great experience attending GHC'22 OSD. I learned about some amazing projects, creators and maintainers of
+different projects. I worked with the WildFly Elytron team on GHC'22 OSD. It was great to learn about the WildFly
+Elytron project and the team was super helpful, and I even merged my PRs to WildFly Elytron. It was exciting to work
+with the WildFly Elytron project. Hope to work with them in the future as well.
+
+*-Tanya Gupta*
+____
+
+== What's Next?
+
+The WildFly Elytron project is currently participating in https://hacktoberfest.digitalocean.com/[Hacktoberfest] this month
+and welcomes your contributions! Check out this https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/[page]
+for all the details on how to get started with our project.
