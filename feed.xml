@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 11 Oct 2022 16:05:19 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 14 Oct 2022 15:21:19 +0000</lastBuildDate>
+        
+        <item>
+            <title>Open Source Day 2022 Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/
+            </link>
+            <description>
+                Last month, the WildFly Elytron team had the great pleasure of participating in Open Source Day, an all-day hackathon that took place as a pre-event before the 2022 Grace Hopper Celebration. This was the WildFly Elytron team&#8217;s third time participating in this event, after having participated in the Summer Open...
+            </description>
+            <pubDate>Fri, 14 Oct 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Hacktoberfest Has Started</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Encrypting Pre-Existing Filesystem realms</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool/
-            </link>
-            <description>
-                Overview With the addition of the filesystem realm encryption feature outlined here, a feature was added to the Elytron Tool to encrypt a pre-existing filesystem realm. Method to run the tool There are two methods to run the tool, one is on the command line, that only lets you apply...
-            </description>
-            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption-tool/
             </guid>
         </item>
         
