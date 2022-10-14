@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth;
+package org.wildfly.security.auth.realm;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
