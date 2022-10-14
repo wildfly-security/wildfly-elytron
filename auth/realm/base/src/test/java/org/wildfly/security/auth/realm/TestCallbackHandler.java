@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth;
+package org.wildfly.security.auth.realm;
+
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -25,11 +28,8 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import java.security.Principal;
 
-import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
-
 /**
- * A custom {@link javax.security.auth.callback.CallbackHandler} used in the JAAS security realm tests. It implements the
+ * A custom {@link CallbackHandler} used in the JAAS security realm tests. It implements the
  * {@code setSecurityInfo} method that has been historically used to polulate custom handlers. Also, its {@code handle}
  * implementation will handle any kind of credential by calling {@code toString} and then {@code toCharArray} on the opaque
  * object.
