@@ -46,11 +46,16 @@ public class CipherSuiteSelectorTest {
         "TLS_AES_128_CCM_SHA256", // TLS 1.3
         "TLS_AES_128_CCM_8_SHA256"}; // TLS 1.3
 
+    private List<String> getSelectedSuites(String cipherList, String[] supportedSuites, boolean isTLSv1_3) {
+        if (isTLSv1_3)
+            return Arrays.asList(CipherSuiteSelector.fromNamesString(cipherList).evaluate(supportedSuites));
+        else
+            return Arrays.asList(CipherSuiteSelector.fromString(cipherList).evaluate(supportedSuites));
+    }
 
     @Test
     public void testAll() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("ALL", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, not(hasItem("TLS_RSA_WITH_NULL_SHA256")));
         assertThat(selectedSuites, not(hasItem("TLS_ECDH_anon_WITH_NULL_SHA")));
@@ -63,8 +68,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testComplementofall() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFALL");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("COMPLEMENTOFALL", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_NULL_SHA256", "TLS_ECDH_anon_WITH_NULL_SHA"));
         assertThat("Suites without encryption should be selected", selectedSuites.size() == 2);
@@ -72,8 +76,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testDefault() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("DEFAULT");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("DEFAULT", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_RSA_WITH_AES_128_CBC_SHA256"));
         assertThat("Suites with encryption and authentication should be selected", selectedSuites.size() == 1);
@@ -81,8 +84,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testComplementofdefault() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFDEFAULT");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("COMPLEMENTOFDEFAULT", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("Suites with encryption without authentication should be selected", selectedSuites.size() == 1);
@@ -90,8 +92,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSingleSuiteUsingStandardName() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}));
+        List<String> selectedSuites = getSelectedSuites("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA", new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}, false);
 
         assertThat(selectedSuites, hasItem("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"));
         assertThat("The only suite should be selected", selectedSuites.size() == 1);
@@ -99,8 +100,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSingleSuiteUsingOpensslName() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ECDHE-RSA-AES128-SHA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}));
+        List<String> selectedSuites = getSelectedSuites("ECDHE-RSA-AES128-SHA", new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}, false);
 
         assertThat(selectedSuites, hasItem("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"));
         assertThat("The only suite should be selected", selectedSuites.size() == 1);
@@ -108,8 +108,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSingleTlsSuiteUsingSslPrefixName() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"}));
+        List<String> selectedSuites = getSelectedSuites("SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA", new String[] {"TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"}, false);
 
         assertThat(selectedSuites, hasItem("TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"));
         assertThat("The only suite should be selected", selectedSuites.size() == 1);
@@ -117,8 +116,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testPlusBetweenAnonAndNullEncryption() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("aNULL+eNULL");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("aNULL+eNULL", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_ECDH_anon_WITH_NULL_SHA"));
         assertThat("Suites without both encryption and authenticaiton should be selected", selectedSuites.size() == 1);
@@ -126,8 +124,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testPlusBetweenAnonAndTls12() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("aNULL+TLSv1.2");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("aNULL+TLSv1.2", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("TLSv1.2 suites without authenticaiton should be selected", selectedSuites.size() == 1);
@@ -135,8 +132,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testDoublePlusBetweenAnonAndTls12() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("aNULL++TLSv1.2");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("aNULL++TLSv1.2", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("TLSv1.2 suites without authenticaiton should be selected", selectedSuites.size() == 1);
@@ -144,8 +140,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testPlusBetweenAnonAndTls12AndAfter() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("aNULL+TLSv1.2+");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("aNULL+TLSv1.2+", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("TLSv1.2 suites without authenticaiton should be selected", selectedSuites.size() == 1);
@@ -153,8 +148,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testMultiplePlus() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("aRSA+kRSA+AES+TLSv1.2");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("aRSA+kRSA+AES+TLSv1.2", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_RSA_WITH_AES_128_CBC_SHA256"));
         assertThat("TLSv1.2 RSA suites using AES should be selected", selectedSuites.size() == 1);
@@ -162,8 +156,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testPlusBeforeFirstRsa() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA +AES");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA +AES", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
         assertThat("RSA suites should be selected", selectedSuites.size() == 2);
@@ -172,8 +165,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testMinusAesAfterRsa() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA -AES");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA -AES", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_RSA_WITH_NULL_SHA256"));
         assertThat("RSA suites not using AES should be selected", selectedSuites.size() == 1);
@@ -181,8 +173,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testMinusBetweenRsaAndAes() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA - AES");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA - AES", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256", "TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("RSA suites not using AES should be selected", selectedSuites.size() == 3);
@@ -190,8 +181,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testMinusAesBetweenRsaAndAes() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA -AES AES");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA -AES AES", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256", "TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("RSA suites and suites using AES should be selected", selectedSuites.size() == 3);
@@ -199,8 +189,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testMinusRsaBetweenRsaAndRsa() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA -RSA RSA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA -RSA RSA", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
         assertThat("RSA suites should be selected", selectedSuites.size() == 2);
@@ -213,24 +202,21 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testNotRsaAfterRsa() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA !RSA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA !RSA", SUPPORTED_SUITES, false);
 
         assertThat("No suites should be selected", selectedSuites.isEmpty());
     }
 
     @Test
     public void testNotRsaBetweenRsaAndRsa() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA !RSA RSA");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA !RSA RSA", SUPPORTED_SUITES, false);
 
         assertThat("No suites should be selected", selectedSuites.isEmpty());
     }
 
     @Test
     public void testNotAesBetweenRsaAndAes() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA !AES AES");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("RSA !AES AES", SUPPORTED_SUITES, false);
 
         assertThat(selectedSuites, hasItem("TLS_RSA_WITH_NULL_SHA256"));
         assertThat("RSA suites not using AES should be selected", selectedSuites.size() == 1);
@@ -238,8 +224,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testStrengthForAllAndComplementofall() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL COMPLEMENTOFALL @STRENGTH");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("ALL COMPLEMENTOFALL @STRENGTH", SUPPORTED_SUITES, false);
 
         assertThat("All pre TLS 1.3 supported suites should be selected", selectedSuites.size() == 4);
         assertThat("High strength suites should be at the beginning", selectedSuites.get(0), is("TLS_RSA_WITH_AES_128_CBC_SHA256"));
@@ -250,8 +235,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testStrengthForComplementofallAndAll() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFALL ALL @STRENGTH");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("COMPLEMENTOFALL ALL @STRENGTH", SUPPORTED_SUITES, false);
 
         assertThat("All pre TLS 1.3 supported suites should be selected", selectedSuites.size() == 4);
         assertThat("High strength suites should be at the beginning", selectedSuites.get(0), is("TLS_RSA_WITH_AES_128_CBC_SHA256"));
@@ -262,8 +246,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSeparatorSpace() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("TLS_RSA_WITH_AES_128_CBC_SHA256 TLS_RSA_WITH_NULL_SHA256");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("TLS_RSA_WITH_AES_128_CBC_SHA256 TLS_RSA_WITH_NULL_SHA256", SUPPORTED_SUITES, false);
 
         assertThat("Chosen suites should be selected", selectedSuites.size() == 2);
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
@@ -271,8 +254,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSeparatorComma() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_NULL_SHA256");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_RSA_WITH_NULL_SHA256", SUPPORTED_SUITES, false);
 
         assertThat("Chosen suites should be selected", selectedSuites.size() == 2);
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
@@ -280,8 +262,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSeparatorColon() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_RSA_WITH_NULL_SHA256");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_RSA_WITH_NULL_SHA256", SUPPORTED_SUITES, false);
 
         assertThat("Chosen suites should be selected", selectedSuites.size() == 2);
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
@@ -289,8 +270,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testSeparatorCommaSpace() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromString("TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_NULL_SHA256");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_NULL_SHA256", SUPPORTED_SUITES, false);
 
         assertThat("Chosen suites should be selected", selectedSuites.size() == 2);
         assertThat(selectedSuites, hasItems("TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_NULL_SHA256"));
@@ -309,8 +289,7 @@ public class CipherSuiteSelectorTest {
 
     @Test
     public void testValidCipherSuites() {
-        CipherSuiteSelector selector = CipherSuiteSelector.fromNamesString("TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_CCM_8_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_CCM_SHA256");
-        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+        List<String> selectedSuites = getSelectedSuites("TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_CCM_8_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_CCM_SHA256", SUPPORTED_SUITES, true);
 
         assertThat("TLS_AES_256_GCM_SHA384 should not be selected", selectedSuites.size() == 3);
         assertThat(selectedSuites, hasItems("TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_CCM_8_SHA256", "TLS_AES_128_CCM_SHA256"));
