@@ -19,7 +19,6 @@ package org.wildfly.security.authz.jacc;
 
 import org.hamcrest.core.IsInstanceOf;
 import org.hamcrest.core.IsSame;
-import org.junit.Assert;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
 
@@ -32,8 +31,8 @@ import java.security.Policy;
 import java.security.PrivilegedAction;
 
 import static java.security.AccessController.doPrivileged;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -48,11 +47,11 @@ public class PolicyConfigurationTest extends AbstractAuthorizationTestCase {
     public void testCreateElytronPolicyConfigurationFactory() throws Exception {
         PolicyConfigurationFactory policyConfigurationFactory = PolicyConfigurationFactory.getPolicyConfigurationFactory();
 
-        Assert.assertThat(policyConfigurationFactory, new IsInstanceOf(ElytronPolicyConfigurationFactory.class));
+        assertThat(policyConfigurationFactory, new IsInstanceOf(ElytronPolicyConfigurationFactory.class));
 
         PolicyConfigurationFactory sameInstance = PolicyConfigurationFactory.getPolicyConfigurationFactory();
 
-        Assert.assertThat(policyConfigurationFactory, new IsSame<>(sameInstance));
+        assertThat(policyConfigurationFactory, new IsSame<>(sameInstance));
     }
 
     @Test
