@@ -125,19 +125,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
-    private KeyStore.Entry getEntry(String name) {
-        try {
-            KeyStore.Entry entry = keyStore.getEntry(name, null);
-            if (entry == null) {
-                log.tracef("KeyStoreRealm: alias [%s] does not exist in KeyStore", name);
-            }
-            return entry;
-        } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
-            log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
-            return null;
-        }
-    }
-
     private class KeyStoreRealmIdentity implements RealmIdentity {
 
         private final String name;
@@ -211,5 +198,18 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         public boolean exists() throws RealmUnavailableException {
             return getEntry(name) != null;
         }
+
+        private KeyStore.Entry getEntry(String name) {
+          try {
+              KeyStore.Entry entry = keyStore.getEntry(name, null);
+              if (entry == null) {
+                  log.tracef("KeyStoreRealm: alias [%s] does not exist in KeyStore", name);
+              }
+              return entry;
+          } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
+              log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
+              return null;
+          }
+      }
     }
 }
