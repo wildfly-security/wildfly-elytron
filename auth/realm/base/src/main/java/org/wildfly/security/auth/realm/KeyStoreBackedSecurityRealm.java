@@ -198,7 +198,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         public boolean exists() throws RealmUnavailableException {
             return getEntry(name) != null;
         }
-        
+
         private KeyStore.Entry getEntry(String name) {
           try {
               KeyStore.Entry entry = keyStore.getEntry(name, null);
@@ -210,6 +210,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
               log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
               return null;
           }
-      }        
+      }
     }
 }
