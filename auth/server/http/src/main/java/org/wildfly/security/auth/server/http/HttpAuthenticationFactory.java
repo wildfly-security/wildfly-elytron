@@ -86,7 +86,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     protected Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME:
-            case "DIGEST": {
+            case HttpConstants.DIGEST_NAME: {
                 return singleton(PasswordCredential.class);
             }
             default: {
@@ -100,7 +100,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
             case HttpConstants.BASIC_NAME: {
                 return singleton("*");
             }
-            case "DIGEST": {
+            case HttpConstants.DIGEST_NAME: {
                 return asList(ClearPassword.ALGORITHM_CLEAR, DigestPassword.ALGORITHM_DIGEST_MD5);
             }
             default: {
@@ -112,7 +112,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     protected boolean usesCredentials(final String mechName) {
         switch (mechName) {
             case HttpConstants.BASIC_NAME:
-            case "DIGEST": {
+            case HttpConstants.DIGEST_NAME: {
                 return true;
             }
             default: {
