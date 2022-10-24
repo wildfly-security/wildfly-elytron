@@ -429,6 +429,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), false) : RealmIdentity.NON_EXISTENT;
     }
 
+    @Override
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final Principal principal) {
         return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
     }
@@ -455,6 +456,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         return new Identity(finalName, pathFor(finalName), lock, hashCharset, hashEncoding, providers, secretKey, privateKey, publicKey, hasIntegrityEnabled());
     }
 
+    @Override
     public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
         return subIterator(root, levels);
     }
@@ -670,6 +672,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return SupportLevel.UNSUPPORTED;
         }
 
+        @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
             return getCredential(credentialType, null);
         }
@@ -1105,6 +1108,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
+        @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             final LoadedIdentity loadedIdentity = loadIdentity(true, false);
             return loadedIdentity == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
