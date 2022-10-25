@@ -36,7 +36,7 @@ import org.wildfly.security.http.sfbasic.BasicMechanismFactory;
 @RunWith(JMockit.class)
 public class BasicAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
-    public void testBasic(String username, String realm, String password, String authorization) throws Exception {
+    public void testBasic(String username, String realm, String password, String authorization, boolean isPasswordWrong) throws Exception {
         HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism(HttpConstants.BASIC_NAME,
                 Collections.singletonMap(HttpConstants.CONFIG_REALM, realm), getCallbackHandler(username, realm, password));
 
@@ -48,19 +48,29 @@ public class BasicAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Assert.assertEquals(HttpConstants.UNAUTHORIZED, response.getStatusCode());
         Assert.assertEquals("Basic realm=\"" + realm + "\"", response.getAuthenticateHeader());
 
-        // send the authorization header and check everything OK
         request = new TestingHttpServerRequest(new String[] {authorization});
         mechanism.evaluateRequest(request);
-        Assert.assertEquals(AbstractBaseHttpTest.Status.COMPLETE, request.getResult());
+        if (isPasswordWrong) {
+           // request with incorrect password, it should be 401 and response added
+           response = request.getResponse();
+           Assert.assertEquals(HttpConstants.UNAUTHORIZED, response.getStatusCode());
+        } else {
+           // send the authorization header and check everything OK
+           Assert.assertEquals(AbstractBaseHttpTest.Status.COMPLETE, request.getResult());
+        }
+        
     }
 
     @Test
     public void testBasicRFC7617Examples() throws Exception {
-        testBasic("Aladdin", "WallyWorld", "open sesame", "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==");
-        testBasic("test", "foo", "123\u00A3", "Basic dGVzdDoxMjPCow==");
+        testBasic("Aladdin", "WallyWorld", "open sesame", "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==", false);
+        testBasic("test", "foo", "123\u00A3", "Basic dGVzdDoxMjPCow==", false);
         // test case insensitive
-        testBasic("Aladdin", "WallyWorld", "open sesame", "basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==");
-        testBasic("test", "foo", "123\u00A3", "BASIC dGVzdDoxMjPCow==");
+        testBasic("Aladdin", "WallyWorld", "open sesame", "basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==", false);
+        testBasic("test", "foo", "123\u00A3", "BASIC dGVzdDoxMjPCow==", false);
+        // wrong password
+        testBasic("Aladdin", "WallyWorld", "open", "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==", true);
+        testBasic("test", "foo", "123", "Basic dGVzdDoxMjPCow==", true);
     }
 
     public void testStatefulBasic(String username, String realm, String password, String authorization) throws Exception {

@@ -125,20 +125,22 @@ public class DEREncoderTest {
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierTooFewComponents() throws Exception {
-        DEREncoder encoder = new DEREncoder();
-        encoder.encodeObjectIdentifier("1");
+        testEncodeObjectIdentifier("1");
     }
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierInvalidFirstComponent() throws Exception {
-        DEREncoder encoder = new DEREncoder();
-        encoder.encodeObjectIdentifier("5.10");
+        testEncodeObjectIdentifier("5.10");
     }
 
     @Test(expected=ASN1Exception.class)
     public void testEncodeObjectIdentifierInvalidSecondComponent() throws Exception {
+        testEncodeObjectIdentifier("0.50");
+    }
+
+    private void testEncodeObjectIdentifier(String component) {
         DEREncoder encoder = new DEREncoder();
-        encoder.encodeObjectIdentifier("0.50");
+        encoder.encodeObjectIdentifier(component);
     }
 
     @Test

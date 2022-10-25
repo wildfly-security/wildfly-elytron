@@ -88,7 +88,7 @@ public class SystemPropertiesJsonParserFactory extends MappingJsonFactory {
         }
 
         public SystemEnvProperties() {
-            this.overrides = Collections.EMPTY_MAP;
+            this.overrides = Collections.emptyMap();
         }
 
         @Override

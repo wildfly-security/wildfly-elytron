@@ -65,11 +65,11 @@ public final class WildFlyElytronClientDefaultSSLContextProvider extends Provide
      * @param configPath path to Elytron client configuration path
      */
     public Provider configure(String configPath) {
-        Service service = getService("SSLContext", "Default");
+        Service service = getService(SSL_CONTEXT_SERVICE_TYPE, DEFAULT_ALGORITHM_NAME);
         if (service instanceof ClientSSLContextProviderService) {
-            ((ClientSSLContextProviderService) getService("SSLContext", "Default")).setConfigPath(configPath);
+            ((ClientSSLContextProviderService) getService(SSL_CONTEXT_SERVICE_TYPE, DEFAULT_ALGORITHM_NAME)).setConfigPath(configPath);
         } else {
-            putService(new ClientSSLContextProviderService(this, "SSLContext", "Default", "org.wildfly.security.auth.client.provider.WildFlyElytronClientDefaultSSLContextSpi", null, null, configPath));
+            putService(new ClientSSLContextProviderService(this, SSL_CONTEXT_SERVICE_TYPE, DEFAULT_ALGORITHM_NAME, SERVICE_IMPLEMENTATION_CLASS, null, null, configPath));
         }
         return this;
     }
