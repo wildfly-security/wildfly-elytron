@@ -21,8 +21,8 @@ package org.wildfly.security.credential;
 import java.security.Provider;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.MessageDigest;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
@@ -56,7 +56,7 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
         if (evidence instanceof X509PeerCertificateChainEvidence) {
             final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
             try {
-                return getAlgorithm().equals(peerCertificateChainEvidence.getAlgorithm()) && Arrays.equals(getFirstCertificate().getEncoded(), peerCertificateChainEvidence.getFirstCertificate().getEncoded());
+                return getAlgorithm().equals(peerCertificateChainEvidence.getAlgorithm()) && MessageDigest.isEqual(getFirstCertificate().getEncoded(), peerCertificateChainEvidence.getFirstCertificate().getEncoded());
             } catch (CertificateEncodingException e) {
             }
         }
