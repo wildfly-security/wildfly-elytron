@@ -53,7 +53,7 @@ public class DelegatingAuthConfigFactory extends AuthConfigFactory {
     @Override
     public AuthConfigProvider getConfigProvider(String layer, String appContext, RegistrationListener listener) {
         AuthConfigProvider authConfigProvider = elytronAuthConfigFactory.getConfigProvider(layer, appContext, listener);
-        if (authConfigProvider != null || elytronAuthConfigFactory.matchesRegistration(layer, appContext) || !delegationAllowed.get()) {
+        if (authConfigProvider != null || elytronAuthConfigFactory.matchesRegistration(layer, appContext) || !Boolean.TRUE.equals(delegationAllowed.get())) {
             return authConfigProvider;
         }
 

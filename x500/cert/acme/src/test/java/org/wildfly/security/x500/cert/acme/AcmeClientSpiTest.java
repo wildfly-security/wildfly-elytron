@@ -21,6 +21,7 @@ package org.wildfly.security.x500.cert.acme;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -270,7 +271,7 @@ public class AcmeClientSpiTest {
         assertNotNull(nonce);
 
         String newNonce = ByteIterator.ofBytes(acmeClient.getNewNonce(account, false)).base64Encode(BASE64_URL, false).drainToString();
-        assertFalse(nonce.equals(newNonce));
+        assertNotEquals(nonce,newNonce);
         assertEquals(NEW_NONCE_RESPONSE, newNonce);
     }
 
