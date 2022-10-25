@@ -137,7 +137,7 @@ public class DEREncoderTest {
     public void testEncodeObjectIdentifierInvalidSecondComponent() throws Exception {
         testEncodeObjectIdentifier("0.50");
     }
-    
+
     private void testEncodeObjectIdentifier(String component) {
         DEREncoder encoder = new DEREncoder();
         encoder.encodeObjectIdentifier(component);
