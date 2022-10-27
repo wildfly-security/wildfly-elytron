@@ -154,7 +154,8 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * @param securityIdentity the identity to authorize and cache. If null, the corresponding identity will be removed from the cache
      */
     public void setAuthorized(SecurityIdentity securityIdentity) {
-        if (authorized = securityIdentity != null) {
+        authorized = securityIdentity != null;
+        if (authorized) {
             createDomainCache().put(securityIdentity);
         } else {
             createDomainCache().remove();
