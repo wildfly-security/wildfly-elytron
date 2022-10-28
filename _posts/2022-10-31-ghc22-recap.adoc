@@ -1,0 +1,86 @@
+---
+layout: post
+title: 'Grace Hopper Celebration Recap'
+date: 2022-10-31
+tags: ghc22
+synopsis: A recap of the 2022 Grace Hopper Celebration.
+author: fjuma
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/GHC22Panel.jpg
+---
+
+Last month, I had the opportunity to attend and speak at the https://ghc.anitab.org/[2022 Grace Hopper Celebration].
+This was my very first time attending this conference in person after attending virtually last year. This
+was the largest conference I have ever been to and it definitely had a lasting impact on me.
+
+== About GHC
+
+The Grace Hopper Celebration (GHC) is a conference for women in computing. Notably, it is the largest gathering
+of women technologists in the world! This was the first in-person GHC since 2019 due to the pandemic. For the
+first time ever, GHC was a hybrid conference this year with both virtual and in-person attendees. The total
+number of in-person attendees hasn't been officially published yet but it was roughly thought to be at least
+15,000 people from 80+ countries. The conference took place in Orlando, Florida.
+
+== Opening Plenary Session
+
+The conference started out with an opening plenary session that featured a few keynotes. First up was AnitaB.org
+President and CEO Brenda Darden Wilkerson who kicked things off, talked about some of the challenges that have
+been faced over the past few years, and discussed the importance of the theme of this year's conference,
+"Next is Now". This was a very inspiring keynote that encouraged us all to be change makers and really think
+about how we can all contribute to technology to serve society with the highest good in mind. She emphasized
+the need for technology that is inclusive, ethical, and safe for all. This was a theme that came up during
+quite a few of the conference sessions as well. The next keynote speaker of the morning was
+the CEO and Founder of Insitro, Daphne Koller. She delivered a very interesting keynote about leveraging
+machine learning to make better predictions for both discovering and developing new pharmaceutical drugs.
+The last keynote of the opening session was delivered by Frances Haugen, a data scientist, engineer, and
+advocate for accountability and transparency in social media. This was a great, thought-provoking keynote in
+which Frances identified why there is an urgency for accountability in Big Tech and talked about her
+brave decision to blow the whistle on Facebook.
+
+== Conference Sessions
+
+GHC is a very large conference and there were so many interesting sessions to choose from, it was definitely
+hard to pick what to attend at times! The thing I liked the most was the variety of the sessions available.
+In particular, there was a good mix of technical presentations and panels, hands-on technical labs, and
+sessions and panels that focussed on relevant topics for women in tech. As an example, some of the sessions
+I attended ranged from topics like cloud security and machine learning to the importance of building diversity,
+equity, and inclusion from the product up, creating products with social responsibility, and how to be a
+successful leader.
+
+== My First Time Speaking At GHC
+
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/GHC22Panel.jpg[align="center"]
+
+Not only was this the first time that I've attended GHC in person but this was also my very first time speaking
+at GHC! I had the opportunity to be a panelist at the "Maintainers' Guide to Open Source" along with Luciana
+Abud from Microsoft and Kavitha Srinivasan from Netflix. The three of us were also project representatives
+at Open Source Day, a https://fjuma.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/[pre-event] that
+took place the week before GHC. The panel was moderated by Anna Jung from VMWare who was also one of the amazing
+co-chairs for Open Source Day. I really enjoyed getting to be part of this panel where we talked about what
+being a maintainer for an open source project entails, the steps we're taking to make our projects more inclusive,
+what it's like working with the community, and so much more.
+
+== Tips For Future Attendees
+
+As I mentioned before, GHC is a very large conference! To get the most out of it, there are a couple things
+you could do to prepare in advance. First, the venue is quite large so come prepared to do a lot of walking.
+This is also something that was mentioned by the event organizers in the emails leading up to the conference.
+
+It's also good to take a look at the venue maps in advance to get a sense of where things are. I found it
+useful to pick the sessions I wanted to attend the night before each day of the conference so I could figure
+out if it was possible to make it from one session to the next one on time or if I needed to pick a different
+session instead. For example, getting from the Orange County Convention Center to the Hyatt Regency ballrooms
+wasn't fast so it was better not to try to attend back to back sessions that were split between these two locations
+unless there was enough of a gap to make it on time.
+
+Finally, it's common for attendees to start lining up for sessions about half an hour before they begin. This
+wasn't something that I realized ahead of time and there were a couple sessions on the first day that I wasn't
+able to get into because they reached capacity. Being aware of this helped me get into most of the sessions
+I wanted to attend during the rest of the conference.
+
+== Final Thoughts
+
+I thoroughly enjoyed attending GHC. I learned so much and it was definitely inspiring being at an event
+with so many fellow women technologists. I hope I can attend this conference again in the future!
+
