@@ -152,11 +152,6 @@ public class RequestAuthenticator {
             log.debug("NOT_ATTEMPTED: bearer only");
             return AuthOutcome.NOT_ATTEMPTED;
         }
-        if (isAutodetectedBearerOnly()) {
-            challenge = bearer.getChallenge();
-            log.debug("NOT_ATTEMPTED: Treating as bearer only");
-            return AuthOutcome.NOT_ATTEMPTED;
-        }
 
         if (log.isTraceEnabled()) {
             log.trace("try oidc");
@@ -166,6 +161,12 @@ public class RequestAuthenticator {
             if (verifySSL()) return AuthOutcome.FAILED;
             log.debug("AUTHENTICATED: was cached");
             return AuthOutcome.AUTHENTICATED;
+        }
+
+        if (isAutodetectedBearerOnly()) {
+            challenge = bearer.getChallenge();
+            log.debug("NOT_ATTEMPTED: Treating as bearer only");
+            return AuthOutcome.NOT_ATTEMPTED;
         }
 
         OidcRequestAuthenticator oidc = createOidcAuthenticator();
