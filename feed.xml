@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 20 Oct 2022 21:37:44 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 31 Oct 2022 14:34:14 +0000</lastBuildDate>
+        
+        <item>
+            <title>Grace Hopper Celebration Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-recap/
+            </link>
+            <description>
+                Last month, I had the opportunity to attend and speak at the 2022 Grace Hopper Celebration. This was my very first time attending this conference in person after attending virtually last year. This was the largest conference I have ever been to and it definitely had a lasting impact on...
+            </description>
+            <pubDate>Mon, 31 Oct 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Open Source Day 2022 Recap</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Encrypting Filesystem realms</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/
-            </link>
-            <description>
-                Previously, any data in the filesystem realm was always stored unencrypted, this meant that anyone with access to the filesystem identity files could access the credentials, and attributes (such as assigned roles). Now encryption has been added via a SecretKey. An overview of the new attributes The filesystem realm now...
-            </description>
-            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-encryption/
             </guid>
         </item>
         
