@@ -121,7 +121,7 @@
 23000 - 23999    wildfly-elytron-http-oidc
 24000 - 24999    wildfly-elytron-jose-jwk
 25000 - 25999    wildfly-elytron-jose-jws
-26000 - 26999
+26000 - 26999    wildfly-elytron-jose-util
 27000 - 27999
 28000 - 28999
 29000 - 29999
