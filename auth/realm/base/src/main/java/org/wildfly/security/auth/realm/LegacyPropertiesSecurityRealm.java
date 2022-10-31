@@ -356,7 +356,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         // users, which are in groups file only
         for (String userName : groups.stringPropertyNames()) {
-            if (accounts.containsKey(userName) == false) {
+            if (!accounts.containsKey(userName)) {
                 accounts.put(userName, new AccountEntry(userName, null, groups.getProperty(userName)));
             }
         }
