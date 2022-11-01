@@ -87,7 +87,7 @@
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
-        <version.hsqldb>2.4.0</version.hsqldb>
+        <version.hsqldb>2.7.1</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
         <version.net.minidev.json-smart>2.4.7</version.net.minidev.json-smart>
         <version.com.nimbusds.nimbus-jose-jwt>8.2.1</version.com.nimbusds.nimbus-jose-jwt>
