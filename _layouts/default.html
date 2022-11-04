@@ -44,12 +44,12 @@
                         {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
                     {% elsif page.url contains 'blog' and item.name == 'Blog' %}
                         {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
-                    {% elsif page.url contains 'hacktoberfest' and item.name == 'Hacktoberfest' %}
+                    {% elsif page.url contains 'contribute' and item.name == 'Contribute' %}
                         {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
                     {% else %}
                         {% assign class = 'mdl-navigation__link' %}
                     {% endif %}
-                    {% if item.name == 'Hacktoberfest' %}
+                    {% if item.name == 'Contribute' %}
                         {% assign class = class | append: " highlight-button" %}
                     {% endif %}
                     {% if item.name == 'GitHub' %}
@@ -69,12 +69,12 @@
                 {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
             {% elsif page.url contains 'blog' and item.name == 'Blog' %}
                 {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
-            {% elsif page.url contains 'hacktoberfest' and item.name == 'Hacktoberfest' %}
+            {% elsif page.url contains 'contribute' and item.name == 'Contribute' %}
                 {% assign class = 'mdl-navigation__link mdl-navigation__link--current' %}
             {% else %}
                 {% assign class = 'mdl-navigation__link' %}
             {% endif %}
-            {% if item.name == 'Hacktoberfest' %}
+            {% if item.name == 'Contribute' %}
                 {% assign class = class | append: " highlight-sidebar" %}
             {% endif %}
             {% if item.name == 'GitHub' %}
