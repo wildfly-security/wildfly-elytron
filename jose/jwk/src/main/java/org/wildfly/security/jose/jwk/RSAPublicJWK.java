@@ -18,6 +18,7 @@
 
 package org.wildfly.security.jose.jwk;
 
+import static org.wildfly.security.jose.jwk.ElytronMessages.log;
 import static org.wildfly.security.jose.jwk.JWKUtil.generateThumbprint;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -75,7 +76,7 @@ public class RSAPublicJWK extends JWK {
                 sha1x509Thumbprint = generateThumbprint(x509CertificateChain, "SHA-1");
                 sha256x509Thumbprint = generateThumbprint(x509CertificateChain, "SHA-256");
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+                throw log.unableToGenerateThumbprint(e);
             }
         }
     }
