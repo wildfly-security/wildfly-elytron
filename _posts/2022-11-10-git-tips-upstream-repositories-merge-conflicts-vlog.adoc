@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Git Tips on Upstream Repositories and Merge Conflicts'
+date: 2022-11-10
+tags: git-tips github vlog
+synopsis: This video explains how to add upstream repositories, rebase onto upstream branches, and resolve merge conflicts in Git.
+author: cam-rod
+link: https://www.youtube.com/watch?v=v5d6x3kT7lU
+---
