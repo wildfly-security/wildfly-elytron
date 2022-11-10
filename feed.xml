@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 10 Nov 2022 16:03:12 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 10 Nov 2022 20:49:29 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Git Tips on Upstream Repositories and Merge Conflicts</title>
+            <link>
+                https://www.youtube.com/watch?v=v5d6x3kT7lU
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 10 Nov 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=v5d6x3kT7lU
+            </guid>
+        </item>
         
         <item>
             <title>Enabling Integrity on Filesystem realms</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 21 Jun 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/
-            </guid>
-        </item>
-        
-        <item>
-            <title>New Security Features in WildFly 26.1</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/
-            </link>
-            <description>
-                Since WildFly 26.1 was just released, we wanted to highlight some new security features included in this release. New Features Automatic Registration of a Client Side Default SSLContext The Elytron authentication client now provides a Java security provider that can be used to register a JVM wide default SSLContext. When...
-            </description>
-            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/
             </guid>
         </item>
         
