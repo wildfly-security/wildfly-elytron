@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 04 Nov 2022 18:22:56 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 10 Nov 2022 16:03:12 +0000</lastBuildDate>
+        
+        <item>
+            <title>Enabling Integrity on Filesystem realms</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/
+            </link>
+            <description>
+                Previously, any data in the filesystem realm was not verified, this meant that anyone with access to the identity files, could tamper with the data without any way of knowing. WildFly 27 adds support for filesystem integrity checking by adding signatures to identity files. This is done using a public-private...
+            </description>
+            <pubDate>Thu, 10 Nov 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/
+            </guid>
+        </item>
         
         <item>
             <title>Grace Hopper Celebration Recap</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/new-security-features-wildfly-26-1/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Improving readability of certificate read commands</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/
-            </link>
-            <description>
-                Any one who has experience with network hardware or console administration knows the Achilles' heel of CLI - limited visualization capability. This can be somewhat mitigated by setting large horizontal buffer and simple scrolling. However not all devices support scrolling and output still can be loitered with wrapped lines. This...
-            </description>
-            <pubDate>Tue, 19 Apr 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/improving-readability-of-alias-commands/
             </guid>
         </item>
         
