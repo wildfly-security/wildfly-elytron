@@ -1,0 +1,140 @@
+---
+layout: post
+title: "Enabling Integrity on Filesystem realms"
+date: 2022-11-10
+tags: filesystem-realm integrity
+synopsis: An overview of the new support for filesystem realm integrity verification.
+author: araskar
+link:
+---
+
+Previously, any data in the filesystem realm was not verified, this meant that anyone with access to the identity files, could tamper with the data without any way of knowing. WildFly 27 adds support for filesystem integrity checking by adding signatures to identity files. This is done using a public-private key pair.
+
+== An overview of the new attributes
+
+The filesystem realm now supports the following attributes
+
+* ``key-store``: This attribute specifies the key store where the key pair is stored if the integrity is to be enabled on the filesystem realm. This attribute is optional.
+
+* ``key-store-alias``: This attribute specifies the alias of the key pair that is stored in the previously specified key store. This attribute is optional.
+
+== A Complete Example
+
+In this post we go through an example of setting up a filesystem realm with integrity enabled and then we'll try accessing a web application that's secured with the filesystem realm.
+
+=== Example Project
+Clone the ``elytron-examples`` repo locally:
+
+[source]
+----
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples
+----
+We'll be looking at the *https://github.com/wildfly-security-incubator/elytron-examples/blob/master/integrity-filesystem-realm[integrity-filesystem-realm]*
+
+=== Server Configuration
+In the following section, we will review the configuration available in the script for the quickstart
+*https://github.com/wildfly-security-incubator/elytron-examples/blob/master/integrity-filesystem-realm/configure-elytron.cli[configure-elytron.cli]*. We start our configuration by connecting to the server using the following command:
+
+[source,shell]
+----
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+----
+==== Note: Use of WILDFLY_HOME
+In the following post, replace ``WILDFLY_HOME`` with the actual path to your WildFly installation.
+
+We first create a keystore and keypair under the Elytron subsystem, with the name ``keystore``, and alias ``user``.
+[source]
+----
+/subsystem=elytron/key-store=keystore:add(path=keystore, relative-to=jboss.server.config.dir, type=JKS, credential-reference={clear-text=secret})
+/subsystem=elytron/key-store=keystore:generate-key-pair(alias=user,algorithm=RSA,key-size=1024,validity=365,distinguished-name="CN=localhost")
+/subsystem=elytron/key-store=keystore:store()
+----
+
+
+Then we create a filesystem realm under the Elytron subsystem using the key-store and key-store-alias specified above. We then add an identity ``quickstartUser``, setting a digest password and adding the
+attributes ``Guest`` and ``Admin`` as follows:
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm,relative-to=jboss.server.config.dir, key-store=keystore, key-store-alias=user)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(digest={algorithm=digest-md5, realm=fsRealm, password=password123!}, identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])
+----
+
+For more information about creating FileSystem realms along with all of its possible configurations,
+please refer to the https://docs.wildfly.org/27/WildFly_Elytron_Security.html[Elytron documentation].
+
+We then configure a simple role decoder and create a new security domain which will make use of our
+filesystem realm and role decoder as follows:
+[source]
+----
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+----
+
+
+NOTE: Creating an additional security domain (``fsDomain``in this case) is not necessary.
+We could alternatively take the default ``ApplicationDomain`` and add the FileSystem realm to it.
+
+We then update our security domain mapping in the Undertow subsystem:
+
+[source]
+----
+/subsystem=undertow/application-security-domain=other:write-attribute(name=security-domain, value=fsDomain)
+----
+
+
+=== Deploying the app to WildFly
+
+From the root directory of the *https://github.com/wildfly-security-incubator/elytron-examples/blob/master/integrity-filesystem-realm/[quickstart example]* run the following command the deploy the web application to wildfly
+[source]
+----
+mvn clean install wildfly:deploy
+----
+
+=== Verifying Integrity
+Now you may navigate to ``http://localhost:8080/integrity-filesystem``, and when it prompts you to enter a username and password, put in the credentials we specified earlier, ``quickstartUser``, and ``password123!``. This should authenticate you to a page that shows you the principal you're logged in with.
+
+The successful login indicates that integrity has been configured correctly.
+
+In order to further verify that these features are being used correctly we can navigate to the identity file and check the contents. The file should be located at ``WILDFLY_HOME/standalone/configuration/fs-realm/q/u/quickstartuser-OF2WSY3LON2GC4TUKVZWK4Q.xml`` if the same filesystem realm and identity configuration was used.
+
+In the identity we can see there is now a ``<principal />`` tag specifying the principal name, to ensure it matches with the file name, as well as a ``<Signature>`` tag.
+
+The format for the signature tag should look like the following
+
+[xml]
+----
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>ArpOOvSwrygVhHqyHYZb/y8R5Hn8CFRfpTliiHQEyA=</DigestValue></Reference></SignedInfo><SignatureValue>RWl3Tt1iYuJD1Sj8MeCIYkB3W1j+gNzMoHZ1nAMZaDtWIf9pJApf84L0bihM9+cUeHaNnJjjic8T&#13;
+tx+EwwYKF2liZXbOlM8QBV6H2ODX1pYHjFfVDEoqI8oY8egP2nPNLxREp/kmNiWJGeLnHibYapZ7&#13;
+RjJG7r21+yeCvni4rLc=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>jKCHruUkqzCrXhvKBPGv98I5zZsWxcWE+1gz4EqIv5EHlKv8rvfaLnhlQIxwIe0uB6Tfa2M3NKjE&#13;
+RBsL7AH5R3T4h9ht8rdRcZfVZlq55d/dqvZv+QHDwzy2bMY2s/+1E3nF95CmGTa4uf0zm3WYOs1K&#13;
+0iLzGzkyPT1JZSa0gRU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature>
+----
+
+== Additional Operations
+
+=== Verifying Integrity of the Whole Realm
+If at any point you want to verify that the whole realm is intact, you can use the following command:
+[source]
+----
+/subsystem=elytron/filesystem-realm=fsRealm:verify-integrity()
+----
+
+This command iterates over every identity in the filesystem realm and verifies that the signature is valid.
+
+=== Update Key Pair
+If you want to update the key pair in the filesystem realm, you can use the following commands:
+[source]
+----
+/subsystem=elytron/filesystem-realm=keystore:write-attribute(name=key-store, value=newKeystore)
+/subsystem=elytron/filesystem-realm=keystore:write-attribute(name=key-store-alias, value=newKeystoreAlias)
+/subsystem=elytron/filesystem-realm=fsRealm:update-key-pair()
+----
+
+The first command changes the key-store that is associated with the filesystem realm. You can either pick to only change the key-store, the key-store-alias, or change both.
+
+Then the second command uses the new key pair assigned to the filesystem realm to update all the signatures of each identity.
+
+== Summary
+This blog post has given an overview on how to configure a filesystem realm to enable integrity support, as well as 2 operations useful for managing filesystem realms that have enabled integrity support.
