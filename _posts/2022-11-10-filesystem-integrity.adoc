@@ -65,15 +65,15 @@ attributes ``Guest`` and ``Admin`` as follows:
 For more information about creating FileSystem realms along with all of its possible configurations,
 please refer to the https://docs.wildfly.org/27/WildFly_Elytron_Security.html[Elytron documentation].
 
-We then configure a simple role decoder and create a new security domain which will make use of our
-filesystem realm and role decoder as follows:
+We then create a new security domain which will make use of our
+filesystem realm as follows:
 [source]
 ----
-/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
 ----
 
 
-NOTE: Creating an additional security domain (``fsDomain``in this case) is not necessary.
++NOTE:+ Creating an additional security domain (``fsDomain``in this case) is not necessary.
 We could alternatively take the default ``ApplicationDomain`` and add the FileSystem realm to it.
 
 We then update our security domain mapping in the Undertow subsystem:
