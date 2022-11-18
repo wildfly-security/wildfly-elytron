@@ -284,26 +284,17 @@ attributes <code>Guest</code> and <code>Admin</code> as follows:</p>
 please refer to the <a href="https://docs.wildfly.org/27/WildFly_Elytron_Security.html">Elytron documentation</a>.</p>
 </div>
 <div class="paragraph">
-<p>We then configure a simple role decoder and create a new security domain which will make use of our
-filesystem realm and role decoder as follows:</p>
+<p>We then create a new security domain which will make use of our
+filesystem realm as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm, role-decoder=from-roles-attribute}], default-realm=fsRealm,permission-mapper=default-permission-mapper)</code></pre>
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm}], default-realm=fsRealm,permission-mapper=default-permission-mapper)</code></pre>
 </div>
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Creating an additional security domain (<code>fsDomain</code>in this case) is not necessary.
-We could alternatively take the default <code>ApplicationDomain</code> and add the FileSystem realm to it.
-</td>
-</tr>
-</table>
+<div class="paragraph">
+<p>NOTE: Creating an additional security domain (<code>fsDomain</code>in this case) is not necessary.
+We could alternatively take the default <code>ApplicationDomain</code> and add the FileSystem realm to it.</p>
 </div>
 <div class="paragraph">
 <p>We then update our security domain mapping in the Undertow subsystem:</p>
