@@ -881,26 +881,12 @@ public class FileSystemSecurityRealmTest {
 
     @Test
     public void testNewKeyPairRewrite() throws Exception {
-        FileSystemSecurityRealm securityRealm = getBuilder(privateKey, publicKey).build();
-        ModifiableRealmIdentity newIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("plainUser"));
-        newIdentity.create();
-        MapAttributes newAttributes = new MapAttributes();
-        newAttributes.addFirst("name", "plainUser");
-        newAttributes.addAll("roles", Arrays.asList("Employee", "Manager", "Admin"));
-        newIdentity.setAttributes(newAttributes);
-        newIdentity.dispose();
-        String identityPath = getRootPath(false) + File.separator + "p" + File.separator + "l" + File.separator + "plainuser-OBWGC2LOKVZWK4Q.xml";
-        assertTrue(validateDigitalSignature(identityPath, "plainUser", publicKey));
+        createRealmAndUpdateKeyPair(true);
+    }
 
-        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-        KeyPair pair = keyPairGen.generateKeyPair();
-        PrivateKey newPrivateKey = pair.getPrivate();
-        PublicKey newPublicKey = pair.getPublic();
-        securityRealm = getBuilder(newPrivateKey, newPublicKey).build();
-        assertFalse(validateDigitalSignature(identityPath, "plainUser", newPublicKey));
-        securityRealm.updateRealmKeyPair();
-        assertTrue(validateDigitalSignature(identityPath, "plainUser", newPublicKey));
-        newIdentity.dispose();
+    @Test
+    public void testEnableIntegrityOnExistingRealm() throws Exception {
+        createRealmAndUpdateKeyPair(false);
     }
 
     @Test
@@ -1138,6 +1124,36 @@ public class FileSystemSecurityRealmTest {
         existingIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("plainUser"));
         assertFalse(existingIdentity.exists());
         existingIdentity.dispose();
+    }
+
+    private void createRealmAndUpdateKeyPair(boolean useInitialKeyPair) throws Exception {
+        FileSystemSecurityRealm securityRealm = useInitialKeyPair
+                ? getBuilder(privateKey, publicKey).build()
+                : getBuilder().build();
+
+        ModifiableRealmIdentity newIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("plainUser"));
+        newIdentity.create();
+        MapAttributes newAttributes = new MapAttributes();
+        newAttributes.addFirst("name", "plainUser");
+        newAttributes.addAll("roles", Arrays.asList("Employee", "Manager", "Admin"));
+        newIdentity.setAttributes(newAttributes);
+        newIdentity.dispose();
+        String identityPath = getRootPath(false) + File.separator + "p" + File.separator + "l" + File.separator + "plainuser-OBWGC2LOKVZWK4Q.xml";
+        if (useInitialKeyPair) {
+            assertTrue(validateDigitalSignature(identityPath, "plainUser", publicKey));
+        }
+
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+        KeyPair pair = keyPairGen.generateKeyPair();
+        PrivateKey newPrivateKey = pair.getPrivate();
+        PublicKey newPublicKey = pair.getPublic();
+        securityRealm = getBuilder(newPrivateKey, newPublicKey).build();
+        if (useInitialKeyPair) {
+            assertFalse(validateDigitalSignature(identityPath, "plainUser", newPublicKey));
+        }
+        securityRealm.updateRealmKeyPair();
+        assertTrue(validateDigitalSignature(identityPath, "plainUser", newPublicKey));
+        newIdentity.dispose();
     }
 
     private void specialCharacters(FileSystemSecurityRealm securityRealm) throws Exception{

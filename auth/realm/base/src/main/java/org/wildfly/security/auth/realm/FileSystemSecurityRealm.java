@@ -594,8 +594,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         ModifiableRealmIdentityIterator realmIterator = this.getRealmIdentityIterator();
         while (realmIterator.hasNext()) {
             Identity identity = (Identity) realmIterator.next();
-            try{
-                identity.writeDigitalSignature(identity.path, identity.name);
+            try {
+                identity.writeDigitalSignature(identity.path, identity.name, false);
             } finally {
                 identity.dispose();
             }
@@ -710,7 +710,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
             if (ElytronMessages.log.isTraceEnabled()) {
                 try {
-                    final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+                    final LoadedIdentity loadedIdentity = loadIdentity(false, true, false);
                     ElytronMessages.log.tracef("Trying to authenticate identity %s using FileSystemSecurityRealm", (loadedIdentity != null) ? loadedIdentity.getName() : "null");
                 } catch (RealmUnavailableException e) {
                     if (e.getCause() instanceof IntegrityException) {
@@ -746,7 +746,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         }
 
         List<Credential> loadCredentials() throws RealmUnavailableException {
-            final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+            final LoadedIdentity loadedIdentity = loadIdentity(false, true, false);
             return loadedIdentity == null ? Collections.emptyList() : loadedIdentity.getCredentials();
         }
 
@@ -855,7 +855,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                     }
                     if(integrityEnabled) {
                         try {
-                            writeDigitalSignature(tempPath, this.name);
+                            writeDigitalSignature(tempPath, this.name, false);
                         } catch (RealmUnavailableException e) {
                             throw ElytronMessages.log.unableToGenerateSignature(path.toString());
                         }
@@ -889,28 +889,30 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         public void setCredentials(final Collection<? extends Credential> credentials) throws RealmUnavailableException {
             Assert.checkNotNullParam("credential", credentials);
-            final LoadedIdentity loadedIdentity = loadIdentity(false, false);
+            final LoadedIdentity loadedIdentity = loadIdentity(false, false, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
 
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials), loadedIdentity.getAttributes(), hashEncoding);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, new ArrayList<>(credentials), loadedIdentity.getAttributes(),
+                    hashEncoding, false);
             replaceIdentity(newIdentity);
         }
 
         public void setAttributes(final Attributes attributes) throws RealmUnavailableException {
             Assert.checkNotNullParam("attributes", attributes);
-            final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+            final LoadedIdentity loadedIdentity = loadIdentity(false, true, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes, hashEncoding);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes, hashEncoding,
+                    false);
             replaceIdentity(newIdentity);
         }
 
         @Override
         public Attributes getAttributes() throws RealmUnavailableException {
-            final LoadedIdentity loadedIdentity = loadIdentity(true, false);
+            final LoadedIdentity loadedIdentity = loadIdentity(true, false, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
@@ -932,8 +934,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
+        /**
+         * Replaces the given identity in place, modifying the namespace if necessary
+         */
         private Void replaceIdentityPrivileged(final LoadedIdentity newIdentity) throws RealmUnavailableException {
-            if (!isIntegrityValid()) {
+            if (!isIntegrityValid() && !newIdentity.getUpgradeIdentity()) {
                 throw new RealmUnavailableException(ElytronMessages.log.invalidIdentitySignature(name));
             }
             for (;;) {
@@ -950,7 +955,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         }
                         if (integrityEnabled) {
                             try {
-                                writeDigitalSignature(tempPath, name);
+                                writeDigitalSignature(tempPath, name, newIdentity.getUpgradeIdentity());
                             } catch (RealmUnavailableException e) {
                                 throw ElytronMessages.log.unableToGenerateSignature(path.toString());
                             }
@@ -1110,16 +1115,19 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            final LoadedIdentity loadedIdentity = loadIdentity(true, false);
+            final LoadedIdentity loadedIdentity = loadIdentity(true, false, false);
             return loadedIdentity == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
         }
 
-        private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
+        /**
+         * @param upgradeIdentity skip integrity validation if checking for identity namespace upgrade
+         */
+        private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes, final boolean upgradeIdentity) throws RealmUnavailableException {
             if (System.getSecurityManager() == null) {
-                return loadIdentityPrivileged(skipCredentials, skipAttributes);
+                return loadIdentityPrivileged(skipCredentials, skipAttributes, upgradeIdentity);
             }
             try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<LoadedIdentity>) () -> loadIdentityPrivileged(skipCredentials, skipAttributes));
+                return AccessController.doPrivileged((PrivilegedExceptionAction<LoadedIdentity>) () -> loadIdentityPrivileged(skipCredentials, skipAttributes, upgradeIdentity));
             } catch (PrivilegedActionException e) {
                 if (e.getException() instanceof RealmUnavailableException) {
                     throw (RealmUnavailableException) e.getException();
@@ -1128,8 +1136,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        protected LoadedIdentity loadIdentityPrivileged(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
-            if (!isIntegrityValid()) {
+        protected LoadedIdentity loadIdentityPrivileged(final boolean skipCredentials, final boolean skipAttributes, final boolean upgradeIdentity) throws RealmUnavailableException {
+            if (!isIntegrityValid() && !upgradeIdentity) {
                 throw new RealmUnavailableException(ElytronMessages.log.invalidIdentitySignature(name));
             }
             try (InputStream inputStream = Files.newInputStream(path, READ)) {
@@ -1173,6 +1181,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             Attributes attributes = Attributes.EMPTY;
             boolean gotCredentials = false;
             boolean gotAttributes = false;
+            boolean upgradeIdentity = false;
             for (;;) {
                 if (streamReader.isEndElement()) {
                     if (attributes == Attributes.EMPTY && !skipAttributes) {
@@ -1180,18 +1189,31 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
                         // modifiable version of Attributes;
                         attributes = new MapAttributes();
                     }
-                    return new LoadedIdentity(name, credentials, attributes, hashEncoding);
+                    return new LoadedIdentity(name, credentials, attributes, hashEncoding, upgradeIdentity);
                 }
                 if (!(version.getNamespace().equals(streamReader.getNamespaceURI())) && !(XMLSignature.XMLNS.equals(streamReader.getNamespaceURI()))) {
                     // Mixed versions unsupported.
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
 
+                if("identity".equals(streamReader.getLocalName())) {
+                    if (!version.isAtLeast(Version.VERSION_1_2) && integrityEnabled) {
+                        upgradeIdentity = true;
+                    }
+                }
                 if ("principal".equals(streamReader.getLocalName())) {
                     if (version.isAtLeast(Version.VERSION_1_2)) {
                         consumeContent(streamReader);
                     } else {
                         throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
+                    }
+                }
+                // Warning if integrity enabled on existing realm before ELY-2491 fix: https://issues.redhat.com/browse/ELY-2491
+                if ("Signature".equals(streamReader.getLocalName())) {
+                    if (! version.isAtLeast(Version.VERSION_1_2)) {
+                        ElytronMessages.log.warnv("Identity at %s contains a signature, but identity version does not support integrity verification." +
+                                " This identity will be rewritten into a valid version.", path);
+                        upgradeIdentity = true;
                     }
                 }
 
@@ -1537,8 +1559,23 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return validity;
         }
 
-        private void writeDigitalSignature(Path path, String name) throws RealmUnavailableException {
+        /**
+         * Writes a signed hash of the identity to file. If the identity does nto currently support integrity
+         * verification, it is rewritten in the {@link Version#VERSION_1_2 VERSION_1_2} namespace.
+         *
+         * @param identityUpgradeRunning skips identity version check if true (upgrade is currently running)
+         */
+        private void writeDigitalSignature(Path path, String name, boolean identityUpgradeRunning) throws RealmUnavailableException {
             try {
+                if (!identityUpgradeRunning) {
+                    LoadedIdentity loadedIdentity = loadIdentity(false, false, true);
+                    try {
+                        if (loadedIdentity.getUpgradeIdentity()) {
+                            replaceIdentity(loadedIdentity);
+                        }
+                    } catch (NullPointerException ignored) {}
+                }
+
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 dbf.setNamespaceAware(true);
                 DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -1605,12 +1642,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         private final List<Credential> credentials;
         private final Attributes attributes;
         private final Encoding hashEncoding;
+        private final boolean upgradeIdentity;
 
-        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes, final Encoding hashEncoding) {
+        LoadedIdentity(final String name, final List<Credential> credentials, final Attributes attributes,
+                final Encoding hashEncoding, final boolean upgradeIdentity) {
             this.name = name;
             this.credentials = credentials;
             this.attributes = attributes;
             this.hashEncoding = hashEncoding;
+            this.upgradeIdentity = upgradeIdentity;
         }
 
         public String getName() {
@@ -1627,6 +1667,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         public Encoding getHashEncoding() {
             return hashEncoding;
+        }
+
+        public boolean getUpgradeIdentity() {
+            return upgradeIdentity;
         }
 
     }
