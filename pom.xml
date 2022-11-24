@@ -56,7 +56,8 @@
 
     <properties>
         <jdk.min.version>11</jdk.min.version>
-        <version.com.fasterxml.jackson>2.13.3</version.com.fasterxml.jackson>
+        <version.com.fasterxml.jackson>2.13.4</version.com.fasterxml.jackson>
+        <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}.2</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.4</version.commons-cli>
         <version.io.smallrye.jwt>3.1.1</version.io.smallrye.jwt>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
@@ -1041,7 +1042,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${version.com.fasterxml.jackson}</version>
+                <version>${version.com.fasterxml.jackson.databind}</version>
             </dependency>
             <dependency>
                 <groupId>org.bitbucket.b_c</groupId>
