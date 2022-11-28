@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 
@@ -39,6 +40,12 @@ final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServer
         this.sslContext = sslContext;
         this.sslConfigurator = sslConfigurator;
         this.wrap = wrap;
+    }
+
+    public String[] getDefaultCipherSuites() {
+        SSLParameters params = sslContext.getSupportedSSLParameters​();
+        params = sslConfigurator.getDefaultSSLParameters(sslContext, params);
+        return params.getCipherSuites();
     }
 
     public ServerSocket createServerSocket() throws IOException {

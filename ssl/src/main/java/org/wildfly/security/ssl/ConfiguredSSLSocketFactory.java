@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -41,6 +42,12 @@ final class ConfiguredSSLSocketFactory extends AbstractDelegatingSSLSocketFactor
         this.sslContext = sslContext;
         this.sslConfigurator = sslConfigurator;
         this.wrap = wrap;
+    }
+
+    public String[] getDefaultCipherSuites() {
+        SSLParameters params = sslContext.getSupportedSSLParameters​();
+        params = sslConfigurator.getDefaultSSLParameters(sslContext, params);
+        return params.getCipherSuites();
     }
 
     public Socket createSocket(final Socket s, final String host, final int port, final boolean autoClose) throws IOException {

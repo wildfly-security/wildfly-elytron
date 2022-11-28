@@ -25,7 +25,10 @@ import javax.net.ssl.SNIMatcher;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import java.io.IOException;
 import java.security.AlgorithmConstraints;
@@ -38,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -117,4 +121,19 @@ public class SSLConfiguratorImplTest {
         assertEquals("HTTPS", copiedSSLParams.getEndpointIdentificationAlgorithm());
     }
 
+    @Test
+    public void testCipherSuites() throws GeneralSecurityException, IOException {
+        SSLContext sslContext = new SSLContextBuilder().setCipherSuiteSelector(CipherSuiteSelector.fromString("AES256-SHA256")).build().create();
+        SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket();
+        assertArrayEquals(new String[]{"TLS_RSA_WITH_AES_256_CBC_SHA256"}, sslSocket.getEnabledCipherSuites());
+        assertArrayEquals(new String[]{"TLS_RSA_WITH_AES_256_CBC_SHA256"}, sslSocketFactory.getDefaultCipherSuites());
+        assertArrayEquals(sslSocket.getSupportedCipherSuites(), sslSocketFactory.getSupportedCipherSuites());
+
+        SSLServerSocketFactory sslServerSocketFactory = sslContext.getServerSocketFactory();
+        SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket();
+        assertArrayEquals(new String[]{"TLS_RSA_WITH_AES_256_CBC_SHA256"}, sslServerSocket.getEnabledCipherSuites());
+        assertArrayEquals(new String[]{"TLS_RSA_WITH_AES_256_CBC_SHA256"}, sslServerSocketFactory.getDefaultCipherSuites());
+        assertArrayEquals(sslServerSocket.getSupportedCipherSuites(), sslServerSocketFactory.getSupportedCipherSuites());
+    }
 }
