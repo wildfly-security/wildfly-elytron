@@ -35,12 +35,15 @@ class ScramUtil {
     static final byte[] SERVER_KEY_BYTES = "Server Key".getBytes(StandardCharsets.UTF_8);
 
     static {
-        byte[] dict = new byte[93];
+        byte[] dict = new byte[92];
         int i = 0;
         for (byte c = '!'; c < ','; c ++) {
             dict[i ++] = c;
         }
-        for (byte c = ',' + 1; c < 127; c ++) {
+        for (byte c = ',' + 1; c < '='; c ++) {
+            dict[i ++] = c;
+        }
+        for (byte c = '=' + 1; c < 127; c ++) {
             dict[i ++] = c;
         }
         assert i == dict.length;
@@ -50,7 +53,7 @@ class ScramUtil {
     public static byte[] generateNonce(int length, Random random) {
         final byte[] chars = new byte[length];
         for (int i = 0; i < length; i ++) {
-            chars[i] = randomCharDictionary[random.nextInt(93)];
+            chars[i] = randomCharDictionary[random.nextInt(92)];
         }
         return chars;
     }
