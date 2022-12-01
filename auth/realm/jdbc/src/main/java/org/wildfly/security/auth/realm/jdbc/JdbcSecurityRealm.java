@@ -67,7 +67,7 @@ public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        if (! (principal instanceof NamePrincipal)) {
+        if (! NamePrincipal.isConvertibleTo(principal)) {
             return RealmIdentity.NON_EXISTENT;
         }
         return new JdbcRealmIdentity(principal.getName());

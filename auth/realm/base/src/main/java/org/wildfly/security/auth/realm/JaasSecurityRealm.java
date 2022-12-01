@@ -86,7 +86,12 @@ public class JaasSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        return principal instanceof NamePrincipal ? new JaasRealmIdentity(principal) : RealmIdentity.NON_EXISTENT;
+        if (principal instanceof NamePrincipal) {
+            return new JaasRealmIdentity(principal);
+        } else {
+            NamePrincipal namePrincipal = NamePrincipal.from(principal);
+            return namePrincipal != null ? new JaasRealmIdentity(namePrincipal) : RealmIdentity.NON_EXISTENT;
+        }
     }
 
     @Override
