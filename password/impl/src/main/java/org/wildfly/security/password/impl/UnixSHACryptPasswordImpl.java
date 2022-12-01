@@ -145,7 +145,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         try {
             byte[] password = getNormalizedPasswordBytes(guess);
             byte[] encodedGuess = doEncode(algorithm, password, salt, iterationCount);
-            return Arrays.equals(getHash(), encodedGuess);
+            return MessageDigest.isEqual(getHash(), encodedGuess);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyCannotVerifyPassword(e);
         }

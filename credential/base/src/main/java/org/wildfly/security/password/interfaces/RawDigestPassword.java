@@ -20,6 +20,7 @@ package org.wildfly.security.password.interfaces;
 
 import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
+import java.security.MessageDigest;
 import java.util.Arrays;
 
 class RawDigestPassword extends RawPassword implements DigestPassword {
@@ -62,6 +63,6 @@ class RawDigestPassword extends RawPassword implements DigestPassword {
             return false;
         }
         RawDigestPassword other = (RawDigestPassword) obj;
-        return Arrays.equals(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && getAlgorithm().equals(other.getAlgorithm());
+        return MessageDigest.isEqual(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && getAlgorithm().equals(other.getAlgorithm());
     }
 }
