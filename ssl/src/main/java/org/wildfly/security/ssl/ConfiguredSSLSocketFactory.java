@@ -71,6 +71,14 @@ final class ConfiguredSSLSocketFactory extends AbstractDelegatingSSLSocketFactor
         return wrap(super.createSocket(socket, inputStream, autoClose));
     }
 
+    public String[] getDefaultCipherSuites() {
+        return sslConfigurator.getDefaultSSLParameters(sslContext, sslContext.getDefaultSSLParameters()).getCipherSuites();
+    }
+
+    public String[] getSupportedCipherSuites() {
+        return sslConfigurator.getSupportedSSLParameters(sslContext, sslContext.getSupportedSSLParameters()).getCipherSuites();
+    }
+
     private Socket wrap(Socket orig) {
         if (orig instanceof SSLSocket) {
             final SSLSocket sslSocket = (SSLSocket) orig;
