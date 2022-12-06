@@ -18,6 +18,8 @@
 
 package org.wildfly.security.jose.util;
 
+import static org.wildfly.security.jose.util._private.ElytronMessages.log;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -113,7 +115,7 @@ public class JsonSerialization {
         JsonNode jsonNode = jsonParser.readValueAsTree();
 
         if (!jsonNode.isObject()) {
-            throw new RuntimeException("JsonNode [" + jsonNode + "] is not a object.");
+            throw log.jsonNodeIsNotObject(jsonNode);
         }
 
         objectNode.setAll((ObjectNode) jsonNode);

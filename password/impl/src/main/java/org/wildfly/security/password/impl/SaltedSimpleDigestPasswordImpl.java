@@ -125,7 +125,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     @Override
     boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         try {
-            return Arrays.equals(digest, digestOf(algorithm, salt, guess, hashCharset));
+            return MessageDigest.isEqual(digest, digestOf(algorithm, salt, guess, hashCharset));
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -201,7 +201,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
             return false;
         }
         SaltedSimpleDigestPasswordImpl other = (SaltedSimpleDigestPasswordImpl) obj;
-        return algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest) && Arrays.equals(salt, other.salt);
+        return algorithm.equals(other.algorithm) && MessageDigest.isEqual(digest, other.digest) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

@@ -374,9 +374,7 @@ final class SNISSLExplorer {
             info = exploreExtensions(input);
         }
 
-        final List<SNIServerName> snList = info != null ? info.sni : Collections.emptyList();
-
-        return snList;
+        return info != null ? info.sni : Collections.emptyList();
     }
 
     /*

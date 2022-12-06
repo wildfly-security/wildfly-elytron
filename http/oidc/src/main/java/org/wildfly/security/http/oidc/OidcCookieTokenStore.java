@@ -137,7 +137,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
                 return;
             }
             OidcClientConfiguration deployment = httpFacade.getOidcClientConfiguration();
-            if (! deployment.isBearerOnly() && securityContext != null && securityContext instanceof RefreshableOidcSecurityContext) {
+            if (! deployment.isBearerOnly() && securityContext instanceof RefreshableOidcSecurityContext) {
                 ((RefreshableOidcSecurityContext) securityContext).logout(deployment);
             }
         }
@@ -187,7 +187,7 @@ public class OidcCookieTokenStore implements OidcTokenStore {
         String uri = facade.getRequest().getURI();
         String path = null;
         try {
-            new URIBuilder(uri).build().getPath();
+            path = new URIBuilder(uri).build().getPath();
         } catch (URISyntaxException e) {
             throw log.invalidUri(uri);
         }

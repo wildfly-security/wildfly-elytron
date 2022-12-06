@@ -957,8 +957,7 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("name", name);
             Assert.checkNotNullParam("realm", realm);
             assertNotBuilt();
-            final RealmBuilder realmBuilder = new RealmBuilder(this, name, realm);
-            return realmBuilder;
+            return new RealmBuilder(this, name, realm);
         }
 
         Builder addRealm(RealmBuilder realmBuilder) {

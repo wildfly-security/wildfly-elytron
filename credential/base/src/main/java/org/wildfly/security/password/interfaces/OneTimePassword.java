@@ -84,6 +84,7 @@ public interface OneTimePassword extends OneWayPassword {
      */
     int getSequenceNumber();
 
+    @Override
     default OneTimePasswordAlgorithmSpec getParameterSpec() {
         return new OneTimePasswordAlgorithmSpec(getAlgorithm(), getSeed(), getSequenceNumber());
     }

@@ -51,8 +51,8 @@ public class DefaultSSLContextProviderProgrammaticConfigurationTest {
             Assert.assertEquals(WildFlyElytronClientDefaultSSLContextProvider.class.getSimpleName(), defaultSSLContext.getProvider().getName());
             Assert.assertNotNull(defaultSSLContext.getSocketFactory());
             // this will make sure the file is used instead of the empty AuthenticationContext
-            Assert.assertEquals(defaultSSLContext.createSSLEngine().getSSLParameters().getProtocols().length, 1);
-            Assert.assertEquals(defaultSSLContext.getSocketFactory().getSupportedCipherSuites().length, 1);
+            Assert.assertEquals(1, defaultSSLContext.createSSLEngine().getSSLParameters().getProtocols().length);
+            Assert.assertEquals(1, defaultSSLContext.getSocketFactory().getSupportedCipherSuites().length);
         });
     }
 }

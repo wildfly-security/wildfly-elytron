@@ -699,7 +699,7 @@ public abstract class AcmeClientSpi {
         HttpURLConnection connection = sendPostAsGetRequest(account, staging, getAccountUrl(account, staging), null, HttpURLConnection.HTTP_OK);
         JsonObject jsonResponse = getJsonResponse(connection);
         JsonArray contactsArray = jsonResponse.getJsonArray(CONTACT);
-        if (contactsArray != null && contactsArray.size() > 0) {
+        if (contactsArray != null && !contactsArray.isEmpty()) {
             List<String> contacts = new ArrayList<>(contactsArray.size());
             for (JsonString contact : contactsArray.getValuesAs(JsonString.class)) {
                 contacts.add(contact.getString());
@@ -976,7 +976,7 @@ public abstract class AcmeClientSpi {
             problemMessages.append(getProblemMessage(errorResponse));
         }
         JsonArray subproblems = errorResponse.getJsonArray(SUBPROBLEMS);
-        if (subproblems != null && subproblems.size() > 0) {
+        if (subproblems != null && !subproblems.isEmpty()) {
             problemMessages.append(":");
             for (JsonObject subproblem : subproblems.getValuesAs(JsonObject.class)) {
                 problemMessages.append("\n").append(getProblemMessage(subproblem));

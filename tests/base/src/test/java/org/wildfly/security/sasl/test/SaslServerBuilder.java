@@ -259,7 +259,6 @@ public class SaslServerBuilder {
     }
 
     public SaslServerBuilder setPlainText(boolean plainText) {
-        Assert.assertNotNull(plainText);
         this.plainText = plainText;
         return this;
     }

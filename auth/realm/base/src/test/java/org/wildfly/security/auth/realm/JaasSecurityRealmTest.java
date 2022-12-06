@@ -16,32 +16,32 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+package org.wildfly.security.auth.realm;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.auth.server.ServerAuthenticationContext;
-import org.wildfly.security.auth.realm.JaasSecurityRealm;
-import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 /**
- * Testsuite for the {@link org.wildfly.security.auth.realm.JaasSecurityRealm}.
+ * Testsuite for the {@link JaasSecurityRealm}.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
@@ -133,7 +133,7 @@ public class JaasSecurityRealmTest {
     @Test
     public void testJaasSecurityRealmWithConfiguredPathToJAASConfigFile() throws Exception {
 
-        SecurityRealm realm = new JaasSecurityRealm("Entry1", "./src/test/resources/org/wildfly/security/auth/jaas-login2.config", null);
+        SecurityRealm realm = new JaasSecurityRealm("Entry1", "./src/test/resources/org/wildfly/security/auth/realm/jaas-login2.config", null);
         RealmIdentity realmIdentity = realm.getRealmIdentity(new NamePrincipal("javajoe"));
         assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("$#21pass".toCharArray())));
 

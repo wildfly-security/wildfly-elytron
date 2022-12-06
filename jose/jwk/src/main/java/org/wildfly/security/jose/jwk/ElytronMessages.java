@@ -53,4 +53,6 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 24003, value = "Unable to create public key from JWK")
     RuntimeException unableToCreatePublicKeyFromJWK(@Cause Exception cause);
 
+    @Message(id = 24004, value = "Unable to generate thumbprint for the certificate")
+    RuntimeException unableToGenerateThumbprint(@Cause Exception cause);
 }

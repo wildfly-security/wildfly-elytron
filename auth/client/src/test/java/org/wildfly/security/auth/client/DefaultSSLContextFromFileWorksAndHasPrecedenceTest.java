@@ -47,8 +47,8 @@ public class DefaultSSLContextFromFileWorksAndHasPrecedenceTest {
             // if programmatic configuration was used, it would not find the default SSLContext configured and the provider would be ignored
             // because the file was used, the default SSL context was present and returned with SSLContext.getDefault() call
             Assert.assertEquals(WildFlyElytronClientDefaultSSLContextProvider.class.getSimpleName(), defaultSSLContext.getProvider().getName());
-            Assert.assertEquals(defaultSSLContext.createSSLEngine().getSSLParameters().getProtocols().length, 1);
-            Assert.assertEquals(defaultSSLContext.getSocketFactory().getSupportedCipherSuites().length, 1);
+            Assert.assertEquals(1, defaultSSLContext.createSSLEngine().getSSLParameters().getProtocols().length);
+            Assert.assertEquals(1, defaultSSLContext.getSocketFactory().getSupportedCipherSuites().length);
         });
     }
 }

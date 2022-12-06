@@ -18,8 +18,8 @@
 
 package org.wildfly.security.password.spec;
 
+import java.security.MessageDigest;
 import java.util.Arrays;
-
 import org.wildfly.common.Assert;
 
 /**
@@ -52,7 +52,7 @@ public final class HashPasswordSpec implements PasswordSpec {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof HashPasswordSpec && Arrays.equals(digest, ((HashPasswordSpec)other).digest);
+        return other instanceof HashPasswordSpec && MessageDigest.isEqual(digest, ((HashPasswordSpec)other).digest);
     }
 
     @Override

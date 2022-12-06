@@ -114,11 +114,11 @@ public class Oidc {
             int status = response.getStatusLine().getStatusCode();
             if (status != 200) {
                 close(response);
-                log.unexpectedResponseCodeFromOidcProvider(status);
+                throw log.unexpectedResponseCodeFromOidcProvider(status);
             }
             HttpEntity entity = response.getEntity();
             if (entity == null) {
-                log.noEntityInResponse();
+                throw log.noEntityInResponse();
             }
             InputStream is = entity.getContent();
             try {

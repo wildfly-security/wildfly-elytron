@@ -147,7 +147,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        if (! (principal instanceof NamePrincipal)) {
+        if (! NamePrincipal.isConvertibleTo(principal)) {
             return RealmIdentity.NON_EXISTENT;
         }
         String name = rewriter.rewriteName(principal.getName());

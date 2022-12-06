@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -221,7 +222,8 @@ public class KeyStoreCredentialStoreTest {
         final KeyStoreCredentialStore retrievalStore = new KeyStoreCredentialStore();
 
         final File symbolicLinkFile = new File(tmp.getRoot(), "link");
-        Files.createSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath()), Paths.get(keyStoreFile.getAbsolutePath()));
+        Assume.assumeTrue("Running on Windows without administrator privileges, test skipped.",
+                createSymbolicLink(symbolicLinkFile, keyStoreFile));
 
         final Map<String, String> attributesRetrieval = new HashMap<>();
         attributesRetrieval.put("location", symbolicLinkFile.getAbsolutePath());
@@ -232,5 +234,14 @@ public class KeyStoreCredentialStoreTest {
         retrievalStore.flush();
 
         assertTrue(Files.isSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath())));
+    }
+
+    private boolean createSymbolicLink(File symbolicLinkFile, File targetFile) {
+        try {
+            Files.createSymbolicLink(Paths.get(symbolicLinkFile.getAbsolutePath()), Paths.get(targetFile.getAbsolutePath()));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

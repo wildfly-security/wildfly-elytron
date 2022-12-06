@@ -678,7 +678,7 @@ public final class ModularCrypt {
         if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
         r.next(); // skip $ delimiter
 
-        int iterationCount = Integer.valueOf(r.delimitedBy('$').drainToString());
+        int iterationCount = Integer.parseInt(r.delimitedBy('$').drainToString());
         if (! r.hasNext()) throw log.invalidKeySpecNoSaltTerminatorGiven();
         r.next(); // skip $ delimiter
 

@@ -228,8 +228,8 @@ public class ServerRequest {
     }
 
     public static class HttpFailure extends Exception {
-        private int status;
-        private String error;
+        private final int status;
+        private final String error;
 
         public HttpFailure(int status, String error) {
             this.status = status;
