@@ -185,7 +185,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     }
 
     private ModifiableRealmIdentity getRealmIdentity(final Principal principal, final boolean exclusive) {
-        if (! (principal instanceof NamePrincipal)) {
+        if (! NamePrincipal.isConvertibleTo(principal)) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
         String name = nameRewriter.rewriteName(principal.getName());

@@ -116,7 +116,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     boolean verify(char[] guess) throws InvalidKeyException {
         try {
             byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
-            return Arrays.equals(digest, guessDigest);
+            return MessageDigest.isEqual(digest, guessDigest);
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
@@ -166,7 +166,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
             return false;
         }
         DigestPasswordImpl other = (DigestPasswordImpl) obj;
-        return Arrays.equals(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && algorithm.equals(other.algorithm);
+        return MessageDigest.isEqual(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && algorithm.equals(other.algorithm);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
