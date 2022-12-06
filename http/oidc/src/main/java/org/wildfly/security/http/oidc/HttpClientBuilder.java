@@ -65,7 +65,7 @@ import org.apache.http.ssl.SSLContexts;
  */
 public class HttpClientBuilder {
 
-    public static enum HostnameVerificationPolicy {
+    public enum HostnameVerificationPolicy {
         /**
          * Hostname verification is not done on the server's certificate
          */

@@ -61,7 +61,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2, count);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2, count);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 3);
+        assertEquals(3, count);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2, count);
     }
 
     @Test
@@ -180,7 +180,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2, count);
     }
 
     @Test
@@ -199,7 +199,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 1);
+        assertEquals(1, count);
     }
 
     @Test
@@ -218,7 +218,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 3);
+        assertEquals(3, count);
     }
 
     @Test
@@ -237,7 +237,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 2);
+        assertEquals(2, count);
     }
 
     @Test
@@ -256,7 +256,7 @@ public class RoleMappingTest {
             iterator.next();
             count++;
         }
-        assertEquals(count, 1);
+        assertEquals(1, count);
     }
 
     private Set<String> createSet(String... values) {

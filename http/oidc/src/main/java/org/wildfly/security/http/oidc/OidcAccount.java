@@ -69,6 +69,7 @@ public class OidcAccount implements Serializable {
         RefreshableOidcSecurityContext securityContext = getOidcSecurityContext();
         if (securityContext == null) {
             log.debug("No security context. Aborting refresh.");
+            return false;
         }
         if (securityContext.refreshToken(false)) {
             log.debug("refresh succeeded");

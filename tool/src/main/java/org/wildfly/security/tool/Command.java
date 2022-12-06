@@ -46,9 +46,9 @@ public abstract class Command {
     /**
      * General configuration error exit code.
      */
-    public static int GENERAL_CONFIGURATION_ERROR = 7;
+    public static final int GENERAL_CONFIGURATION_ERROR = 7;
 
-    public static int INPUT_DATA_NOT_CONFIRMED = 3;
+    public static final int INPUT_DATA_NOT_CONFIRMED = 3;
 
     private int status = 255;
 
@@ -66,7 +66,7 @@ public abstract class Command {
     /**
      * Default help line width.
      */
-    public static int WIDTH = 1024;
+    public static final int WIDTH = 1024;
 
     /**
      * Display help to the command.

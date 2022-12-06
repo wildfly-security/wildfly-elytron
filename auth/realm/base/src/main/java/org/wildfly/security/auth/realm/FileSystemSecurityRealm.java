@@ -426,11 +426,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     }
 
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), false) : RealmIdentity.NON_EXISTENT;
+        return NamePrincipal.isConvertibleTo(principal) ? getRealmIdentity(principal.getName(), false) : RealmIdentity.NON_EXISTENT;
     }
 
+    @Override
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final Principal principal) {
-        return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
+        return NamePrincipal.isConvertibleTo(principal) ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
     }
 
     @Override
@@ -455,6 +456,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
         return new Identity(finalName, pathFor(finalName), lock, hashCharset, hashEncoding, providers, secretKey, privateKey, publicKey, hasIntegrityEnabled());
     }
 
+    @Override
     public ModifiableRealmIdentityIterator getRealmIdentityIterator() throws RealmUnavailableException {
         return subIterator(root, levels);
     }
@@ -670,6 +672,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             return SupportLevel.UNSUPPORTED;
         }
 
+        @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
             return getCredential(credentialType, null);
         }
@@ -1105,6 +1108,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
+        @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             final LoadedIdentity loadedIdentity = loadIdentity(true, false);
             return loadedIdentity == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
@@ -1266,7 +1270,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
 
         private void parseCertificate(final List<Credential> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             parseCredential(streamReader, (algorithm, format, text) -> {
-                if (algorithm == null) algorithm = "X.509";
+                if (algorithm == null) algorithm = X509_FORMAT;
                 if (format == null) format = X509_FORMAT;
                 try {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);

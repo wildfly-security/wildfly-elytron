@@ -80,7 +80,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
-        if (principal instanceof NamePrincipal) {
+        if (NamePrincipal.isConvertibleTo(principal)) {
             String name = principal.getName();
             log.tracef("KeyStoreRealm: obtaining certificate by alias [%s]", name);
             return new KeyStoreRealmIdentity(name);
@@ -123,19 +123,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
         Assert.checkNotNullParam("evidenceType", evidenceType);
         return SupportLevel.POSSIBLY_SUPPORTED;
-    }
-
-    private KeyStore.Entry getEntry(String name) {
-        try {
-            KeyStore.Entry entry = keyStore.getEntry(name, null);
-            if (entry == null) {
-                log.tracef("KeyStoreRealm: alias [%s] does not exist in KeyStore", name);
-            }
-            return entry;
-        } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
-            log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
-            return null;
-        }
     }
 
     private class KeyStoreRealmIdentity implements RealmIdentity {
@@ -211,5 +198,18 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         public boolean exists() throws RealmUnavailableException {
             return getEntry(name) != null;
         }
+
+        private KeyStore.Entry getEntry(String name) {
+          try {
+              KeyStore.Entry entry = keyStore.getEntry(name, null);
+              if (entry == null) {
+                  log.tracef("KeyStoreRealm: alias [%s] does not exist in KeyStore", name);
+              }
+              return entry;
+          } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
+              log.tracef(e, "KeyStoreRealm: Obtaining entry [%s] from KeyStore failed", name);
+              return null;
+          }
+      }
     }
 }

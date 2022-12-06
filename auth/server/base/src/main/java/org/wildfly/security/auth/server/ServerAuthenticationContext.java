@@ -974,7 +974,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     if (credential != null) {
                         if (credential instanceof PasswordCredential) {
                             Password password = ((PasswordCredential) credential).getPassword();
-                            if (password != null && password instanceof DigestPassword) {
+                            if (password instanceof DigestPassword) {
                                 String providedRealm = ((DigestPassword) password).getRealm();
                                 if ( ! providedRealm.equals(requestedRealm)) {
                                     log.tracef("Handling CredentialCallback: credential for realm \"%s\" is not available (\"%s\" provided)", requestedRealm, providedRealm);
@@ -1525,7 +1525,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
             boolean ok = false;
             try {
                 if (! realmIdentity.exists()) {
-                    ElytronMessages.log.tracef("Authorization failed - identity does not exists");
+                    ElytronMessages.log.tracef("Authorization failed - identity does not exist");
                     return false;
                 }
                 // check the run-as permission on the old identity
