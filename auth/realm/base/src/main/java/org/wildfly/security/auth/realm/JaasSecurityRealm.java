@@ -43,6 +43,7 @@ import java.security.spec.AlgorithmParameterSpec;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -133,7 +134,12 @@ public class JaasSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        return new JaasRealmIdentity(principal);
+        if (principal instanceof NamePrincipal) {
+            return new JaasRealmIdentity(principal);
+        } else {
+            NamePrincipal namePrincipal = NamePrincipal.from(principal);
+            return namePrincipal != null ? new JaasRealmIdentity(namePrincipal) : RealmIdentity.NON_EXISTENT;
+        }
     }
 
     @Override

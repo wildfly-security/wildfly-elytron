@@ -80,7 +80,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
-        if (principal instanceof NamePrincipal) {
+        if (NamePrincipal.isConvertibleTo(principal)) {
             String name = principal.getName();
             log.tracef("KeyStoreRealm: obtaining certificate by alias [%s]", name);
             return new KeyStoreRealmIdentity(name);

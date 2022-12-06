@@ -426,12 +426,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
     }
 
     public RealmIdentity getRealmIdentity(final Principal principal) {
-        return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), false) : RealmIdentity.NON_EXISTENT;
+        return NamePrincipal.isConvertibleTo(principal) ? getRealmIdentity(principal.getName(), false) : RealmIdentity.NON_EXISTENT;
     }
 
     @Override
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final Principal principal) {
-        return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
+        return NamePrincipal.isConvertibleTo(principal) ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
     }
 
     @Override
