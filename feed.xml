@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 18 Nov 2022 17:25:56 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 07 Dec 2022 18:09:11 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Filesystem Realm Integrity</title>
+            <link>
+                https://www.youtube.com/watch?v=Tzd9GTr8kwE
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 07 Dec 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=Tzd9GTr8kwE
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Git Tips on Upstream Repositories and Merge Conflicts</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 07 Jul 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=1K92tit2uCk
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing Jakarta Enterprise Beans with mutual TLS authentication</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/
-            </link>
-            <description>
-                The ejb-mutual-tls example demonstrates how to use Elytron to secure EJBs with mutual TLS authentication. It also shows how to restrict access to EJBs, configuring a FileSystem realm protected by SASL authentication, and accessed using a credential store. This example focuses on the TLS configuration, so if you wish to...
-            </description>
-            <pubDate>Tue, 21 Jun 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/
             </guid>
         </item>
         
