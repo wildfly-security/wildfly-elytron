@@ -93,4 +93,36 @@ public final class NamePrincipal implements Principal, Serializable {
     public String toString() {
         return name;
     }
+
+    /**
+     * Attempt to convert the given principal to a {@code NamePrincipal}.
+     *
+     * @param principal the original principal
+     * @return the {@code NamePrincipal} or {@code null} if the principal cannot be converted
+     */
+    public static NamePrincipal from(Principal principal) {
+        if (principal instanceof NamePrincipal) {
+            return (NamePrincipal) principal;
+        }
+        return isConvertibleTo(principal) ? new NamePrincipal(principal.getName()) : null;
+    }
+
+    /**
+     * Check if the given principal could be converted to a {@code NamePrincipal}.
+     *
+     * @param principal the original principal
+     * @return {@code true} if the principal can be converted to a {@code NamePrincipal} and {@code false} otherwise
+     */
+    public static boolean isConvertibleTo(Principal principal) {
+        if (principal instanceof NamePrincipal) {
+            return true;
+        }
+        if (principal != null) {
+            String name = principal.getName();
+            if (name != null && ! name.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
