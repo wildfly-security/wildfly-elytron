@@ -125,7 +125,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     @Override
     boolean verify(char[] guess, Charset hashCharset) throws InvalidKeyException {
         try {
-            return MessageDigest.isEqual(digest, digestOf(algorithm, salt, guess));
+            return MessageDigest.isEqual(digest, digestOf(algorithm, salt, guess, hashCharset));
         } catch (NoSuchAlgorithmException e) {
             throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
