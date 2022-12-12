@@ -97,8 +97,11 @@ public class SystemPropertiesJsonParserFactory extends MappingJsonFactory {
                 return overrides.get(key);
             } else if (key.startsWith("env.")) {
                 return System.getenv().get(key.substring(4));
-            } else {
+            } else if (System.getProperties().contains(key)) {
                 return System.getProperty(key);
+            } else {
+                String envVar = replaceNonAlphanumericByUnderscoresAndMakeUpperCase(key);
+                return System.getenv(envVar);
             }
         }
 
@@ -106,6 +109,20 @@ public class SystemPropertiesJsonParserFactory extends MappingJsonFactory {
         public String getProperty(String key, String defaultValue) {
             String value = getProperty(key);
             return value != null ? value : defaultValue;
+        }
+
+        private String replaceNonAlphanumericByUnderscoresAndMakeUpperCase(final String name) {
+            StringBuilder sb = new StringBuilder();
+            int c;
+            for (int i = 0; i < name.length(); i += Character.charCount(c)) {
+                c = Character.toUpperCase(name.codePointAt(i));
+                if ('A' <= c && c <= 'Z' || '0' <= c && c <= '9') {
+                    sb.appendCodePoint(c);
+                } else {
+                    sb.append('_');
+                }
+            }
+            return sb.toString();
         }
     }
 }
