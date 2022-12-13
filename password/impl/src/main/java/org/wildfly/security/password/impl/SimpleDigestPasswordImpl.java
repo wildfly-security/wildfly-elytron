@@ -135,7 +135,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
             return false;
         }
         SimpleDigestPasswordImpl other = (SimpleDigestPasswordImpl) obj;
-        return algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest);
+        return algorithm.equals(other.algorithm) && MessageDigest.isEqual(digest, other.digest);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

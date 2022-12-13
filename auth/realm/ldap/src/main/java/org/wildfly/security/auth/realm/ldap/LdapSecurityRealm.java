@@ -185,7 +185,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
     }
 
     private ModifiableRealmIdentity getRealmIdentity(final Principal principal, final boolean exclusive) {
-        if (! (principal instanceof NamePrincipal)) {
+        if (! NamePrincipal.isConvertibleTo(principal)) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
         String name = nameRewriter.rewriteName(principal.getName());
@@ -717,7 +717,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         private String extractRdn(AttributeMapping mapping, final String dn) {
             String valueRdn = mapping.getRdn();
             try {
-                for (Rdn rdn : new LdapName(dn).getRdns()) {
+                LdapName dnName = new LdapName(dn);
+                // loop RDNs in reverse order, left to right, to return the leftmost one that matches
+                for (int i = dnName.size() - 1; i >= 0; i--) {
+                    Rdn rdn = dnName.getRdn(i);
                     if (rdn.getType().equalsIgnoreCase(valueRdn)) {
                         return rdn.getValue().toString();
                     }
