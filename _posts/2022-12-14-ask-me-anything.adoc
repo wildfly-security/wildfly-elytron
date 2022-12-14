@@ -1,0 +1,29 @@
+---
+layout: post
+title: 'Ask Me Anything with the WildFly Elytron Team'
+date: 2022-12-14
+tags: ama opensource
+synopsis: The WildFly Elytron team will be having an Ask Me Anything session on Monday Dec. 19th on chat.
+author: fjuma
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/AMA.jpg
+---
+
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/AMA.jpg[align="center"]
+
+The WildFly Elytron team will be having an Ask Me Anything (AMA) session on Monday Dec. 19th on chat.
+
+This is your chance to ask any questions about:
+
+* Contributing to the WildFly Elytron project
+* How to use WildFly Elytron
+* General questions about contributing to open source projects
+
+The AMA session will take place on https://red.ht/ama-with-wildfly-elytron[Zulip Chat].
+
+Feel free to drop your questions on chat anytime between now and Monday.
+
+The WildFly Elytron team will respond to questions throughout the day on Monday.
+
+We're looking forward to chatting!
