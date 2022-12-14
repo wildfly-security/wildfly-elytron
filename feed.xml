@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 07 Dec 2022 18:09:11 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 14 Dec 2022 20:57:47 +0000</lastBuildDate>
+        
+        <item>
+            <title>Ask Me Anything with the WildFly Elytron Team</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything/
+            </link>
+            <description>
+                The WildFly Elytron team will be having an Ask Me Anything (AMA) session on Monday Dec. 19th on chat. This is your chance to ask any questions about: Contributing to the WildFly Elytron project How to use WildFly Elytron General questions about contributing to open source projects The AMA session...
+            </description>
+            <pubDate>Wed, 14 Dec 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything/
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Filesystem Realm Integrity</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 09 Aug 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/top-five-reasons-to-join-elytron-open-source-day/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Encrypting a Filesystem Realm</title>
-            <link>
-                https://www.youtube.com/watch?v=1K92tit2uCk
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Thu, 07 Jul 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=1K92tit2uCk
             </guid>
         </item>
         
