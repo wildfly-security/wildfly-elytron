@@ -1,0 +1,81 @@
+---
+layout: post
+title: 'AMA Recap'
+date: 2022-12-22
+tags: ama opensource recap
+synopsis: A recap of the Ask Me Anything session with the WildFly Elytron team that took place this week.
+author: fjuma
+---
+
+The WildFly Elytron team had our very first Ask Me Anything (AMA) session on chat this week.
+Thanks very much to those who joined! This blog post gives a recap of the session in case
+you missed it.
+
+=== Q: How can I contribute to Elytron as a person who has almost no security knowledge and might not be the best at documentation?
+
+Prior security knowledge isn't required to contribute to the Elytron project. A great starting point for code
+contributions is to take a look at our https://issues.redhat.com/issues/?filter=12364234[good-first-issues]. These are a good way to get started with the project without requiring prior security experience and can help you get more familiar with the different parts of the project.
+
+In addition to code contributions, other ways to get involved could be by asking questions on the WildFly user forum, raising bug reports, creating feature requests, writing blog posts about a cool Elytron feature you've tried out, etc. Lots of ways to contribute!
+
+=== Q: What have been the wins and challenges for Elytron for 2022?
+
+Towards the end of last year, support for legacy security was removed from WildFly and we moved to Elytron-based security only. In 2022, we finally got to remove the final pieces of legacy security code from WildFly! That was certainly a big win for us.
+
+On the feature side, we released a bunch of interesting new features in 2022 including support for encryption and integrity verification for filesystem realms, OIDC enhancements, and SSLContext configuration enhancements.
+
+On the community side, we really enjoyed participating in events like Open Source Day and Hacktoberfest. We also got involved in vlogging for the https://www.youtube.com/c/WildFlyAS[WildFlyAS YouTube channel] which was something new for us.
+
+We have a lot of new things we'd like to work on and areas that we'd like to explore further. One of our biggest challenges has been finding the time to get to everything!
+
+==== Perspective from a current intern on the WildFly Elytron team
+
+Our intern, Cameron Rodriguez, also chimed in with his own perspective on some of his personal wins and
+challenges during his first 8 months on the WildFly Elytron team.
+
+[quote]
+____
+Coming on, it was my first time contributing to a project of this size, so learning how to not only work on the codebase, but also with the community around the WildFly project was a new experience for me. Although it was a bit confusing at times, I feel like I've really learned a lot about working with an open source community and all the cool things that come out of it.
+
+Like Farah said, community events like Open Source Day are a lot of fun!
+
+On the technical side, getting familiar with the project and seeing my changes go into action is a lot of fun. One challenge would be relearning Java; it had been a while since I had last used the language so it took a bit to get used to it again.
+
+On the community side, being able to help people out in Zulip, on Stack Overflow, and elsewhere has been really cool. I don't think I would get the chance to meet the users in a closed-source project, so it's a huge plus.
+
+I'm about halfway through my co-op, so looking forward to more fun stuff next year!
+____
+
+=== Q: Is there a tool to automatically convert old PicketBox configuration in standalone.xml to Elytron configuration?
+
+There isn't a tool for this but we do have a couple of migration guides that should assist with the manual steps that are needed to convert your configuration:
+
+* https://docs.wildfly.org/27/WildFly_Elytron_Security.html#Migrate_Legacy_Security_to_Elytron_Security[Migrate Legacy Security to Elytron Security]
+* https://docs.wildfly.org/27/Migration_Guide.html[WildFly Migration Guide]
+
+Feel free to let us know if you have any questions or run into any issues with migrating, we're happy to help!
+
+=== Q: Which SSL context will be used by an SSL client in a servlet if Elytron's SSL configuration and the java SL properties of WildFly are different?
+
+If Elytron client configuration is being used and a client ssl context has been configured, then that will take precedence. It's also possible to register a client side default SSL context as described here:
+
+https://wildfly-security.github.io/wildfly-elytron/blog/client-default-ssl-context/[Client side default SSL context provider]
+
+Feel free to let us know if you have more questions about this.
+
+=== Q: Is it possible to somehow read Elytron configuration in runtime? I am writing a PrincipalTransformer and it would be useful to get information about configured realms in a transformer's initialize method.
+
+A `PrincipalTransformer` is used during the authentication process to optionally transform the principal before selecting the realm to use to load the identity and to optionally transform the principal after the realm has been selected.
+
+Different realms can have different principal transformers configured. A `principal-transformer` can be referenced from the realm configuration for a `security-domain`. There's an example https://github.com/wildfly/wildfly-core/blob/main/elytron/src/test/resources/org/wildfly/extension/elytron/legacy-elytron-subsystem-1.0.xml#L25[here].
+
+More details about principal transformers can also be found in this http://darranl.blogspot.com/2017/07/wildfly-elytron-principal-transformers.html[blog post] in case it helps.
+
+== Come Join Us
+
+We hope to have more Ask Me Anything sessions in 2023 so stay tuned for those!
+
+Want to learn more about WildFly Elytron? Come join our community, there are so many ways
+to https://wildfly-security.github.io/wildfly-elytron/community/[contribute]!
+
+Happy Holidays from the WildFly Elytron team!
