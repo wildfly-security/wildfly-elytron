@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 14 Dec 2022 20:57:47 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 22 Dec 2022 20:31:04 +0000</lastBuildDate>
+        
+        <item>
+            <title>AMA Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything-recap/
+            </link>
+            <description>
+                The WildFly Elytron team had our very first Ask Me Anything (AMA) session on chat this week. Thanks very much to those who joined! This blog post gives a recap of the session in case you missed it. Q: How can I contribute to Elytron as a person who has...
+            </description>
+            <pubDate>Thu, 22 Dec 2022 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Ask Me Anything with the WildFly Elytron Team</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 01 Sep 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Top 5 Reasons To Join Us At Open Source Day</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/top-five-reasons-to-join-elytron-open-source-day/
-            </link>
-            <description>
-                Last month, we were thrilled to announce that the WildFly Elytron project was selected for Open Source Day, an all-day hackathon hosted by AnitaB.org as part of the Grace Hopper Celebration. This is our third time taking part in this event, after having participated in the Summer Open Source Day...
-            </description>
-            <pubDate>Tue, 09 Aug 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/top-five-reasons-to-join-elytron-open-source-day/
             </guid>
         </item>
         
