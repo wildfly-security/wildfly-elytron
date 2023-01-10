@@ -158,5 +158,46 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <excludes>
+                                <exclude>**/DefaultSSLContextProviderJavaSecurityStaticConfigurationTest</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>security-static-configuration-tests</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <argLine>-Djava.security.properties=${project.basedir}/src/test/resources/org/wildfly/security/auth/client/java.security</argLine>
+                            <systemPropertyVariables>
+                                <server.jvm.args>-Djava.security.properties=${project.basedir}/src/test/resources/org/wildfly/security/auth/client/java.security</server.jvm.args>
+                            </systemPropertyVariables>
+                            <includes>
+                                <include>**/DefaultSSLContextProviderJavaSecurityStaticConfigurationTest</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
