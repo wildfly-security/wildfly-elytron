@@ -192,16 +192,22 @@ public class SSLAuthenticationTest {
     }
 
     private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath) throws Exception {
+        return getKeyStoreBackedSecurityDomain(keyStorePath, true);
+    }
+
+    private static SecurityDomain getKeyStoreBackedSecurityDomain(String keyStorePath, boolean decoder) throws Exception {
         SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(createKeyStore(keyStorePath));
 
-        return SecurityDomain.builder()
+        SecurityDomain.Builder builder = SecurityDomain.builder()
                 .addRealm("KeystoreRealm", securityRealm)
                 .build()
                 .setDefaultRealmName("KeystoreRealm")
-                .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
                 .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
-                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
-                .build();
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL);
+        if (decoder) {
+            builder.setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1));
+        }
+        return builder.build();
     }
 
     @BeforeClass
@@ -537,6 +543,19 @@ public class SSLAuthenticationTest {
     public void testTwoWay() throws Throwable {
         SSLContext serverContext = new SSLContextBuilder()
                 .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore"))
+                .setKeyManager(getKeyManager("/jks/scarab.keystore"))
+                .setTrustManager(getCATrustManager())
+                .setNeedClientAuth(true)
+                .build().create();
+
+        performConnectionTest(serverContext, "protocol://test-two-way.org", true, "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Scarab",
+                "OU=Elytron,O=Elytron,C=UK,ST=Elytron,CN=Ladybird", false);
+    }
+
+    @Test
+    public void testTwoWayNoDecoder() throws Throwable {
+        SSLContext serverContext = new SSLContextBuilder()
+                .setSecurityDomain(getKeyStoreBackedSecurityDomain("/jks/beetles.keystore", false))
                 .setKeyManager(getKeyManager("/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
                 .setNeedClientAuth(true)
