@@ -80,36 +80,34 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
-        if (NamePrincipal.isConvertibleTo(principal)) {
+        final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
+        if (x500Principal != null) {
+            log.tracef("KeyStoreRealm: obtaining certificate by X500Principal [%s]", x500Principal);
+            final KeyStore keyStore = this.keyStore;
+            try {
+                final Enumeration<String> aliases = keyStore.aliases();
+                while (aliases.hasMoreElements()) {
+                    final String alias = aliases.nextElement();
+                    if (keyStore.isCertificateEntry(alias)) {
+                        final Certificate certificate = keyStore.getCertificate(alias);
+                        if (certificate instanceof X509Certificate && x500Principal.equals(X500PrincipalUtil.asX500Principal(((X509Certificate) certificate).getSubjectX500Principal()))) {
+                            log.tracef("KeyStoreRealm: certificate found by X500Principal in alias [%s]", alias);
+                            return new KeyStoreRealmIdentity(alias);
+                        }
+                    }
+                }
+            } catch (KeyStoreException e) {
+                throw log.failedToReadKeyStore(e);
+            }
+            log.tracef("KeyStoreRealm: certificate not found by X500Principal");
+            return RealmIdentity.NON_EXISTENT;
+        } else if (NamePrincipal.isConvertibleTo(principal)) {
             String name = principal.getName();
             log.tracef("KeyStoreRealm: obtaining certificate by alias [%s]", name);
             return new KeyStoreRealmIdentity(name);
         } else {
-            final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
-            if (x500Principal == null) {
-                log.tracef("KeyStoreRealm: conversion of principal [%s] to X500Principal failed", principal);
-                return RealmIdentity.NON_EXISTENT;
-            } else {
-                log.tracef("KeyStoreRealm: obtaining certificate by X500Principal [%s]", x500Principal);
-                final KeyStore keyStore = this.keyStore;
-                try {
-                    final Enumeration<String> aliases = keyStore.aliases();
-                    while (aliases.hasMoreElements()) {
-                        final String alias = aliases.nextElement();
-                        if (keyStore.isCertificateEntry(alias)) {
-                            final Certificate certificate = keyStore.getCertificate(alias);
-                            if (certificate instanceof X509Certificate && x500Principal.equals(X500PrincipalUtil.asX500Principal(((X509Certificate) certificate).getSubjectX500Principal()))) {
-                                log.tracef("KeyStoreRealm: certificate found by X500Principal in alias [%s]", alias);
-                                return new KeyStoreRealmIdentity(alias);
-                            }
-                        }
-                    }
-                } catch (KeyStoreException e) {
-                    throw log.failedToReadKeyStore(e);
-                }
-                log.tracef("KeyStoreRealm: certificate not found by X500Principal");
-                return RealmIdentity.NON_EXISTENT;
-            }
+            log.tracef("KeyStoreRealm: conversion of principal [%s] to X500Principal failed", principal);
+            return RealmIdentity.NON_EXISTENT;
         }
     }
 
