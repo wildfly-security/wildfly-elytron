@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -43,7 +44,8 @@ import org.jboss.logging.annotations.ValidIdRanges;
 @ValidIdRanges({
     @ValidIdRange(min = 2, max = 4),
     @ValidIdRange(min = 5151, max = 5151),
-    @ValidIdRange(min = 8013, max = 8028)
+    @ValidIdRange(min = 8013, max = 8028),
+    @ValidIdRange(min = 21000, max = 21999)
 })
 interface ElytronMessages extends BasicLogger {
 
@@ -100,4 +102,9 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 8028, value = "Invalid algorithm \"%s\"")
     NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
 
+    @Message(id = 21000, value = "Invalid algorithm parameter specification")
+    InvalidAlgorithmParameterException invalidAlgorithmParameterSpecification();
+
+    @Message(id = 21001, value = "Invalid sequence number algorithm parameter \"%s\"")
+    InvalidAlgorithmParameterException invalidSequenceNumberAlgorithmParameter(int sequenceNumber);
 }
