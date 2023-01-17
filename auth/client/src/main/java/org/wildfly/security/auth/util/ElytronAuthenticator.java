@@ -49,6 +49,7 @@ import org.wildfly.security.permission.ElytronPermission;
  * An implementation of {@link Authenticator} which uses the current security context to perform the authentication.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @deprecated Using the ElytronAuthenticator is not supported or recommended due to known credential limitations in Java 8.
  */
 @Deprecated
 public final class ElytronAuthenticator extends Authenticator {
