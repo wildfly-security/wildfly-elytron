@@ -87,12 +87,25 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
     private final UnaryOperator<GSSKerberosCredential> credentialOperator;
 
 
+    /**
+     * Constructs a new {@code GSSCredentialSecurityFactory} instance.
+     *
+     * @param minimumRemainingLifetime the minimum remaining lifetime for a {@link GSSCredential} in seconds.
+     * @param rawSupplier the supplier of raw credentials.
+     */
     GSSCredentialSecurityFactory(final int minimumRemainingLifetime, final ExceptionSupplier<GSSKerberosCredential, GeneralSecurityException> rawSupplier) {
         this.minimumRemainingLifetime = minimumRemainingLifetime;
         this.rawSupplier = rawSupplier;
         credentialOperator = this::update;
     }
 
+    /**
+     * Updates the {@link GSSKerberosCredential}. If the original is not valid, it gets a new {@code GSSKerberosCredential}
+     * from the {@code rawSupplier}, otherwise returns the original.
+     *
+     * @param original the original {@code GSSKerberosCredential} to be updated.
+     * @return the original if still valid, new {@code GSSKerberosCredential} otherwise.
+     */
     private GSSKerberosCredential update(GSSKerberosCredential original) {
         GSSKerberosCredential result = null;
         try {
@@ -116,6 +129,13 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         return result;
     }
 
+    /**
+     * Checks if the GSSCredential is still valid.
+     *
+     * @param gssCredential the GSSCredential to check.
+     * @return {@code true} if the GSSCredential is valid, {@code false} otherwise.
+     * @throws GeneralSecurityException if an error occurs during the validation.
+     */
     private boolean testIsValid(GSSCredential gssCredential) throws GeneralSecurityException {
         checkNotNullParam("gssCredential", gssCredential);
         boolean stillValid;
@@ -131,6 +151,12 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         return stillValid;
     }
 
+    /**
+     * Checks if the Kerberos ticket is still valid. If not, attempts to refresh it.
+     *
+     * @param ticket the Kerberos ticket to be checked.
+     * @return {@code true} if the ticket is valid, {@code false} otherwise.
+     */
     private boolean testIsValid(KerberosTicket ticket) {
         if (ticket == null) {
             log.trace("No cached KerberosTicket");
@@ -231,9 +257,9 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
-         * Set if the KerberosTicket should also be obtained and associated with the Credential/
+         * Set if the KerberosTicket should also be obtained and associated with the Credential.
          *
-         * @param obtainKerberosTicket if the KerberosTicket should also be obtained and associated with the Credential/
+         * @param obtainKerberosTicket if the KerberosTicket should also be obtained and associated with the Credential.
          * @return {@code this} to allow chaining.
          */
         public Builder setObtainKerberosTicket(final boolean obtainKerberosTicket) {
@@ -297,7 +323,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
-         * Set if debug logging should be enabled for the JAAS authentication portion of obtaining the {@link GSSCredential}
+         * Set if debug logging should be enabled for the JAAS authentication portion of obtaining the {@link GSSCredential}.
          *
          * @param debug if debug logging should be enabled for the JAAS authentication portion of obtaining the {@link GSSCredential}
          * @return {@code this} to allow chaining.
@@ -336,7 +362,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         }
 
         /**
-         * Set other configuration options for {@code Krb5LoginModule}
+         * Set other configuration options for {@code Krb5LoginModule}.
          *
          * @param options the configuration options which will be appended to options passed into {@code Krb5LoginModule}
          * @return {@code this} to allow chaining.
@@ -380,6 +406,14 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             return new GSSCredentialSecurityFactory(minimumRemainingLifetime > 0 ? minimumRemainingLifetime : 0, () -> createGSSCredential(configuration));
         }
 
+        /**
+         * Creates an instance of the {@link GSSKerberosCredential} class, which represents a Kerberos credential
+         * that can be used for authentication using the GSS-API.
+         *
+         * @param configuration the configuration used for creating the {@link LoginContext}.
+         * @return the {@code GSSKerberosCredential} - the GSSCredential object and Kerberos Ticket (if {@code obtainKerberosTicket} is {@code true}.
+         * @throws GeneralSecurityException if an error occurs during the creation of {@code GSSKerberosCredential}.
+         */
         private GSSKerberosCredential createGSSCredential(Configuration configuration) throws GeneralSecurityException {
             if (failCache != 0 && System.currentTimeMillis() - lastFailTime < failCache * 1000) {
                 throw log.initialLoginSkipped(failCache);
@@ -445,10 +479,24 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             }
         }
 
+        /**
+         * Performs a privileged action. If a security manager is set, the action will be executed via
+         * {@link AccessController#doPrivileged(PrivilegedAction)}. If no security manager is set,
+         * the action will be executed directly.
+         *
+         * @param action the action do be executed.
+         * @param <T> the type of the action.
+         * @return the result of the executed action.
+         */
         private static <T> T doPrivileged(final PrivilegedAction<T> action) {
             return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
         }
 
+        /**
+         * Checks if the keytab exists and if it contains any keys for the specified principal.
+         *
+         * @throws IOException if the keytab does not exist or if it does not contain any keys for the specified principal.
+         */
         private void checkKeyTab() throws IOException {
             KeyTab kt = KeyTab.getInstance(keyTab);
             if (!kt.exists()) {
@@ -459,6 +507,12 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             }
         }
 
+        /**
+         * Creates a {@link Configuration} that is used to initiate a {@link LoginContext}.
+         *
+         * @return a {@code Configuration} for initiating a {@code LoginContext}.
+         * @throws IOException if the keyTab does not exist or there are no keys for the principal in the keyTab.
+         */
         private Configuration createConfiguration() throws IOException {
             Map<String, Object> options = new HashMap<>();
             if (debug) {
@@ -491,6 +545,9 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             };
         }
 
+        /**
+         * Asserts that the builder has not yet been built.
+         */
         private void assertNotBuilt() {
             if (built) {
                 throw log.builderAlreadyBuilt();
@@ -499,6 +556,12 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
 
     }
 
+    /**
+     * Wraps the given {@link GSSCredential} and prevents it from being disposed.
+     *
+     * @param credential the {@code GSSCredential} to be wrapped.
+     * @return the wrapped {@code GSSCredential}.
+     */
     private static GSSCredential wrapCredential(final GSSCredential credential) {
         return new GSSCredential() {
 
