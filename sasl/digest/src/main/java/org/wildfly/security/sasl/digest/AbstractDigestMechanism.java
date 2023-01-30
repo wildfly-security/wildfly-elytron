@@ -73,6 +73,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     public static final int DEFAULT_MAXBUF = 65536;
     public static final char DELIMITER = ',';
     public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
+    private static final String CLIENT_MAGIC_INTEGRITY = "Digest session key to client-to-server signing key magic constant";
+    private static final String SERVER_MAGIC_INTEGRITY = "Digest session key to server-to-client signing key magic constant";
 
     private FORMAT format;
     protected final String digestURI;
@@ -217,9 +219,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractDigestMechanism.this.wrapConfidentialityProtectedMessage(outgoing, offset, len);
+                return wrapConfidentialityProtectedMessage(outgoing, offset, len);
             } else {
-                return AbstractDigestMechanism.this.wrapIntegrityProtectedMessage(outgoing, offset, len);
+                return wrapIntegrityProtectedMessage(outgoing, offset, len);
             }
         }
 
@@ -229,152 +231,148 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractDigestMechanism.this.unwrapConfidentialityProtectedMessage(incoming, offset, len);
+                return unwrapConfidentialityProtectedMessage(incoming, offset, len);
             } else {
-                return AbstractDigestMechanism.this.unwrapIntegrityProtectedMessage(incoming, offset, len);
+                return unwrapIntegrityProtectedMessage(incoming, offset, len);
             }
         }
+        private byte[] wrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-    }
+            byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
 
-    private static final String CLIENT_MAGIC_INTEGRITY = "Digest session key to client-to-server signing key magic constant";
-    private static final String SERVER_MAGIC_INTEGRITY = "Digest session key to server-to-client signing key magic constant";
-
-    private byte[] wrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
-
-        byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
-
-        byte[] result = new byte[len + 16];
-        System.arraycopy(message, offset, result, 0, len);
-        System.arraycopy(messageMac, 0, result, len, 10);
-        integerByteOrdered(1, result, len + 10, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(wrapSeqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
-        wrapSeqNum++;
-        return result;
-    }
-
-    private byte[] unwrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
-
-        int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
-        int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
-
-        if (messageType != 1) {
-            throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
+            byte[] result = new byte[len + 16];
+            System.arraycopy(message, offset, result, 0, len);
+            System.arraycopy(messageMac, 0, result, len, 10);
+            integerByteOrdered(1, result, len + 10, 2);  // 2-byte message type number in network byte order with value 1
+            integerByteOrdered(wrapSeqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
+            wrapSeqNum++;
+            return result;
         }
 
-        if (extractedSeqNum != unwrapSeqNum) {
-            throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
+        private byte[] unwrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
+
+            int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
+            int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
+
+            if (messageType != 1) {
+                throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
+            }
+
+            if (extractedSeqNum != unwrapSeqNum) {
+                throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
+            }
+
+            byte[] extractedMessageMac = new byte[10];
+            byte[] extractedMessage = new byte[len - 16];
+            System.arraycopy(message, offset, extractedMessage, 0, len - 16);
+            System.arraycopy(message, offset + len - 16, extractedMessageMac, 0, 10);
+
+            byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, extractedMessage, 0, extractedMessage.length);
+
+            // validate MAC block
+            if (Arrays2.equals(expectedHmac, 0, extractedMessageMac, 0, 10) == false) {
+                return NO_BYTES;
+            }
+
+            unwrapSeqNum++; // increment only if MAC is valid
+            return extractedMessage;
         }
 
-        byte[] extractedMessageMac = new byte[10];
-        byte[] extractedMessage = new byte[len - 16];
-        System.arraycopy(message, offset, extractedMessage, 0, len - 16);
-        System.arraycopy(message, offset + len - 16, extractedMessageMac, 0, 10);
+        private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-        byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, extractedMessage, 0, extractedMessage.length);
+            byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
 
-        // validate MAC block
-        if (Arrays2.equals(expectedHmac, 0, extractedMessageMac, 0, 10) == false) {
-            return NO_BYTES;
+            int paddingLength = 0;
+            byte[] pad = null;
+            int blockSize = wrapCipher.getBlockSize();
+            if (blockSize > 0) {
+                paddingLength = blockSize - ((len + 10) % blockSize);
+                pad = new byte[paddingLength];
+                Arrays.fill(pad, (byte)paddingLength);
+            }
+
+            byte[] toCipher = new byte[len + paddingLength + 10];
+            System.arraycopy(message, offset, toCipher, 0, len);
+            if (paddingLength > 0) {
+                System.arraycopy(pad, 0, toCipher, len, paddingLength);
+            }
+            System.arraycopy(messageMac, 0, toCipher, len + paddingLength, 10);
+
+            byte[] cipheredPart = null;
+            try {
+                cipheredPart = wrapCipher.update(toCipher);
+            } catch (Exception e) {
+                throw saslDigest.mechProblemDuringCrypt(e).toSaslException();
+            }
+            if (cipheredPart == null){
+                throw saslDigest.mechProblemDuringCryptResultIsNull().toSaslException();
+            }
+
+            byte[] result = new byte[cipheredPart.length + 6];
+            System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
+            integerByteOrdered(1, result, cipheredPart.length, 2);  // 2-byte message type number in network byte order with value 1
+            integerByteOrdered(wrapSeqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
+
+            wrapSeqNum++;
+            return result;
         }
 
-        unwrapSeqNum++; // increment only if MAC is valid
-        return extractedMessage;
-    }
+        private byte[] unwrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-    private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
+            int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
+            int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
-        byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
+            if (messageType != 1) {
+                throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
+            }
 
-        int paddingLength = 0;
-        byte[] pad = null;
-        int blockSize = wrapCipher.getBlockSize();
-        if (blockSize > 0) {
-            paddingLength = blockSize - ((len + 10) % blockSize);
-            pad = new byte[paddingLength];
-            Arrays.fill(pad, (byte)paddingLength);
-        }
+            if (extractedSeqNum != unwrapSeqNum) {
+                throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
+            }
 
-        byte[] toCipher = new byte[len + paddingLength + 10];
-        System.arraycopy(message, offset, toCipher, 0, len);
-        if (paddingLength > 0) {
-            System.arraycopy(pad, 0, toCipher, len, paddingLength);
-        }
-        System.arraycopy(messageMac, 0, toCipher, len + paddingLength, 10);
+            byte[] clearText = null;
+            try {
+                clearText = unwrapCipher.update(message, offset, len - 6);
+            } catch (Exception e) {
+                throw saslDigest.mechProblemDuringDecrypt(e).toSaslException();
+            }
+            if (clearText == null){
+                throw saslDigest.mechProblemDuringDecryptResultIsNull().toSaslException();
+            }
 
-        byte[] cipheredPart = null;
-        try {
-            cipheredPart = wrapCipher.update(toCipher);
-        } catch (Exception e) {
-            throw saslDigest.mechProblemDuringCrypt(e).toSaslException();
-        }
-        if (cipheredPart == null){
-            throw saslDigest.mechProblemDuringCryptResultIsNull().toSaslException();
-        }
+            byte[] hmac = new byte[10];
+            System.arraycopy(clearText, clearText.length - 10, hmac, 0, 10);
 
-        byte[] result = new byte[cipheredPart.length + 6];
-        System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
-        integerByteOrdered(1, result, cipheredPart.length, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(wrapSeqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
-
-        wrapSeqNum++;
-        return result;
-    }
-
-    private byte[] unwrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
-
-        int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
-        int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
-
-        if (messageType != 1) {
-            throw saslDigest.mechMessageTypeMustEqual(1, messageType).toSaslException();
-        }
-
-        if (extractedSeqNum != unwrapSeqNum) {
-            throw saslDigest.mechBadSequenceNumberWhileUnwrapping(unwrapSeqNum, extractedSeqNum).toSaslException();
-        }
-
-        byte[] clearText = null;
-        try {
-            clearText = unwrapCipher.update(message, offset, len - 6);
-        } catch (Exception e) {
-            throw saslDigest.mechProblemDuringDecrypt(e).toSaslException();
-        }
-        if (clearText == null){
-            throw saslDigest.mechProblemDuringDecryptResultIsNull().toSaslException();
-        }
-
-        byte[] hmac = new byte[10];
-        System.arraycopy(clearText, clearText.length - 10, hmac, 0, 10);
-
-        byte[] decryptedMessage = null;
-        // strip potential padding
-        if (unwrapCipher.getBlockSize() > 0) {
-            int padSize = clearText[clearText.length - 10 - 1];
-            int decryptedMessageSize = clearText.length - 10;
-            if (padSize < 8) {
-                int i = clearText.length - 10 - 1;
-                while (clearText[i] == padSize) {
-                    i--;
+            byte[] decryptedMessage = null;
+            // strip potential padding
+            if (unwrapCipher.getBlockSize() > 0) {
+                int padSize = clearText[clearText.length - 10 - 1];
+                int decryptedMessageSize = clearText.length - 10;
+                if (padSize < 8) {
+                    int i = clearText.length - 10 - 1;
+                    while (clearText[i] == padSize) {
+                        i--;
+                    }
+                    decryptedMessageSize = i + 1;
                 }
-                decryptedMessageSize = i + 1;
+                decryptedMessage = new byte[decryptedMessageSize];
+                System.arraycopy(clearText, 0, decryptedMessage, 0, decryptedMessageSize);
+            } else {
+                decryptedMessage = new byte[clearText.length - 10];
+                System.arraycopy(clearText, 0, decryptedMessage, 0, clearText.length - 10);
             }
-            decryptedMessage = new byte[decryptedMessageSize];
-            System.arraycopy(clearText, 0, decryptedMessage, 0, decryptedMessageSize);
-        } else {
-            decryptedMessage = new byte[clearText.length - 10];
-            System.arraycopy(clearText, 0, decryptedMessage, 0, clearText.length - 10);
+
+            byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, decryptedMessage, 0, decryptedMessage.length);
+
+            // check hmac-s
+            if (Arrays2.equals(expectedHmac, 0, hmac, 0, 10) == false) {
+                return NO_BYTES;
+            }
+
+            unwrapSeqNum++; // increment only if MAC is valid
+            return decryptedMessage;
         }
 
-        byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, decryptedMessage, 0, decryptedMessage.length);
-
-        // check hmac-s
-        if (Arrays2.equals(expectedHmac, 0, hmac, 0, 10) == false) {
-            return NO_BYTES;
-        }
-
-        unwrapSeqNum++; // increment only if MAC is valid
-        return decryptedMessage;
     }
 
     protected void createCiphersAndKeys() throws SaslException {
