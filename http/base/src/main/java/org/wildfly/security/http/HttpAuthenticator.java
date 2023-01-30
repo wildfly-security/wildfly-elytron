@@ -66,7 +66,6 @@ public class HttpAuthenticator {
     private final String programmaticMechanismName;
     private final Consumer<Runnable> logoutHandlerConsumer;
     private volatile IdentityCache identityCache;
-    private volatile boolean authenticated = false;
 
     private HttpAuthenticator(final Builder builder) {
         this.mechanismSupplier = builder.mechanismSupplier;
@@ -94,9 +93,6 @@ public class HttpAuthenticator {
         return new AuthenticationExchange().authenticate();
     }
 
-    private boolean isAuthenticated() {
-        return authenticated;
-    }
 
     /**
      * Perform a login for the supplied username and password using the pre-configured mechanism name.
@@ -306,9 +302,14 @@ public class HttpAuthenticator {
         private volatile boolean statusCodeAllowed = false;
         private volatile List<HttpServerMechanismsResponder> responders;
         private volatile HttpServerMechanismsResponder successResponder;
+        private volatile boolean authenticated = false;
 
         AuthenticationExchange() {
             super(httpExchangeSpi);
+        }
+
+        private boolean isAuthenticated() {
+            return authenticated;
         }
 
         private boolean authenticate() throws HttpAuthenticationException {
