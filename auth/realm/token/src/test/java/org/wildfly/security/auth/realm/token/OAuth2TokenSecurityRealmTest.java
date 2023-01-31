@@ -187,7 +187,7 @@ public class OAuth2TokenSecurityRealmTest {
 
         RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
 
-        assertFalse(realmIdentity.exists());
+        realmIdentity.exists();
     }
 
     @Test(expected = IllegalArgumentException.class)

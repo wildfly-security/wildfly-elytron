@@ -44,6 +44,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -180,25 +181,36 @@ public class ExternalSaslServerTest {
     /**
      * Test failing (as we only authenticate "admin") authn for unsupported data "test" from client.
      */
-    @Test(expected = SaslException.class)
-    public void testFailedAuthn() throws Exception {
-        SaslServer saslServer = obtainSaslServerFactory(ExternalSaslServerFactory.class).createSaslServer(EXTERNAL, "test",
-                "localhost", setProps(), CALLBACK_HANDLER_AUTHZ_ADMIN);
-        assertFalse(saslServer.isComplete());
-        saslServer.evaluateResponse("test".getBytes(StandardCharsets.UTF_8));
+    @Test
+    public void testFailedAuthn() {
+        try {
+            SaslServer saslServer = obtainSaslServerFactory(ExternalSaslServerFactory.class).createSaslServer(EXTERNAL, "test",
+                    "localhost", setProps(), CALLBACK_HANDLER_AUTHZ_ADMIN);
+            assertFalse(saslServer.isComplete());
+            Assert.assertThrows(SaslException.class,()->{
+                saslServer.evaluateResponse("test".getBytes(StandardCharsets.UTF_8));
+            });
+        }catch (SaslException saslException){
+            fail("Failed to create SaslServer Instance");
+        }
     }
 
     /**
      * Test failing authn (as we only authenticate "admin") for empty data received from client.
      */
-    @Test(expected = SaslException.class)
-    public void testAuthnEmptyData() throws Exception {
-        SaslServer saslServer = obtainSaslServerFactory(ExternalSaslServerFactory.class).createSaslServer(EXTERNAL, "test",
-                "localhost", setProps(), CALLBACK_HANDLER_AUTHZ_ADMIN);
+    @Test
+    public void testAuthnEmptyData() {
+        try{
+            SaslServer saslServer = obtainSaslServerFactory(ExternalSaslServerFactory.class).createSaslServer(EXTERNAL, "test",
+                    "localhost", setProps(), CALLBACK_HANDLER_AUTHZ_ADMIN);
 
-        assertFalse(saslServer.isComplete());
-
-        saslServer.evaluateResponse(AbstractSaslParticipant.NO_BYTES);
+            assertFalse(saslServer.isComplete());
+            Assert.assertThrows(SaslException.class,()->{
+                saslServer.evaluateResponse(AbstractSaslParticipant.NO_BYTES);
+            });
+        }catch (SaslException saslException){
+            fail("Failed to create SaslServer Instance");
+        }
     }
 
     @Test
