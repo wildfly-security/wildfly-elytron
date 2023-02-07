@@ -140,10 +140,5 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10024, value = "Invalid X.509 certificate extension string value")
     IllegalArgumentException invalidCertificateExtensionStringValue();
 
-    @Message(id = 18000, value = "Malformed OpenSSH Private Key: %s")
-    IllegalArgumentException openSshParseError(String e);
-
-    @Message(id = 18001, value = "Unable to Generate Key: %s")
-    IllegalArgumentException openSshGeneratingError(String e);
 }
 

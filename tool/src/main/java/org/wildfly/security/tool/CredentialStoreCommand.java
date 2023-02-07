@@ -68,6 +68,7 @@ import org.wildfly.security.encryption.SecretKeyUtil;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.pem.Pem;
+import org.wildfly.security.ssh.util.SshUtil;
 
 /**
  * Credential Store Command
@@ -903,7 +904,7 @@ class CredentialStoreCommand extends Command {
     private KeyPairCredential parseKeyPairCredential(String privateKeyContent, String publicKeyContent, FilePasswordProvider passwordProvider) throws Exception {
         KeyPair keyPair;
         try {
-            keyPair = Pem.parsePemOpenSSHContent(CodePointIterator.ofString(privateKeyContent), passwordProvider).next().tryCast(KeyPair.class);
+            keyPair = SshUtil.parsePemOpenSSHContent(CodePointIterator.ofString(privateKeyContent), passwordProvider).next().tryCast(KeyPair.class);
             if (keyPair == null) throw ElytronToolMessages.msg.xmlNoPemContent();
         } catch (IllegalArgumentException e) {
             if (publicKeyContent == null || publicKeyContent.isEmpty()) {
