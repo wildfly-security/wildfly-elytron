@@ -816,6 +816,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-ssh-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-tool</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1456,6 +1461,7 @@
         <module>sasl/plain</module>
         <module>sasl/scram</module>
         <module>ssl</module>
+        <module>ssh/util</module>
         <module>tool</module>
         <module>util</module>
         <module>x500/base</module>
