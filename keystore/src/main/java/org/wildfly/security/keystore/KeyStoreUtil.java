@@ -21,6 +21,7 @@ package org.wildfly.security.keystore;
 import static org.wildfly.security.keystore.ElytronMessages.log;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -147,7 +148,7 @@ public class KeyStoreUtil {
         return null;
     }
 
-    private static KeyStore loadPemAsKeyStore(FileInputStream is, char[] password) throws KeyStoreException, IOException {
+    public static KeyStore loadPemAsKeyStore(InputStream is, char[] password) throws KeyStoreException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         try {
             keyStore.load(null, null);
@@ -158,7 +159,7 @@ public class KeyStoreUtil {
         PrivateKey pk = null;
         List<Certificate> certificates = new ArrayList<>();
         // Reading all of the file should not be an issue
-        byte[] pem = new byte[(int) is.getChannel().size()];
+        byte[] pem = readAllBytes(is);
         is.read(pem);
         for (Iterator<PemEntry<?>> it = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(pem)); it.hasNext(); ) {
             Object entry = it.next().getEntry();
@@ -185,6 +186,19 @@ public class KeyStoreUtil {
             }
         }
         return keyStore;
+    }
+
+    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int readBytes = inputStream.read(buffer);
+
+        // inputStream.read() returns -1 when the end of the stream is reached
+        while(readBytes != -1){
+            outputStream.write(buffer, 0, readBytes);
+            readBytes = inputStream.read(buffer);
+        }
+        return outputStream.toByteArray();
     }
 
     //FileInputStream does not support marking by default and buffering unknown sized file doesn't seem right

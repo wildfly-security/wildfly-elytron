@@ -37,6 +37,7 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 import javax.security.auth.x500.X500Principal;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -237,7 +238,7 @@ public class KeyStoreUtilTest {
     }
 
     @Test
-    public void testPEM() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
+    public void testPEMFromFileInputStream() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException {
         SelfSignedX509CertificateAndSigningKey ca = SelfSignedX509CertificateAndSigningKey.builder()
                 .setDn(new X500Principal("O=Root Certificate Authority, EMAILADDRESS=elytron@wildfly.org, C=UK, ST=Elytron, CN=Elytron CA"))
                 .setKeyAlgorithmName("RSA")
@@ -258,10 +259,16 @@ public class KeyStoreUtilTest {
         Pem.generatePemX509Certificate(target, ca.getSelfSignedCertificate());
         Pem.generatePemX509Certificate(target, subjectCertificate);
         Files.write(Paths.get(workingDir.getPath(), "pem.pem"), target.toArray());
-        KeyStore loadedStore = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, "pem.pem")), "pem.pem", "".toCharArray());
-        Assert.assertNotNull(loadedStore);
-        Assert.assertEquals(ca.getSelfSignedCertificate(), loadedStore.getCertificate(ca.getSelfSignedCertificate().getSubjectX500Principal().getName()));
-        Assert.assertEquals(subjectCertificate, loadedStore.getCertificate(subjectCertificate.getSubjectX500Principal().getName()));
+
+        KeyStore loadedStoreFromByteArrayInputStream = KeyStoreUtil.loadPemAsKeyStore(new ByteArrayInputStream(target.toArray()), "".toCharArray());
+        Assert.assertNotNull(loadedStoreFromByteArrayInputStream);
+        Assert.assertEquals(ca.getSelfSignedCertificate(), loadedStoreFromByteArrayInputStream.getCertificate(ca.getSelfSignedCertificate().getSubjectX500Principal().getName()));
+        Assert.assertEquals(subjectCertificate, loadedStoreFromByteArrayInputStream.getCertificate(subjectCertificate.getSubjectX500Principal().getName()));
+
+        KeyStore loadedStoreFromFileInputStream = KeyStoreUtil.loadKeyStore(providerSupplier, null, new FileInputStream(new File(workingDir, "pem.pem")), "pem.pem", "".toCharArray());
+        Assert.assertNotNull(loadedStoreFromFileInputStream);
+        Assert.assertEquals(ca.getSelfSignedCertificate(), loadedStoreFromFileInputStream.getCertificate(ca.getSelfSignedCertificate().getSubjectX500Principal().getName()));
+        Assert.assertEquals(subjectCertificate, loadedStoreFromFileInputStream.getCertificate(subjectCertificate.getSubjectX500Principal().getName()));
     }
 
 
