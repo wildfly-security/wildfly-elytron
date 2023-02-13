@@ -84,6 +84,7 @@ public interface BCryptPassword extends OneWayPassword {
      */
     BCryptPassword clone();
 
+    @Override
     default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
         return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), getSalt());
     }
