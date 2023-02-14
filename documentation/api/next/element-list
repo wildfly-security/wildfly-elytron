@@ -5,10 +5,6 @@ org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
 org.wildfly.security.auth.client._private
-org.wildfly.security.auth.client.spi
-org.wildfly.security.auth.jaspi
-org.wildfly.security.auth.jaspi._private
-org.wildfly.security.auth.jaspi.impl
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
 org.wildfly.security.auth.realm
@@ -26,7 +22,6 @@ org.wildfly.security.auth.server.http
 org.wildfly.security.auth.server.sasl
 org.wildfly.security.auth.util
 org.wildfly.security.authz
-org.wildfly.security.authz.jacc
 org.wildfly.security.cache
 org.wildfly.security.credential
 org.wildfly.security.credential._private
@@ -64,7 +59,6 @@ org.wildfly.security.mechanism.gssapi
 org.wildfly.security.mechanism.http
 org.wildfly.security.mechanism.oauth2
 org.wildfly.security.mechanism.scram
-org.wildfly.security.mp.jwt
 org.wildfly.security.password
 org.wildfly.security.password.impl
 org.wildfly.security.password.interfaces

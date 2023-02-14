@@ -3,7 +3,6 @@ org.wildfly.security.asn1
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
-org.wildfly.security.auth.jaspi
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
 org.wildfly.security.auth.server
