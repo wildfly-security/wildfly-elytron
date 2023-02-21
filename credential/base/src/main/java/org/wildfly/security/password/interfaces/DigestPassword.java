@@ -90,6 +90,7 @@ public interface DigestPassword extends OneWayPassword {
      */
     byte[] getDigest();
 
+    @Override
     default DigestPasswordAlgorithmSpec getParameterSpec() {
         return new DigestPasswordAlgorithmSpec(getUsername(), getRealm());
     }

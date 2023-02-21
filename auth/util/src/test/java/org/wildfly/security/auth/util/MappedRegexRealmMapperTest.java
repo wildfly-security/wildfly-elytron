@@ -20,12 +20,14 @@ package org.wildfly.security.auth.util;
 
 import java.security.Principal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.RealmMapper;
 import org.wildfly.security.x500.X500PrincipalBuilder;
 
 /**
@@ -57,6 +59,28 @@ public class MappedRegexRealmMapperTest {
         Map<String, String> realmNameMap = Collections.singletonMap("A-9999", realmName);
         Pattern pattern = Pattern.compile("([A-Z]-\\d{4})");
         MappedRegexRealmMapper mappedRegexRealmMapper = new MappedRegexRealmMapper(pattern, realmNameMap);
+        Principal principal = new NamePrincipal("A-9999");
+        Assert.assertEquals(realmName, mappedRegexRealmMapper.getRealmMapping(principal, null));
+    }
+
+    @Test
+    public void testReturnSpecificRealmMappingForDelegate() {
+        String delegateName = "delegate_realm";
+        Pattern pattern = Pattern.compile("([A-Z]-\\d{4})");
+        Map<String, String> realmNameMap = Collections.singletonMap("A-9999", delegateName);
+        MappedRegexRealmMapper mappedRegexRealmMapper = new MappedRegexRealmMapper(pattern, RealmMapper.single("A-9999"), realmNameMap);
+        Principal principal = new NamePrincipal("A-1");
+        Assert.assertEquals(delegateName, mappedRegexRealmMapper.getRealmMapping(principal, null));
+    }
+
+    @Test
+    public void testReturnCorrectRealmMappingWithPrincipalAndDelegateMatchingPattern() {
+        String realmName = "realm";
+        Pattern pattern = Pattern.compile("([A-Z]-\\d{4})");
+        Map<String, String> realmNameMap = new HashMap<>();
+        realmNameMap.put("A-9999", realmName);
+        realmNameMap.put("A-1111", "delegateRealm");
+        MappedRegexRealmMapper mappedRegexRealmMapper = new MappedRegexRealmMapper(pattern, RealmMapper.single("A-1111"), realmNameMap);
         Principal principal = new NamePrincipal("A-9999");
         Assert.assertEquals(realmName, mappedRegexRealmMapper.getRealmMapping(principal, null));
     }

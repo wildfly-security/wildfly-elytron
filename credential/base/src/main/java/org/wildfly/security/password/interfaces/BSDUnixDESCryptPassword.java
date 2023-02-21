@@ -77,6 +77,7 @@ public interface BSDUnixDESCryptPassword extends OneWayPassword {
      */
     byte[] getHash();
 
+    @Override
     default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
         final int salt = getSalt();
         byte[] saltBytes = new byte[4];
