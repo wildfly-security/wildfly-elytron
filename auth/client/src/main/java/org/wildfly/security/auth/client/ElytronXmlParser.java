@@ -129,6 +129,7 @@ import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509RevocationTrustManager;
+import org.wildfly.security.ssh.util.SshUtil;
 
 /**
  * A parser for the Elytron XML schema.
@@ -1727,7 +1728,7 @@ public final class ElytronXmlParser {
                 if (keyContent == null) throw reader.missingRequiredAttribute(reader.getNamespaceURI(), "openssh-private-key");
                 final ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> finalFunction = function;
                 ElytronFilePasswordProvider passwordProvider = new ElytronFilePasswordProvider(()->finalFunction.apply(null));
-                Iterator<PemEntry<?>> pemContent = Pem.parsePemOpenSSHContent(CodePointIterator.ofString(keyContent), passwordProvider);
+                Iterator<PemEntry<?>> pemContent = SshUtil.parsePemOpenSSHContent(CodePointIterator.ofString(keyContent), passwordProvider);
                 final PemEntry<?> pemEntry = pemContent.next();
                 final KeyPair keyPair = pemEntry.tryCast(KeyPair.class);
                 if (keyPair == null) throw xmlLog.xmlInvalidOpenSSHKey(reader);

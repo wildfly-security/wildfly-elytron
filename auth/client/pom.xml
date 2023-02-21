@@ -74,7 +74,7 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500-cert</artifactId>
+            <artifactId>wildfly-elytron-ssh-util</artifactId>
         </dependency>
                                 
         <dependency>
