@@ -7,14 +7,14 @@ permalink: /docs/
 = WildFly Elytron Documentation
 
 For information regarding using WildFly Elytron within the WildFly application server please consult the
-https://docs.wildfly.org/26.1/WildFly_Elytron_Security.html[subsystem documentation].
+https://docs.wildfly.org/27/WildFly_Elytron_Security.html[subsystem documentation].
 
 == API References
 
 Javadoc of the public APIs is available for the most recent two major WildFly releases.
 
- * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 26 API].
- * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 25 API].
+ * link:/wildfly-elytron/documentation/api/current/index.html[WildFly 27 API].
+ * link:/wildfly-elytron/documentation/api/previous/index.html[WildFly 26 API].
 
 Javadoc of the public APIs is also available for the versions of WildFly Elytron included in JBoss EAP.
 
@@ -31,7 +31,7 @@ link:/wildfly-elytron/getting-started-for-developers[Getting Started for Develop
 
 Two versions of the full javadoc (including private APIs) are available.
 
- * link:/wildfly-elytron/documentation/api/next/index.html[WildFly 26].
+ * link:/wildfly-elytron/documentation/api/next/index.html[WildFly 27].
  * link:/wildfly-elytron/documentation/api/upstream/index.html[Upstream Javadoc].
 
 NOTE: This full javadoc includes private API which may be subject to change.
