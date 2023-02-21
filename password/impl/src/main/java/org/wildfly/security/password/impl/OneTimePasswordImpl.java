@@ -23,15 +23,18 @@ import static org.wildfly.security.password.impl.ElytronMessages.log;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Locale;
 
 import org.wildfly.common.bytes.ByteStringBuilder;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
@@ -107,6 +110,28 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
     }
 
     @Override
+    Password translate(final AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        if (parameterSpec instanceof OneTimePasswordAlgorithmSpec) {
+            OneTimePasswordAlgorithmSpec updateSpec = (OneTimePasswordAlgorithmSpec) parameterSpec;
+            int updateSequence = updateSpec.getSequenceNumber();
+            if (updateSequence < this.sequenceNumber) {
+                throw log.invalidSequenceNumberAlgorithmParameter(updateSequence);
+            }
+            if (updateSequence == this.sequenceNumber) {
+                return this;
+            }
+            byte[] hash = this.hash.clone();
+            try {
+                hash = computeHash(hash, algorithm, getMessageDigest(algorithm), this.sequenceNumber, updateSequence);
+            } catch (NoSuchAlgorithmException e) {
+                throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
+            }
+            return new OneTimePasswordImpl(algorithm, hash, seed, updateSequence);
+        }
+        throw log.invalidAlgorithmParameterSpecification();
+    }
+
+    @Override
     boolean verify(char[] guess) throws InvalidKeyException {
         // The OTP SASL mechanism handles this (this involves updating the stored password)
         throw new InvalidKeyException();
@@ -137,11 +162,17 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
         byte[] hash = hashAndFold(algorithm, messageDigest, seedAndPassPhrase.toArray());
 
         // Computation step
-        for (int i = 0; i < sequenceNumber; i++) {
-            messageDigest.reset();
-            hash = hashAndFold(algorithm, messageDigest, hash);
-        }
+        hash = computeHash(hash, algorithm, messageDigest, 0, sequenceNumber);
         return hash;
+    }
+
+    static byte[] computeHash(final byte[] hash, final String algorithm, final MessageDigest messageDigest, final int start, final int end) {
+        byte[] current = hash;
+        for (int i = start; i < end; i++) {
+            messageDigest.reset();
+            current = hashAndFold(algorithm, messageDigest, current);
+        }
+        return current;
     }
 
     private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {

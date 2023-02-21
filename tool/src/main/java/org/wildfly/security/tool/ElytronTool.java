@@ -32,6 +32,7 @@ import java.util.Map;
  */
 public class ElytronTool {
 
+    public static final String LOG_MANAGER_PROPERTY = "java.util.logging.manager";
     /**
      * status code for unrecognized command
      */
@@ -65,6 +66,7 @@ public class ElytronTool {
      * @param args parameters to pass farther. The first parameter is name or alias of the command.
      */
     public static void main(String[] args) {
+        configureLogManager();
 
         Security.addProvider(new WildFlyElytronProvider());
 
@@ -118,6 +120,12 @@ public class ElytronTool {
         } else {
             // no arguments supplied, print general help message and exist.
             tool.generalHelp();
+        }
+    }
+
+    private static void configureLogManager() {
+        if (System.getProperty(LOG_MANAGER_PROPERTY) == null) {
+            System.setProperty(LOG_MANAGER_PROPERTY, "org.jboss.logmanager.LogManager");
         }
     }
 

@@ -97,7 +97,7 @@ public class SystemPropertiesJsonParserFactory extends MappingJsonFactory {
                 return overrides.get(key);
             } else if (key.startsWith("env.")) {
                 return System.getenv().get(key.substring(4));
-            } else if (System.getProperties().contains(key)) {
+            } else if (System.getProperties().containsKey(key)) {
                 return System.getProperty(key);
             } else {
                 String envVar = replaceNonAlphanumericByUnderscoresAndMakeUpperCase(key);

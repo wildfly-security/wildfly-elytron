@@ -1,0 +1,20 @@
+# Gitleaks is a tool that detects potential leaks of secrets. This file defines an allowlist to avoid false positives.
+# The tool checks the commit history, some files that are not present anymore but contained example secrets has to be put in the allowlist as well
+[allowlist]
+  description = "Allowlist"
+  # ignore secrets present in the below folders and files
+  paths = [
+    # test folders containing example secrets
+    '''auth\/client\/src\/test\/resources\/org\/wildfly\/security\/auth\/client''',
+    '''tests\/base\/src\/test\/resources''',
+    '''tests\/base\/src\/test\/java\/org\/wildfly\/security\/util''',
+    # blog posts containing example secrets
+    '''blog\/ssh-auth-for-git-persistence\/index.html''',
+    '''blog\/using-remote-client-ip-for-authorization\/index.html''',
+    # below test folders do not exist anymore
+    '''src\/test\/java\/org\/wildfly\/security\/tool''',
+    '''src\/test\/java\/org\/wildfly\/security\/auth''',
+    '''src\/test\/resources''',
+    # ignore this file
+    '''^\.?gitleaks.toml$'''
+  ]

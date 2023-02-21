@@ -1120,7 +1120,7 @@
             <dependency>
                 <groupId>org.jboss.xnio</groupId>
                 <artifactId>xnio-api</artifactId>
-                <version>3.7.2.Final</version>
+                <version>3.8.8.Final</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

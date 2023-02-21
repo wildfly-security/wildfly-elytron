@@ -75,6 +75,16 @@ public class OidcTest extends OidcBaseTest {
         }
     }
 
+    @BeforeClass
+    public static void beforeClass() {
+        System.setProperty("oidc.provider.url", KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        System.clearProperty("oidc.provider.url");
+    }
+
     @Test
     public void testWrongPassword() throws Exception {
         Map<String, Object> props = new HashMap<>();
@@ -130,12 +140,18 @@ public class OidcTest extends OidcBaseTest {
     }
 
     @Test
-    public void testSucessfulAuthenticationWithProviderUrlExpression() throws Exception {
+    public void testSucessfulAuthenticationWithEnvironmentVariableExpression() throws Exception {
         String oidcProviderUrl = "/realms/" + TEST_REALM;
         String providerUrlEnv = System.getenv("OIDC_PROVIDER_URL_ENV");
         assertEquals(oidcProviderUrl, providerUrlEnv);
 
-        performAuthentication(getOidcConfigurationInputStreamWithProviderUrlExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+        performAuthentication(getOidcConfigurationInputStreamWithEnvironmentVariableExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testSucessfulAuthenticationWithSystemPropertyExpression() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithSystemPropertyExpression(), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
@@ -210,11 +226,24 @@ public class OidcTest extends OidcBaseTest {
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
 
-    private InputStream getOidcConfigurationInputStreamWithProviderUrlExpression() {
+    private InputStream getOidcConfigurationInputStreamWithEnvironmentVariableExpression() {
         String oidcConfig = "{\n" +
                 "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
                 "    \"public-client\" : \"false\",\n" +
                 "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "${oidc.provider-url-env}\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithSystemPropertyExpression() {
+        String oidcConfig = "{\n" +
+                "    \"resource\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"provider-url\" : \"${oidc.provider.url}\",\n" +
                 "    \"ssl-required\" : \"EXTERNAL\",\n" +
                 "    \"credentials\" : {\n" +
                 "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
