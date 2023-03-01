@@ -752,6 +752,7 @@ class FileSystemEncryptRealmCommand extends Command {
                         false,
                         null
                 );
+                if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
             }
             String fullOutputPath;
             if (outputRealmLocation.startsWith(".")) {
@@ -774,7 +775,7 @@ class FileSystemEncryptRealmCommand extends Command {
                     String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s, levels=%s, credential-store=%s, secret-key=%s)", fileSystemRealmName, fullOutputPath+'/'+fileSystemRealmName, levels, "mycredstore"+counter, secretKeyAlias)
             );
 
-            if (!createScriptCheck.equals("y") && !createScriptCheck.equals("yes")) {
+            if (createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y")) { // Create a new script file, or overwrite the existing one
                 Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
                 Files.write(scriptPath, scriptLines, StandardOpenOption.APPEND);
