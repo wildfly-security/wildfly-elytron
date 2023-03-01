@@ -749,6 +749,7 @@ class FileSystemEncryptRealmCommand extends Command {
                         false,
                         ElytronToolMessages.msg.shouldFileBeOverwritten(String.format("%s.cli", fileSystemRealmName))
                 );
+                if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
             }
             String fullOutputPath;
             if (outputRealmLocation.startsWith(".")) {
@@ -771,7 +772,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s, levels=%s, credential-store=%s, secret-key=%s)", fileSystemRealmName, fullOutputPath+'/'+fileSystemRealmName, levels, "mycredstore"+counter, secretKeyAlias)
             );
 
-            if (!createScriptCheck.equals("y") && !createScriptCheck.equals("yes")) {
+            if (createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y")) { // Create a new script file, or overwrite the existing one
                 Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
                 Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.APPEND);
