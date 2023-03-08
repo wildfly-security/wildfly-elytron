@@ -183,46 +183,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0-jboss-1</version>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <release>8</release>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>compile-java9</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <release>9</release>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.basedir}/src/main/java9</compileSourceRoots>
-                            <outputDirectory>${project.build.directory}/classes/META-INF/versions/9</outputDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -230,7 +190,6 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Multi-Release>true</Multi-Release>
                             <Jar-Version>${project.version}</Jar-Version>
                             <Jar-Name>${project.artifactId}</Jar-Name>
                         </manifestEntries>
@@ -244,6 +203,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <!-- SOURCES -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -266,17 +226,6 @@
                     <reuseForks>false</reuseForks>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.directory}/classes</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
 
@@ -303,7 +252,7 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${version.jmockit}/jmockit-${version.jmockit}.jar ${modular.jdk.args} ${modular.jdk.props}</argLine>
+                        <argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${version.jmockit}/jmockit-${version.jmockit}.jar</argLine>
                         <!-- See also excludedGroups property in profiles -->
                     </configuration>
                 </plugin>
@@ -785,220 +734,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-
-    <profiles>
-        <profile>
-            <id>modularizedJdk</id>
-            <activation>
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
-                <!-- use version of jboss-logging that works much better with JDK9 -->
-                <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
-                <!-- 2.20.x doesn't start on JDK10-->
-                <version.surefire.plugin>2.19.1</version.surefire.plugin>
-            </properties>
-        </profile>
-        <profile>
-            <id>compatibilityCheck</id>
-            <activation>
-                <property>
-                    <name>!skipCompatibility</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-
-                    <!-- TODO Restore JAPICMP Comparison.
-
-                    <plugin>
-                        <groupId>com.github.siom79.japicmp</groupId>
-                        <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>0.13.0</version>
-                        <configuration>
-                            <oldVersion>
-                                <dependency>
-                                    <groupId>org.wildfly.security</groupId>
-                                    <artifactId>wildfly-elytron</artifactId>
-                                    <version>1.7.0.Final</version>
-                                    <type>jar</type>
-                                </dependency>
-                            </oldVersion>
-                            <newVersion>
-                                <file>
-                                    <path>${project.build.directory}/${project.artifactId}-${project.version}.${project.packaging}</path>
-                                </file>
-                            </newVersion>
-                            <parameter>
-                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
-                                <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-                                <overrideCompatibilityChangeParameters>
-                                    <overrideCompatibilityChangeParameter> allowing new method in interface if default impl provided 
-                                        <compatibilityChange>METHOD_NEW_DEFAULT</compatibilityChange>
-                                        <binaryCompatible>true</binaryCompatible>
-                                        <sourceCompatible>true</sourceCompatible>
-                                    </overrideCompatibilityChangeParameter>
-                                </overrideCompatibilityChangeParameters>
-                                <includes>
-                                    <include>org.wildfly.security</include>
-                                    <include>org.wildfly.security.asn1</include>
-                                    <include>org.wildfly.security.auth</include>
-                                    <include>org.wildfly.security.auth.callback</include>
-                                    <include>org.wildfly.security.auth.client</include>
-                                    <include>org.wildfly.security.auth.permission</include>
-                                    <include>org.wildfly.security.auth.principal</include>
-                                    <include>org.wildfly.security.auth.server</include>
-                                    <include>org.wildfly.security.auth.server.event</include>
-                                    <include>org.wildfly.security.auth.util</include>
-                                    <include>org.wildfly.security.authz</include>
-                                    <include>org.wildfly.security.credential</include>
-                                    <include>org.wildfly.security.credential.source</include>
-                                    <include>org.wildfly.security.credential.store</include>
-                                    <include>org.wildfly.security.evidence</include>
-                                    <include>org.wildfly.security.http</include>
-                                    <include>org.wildfly.security.key</include>
-                                    <include>org.wildfly.security.manager</include>
-                                    <include>org.wildfly.security.manager.action</include>
-                                    <include>org.wildfly.security.mechanism</include>
-                                    <include>org.wildfly.security.password</include>
-                                    <include>org.wildfly.security.password.interfaces</include>
-                                    <include>org.wildfly.security.password.spec</include>
-                                    <include>org.wildfly.security.permission</include>
-                                    <include>org.wildfly.security.sasl.util</include>
-                                    <include>org.wildfly.security.ssl</include>
-                                    <include>org.wildfly.security.x500</include>
-                                    <include>org.wildfly.security.x500.cert</include>
-                                </includes>
-                                <includeExclusively>true</includeExclusively>
-                            </parameter>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>cmp</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>javax.xml.bind</groupId>
-                                <artifactId>jaxb-api</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>com.sun.xml.bind</groupId>
-                                <artifactId>jaxb-core</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>com.sun.xml.bind</groupId>
-                                <artifactId>jaxb-impl</artifactId>
-                                <version>2.3.0</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>javax.activation</groupId>
-                                <artifactId>javax.activation-api</artifactId>
-                                <version>1.2.0</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                    -->
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>skip-default-tests</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>default-test</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>java8-test-profile</id>
-            <activation>
-                <property>
-                    <name>java8.home</name>
-                </property>
-            </activation>
-            <properties>
-                <modular.jdk.args/>
-                <modular.jdk.props/>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>java8-test</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <reportsDirectory>${project.build.directory}/surefire-reports/java8</reportsDirectory>
-                                    <jvm>${java8.home}/bin/java</jvm>
-                                    <additionalClasspathElements>
-                                        <additionalClasspathElement>${java8.home}/lib/tools.jar</additionalClasspathElement>
-                                    </additionalClasspathElements>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>java9-test-profile</id>
-            <activation>
-                <property>
-                    <name>java9.home</name>
-                </property>
-            </activation>
-            <properties>
-                <modular.jdk.args/>
-                <modular.jdk.props/>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>java9-test</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <reportsDirectory>${project.build.directory}/surefire-reports/java9</reportsDirectory>
-                                    <jvm>${java9.home}/bin/java</jvm>
-                                    <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
-                                    <additionalClasspathElements>
-                                        <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
-                                        <additionalClasspathElement>${java9.home}/lib/tools.jar</additionalClasspathElement>
-                                    </additionalClasspathElements>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <repositories>
         <repository>
