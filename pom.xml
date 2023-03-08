@@ -55,7 +55,9 @@
     </scm>
 
     <properties>
-        <jdk.min.version>11</jdk.min.version>
+        <maven.compiler.release>11</maven.compiler.release>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <version.com.fasterxml.jackson>2.13.4</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}.2</version.com.fasterxml.jackson.databind>
         <version.commons-cli>1.4</version.commons-cli>
@@ -140,7 +142,6 @@
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <release>8</release>
                             <buildDirectory>${project.build.directory}</buildDirectory>
                             <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
@@ -319,6 +320,7 @@
                             ${project.basedir}/sasl/otp/src/main/java/;
                             ${project.basedir}/sasl/plain/src/main/java/;
                             ${project.basedir}/sasl/scram/src/main/java/;
+                            ${project.basedir}/ssl/src/main/java9/;
                             ${project.basedir}/ssl/src/main/java/;
                             ${project.basedir}/tests/base/src/main/java/;
                             ${project.basedir}/tests/common/src/main/java/;

@@ -61,7 +61,7 @@ final class JDKSpecific {
     }
 
     /**
-     * Copies SSLParameters' fields available in java 8 and java 9.
+     * Copies SSLParameters' fields available in Java 9.
      *
      * @param original SSLParameters that should be applied to new instance
      * @return instance of SSLParameters with fields copied from original
