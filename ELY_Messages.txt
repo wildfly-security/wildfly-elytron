@@ -126,8 +126,8 @@
 28000 - 28999
 29000 - 29999
 30000 - 30999
-# Reserved For master / Elytron 2
 40000 - 40999 wildfly-elytron-ssh-util
+# Reserved For master / Elytron 2
 41000 - 41999 master
 42000 - 42999 master
 43000 - 43999 master
