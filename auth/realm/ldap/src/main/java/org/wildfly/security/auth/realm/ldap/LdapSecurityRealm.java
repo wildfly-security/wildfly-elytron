@@ -1263,7 +1263,11 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public void namingExceptionThrown(NamingExceptionEvent evt) {
-
+            if (log.isTraceEnabled()) {
+                log.tracef("namingExceptionThrown thrown: [%s], with explanation: [%s]. " +
+                                "Maybe persistent search not recognized by the LDAP server?",
+                        evt.getException().toString(), evt.getException().getExplanation());
+            }
         }
 
         private void invokeCacheUpdateListener(NamingEvent evt) {
