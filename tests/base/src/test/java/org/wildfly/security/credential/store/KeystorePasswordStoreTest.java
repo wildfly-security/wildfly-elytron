@@ -115,6 +115,7 @@ public class KeystorePasswordStoreTest {
         // setup vaults that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("TWO"))
                 .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
+                .setUseInitializedProvidersForPasswords(true)
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_TWO")
                 .addPassword("alias1", "secret-password-1")
@@ -122,6 +123,7 @@ public class KeystorePasswordStoreTest {
                 .build();
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("THREE"))
                 .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
+                .setUseInitializedProvidersForPasswords(true)
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_THREE")
                 .addPassword("db-pass-1", "1-secret-info")
@@ -132,6 +134,7 @@ public class KeystorePasswordStoreTest {
                 .build();
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("TO_DELETE"))
                 .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
+                .setUseInitializedProvidersForPasswords(true)
                 .setKeyStorePassword("secret_store_DELETE")
                 .addPassword("alias1", "secret-password-1")
                 .addPassword("alias2", "secret-password-2")

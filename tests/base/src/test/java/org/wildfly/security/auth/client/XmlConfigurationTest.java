@@ -148,6 +148,7 @@ public class XmlConfigurationTest {
         // setup vaults that need to be complete before a test starts
         CredentialStoreBuilder.get().setKeyStoreFile(stores.get("ONE"))
                 .setProviders(WildFlyElytronCredentialStoreProvider.getInstance())
+                .setUseInitializedProvidersForPasswords(true)
                 .setKeyStoreType("JCEKS")
                 .setKeyStorePassword("secret_store_ONE")
                 .addPassword("ladybird", "Elytron")

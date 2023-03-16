@@ -44,6 +44,7 @@ public class CredentialStoreBuilder {
 
     private ArrayList<Data> data = new ArrayList<>();
     private Provider[] providers;
+    private boolean useInitializedProvidersForPasswords = false;
 
     public CredentialStoreBuilder() { }
 
@@ -117,6 +118,11 @@ public class CredentialStoreBuilder {
         return this;
     }
 
+    public CredentialStoreBuilder setUseInitializedProvidersForPasswords(boolean useInitializedProvidersForPasswords) {
+        this.useInitializedProvidersForPasswords = useInitializedProvidersForPasswords;
+        return this;
+    }
+
     public void build() throws Exception {
         if (file == null) {
             throw new IllegalStateException("file has to be specified");
@@ -128,6 +134,7 @@ public class CredentialStoreBuilder {
         map.put("location", file);
         map.put("create", Boolean.TRUE.toString());
         if (type != null) map.put("keyStoreType", type);
+        map.put("providersForPasswords", Boolean.toString(useInitializedProvidersForPasswords));
         storeImpl.initialize(
             map,
             new CredentialStore.CredentialSourceProtectionParameter(

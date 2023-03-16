@@ -108,6 +108,7 @@ class CredentialStoreCommand extends Command {
     public static final String CREDENTIAL_TYPES = "credential-types";
     public static final String REMOVE_ALIAS_PARAM = "remove";
     public static final String ENTRY_TYPE_PARAM = "entry-type";
+    public static final String PROVIDERS_FOR_PASSWORDS_PARAM = "providers-for-passwords";
     public static final String SIZE_PARAM = "size";
 
     public static final String GENERATE_KEY_PAIR_PARAM = "generate-key-pair";
@@ -272,9 +273,11 @@ class CredentialStoreCommand extends Command {
 
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
+        Option w = new Option("w", PROVIDERS_FOR_PASSWORDS_PARAM, false, ElytronToolMessages.msg.cmdLineProvidersForPasswords());
         options.addOptionGroup(og);
         options.addOption(h);
         options.addOption(d);
+        options.addOption(w);
     }
 
     private static void readAttributesForView(Path path, String prefix, String attributes, Map<String, Object> attrs) {
@@ -392,6 +395,7 @@ class CredentialStoreCommand extends Command {
         implProps.putIfAbsent("create", Boolean.valueOf(createStorage).toString());
         if (csType.equals(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE)) {
             implProps.putIfAbsent("keyStoreType", "JCEKS");
+            implProps.put("providersForPasswords", Boolean.valueOf(cmdLine.hasOption(PROVIDERS_FOR_PASSWORDS_PARAM)).toString());
         }
         String implPropsKeyStoreType = implProps.get("keyStoreType");
         if (location == null && implPropsKeyStoreType != null && filebasedKeystoreTypes.contains(implPropsKeyStoreType.toUpperCase(Locale.ENGLISH))) {
