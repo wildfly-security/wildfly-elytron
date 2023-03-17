@@ -524,7 +524,7 @@
             </xsd:documentation>
         </xsd:annotation>
         <xsd:all minOccurs="0">
-            <xsd:element name="set-http-mechanism" type="name-type" minOccurs="0">
+            <xsd:element name="set-http-mechanism" type="selector-type" minOccurs="0">
                 <xsd:annotation>
                     <xsd:documentation>
                         WS client will use the credentials with this HTTP mechanism.

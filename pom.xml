@@ -140,7 +140,7 @@
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <release>8</release>
+                            <release>11</release>
                             <buildDirectory>${project.build.directory}</buildDirectory>
                             <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
@@ -282,6 +282,7 @@
                             ${project.basedir}/http/basic/src/main/java/;
                             ${project.basedir}/http/bearer/src/main/java/;
                             ${project.basedir}/http/cert/src/main/java/;
+                            ${project.basedir}/http/client/src/main/java/;
                             ${project.basedir}/http/deprecated/src/main/java/;
                             ${project.basedir}/http/digest/src/main/java/;
                             ${project.basedir}/http/external/src/main/java/;
@@ -544,6 +545,11 @@
             <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-http-cert</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-http-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1385,6 +1391,7 @@
         <module>http/basic</module>
         <module>http/bearer</module>
         <module>http/cert</module>
+        <module>http/client</module>
         <module>http/deprecated</module>
         <module>http/digest</module>
         <module>http/external</module>

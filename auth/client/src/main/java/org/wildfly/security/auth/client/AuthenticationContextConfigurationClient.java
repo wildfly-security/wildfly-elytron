@@ -382,7 +382,7 @@ public final class AuthenticationContextConfigurationClient {
      * Get the Http Mechanism Type to use for the given configuration.
      *
      * @param configuration the configuration (must not be {@code null})
-     * @return the WS-Security type to use
+     * @return the Http Mechanism type to use
      */
     public String getHttpMechanismType(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);

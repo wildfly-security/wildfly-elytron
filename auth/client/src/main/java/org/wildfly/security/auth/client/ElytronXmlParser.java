@@ -2558,14 +2558,14 @@ public final class ElytronXmlParser {
         String selector = null;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
-            if (reader.getAttributeLocalName(i).equals("name")) {
+            if (reader.getAttributeLocalName(i).equals("selector")) {
                 selector = reader.getAttributeValueResolved(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
         }
         if (selector == null) {
-            throw missingAttribute(reader, "name");
+            throw missingAttribute(reader, "selector");
         }
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
