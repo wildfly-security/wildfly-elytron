@@ -154,7 +154,8 @@ public final class ElytronXmlParser {
         VERSION_1_4("urn:elytron:client:1.4", VERSION_1_3),
         VERSION_1_5("urn:elytron:client:1.5", VERSION_1_4),
         VERSION_1_6("urn:elytron:client:1.6", VERSION_1_5),
-        VERSION_1_7("urn:elytron:client:1.7", VERSION_1_6);
+        VERSION_1_7("urn:elytron:client:1.7", VERSION_1_6),
+        VERSION_1_8("urn:elytron:client:1.8", VERSION_1_7);
 
         final String namespace;
 
@@ -1241,6 +1242,13 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 14);
                         Map<String, ?> webServices = parseWebServicesType(reader, xmlVersion);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useWebServices(webServices));
+                        break;
+                    }
+                    case "http-mechanism-selector": {
+                        if (isSet(foundBits, 15) || !xmlVersion.isAtLeast(Version.VERSION_1_8)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 15);
+                        final String selector = parseHttpMechanismSelectorType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useHttpMechanism(selector));
                         break;
                     }
                     default: {
@@ -2538,6 +2546,33 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return name;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    static String parseHttpMechanismSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String selector = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            if (reader.getAttributeLocalName(i).equals("name")) {
+                selector = reader.getAttributeValueResolved(i);
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (selector == null) {
+            throw missingAttribute(reader, "name");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return selector;
             } else {
                 throw reader.unexpectedContent();
             }
