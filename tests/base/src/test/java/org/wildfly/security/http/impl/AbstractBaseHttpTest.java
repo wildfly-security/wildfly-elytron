@@ -27,7 +27,9 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -50,6 +52,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
+import okhttp3.mockwebserver.RecordedRequest;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -130,6 +133,8 @@ public class AbstractBaseHttpTest {
 
     protected static class TestingHttpServerRequest implements HttpServerRequest {
 
+        private String contentType;
+        private String body;
         private Status result;
         private HttpServerMechanismsResponder responder;
         private String remoteUser;
@@ -137,6 +142,8 @@ public class AbstractBaseHttpTest {
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
         private Map<String, List<String>> requestHeaders = new HashMap<>();
+        private Map<Scope, HttpScope> scopes = new HashMap<>();
+        private HttpScope sessionScope;
 
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
@@ -173,6 +180,10 @@ public class AbstractBaseHttpTest {
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie) {
+            this(authorization, requestURI, cookie, null);
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie, HttpScope sessionScope) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
             }
@@ -224,6 +235,14 @@ public class AbstractBaseHttpTest {
                     }
                 });
             }
+            this.sessionScope = sessionScope;
+        }
+
+        public TestingHttpServerRequest(RecordedRequest serverRequest, HttpScope sessionScope) throws URISyntaxException {
+            this(new String[0], new URI(serverRequest.getRequestUrl().toString()), serverRequest.getHeader("Cookie"), sessionScope);
+            this.requestMethod = serverRequest.getMethod();
+            this.body = serverRequest.getBody().readUtf8();
+            this.contentType = serverRequest.getHeader("Content-Type");
         }
 
 
@@ -292,7 +311,11 @@ public class AbstractBaseHttpTest {
         }
 
         public String getRequestPath() {
-            throw new IllegalStateException();
+            try {
+                return requestURI.toURL().getPath();
+            } catch (MalformedURLException cause) {
+                throw new RuntimeException("Mal-formed request URL", cause);
+            }
         }
 
         public Map<String, List<String>> getParameters() {
@@ -308,6 +331,19 @@ public class AbstractBaseHttpTest {
         }
 
         public String getFirstParameterValue(String name) {
+            if ("application/x-www-form-urlencoded".equals(contentType)) {
+                if (body == null) {
+                    return null;
+                }
+
+                for (String keyValue : body.split("&")) {
+                    String key = keyValue.substring(0, keyValue.indexOf('='));
+
+                    if (key.equals(name)) {
+                        return keyValue.substring(keyValue.indexOf('=') + 1);
+                    }
+                }
+            }
             throw new IllegalStateException();
         }
 
@@ -332,39 +368,52 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope) {
-            return new HttpScope() {
+            if (Scope.SESSION.equals(scope) && sessionScope != null) {
+                return sessionScope;
+            }
 
-                @Override
-                public boolean exists() {
-                    return true;
-                }
+            HttpScope httpScope = scopes.get(scope);
 
-                @Override
-                public boolean create() {
-                    return false;
-                }
+            if (httpScope == null) {
+                httpScope = new HttpScope() {
 
-                @Override
-                public boolean supportsAttachments() {
-                    return true;
-                }
+                    Map<String, Object> attachments = new HashMap<>();
 
-                @Override
-                public boolean supportsInvalidation() {
-                    return false;
-                }
+                    @Override
+                    public boolean exists() {
+                        return true;
+                    }
 
-                @Override
-                public void setAttachment(String key, Object value) {
-                    // no-op
-                }
+                    @Override
+                    public boolean create() {
+                        return false;
+                    }
 
-                @Override
-                public Object getAttachment(String key) {
-                    return null;
-                }
+                    @Override
+                    public boolean supportsAttachments() {
+                        return true;
+                    }
 
-            };
+                    @Override
+                    public boolean supportsInvalidation() {
+                        return true;
+                    }
+
+                    @Override
+                    public void setAttachment(String key, Object value) {
+                        attachments.put(key, value);
+                    }
+
+                    @Override
+                    public Object getAttachment(String key) {
+                        return attachments.get(key);
+                    }
+
+                };
+                scopes.put(scope, httpScope);
+            }
+
+            return httpScope;
         }
 
         public Collection<String> getScopeIds(Scope scope) {
@@ -372,7 +421,10 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope, String id) {
-            throw new IllegalStateException();
+            if (Scope.SESSION.equals(scope) && sessionScope != null) {
+                return sessionScope;
+            }
+            return scopes.get(scope);
         }
 
         public void setRemoteUser (String remoteUser) {

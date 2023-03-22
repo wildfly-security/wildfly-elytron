@@ -74,7 +74,7 @@ public class OidcClientConfiguration {
     protected String providerUrl;
     protected String authUrl;
     protected String tokenUrl;
-    protected String logoutUrl;
+    protected String endSessionEndpointUrl;
     protected String accountUrl;
     protected String registerNodeUrl;
     protected String unregisterNodeUrl;
@@ -126,6 +126,16 @@ public class OidcClientConfiguration {
     protected boolean verifyTokenAudience = false;
 
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
+
+    private String postLogoutUri;
+
+    private boolean sessionRequiredOnLogout = true;
+
+    private String logoutUrl = "/logout";
+
+    private String logoutCallbackUrl = "/logout/callback";
+
+    private int logoutSessionWaitingLimit = 100;
 
     public OidcClientConfiguration() {
     }
@@ -185,7 +195,7 @@ public class OidcClientConfiguration {
     protected void resetUrls() {
         authUrl = null;
         tokenUrl = null;
-        logoutUrl = null;
+        endSessionEndpointUrl = null;
         accountUrl = null;
         registerNodeUrl = null;
         unregisterNodeUrl = null;
@@ -221,7 +231,7 @@ public class OidcClientConfiguration {
                     authUrl = config.getAuthorizationEndpoint();
                     issuerUrl = config.getIssuer();
                     tokenUrl = config.getTokenEndpoint();
-                    logoutUrl = config.getLogoutEndpoint();
+                    endSessionEndpointUrl = config.getLogoutEndpoint();
                     jwksUrl = config.getJwksUri();
                     if (authServerBaseUrl != null) {
                         // keycloak-specific properties
@@ -299,9 +309,9 @@ public class OidcClientConfiguration {
         return tokenUrl;
     }
 
-    public String getLogoutUrl() {
+    public String getEndSessionEndpointUrl() {
         resolveUrls();
-        return logoutUrl;
+        return endSessionEndpointUrl;
     }
 
     public String getAccountUrl() {
@@ -649,6 +659,45 @@ public class OidcClientConfiguration {
 
     public String getTokenSignatureAlgorithm() {
         return tokenSignatureAlgorithm;
+    }
+
+    public void setPostLogoutUri(String postLogoutUri) {
+        this.postLogoutUri = postLogoutUri;
+    }
+
+    public String getPostLogoutUri() {
+        return postLogoutUri;
+    }
+
+    public boolean isSessionRequiredOnLogout() {
+        return sessionRequiredOnLogout;
+    }
+
+    public void setSessionRequiredOnLogout(boolean sessionRequiredOnLogout) {
+        this.sessionRequiredOnLogout = sessionRequiredOnLogout;
+    }
+
+    public String getLogoutUrl() {
+        return logoutUrl;
+    }
+
+    public void setLogoutUrl(String logoutUrl) {
+        this.logoutUrl = logoutUrl;
+    }
+
+    public String getLogoutCallbackUrl() {
+        return logoutCallbackUrl;
+    }
+
+    public void setLogoutCallbackUrl(String logoutCallbackUrl) {
+        this.logoutCallbackUrl = logoutCallbackUrl;
+    }
+    public int getLogoutSessionWaitingLimit() {
+        return logoutSessionWaitingLimit;
+    }
+
+    public void setLogoutSessionWaitingLimit(int logoutSessionWaitingLimit) {
+        this.logoutSessionWaitingLimit = logoutSessionWaitingLimit;
     }
 
 }

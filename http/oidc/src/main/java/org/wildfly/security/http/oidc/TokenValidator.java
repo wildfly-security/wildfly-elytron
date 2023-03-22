@@ -55,10 +55,12 @@ public class TokenValidator {
     private static final int HEADER_INDEX = 0;
     private JwtConsumerBuilder jwtConsumerBuilder;
     private OidcClientConfiguration clientConfiguration;
+    private String tokenType;
 
     private TokenValidator(Builder builder) {
         this.jwtConsumerBuilder = builder.jwtConsumerBuilder;
         this.clientConfiguration = builder.clientConfiguration;
+        this.tokenType = builder.tokenType;
     }
 
     /**
@@ -96,10 +98,16 @@ public class TokenValidator {
      * @throws OidcException if the bearer token is invalid
      */
     public AccessToken parseAndVerifyToken(final String bearerToken) throws OidcException {
+        return new AccessToken(verify(bearerToken));
+    }
+
+    public JwtClaims verify(String bearerToken) throws OidcException {
+        JwtClaims jwtClaims;
+
         try {
             JwtContext jwtContext = setVerificationKey(bearerToken, jwtConsumerBuilder);
             jwtConsumerBuilder.setRequireSubject();
-            jwtConsumerBuilder.registerValidator(new TypeValidator("Bearer"));
+            jwtConsumerBuilder.registerValidator(new TypeValidator(tokenType));
             if (clientConfiguration.isVerifyTokenAudience()) {
                 jwtConsumerBuilder.setExpectedAudience(clientConfiguration.getResourceName());
             } else {
@@ -107,15 +115,15 @@ public class TokenValidator {
             }
             // second pass to validate
             jwtConsumerBuilder.build().processContext(jwtContext);
-            JwtClaims jwtClaims = jwtContext.getJwtClaims();
+            jwtClaims = jwtContext.getJwtClaims();
             if (jwtClaims == null) {
                 throw log.invalidBearerTokenClaims();
             }
-            return new AccessToken(jwtClaims);
         } catch (InvalidJwtException e) {
             log.tracef("Problem parsing bearer token: " + bearerToken, e);
             throw log.invalidBearerToken(e);
         }
+        return jwtClaims;
     }
 
     private JwtContext setVerificationKey(final String token, final JwtConsumerBuilder jwtConsumerBuilder) throws InvalidJwtException {
@@ -148,6 +156,8 @@ public class TokenValidator {
     }
 
     public static class Builder {
+
+        public String tokenType = "Bearer";
         private OidcClientConfiguration clientConfiguration;
         private String expectedIssuer;
         private String clientId;
@@ -155,6 +165,7 @@ public class TokenValidator {
         private PublicKeyLocator publicKeyLocator;
         private SecretKey clientSecretKey;
         private JwtConsumerBuilder jwtConsumerBuilder;
+        private boolean skipExpirationValidator;
 
         /**
          * Construct a new uninitialized instance.
@@ -197,10 +208,23 @@ public class TokenValidator {
             jwtConsumerBuilder = new JwtConsumerBuilder()
                     .setExpectedIssuer(expectedIssuer)
                     .setJwsAlgorithmConstraints(
-                            new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, expectedJwsAlgorithm))
-                    .setRequireExpirationTime();
+                            new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, expectedJwsAlgorithm));
+
+            if (!skipExpirationValidator) {
+                jwtConsumerBuilder.setRequireExpirationTime();
+            }
 
             return new TokenValidator(this);
+        }
+
+        public Builder setSkipExpirationValidator() {
+            this.skipExpirationValidator = true;
+            return this;
+        }
+
+        public Builder setTokenType(String tokenType) {
+            this.tokenType = tokenType;
+            return this;
         }
     }
 
