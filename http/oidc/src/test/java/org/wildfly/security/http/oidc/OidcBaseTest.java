@@ -279,6 +279,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
         WebClient webClient = new WebClient();
         webClient.setCssErrorHandler(new SilentCssErrorHandler());
         webClient.setJavaScriptErrorListener(new SilentJavaScriptErrorListener());
+        webClient.getOptions().setMaxInMemory(50000 * 1024);
         return webClient;
     }
 
@@ -291,7 +292,10 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     }
 
     protected HtmlInput loginToKeycloak(String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
-        WebClient webClient = getWebClient();
+        return loginToKeycloak(getWebClient(), username, password, requestUri, location, cookies);
+    }
+
+    protected HtmlInput loginToKeycloak(WebClient webClient, String username, String password, URI requestUri, String location, List<HttpServerCookie> cookies) throws IOException {
         if (cookies != null) {
             for (HttpServerCookie cookie : cookies) {
                 webClient.addCookie(getCookieString(cookie), requestUri.toURL(), null);
