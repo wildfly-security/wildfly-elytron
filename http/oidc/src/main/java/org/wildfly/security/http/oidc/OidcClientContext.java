@@ -137,8 +137,8 @@ public class OidcClientContext {
         }
 
         @Override
-        public String getLogoutUrl() {
-            return (this.logoutUrl != null) ? this.logoutUrl : delegate.getLogoutUrl();
+        public String getEndSessionEndpointUrl() {
+            return (this.endSessionEndpointUrl != null) ? this.endSessionEndpointUrl : delegate.getEndSessionEndpointUrl();
         }
 
         @Override

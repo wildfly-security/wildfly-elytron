@@ -27,7 +27,9 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -51,6 +53,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
+
+import okhttp3.mockwebserver.RecordedRequest;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -146,15 +150,19 @@ public class AbstractBaseHttpTest {
 
     protected static class TestingHttpServerRequest implements HttpServerRequest {
 
+        private String contentType;
+        private String body;
         private Status result;
         private HttpServerMechanismsResponder responder;
         private String remoteUser;
         private URI requestURI;
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
-        private Map<String, List<String>> requestHeaders = new HashMap<>();
+        private Map<String, List<String>> requestHeaders = new HashMap<>();HEAD
         private X500Principal testPrincipal = null;
         private Map<String, Object> sessionScopeAttachments = new HashMap<>();
+        private Map<Scope, HttpScope> scopes = new HashMap<>();
+        private HttpScope sessionScope;
 
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
@@ -220,6 +228,10 @@ public class AbstractBaseHttpTest {
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie) {
+            this(authorization, requestURI, cookie, null);
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, String cookie, HttpScope sessionScope) {
             if (authorization != null) {
                 requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
             }
@@ -240,6 +252,14 @@ public class AbstractBaseHttpTest {
                     }
                 }
             }
+            this.sessionScope = sessionScope;
+        }
+
+        public TestingHttpServerRequest(RecordedRequest serverRequest, HttpScope sessionScope) throws URISyntaxException {
+            this(new String[0], new URI(serverRequest.getRequestUrl().toString()), serverRequest.getHeader("Cookie"), sessionScope);
+            this.requestMethod = serverRequest.getMethod();
+            this.body = serverRequest.getBody().readUtf8();
+            this.contentType = serverRequest.getHeader("Content-Type");
         }
 
         public Status getResult() {
@@ -313,7 +333,11 @@ public class AbstractBaseHttpTest {
         }
 
         public String getRequestPath() {
-            throw new IllegalStateException();
+            try {
+                return requestURI.toURL().getPath();
+            } catch (MalformedURLException cause) {
+                throw new RuntimeException("Mal-formed request URL", cause);
+            }
         }
 
         public Map<String, List<String>> getParameters() {
@@ -329,6 +353,7 @@ public class AbstractBaseHttpTest {
         }
 
         public String getFirstParameterValue(String name) {
+
             List<String> key = requestHeaders.get("Authorization");
             if (name == "j_username"){
                 return key.get(0);
@@ -360,6 +385,7 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope) {
+
             if (scope.equals(Scope.SSL_SESSION)) {
                 return null;
             } else {
@@ -409,7 +435,10 @@ public class AbstractBaseHttpTest {
         }
 
         public HttpScope getScope(Scope scope, String id) {
-            throw new IllegalStateException();
+            if (Scope.SESSION.equals(scope) && sessionScope != null) {
+                return sessionScope;
+            }
+            return scopes.get(scope);
         }
 
         public void setRemoteUser(String remoteUser) {

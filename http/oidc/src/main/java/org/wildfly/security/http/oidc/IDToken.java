@@ -53,7 +53,11 @@ public class IDToken extends JsonWebToken {
     public static final String CLAIMS_LOCALES = "claims_locales";
     public static final String ACR = "acr";
     public static final String S_HASH = "s_hash";
+<<<<<<< HEAD
     public static final String NONCE = "nonce";
+=======
+    public static final String SID = "sid";
+>>>>>>> 4698b602c6 (OpenID Connect Logout support)
 
     /**
      * Construct a new instance.

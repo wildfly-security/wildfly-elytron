@@ -102,7 +102,7 @@ public class ServerRequest {
 
     public static void invokeLogout(OidcClientConfiguration deployment, String refreshToken) throws IOException, HttpFailure {
         HttpClient client = deployment.getClient();
-        String uri = deployment.getLogoutUrl();
+        String uri = deployment.getEndSessionEndpointUrl();
         List<NameValuePair> formparams = new ArrayList<>();
 
         formparams.add(new BasicNameValuePair(Oidc.REFRESH_TOKEN, refreshToken));
