@@ -19,6 +19,7 @@ package org.wildfly.security.http.client;
 
 import org.junit.Assert;
 import org.junit.Test;
+import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.client.ElytronXmlParser;
@@ -26,6 +27,7 @@ import org.wildfly.security.auth.client.InvalidAuthenticationConfigurationExcept
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.basic.BasicMechanismFactory;
+import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 
@@ -34,6 +36,8 @@ import java.net.http.HttpRequest;
 import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.security.AccessController.doPrivileged;
@@ -49,7 +53,7 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
             WildFlyElytronPasswordProvider.getInstance()
     };
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
-
+    protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
 
     @Test
@@ -74,6 +78,36 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
                 mechanism.evaluateRequest(testingHttpServerRequest);
                 Assert.assertEquals(Status.COMPLETE,testingHttpServerRequest.getResult());
+            }catch (Exception e){
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void testRequest2() throws Exception{
+        AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
+                doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
+
+        AuthenticationContext context = doPrivileged((PrivilegedAction<AuthenticationContext>) () -> {
+            try {
+                URL config = getClass().getResource("wildfly-config-http-client-basic.xml");
+                return ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI()).create();
+            } catch (Throwable t) {
+                throw new InvalidAuthenticationConfigurationException(t);
+            }
+        });
+        context.run(() -> {
+            try {
+                Map<String, Object> props = new HashMap<>();
+                props.put(CONFIG_REALM, "RealmUsersRoles");
+                props.put("org.wildfly.security.http.validate-digest-uri", "true");
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("quickstartUser", "RealmUsersRoles", "quickstartPwd1!"));
+                HttpRequest request = elytronHttpClient.getRequest2("http://localhost:8080/servlet-security/SecuredServlet");
+
+                //Test successful authentication
+                TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
+                mechanism.evaluateRequest(testingHttpServerRequest);
             }catch (Exception e){
                 throw new RuntimeException(e);
             }
