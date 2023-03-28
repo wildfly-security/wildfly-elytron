@@ -84,7 +84,6 @@ public class ElytronHttpClient {
     public HttpRequest getResponseHeader(String responseHeader) throws Exception {
 
         updateAuthParams(responseHeader);
-
         String realm = authParams.get("realm");
         String nonce = authParams.get("nonce");
         String opaque = authParams.get("opaque");
@@ -127,46 +126,6 @@ public class ElytronHttpClient {
         Pattern pattern = Pattern.compile("(\\w+)=([^,\\s]+)");
         Matcher matcher = pattern.matcher(authHeader);
 
-        while (matcher.find()) {
-            authParams.put(matcher.group(1), matcher.group(2));
-        }
-
-        for (String key : authParams.keySet()) {
-            String val = authParams.get(key);
-            if (val.charAt(0) == '"' && val.charAt(val.length() - 1) == '"') {
-                val = val.substring(1, val.length() - 1);
-                authParams.replace(key, val);
-            }
-        }
-    }
-
-    private String generateCNonce() {
-        return Long.toString(System.nanoTime());
-    }
-
-    public HttpRequest createDigestRequest(String uri) throws Exception {
-        String realm = authParams.getOrDefault("realm", null);
-        String domain = authParams.getOrDefault("domain", null);
-        String nonce = authParams.getOrDefault("nonce", null);
-        String opaque = authParams.getOrDefault("opaque", null);
-        String algorithm = authParams.getOrDefault("algorithm", "MD5");
-        String qop = authParams.getOrDefault("qop", null);
-        String uriPath = getUriPath(uri);
-        String cnonce = generateCNonce();
-        String ncount = String.format("%08x", Integer.parseInt(authParams.getOrDefault("ncount", String.valueOf(0))));
-
-        String resp;
-        if (qop == null) {
-            resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, "GET");
-        } else {
-            resp = computeDigestWithQop(uriPath, nonce, cnonce, ncount, userName, password, algorithm, realm, qop, "GET");
-        }
-
-        HttpRequest request = HttpRequest
-                .newBuilder()
-                .uri(new URI(uri))
-                .header("Authorization", "Digest " +
-                        "username=\"" + userName + "\", " +
                         "realm=\"" + realm + "\"," +
                         "nonce=\"" + nonce + "\", " +
                         "uri=\"" + uriPath + "\", " +

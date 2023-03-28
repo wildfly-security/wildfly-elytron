@@ -20,7 +20,6 @@ package org.wildfly.security.http.client;
 import org.junit.Assert;
 import org.junit.Test;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
-
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.client.ElytronXmlParser;
