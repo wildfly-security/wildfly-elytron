@@ -61,17 +61,52 @@ public class ElytronHttpClient {
         return response;
     }
 
-    public HttpRequest getRequest2(String uri) throws Exception{
+    public HttpRequest getResponseHeader(String responseHeader) throws Exception{
+
+        Map<String,String> authParams = getHeaderValue(responseHeader);
+
+        String realm = authParams.get("realm");
+        String domain = authParams.get("domain");
+        String nonce = authParams.get("nonce");
+        String opaque = authParams.get("opaque");
+        String algorithm = authParams.get("algorithm");
+        String qop = authParams.get("qop");
+
+        String path = "/test";
+        String uri = "http://localhost:8080"+path;
+
         String username = httpMechClientConfigUtil.getUsername(new URI(uri));
         String password = httpMechClientConfigUtil.getPassword(new URI(uri));
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(new URI(uri)).build();
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
-        String str = response.headers().allValues("www-authenticate").get(0);
 
+        String resp;
+        if(qop==null){
+            resp = computeDigestWithoutQop(path,nonce,username,password,"MD5",realm,"GET");
+        }else{
+            resp = computeDigestWithQop(path,nonce,"0a4f113b","00000001",username,password,"MD5",realm,qop,"GET");
+        }
+
+        HttpRequest request2 = HttpRequest
+                .newBuilder()
+                .uri(new URI(uri))
+                .header("Authorization","Digest " +
+                        "username=\"" + username + "\", " +
+                        "realm=\"" + realm + "\"," +
+                        "nonce=\"" + nonce + "\", " +
+                        "uri=\"" + path + "\", " +
+                        "qop=\"" + qop + "\", " +
+                        "nc=00000001, " +
+                        "cnonce=\"0a4f113b\", " +
+                        "response=\"" + resp + "\", " +
+                        "opaque=\"" + opaque + "\", " +
+                        "algorithm="+algorithm)
+                .build();
+        return request2;
+
+    }
+
+    public Map<String,String> getHeaderValue(String responseHeader){
         Pattern pattern = Pattern.compile("(\\w+)=([^,\\s]+)");
-        Matcher matcher = pattern.matcher(str);
+        Matcher matcher = pattern.matcher(responseHeader);
 
         Map<String, String> authParams = new HashMap<String, String>();
         while (matcher.find()) {
@@ -85,6 +120,18 @@ public class ElytronHttpClient {
                 authParams.replace(key,val);
             }
         }
+        return authParams;
+    }
+
+    public String getRequest2(String uri) throws Exception{
+        String username = httpMechClientConfigUtil.getUsername(new URI(uri));
+        String password = httpMechClientConfigUtil.getPassword(new URI(uri));
+        HttpRequest request = HttpRequest.newBuilder().uri(new URI(uri)).build();
+        HttpResponse<String> response =
+                client.send(request, HttpResponse.BodyHandlers.ofString());
+        String str = response.headers().allValues("www-authenticate").get(0);
+
+        Map<String,String> authParams = getHeaderValue(str);
 
         String realm = authParams.get("realm");
         String domain = authParams.get("domain");
@@ -92,6 +139,8 @@ public class ElytronHttpClient {
         String opaque = authParams.get("opaque");
         String algorithm = authParams.get("algorithm");
         String qop = authParams.get("qop");
+
+        System.out.println("nonce : " + nonce);
 
         String uriPath = getUriPath(uri);
 
@@ -112,12 +161,13 @@ public class ElytronHttpClient {
                         "uri=\"" + uriPath + "\", " +
                         "qop=\"" + qop + "\", " +
                         "nc=00000001, " +
-                        "cnonce=\"0a4f113b\", " +
+                        "cnonce=\"" + generateCNonce() +"\", " +
                         "response=\"" + resp + "\", " +
                         "opaque=\"" + opaque + "\", " +
                         "algorithm="+algorithm)
                 .build();
-        return request2;
+        HttpResponse<String> response2 = client.send(request2, HttpResponse.BodyHandlers.ofString());
+        return response2.statusCode()+"";
     }
 
     private static String computeDigestWithoutQop(String uri, String nonce, String username, String password, String algorithm, String realm, String method) throws NoSuchAlgorithmException {
@@ -174,5 +224,9 @@ public class ElytronHttpClient {
                 .build();
 
         return request;
+    }
+
+    private String generateCNonce() {
+        return Long.toString(System.nanoTime());
     }
 }

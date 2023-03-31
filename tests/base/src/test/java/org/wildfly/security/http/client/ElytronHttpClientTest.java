@@ -20,6 +20,7 @@ package org.wildfly.security.http.client;
 import org.junit.Assert;
 import org.junit.Test;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.client.ElytronXmlParser;
@@ -48,6 +49,8 @@ import static java.security.AccessController.doPrivileged;
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
 public class ElytronHttpClientTest extends AbstractBaseHttpTest {
+
+    private static final String NAME = ElytronHttpClientTest.class.getSimpleName();
 
     public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
             WildFlyElytronPasswordProvider.getInstance()
@@ -101,13 +104,18 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
             try {
                 Map<String, Object> props = new HashMap<>();
                 props.put(CONFIG_REALM, "RealmUsersRoles");
-                props.put("org.wildfly.security.http.validate-digest-uri", "true");
+                props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("quickstartUser", "RealmUsersRoles", "quickstartPwd1!"));
-                HttpRequest request = elytronHttpClient.getRequest2("http://localhost:8080/servlet-security/SecuredServlet");
+                TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
+                mechanism.evaluateRequest(request1);
+                TestingHttpServerResponse response = request1.getResponse();
+                HttpRequest request2 = elytronHttpClient.getResponseHeader(response.getAuthenticateHeader());
+                System.out.println(request2.headers());
 
                 //Test successful authentication
-                TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
+                TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
                 mechanism.evaluateRequest(testingHttpServerRequest);
+                Assert.assertEquals(Status.COMPLETE,testingHttpServerRequest.getResult());
             }catch (Exception e){
                 throw new RuntimeException(e);
             }
