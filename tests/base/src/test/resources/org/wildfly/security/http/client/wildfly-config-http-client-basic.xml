@@ -24,9 +24,9 @@
         </authentication-rules>
         <authentication-configurations>
             <configuration name="default-config">
-                <set-user-name name="quickstartUser"/>
+                <set-user-name name="user1"/>
                 <credentials>
-                    <clear-password password="quickstartPwd1!"/>
+                    <clear-password password="password1"/>
                 </credentials>
                 <http-mechanism-selector selector="BASIC"/>
             </configuration>

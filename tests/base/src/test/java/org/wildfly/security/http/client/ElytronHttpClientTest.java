@@ -20,6 +20,7 @@ package org.wildfly.security.http.client;
 import org.junit.Assert;
 import org.junit.Test;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.client.ElytronXmlParser;
@@ -73,7 +74,7 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
         });
         context.run(() -> {
             try {
-                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(),getCallbackHandler("quickstartUser", "test-realm", "quickstartPwd1!"));
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(),getCallbackHandler("user1", "test-realm", "password1"));
                 HttpRequest request = elytronHttpClient.getRequest("http://localhost:8080/servlet-security/SecuredServlet");
 
                 //Test successful authentication
@@ -104,7 +105,7 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
                 Map<String, Object> props = new HashMap<>();
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("quickstartUser", "RealmUsersRoles", "quickstartPwd1!"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password1"));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();

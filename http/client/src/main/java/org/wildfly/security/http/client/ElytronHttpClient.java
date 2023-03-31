@@ -62,10 +62,9 @@ public class ElytronHttpClient {
     public HttpResponse evaluateDigestMechanism(String uri) throws Exception {
 
         HttpRequest request;
-        if (lastURI != null && lastURI.equals(uri)) {
-            request = createDigestRequest(uri);
-        } else {
-            request = createDigestRequest(uri);
+        request = createDigestRequest(uri);
+
+        if(lastURI==null || !(lastURI.equals(uri))){
             lastURI = uri;
         }
 
@@ -113,7 +112,7 @@ public class ElytronHttpClient {
                         "uri=\"" + path + "\", " +
                         "qop=\"" + qop + "\", " +
                         "nc=00000001, " +
-                        "cnonce=\"0a4f113b\", " +
+                        "cnonce=\"" + generateCNonce() +"\", " +
                         "response=\"" + resp + "\", " +
                         "opaque=\"" + opaque + "\", " +
                         "algorithm=" + algorithm)
@@ -220,6 +219,15 @@ public class ElytronHttpClient {
         HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
         return response;
     }
+    public HttpResponse evaluateNoAuthMechanism(String uri) throws Exception{
+        HttpRequest request = HttpRequest
+                .newBuilder()
+                .uri(new URI(uri))
+                .build();
+
+        HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response;
+    }
 
     public HttpResponse connect(String uri) throws Exception {
         userName = httpMechClientConfigUtil.getUsername(new URI(uri));
@@ -230,19 +238,32 @@ public class ElytronHttpClient {
             switch (previousMechanism) {
                 case "basic":
                     response = evaluateBasicMechanism(uri);
+                    break;
                 case "digest":
                     response = evaluateDigestMechanism(uri);
+                    break;
+                case "noauth":
+                    response = evaluateNoAuthMechanism(uri);
+                    break;
             }
         } else {
-            HttpRequest request = HttpRequest.newBuilder().uri(new URI(uri)).build();
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            response = evaluateNoAuthMechanism(uri);
 
-            String str = response.headers().allValues("www-authenticate").get(0);
+            if(response.statusCode()==200){
+                previousMechanism = "noauth";
+                lastURI = uri;
+                return response;
+            }
 
-            if (str.startsWith("Basic ")) {
+            String authHeader = response.headers().allValues("www-authenticate").get(0);
+
+            if (authHeader.toLowerCase().startsWith("basic")) {
                 response = evaluateBasicMechanism(uri);
-            } else if (str.startsWith("Digest ")) {
+                previousMechanism = "basic";
+            } else if (authHeader.toLowerCase().startsWith("digest")) {
+                updateAuthParams(authHeader);
                 response = evaluateDigestMechanism(uri);
+                previousMechanism = "digest";
             }
         }
         return response;
