@@ -123,7 +123,7 @@ public class ElytronHttpClient {
         return authParams;
     }
 
-    public String getRequest2(String uri) throws Exception{
+    public HttpRequest getRequest2(String uri) throws Exception{
         String username = httpMechClientConfigUtil.getUsername(new URI(uri));
         String password = httpMechClientConfigUtil.getPassword(new URI(uri));
         HttpRequest request = HttpRequest.newBuilder().uri(new URI(uri)).build();
@@ -166,8 +166,7 @@ public class ElytronHttpClient {
                         "opaque=\"" + opaque + "\", " +
                         "algorithm="+algorithm)
                 .build();
-        HttpResponse<String> response2 = client.send(request2, HttpResponse.BodyHandlers.ofString());
-        return response2.statusCode()+"";
+        return request2;
     }
 
     private static String computeDigestWithoutQop(String uri, String nonce, String username, String password, String algorithm, String realm, String method) throws NoSuchAlgorithmException {
