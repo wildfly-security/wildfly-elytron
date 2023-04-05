@@ -22,20 +22,35 @@ import org.apache.commons.cli.Option;
 
 import java.io.BufferedReader;
 import java.io.Console;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import javax.crypto.SecretKey;
+
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.SecretKeyCredential;
+import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreException;
+import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
+import org.wildfly.security.encryption.SecretKeyUtil;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 
 /**
  * Base command class
@@ -48,7 +63,13 @@ public abstract class Command {
      */
     public static final int GENERAL_CONFIGURATION_ERROR = 7;
 
+    public static final int GENERAL_CONFIGURATION_WARNING = 1;
+
     public static final int INPUT_DATA_NOT_CONFIRMED = 3;
+
+    public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[] {
+            WildFlyElytronPasswordProvider.getInstance()
+    };
 
     private int status = 255;
 
@@ -106,7 +127,7 @@ public abstract class Command {
      * @param confirm confirm data after the first input
      * @param confirmPrompt confirmation text
      * @return data as user inputs it
-     * @throws Exception
+     * @throws Exception if a {@link BufferedReader} cannot be created
      */
     protected String prompt(boolean echo, String prompt, boolean confirm, String confirmPrompt) throws Exception {
         Console console = System.console();
@@ -205,6 +226,27 @@ public abstract class Command {
     }
 
     /**
+     * Print a warning message.
+     *
+     * @param warning The warning to be shown
+     */
+    protected void warningHandler(String warning) {
+        System.out.print("WARNING: ");
+        System.out.println(warning);
+    }
+
+    /**
+     * Set an {@value GENERAL_CONFIGURATION_ERROR} and raise the exception
+     *
+     * @param e The exception thrown during execution
+     * @throws Exception The exception to be handled by Elytron Tool
+     */
+    protected void errorHandler(Exception e) throws Exception {
+        setStatus(GENERAL_CONFIGURATION_ERROR);
+        throw e;
+    }
+
+    /**
      * Get the command debug option
      */
     public boolean isEnableDebug() {
@@ -270,4 +312,94 @@ public abstract class Command {
             }
         };
     }
+
+    /**
+     * Acquire a given secret key from a {@link CredentialStore}.
+     *
+     * @param alias the name for a secret key within the CredentialStore
+     * @return the requested {@link SecretKey}, or {@code null} if it could not be retrieved
+     * @throws CredentialStoreException when credential store initialization or an operation fails
+     * @throws NoSuchAlgorithmException if the credential store algorithm cannot be found
+     * @throws GeneralSecurityException when a secret key cannot be generated
+     * @throws Exception when an existing credential store does not contain the secret key
+     */
+    SecretKey getSecretKey(Boolean createCredentialStore, String credentialStoreLocation, String alias, Boolean populate,
+                           String inputRealmLocation) throws Exception {
+        CredentialStore credentialStore;
+        String csType = PropertiesCredentialStore.NAME;
+        try {
+            credentialStore = CredentialStore.getInstance(csType);
+        } catch (NoSuchAlgorithmException e) {
+            // fallback to load all possible providers
+            credentialStore = CredentialStore.getInstance(csType, getProvidersSupplier(null));
+        }
+        Map<String, String> implProps = new HashMap<>();
+        implProps.put("create", String.valueOf(createCredentialStore));
+        implProps.put("location", credentialStoreLocation);
+        implProps.put("modifiable", Boolean.TRUE.toString());
+        credentialStore.initialize(implProps);
+        try {
+            credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
+            System.out.println(ElytronToolMessages.msg.existingCredentialStore());
+        } catch (Exception e) {
+            if (!createCredentialStore) {
+                warningHandler(ElytronToolMessages.msg.skippingBlockMissingCredentialStore());
+                return null;
+            }
+            if (populate) {
+                SecretKey key = SecretKeyUtil.generateSecretKey(256);
+                Credential keyCredential = new SecretKeyCredential(key);
+                credentialStore.store(alias, keyCredential);
+                credentialStore.flush();
+            } else {
+                errorHandler(ElytronToolMessages.msg.cmdFileSystemPopulateUnspecified());
+            }
+        }
+        SecretKey key;
+        try {
+            key = credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
+        } catch (NullPointerException e) {
+            System.out.println(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(credentialStoreLocation, inputRealmLocation));
+            return null;
+        }
+
+        return key;
+    }
+}
+
+class Params {
+    static final String ALIAS_PARAM = "alias";
+    static final String BULK_CONVERT_PARAM = "bulk-convert";
+    static final String CREDENTIAL_STORE_LOCATION_PARAM = "credential-store";
+    static final String CREATE_CREDENTIAL_STORE_PARAM = "create";
+    static final String CREDENTIAL_STORE_TYPE_PARAM = "type";
+    static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
+    static final String ENCODED_PARAM = "encoded";
+    static final String FILE_PARAM = "file";
+    static final String DEBUG_PARAM = "debug";
+    static final String DIRECTORY_PARAM = "directory";
+    static final String HASH_ENCODING_PARAM = "hash-encoding";
+    static final String HELP_PARAM = "help";
+    static final String IMPLEMENTATION_PROPERTIES_PARAM = "properties";
+    static final String INPUT_LOCATION_PARAM = "input-location";
+    static final String ITERATION_PARAM = "iteration";
+    static final String KEYSTORE_PARAM = "keystore";
+    static final String LEVELS_PARAM = "levels";
+    static final String NAME_PARAM = "name";
+    static final String OTHER_PROVIDERS_PARAM = "other-providers";
+    static final String OUTPUT_LOCATION_PARAM = "output-location";
+    static final String PASSWORD_PARAM = "password";
+    static final String REALM_NAME_PARAM = "realm-name";
+    static final String SALT_PARAM = "salt";
+    static final String SECRET_KEY_ALIAS_PARAM = "secret-key";
+    static final String SILENT_PARAM = "silent";
+    static final String STORE_LOCATION_PARAM = "location";
+    static final String SUMMARY_PARAM = "summary";
+
+    // Other constants
+    static final Integer DEFAULT_LEVELS = 2;
+    static final String DEFAULT_SECRET_KEY_ALIAS = "key";
+    static final String FILE_SEPARATOR = File.separator;
+    static final String LINE_SEPARATOR = System.lineSeparator();
+    static final String SUMMARY_DIVIDER = "-".repeat(100);
 }

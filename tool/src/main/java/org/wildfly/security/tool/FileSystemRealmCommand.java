@@ -17,6 +17,18 @@
  */
 package org.wildfly.security.tool;
 
+import static org.wildfly.security.tool.Params.BULK_CONVERT_PARAM;
+import static org.wildfly.security.tool.Params.DEBUG_PARAM;
+import static org.wildfly.security.tool.Params.DIRECTORY_PARAM;
+import static org.wildfly.security.tool.Params.FILE_PARAM;
+import static org.wildfly.security.tool.Params.HELP_PARAM;
+import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
+import static org.wildfly.security.tool.Params.NAME_PARAM;
+import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.SILENT_PARAM;
+import static org.wildfly.security.tool.Params.SUMMARY_DIVIDER;
+import static org.wildfly.security.tool.Params.SUMMARY_PARAM;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -60,23 +72,12 @@ import org.wildfly.security.password.spec.PasswordSpec;
  */
 class FileSystemRealmCommand extends Command {
 
-    static final int GENERAL_CONFIGURATION_WARNING = 1;
     static final String FILE_SYSTEM_REALM_COMMAND = "filesystem-realm";
-    static final int SUMMARY_WIDTH = 100;
 
-    private static final String HELP_PARAM = "help";
-    private static final String DEBUG_PARAM = "debug";
-    private static final String SILENT_PARAM = "silent";
-    private static final String SUMMARY_PARAM = "summary";
     private static final String USERS_FILE_PARAM = "users-file";
     private static final String ROLES_FILE_PARAM = "roles-file";
-    private static final String OUTPUT_LOCATION_PARAM = "output-location";
     private static final String FILESYSTEM_REALM_NAME_PARAM = "filesystem-realm-name";
     private static final String SECURITY_DOMAIN_NAME_PARAM = "security-domain-name";
-    private static final String BULK_CONVERT_PARAM = "bulk-convert";
-    private static final String FILE_ARG = "file";
-    private static final String DIRECTORY_ARG = "directory";
-    private static final String NAME_ARG = "name";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "converted-properties-filesystem-realm";
     private static final String DEFAULT_SECURITY_DOMAIN_NAME = "converted-properties-security-domain";
 
@@ -96,27 +97,27 @@ class FileSystemRealmCommand extends Command {
         Option option;
 
         option = new Option("u", USERS_FILE_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmUsersFileDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(FILE_PARAM);
         options.addOption(option);
 
         option = new Option("r", ROLES_FILE_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmRolesFileDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(FILE_PARAM);
         options.addOption(option);
 
         option = new Option("o", OUTPUT_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmOutputLocationDesc());
-        option.setArgName(DIRECTORY_ARG);
+        option.setArgName(DIRECTORY_PARAM);
         options.addOption(option);
 
         option = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmBulkConvertDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("f", FILESYSTEM_REALM_NAME_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmFileSystemRealmNameDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("s", SECURITY_DOMAIN_NAME_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmSecurityDomainNameDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -226,12 +227,12 @@ class FileSystemRealmCommand extends Command {
         if (cmdLine.hasOption(SUMMARY_PARAM)) {
             summaryMode = true;
             summaryString = new StringBuilder();
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append("Summary for execution of Elytron-Tool command FileSystemRealm");
-            summaryString.append(System.getProperty("line.separator"));
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
         }
         printDuplicatesWarning(cmdLine);
 
@@ -243,7 +244,7 @@ class FileSystemRealmCommand extends Command {
         if (bulkConvert == null) {
             if (summaryMode) {
                 summaryString.append("Options were specified via CLI, converting single users-roles combination");
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
             }
 
             if (usersFileOption == null) {
@@ -268,7 +269,7 @@ class FileSystemRealmCommand extends Command {
         } else {
             if (summaryMode) {
                 summaryString.append(String.format("Options were specified via descriptor file: %s, converting multiple users-roles combinations", bulkConvert));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
             }
             parseDescriptorFile(bulkConvert);
         }
@@ -277,11 +278,11 @@ class FileSystemRealmCommand extends Command {
         createWildFlyScript();
 
         if (summaryMode) {
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append("End of summary");
-            summaryString.append(System.getProperty("line.separator"));
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
+            summaryString.append(LINE_SEPARATOR);
+            summaryString.append(SUMMARY_DIVIDER);
             System.out.println(summaryString);
         }
 
@@ -306,13 +307,8 @@ class FileSystemRealmCommand extends Command {
                 true);
     }
 
-    /**
-     * Prints out a warning message if silentMode is not enabled and adds the warning to the summary
-     * if summaryMode is enabled
-     *
-     * @param warning The warning to be shown
-     */
-    private void warningHandler(String warning) {
+    @Override
+    protected void warningHandler(String warning) {
         warningOccurred = true;
         if (! silentMode) {
             System.out.print("WARNING: ");
@@ -321,23 +317,18 @@ class FileSystemRealmCommand extends Command {
         if (summaryMode) {
             summaryString.append("WARNING: ");
             summaryString.append(warning);
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
         }
     }
 
-    /**
-     * Determines if a summary needs to be printed and prints summary after an error is thrown
-     *
-     * @param e The exception thrown during execution
-     * @throws Exception The exception to be handled by Elytron Tool
-     */
-    private void errorHandler(Exception e) throws Exception {
+    @Override
+    protected void errorHandler(Exception e) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
         if (summaryMode) {
             summaryString.append("Error was thrown during execution:");
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append(e.getMessage());
-            System.out.println(System.getProperty("line.separator") + summaryString.toString());
+            System.out.println(LINE_SEPARATOR + summaryString.toString());
         }
         throw e;
     }
@@ -348,26 +339,26 @@ class FileSystemRealmCommand extends Command {
      * @param count The amount of descriptor blocks in the file
      */
     private void printDescriptorBlocks(int count) {
-        summaryString.append(System.getProperty("line.separator"));
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
+        summaryString.append(LINE_SEPARATOR);
         summaryString.append("Found following users-roles combinations, null indicates missing required component:");
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
         for (int i = 0; i < count; i++) {
             StringBuilder summary = new StringBuilder();
             summary.append("\tPrinting summary for block ");
             summary.append(i + 1);
-            summary.append(System.getProperty("line.separator"));
+            summary.append(LINE_SEPARATOR);
             Descriptor descriptor = descriptors.get(i);
             for (String param : PARAMS_LIST) {
                 summary.append("\t\t");
                 summary.append(param);
                 summary.append(" - ");
                 summary.append(getDescriptorParam(param, descriptor));
-                summary.append(System.getProperty("line.separator"));
+                summary.append(LINE_SEPARATOR);
             }
             summaryString.append(summary);
         }
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
     }
 
     /**
@@ -583,7 +574,7 @@ class FileSystemRealmCommand extends Command {
                 }
                 if (summaryMode) {
                     summaryString.append(String.format("Added roles: %s for user %s.", ArrayUtils.toString(roles), user));
-                    summaryString.append(System.getProperty("line.separator"));
+                    summaryString.append(LINE_SEPARATOR);
                 }
             }
             usersMap.forEach((key,value) -> {
@@ -648,17 +639,17 @@ class FileSystemRealmCommand extends Command {
 
             if (summaryMode) {
                 summaryString.append(String.format("Configured script for WildFly named %s.sh at %s.", fileSystemRealmName, fullOutputPath));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
                 summaryString.append("The script is using the following names:");
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
                 summaryString.append(String.format("Name of filesystem-realm: %s", fileSystemRealmName));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
             }
 
             if (securityDomainName != null && !securityDomainName.isEmpty()) {
                 if (summaryMode) {
                     summaryString.append(String.format("Name of security-domain: %s",securityDomainName));
-                    summaryString.append(System.getProperty("line.separator"));
+                    summaryString.append(LINE_SEPARATOR);
                 }
             } else {
                 warningHandler(String.format("No name provided for security-domain, using default security-domain name for %s.", usersFile));

@@ -17,23 +17,39 @@
  */
 package org.wildfly.security.tool;
 
+import static org.wildfly.security.tool.Params.BULK_CONVERT_PARAM;
+import static org.wildfly.security.tool.Params.CREATE_CREDENTIAL_STORE_PARAM;
+import static org.wildfly.security.tool.Params.CREDENTIAL_STORE_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.DEBUG_PARAM;
+import static org.wildfly.security.tool.Params.DEFAULT_LEVELS;
+import static org.wildfly.security.tool.Params.DEFAULT_SECRET_KEY_ALIAS;
+import static org.wildfly.security.tool.Params.DIRECTORY_PARAM;
+import static org.wildfly.security.tool.Params.ENCODED_PARAM;
+import static org.wildfly.security.tool.Params.FILE_PARAM;
+import static org.wildfly.security.tool.Params.HASH_ENCODING_PARAM;
+import static org.wildfly.security.tool.Params.HELP_PARAM;
+import static org.wildfly.security.tool.Params.INPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.LEVELS_PARAM;
+import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
+import static org.wildfly.security.tool.Params.NAME_PARAM;
+import static org.wildfly.security.tool.Params.OUTPUT_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.REALM_NAME_PARAM;
+import static org.wildfly.security.tool.Params.SECRET_KEY_ALIAS_PARAM;
+import static org.wildfly.security.tool.Params.SILENT_PARAM;
+import static org.wildfly.security.tool.Params.SUMMARY_DIVIDER;
+import static org.wildfly.security.tool.Params.SUMMARY_PARAM;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import org.apache.commons.cli.CommandLine;
@@ -44,12 +60,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.wildfly.security.auth.realm.FileSystemRealmUtil;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.SecretKeyCredential;
-import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
-import org.wildfly.security.encryption.SecretKeyUtil;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.Encoding;
 
 /**
@@ -60,35 +70,13 @@ import org.wildfly.security.password.spec.Encoding;
  */
 
 class FileSystemEncryptRealmCommand extends Command {
-    static final int GENERAL_CONFIGURATION_WARNING = 1;
     static final String FILE_SYSTEM_ENCRYPT_COMMAND = "filesystem-realm-encrypt";
-    static final int SUMMARY_WIDTH = 100;
 
-    private static final String HELP_PARAM = "help";
-    private static final String DEBUG_PARAM = "debug";
-    private static final String SILENT_PARAM = "silent";
-    private static final String SUMMARY_PARAM = "summary";
-    private static final String INPUT_REALM_LOCATION_PARAM = "input-location";
-    private static final String REALM_NAME_PARAM = "realm-name";
-    private static final String OUTPUT_REALM_LOCATION_PARAM = "output-location";
-    private static final String CREDENTIAL_STORE_LOCATION_PARAM = "credential-store";
-    private static final String CREATE_CREDENTIAL_STORE_PARAM = "create";
-    private static final String SECRET_KEY_ALIAS_PARAM = "secret-key";
-    private static final String HASH_ENCODING_PARAM = "hash-encoding";
-    private static final String ENCODED_PARAM = "encoded";
-    private static final String LEVELS_PARAM = "levels";
     private static final String POPULATE_SECRET_KEY_PARAM = "populate";
-    private static final String BULK_CONVERT_PARAM = "bulk-convert";
-    private static final String FILE_ARG = "file";
-    private static final String DIRECTORY_ARG = "directory";
-    private static final String NAME_ARG = "name";
     private static final String DEFAULT_FILESYSTEM_REALM_NAME = "encrypted-filesystem-realm";
-    public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
-            WildFlyElytronPasswordProvider.getInstance()
-    };
 
     private final List<Descriptor> descriptors = new ArrayList<>();
-    private final List<String> PARAMS_LIST = new ArrayList<>(Arrays.asList(INPUT_REALM_LOCATION_PARAM, OUTPUT_REALM_LOCATION_PARAM));
+    private final List<String> PARAMS_LIST = new ArrayList<>(Arrays.asList(INPUT_LOCATION_PARAM, OUTPUT_LOCATION_PARAM));
 
     private final Options options;
     private final CommandLineParser parser = new DefaultParser();
@@ -102,48 +90,48 @@ class FileSystemEncryptRealmCommand extends Command {
         options = new Options();
         Option option;
 
-        option = new Option("i", INPUT_REALM_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptInputLocationDesc());
-        option.setArgName(DIRECTORY_ARG);
+        option = new Option("i", INPUT_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptInputLocationDesc());
+        option.setArgName(DIRECTORY_PARAM);
         options.addOption(option);
 
         option = new Option("r", REALM_NAME_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptNewRealmDesc());
-        option.setArgName(DIRECTORY_ARG);
+        option.setArgName(DIRECTORY_PARAM);
         options.addOption(option);
 
-        option = new Option("o", OUTPUT_REALM_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptOutputLocationDesc());
-        option.setArgName(DIRECTORY_ARG);
+        option = new Option("o", OUTPUT_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptOutputLocationDesc());
+        option.setArgName(DIRECTORY_PARAM);
         options.addOption(option);
 
         option = new Option("c", CREDENTIAL_STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptCredentialStoreDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(FILE_PARAM);
         options.addOption(option);
 
         option = new Option("a", CREATE_CREDENTIAL_STORE_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptCreateCredentialStoreDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("s", SECRET_KEY_ALIAS_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptSecretKeyDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("e", HASH_ENCODING_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptHashEncodingDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("f", ENCODED_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptEncodedDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("l", LEVELS_PARAM, true, ElytronToolMessages.msg.cmdFileSystemEncryptLevelsDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("p", POPULATE_SECRET_KEY_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmEncryptPopulateDesc());
-        option.setArgName(NAME_ARG);
+        option.setArgName(NAME_PARAM);
         options.addOption(option);
 
         option = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cmdFileSystemRealmEncryptBulkConvertDesc());
-        option.setArgName(FILE_ARG);
+        option.setArgName(FILE_PARAM);
         options.addOption(option);
 
         option = Option.builder().longOpt(HELP_PARAM).desc(ElytronToolMessages.msg.cmdLineHelp()).build();
@@ -296,12 +284,12 @@ class FileSystemEncryptRealmCommand extends Command {
         if (cmdLine.hasOption(SUMMARY_PARAM)) {
             summaryMode = true;
             summaryString = new StringBuilder();
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append("Summary for execution of Elytron-Tool command FileSystemRealmEncrypt");
-            summaryString.append(System.getProperty("line.separator"));
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
         }
         printDuplicatesWarning(cmdLine);
 
@@ -358,7 +346,7 @@ class FileSystemEncryptRealmCommand extends Command {
             }
 
             if (levelsOption == null) {
-                descriptor.setLevels(2);
+                descriptor.setLevels(DEFAULT_LEVELS);
             } else {
                 try {
                     descriptor.setLevels(Integer.parseInt(levelsOption));
@@ -390,7 +378,7 @@ class FileSystemEncryptRealmCommand extends Command {
             if (secretKeyAliasOption != null) {
                 descriptor.setSecretKeyAlias(secretKeyAliasOption);
             } else {
-                descriptor.setSecretKeyAlias("key");
+                descriptor.setSecretKeyAlias(DEFAULT_SECRET_KEY_ALIAS);
             }
             descriptors.add(descriptor);
             checkDescriptorFields(descriptor);
@@ -401,7 +389,7 @@ class FileSystemEncryptRealmCommand extends Command {
         } else {
             if (summaryMode) {
                 summaryString.append(String.format("Options were specified via descriptor file: %s, converting multiple old filesystem realm", bulkConvert));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
             }
             parseDescriptorFile(bulkConvert);
         }
@@ -410,11 +398,11 @@ class FileSystemEncryptRealmCommand extends Command {
         createWildFlyScript();
 
         if (summaryMode) {
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(SUMMARY_DIVIDER);
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append("End of summary");
-            summaryString.append(System.getProperty("line.separator"));
-            summaryString.append(String.join("", Collections.nCopies(SUMMARY_WIDTH, "-")));
+            summaryString.append(LINE_SEPARATOR);
+            summaryString.append(SUMMARY_DIVIDER);
             System.out.println(summaryString);
         }
 
@@ -445,7 +433,8 @@ class FileSystemEncryptRealmCommand extends Command {
      *
      * @param warning The warning to be shown
      */
-    private void warningHandler(String warning) {
+    @Override
+    protected void warningHandler(String warning) {
         warningOccurred = true;
         if (!silentMode) {
             System.out.print("WARNING: ");
@@ -454,7 +443,7 @@ class FileSystemEncryptRealmCommand extends Command {
         if (summaryMode) {
             summaryString.append("WARNING: ");
             summaryString.append(warning);
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
         }
     }
 
@@ -464,13 +453,14 @@ class FileSystemEncryptRealmCommand extends Command {
      * @param e The exception thrown during execution
      * @throws Exception The exception to be handled by Elytron Tool
      */
-    private void errorHandler(Exception e) throws Exception {
+    @Override
+    protected void errorHandler(Exception e) throws Exception {
         setStatus(GENERAL_CONFIGURATION_ERROR);
         if (summaryMode) {
             summaryString.append("Error was thrown during execution:");
-            summaryString.append(System.getProperty("line.separator"));
+            summaryString.append(LINE_SEPARATOR);
             summaryString.append(e.getMessage());
-            System.out.println(System.getProperty("line.separator") + summaryString.toString());
+            System.out.println(LINE_SEPARATOR + summaryString.toString());
         }
         throw e;
     }
@@ -481,26 +471,26 @@ class FileSystemEncryptRealmCommand extends Command {
      * @param count The amount of descriptor blocks in the file
      */
     private void printDescriptorBlocks(int count) {
-        summaryString.append(System.getProperty("line.separator"));
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
+        summaryString.append(LINE_SEPARATOR);
         summaryString.append("Found following unencrypted filesystem-realm combinations, null indicates missing required component:");
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
         for (int i = 0; i < count; i++) {
             StringBuilder summary = new StringBuilder();
             summary.append("\tPrinting summary for block ");
             summary.append(i + 1);
-            summary.append(System.getProperty("line.separator"));
+            summary.append(LINE_SEPARATOR);
             Descriptor descriptor = descriptors.get(i);
             for (String param : PARAMS_LIST) {
                 summary.append("\t\t");
                 summary.append(param);
                 summary.append(" - ");
                 summary.append(getDescriptorParam(param, descriptor));
-                summary.append(System.getProperty("line.separator"));
+                summary.append(LINE_SEPARATOR);
             }
             summaryString.append(summary);
         }
-        summaryString.append(System.getProperty("line.separator"));
+        summaryString.append(LINE_SEPARATOR);
     }
 
     /**
@@ -512,9 +502,9 @@ class FileSystemEncryptRealmCommand extends Command {
      */
     private String getDescriptorParam(String param, Descriptor descriptor) {
         switch (param) {
-            case INPUT_REALM_LOCATION_PARAM:
+            case INPUT_LOCATION_PARAM:
                 return descriptor.getInputRealmLocation();
-            case OUTPUT_REALM_LOCATION_PARAM:
+            case OUTPUT_LOCATION_PARAM:
                 return descriptor.getOutputRealmLocation();
             case REALM_NAME_PARAM:
                 return descriptor.getFileSystemRealmName();
@@ -551,10 +541,10 @@ class FileSystemEncryptRealmCommand extends Command {
                     String option = parts[0];
                     String arg = parts[1];
                     switch (option) {
-                        case INPUT_REALM_LOCATION_PARAM:
+                        case INPUT_LOCATION_PARAM:
                             descriptor.setInputRealmLocation(arg);
                             break;
-                        case OUTPUT_REALM_LOCATION_PARAM:
+                        case OUTPUT_LOCATION_PARAM:
                             descriptor.setOutputRealmLocation(arg);
                             break;
                         case REALM_NAME_PARAM:
@@ -633,7 +623,7 @@ class FileSystemEncryptRealmCommand extends Command {
             descriptor.setEncoded(true);
         }
         if(descriptor.getLevels() == null) {
-            descriptor.setLevels(2);
+            descriptor.setLevels(DEFAULT_LEVELS);
         }
         if(descriptor.getCredentialStore() == null) {
             warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockCredentialStoreLocation(count));
@@ -648,7 +638,7 @@ class FileSystemEncryptRealmCommand extends Command {
         }
 
         if(descriptor.getSecretKeyAlias() == null) {
-            descriptor.setSecretKeyAlias("key");
+            descriptor.setSecretKeyAlias(DEFAULT_SECRET_KEY_ALIAS);
         }
 
         if (missingRequiredValue) {
@@ -667,46 +657,11 @@ class FileSystemEncryptRealmCommand extends Command {
             System.out.println(ElytronToolMessages.msg.fileSystemRealmEncryptCreatingRealm(descriptor.getInputRealmLocation()));
 
             if (checkDescriptorFields(descriptor)) continue;
-            CredentialStore credentialStore;
-            // check if credential-store and secret-key-alias are both specified, or both null
-            String csType = PropertiesCredentialStore.NAME;
-            try {
-                credentialStore = CredentialStore.getInstance(csType);
-            } catch (NoSuchAlgorithmException e) {
-                // fallback to load all possible providers
-                credentialStore = CredentialStore.getInstance(csType, getProvidersSupplier(null));
-            }
-            Map<String, String> implProps = new HashMap<>();
-            implProps.put("create", String.valueOf(descriptor.getCreateCredentialStore()));
-            implProps.put("location", descriptor.getCredentialStore());
-            implProps.put("modifiable", Boolean.TRUE.toString());
-            credentialStore.initialize(implProps);
-            try {
-                credentialStore.retrieve(descriptor.getSecretKeyAlias(), SecretKeyCredential.class).getSecretKey();
-                System.out.println(ElytronToolMessages.msg.existingCredentialStore());
-            } catch (Exception e) {
-                if (!descriptor.getCreateCredentialStore()) {
-                    warningHandler(ElytronToolMessages.msg.skippingBlockMissingCredentialStore());
-                    descriptor.reset();
-                    continue;
-                }
-                if (descriptor.getPopulate()) {
-                    SecretKey key = SecretKeyUtil.generateSecretKey(256);
-                    Credential keyCredential = new SecretKeyCredential(key);
-                    credentialStore.store(descriptor.getSecretKeyAlias(), keyCredential);
-                    credentialStore.flush();
-                } else {
-                    errorHandler(ElytronToolMessages.msg.cmdFileSystemPopulateUnspecified());
-                }
-            }
-            SecretKey key;
-            try {
-                key = credentialStore.retrieve(descriptor.getSecretKeyAlias(), SecretKeyCredential.class).getSecretKey();
-            } catch (NullPointerException e) {
-                System.out.println(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(descriptor.getCredentialStore(), descriptor.getInputRealmLocation()));
-                descriptor.reset();
-                continue;
-            }
+
+            // Load secret key
+            SecretKey key = getSecretKey(descriptor.getCreateCredentialStore(), descriptor.getCredentialStore(),
+                    descriptor.getSecretKeyAlias(), descriptor.getPopulate(), descriptor.getInputRealmLocation());
+            if (key == null) continue;
 
             FileSystemSecurityRealm oldFileSystemRealm = FileSystemSecurityRealm.builder()
                     .setRoot(Paths.get(descriptor.getInputRealmLocation()))
@@ -742,7 +697,7 @@ class FileSystemEncryptRealmCommand extends Command {
             int levels = descriptor.getLevels();
 
             if(secretKeyAlias == null) {
-                secretKeyAlias = "key";
+                secretKeyAlias = DEFAULT_SECRET_KEY_ALIAS;
             }
             String createScriptCheck = "";
 
@@ -776,11 +731,11 @@ class FileSystemEncryptRealmCommand extends Command {
 
             if (summaryMode) {
                 summaryString.append(String.format("Configured script for WildFly at %s", scriptPath));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
                 summaryString.append("The script is using the following names:");
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
                 summaryString.append(String.format("Name of filesystem-realm: %s", fileSystemRealmName));
-                summaryString.append(System.getProperty("line.separator"));
+                summaryString.append(LINE_SEPARATOR);
             }
 
             List<String> scriptLines = Arrays.asList(
