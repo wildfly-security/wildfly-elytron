@@ -378,6 +378,7 @@ class Params {
     static final String FILE_PARAM = "file";
     static final String DEBUG_PARAM = "debug";
     static final String DIRECTORY_PARAM = "directory";
+    static final String HASH_CHARSET_PARAM = "hash-charset";
     static final String HASH_ENCODING_PARAM = "hash-encoding";
     static final String HELP_PARAM = "help";
     static final String IMPLEMENTATION_PROPERTIES_PARAM = "properties";

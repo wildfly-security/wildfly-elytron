@@ -473,9 +473,9 @@ public interface ElytronToolMessages extends BasicLogger {
     String cmdFileSystemRealmBulkConvertDesc();
 
     @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
-            "The options realm-name, hash-encoding, levels, secret-key, create, and populate are optional. %n" +
+            "The options realm-name, hash-encoding, hash-charset, levels, secret-key, create, populate, keystore, type, password, password-env, and key-pair are optional. %n" +
             "Values are required for the following options: input-location, output-location, and credential-store. %n" +
-            "The default values of realm-name, hash-encoding, levels, secret-key, create, and populate are encrypted-filesystem-realm, BASE64, 2, key, true, and true respectively. %n" +
+            "The default values of realm-name, hash-encoding, hash-charset, levels, secret-key, create, and populate are encrypted-filesystem-realm, BASE64, UTF-8, 2, key, true, and true respectively. %n" +
             "If one or more these required values are not set, the corresponding block is skipped. %n" +
             "Each option must be specified in the following format: <option>:<value>. The order of options does not matter. %n" +
             "Blocks of options must be separated by a blank line.")
@@ -490,6 +490,9 @@ public interface ElytronToolMessages extends BasicLogger {
 
     @Message(id = NONE, value = "Unable to locate Secret Key with Credential Store located at %s. Skipping realm located at %s.")
     String cmdFileSystemEncryptionNoSecretKey(String credentialStore, String realmLocation);
+
+    @Message(id = NONE, value = "The character set used to convert the password string to a byte array. Defaults to UTF-8.")
+    String cmdFileSystemRealmIntegrityHashCharsetDesc();
 
     @Message(id = NONE, value = "Suppresses all output except errors and prompts.")
     String cmdFileSystemRealmSilentDesc();

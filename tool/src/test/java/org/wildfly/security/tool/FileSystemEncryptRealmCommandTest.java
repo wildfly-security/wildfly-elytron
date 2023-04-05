@@ -37,7 +37,11 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 
-public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
+/**
+ * @author <a href="mailto:araskar@redhat.com">Ashpan Raskar</a>
+ * @author <a href="mailto:carodrig@redhat.com">Cameron Rodriguez</a>
+ */
+public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
 
     private static final String RELATIVE_BASE_DIR = "./target/test-classes/filesystem-encrypt/";
     private static final String CREDENTIAL_STORE_PATH = RELATIVE_BASE_DIR + "mycredstore.cs";
@@ -107,7 +111,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
     public void testBulk() throws Exception {
         String descriptorFileLocation = "./target/test-classes/bulk-encryption-conversion-desc";
         runCommand(descriptorFileLocation, 0);
-        String[] files = new String[]{"multiple-credential-types/O/OBWGC2LOKVZWK4Q.xml", "multiple-credential-types/O/ONQWY5DFMRKXGZLS.xml", "multiple-credential-types/O/OVZWK4RUGI.xml", "multiple-credential-types/M/MFXG65DIMVZFK43FOI.xml", "multiple-credential-types/M/MFZWQ4DBNY.xml", "multiple-credential-types/N/NZSXOU3BNR2GKZCVONSXEMQ.xml", "hash-encoding/O/B/OBSXE43PNYZA.xml", "hash-encoding/O/5/O5UWYZDGNR4TO.xml", "hash-encoding/O/V/OVZWK4RR.xml", "hash-encoding/M/J/MJXXSNA.xml", "hash-encoding/M/5/M5UXE3BV.xml", "hash-encoding/M/V/MVQXAOA.xml", "hash-encoding/N/J/NJRG643TGY.xml", "hash-encoding/N/F/NFSGK3TUNF2HSMY.xml", "hash-charset/O/B/OBSXE43PNYZA.xml", "hash-charset/O/5/O5UWYZDGNR4TO.xml", "hash-charset/O/V/OVZWK4RR.xml", "hash-charset/M/J/MJXXSNA.xml", "hash-charset/M/5/M5UXE3BV.xml", "hash-charset/M/V/MVQXAOA.xml", "hash-charset/N/J/NJRG643TGY.xml", "hash-charset/N/F/NFSGK3TUNF2HSMY.xml", "level-4/O/B/S/X/OBSXE43PNYZA.xml", "level-4/O/5/U/W/O5UWYZDGNR4TO.xml", "level-4/O/V/Z/W/OVZWK4RR.xml", "level-4/M/J/X/X/MJXXSNA.xml", "level-4/M/5/U/X/M5UXE3BV.xml", "level-4/M/V/Q/X/MVQXAOA.xml", "level-4/N/J/R/G/NJRG643TGY.xml", "level-4/N/F/S/G/NFSGK3TUNF2HSMY.xml"};
+        String[] files = new String[]{"multiple-credential-types/O/OBWGC2LOKVZWK4Q.xml", "multiple-credential-types/O/ONQWY5DFMRKXGZLS.xml", "multiple-credential-types/O/OVZWK4RUGI.xml", "multiple-credential-types/M/MFXG65DIMVZFK43FOI.xml", "multiple-credential-types/M/MFZWQ4DBNY.xml", "multiple-credential-types/N/NZSXOU3BNR2GKZCVONSXEMQ.xml", "hash-encoding/O/B/OBSXE43PNYZA.xml", "hash-encoding/O/5/O5UWYZDGNR4TO.xml", "hash-encoding/O/V/OVZWK4RR.xml", "hash-encoding/M/J/MJXXSNA.xml", "hash-encoding/M/5/M5UXE3BV.xml", "hash-encoding/M/V/MVQXAOA.xml", "hash-encoding/N/J/NJRG643TGY.xml", "hash-encoding/N/F/NFSGK3TUNF2HSMY.xml", "hash-charset/M/F/MFWGSY3F.xml", "hash-charset/M/J/MJXWE.xml", "hash-charset/M/N/MNQW2ZLSN5XA.xml", "level-4/O/B/S/X/OBSXE43PNYZA.xml", "level-4/O/5/U/W/O5UWYZDGNR4TO.xml", "level-4/O/V/Z/W/OVZWK4RR.xml", "level-4/M/J/X/X/MJXXSNA.xml", "level-4/M/5/U/X/M5UXE3BV.xml", "level-4/M/V/Q/X/MVQXAOA.xml", "level-4/N/J/R/G/NJRG643TGY.xml", "level-4/N/F/S/G/NFSGK3TUNF2HSMY.xml"};
         for (String file: files) {
             if(!fileExists("target/test-classes/filesystem-encrypt/fs-encrypted-realms/"+file)){
                 throw new FileNotFoundException("Missing file from Bulk Descriptor File: " + file);

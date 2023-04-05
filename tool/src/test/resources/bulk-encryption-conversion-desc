@@ -12,9 +12,10 @@ credential-store:target/test-classes/filesystem-encrypt/mycredstore.cs
 create:true
 levels:4
 
-input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/hashcharset
+input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/fsRealmCharset
 output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
 realm-name:hash-charset
+hash-charset:ISO-8859-1
 credential-store:target/test-classes/filesystem-encrypt/mycredstore.cs
 create:true
 
