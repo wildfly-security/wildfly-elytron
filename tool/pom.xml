@@ -142,6 +142,9 @@
                             <log4j.defaultInitOverride>true</log4j.defaultInitOverride>
                             <test.level>${test.level}</test.level>
                         </systemPropertyVariables>
+                        <environmentVariables>
+                            <FS_INTEGRITY_PASSWORD_TEST_VAR>Guk]i%Aua4-wB</FS_INTEGRITY_PASSWORD_TEST_VAR> <!-- gitleaks:allow -->
+                        </environmentVariables>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <enableAssertions>true</enableAssertions>
                         <trimStackTrace>false</trimStackTrace>

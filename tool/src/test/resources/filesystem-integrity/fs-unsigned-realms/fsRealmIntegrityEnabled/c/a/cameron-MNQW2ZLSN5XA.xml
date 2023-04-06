@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><identity xmlns="urn:elytron:identity:1.2">
+    <principal name="cameron"/>
+    <credentials>
+        <password algorithm="simple-digest-sha-256" format="base64">A3YRu0iebR9tX8reCXbzm6xiKqWEAVnrKLClSLI20Cln</password>
+    </credentials>
+    <attributes>
+        <attribute name="role" value="user"/>
+        <attribute name="position" value="engineer"/>
+    </attributes>
+
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>Od9LJmJdsDXCArHRe4J/2O8/NqZ8v9r5jRlm6RPwF9Q=</DigestValue></Reference></SignedInfo><SignatureValue>OT+Ld9SyQyWWbtPXxfP8z3cj5icRLEMf4m9jUg1tVcIsAHfCEJVlpmEL9gpnKseG1RsKXJUVrsKe&#13;
+4qctW5vPbRKkiomhSjgPmWIZU3ufxO8CPJhTJGkYkG7vcoc7saHUOrvKwUFvcCQDsKEDoa+zZV7a&#13;
+VRvhP4hxnKzY+Moj0jYSSqscwW/+2yU5cmC/KY6L7IM8y/IxuPsGJvRUbMpExo9jXiPKTbNbITyu&#13;
+z66Hah1TQM2jxg7fvri0WuZ5hodkXtbLoXLRi4aGn1GU/pX4A4ZbJbB2GEmFiOpBgrjZAEAv9h8d&#13;
+9O3aP8cd5xbOvW9PZQB2pMuYQbwbBzPcEypl4Wlsllc3O8QXPucB9KHL024PHzIHlFuVVoY3eF0D&#13;
+RIptK7UHt6DrQHnDoeuQ9mFO9mzSXTnbpBm/mZfk5f029YPm9eK5Bv6Inh8YmGkF9lZ6iwGQRt6H&#13;
+jsAjIfUTB6A7nyONocwYHkCfh4zMrUc9PbunIEQQTVN7zN0Ar51tLjgzR08811o5H8Ac0YfDqY0I&#13;
+9JwPd8LDd7JAaP3GtKfuTypGa8uamP/4kdhAfYWINRbuPuvtj8IMlUPM8yR/zN6xMEowrBGLbyqZ&#13;
+khugOFlTXEuKVndn3IIWwPgJklH1Q14aend9zLEQoGUZCToLQYRWjiDgCbl/kwRDpB4BqgpvBco=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>sQJCJE08Q3X5f3v0VAmvoBb4eIymE32jilIdaHgiWD2NJgZIEt38CVfNqneyPTng8vs0EHgBC+L5&#13;
+uMt4/ig7ZOZN0Yy8uUosg8ByKqyStbCOLgH/jH884+vS8cd5D7w0TBy6F5GiuHXQ/8KjY3rGJjhv&#13;
+1gEIrXdWSCvW1dKdvgrBP/vb8j2bxvqGTwiVjEwZC38z2IEYQi9cWL3vBSfASaeM8dTFqYKdUEcq&#13;
+eZliZSrzsTtZwG4EeBfjHl16hwB3WnOebqoUuE8dojZTfO11rPojZCf/xGk12sE+3c5IfGJ95qq9&#13;
+TDXXQyrcOJpL8jGeTWRv4kPdgL6SqUz1Kp0uloGvGtPd18Qxrp+vf16573PYdW78uYv+/fg0hdkb&#13;
+thDMA/YCI01gnaph0r2iNXseO9aA24ySU9jOiTYYcQVEvRQlDp9Ha7j7HoVHeAvyoUDbsuLigLTt&#13;
+qXeLq1HfT4LwQUhhcGeQsPibNkiQV0X/HvUffA+dq2umscZy6TKy4e7wmQo2NPrRAZ4k+aS9ymGl&#13;
+VrwLYYygJtZY4KVgipPZzF2vOiPK37zhngcA74+ehUI5lA0LcTRppW1f9mM+ygUYTJp93MBLJGFN&#13;
+obMbdgsVjiPTviurxFO6Ip+dVcKlIYxPgHZ5Wcpap47qsmDjJI9QP0VLJ95GJHufSejTfHFuGAU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature></identity>

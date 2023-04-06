@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:identity:1.1">
+    <credentials>
+        <password algorithm="simple-digest-sha-256" format="enc_base64">RUxZAUMQmN2tER7sx6WCUfx5BZ+liMHRsRAWcomJsM5uQheDmOy2pIBFvxT6sFy3NCLaUPRE71sRRJyIA+jrtiabP+wMbw==</password>
+    </credentials>
+    <attributes>
+        <attribute name="RUxZAUMQSk0ms07E4n6oucCqu9XU2IDV5gWzieXdPo2gN7DY8nQ=" value="RUxZAUMQp1mS0Qv8c+709XlYf6/ukoqOnHzSK65h7rYDfChpb34="></attribute>
+        <attribute name="RUxZAUMQjX1Lca6sXWhXKl1LAfCAORrE2RELPMyJ8aTQrMu5hhk=" value="RUxZAUMQ2vhYtc96++W8EDhpr20HKi1DeQ5c5icje9zd7d92nL4="></attribute>
+    </attributes>
+
+    </identity>

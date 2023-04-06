@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="simple-digest-sha-256" format="base64">A3YRu0iebR9tX8reCXbzm6xiKqWEAVnrKLClSLI20Cln</password>
+    </credentials>
+    <attributes>
+        <attribute name="role" value="user"></attribute>
+        <attribute name="position" value="engineer"></attribute>
+    </attributes>
+
+    </identity>

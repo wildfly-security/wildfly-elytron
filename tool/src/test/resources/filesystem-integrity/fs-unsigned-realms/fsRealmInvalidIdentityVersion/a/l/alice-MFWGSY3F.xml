@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:1.1">
+    <attributes>
+        <attribute name="role" value="user"></attribute>
+        <attribute name="role" value="admin"></attribute>
+    </attributes>
+
+    </identity>

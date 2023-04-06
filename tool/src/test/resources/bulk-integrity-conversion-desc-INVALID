@@ -1,0 +1,7 @@
+output-location:target/test-classes/filesystem-integrity/fs-signed-realms
+keystore:target/test-classes/filesystem-integrity/fsKeyStore.pfx
+password:Guk]i%Aua4-wB
+
+input-location:target/test-classes/filesystem-integrity/fs-unsigned-realms/fsRealmEmpty
+output-location:target/test-classes/filesystem-integrity/fs-signed-realms
+keystore:target/test-classes/filesystem-integrity/fsKeyStore.pfx

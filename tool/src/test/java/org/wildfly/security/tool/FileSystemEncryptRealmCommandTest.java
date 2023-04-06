@@ -26,7 +26,9 @@ import java.io.FileNotFoundException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.crypto.SecretKey;
+
 import org.apache.commons.cli.MissingArgumentException;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -63,6 +65,16 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, int levels, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
         requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--levels", String.valueOf(levels), "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
+        executeCommandAndCheckStatus(requiredArgs, expectedStatus);
+    }
+
+    private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String keyStoreLocation,
+                            String keyPairAlias, String keyStorePassword, int levels, boolean create, int expectedStatus) {
+        String[] requiredArgs;
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName,
+                "--keystore", keyStoreLocation, "--key-pair", keyPairAlias, "--password", keyStorePassword,
+                "--levels", String.valueOf(levels), "--create", String.valueOf(create),
+                "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -163,6 +175,17 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
         if(!fileExists(file)){
             throw new FileNotFoundException("Encrypted Identity/Identities Missing: " + file);
         }
+    }
+
+    @Test
+    public void testSingleUserWithRolesAndIntegrity() throws Exception {
+        String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-roles-and-integrity";
+        String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
+        String fileSystemRealmName = "single-user-with-roles-and-integrity";
+        String keyStoreLocation = RELATIVE_BASE_DIR + "mykeystore.pfx";
+        String keyPairAlias = "integrity-key";
+        String keyStorePassword = "Guk]i%Aua4-wB";
+        runCommand(inputLocation, outputLocation, fileSystemRealmName, keyStoreLocation, keyPairAlias, keyStorePassword, 2, true, 0);
     }
 
     @Test
