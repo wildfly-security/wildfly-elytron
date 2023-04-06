@@ -707,17 +707,17 @@ class FileSystemEncryptRealmCommand extends Command {
                     .setHashEncoding(descriptor.getHashEncoding())
                     .setHashCharset(descriptor.getHashCharset())
                     .setEncoded(descriptor.getEncoded())
-                    .setProviders(ELYTRON_PASSWORD_PROVIDERS)
+                    .setProviders(ELYTRON_KS_PASS_PROVIDERS)
                     .build();
 
             FileSystemSecurityRealm newFileSystemRealm = FileSystemSecurityRealm.builder()
                     .setRoot(Paths.get(descriptor.getOutputRealmLocation(), descriptor.getFileSystemRealmName()))
                     .setSecretKey(key)
                     .setLevels(descriptor.getLevels())
-                    .setProviders(ELYTRON_PASSWORD_PROVIDERS)
+                    .setProviders(ELYTRON_KS_PASS_PROVIDERS)
                     .setHashCharset(descriptor.getHashCharset())
                     .build();
-            FileSystemRealmUtil.createEncryptedRealmFromUnencrypted(oldFileSystemRealm, newFileSystemRealm);
+            FileSystemRealmUtil.cloneIdentitiesToNewRealm(oldFileSystemRealm, newFileSystemRealm);
         }
     }
 

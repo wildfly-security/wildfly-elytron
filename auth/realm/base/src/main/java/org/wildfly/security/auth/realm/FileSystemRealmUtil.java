@@ -19,6 +19,7 @@ package org.wildfly.security.auth.realm;
 
 
 import java.util.List;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
@@ -31,28 +32,29 @@ import org.wildfly.security.credential.Credential;
  * A utility class to utilize methods from the {@code FileSystemSecurityRealm} class for the Elytron Tool.
  *
  * @author <a href="mailto:araskar@redhat.com">Ashpan Raskar</a>
+ * @author <a href="mailto:carodrig@redhat.com">Cameron Rodriguez</a>
  */
 public class FileSystemRealmUtil {
 
     /**
-     * Converts a pre-existing unencrypted {@code FileSystemSecurityRealm} to a newly created encrypted {@code FileSystemSecurityRealm}
+     * Copies identities from an existing {@code FileSystemSecurityRealm} to a new one.
      *
-     * @param unencryptedRealm the {@code FileSystemSecurityRealm} without any encryption applied
-     * @param encryptedRealm the {@code FileSystemSecurityRealm} configured with a SecretKey to encrypt identity data
-     * @throws RealmUnavailableException if either realm is unavailable
+     * @param oldRealm the existing {@code FileSystemSecurityRealm} with the identities
+     * @param newRealm the new {@code FileSystemSecurityRealm}
+     * @throws RealmUnavailableException if either realm is unavailable or an operation fails
      */
-    public static void createEncryptedRealmFromUnencrypted(FileSystemSecurityRealm unencryptedRealm, FileSystemSecurityRealm encryptedRealm) throws RealmUnavailableException {
-        Assert.checkNotNullParam("unencryptedRealm", unencryptedRealm);
-        Assert.checkNotNullParam("encryptedRealm", encryptedRealm);
+    public static void cloneIdentitiesToNewRealm(FileSystemSecurityRealm oldRealm, FileSystemSecurityRealm newRealm) throws RealmUnavailableException {
+        Assert.checkNotNullParam("Old FileSystem Realm", oldRealm);
+        Assert.checkNotNullParam("New FileSystem Realm", newRealm);
 
-        ModifiableRealmIdentityIterator realmIterator = unencryptedRealm.getRealmIdentityIterator();
+        ModifiableRealmIdentityIterator realmIterator = oldRealm.getRealmIdentityIterator();
 
         while (realmIterator.hasNext()) {
-            ModifiableRealmIdentity identity = realmIterator.next();
-            List<Credential> credentials = ((FileSystemSecurityRealm.Identity) identity).loadCredentials();
-            Attributes attributes = identity.getAttributes();
+            ModifiableRealmIdentity oldIdentity = realmIterator.next();
+            List<Credential> credentials = ((FileSystemSecurityRealm.Identity) oldIdentity).loadCredentials();
+            Attributes attributes = oldIdentity.getAttributes();
 
-            ModifiableRealmIdentity newIdentity = encryptedRealm.getRealmIdentityForUpdate(new NamePrincipal(identity.getRealmIdentityPrincipal().getName()));
+            ModifiableRealmIdentity newIdentity = newRealm.getRealmIdentityForUpdate(new NamePrincipal(oldIdentity.getRealmIdentityPrincipal().getName()));
             newIdentity.create();
             newIdentity.setCredentials(credentials);
             newIdentity.setAttributes(attributes);
@@ -60,5 +62,4 @@ public class FileSystemRealmUtil {
         }
         realmIterator.close();
     }
-
 }

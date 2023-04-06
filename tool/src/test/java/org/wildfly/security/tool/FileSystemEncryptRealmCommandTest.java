@@ -19,7 +19,7 @@ package org.wildfly.security.tool;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.tool.FileSystemEncryptRealmCommand.ELYTRON_PASSWORD_PROVIDERS;
+import static org.wildfly.security.tool.Command.ELYTRON_KS_PASS_PROVIDERS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -197,7 +197,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
         FileSystemSecurityRealm securityRealm = FileSystemSecurityRealm.builder()
                 .setRoot(Paths.get(outputLocation, fileSystemRealmName))
                 .setLevels(2)
-                .setProviders(ELYTRON_PASSWORD_PROVIDERS)
+                .setProviders(ELYTRON_KS_PASS_PROVIDERS)
                 .setSecretKey(key)
             .build();
         ModifiableRealmIdentity existingIdentity = securityRealm.getRealmIdentityForUpdate(new NamePrincipal("hello"));

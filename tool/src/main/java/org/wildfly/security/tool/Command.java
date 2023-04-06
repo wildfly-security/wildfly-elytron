@@ -23,13 +23,23 @@ import org.apache.commons.cli.Option;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +51,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import javax.crypto.SecretKey;
 
@@ -50,7 +61,11 @@ import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.encryption.SecretKeyUtil;
+import org.wildfly.security.keystore.AtomicLoadKeyStore;
+import org.wildfly.security.keystore.KeyStoreUtil;
+import org.wildfly.security.keystore.WildFlyElytronKeyStoreProvider;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
+import org.wildfly.security.provider.util.ProviderUtil;
 
 /**
  * Base command class
@@ -67,7 +82,8 @@ public abstract class Command {
 
     public static final int INPUT_DATA_NOT_CONFIRMED = 3;
 
-    public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[] {
+    public static Supplier<Provider[]> ELYTRON_KS_PASS_PROVIDERS = () -> new Provider[] {
+            WildFlyElytronKeyStoreProvider.getInstance(),
             WildFlyElytronPasswordProvider.getInstance()
     };
 
@@ -378,10 +394,79 @@ public abstract class Command {
 
         return key;
     }
+
+    /**
+     * Acquire a given keypair from a {@link KeyStore}.
+     *
+     * @param keyPairAlias the name for a keypair within the keyStore
+     * @param descriptorBlockCount index of a descriptor block from bulk conversion files
+     * @return the requested {@link KeyPair}, or {@code null} if it could not be retrieved
+     * @throws CertificateException if the KeyStore cannot be loaded
+     * @throws NoSuchAlgorithmException if the algorithm to verify the KeyStore's integrity is not available
+     */
+    KeyPair getKeyPair(Path keyStorePath, String keyStoreType, String keyPairAlias, char[] password,
+                       int descriptorBlockCount) throws CertificateException, NoSuchAlgorithmException {
+        AtomicLoadKeyStore keyStore = null;
+        if (keyStoreType != null) {
+            keyStore = AtomicLoadKeyStore.newInstance(
+                    keyStoreType,
+                    ProviderUtil.findProvider(ProviderUtil.INSTALLED_PROVIDERS, null, KeyStore.class, keyStoreType)
+                );
+        }
+
+        File resolvedPath = null;
+        if (keyStorePath != null && keyStorePath.toFile().exists()) {
+            try {
+                resolvedPath = keyStorePath.toAbsolutePath().toFile();
+            } catch (IOError | SecurityException e) {
+                warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockInvalidKeyStorePath(descriptorBlockCount));
+                return null;
+            }
+        }
+        if (resolvedPath == null){
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockInvalidKeyStorePath(descriptorBlockCount));
+            return null;
+        }
+
+        try (FileInputStream is = new FileInputStream(resolvedPath)) {
+            if (keyStoreType != null) {
+                keyStore.load(is, password);
+            } else {
+                KeyStore detected = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null,
+                        is, resolvedPath.getPath(), password);
+                keyStore = AtomicLoadKeyStore.atomize(detected);
+            }
+        } catch (IOException | KeyStoreException e) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockKeyStoreNotLoaded(descriptorBlockCount));
+            return null;
+        }
+
+        PrivateKey privateKey;
+        Certificate publicKeyCert;
+        try {
+            privateKey = (PrivateKey) keyStore.getKey(keyPairAlias, password);
+            publicKeyCert = keyStore.getCertificate(keyPairAlias);
+        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockKeyPairFail(descriptorBlockCount));
+            return null;
+        }
+
+        if (privateKey == null) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockMissingPrivateKey(descriptorBlockCount));
+            return null;
+        }
+        if (publicKeyCert == null) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockMissingPublicKey(descriptorBlockCount));
+            return null;
+        }
+
+        return new KeyPair(publicKeyCert.getPublicKey(), privateKey);
+    }
 }
 
 class Params {
     static final String ALIAS_PARAM = "alias";
+    static final String BOOLEAN_PARAM = "true/false";
     static final String BULK_CONVERT_PARAM = "bulk-convert";
     static final String CREDENTIAL_STORE_LOCATION_PARAM = "credential-store";
     static final String CREATE_CREDENTIAL_STORE_PARAM = "create";
@@ -397,12 +482,16 @@ class Params {
     static final String IMPLEMENTATION_PROPERTIES_PARAM = "properties";
     static final String INPUT_LOCATION_PARAM = "input-location";
     static final String ITERATION_PARAM = "iteration";
+    static final String KEY_PAIR_ALIAS_PARAM = "key-pair";
     static final String KEYSTORE_PARAM = "keystore";
+    static final String KEYSTORE_TYPE_PARAM = "type";
     static final String LEVELS_PARAM = "levels";
     static final String NAME_PARAM = "name";
+    static final String NUMBER_PARAM = "number";
     static final String OTHER_PROVIDERS_PARAM = "other-providers";
     static final String OUTPUT_LOCATION_PARAM = "output-location";
     static final String PASSWORD_PARAM = "password";
+    static final String PASSWORD_ENV_PARAM = "password-env";
     static final String REALM_NAME_PARAM = "realm-name";
     static final String SALT_PARAM = "salt";
     static final String SECRET_KEY_ALIAS_PARAM = "secret-key";
@@ -411,6 +500,8 @@ class Params {
     static final String SUMMARY_PARAM = "summary";
 
     // Other constants
+    static final Pattern BOOLEAN_ARG_REGEX = Pattern.compile("(true|false)", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    static final String DEFAULT_KEY_PAIR_ALIAS = "integrity-key";
     static final Integer DEFAULT_LEVELS = 2;
     static final String DEFAULT_SECRET_KEY_ALIAS = "key";
     static final String FILE_SEPARATOR = File.separator;
