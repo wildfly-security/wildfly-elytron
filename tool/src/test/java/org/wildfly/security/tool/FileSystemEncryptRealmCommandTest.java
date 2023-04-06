@@ -40,6 +40,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
 
     private static final String RELATIVE_BASE_DIR = "./target/test-classes/filesystem-encrypt/";
+    private static final String CREDENTIAL_STORE_PATH = RELATIVE_BASE_DIR + "mycredstore.cs";
 
     private void run(String inputLocation, String outputLocation, String fileSystemRealmName, int expectedStatus) {
         runCommandSilent(inputLocation, outputLocation, fileSystemRealmName, expectedStatus);
@@ -51,19 +52,19 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, int levels, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--levels", String.valueOf(levels), "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--levels", String.valueOf(levels), "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
     private void runCommand(String inputLocation, String outputLocation, String fileSystemRealmName, String credentialStore, String secretKey, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--credential-store", credentialStore, "--secret-key", secretKey, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--input-location", inputLocation, "--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--credential-store", credentialStore, "--secret-key", secretKey, "--encoded", encoded, "--create", String.valueOf(create)};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -75,7 +76,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
 
     private void runCommandInvalid(String outputLocation, String fileSystemRealmName, String encoded, boolean create, int expectedStatus) {
         String[] requiredArgs;
-        requiredArgs = new String[]{"--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", "mycredstore.cs"};
+        requiredArgs = new String[]{"--output-location", outputLocation, "--realm-name", fileSystemRealmName, "--encoded", encoded, "--create", String.valueOf(create), "--credential-store", CREDENTIAL_STORE_PATH};
         executeCommandAndCheckStatus(requiredArgs, expectedStatus);
     }
 
@@ -159,9 +160,8 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user-with-key/";
         String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
         String fileSystemRealmName = "single-user-with-key";
-        String credentialStore = RELATIVE_BASE_DIR + "mycredstore.cs";
         String key = "key";
-        runCommand(inputLocation, outputLocation, fileSystemRealmName, credentialStore, key, "false", false, 0);
+        runCommand(inputLocation, outputLocation, fileSystemRealmName, CREDENTIAL_STORE_PATH, key, "false", false, 0);
         String file = "target/test-classes/filesystem-encrypt/fs-encrypted-realms/single-user-with-key/O/N/ONSWG4TFORYGK4TTN5XA.xml";
         if(!fileExists(file)){
             throw new FileNotFoundException("Encrypted Identity/Identities Missing: " + file);
@@ -173,7 +173,7 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
         String inputLocation = RELATIVE_BASE_DIR + "fs-unencrypted-realms/single-user/";
         String outputLocation = RELATIVE_BASE_DIR + "fs-encrypted-realms";
         String fileSystemRealmName = "verify";
-        String credentialStoreLocation = RELATIVE_BASE_DIR + "mycredstore.cs";
+        String credentialStoreLocation = CREDENTIAL_STORE_PATH;
         String keyAlias = "key";
         runCommand(inputLocation, outputLocation, fileSystemRealmName, credentialStoreLocation, keyAlias, "false", false, 0);
 
