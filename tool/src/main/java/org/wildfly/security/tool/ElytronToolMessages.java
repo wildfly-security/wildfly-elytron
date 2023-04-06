@@ -424,6 +424,26 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Whether or not the credential store should be dynamically created if it doesn't exist. Set to true by default.")
     String cmdFileSystemEncryptCreateCredentialStoreDesc();
 
+    @Message(id = NONE, value = "The relative or absolute path to the KeyStore file that contains the key pair. Only %n" +
+            "applicable if the filesystem realm has integrity verification enabled.")
+    String cmdFileSystemEncryptKeyStoreDesc();
+
+    @Message(id = NONE, value = "The type of KeyStore to be used. Optional, only applicable if the filesystem %n" +
+            "realm has integrity verification enabled.")
+    String cmdFileSystemEncryptKeyStoreTypeDesc();
+
+    @Message(id = NONE, value = "The alias of the key pair to be used, within the KeyStore. Set to integrity-key by default, only %n" +
+            "applicable if the filesystem realm has integrity verification enabled.")
+    String cmdFileSystemEncryptKeyPairAliasDesc();
+
+    @Message(id = NONE, value = "Password for KeyStore. Can also be provided by console prompt. Only applicable if %n" +
+            "the filesystem realm has integrity verification enabled.")
+    String cmdFileSystemEncryptKeyStorePassword();
+
+    @Message(id = NONE, value = "Name of an environment variable from which to resolve the KeyStore password. Only %n" +
+            "applicable if the filesystem realm has integrity verification enabled.")
+    String cmdFileSystemEncryptKeyStorePasswordEnv();
+
     @Message(id = NONE, value = "Input Realm location not specified.")
     MissingArgumentException inputLocationNotSpecified();
 
@@ -479,10 +499,11 @@ public interface ElytronToolMessages extends BasicLogger {
     String cmdFileSystemRealmBulkConvertDesc();
 
     @Message(id = NONE, value = "Bulk conversion with options listed in description file. Optional options have default values, required options do not. (Action) %n" +
-            "The options realm-name, hash-encoding, hash-charset, levels, secret-key, create, populate, keystore, type, password, password-env, and key-pair are optional. %n" +
+            "The options realm-name, hash-encoding, levels, secret-key, create, populate, keystore, type, password, password-env, and key-pair are optional. %n" +
             "Values are required for the following options: input-location, output-location, and credential-store. %n" +
             "The default values of realm-name, hash-encoding, hash-charset, levels, secret-key, create, and populate are encrypted-filesystem-realm, BASE64, UTF-8, 2, key, true, and true respectively. %n" +
             "If one or more these required values are not set, the corresponding block is skipped. %n" +
+            "If keystore is provided, then either password or password-env are required. %n" +
             "Each option must be specified in the following format: <option>:<value>. The order of options does not matter. %n" +
             "Blocks of options must be separated by a blank line.")
     String cmdFileSystemRealmEncryptBulkConvertDesc();
@@ -498,7 +519,7 @@ public interface ElytronToolMessages extends BasicLogger {
     String cmdFileSystemRealmIntegrityBulkConvertDesc();
 
     // filesystem-realm encrypt command
-    @Message(id = NONE, value = "'FileSystemRealmEncrypt' command is used to convert un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
+    @Message(id = NONE, value = "'FileSystemRealmEncrypt' command is used to convert non-empty, un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
     String cmdFileSystemEncryptHelpHeader();
 
     @Message(id = NONE, value = "Secret Key was not found in the Credential Store at %s, and populate option was not set. Skipping descriptor file block number %d.")
@@ -580,7 +601,8 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Both --bulk-convert and one or more of --users-file, --roles-file, and/or --output-location were specified. Please only use --bulk-convert or all of --users-file, --roles-file, and --output-location.")
     MissingOptionException mutuallyExclusiveOptionsSpecified();
 
-    @Message(id = NONE, value = "Both --bulk-convert and one or more of --old-realm-name, --new-realm-name, --input-location, --output-location, --credential-store, and/or --secret-key were specified. Please only use --bulk-convert or all of the other others.")
+    @Message(id = NONE, value = "Both --bulk-convert and one or more of --old-realm-name, --new-realm-name, --input-location, --output-location, --credential-store, --secret-key, --keystore, --type, " +
+            "--key-pair, --password and/or --password-env were specified. Please only use --bulk-convert or all of the other others.")
     MissingOptionException mutuallyExclusiveOptionsEncryptSpecified();
 
     @Message(id = NONE, value = "No value found for %s.")

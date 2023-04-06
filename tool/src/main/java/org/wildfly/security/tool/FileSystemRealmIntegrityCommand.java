@@ -516,7 +516,6 @@ public class FileSystemRealmIntegrityCommand extends Command {
             if (passwordOption == null && passwordEnvOption == null) {
                 passwordOption = prompt(false, ElytronToolMessages.msg.keyStorePasswordPrompt(), false, null);
                 if (passwordOption == null) {
-                    setStatus(GENERAL_CONFIGURATION_ERROR);
                     throw ElytronToolMessages.msg.optionNotSpecified(PASSWORD_PARAM + " or " + PASSWORD_ENV_PARAM);
                 }
             } else if (passwordEnvOption != null) { // Resolve environment variable
