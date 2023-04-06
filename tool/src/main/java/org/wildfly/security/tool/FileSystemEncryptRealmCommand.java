@@ -686,6 +686,7 @@ class FileSystemEncryptRealmCommand extends Command {
             } catch (Exception e) {
                 if (!descriptor.getCreateCredentialStore()) {
                     warningHandler(ElytronToolMessages.msg.skippingBlockMissingCredentialStore());
+                    descriptor.reset();
                     continue;
                 }
                 if (descriptor.getPopulate()) {
@@ -702,6 +703,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 key = credentialStore.retrieve(descriptor.getSecretKeyAlias(), SecretKeyCredential.class).getSecretKey();
             } catch (NullPointerException e) {
                 System.out.println(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(descriptor.getCredentialStore(), descriptor.getInputRealmLocation()));
+                descriptor.reset();
                 continue;
             }
 
