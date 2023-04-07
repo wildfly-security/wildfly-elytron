@@ -742,12 +742,15 @@ class FileSystemEncryptRealmCommand extends Command {
                 secretKeyAlias = "key";
             }
             String createScriptCheck = "";
-            if (Paths.get(String.format("%s.cli", fileSystemRealmName)).toFile().exists()) {
+
+            Path scriptPath = Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName));
+
+            if (scriptPath.toFile().exists()) {
                 createScriptCheck = prompt(
+                        true,
+                        ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
                         false,
-                        null,
-                        false,
-                        ElytronToolMessages.msg.shouldFileBeOverwritten(String.format("%s.cli", fileSystemRealmName))
+                        null
                 );
             }
             String fullOutputPath;
@@ -758,7 +761,7 @@ class FileSystemEncryptRealmCommand extends Command {
             }
 
             if (summaryMode) {
-                summaryString.append(String.format("Configured script for WildFly named %s.cli at %s.", fileSystemRealmName, fullOutputPath));
+                summaryString.append(String.format("Configured script for WildFly at %s", scriptPath));
                 summaryString.append(System.getProperty("line.separator"));
                 summaryString.append("The script is using the following names:");
                 summaryString.append(System.getProperty("line.separator"));
@@ -772,9 +775,9 @@ class FileSystemEncryptRealmCommand extends Command {
             );
 
             if (!createScriptCheck.equals("y") && !createScriptCheck.equals("yes")) {
-                Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
-                Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.APPEND);
+                Files.write(scriptPath, scriptLines, StandardOpenOption.APPEND);
             }
             counter++;
         }
