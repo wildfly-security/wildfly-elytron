@@ -115,6 +115,12 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest{
     }
 
     @Test
+    public void testBulkWithoutNames() throws Exception {
+        String descriptorFileLocation = "./target/test-classes/bulk-encryption-conversion-desc-without-names";
+        runCommand(descriptorFileLocation, 0);
+    }
+
+    @Test
     public void testBulkMissingParam() throws Exception {
         String descriptorFileLocation = "./target/test-classes/bulk-encryption-conversion-desc-INVALID";
         runCommand(descriptorFileLocation, 1);

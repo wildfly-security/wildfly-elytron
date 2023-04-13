@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -623,7 +624,7 @@ class FileSystemEncryptRealmCommand extends Command {
             missingRequiredValue = true;
         }
         if (descriptor.getFileSystemRealmName() == null) {
-            descriptor.setFileSystemRealmName(DEFAULT_FILESYSTEM_REALM_NAME);
+            descriptor.setFileSystemRealmName(DEFAULT_FILESYSTEM_REALM_NAME + "-" + UUID.randomUUID());
         }
         if(descriptor.getHashEncoding() == null) {
             descriptor.setHashEncoding(Encoding.BASE64);
