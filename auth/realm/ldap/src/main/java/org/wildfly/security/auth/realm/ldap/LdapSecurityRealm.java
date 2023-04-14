@@ -54,6 +54,7 @@ import javax.naming.InvalidNameException;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.PartialResultException;
 import javax.naming.ReferralException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
@@ -1083,7 +1084,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                         throw referralException;
                                     }
 
-                                    if ( ! result.hasMore()) { // end of page
+                                    if ( ! hasMore(result)) { // end of page
                                         if ( ! (pageSize != 0 && context instanceof LdapContext) ) {
                                             log.trace("Identity iterating - pagination not supported - end of list");
                                             finished = true;
@@ -1105,7 +1106,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                         result.close();
 
                                         result = searchWithPagination();
-                                        if ( ! result.hasMore()) {
+                                        if ( ! hasMore(result)) {
                                             log.trace("Identity iterating - even after page loading no results - end of list");
                                             finished = true;
                                             return false; // no more elements
@@ -1218,6 +1219,22 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
          */
         private DirContext getContext() {
             return context;
+        }
+
+        /*
+         * wrapper of NamingEnumeration<SearchResult>#hasMore() to ignore PartialResultException when referral-mode=ignore
+         */
+        private boolean hasMore(NamingEnumeration<SearchResult> result) throws PartialResultException, NamingException {
+            try {
+                return result.hasMore();
+            } catch (PartialResultException e) {
+                if (getContext().getEnvironment().get(DirContext.REFERRAL).equals("ignore")) {
+                    log.trace("Ignored PartialResultException with referral-mode=ignore: " + e.toString(false));
+                    return false;
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 
