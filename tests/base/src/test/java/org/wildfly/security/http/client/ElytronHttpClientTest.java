@@ -60,7 +60,7 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
     ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
 
     @Test
-    public void testRequest() throws Exception{
+    public void testElytonHttpClientBasicAuthenticationMechanism() throws Exception{
         AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
                 doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
 
@@ -88,7 +88,7 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
     }
 
     @Test
-    public void testRequest2() throws Exception{
+    public void testElytonHttpClientDigestAuthenticationMechanism() throws Exception{
         AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
                 doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
 
@@ -105,12 +105,12 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
                 Map<String, Object> props = new HashMap<>();
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
+                String uri = "http://localhost:8080/hello";
                 HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password1"));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = elytronHttpClient.getResponseHeader(response.getAuthenticateHeader());
-                System.out.println(request2.headers());
+                HttpRequest request2 = elytronHttpClient.getResponseHeader(response.getAuthenticateHeader(), uri);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});

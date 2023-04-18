@@ -47,7 +47,7 @@ public class HttpMechClientConfigUtil {
             callbackHandler.handle(new Callback[]{nameCallback});
             return nameCallback.getName();
         } catch (IOException | UnsupportedCallbackException e) {
-            throw new ElytronHttpClientException("Name call back handle unsucessfull");
+            throw new ElytronHttpClientException(ElytronMessages.log.nameCallBackHandlingFailed());
         }
     }
 
@@ -62,7 +62,7 @@ public class HttpMechClientConfigUtil {
             }
             return new String(password);
         } catch (IOException | UnsupportedCallbackException e) {
-            throw new ElytronHttpClientException("Password callback handling unsucessfull");
+            throw new ElytronHttpClientException(ElytronMessages.log.passwordCallBackHandlingFailed());
         }
     }
 

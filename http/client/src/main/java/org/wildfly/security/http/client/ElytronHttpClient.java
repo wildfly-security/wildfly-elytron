@@ -17,20 +17,19 @@
  */
 package org.wildfly.security.http.client;
 
+import org.wildfly.security.http.client.exception.ElytronHttpClientException;
+import org.wildfly.security.http.client.utils.DigestHttpMechanismUtil;
 import org.wildfly.security.http.client.utils.HttpMechClientConfigUtil;
+import org.wildfly.security.http.client.utils.ElytronMessages;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Elytron client for HTTP authentication
@@ -46,6 +45,7 @@ public class ElytronHttpClient {
     private String userName;
     private String password;
     private String previousMechanism;
+    private DigestHttpMechanismUtil digestHttpMechanismUtil;
 
     public ElytronHttpClient() {
         this.client = HttpClient.newHttpClient();
@@ -53,6 +53,7 @@ public class ElytronHttpClient {
         authParams = new HashMap<>();
         previousMechanism = null;
         lastURI = null;
+        digestHttpMechanismUtil = new DigestHttpMechanismUtil();
     }
 
     private static String basicAuth(String username, String password) {
@@ -62,7 +63,7 @@ public class ElytronHttpClient {
     public HttpResponse evaluateDigestMechanism(String uri) throws Exception {
 
         HttpRequest request;
-        request = createDigestRequest(uri);
+        request = digestHttpMechanismUtil.createDigestRequest(uri,userName,password,authParams);
 
         if(lastURI==null || !(lastURI.equals(uri))){
             lastURI = uri;
@@ -72,34 +73,34 @@ public class ElytronHttpClient {
 
         if (response.statusCode() == 401) {
             String authHeader = response.headers().allValues("www-authenticate").get(0);
-            updateAuthParams(authHeader);
-            request = createDigestRequest(uri);
+            digestHttpMechanismUtil.updateAuthParams(authHeader,authParams);
+            request = digestHttpMechanismUtil.createDigestRequest(uri,userName,password,authParams);
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
         }
         return response;
     }
 
     //To test header values from ElytronHttpClientTest
-    public HttpRequest getResponseHeader(String responseHeader) throws Exception {
+    public HttpRequest getResponseHeader(String responseHeader, String uri) throws Exception {
 
-        updateAuthParams(responseHeader);
+        digestHttpMechanismUtil.updateAuthParams(responseHeader,authParams);
+
         String realm = authParams.get("realm");
         String nonce = authParams.get("nonce");
         String opaque = authParams.get("opaque");
         String algorithm = authParams.get("algorithm");
         String qop = authParams.get("qop");
 
-        String path = "/test";
-        String uri = "http://localhost:8080" + path;
+        String path = digestHttpMechanismUtil.getUriPath(uri);
 
         userName = httpMechClientConfigUtil.getUsername(new URI(uri));
         password = httpMechClientConfigUtil.getPassword(new URI(uri));
 
-        String resp;
+        String response;
         if (qop == null) {
-            resp = computeDigestWithoutQop(path, nonce, userName, password, algorithm, realm, "GET");
+            response = digestHttpMechanismUtil.computeDigestWithoutQop(path, nonce, userName, password, algorithm, realm, "GET");
         } else {
-            resp = computeDigestWithQop(path, nonce, "0a4f113b", "00000001", userName, password, algorithm, realm, qop, "GET");
+            response = digestHttpMechanismUtil.computeDigestWithQop(path, nonce, "0a4f113b", "00000001", userName, password, algorithm, realm, qop, "GET");
         }
 
         HttpRequest request2 = HttpRequest
@@ -112,85 +113,13 @@ public class ElytronHttpClient {
                         "uri=\"" + path + "\", " +
                         "qop=\"" + qop + "\", " +
                         "nc=00000001, " +
-                        "cnonce=\"" + generateCNonce() +"\", " +
-                        "response=\"" + resp + "\", " +
+                        "cnonce=\"0a4f113b\", " +
+                        "response=\"" + response + "\", " +
                         "opaque=\"" + opaque + "\", " +
                         "algorithm=" + algorithm)
                 .build();
         return request2;
 
-    }
-
-    private void updateAuthParams(String authHeader) {
-        Pattern pattern = Pattern.compile("(\\w+)=([^,\\s]+)");
-        Matcher matcher = pattern.matcher(authHeader);
-
-                        "realm=\"" + realm + "\"," +
-                        "nonce=\"" + nonce + "\", " +
-                        "uri=\"" + uriPath + "\", " +
-                        "qop=\"" + qop + "\", " +
-                        "nc=\"" + ncount + "\"," +
-                        "cnonce=\"" + cnonce + "\", " +
-                        "response=\"" + resp + "\", " +
-                        "opaque=\"" + opaque + "\", " +
-                        "algorithm=" + algorithm)
-                .build();
-        int updateNonceCount = Integer.parseInt(authParams.getOrDefault("ncount", "0")) + 1;
-        authParams.put("ncount", String.valueOf(updateNonceCount));
-        return request;
-    }
-
-    private static String computeDigestWithoutQop(String uri, String nonce, String username, String
-            password, String algorithm, String realm, String method) throws NoSuchAlgorithmException {
-        String A1, HashA1, A2, HashA2;
-        MessageDigest md = MessageDigest.getInstance(algorithm);
-        A1 = username + ":" + realm + ":" + password;
-        HashA1 = calculateMD5(A1);
-        A2 = method + ":" + uri;
-        HashA2 = calculateMD5(A2);
-        String combo, finalHash;
-        combo = HashA1 + ":" + nonce + ":" + HashA2;
-        finalHash = calculateMD5(combo);
-        return finalHash;
-    }
-
-    private static String computeDigestWithQop(String uri, String nonce, String cnonce, String nc, String
-            username, String password, String algorithm, String realm, String qop, String method) throws
-            NoSuchAlgorithmException {
-
-        System.out.println("uri : " + uri + " nonce " + nonce + " cnonce " + cnonce + " nc " + nc + " username " + username + " password " + password + " realm " + realm + " qop " + qop + " method " + method);
-        String A1, HashA1, A2, HashA2;
-        MessageDigest md = MessageDigest.getInstance(algorithm);
-        A1 = username + ":" + realm + ":" + password;
-        HashA1 = calculateMD5(A1);
-        A2 = method + ":" + uri;
-        HashA2 = calculateMD5(A2);
-
-        String combo, finalHash;
-        combo = HashA1 + ":" + nonce + ":" + nc + ":" + cnonce + ":" + qop + ":" + HashA2;
-        finalHash = calculateMD5(combo);
-        return finalHash;
-    }
-
-    private static String calculateMD5(String value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(value.getBytes());
-            byte[] digest = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not available", e);
-        }
-    }
-
-    private static String getUriPath(String uri) throws URISyntaxException {
-        URI uriPath = new URI(uri);
-        String path = uriPath.getPath();
-        return path;
     }
 
     public HttpRequest getRequest(String uri) throws Exception {
@@ -254,14 +183,23 @@ public class ElytronHttpClient {
                 lastURI = uri;
                 return response;
             }
+            String authHeader = null;
+            Map<String, List<String>> allHeaderValues = response.headers().map();
+            for(String headerKey : allHeaderValues.keySet()){
+                if(headerKey.toLowerCase().equals("www-authenticate")){
+                    authHeader = allHeaderValues.get(headerKey).get(0);
+                }
+            }
 
-            String authHeader = response.headers().allValues("www-authenticate").get(0);
+            if(authHeader == null){
+                throw new ElytronHttpClientException(ElytronMessages.log.responseHeaderExtractionFailed());
+            }
 
             if (authHeader.toLowerCase().startsWith("basic")) {
                 response = evaluateBasicMechanism(uri);
                 previousMechanism = "basic";
             } else if (authHeader.toLowerCase().startsWith("digest")) {
-                updateAuthParams(authHeader);
+                digestHttpMechanismUtil.updateAuthParams(authHeader,authParams);
                 response = evaluateDigestMechanism(uri);
                 previousMechanism = "digest";
             }
