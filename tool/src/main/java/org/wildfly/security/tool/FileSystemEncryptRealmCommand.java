@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -756,6 +757,16 @@ class FileSystemEncryptRealmCommand extends Command {
                 );
                 if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
             }
+
+            boolean overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
+            if (!overwriteScript) { // Generate a random file for the CLI script
+                do {
+                    scriptPath = Paths.get(String.format("%s/%s.cli",
+                            outputRealmLocation,
+                            fileSystemRealmName + "-" + UUID.randomUUID()));
+                } while (scriptPath.toFile().exists());
+            }
+
             String fullOutputPath;
             if (outputRealmLocation.startsWith(".")) {
                 fullOutputPath = Paths.get(outputRealmLocation.substring(2)).toAbsolutePath().toString();
@@ -777,7 +788,7 @@ class FileSystemEncryptRealmCommand extends Command {
                     String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s, levels=%s, credential-store=%s, secret-key=%s)", fileSystemRealmName, fullOutputPath+'/'+fileSystemRealmName, levels, "mycredstore"+counter, secretKeyAlias)
             );
 
-            if (createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y")) { // Create a new script file, or overwrite the existing one
+            if (overwriteScript) { // Create a new script file, or overwrite the existing one
                 Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
                 Files.write(scriptPath, scriptLines, StandardOpenOption.APPEND);
