@@ -1,5 +1,8 @@
 package org.wildfly.security.http.client.utils;
 
+import org.wildfly.security.digest.WildFlyElytronDigestProvider;
+import org.wildfly.security.http.client.exception.ElytronHttpClientException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
@@ -54,7 +57,7 @@ public class DigestHttpMechanismUtil {
         Pattern domainPattern = Pattern.compile("domain=\"(.*?)\"");
         Pattern noncePattern = Pattern.compile("nonce=\"(.*?)\"");
         Pattern opaquePattern = Pattern.compile("opaque=\"(.*?)\"");
-        Pattern algorithmPattern = Pattern.compile("algorithm=(\\w+)");
+        Pattern algorithmPattern = Pattern.compile("algorithm=(.+?)(?:,|$)");
         Pattern qopPattern = Pattern.compile("qop=\\s*\"?([^\"]*)\"?");
 
         Matcher realmMatcher = realmPattern.matcher(authHeader);
@@ -114,7 +117,11 @@ public class DigestHttpMechanismUtil {
 
     public String generateHash(String value,String algorithm) {
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+            MessageDigest messageDigest;
+            if(algorithm.equals("SHA-512-256")){
+                messageDigest = MessageDigest.getInstance(algorithm, WildFlyElytronDigestProvider.getInstance());
+            }
+            else messageDigest = MessageDigest.getInstance(algorithm);
             messageDigest.update(value.getBytes());
             byte[] digest = messageDigest.digest();
             StringBuilder sb = new StringBuilder();
@@ -123,7 +130,7 @@ public class DigestHttpMechanismUtil {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Provided algorithm not available", e);
+            throw new ElytronHttpClientException(ElytronMessages.log.digestAuthenticationAlgorithmNotAvailable());
         }
     }
 

@@ -471,7 +471,10 @@ public class AbstractBaseHttpTest {
                     Assert.assertNotNull(clearPwdCredential);
                     Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
                 } else if (callback instanceof AuthorizeCallback) {
-                    if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                    if(username.equalsIgnoreCase("unauthorizedUser")){
+                        ((AuthorizeCallback) callback).setAuthorized(false);
+                    }
+                    else if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
                        username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
                         ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {

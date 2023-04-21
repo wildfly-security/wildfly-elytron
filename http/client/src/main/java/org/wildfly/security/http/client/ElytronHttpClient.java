@@ -38,6 +38,7 @@ import java.util.Map;
  */
 public class ElytronHttpClient {
 
+    private static final String AUTHORIZATION = "Authorization";
     private final HttpClient client;
     private final HttpMechClientConfigUtil httpMechClientConfigUtil;
     private String lastURI;
@@ -106,7 +107,7 @@ public class ElytronHttpClient {
         HttpRequest request2 = HttpRequest
                 .newBuilder()
                 .uri(new URI(uri))
-                .header("Authorization", "Digest " +
+                .header(AUTHORIZATION, "Digest " +
                         "username=\"" + userName + "\", " +
                         "realm=\"" + realm + "\"," +
                         "nonce=\"" + nonce + "\", " +
@@ -133,7 +134,7 @@ public class ElytronHttpClient {
         HttpRequest request = HttpRequest
                 .newBuilder()
                 .uri(new URI(uri))
-                .header("Authorization", AuthHeader)
+                .header(AUTHORIZATION, AuthHeader)
                 .build();
 
         return request;
@@ -143,7 +144,7 @@ public class ElytronHttpClient {
         HttpRequest request = HttpRequest
                 .newBuilder()
                 .uri(new URI(uri))
-                .header("Authorization", basicAuth(userName, password))
+                .header(AUTHORIZATION, basicAuth(userName, password))
                 .build();
         HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
         return response;

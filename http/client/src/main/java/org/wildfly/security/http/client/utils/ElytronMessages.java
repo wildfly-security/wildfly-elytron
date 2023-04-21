@@ -47,4 +47,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 41002, value = "Response Header Extraction Failed.")
     ElytronHttpClientException responseHeaderExtractionFailed();
+
+    @Message(id = 41003, value = "Provided Algorithm Not Available.")
+    ElytronHttpClientException digestAuthenticationAlgorithmNotAvailable();
 }
