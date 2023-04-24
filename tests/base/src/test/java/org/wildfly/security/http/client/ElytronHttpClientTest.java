@@ -94,6 +94,56 @@ public class ElytronHttpClientTest extends AbstractBaseHttpTest {
     }
 
     @Test
+    public void testElytonHttpClientBasicAuthenticationMechanismUnauthorizedUser() {
+        AuthenticationConfiguration configuration = AuthenticationConfiguration.empty().useName("unauthorizedUser").usePassword("password").useHttpMechanism("BASIC");
+        AuthenticationContext context = AuthenticationContext.empty();
+        context = context.with(MatchRule.ALL,configuration);
+        context.run(() -> {
+            try {
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("unauthorizedUser", "test-realm", "password"));
+                HttpRequest request = elytronHttpClient.getRequest("http://localhost:8080/servlet-security/SecuredServlet");
+
+                //Test successful authentication
+                TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
+                mechanism.evaluateRequest(testingHttpServerRequest);
+                Assert.assertEquals(Status.FAILED, testingHttpServerRequest.getResult());
+                Assert.assertEquals(FORBIDDEN,testingHttpServerRequest.getResponse().getStatusCode());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void testElytonHttpClientBasicAuthenticationMechanismInvalidUser() {
+        AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
+                doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
+
+        AuthenticationContext context = doPrivileged((PrivilegedAction<AuthenticationContext>) () -> {
+            try {
+                URL config = getClass().getResource("wildfly-config-http-client-basic.xml");
+                return ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI()).create();
+            } catch (Throwable t) {
+                throw new InvalidAuthenticationConfigurationException(t);
+            }
+        });
+        context.run(() -> {
+            try {
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("user1", "test-realm", "password"));
+                HttpRequest request = elytronHttpClient.getRequest("http://localhost:8080/servlet-security/SecuredServlet");
+
+                //Test successful authentication
+                TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
+                mechanism.evaluateRequest(testingHttpServerRequest);
+                Assert.assertEquals(Status.FAILED, testingHttpServerRequest.getResult());
+                Assert.assertEquals(UNAUTHORIZED,testingHttpServerRequest.getResponse().getStatusCode());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
     public void testElytonHttpClientDigestAuthenticationMechanism() {
         AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
                 doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
