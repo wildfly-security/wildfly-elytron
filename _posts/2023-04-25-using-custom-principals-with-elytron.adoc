@@ -1,0 +1,284 @@
+---
+layout: post
+title: 'Using Custom Principals with Elytron'
+date: 2023-04-25
+tags: custom-principal principal principal-transformer
+synopsis: How to make accessing user information simpler, with new support for custom principals in WildFly Elytron.
+author: cam-rod
+---
+
+:toc: macro
+:toc-title:
+
+Sometimes, you need to access additional information about an
+authenticated user. As an example, you may want to know when they logged
+in, or what information they have on file. Traditionally, this type of
+information needed to be stored using security realm attributes
+associated with an identity. Now in WildFly 28, it is possible to use a
+custom `Principal` instance instead.
+
+Custom principals allow you to add fields and methods to a `Principal`. By
+configuring a custom `PrincipalTransformer`, you can modify the principal
+during the authentication process. You can then retrieve this principal,
+and its functionality, from your application. Let's take a look at how
+this works.
+
+toc::[]
+
+== Create a custom principal
+
+First, you'll need to create a custom implementation of the Principal
+class. The custom principal will be created at the pre-realm stage of
+authentication, which you can learn more about in
+https://darranl.blogspot.com/2017/07/wildfly-elytron-principal-transformers.html[this
+blog post].
+
+Let's create a class called `CustomPrincipal` that implements the
+Principal class. This class will record the time a user logged in. We'll
+start with a basic definition of the class, introduce a `name` field, and
+override `equals()` to compare against the name as well:
+
+.A basic `Principal` implementation
+[source,java]
+----
+package com.company.components;
+
+import java.io.Serializable;
+import java.security.Principal;
+import java.time.LocalDateTime;
+
+public class CustomPrincipal implements Principal, Serializable {
+    private static final long serialVersionUID = 3384494813486178989L;
+    private final String name;
+
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object instanceof CustomPrincipal) {
+            return this.name.equals( ((CustomPrincipal) object).getName() );
+        }
+        return false;
+    }
+}
+----
+
+Then, let's introduce a field to store the login time, a getter, and a
+constructor to set the time:
+
+.Adding login timestamps to the principal
+[source,java]
+----
+// [...]
+
+public class CustomPrincipal implements Principal, Serializable {
+    // [...]
+    private final LocalDateTime loginTime;
+
+    public CustomPrincipal(Principal principal, LocalDateTime loginTime) {
+        this.name = principal.getName();
+        this.loginTime = loginTime;
+    }
+
+    /** @return The time at which the user attempted authentication. */
+    public LocalDateTime getloginTime() {
+        return this.loginTime;
+    }
+
+    // [...]
+}
+----
+
+And that's it! Our custom principal can now provide the time of login.
+
+== Create a custom principal transformer
+
+Elytron uses implementations of the `PrincipalTransformer` interface to
+modify principals during the authentication. For example,
+`regex-principal-transformer` will apply a regular expression to modify
+the name of a principal. In the same way, we can use a
+`custom-principal-transformer` to convert into our `CustomPrincipal`.
+
+To do this, we'll implement the `PrincipalTransformer` interface. In the
+`apply()` method, we'll record the current time and return a new instance of
+our custom principal:
+
+.A custom `PrincipalTransformer` implementation
+[source,java]
+----
+package com.company.components;
+
+import java.security.Principal;
+import java.time.LocalDateTime;
+
+import org.wildfly.extension.elytron.capabilities.PrincipalTransformer;
+
+public class CustomPrincipalTransformer implements PrincipalTransformer {
+
+    @Override
+    public Principal apply(Principal principal) {
+        LocalDateTime loginTime = LocalDateTime.now();
+        return new CustomPrincipal(principal, loginTime);
+    }
+}
+----
+
+If we needed to pass variables from the server configuration to the
+transformer, we could also override the `initialize()` method. You can
+learn more about custom components in the
+https://docs.wildfly.org/28/WildFly_Elytron_Security.html#Custom_Components[Elytron
+documentation].
+
+== Configure the custom components
+
+Now, we can configure WildFly to use our custom components. First,
+package the custom principal and transformer into a JAR. Then, with
+WildFly running, open the WildFly CLI in a terminal session, and add a
+new module that contains our archive:
+
+[source,shell]
+----
+[standalone@localhost:9990 /] module add --name=custom-principal-components \
+--resources=/PATH/TO/custom-principal-components.jar \
+--dependencies=org.wildfly.security.elytron,org.wildfly.extension.elytron
+----
+
+We can configure a custom principal transformer that references this
+new module. For example, let's say we wanted to use our custom principal
+with the `ApplicationDomain` security domain. We can add our transformer
+as a `pre-realm-principal-transformer`. Here are the CLI commands needed
+to achieve that:
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/custom-principal-transformer=customPrincipalTransformer:add(module=custom-principal-components,\
+class-name=com.company.components.CustomPrincipalTransformer)
+{"outcome" => "success"}
+
+[standalone@localhost:9990 /] /subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=pre-realm-principal-transformer,\
+value=customPrincipalTransformer)
+{
+    "outcome" => "success",
+    "response-headers" => {
+        "operation-requires-reload" => true,
+        "process-state" => "reload-required"
+    }
+}
+
+[standalone@localhost:9990 /] reload
+----
+
+Now, whenever a user is authenticated via the `ApplicationDomain`, our
+`CustomPrincipal` will be associated with that user.
+
+== Accessing the custom principal
+
+There are many ways you can retrieve a principal from within an
+application. A few methods are listed below, with links to example
+applications you can try yourself.
+
+=== Jakarta Security
+
+With Jakarta Security, you can access the current user via the
+`SecurityContext` object. Inject the `SecurityContext` into your Jakarta
+Servlet, and use the standard methods `getCallerPrincipal()` or
+`getPrincipalsByType()` to retrieve the custom principal:
+
+.Accessing a custom principal with Jakarta Security
+[source,java]
+----
+package com.company.servlet;
+
+// [...]
+
+@WebServlet
+public class MyServlet extends HttpServlet {
+
+    @Inject
+    private SecurityContext securityContext;
+
+    private CustomPrincipal getCustomPrincipal() {
+        Principal custPrincipal = securityContext.getCallerPrincipal();
+        return (CustomPrincipal) custPrincipal;
+    }
+
+    private CustomPrincipal getCustomPrincipalByType() {
+        Set<CustomPrincipal> principals = securityContext.getPrincipalsByType(CustomPrincipal.class);
+        return principals.iterator().next();
+    }
+
+    // [...]
+}
+----
+
+To use this functionality, simply enable a default _Jakarta
+Authorization (JACC)_ policy in Elytron:
+
+[source,shell]
+----
+[standalone@localhost:9990 /] /subsystem=elytron/policy=jacc:add(jacc-policy={})
+----
+
+The https://github.com/wildfly-security-incubator/elytron-examples/tree/main/custom-principal-ee[*custom-principal-ee*]
+example is a full _Jakarta Security_ implementation. It demonstrates how
+both of these methods return the same class, making the custom principal
+available to the Servlet.
+
+=== Using SecurityContext with Elytron
+
+When securing an application using an Elytron HTTP authentication
+mechanism instead of Jakarta Security, it’s still possible to use the
+`SecurityContext` to retrieve the custom principal from within an
+application. By creating the default JACC policy and injecting a
+`SecurityContext` into an application, WildFly will automatically allow
+the application to use the interface to access the authorized identity.
+The
+https://github.com/wildfly-security-incubator/elytron-examples/tree/main/custom-principal-ejb[*custom-principal-elytron*]
+example is similar to the
+https://github.com/wildfly-security-incubator/elytron-examples/tree/main/custom-principal-ee[*custom-principal-ee*]
+demo, but unlike the Jakarta Security application, it uses one of Elytron's
+built-in authentication mechanisms.
+
+=== Jakarta Enterprise Beans (EJBs)
+
+The custom principal can be retrieved by any class implementing
+`EJBContext`. For example, a stateless EJB can inject `SessionContext`, and
+call `getCallerPrincipal()` to retrieve the custom principal:
+
+.Accessing a custom principal from an EJB
+[source,java]
+----
+package com.company.beans;
+
+// [...]
+
+@Stateless
+@Remote(MyBeanInterface.class)
+public class MyBean implements MyBeanInterface {
+
+    @Resource
+    private SessionContext ejbContext;
+
+    @Override
+    public CustomPrincipal getCustomPrincipal() {
+        Principal custPrincipal = ejbContext.getCallerPrincipal();
+        return (CustomPrincipal) custPrincipal;
+    }
+
+    // [...]
+}
+----
+
+The https://github.com/wildfly-security-incubator/elytron-examples/tree/main/custom-principal-ejb[*custom-principal-ejb*]
+example demonstrates a pair of EJBs and a remote client using methods
+from a custom principal.
+
+== Flexible principals for real-time functionality
+
+With WildFly 28, it’s now possible to associate a custom Principal class
+with authenticated users. This means it’s now easier to access
+additional information and methods for a user, without needing to store
+it in a security realm or elsewhere.
