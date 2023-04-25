@@ -126,7 +126,7 @@ a:not(.mdl-navigation__link) {
   color: $title-colour;
   text-align: center;
   font-family: "Titillium Web", sans-serif;
-  b {
+  b, code {
       color: $title-colour;
   }
 }
@@ -479,11 +479,33 @@ table code {
   }
 }
 
-td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;font-weight:400;margin-top:0;margin-bottom:.25em}
-
 details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
 
-td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-size:1rem;font-style:italic}
+@mixin nested-title-class {
+  line-height:1.45;
+  text-align:left;
+  margin-top:0;
+  margin-bottom:.25em;
+
+  font-size:1rem;
+  font-weight:400;
+  font-style:italic;
+  text-rendering:optimizeLegibility;
+}
+
+td.content>, .audioblock>, .exampleblock>, .imageblock>, .listingblock>, .literalblock>, .stemblock>, .openblock>,
+  .paragraph>, .quoteblock>, table.tableblock>, .verseblock>, .videoblock>, .dlist>, .olist>, .ulist>, .qlist>,
+  .hdlist> {
+
+  .title {
+    @include nested-title-class;
+  }
+
+  .title>code {
+      @include nested-title-class;
+      font-style: normal;
+  }
+}
 
 .banner>.content>img {
   width: 100%;
