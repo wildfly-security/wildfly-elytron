@@ -52,7 +52,7 @@ a:not(.mdl-navigation__link), a:not(.mdl-navigation__link) strong:not(.mdl-navig
 
 .title { color: #004153 !important; text-align: center; font-family: "Titillium Web", sans-serif; }
 
-.title b { color: #004153 !important; }
+.title b, .title code { color: #004153 !important; }
 
 .logo-toolbar-container { line-height: 48px; }
 
@@ -172,11 +172,11 @@ pre > code, table code { border: none; background-color: transparent; }
 
 .OSD-2022-page strong > a, .OSD-2022-page a:not(.mdl-navigation__link) strong > strong, a:not(.mdl-navigation__link) .OSD-2022-page strong > strong, .OSD-2022-page a:not(.mdl-navigation__link) strong > em, a:not(.mdl-navigation__link) .OSD-2022-page strong > em, .hacktoberfest-page strong > a, .hacktoberfest-page a:not(.mdl-navigation__link) strong > strong, a:not(.mdl-navigation__link) .hacktoberfest-page strong > strong, .hacktoberfest-page a:not(.mdl-navigation__link) strong > em, a:not(.mdl-navigation__link) .hacktoberfest-page strong > em, .contribute-page strong > a, .contribute-page a:not(.mdl-navigation__link) strong > strong, a:not(.mdl-navigation__link) .contribute-page strong > strong, .contribute-page a:not(.mdl-navigation__link) strong > em, a:not(.mdl-navigation__link) .contribute-page strong > em { font-weight: bold; }
 
-td.content > .title, .audioblock > .title, .exampleblock > .title, .imageblock > .title, .listingblock > .title, .literalblock > .title, .stemblock > .title, .openblock > .title, .paragraph > .title, .quoteblock > .title, table.tableblock > .title, .verseblock > .title, .videoblock > .title, .dlist > .title, .olist > .title, .ulist > .title, .qlist > .title, .hdlist > .title { line-height: 1.45; font-weight: 400; margin-top: 0; margin-bottom: .25em; }
-
 details, .audioblock, .imageblock, .literalblock, .listingblock, .stemblock, .videoblock { margin-bottom: 1.25em; }
 
-td.content > .title, .audioblock > .title, .exampleblock > .title, .imageblock > .title, .listingblock > .title, .literalblock > .title, .stemblock > .title, .openblock > .title, .paragraph > .title, .quoteblock > .title, table.tableblock > .title, .verseblock > .title, .videoblock > .title, .dlist > .title, .olist > .title, .ulist > .title, .qlist > .title, .hdlist > .title { text-rendering: optimizeLegibility; text-align: left; font-size: 1rem; font-style: italic; }
+td.content > .title, .audioblock > .title, .exampleblock > .title, .imageblock > .title, .listingblock > .title, .literalblock > .title, .stemblock > .title, .openblock > .title, .paragraph > .title, .quoteblock > .title, table.tableblock > .title, .verseblock > .title, .videoblock > .title, .dlist > .title, .olist > .title, .ulist > .title, .qlist > .title, .hdlist > .title { line-height: 1.45; text-align: left; margin-top: 0; margin-bottom: .25em; font-size: 1rem; font-weight: 400; font-style: italic; text-rendering: optimizeLegibility; }
+
+td.content > .title > code, .audioblock > .title > code, .exampleblock > .title > code, .imageblock > .title > code, .listingblock > .title > code, .literalblock > .title > code, .stemblock > .title > code, .openblock > .title > code, .paragraph > .title > code, .quoteblock > .title > code, table.tableblock > .title > code, .verseblock > .title > code, .videoblock > .title > code, .dlist > .title > code, .olist > .title > code, .ulist > .title > code, .qlist > .title > code, .hdlist > .title > code { line-height: 1.45; text-align: left; margin-top: 0; margin-bottom: .25em; font-size: 1rem; font-weight: 400; font-style: italic; text-rendering: optimizeLegibility; font-style: normal; }
 
 .banner > .content > img { width: 100%; height: auto; }
 

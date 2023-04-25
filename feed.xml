@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 21 Feb 2023 17:56:24 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 25 Apr 2023 16:15:24 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using Custom Principals with Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/using-custom-principals-with-elytron/
+            </link>
+            <description>
+                Sometimes, you need to access additional information about an authenticated user. As an example, you may want to know when they logged in, or what information they have on file. Traditionally, this type of information needed to be stored using security realm attributes associated with an identity. Now in WildFly...
+            </description>
+            <pubDate>Tue, 25 Apr 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/using-custom-principals-with-elytron/
+            </guid>
+        </item>
         
         <item>
             <title>AMA Recap</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 01 Sep 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Bearer Token Support for the Elytron OIDC Client Subsystem</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/
-            </link>
-            <description>
-                WildFly 26.1.2.Final, which was just released, includes the ability to secure applications with bearer tokens when using the Elytron OpenID Connect (OIDC) Client subsystem. This blog post gives an overview of how to configure applications deployed to WildFly so they can support Bearer Token Authentication. Bearer Token Authentication Securing an...
-            </description>
-            <pubDate>Thu, 01 Sep 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/bearer-only-support-openid-connect/
             </guid>
         </item>
         
