@@ -21,6 +21,7 @@ package org.wildfly.security.http.digest;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.http.HttpConstants.CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA256_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_SHA512_256_NAME;
@@ -58,7 +59,7 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
     }
 
     public DigestMechanismFactory(final Provider provider) {
-        this(new Provider[] { provider });
+        this(new Provider[]{provider});
     }
 
     public DigestMechanismFactory(final Provider... providers) {
@@ -98,8 +99,13 @@ public class DigestMechanismFactory implements HttpServerAuthenticationMechanism
         checkNotNullParam("properties", properties);
         checkNotNullParam("callbackHandler", callbackHandler);
 
+        // TODO can I properties this with the PersistentNonceManager
         if (properties.containsKey("nonceManager")) {
             nonceManager = (NonceManager) properties.get("nonceManager");
+        } else if (properties.get(CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER) != null) {
+            if (Boolean.parseBoolean((String) properties.get(CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER))) {
+                nonceManager = new PersistentNonceManager(NonceManagerUtils.DEFAULT_VALIDITY_PERIOD, NonceManagerUtils.DEFAULT_NONCE_SESSION_TIME, true, NonceManagerUtils.DEFAULT_KEY_SIZE, SHA256, ElytronMessages.httpDigest);
+            }
         }
 
         switch (mechanismName) {

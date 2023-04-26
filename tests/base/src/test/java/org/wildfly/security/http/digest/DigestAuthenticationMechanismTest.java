@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.impl.AbstractBaseHttpTest;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.http.HttpConstants.CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SHA512_256;
@@ -286,6 +288,58 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
                         "       response=\"" + computeDigest("/doe.json", "5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK", "NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v", "00000001", "J\u00E4s\u00F8n Doe", "Secret, or not?", "MD5", "api@example.org", "auth", "GET") + "\",\n" +
                         "       opaque=\"00000000000000000000000000000000\",\n" +
                         "       userhash=false"
+        });
+        mechanism.evaluateRequest(request2);
+        Assert.assertEquals(Status.COMPLETE, request2.getResult());
+    }
+
+    // TODO think about adding a special test case for backwards compatibility of nonce managers, as they will be stored in a HTTP session, we will care about incompatibility
+    @Test
+    public void testSessionDigestAttributeUsesPersistedNonceManager() throws Exception {
+        mockDigestNonce("AAAAAQABsxiWa25/kpFxsPCrpDCFsjkTzs/Xr7RPsi/VVN6faYp21Hia3h4=");
+        Map<String, Object> props = new HashMap<>();
+        props.put(CONFIG_REALM, "testrealm@host.com");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
+        props.put(CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER, "true");   // persist nonce manager in HTTP session
+        digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+
+        Field f = DigestMechanismFactory.class.getDeclaredField("nonceManager");
+        f.setAccessible(true);
+        Assert.assertTrue(f.get(NonceManager.class) instanceof PersistentNonceManager);
+    }
+
+    @Test
+    public void testPersistedNonceManager() throws Exception {
+
+        mockDigestNonce("AAAAAQABsxiWa25/kpFxsPCrpDCFsjkTzs/Xr7RPsi/VVN6faYp21Hia3h4=");
+        Map<String, Object> props = new HashMap<>();
+        props.put(CONFIG_REALM, "testrealm@host.com");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
+        props.put(CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER, "true");   // persist nonce manager in HTTP session
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+
+        Field f = DigestMechanismFactory.class.getDeclaredField("nonceManager");
+        f.setAccessible(true);
+        Assert.assertTrue(f.get(NonceManager.class) instanceof PersistentNonceManager);
+
+        TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
+        mechanism.evaluateRequest(request1);
+        Assert.assertEquals(Status.NO_AUTH, request1.getResult());
+        TestingHttpServerResponse response = request1.getResponse();
+        Assert.assertEquals(UNAUTHORIZED, response.getStatusCode());
+        Assert.assertEquals("Digest realm=\"testrealm@host.com\", nonce=\"AAAAAQABsxiWa25/kpFxsPCrpDCFsjkTzs/Xr7RPsi/VVN6faYp21Hia3h4=\", opaque=\"00000000000000000000000000000000\", algorithm=MD5, qop=auth", response.getAuthenticateHeader());
+
+        TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
+                "Digest username=\"Mufasa\",\n" +
+                        "                 realm=\"testrealm@host.com\",\n" +
+                        "                 nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\",\n" +
+                        "                 uri=\"/dir/index.html\",\n" +
+                        "                 qop=auth,\n" +
+                        "                 nc=00000001,\n" +
+                        "                 cnonce=\"0a4f113b\",\n" +
+                        "                 response=\"6629fae49393a05397450978507c4ef1\",\n" +
+                        "                 opaque=\"00000000000000000000000000000000\",\n" +
+                        "                 algorithm=MD5"
         });
         mechanism.evaluateRequest(request2);
         Assert.assertEquals(Status.COMPLETE, request2.getResult());

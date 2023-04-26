@@ -67,6 +67,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
+import org.wildfly.security.http.Scope;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
@@ -82,10 +83,11 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     private static final String CHALLENGE_PREFIX = "Digest ";
     private static final String OPAQUE_VALUE = "00000000000000000000000000000000";
     private static final byte COLON = ':';
+    public static final String PERSISTENT_NONCE_MANAGER = "persistentNonceManager";
 
     private final Supplier<Provider[]> providers;
     private final CallbackHandler callbackHandler;
-    private final NonceManager nonceManager;
+    private NonceManager nonceManager;
     private final String configuredRealm;
     private final String domain;
     private final String mechanismName;
@@ -116,6 +118,22 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
+
+        // TODO can we pass HttpServerRequest to the NonceManager so it interacts directly
+        if (nonceManager instanceof PersistentNonceManager) {
+            if (request.getScope(Scope.SESSION) == null || !request.getScope(Scope.SESSION).exists()) {
+                request.getScope(Scope.SESSION).create();
+            }
+            PersistentNonceManager persistentNonceManager = (PersistentNonceManager) request.getScope(Scope.SESSION).getAttachment(PERSISTENT_NONCE_MANAGER);
+            if (persistentNonceManager != null) {
+                // executor is transient, so it will be always be null
+                if (persistentNonceManager.getExecutor() == null) {
+                    persistentNonceManager.setDefaultExecutor();
+                }
+                nonceManager = persistentNonceManager;
+            }
+        }
+
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
 
         if (authorizationValues != null) {
@@ -128,14 +146,13 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
                         return;
                     } catch (AuthenticationMechanismException e) {
                         httpDigest.trace("Failed to parse or validate the response", e);
-                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(selectRealm(), response, false));
+                        request.badRequest(e.toHttpAuthenticationException(), response -> prepareResponse(selectRealm(), response, false, request));
                         return;
                     }
                 }
             }
         }
-
-        request.noAuthenticationInProgress(response -> prepareResponse(selectRealm(), response, false));
+        request.noAuthenticationInProgress(response -> prepareResponse(selectRealm(), response, false, request));
     }
 
     private void validateResponse(HashMap<String, byte[]> responseTokens, final HttpServerRequest request) throws AuthenticationMechanismException, HttpAuthenticationException {
@@ -213,7 +230,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         if (username.length() == 0) {
             httpDigest.trace("Failed: no username");
             fail();
-            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false, request));
             return;
         }
 
@@ -222,7 +239,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         if (hA1 == null) {
             httpDigest.trace("Failed: unable to get expected proof");
             fail();
-            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.authenticationFailed(), httpResponse -> prepareResponse(selectedRealm, httpResponse, false, request));
             return;
         }
 
@@ -231,13 +248,13 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         if (MessageDigest.isEqual(response, calculatedResponse) == false) {
             httpDigest.trace("Failed: invalid proof");
             fail();
-            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            request.authenticationFailed(httpDigest.mechResponseTokenMismatch(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false, request));
             return;
         }
 
         if (nonceValid == false) {
             httpDigest.trace("Failed: invalid nonce");
-            request.authenticationInProgress(httpResponse -> prepareResponse(selectedRealm, httpResponse, true));
+            request.authenticationInProgress(httpResponse -> prepareResponse(selectedRealm, httpResponse, true, request));
             return;
         }
 
@@ -390,7 +407,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
         }
     }
 
-    private void prepareResponse(String realmName, HttpServerResponse response, boolean stale) throws HttpAuthenticationException {
+    private void prepareResponse(String realmName, HttpServerResponse response, boolean stale, HttpServerRequest request) throws HttpAuthenticationException {
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(DigestQuote.quote(realmName)).append("\"");
 
@@ -407,6 +424,10 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
 
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setStatusCode(UNAUTHORIZED);
+
+        if ((nonceManager instanceof PersistentNonceManager) && request.getScope(Scope.SESSION) != null) {
+            request.getScope(Scope.SESSION).setAttachment(PERSISTENT_NONCE_MANAGER, this.nonceManager);
+        }
     }
 
     private boolean authorize(String username) throws AuthenticationMechanismException {
