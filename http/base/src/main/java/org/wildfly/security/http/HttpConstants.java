@@ -51,6 +51,7 @@ public class HttpConstants {
 
     public static final String CONFIG_VALIDATE_DIGEST_URI = CONFIG_BASE + ".validate-digest-uri";
     public static final String CONFIG_SKIP_CERTIFICATE_VERIFICATION = CONFIG_BASE + ".skip-certificate-verification";
+    public static final String CONFIG_SESSION_BASED_DIGEST_NONCE_MANAGER = CONFIG_BASE + ".use-session-based-digest-nonce-manager";
 
     /**
      * The context relative path of the login page.
