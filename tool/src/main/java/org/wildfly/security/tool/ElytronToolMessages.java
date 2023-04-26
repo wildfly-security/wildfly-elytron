@@ -485,11 +485,8 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "'FileSystemRealmEncrypt' command is used to convert un-encrypted FileSystemSecurityRealm(s) to encrypted FileSystemSecurityRealm(s) with a SecretKey.")
     String cmdFileSystemEncryptHelpHeader();
 
-    @Message(id = NONE, value = "The populate parameter was set to false and the Secret Key did not exist in the Credential Store.")
-    MissingOptionException cmdFileSystemPopulateUnspecified();
-
-    @Message(id = NONE, value = "Unable to locate Secret Key with Credential Store located at %s. Skipping realm located at %s.")
-    String cmdFileSystemEncryptionNoSecretKey(String credentialStore, String realmLocation);
+    @Message(id = NONE, value = "Secret Key was not found in the Credential Store at %s, and populate option was not set. Skipping descriptor file block number %d.")
+    String cmdFileSystemEncryptionNoSecretKey(String credentialStorePath, Integer blockNumber);
 
     @Message(id = NONE, value = "The character set used to convert the password string to a byte array. Defaults to UTF-8.")
     String cmdFileSystemRealmIntegrityHashCharsetDesc();
@@ -600,8 +597,14 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = NONE, value = "Found credential store and alias, using pre-existing key")
     String existingCredentialStore();
 
-    @Message(id = NONE, value = "Could not find credential store and secret key alias, skipping block")
-    String skippingBlockMissingCredentialStore();
+    @Message(id = NONE, value = "Skipping descriptor file block number %d due to failure to load Credential Store.")
+    String skippingDescriptorBlockCredentialStoreNotLoaded(Integer blockNumber);
+
+    @Message(id = NONE, value = "Credential Store at %s does not support SecretKey. Skipping descriptor file block number %d.")
+    String skippingDescriptorBlockSecretKeyUnsupported(String credentialStorePath, Integer blockNumber);
+
+    @Message(id = NONE, value = "Exception was thrown while populating Credential Store at %s. Skipping descriptor file block number %d.")
+    String skippingDescriptorBlockUnableToPopulateCredentialStore(String credentialStorePath, Integer blockNumber);
 
     @Message(id = NONE, value = "No Credential Store location or Secret Key Alias specified.")
     MissingOptionException missingCredentialStoreSecretKey();

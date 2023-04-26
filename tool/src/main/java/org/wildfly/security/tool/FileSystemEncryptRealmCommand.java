@@ -689,14 +689,16 @@ class FileSystemEncryptRealmCommand extends Command {
      */
 
     private void createFileSystemRealm() throws Exception {
+        int blockCount = 0;
         for (Descriptor descriptor : descriptors) {
+            blockCount++;
             System.out.println(ElytronToolMessages.msg.fileSystemRealmEncryptCreatingRealm(descriptor.getInputRealmLocation()));
 
             if (checkDescriptorFields(descriptor)) continue;
 
             // Load secret key
             SecretKey key = getSecretKey(descriptor.getCreateCredentialStore(), descriptor.getCredentialStore(),
-                    descriptor.getSecretKeyAlias(), descriptor.getPopulate(), descriptor.getInputRealmLocation());
+                    descriptor.getSecretKeyAlias(), descriptor.getPopulate(), blockCount);
             if (key == null) continue;
 
             FileSystemSecurityRealm oldFileSystemRealm = FileSystemSecurityRealm.builder()

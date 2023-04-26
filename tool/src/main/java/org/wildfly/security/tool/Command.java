@@ -44,10 +44,10 @@ import java.util.function.Supplier;
 
 import javax.crypto.SecretKey;
 
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
+import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.encryption.SecretKeyUtil;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
@@ -204,7 +204,7 @@ public abstract class Command {
      *                          <code>
      *                              List<String> allowedDuplicates = new ArrayList<String>()
      *                                  {{ add(PASSWORD_CREDENTIAL_VALUE_PARAM);
- *                                  }};
+     *                              }};
      *                          </code>
      */
     public void printDuplicatesWarning(CommandLine cmdLine, List<String> duplicatesAllowed) {
@@ -324,7 +324,7 @@ public abstract class Command {
      * @throws Exception when an existing credential store does not contain the secret key
      */
     SecretKey getSecretKey(Boolean createCredentialStore, String credentialStoreLocation, String alias, Boolean populate,
-                           String inputRealmLocation) throws Exception {
+                           int descriptorBlockCount) throws Exception {
         CredentialStore credentialStore;
         String csType = PropertiesCredentialStore.NAME;
         try {
@@ -337,29 +337,42 @@ public abstract class Command {
         implProps.put("create", String.valueOf(createCredentialStore));
         implProps.put("location", credentialStoreLocation);
         implProps.put("modifiable", Boolean.TRUE.toString());
-        credentialStore.initialize(implProps);
+
         try {
-            credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
+            credentialStore.initialize(implProps);
+        } catch (CredentialStoreException e) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockCredentialStoreNotLoaded(descriptorBlockCount));
+        }
+
+        SecretKeyCredential secretKeyCredential;
+        try {
+            secretKeyCredential = credentialStore.retrieve(alias, SecretKeyCredential.class);
+        } catch (UnsupportedCredentialTypeException e) {
+            warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockSecretKeyUnsupported(credentialStoreLocation, descriptorBlockCount));
+            return null;
+        }
+
+        // Acquire SecretKey, and populate credential store if set
+        SecretKey key;
+        if (secretKeyCredential != null) {
             System.out.println(ElytronToolMessages.msg.existingCredentialStore());
-        } catch (Exception e) {
-            if (!createCredentialStore) {
-                warningHandler(ElytronToolMessages.msg.skippingBlockMissingCredentialStore());
+            key = secretKeyCredential.getSecretKey();
+        } else if (populate) {
+            try {
+                SecretKey newKey = SecretKeyUtil.generateSecretKey(256);
+                SecretKeyCredential newKeyCredential = new SecretKeyCredential(newKey);
+                credentialStore.store(alias, newKeyCredential);
+                credentialStore.flush();
+
+                key = newKey;
+            } catch (GeneralSecurityException e) {
+                warningHandler(ElytronToolMessages.msg.skippingDescriptorBlockUnableToPopulateCredentialStore(
+                        credentialStoreLocation, descriptorBlockCount));
                 return null;
             }
-            if (populate) {
-                SecretKey key = SecretKeyUtil.generateSecretKey(256);
-                Credential keyCredential = new SecretKeyCredential(key);
-                credentialStore.store(alias, keyCredential);
-                credentialStore.flush();
-            } else {
-                errorHandler(ElytronToolMessages.msg.cmdFileSystemPopulateUnspecified());
-            }
-        }
-        SecretKey key;
-        try {
-            key = credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
-        } catch (NullPointerException e) {
-            System.out.println(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(credentialStoreLocation, inputRealmLocation));
+
+        } else {
+            warningHandler(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(credentialStoreLocation, descriptorBlockCount));
             return null;
         }
 
