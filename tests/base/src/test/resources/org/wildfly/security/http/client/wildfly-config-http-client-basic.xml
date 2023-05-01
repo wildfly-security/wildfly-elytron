@@ -28,7 +28,6 @@
                 <credentials>
                     <clear-password password="password1"/>
                 </credentials>
-                <http-mechanism-selector selector="BASIC"/>
             </configuration>
         </authentication-configurations>
     </authentication-client>
