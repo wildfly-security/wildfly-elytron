@@ -29,6 +29,7 @@ import org.wildfly.security.evidence.Evidence;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.function.Consumer;
 
 /**
  * A realm for authentication and authorization of identities distributed between multiple realms.
@@ -36,10 +37,25 @@ import java.security.spec.AlgorithmParameterSpec;
  * @author <a href="mailto:mmazanek@redhat.com">Martin Mazanek</a>
  */
 public class DistributedSecurityRealm implements SecurityRealm {
+    private final boolean ignoreUnavailableRealms;
     private final SecurityRealm[] securityRealms;
+    private final Consumer<Integer> unavailableRealmCallback;
 
     public DistributedSecurityRealm(final SecurityRealm... securityRealms) {
+        this(false, null, securityRealms);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param ignoreUnavailableRealms allow to specify that the search should continue on to the next realm if a realm happens to be unavailable
+     * @param unavailableRealmCallback a callback that can be used to emit realm unavailability, can be {@code null}
+     * @param securityRealms references to one or more security realms for authentication and authorization
+     */
+    public DistributedSecurityRealm( final boolean ignoreUnavailableRealms, final Consumer<Integer> unavailableRealmCallback, final SecurityRealm... securityRealms) {
         Assert.checkNotNullParam("securityRealms", securityRealms);
+        this.ignoreUnavailableRealms = ignoreUnavailableRealms;
+        this.unavailableRealmCallback = unavailableRealmCallback;
         this.securityRealms = securityRealms;
     }
 
@@ -181,9 +197,22 @@ public class DistributedSecurityRealm implements SecurityRealm {
                 currentIdentity = RealmIdentity.NON_EXISTENT;
                 return false;
             }
-            currentIdentity = securityRealms[nextRealm].getRealmIdentity(principal);
+
+            boolean doesIdentityExist = false;
+            try {
+                currentIdentity = securityRealms[nextRealm].getRealmIdentity(principal);
+                doesIdentityExist = currentIdentity.exists();
+            } catch (RealmUnavailableException e) {
+                if (!ignoreUnavailableRealms) {
+                    throw e;
+                }
+                ElytronMessages.log.realmIsNotAvailable(e);
+                if (unavailableRealmCallback != null) {
+                    unavailableRealmCallback.accept(nextRealm);
+                }
+            }
             nextRealm++;
-            if (!currentIdentity.exists()) {
+            if (!doesIdentityExist) {
                 return nextIdentity();
             }
             return true;

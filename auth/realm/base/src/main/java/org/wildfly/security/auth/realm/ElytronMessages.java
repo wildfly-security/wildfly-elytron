@@ -168,4 +168,7 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 13011, value = "Integrity has not been enabled for the realm at: %s")
     IllegalArgumentException integrityNotEnabled(String s);
 
+    @LogMessage(level = Logger.Level.WARN)
+    @Message(id = 13012, value = "A realm within the distributed realm is unavailable. This realm will be ignored.")
+    void realmIsNotAvailable(@Cause Exception e);
 }
