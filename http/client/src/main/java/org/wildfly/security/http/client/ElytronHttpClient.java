@@ -22,6 +22,7 @@ import org.wildfly.security.http.client.mechanism.ElytronHttpClientAuthMechanism
 import org.wildfly.security.http.client.mechanism.basic.ElytronHttpClientBasicAuthMechanism;
 import org.wildfly.security.http.client.mechanism.digest.ElytronHttpClientDigestAuthMechanism;
 import org.wildfly.security.http.client.utils.ElytronMessages;
+import org.wildfly.security.http.client.utils.HttpMechClientConfigUtil;
 
 import static org.wildfly.security.http.HttpConstants.OK;
 
@@ -43,6 +44,7 @@ public class ElytronHttpClient {
 
     private final HttpClient httpClient;
     private ElytronHttpClientAuthMechanism elytronHttpClientAuthMechanism;
+    private HttpMechClientConfigUtil httpMechClientConfigUtil = new HttpMechClientConfigUtil();
     public ElytronHttpClient() {
         this.httpClient = HttpClient.newHttpClient();
     }
@@ -66,6 +68,7 @@ public class ElytronHttpClient {
     public HttpResponse connect(String uri) throws IOException, InterruptedException, URISyntaxException {
 
         URI uriPath = new URI(uri);
+        String token = httpMechClientConfigUtil.getToken(uriPath);
         HttpRequest request = evaluateNoAuthMechanism(uriPath);
         HttpResponse response = getResponse(request);
 
@@ -83,6 +86,8 @@ public class ElytronHttpClient {
             elytronHttpClientAuthMechanism = new ElytronHttpClientBasicAuthMechanism();
         } else if (authHeader.toLowerCase().startsWith("digest")) {
             elytronHttpClientAuthMechanism = new ElytronHttpClientDigestAuthMechanism(authHeader);
+        } else if(authHeader.toLowerCase().startsWith("bearer")){
+
         }
         request = elytronHttpClientAuthMechanism.evaluateMechanism(uriPath);
         response = getResponse(request);

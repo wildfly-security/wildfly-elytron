@@ -71,7 +71,14 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-mechanism-digest</artifactId>
         </dependency>
-
+<!--        <dependency>-->
+<!--            <groupId>org.wildfly.security</groupId>-->
+<!--            <artifactId>wildfly-elytron-mechanism-oauth2</artifactId>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>

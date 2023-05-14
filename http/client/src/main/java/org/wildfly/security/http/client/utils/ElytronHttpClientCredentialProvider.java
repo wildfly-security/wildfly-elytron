@@ -36,4 +36,7 @@ public class ElytronHttpClientCredentialProvider {
     public String getPassword(URI uri){
         return httpMechClientConfigUtil.getPassword(uri);
     }
+    public String getToken(URI uri) {
+        return httpMechClientConfigUtil.getToken(uri);
+    }
 }
