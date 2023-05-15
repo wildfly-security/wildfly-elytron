@@ -24,13 +24,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.common.array.Arrays2;
+import org.wildfly.security.auth.callback.AuthenticationConfigurationCallback;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
@@ -41,9 +42,16 @@ final class ExternalSaslServer implements SaslServer {
     private final CallbackHandler cbh;
     private boolean complete;
     private String authorizationID;
+    private final boolean skipCertificateVerification;
 
     ExternalSaslServer(final CallbackHandler cbh) {
         this.cbh = cbh;
+        this.skipCertificateVerification = false;
+    }
+
+    ExternalSaslServer(final CallbackHandler cbh, boolean skipCertVerification) {
+        this.cbh = cbh;
+        this.skipCertificateVerification = skipCertVerification;
     }
 
     public String getMechanismName() {
@@ -65,8 +73,11 @@ final class ExternalSaslServer implements SaslServer {
             }
         }
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, authorizationId);
+        final AuthenticationConfigurationCallback authenticationConfigurationCallback = new AuthenticationConfigurationCallback();
+        authenticationConfigurationCallback.setSaslSkipCertificateVerification(skipCertificateVerification);
+        Callback[] callbacks = new Callback[]{authenticationConfigurationCallback, authorizeCallback};
         try {
-            cbh.handle(Arrays2.of(authorizeCallback));
+            cbh.handle(callbacks);
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {

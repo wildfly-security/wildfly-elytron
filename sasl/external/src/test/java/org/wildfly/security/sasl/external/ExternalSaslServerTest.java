@@ -46,6 +46,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.callback.AuthenticationConfigurationCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 
@@ -65,6 +66,8 @@ public class ExternalSaslServerTest {
             if (callback instanceof AuthorizeCallback) {
                 final AuthorizeCallback ac = (AuthorizeCallback) callback;
                 ac.setAuthorized(ADMIN.equals(ac.getAuthorizationID()));
+            } else if (callback instanceof AuthenticationConfigurationCallback) {
+                //ignore
             } else {
                 throw new UnsupportedCallbackException(callback);
             }
