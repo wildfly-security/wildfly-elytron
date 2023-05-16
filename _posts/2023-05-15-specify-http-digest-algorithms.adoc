@@ -9,7 +9,7 @@ author: dvilkola
 
 The default algorithm used for the digest authentication mechanism is MD5. You can configure the WildFly server to also require or accept the `SHA-256` and `SHA-512-256` algorithms. This configuration can be specified in the `mechanism-configuration` attribute of both the `http-authentication-factory` and the `sasl-authentication-factory`:
 
-[source,xml,options="nowrap"]
+[source,xml]
 ----
 <http-authentication-factory name="exampleHttpAuthFactory" security-domain="exampleSD" http-server-mechanism-factory="global">
     <mechanism-configuration>
@@ -21,9 +21,7 @@ The default algorithm used for the digest authentication mechanism is MD5. You c
         </mechanism>
     </mechanism-configuration>
 </http-authentication-factory>
-
 ...
-
 <sasl-authentication-factory name="exampleSaslAuthentication" security-domain="exampleSD" sasl-server-factory="configured">
     <mechanism-configuration>
         <mechanism mechanism-name="DIGEST-SHA-256">
