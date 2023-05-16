@@ -216,7 +216,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight nowrap"><code class="language-xml hljs" data-lang="xml">&lt;http-authentication-factory name="exampleHttpAuthFactory" security-domain="exampleSD" http-server-mechanism-factory="global"&gt;
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;http-authentication-factory name="exampleHttpAuthFactory" security-domain="exampleSD" http-server-mechanism-factory="global"&gt;
     &lt;mechanism-configuration&gt;
         &lt;mechanism mechanism-name="DIGEST-SHA-256"&gt;
             &lt;mechanism-realm realm-name="exampleDomain"/&gt;
@@ -226,9 +226,7 @@
         &lt;/mechanism&gt;
     &lt;/mechanism-configuration&gt;
 &lt;/http-authentication-factory&gt;
-
 ...
-
 &lt;sasl-authentication-factory name="exampleSaslAuthentication" security-domain="exampleSD" sasl-server-factory="configured"&gt;
     &lt;mechanism-configuration&gt;
         &lt;mechanism mechanism-name="DIGEST-SHA-256"&gt;
