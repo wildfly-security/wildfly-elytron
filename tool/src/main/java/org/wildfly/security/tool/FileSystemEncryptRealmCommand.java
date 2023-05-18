@@ -508,7 +508,7 @@ class FileSystemEncryptRealmCommand extends Command {
             }
 
             if (keyStoreLocationOption != null) {
-                if (Files.notExists(Path.of(keyStoreLocationOption))) {
+                if (Files.notExists(Paths.get(keyStoreLocationOption))) {
                     throw ElytronToolMessages.msg.keyStoreDoesNotExist();
                 }
                 descriptor.setKeyStoreLocation(keyStoreLocationOption);

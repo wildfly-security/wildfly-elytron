@@ -506,5 +506,5 @@ class Params {
     static final String DEFAULT_SECRET_KEY_ALIAS = "key";
     static final String FILE_SEPARATOR = File.separator;
     static final String LINE_SEPARATOR = System.lineSeparator();
-    static final String SUMMARY_DIVIDER = "-".repeat(100);
+    static final String SUMMARY_DIVIDER = String.join("", Collections.nCopies(100, "-"));
 }

@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,8 +70,8 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
      * > fsKeyStoreEmpty.jks - JKS keystore. No aliases.
      * > fsCredStore.cs - SecretKey credential store. Two SecretKey aliases: secKey and key
      */
-    private static final Path FS_KEYSTORE_PATH = Path.of(RELATIVE_BASE_DIR, "fsKeyStore.pfx");
-    private static final Path FS_REALM_SIGNED_PATH = Path.of(RELATIVE_SIGNED_DIR);
+    private static final Path FS_KEYSTORE_PATH = Paths.get(RELATIVE_BASE_DIR, "fsKeyStore.pfx");
+    private static final Path FS_REALM_SIGNED_PATH = Paths.get(RELATIVE_SIGNED_DIR);
     private static final String KEYSTORE_PASSWORD = "Guk]i%Aua4-wB";
 
     @Override
@@ -88,8 +89,8 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testSingleUserRealmWithJCEKS() throws IOException {
         String realmName = "fsRealmSingle";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
-        Path keyStore = Path.of(RELATIVE_BASE_DIR, "fsKeyStoreEC.jceks");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
+        Path keyStore = Paths.get(RELATIVE_BASE_DIR, "fsKeyStoreEC.jceks");
         String keyStoreType = "JCEKS";
         String keyPairAlias = "curveKeyPair";
         String[] args = {
@@ -104,7 +105,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
 
         runCommand(inputLocation, args, ElytronToolExitStatus_OK);
         assertTrue("Could not find identity `bob` within single user realm: " + FS_REALM_SIGNED_PATH.resolve(realmName),
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "b", "o")).toFile().exists());
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "b", "o")).toFile().exists());
 
         ScriptParameters params = new ScriptParameters(realmName)
                 .setRealmPath(FS_REALM_SIGNED_PATH.resolve(realmName))
@@ -118,7 +119,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testMultiUserRealmWithSummary() throws IOException {
         String realmName = "fsRealmMultiUser";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, "fsRealm");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealm");
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -152,8 +153,8 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testEncryptedRealmWithFourLevels() throws IOException {
         String realmName = "fsRealmEncrypted";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
-        Path credStorePath = Path.of(RELATIVE_BASE_DIR, "fsCredStore.cs");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
+        Path credStorePath = Paths.get(RELATIVE_BASE_DIR, "fsCredStore.cs");
         String secretKey = "secKey";
         String levels = "4";
         String[] args = {
@@ -169,9 +170,9 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
 
         runCommand(inputLocation, args, ElytronToolExitStatus_OK);
         validateMultiUserIdentitiesPresent(realmName,
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "M", "F", "W", "G", "MFWGSY3F.xml")),
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "M", "J", "X", "W", "MJXWE.xml")),
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "M", "N", "Q", "W", "MNQW2ZLSN5XA.xml")));
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "M", "F", "W", "G", "MFWGSY3F.xml")),
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "M", "J", "X", "W", "MJXWE.xml")),
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "M", "N", "Q", "W", "MNQW2ZLSN5XA.xml")));
 
         ScriptParameters params = new ScriptParameters(realmName)
                 .setRealmPath(FS_REALM_SIGNED_PATH.resolve(realmName))
@@ -186,7 +187,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testRealmWithNameEncodedAndPasswordEnv() throws IOException {
         String realmName = "fsRealmNameEncoded";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String passwordEnvVar = "FS_INTEGRITY_PASSWORD_TEST_VAR";
         String encoded = "false";
         String[] args = {
@@ -211,7 +212,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testRealmWithHashEncoding() throws IOException {
         String realmName = "fsRealmHashEncoding";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String hashEncoding = "hex";
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
@@ -236,7 +237,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testRealmWithHashCharset() throws IOException {
         String realmName = "fsRealmCharset";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String hashCharset = "ISO-8859-1";
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
@@ -261,7 +262,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testRealmUpgradeInPlace() throws IOException {
         String realmName = "fsRealmUpgradeInPlace";
-        Path location = Path.of(RELATIVE_BASE_DIR, realmName);
+        Path location = Paths.get(RELATIVE_BASE_DIR, realmName);
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, location.toString(),
                 "--" + REALM_NAME_PARAM, realmName,
@@ -290,7 +291,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testIntegrityAlreadyEnabled() throws IOException {
         String realmName = "fsRealmIntegrityEnabled";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -313,7 +314,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     public void testBulkUpgradeAndRealmEnumeration() {
         // Also run with a summary
         String[] args = {
-                "--" + BULK_CONVERT_PARAM, Path.of("./target/test-classes/bulk-integrity-conversion-desc").toString(),
+                "--" + BULK_CONVERT_PARAM, Paths.get("./target/test-classes/bulk-integrity-conversion-desc").toString(),
                 "--summary"
         };
 
@@ -326,9 +327,9 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
         File[] signedRealmDirs = FS_REALM_SIGNED_PATH.toFile().listFiles();
 
         assertTrue("Could not find upgraded realm fsRealmUpgradeInPlaceBulk",
-                Path.of(RELATIVE_BASE_DIR, "fsRealmUpgradeInPlaceBulk", "a", "l", "alice-MFWGSY3F.xml").toFile().exists());
+                Paths.get(RELATIVE_BASE_DIR, "fsRealmUpgradeInPlaceBulk", "a", "l", "alice-MFWGSY3F.xml").toFile().exists());
         assertTrue("Could not find creation of realm fsRealmEncryptedBulk",
-                Path.of(RELATIVE_SIGNED_DIR, "fsRealmEncryptedBulk", "M","J", "X", "W", "MJXWE.xml" ).toFile().exists());
+                Paths.get(RELATIVE_SIGNED_DIR, "fsRealmEncryptedBulk", "M","J", "X", "W", "MJXWE.xml" ).toFile().exists());
         assertTrue("No signed filesystem realms could be found in " + FS_REALM_SIGNED_PATH.normalize().toAbsolutePath(),
                 signedRealmDirs != null && signedRealmDirs.length > 0);
 
@@ -348,7 +349,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testMissingInputRealm() {
         String realmName = "fsRealmNonExistent";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -371,7 +372,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testEmptyRealm() {
         String realmName = "fsRealmEmpty";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, realmName);
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, realmName);
         String[] args = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -394,10 +395,10 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
 
     @Test
     public void testNotAKeyStore() {
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, "fsRealm");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealm");
 
         String notKSRealmName = "fsRealmNotAKeyStore";
-        Path notKeyStore = Path.of(RELATIVE_BASE_DIR, "fsCredStore.cs");
+        Path notKeyStore = Paths.get(RELATIVE_BASE_DIR, "fsCredStore.cs");
         String[] notKSArgs = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -419,10 +420,10 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
 
     @Test
     public void testEmptyKeyStore() {
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, "fsRealm");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealm");
 
         String emptyKSRealmName = "fsRealmEmptyKeyStore";
-        Path emptyKeyStore = Path.of(RELATIVE_BASE_DIR, "fsKeyStoreEmpty.jks");
+        Path emptyKeyStore = Paths.get(RELATIVE_BASE_DIR, "fsKeyStoreEmpty.jks");
         String[] emptyKSArgs = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -444,7 +445,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
 
     @Test
     public void testNotAKeyPair() {
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, "fsRealm");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealm");
 
         String certRealmName = "fsRealmSecretKey";
         String certAlias = "integrity-cert";
@@ -471,8 +472,8 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testMissingKeyStore() {
         String realmName = "fsRealmMissingKeyStore";
-        Path inputLocation = Path.of(RELATIVE_UNSIGNED_DIR, "fsRealm");
-        Path keyStore = Path.of(RELATIVE_BASE_DIR, "nonExistentKeyStore.jks");
+        Path inputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, "fsRealm");
+        Path keyStore = Paths.get(RELATIVE_BASE_DIR, "nonExistentKeyStore.jks");
         String[] emptyKSArgs = {
                 "--" + INPUT_LOCATION_PARAM, inputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -496,7 +497,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     public void testInvalidIdentityVersion() {
         // Schema version is invalid
         String invalidRealmName = "fsRealmInvalidIdentityVersion";
-        Path invalidInputLocation = Path.of(RELATIVE_UNSIGNED_DIR, invalidRealmName);
+        Path invalidInputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, invalidRealmName);
         String[] invalidArgs = {
                 "--" + INPUT_LOCATION_PARAM, invalidInputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -514,7 +515,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     public void testMissingIdentityVersion() {
         // Schema version attribute is missing
         String missingRealmName = "fsRealmMissingIdentityVersion";
-        Path missingInputLocation = Path.of(RELATIVE_UNSIGNED_DIR, missingRealmName);
+        Path missingInputLocation = Paths.get(RELATIVE_UNSIGNED_DIR, missingRealmName);
         String[] missingArgs = {
                 "--" + INPUT_LOCATION_PARAM, missingInputLocation.toString(),
                 "--" + OUTPUT_LOCATION_PARAM, FS_REALM_SIGNED_PATH.toString(),
@@ -530,7 +531,7 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     @Test
     public void testInvalidBulkUpgrade() {
         String[] args = {
-                "--" + BULK_CONVERT_PARAM, Path.of("./target/test-classes/bulk-integrity-conversion-desc-INVALID").toString(),
+                "--" + BULK_CONVERT_PARAM, Paths.get("./target/test-classes/bulk-integrity-conversion-desc-INVALID").toString(),
                 "--summary"
         };
 
@@ -557,9 +558,9 @@ public class FileSystemRealmIntegrityCommandTest extends AbstractCommandTest {
     /** Uses default relative paths for identities, as present in {@code resources/fs-unsigned-realms/fsRealm/} */
     private void validateMultiUserIdentitiesPresent(String realmName) {
         validateMultiUserIdentitiesPresent(realmName,
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "a", "l", "alice-MFWGSY3F.xml")),
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "b", "o", "bob-MJXWE.xml")),
-                FS_REALM_SIGNED_PATH.resolve(Path.of(realmName, "c", "a", "cameron-MNQW2ZLSN5XA.xml")));
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "a", "l", "alice-MFWGSY3F.xml")),
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "b", "o", "bob-MJXWE.xml")),
+                FS_REALM_SIGNED_PATH.resolve(Paths.get(realmName, "c", "a", "cameron-MNQW2ZLSN5XA.xml")));
     }
 
     /**

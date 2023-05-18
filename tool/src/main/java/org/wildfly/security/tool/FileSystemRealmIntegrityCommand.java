@@ -53,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -323,13 +324,13 @@ public class FileSystemRealmIntegrityCommand extends Command {
         }
 
         public void setInputRealmPath(String inputRealmPath) {
-            setInputRealmPath(Path.of(inputRealmPath).normalize().toAbsolutePath());
+            setInputRealmPath(Paths.get(inputRealmPath).normalize().toAbsolutePath());
         }
         public void setInputRealmPath(Path inputRealmPath) {
             this.inputRealmPath = inputRealmPath.normalize().toAbsolutePath();
         }
         public void setOutputRealmPath(String outputRealmPath) {
-            setOutputRealmPath(Path.of(outputRealmPath).normalize().toAbsolutePath());
+            setOutputRealmPath(Paths.get(outputRealmPath).normalize().toAbsolutePath());
         }
         public void setOutputRealmPath(Path outputRealmPath) {
             this.outputRealmPath = outputRealmPath.normalize().toAbsolutePath();
@@ -338,7 +339,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             this.fileSystemRealmName = fileSystemRealmName;
         }
         public void setKeyStorePath(String keyStorePath) {
-            setKeyStorePath(Path.of(keyStorePath).normalize().toAbsolutePath());
+            setKeyStorePath(Paths.get(keyStorePath).normalize().toAbsolutePath());
         }
         public void setKeyStorePath(Path keyStorePath) {
             this.keyStorePath = keyStorePath.normalize().toAbsolutePath();
@@ -364,7 +365,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             this.keyPairAlias = keyPairAlias;
         }
         public void setCredentialStorePath(String credentialStorePath) {
-            setCredentialStorePath(Path.of(credentialStorePath).normalize().toAbsolutePath());
+            setCredentialStorePath(Paths.get(credentialStorePath).normalize().toAbsolutePath());
         }
         public void setCredentialStorePath(Path credentialStorePath) {
             this.credentialStorePath = credentialStorePath.normalize().toAbsolutePath();
@@ -486,7 +487,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             if (inputRealmPathOption == null) {
                 errorHandler(ElytronToolMessages.msg.inputLocationNotSpecified());
             } else {
-                Path inputPath = Path.of(inputRealmPathOption).normalize().toAbsolutePath();
+                Path inputPath = Paths.get(inputRealmPathOption).normalize().toAbsolutePath();
                 if (Files.notExists(inputPath)) {
                     errorHandler(ElytronToolMessages.msg.inputLocationDoesNotExist());
                 }
@@ -494,17 +495,21 @@ public class FileSystemRealmIntegrityCommand extends Command {
             }
 
             if (outputRealmPathOption != null) {
-                Path outputPath = Path.of(outputRealmPathOption).normalize().toAbsolutePath();
+                Path outputPath = Paths.get(outputRealmPathOption).normalize().toAbsolutePath();
                 Files.createDirectories(outputPath); // Throws nothing if already exists
                 descriptor.setOutputRealmPath(outputPath);
             }
 
-            descriptor.setFileSystemRealmName(Objects.requireNonNullElse(realmNameOption, DEFAULT_FILESYSTEM_REALM_NAME));
+            if (realmNameOption != null) {
+                descriptor.setFileSystemRealmName(realmNameOption);
+            } else {
+                descriptor.setFileSystemRealmName(DEFAULT_FILESYSTEM_REALM_NAME);
+            }
 
             if (keyStorePathOption == null) {
                 throw ElytronToolMessages.msg.keyStorePathNotSpecified();
             } else {
-                Path keyStorePath = Path.of(keyStorePathOption);
+                Path keyStorePath = Paths.get(keyStorePathOption);
                 if (Files.notExists(keyStorePath)) {
                     throw ElytronToolMessages.msg.keyStoreDoesNotExist();
                 }
@@ -527,7 +532,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             descriptor.setKeyPairAlias(keyPairAliasOption);
 
             if (credentialStorePathOption != null) {
-                Path credentialStorePath = Path.of(credentialStorePathOption);
+                Path credentialStorePath = Paths.get(credentialStorePathOption);
                 descriptor.setCredentialStorePath(credentialStorePath);
             }
 
@@ -710,7 +715,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
      * @throws Exception Exception to be handled by Elytron Tool
      */
     private void parseDescriptorFile(String file) throws Exception {
-        Path path = Path.of(file);
+        Path path = Paths.get(file);
         if (!Files.isRegularFile(path)) {
             errorHandler(ElytronToolMessages.msg.fileNotFound(file));
         }
@@ -875,7 +880,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             if (descriptor.getUpgradeInPlace()) {
                 Path backupPath = backupInputFileSystemRealm(descriptor, count);
                 if (backupPath == null) {
-                    outputPath = Path.of(inputPath.toString().replaceFirst(Pattern.quote(FILE_SEPARATOR + "*$"), "") + "-with-integrity");
+                    outputPath = Paths.get(inputPath.toString().replaceFirst(Pattern.quote(FILE_SEPARATOR + "*$"), "") + "-with-integrity");
 
                     descriptor.setUpgradeInPlace(false);
                     warningHandler(ElytronToolMessages.msg.unableToUpgradeInPlace(inputPath.toString(), outputPath.toString()));
@@ -947,7 +952,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             boolean upgradeInPlace = descriptor.getUpgradeInPlace();
 
             String createScriptCheck = "";
-            Path scriptPath = Path.of(String.format("%s/%s.cli", outputRealmPath, fileSystemRealmName));
+            Path scriptPath = Paths.get(String.format("%s/%s.cli", outputRealmPath, fileSystemRealmName));
 
             // Ask to overwrite CLI script, if already exists
             if(scriptPath.toFile().exists()) {
@@ -963,7 +968,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
             boolean overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
             if (!overwriteScript) {
                 do {
-                    scriptPath = Path.of(String.format("%s/%s.cli",
+                    scriptPath = Paths.get(String.format("%s/%s.cli",
                             outputRealmPath,
                             fileSystemRealmName + "-" + UUID.randomUUID()));
                 } while (scriptPath.toFile().exists());
@@ -1017,14 +1022,14 @@ public class FileSystemRealmIntegrityCommand extends Command {
      */
     private Path backupInputFileSystemRealm(Descriptor descriptor, int count) throws Exception {
         Path originalDirectory = descriptor.getInputRealmPath();
-        Path backupDirectory = Path.of(descriptor.getString(INPUT_LOCATION_PARAM)
+        Path backupDirectory = Paths.get(descriptor.getString(INPUT_LOCATION_PARAM)
                     .replaceFirst(Pattern.quote(FILE_SEPARATOR + "*$"), "") + "-backup");
 
         // Append number if directory already exists
         if (backupDirectory.toFile().exists()) {
             Path numBackupDirectory;
             do {
-                numBackupDirectory = Path.of(backupDirectory + "-" + UUID.randomUUID());
+                numBackupDirectory = Paths.get(backupDirectory + "-" + UUID.randomUUID());
             } while (numBackupDirectory.toFile().exists());
 
             backupDirectory = numBackupDirectory;
@@ -1033,7 +1038,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
         // Copy the filesystem realm
         try {
             final Path finalBackupDirectory = backupDirectory;
-            Files.walkFileTree(originalDirectory, new SimpleFileVisitor<>() {
+            Files.walkFileTree(originalDirectory, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     Files.createDirectories(finalBackupDirectory.resolve(originalDirectory.relativize(dir)));
@@ -1052,7 +1057,7 @@ public class FileSystemRealmIntegrityCommand extends Command {
 
         // Delete current contents if backup is successful
         try {
-            Files.walkFileTree(originalDirectory, new SimpleFileVisitor<>() {
+            Files.walkFileTree(originalDirectory, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toFile().delete()) {
