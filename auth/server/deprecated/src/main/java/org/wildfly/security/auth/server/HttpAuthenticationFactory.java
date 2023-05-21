@@ -120,6 +120,26 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
     }
 
+    @Override
+    protected boolean isKnownMechanism(String mechName) {
+        switch (mechName) {
+            case HttpConstants.BASIC_NAME:
+            case HttpConstants.CLIENT_CERT_NAME:
+            case HttpConstants.DIGEST_NAME:
+            case HttpConstants.DIGEST_SHA256_NAME:
+            case HttpConstants.DIGEST_SHA512_256_NAME:
+            case HttpConstants.EXTERNAL_NAME:
+            case HttpConstants.FORM_NAME:
+            case HttpConstants.SPNEGO_NAME:
+            case HttpConstants.BEARER_TOKEN: {
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
+    }
+
     public void shutdownAuthenticationMechanismFactory() {
         super.getFactory().shutdown();
     }

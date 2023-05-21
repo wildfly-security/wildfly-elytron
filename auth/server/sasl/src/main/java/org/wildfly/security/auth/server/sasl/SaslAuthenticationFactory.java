@@ -99,6 +99,11 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         return SaslMechanismInformation.needsServerCredentials(mechName);
     }
 
+    @Override
+    protected boolean isKnownMechanism(String mechName) {
+        return SaslMechanismInformation.isKnownMechanism(mechName);
+    }
+
     static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
 
     /**

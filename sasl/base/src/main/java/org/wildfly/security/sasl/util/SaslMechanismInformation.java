@@ -154,6 +154,45 @@ public final class SaslMechanismInformation {
         Names.SECURID
     );
 
+    private static final Set<String> KNOWN_MECHS = nSet(
+            Names.CRAM_MD5,
+            Names.DIGEST_MD5,
+            Names.DIGEST_SHA,
+            Names.DIGEST_SHA_256,
+            Names.DIGEST_SHA_384,
+            Names.DIGEST_SHA_512,
+            Names.DIGEST_SHA_512_256,
+            Names.SCRAM_SHA_1,
+            Names.SCRAM_SHA_1_PLUS,
+            Names.SCRAM_SHA_256,
+            Names.SCRAM_SHA_256_PLUS,
+            Names.SCRAM_SHA_384,
+            Names.SCRAM_SHA_384_PLUS,
+            Names.SCRAM_SHA_512,
+            Names.SCRAM_SHA_512_PLUS,
+            Names.IEC_ISO_9798_M_DSA_SHA1,
+            Names.IEC_ISO_9798_M_ECDSA_SHA1,
+            Names.IEC_ISO_9798_M_RSA_SHA1_ENC,
+            Names.IEC_ISO_9798_U_DSA_SHA1,
+            Names.IEC_ISO_9798_U_ECDSA_SHA1,
+            Names.IEC_ISO_9798_U_RSA_SHA1_ENC,
+            Names.ANONYMOUS,
+            Names.EAP_AES128,
+            Names.EAP_AES128_PLUS,
+            Names.EXTERNAL,
+            Names.JBOSS_LOCAL_USER,
+            Names.OAUTH_10_A,
+            Names.OAUTHBEARER,
+            Names.OPENID20,
+            Names.OTP,
+            Names.SAML20,
+            Names.SECURID,
+            Names.PLAIN,
+            Names.GS2_KRB5,
+            Names.GS2_KRB5_PLUS,
+            Names.GSSAPI
+    );
+
     /**
      * A predicate which is true when the mechanism uses MD5.
      */
@@ -746,6 +785,18 @@ public final class SaslMechanismInformation {
                 return false;
             }
         }
+    }
+
+    /**
+     * Determine whether a mechanism is known by WildFly Elytron.
+     *
+     * If the mechanism is not known the other methods in this class can not be relied upon.
+     *
+     * @param mechName the mechanism name
+     * @return {@code true} if the mechanism is known to WildFly Elytron, {@code false} if it is not known
+     */
+    public static boolean isKnownMechanism(final String mechName) {
+        return KNOWN_MECHS.contains(mechName);
     }
 
     @SafeVarargs
