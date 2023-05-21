@@ -42,6 +42,10 @@ public abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exc
         this.factory = factory;
     }
 
+    public MechanismConfigurationSelector getMechanismConfigurationSelector() {
+        return mechanismConfigurationSelector;
+    }
+
     public SecurityDomain getSecurityDomain() {
         return securityDomain;
     }
