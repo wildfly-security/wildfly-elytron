@@ -82,10 +82,15 @@ public abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exc
      * If it is not known we can't filter it out as we can not rely upon the other methods being able to
      * return accurate responses about the mechanisms requirements.
      *
+     * As this is a new method and other implementations may not know to override this has a default
+     * implementation to match the current behaviour i.e. assume we know about all mechanisms.
+     *
      * @param mechName the mechanism name
      * @return {@code true} if the mechanism is known to WildFly Elytron, {@code false} if it is not
      */
-    protected abstract boolean isKnownMechanism(String mechName);
+    protected boolean isKnownMechanism(String mechName) {
+        return true;
+    };
 
     public Collection<String> getMechanismNames() {
         final Collection<String> names = new LinkedHashSet<>();
