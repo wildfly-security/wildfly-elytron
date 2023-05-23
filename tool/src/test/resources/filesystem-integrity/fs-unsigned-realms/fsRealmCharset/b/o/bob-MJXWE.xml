@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<identity xmlns="urn:elytron:1.0">
+    <credentials>
+        <password algorithm="clear" format="base64">ASdwYXNzd29yZEh5dsOkw6TDpCc=</password>
+    </credentials>
+    </identity>

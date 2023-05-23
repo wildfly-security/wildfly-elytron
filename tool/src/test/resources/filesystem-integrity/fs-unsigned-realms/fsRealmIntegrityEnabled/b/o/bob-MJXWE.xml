@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><identity xmlns="urn:elytron:identity:1.2">
+    <principal name="bob"/>
+    <credentials>
+        <password algorithm="clear" format="base64">AWJvYlBhc3N3b3JkMSE=</password>
+    </credentials>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>CCYTLliNvlcsrIrzBaV/mVsTr/wj/2b2aQnz36IP0aI=</DigestValue></Reference></SignedInfo><SignatureValue>MlxRpJuJd8Dbd+Lg+Y5QH+rTIg4WDjVH+GFWqpq+PN4Z5QKUl8QJdjcB5GYBiV2fV2MqobDrqYqg&#13;
+mY//THUeyoRe9denp6qY/SO8Ho4TVimuu/dAH1+omJTPUmKn+V5K+Krnpb4vgPmdtrmFmgfmUHC+&#13;
+P50/VFWyJrXG74jAR49n1rRMN62GT62Yn5bvzczKmw8NLIf/SyYO0CNnNWZG7Pv0YTrQi9QDHbfu&#13;
++lg8ek5sJGPod7Vwr5vtE6eW0M7yYAdf/3Wz21OEVOfueo5/0pJ4CpUTkQYWSMPDmSg1xnzzrhFh&#13;
+UXZhsIwxtsZhJygDFtIQ477BqP2PQdnbAmxQbTa7aRZjALzZQE+5FQlOeBYQmQGNoGVfnzuMl3O9&#13;
+9isCJS4jEVvT5FhNq/r5JVJfOSAdsZgOEbuhJATGIYuzWV4nfNasBWYAw2wTZszEqj5vL0JHf2uZ&#13;
+fa8cKh3qSQQJ9DwVN6mtPLgMUG09RwYbAHXXYhi4S1StAoJ7fYH/Tw+jcAQ7V0swICOlxtNYPNX5&#13;
+3V6jnTIynGdv/pt2Pyxt+HqLSAIgpcKml2rNZHslgDkHxjdBrvVydVLli/rE0jrjy/1Sizoe5RSd&#13;
+NkrIseBJFJ+TzvcOI8C+azsp+hLyu/keXF5SWYq1dHL2TiRt5onn68imjr8Fos2jKd+TJFTINFI=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>sQJCJE08Q3X5f3v0VAmvoBb4eIymE32jilIdaHgiWD2NJgZIEt38CVfNqneyPTng8vs0EHgBC+L5&#13;
+uMt4/ig7ZOZN0Yy8uUosg8ByKqyStbCOLgH/jH884+vS8cd5D7w0TBy6F5GiuHXQ/8KjY3rGJjhv&#13;
+1gEIrXdWSCvW1dKdvgrBP/vb8j2bxvqGTwiVjEwZC38z2IEYQi9cWL3vBSfASaeM8dTFqYKdUEcq&#13;
+eZliZSrzsTtZwG4EeBfjHl16hwB3WnOebqoUuE8dojZTfO11rPojZCf/xGk12sE+3c5IfGJ95qq9&#13;
+TDXXQyrcOJpL8jGeTWRv4kPdgL6SqUz1Kp0uloGvGtPd18Qxrp+vf16573PYdW78uYv+/fg0hdkb&#13;
+thDMA/YCI01gnaph0r2iNXseO9aA24ySU9jOiTYYcQVEvRQlDp9Ha7j7HoVHeAvyoUDbsuLigLTt&#13;
+qXeLq1HfT4LwQUhhcGeQsPibNkiQV0X/HvUffA+dq2umscZy6TKy4e7wmQo2NPrRAZ4k+aS9ymGl&#13;
+VrwLYYygJtZY4KVgipPZzF2vOiPK37zhngcA74+ehUI5lA0LcTRppW1f9mM+ygUYTJp93MBLJGFN&#13;
+obMbdgsVjiPTviurxFO6Ip+dVcKlIYxPgHZ5Wcpap47qsmDjJI9QP0VLJ95GJHufSejTfHFuGAU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature></identity>

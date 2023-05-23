@@ -19,6 +19,20 @@ package org.wildfly.security.tool;
 
 import static org.wildfly.security.credential.store.CredentialStore.CredentialSourceProtectionParameter;
 import static org.wildfly.security.credential.store.CredentialStore.getInstance;
+import static org.wildfly.security.tool.Params.ALIAS_PARAM;
+import static org.wildfly.security.tool.Params.BULK_CONVERT_PARAM;
+import static org.wildfly.security.tool.Params.CREDENTIAL_STORE_TYPE_PARAM;
+import static org.wildfly.security.tool.Params.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM;
+import static org.wildfly.security.tool.Params.DEBUG_PARAM;
+import static org.wildfly.security.tool.Params.FILE_SEPARATOR;
+import static org.wildfly.security.tool.Params.HELP_PARAM;
+import static org.wildfly.security.tool.Params.IMPLEMENTATION_PROPERTIES_PARAM;
+import static org.wildfly.security.tool.Params.ITERATION_PARAM;
+import static org.wildfly.security.tool.Params.KEYSTORE_PARAM;
+import static org.wildfly.security.tool.Params.OTHER_PROVIDERS_PARAM;
+import static org.wildfly.security.tool.Params.SALT_PARAM;
+import static org.wildfly.security.tool.Params.STORE_LOCATION_PARAM;
+import static org.wildfly.security.tool.Params.SUMMARY_PARAM;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -70,22 +84,11 @@ public class VaultCommand extends Command {
 
     public static final String VAULT_COMMAND = "vault";
 
-    public static final String STORE_LOCATION_PARAM = "location";
-    public static final String PRINT_SUMMARY_PARAM = "summary";
     public static final String FAIL_IF_EXIST_PARAM = "fail-if-exist";
 
-    // vault command actions
-    public static String BULK_CONVERT_PARAM = "bulk-convert";
-
     // convert options
-    public static final String KEYSTORE_PARAM = "keystore";
     public static final String KEYSTORE_PASSWORD_PARAM = "keystore-password";
     public static final String ENC_DIR_PARAM = "enc-dir";
-    public static final String SALT_PARAM = "salt";
-    public static final String ITERATION_PARAM = "iteration";
-    public static final String ALIAS_PARAM = "alias";
-    public static final String HELP_PARAM = "help";
-    public static final String DEBUG_PARAM = "debug";
 
     private static final class Descriptor {
         String keyStoreURL;
@@ -126,22 +129,22 @@ public class VaultCommand extends Command {
         o = new Option("l", STORE_LOCATION_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSLocationDesc());
         o.setArgName("loc");
         options.addOption(o);
-        o = new Option("u", CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSParametersDesc());
+        o = new Option("u", IMPLEMENTATION_PROPERTIES_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSParametersDesc());
         o.setValueSeparator(';');
         o.setOptionalArg(true);
         options.addOption(o);
-        o = new Option("t", CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSTypeDesc());
+        o = new Option("t", CREDENTIAL_STORE_TYPE_PARAM, true, ElytronToolMessages.msg.cmdLineVaultCSTypeDesc());
         o.setArgName("type");
         options.addOption(o);
-        o = new Option("o", CredentialStoreCommand.OTHER_PROVIDERS_PARAM, true, ElytronToolMessages.msg.cmdLineOtherProvidersDesc());
+        o = new Option("o", OTHER_PROVIDERS_PARAM, true, ElytronToolMessages.msg.cmdLineOtherProvidersDesc());
         o.setArgName("providers");
         o.setOptionalArg(true);
         options.addOption(o);
-        o = new Option("q", CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM, true, ElytronToolMessages.msg.cmdLineCustomCredentialStoreProviderDesc());
+        o = new Option("q", CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM, true, ElytronToolMessages.msg.cmdLineCustomCredentialStoreProviderDesc());
         o.setArgName("cs-provider");
         o.setOptionalArg(true);
         options.addOption(o);
-        options.addOption("f", PRINT_SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLineVaultPrintSummary());
+        options.addOption("f", SUMMARY_PARAM, false, ElytronToolMessages.msg.cmdLineVaultPrintSummary());
 
         Option b = new Option("b", BULK_CONVERT_PARAM, true, ElytronToolMessages.msg.cliCommandBulkVaultCredentialStoreConversion());
         b.setArgName("description file");
@@ -164,7 +167,7 @@ public class VaultCommand extends Command {
             return;
         }
 
-        boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);
+        boolean printSummary = cmdLine.hasOption(SUMMARY_PARAM);
 
         printDuplicatesWarning(cmdLine);
 
@@ -204,10 +207,10 @@ public class VaultCommand extends Command {
 
             String vaultSecretKeyAlias = cmdLine.getOptionValue(ALIAS_PARAM, "vault");
             String location = cmdLine.getOptionValue(STORE_LOCATION_PARAM);
-            Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM));
-            String csType = cmdLine.getOptionValue(CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
-            String csProvider = cmdLine.getOptionValue(CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM);
-            String csOtherProviders = cmdLine.getOptionValue(CredentialStoreCommand.OTHER_PROVIDERS_PARAM);
+            Map<String, String> implProps = CredentialStoreCommand.parseCredentialStoreProperties(cmdLine.getOptionValue(IMPLEMENTATION_PROPERTIES_PARAM));
+            String csType = cmdLine.getOptionValue(CREDENTIAL_STORE_TYPE_PARAM, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
+            String csProvider = cmdLine.getOptionValue(CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM);
+            String csOtherProviders = cmdLine.getOptionValue(OTHER_PROVIDERS_PARAM);
 
             if (location == null || location.isEmpty()) {
                 location = convertedStoreName(encryptionDirectory, implProps);
@@ -252,7 +255,7 @@ public class VaultCommand extends Command {
 
     private String convertedStoreName(String encryptionDirectory, Map<String, String> implProps) {
         final String implPropsLocation = implProps.get("location");
-        return (implPropsLocation != null && ! implPropsLocation.isEmpty()) ? implPropsLocation : encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(File.separator) ? "" : File.separator) + "converted-vault.cr-store";
+        return (implPropsLocation != null && ! implPropsLocation.isEmpty()) ? implPropsLocation : encryptionDirectory + (encryptionDirectory.isEmpty() || encryptionDirectory.endsWith(FILE_SEPARATOR) ? "" : FILE_SEPARATOR) + "converted-vault.cr-store";
     }
 
     private HashMap<String, String> convert(String keyStoreURL, String vaultPassword, String encryptionDirectory,
@@ -368,13 +371,13 @@ public class VaultCommand extends Command {
                     descriptor.secretKeyAlias = value;
                 } else if (attribute.equals(STORE_LOCATION_PARAM)) {
                     descriptor.outputFile = value;
-                } else if (attribute.equals(CredentialStoreCommand.IMPLEMENTATION_PROPERTIES_PARAM)) {
+                } else if (attribute.equals(IMPLEMENTATION_PROPERTIES_PARAM)) {
                     descriptor.implProps =  CredentialStoreCommand.parseCredentialStoreProperties(value);
-                } else if (attribute.equals(CredentialStoreCommand.CREDENTIAL_STORE_TYPE_PARAM)) {
+                } else if (attribute.equals(CREDENTIAL_STORE_TYPE_PARAM)) {
                     descriptor.csType = value;
-                } else if (attribute.equals(CredentialStoreCommand.CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM)) {
+                } else if (attribute.equals(CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM)) {
                     descriptor.csProvider = value;
-                } else if (attribute.equals(CredentialStoreCommand.OTHER_PROVIDERS_PARAM)) {
+                } else if (attribute.equals(OTHER_PROVIDERS_PARAM)) {
                     descriptor.csOtherProviders = value;
                 } else {
                     throw ElytronToolMessages.msg.unrecognizedDescriptorAttribute(Integer.toString(lineNumber));

@@ -28,6 +28,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
+import static org.wildfly.security.tool.Params.DEBUG_PARAM;
+import static org.wildfly.security.tool.Params.HELP_PARAM;
+import static org.wildfly.security.tool.Params.ITERATION_PARAM;
+import static org.wildfly.security.tool.Params.SALT_PARAM;
 import static org.wildfly.security.util.PasswordUtil.generateSecureRandomString;
 
 /**
@@ -42,12 +46,7 @@ class MaskCommand extends Command {
      * Command string
      */
     public static final String MASK_COMMAND = "mask";
-
-    static final String SALT_PARAM = "salt";
-    static final String ITERATION_PARAM = "iteration";
     static final String SECRET_PARAM = "secret";
-    static final String HELP_PARAM = "help";
-    static final String DEBUG_PARAM = "debug";
 
     private final int defaultIterationCount = 10000;
 
