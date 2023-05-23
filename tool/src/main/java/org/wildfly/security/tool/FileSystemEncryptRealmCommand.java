@@ -687,6 +687,7 @@ class FileSystemEncryptRealmCommand extends Command {
             } catch (Exception e) {
                 if (!descriptor.getCreateCredentialStore()) {
                     warningHandler(ElytronToolMessages.msg.skippingBlockMissingCredentialStore());
+                    descriptor.reset();
                     continue;
                 }
                 if (descriptor.getPopulate()) {
@@ -703,6 +704,7 @@ class FileSystemEncryptRealmCommand extends Command {
                 key = credentialStore.retrieve(descriptor.getSecretKeyAlias(), SecretKeyCredential.class).getSecretKey();
             } catch (NullPointerException e) {
                 System.out.println(ElytronToolMessages.msg.cmdFileSystemEncryptionNoSecretKey(descriptor.getCredentialStore(), descriptor.getInputRealmLocation()));
+                descriptor.reset();
                 continue;
             }
 
@@ -743,14 +745,28 @@ class FileSystemEncryptRealmCommand extends Command {
                 secretKeyAlias = "key";
             }
             String createScriptCheck = "";
-            if (Paths.get(String.format("%s.cli", fileSystemRealmName)).toFile().exists()) {
+
+            Path scriptPath = Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName));
+
+            if (scriptPath.toFile().exists()) {
                 createScriptCheck = prompt(
+                        true,
+                        ElytronToolMessages.msg.shouldFileBeOverwritten(scriptPath.toString()),
                         false,
-                        null,
-                        false,
-                        ElytronToolMessages.msg.shouldFileBeOverwritten(String.format("%s.cli", fileSystemRealmName))
+                        null
                 );
+                if (createScriptCheck.trim().isEmpty()) createScriptCheck = "n";
             }
+
+            boolean overwriteScript = createScriptCheck.isEmpty() || createScriptCheck.toLowerCase().startsWith("y");
+            if (!overwriteScript) { // Generate a random file for the CLI script
+                do {
+                    scriptPath = Paths.get(String.format("%s/%s.cli",
+                            outputRealmLocation,
+                            fileSystemRealmName + "-" + UUID.randomUUID()));
+                } while (scriptPath.toFile().exists());
+            }
+
             String fullOutputPath;
             if (outputRealmLocation.startsWith(".")) {
                 fullOutputPath = Paths.get(outputRealmLocation.substring(2)).toAbsolutePath().toString();
@@ -759,7 +775,7 @@ class FileSystemEncryptRealmCommand extends Command {
             }
 
             if (summaryMode) {
-                summaryString.append(String.format("Configured script for WildFly named %s.cli at %s.", fileSystemRealmName, fullOutputPath));
+                summaryString.append(String.format("Configured script for WildFly at %s", scriptPath));
                 summaryString.append(System.getProperty("line.separator"));
                 summaryString.append("The script is using the following names:");
                 summaryString.append(System.getProperty("line.separator"));
@@ -768,14 +784,14 @@ class FileSystemEncryptRealmCommand extends Command {
             }
 
             List<String> scriptLines = Arrays.asList(
-                String.format("/subsystem=elytron/secret-key-credential-store=%s:add(path=%s)", "mycredstore"+counter, credentialStore),
-                String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s, levels=%s, credential-store=%s, secret-key=%s)", fileSystemRealmName, fullOutputPath+'/'+fileSystemRealmName, levels, "mycredstore"+counter, secretKeyAlias)
+                    String.format("/subsystem=elytron/secret-key-credential-store=%s:add(path=%s)", "mycredstore"+counter, credentialStore),
+                    String.format("/subsystem=elytron/filesystem-realm=%s:add(path=%s, levels=%s, credential-store=%s, secret-key=%s)", fileSystemRealmName, fullOutputPath+'/'+fileSystemRealmName, levels, "mycredstore"+counter, secretKeyAlias)
             );
 
-            if (!createScriptCheck.equals("y") && !createScriptCheck.equals("yes")) {
-                Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            if (overwriteScript) { // Create a new script file, or overwrite the existing one
+                Files.write(scriptPath, scriptLines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             } else {
-                Files.write(Paths.get(String.format("%s/%s.cli", outputRealmLocation, fileSystemRealmName)), scriptLines, StandardOpenOption.APPEND);
+                Files.write(scriptPath, scriptLines, StandardOpenOption.APPEND);
             }
             counter++;
         }
