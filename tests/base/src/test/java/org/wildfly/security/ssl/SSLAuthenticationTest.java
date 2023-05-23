@@ -103,7 +103,6 @@ import org.wildfly.security.x500.cert.ExtendedKeyUsageExtension;
 // has dependency on wildfly-elytron-client, wildfly-elytron-x500-cert, wildfly-elytron-realm, wildly-elytron-x500-deprecated
 public class SSLAuthenticationTest {
 
-    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final int OCSP_PORT = 4854;
     private final int TESTING_PORT = 18201;
     private static final char[] PASSWORD = "Elytron".toCharArray();
@@ -132,7 +131,7 @@ public class SSLAuthenticationTest {
      * @return the initialised key manager.
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
         keyManagerFactory.init(createKeyStore(keystorePath), PASSWORD);
 
         for (KeyManager current : keyManagerFactory.getKeyManagers()) {
