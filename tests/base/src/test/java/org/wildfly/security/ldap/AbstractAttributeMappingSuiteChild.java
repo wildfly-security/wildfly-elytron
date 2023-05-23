@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.ldap;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +41,7 @@ public abstract class AbstractAttributeMappingSuiteChild {
 
     protected void assertAttributeValue(Attributes.Entry values, String... expectedValues) {
         assertNotNull("Attribute values are null.", values);
+        assertEquals("Different number of attributes values", expectedValues.length, values.size());
 
         for (String expectedValue : expectedValues) {
             assertTrue("Value [" + expectedValue + "] for attribute [" + values.getKey() + "] not found in " + Arrays.toString(values.toArray()), values.contains(expectedValue));
