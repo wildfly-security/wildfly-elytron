@@ -164,6 +164,7 @@ public interface MaskedPassword extends TwoWayPassword {
         return null;
     }
 
+    @Override
     default MaskedPasswordAlgorithmSpec getParameterSpec() {
         return new MaskedPasswordAlgorithmSpec(getInitialKeyMaterial(), getIterationCount(), getSalt());
     }
