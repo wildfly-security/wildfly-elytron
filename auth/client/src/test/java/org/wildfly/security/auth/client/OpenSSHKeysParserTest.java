@@ -229,7 +229,7 @@ public class OpenSSHKeysParserTest {
         Assert.assertNotNull(node);
         SSHCredential credential = node.getConfiguration().getCredentialSource().getCredential(SSHCredential.class);
         Assert.assertEquals(SSHCredential.DEFAULT_SSH_DIRECTORY, credential.getSshDirectory());
-        Assert.assertTrue(credential.getPrivateKeyIdentities().length == SSHCredential.DEFAULT_PRIVATE_KEYS.length);
+        Assert.assertEquals(SSHCredential.DEFAULT_PRIVATE_KEYS.length, credential.getPrivateKeyIdentities().length);
         Assert.assertEquals(SSHCredential.DEFAULT_PRIVATE_KEYS[0], credential.getPrivateKeyIdentities()[0]);
         Assert.assertEquals(SSHCredential.DEFAULT_KNOWN_HOSTS, credential.getKnownHostsFile());
         String password = new String(credential.getPassphrase().castAndApply(PasswordCredential.class, c -> c.getPassword()).castAndApply(ClearPassword.class, ClearPassword::getPassword));
@@ -246,7 +246,7 @@ public class OpenSSHKeysParserTest {
         Assert.assertNotNull(node);
         SSHCredential credential = node.getConfiguration().getCredentialSource().getCredential(SSHCredential.class);
         Assert.assertEquals(Paths.get("user", "home","test", ".ssh").toFile().getName(), credential.getSshDirectory().getName());
-        Assert.assertTrue(credential.getPrivateKeyIdentities().length == 1);
+        Assert.assertEquals(1, credential.getPrivateKeyIdentities().length);
         Assert.assertEquals("id_test_ecdsa", credential.getPrivateKeyIdentities()[0]);
         Assert.assertEquals("known_hosts_test", credential.getKnownHostsFile());
         String password = new String(credential.getPassphrase().castAndApply(PasswordCredential.class, c -> c.getPassword()).castAndApply(ClearPassword.class, ClearPassword::getPassword));
