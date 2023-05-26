@@ -51,6 +51,7 @@ public class IDToken extends JsonWebToken {
     public static final String CLAIMS_LOCALES = "claims_locales";
     public static final String ACR = "acr";
     public static final String S_HASH = "s_hash";
+    public static final String SID = "sid";
 
     /**
      * Construct a new instance.
@@ -220,4 +221,12 @@ public class IDToken extends JsonWebToken {
         return getClaimValueAsString(ACR);
     }
 
+    /**
+     * Get the sid claim.
+     *
+     * @return the sid claim
+     */
+    public String getSid() {
+        return getClaimValueAsString(SID);
+    }
 }

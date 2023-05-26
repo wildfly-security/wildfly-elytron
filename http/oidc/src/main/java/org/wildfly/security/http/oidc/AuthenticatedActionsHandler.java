@@ -36,6 +36,8 @@ import java.util.List;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class AuthenticatedActionsHandler {
+
+    private static LogoutHandler logoutHandler = new LogoutHandler();
     private OidcClientConfiguration deployment;
     private OidcHttpFacade facade;
 
@@ -52,6 +54,11 @@ public class AuthenticatedActionsHandler {
             queryBearerToken();
             return true;
         }
+
+        if (logoutHandler.tryLogout(facade)) {
+            return true;
+        }
+
         return false;
     }
 
