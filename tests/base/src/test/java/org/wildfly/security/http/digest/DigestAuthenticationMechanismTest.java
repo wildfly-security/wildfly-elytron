@@ -66,7 +66,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "testrealm@host.com");
         props.put("org.wildfly.security.http.validate-digest-uri", "false");
-        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life", null));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
         mechanism.evaluateRequest(request1);
@@ -97,7 +97,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "testrealm@host.com");
         props.put("org.wildfly.security.http.validate-digest-uri", "true");
-        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life", null));
 
         String path = "/dir/index.html?foo=b%2Fr";
         String uri = "http://localhost" + path;
@@ -123,7 +123,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "testrealm@host.com");
         props.put("org.wildfly.security.http.validate-digest-uri", "true");
-        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life"));
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("Mufasa", "testrealm@host.com", "Circle Of Life", null));
 
         String path = "/dir/foo%2Fr/index.html?foo=b%2Fr";
         String uri = "http://localhost" + path;
@@ -149,7 +149,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "http-auth@example.org");
         props.put("org.wildfly.security.http.validate-digest-uri", "false");
-        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, props, getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life"));
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA256, props, getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life", null));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
         mechanism.evaluateRequest(request1);
@@ -180,7 +180,7 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Map<String, Object> props = new HashMap<>();
         props.put(CONFIG_REALM, "api@example.org");
         props.put("org.wildfly.security.http.validate-digest-uri", "false");
-        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA512_256, props, getCallbackHandler("J\u00E4s\u00F8n Doe", "api@example.org", "Secret, or not?"));
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME + "-" + SHA512_256, props, getCallbackHandler("J\u00E4s\u00F8n Doe", "api@example.org", "Secret, or not?", null));
 
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
         mechanism.evaluateRequest(request1);

@@ -51,7 +51,7 @@ import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
 public class ElytronHttpClientBasicTest extends AbstractBaseHttpTest {
-    private ElytronHttpClientBasicAuthMechanism elytronHttpClientBasicAuthMechanism = new ElytronHttpClientBasicAuthMechanism();
+
     public static Supplier<Provider[]> ELYTRON_PASSWORD_PROVIDERS = () -> new Provider[]{
             WildFlyElytronPasswordProvider.getInstance()
     };
@@ -72,9 +72,9 @@ public class ElytronHttpClientBasicTest extends AbstractBaseHttpTest {
         });
         context.run(() -> {
             try {
-                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("user1", "test-realm", "password1"));
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("user1", "test-realm", "password1", null));
                 URI uri = new URI("http://localhost:8080/servlet-security/SecuredServlet");
-                HttpRequest httpRequest = elytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
+                HttpRequest httpRequest = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{httpRequest.headers().allValues("Authorization").get(0)});
@@ -93,9 +93,9 @@ public class ElytronHttpClientBasicTest extends AbstractBaseHttpTest {
         context = context.with(MatchRule.ALL,configuration);
         context.run(() -> {
             try {
-                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("unauthorizedUser", "test-realm", "password"));
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("unauthorizedUser", "test-realm", "password", null));
                 URI uri = new URI("http://localhost:8080/servlet-security/SecuredServlet");
-                HttpRequest httpRequest = elytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
+                HttpRequest httpRequest = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{httpRequest.headers().allValues("Authorization").get(0)});
@@ -123,9 +123,9 @@ public class ElytronHttpClientBasicTest extends AbstractBaseHttpTest {
         });
         context.run(() -> {
             try {
-                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("user1", "test-realm", "password"));
+                HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism("BASIC", Collections.emptyMap(), getCallbackHandler("user1", "test-realm", "password", null));
                 URI uri = new URI("http://localhost:8080/servlet-security/SecuredServlet");
-                HttpRequest httpRequest = elytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
+                HttpRequest httpRequest = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(uri);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{httpRequest.headers().allValues("Authorization").get(0)});

@@ -22,7 +22,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
-import org.wildfly.security.mechanism._private.MechanismUtil;
+import static org.wildfly.security.http.client.utils.ElytronMessages.log;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -50,7 +50,7 @@ public class HttpMechClientConfigUtil {
             callbackHandler.handle(new Callback[]{nameCallback});
             return nameCallback.getName();
         } catch (IOException | UnsupportedCallbackException e) {
-            throw new ElytronHttpClientException(ElytronMessages.log.nameCallBackHandlingFailed());
+            throw new ElytronHttpClientException(log.nameCallBackHandlingFailed());
         }
     }
 
@@ -65,24 +65,26 @@ public class HttpMechClientConfigUtil {
             }
             return new String(password);
         } catch (IOException | UnsupportedCallbackException e) {
-            throw new ElytronHttpClientException(ElytronMessages.log.passwordCallBackHandlingFailed());
+            throw new ElytronHttpClientException(log.passwordCallBackHandlingFailed());
         }
     }
 
     public String getHttpAuthenticationType(URI uri) throws ElytronHttpClientException {
         return AUTH_CONTEXT_CLIENT.getHttpMechanismType(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
     }
+
     public String getToken(URI uri){
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
         final CredentialCallback credentialCallback = new CredentialCallback(BearerTokenCredential.class);
         try {
-//            callbackHandler.handle(new Callback[]{credentialCallback});
-//            BearerTokenCredential token = credentialCallback.getCredential(BearerTokenCredential.class);
-            MechanismUtil.handleCallbacks(org.wildfly.security.mechanism._private.ElytronMessages.log, callbackHandler, new Callback[]{credentialCallback});
-            String token = (String)credentialCallback.applyToCredential(BearerTokenCredential.class, BearerTokenCredential::getToken);
-            return token;
+            callbackHandler.handle(new Callback[]{credentialCallback});
+            BearerTokenCredential token = credentialCallback.getCredential(BearerTokenCredential.class);
+            if (token == null) {
+                return null;
+            }
+            return token.getToken();
         } catch (IOException | UnsupportedCallbackException e) {
-            throw new RuntimeException("Exception occured");
+            throw new ElytronHttpClientException(log.credentialCallbackHandlingFailed());
         }
     }
 }

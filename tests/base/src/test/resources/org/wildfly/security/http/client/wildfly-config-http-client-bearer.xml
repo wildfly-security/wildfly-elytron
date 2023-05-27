@@ -25,10 +25,10 @@
         <authentication-configurations>
             <configuration name="default-config">
                 <credentials>
-<!--                    <bearer-token value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"/>-->
+                    <bearer-token value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"/>
                     <oauth2-bearer-token token-endpoint-uri="http://localhost:8080/jaxrs-jwt-service/rest/token">
-<!--                        <resource-owner-credentials name="customer" password="customerpw"/>-->
-                        <client-credentials client-id="customer" client-secret="customerpw"/>
+                        <resource-owner-credentials name="jdoe" password="dont_tell_me"/>
+                        <client-credentials client-id="elytron-client" client-secret="client_secret=dont_tell_me"/>
                     </oauth2-bearer-token>
                 </credentials>
             </configuration>

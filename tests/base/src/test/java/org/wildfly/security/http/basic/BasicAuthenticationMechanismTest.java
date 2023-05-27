@@ -38,7 +38,7 @@ public class BasicAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
     public void testBasic(String username, String realm, String password, String authorization) throws Exception {
         HttpServerAuthenticationMechanism mechanism = basicFactory.createAuthenticationMechanism(HttpConstants.BASIC_NAME,
-                Collections.singletonMap(HttpConstants.CONFIG_REALM, realm), getCallbackHandler(username, realm, password));
+                Collections.singletonMap(HttpConstants.CONFIG_REALM, realm), getCallbackHandler(username, realm, password, null));
 
         // request without authorization, it should be 401 and response added
         TestingHttpServerRequest request = new TestingHttpServerRequest(null);
@@ -65,7 +65,7 @@ public class BasicAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
     public void testStatefulBasic(String username, String realm, String password, String authorization) throws Exception {
         HttpServerAuthenticationMechanism mechanism = statefulBasicFactory.createAuthenticationMechanism(BasicMechanismFactory.STATEFUL_BASIC_NAME,
-                Collections.singletonMap(HttpConstants.CONFIG_REALM, realm), getCallbackHandler(username, realm, password));
+                Collections.singletonMap(HttpConstants.CONFIG_REALM, realm), getCallbackHandler(username, realm, password, null));
 
         // request without authorization, it should be 401 and response added
         TestingHttpServerRequest request = new TestingHttpServerRequest(null);

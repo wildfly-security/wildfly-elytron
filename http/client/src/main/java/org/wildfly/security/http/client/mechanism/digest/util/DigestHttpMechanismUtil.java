@@ -22,6 +22,7 @@ import org.wildfly.security.digest.WildFlyElytronDigestProvider;
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
 import org.wildfly.security.http.client.utils.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.sasl.digest._private.DigestUtil;
 
 import static org.wildfly.security.mechanism._private.ElytronMessages.log;
 
@@ -45,17 +46,16 @@ public class DigestHttpMechanismUtil {
     private static final String AUTHORIZATION = "Authorization";
     private static final String CHALLENGE_PREFIX = "Digest ";
 
-    public static HttpRequest createDigestRequest(URI uri, String userName, String password,String authHeader) throws AuthenticationMechanismException {
+    public static HttpRequest createDigestRequest(URI uri, String userName, String password, String authHeader) throws AuthenticationMechanismException {
         Map<String,String> authParams = updateAuthParams(authHeader);
         String realm = authParams.getOrDefault("realm", null);
         String nonce = authParams.getOrDefault("nonce", null);
         String opaque = authParams.getOrDefault("opaque", null);
         String algorithm = authParams.getOrDefault("algorithm", "MD5");
-        String qop = authParams.getOrDefault("qop", null);
+        String qop = authParams.getOrDefault("qop", "qop");
         String uriPath = getUriPath(uri);
         String cnonce = generateCNonce();
-        String nc = String.format("%08x", Integer.parseInt(authParams.getOrDefault("nc", String.valueOf(0))));
-
+        String nc = new String(DigestUtil.convertToHexBytesWithLeftPadding(Integer.parseInt(authParams.getOrDefault("nc","0")),8));
         String resp;
         if (qop == null) {
             resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, "GET");
@@ -113,7 +113,6 @@ public class DigestHttpMechanismUtil {
     private static String computeDigestWithQop(String uri, String nonce, String cnonce, String nc, String
             username, String password, String algorithm, String realm, String qop, String method) {
 
-        System.out.println("uri : " + uri + " nonce " + nonce + " cnonce " + cnonce + " nc " + nc + " username " + username + " password " + password + " realm " + realm + " qop " + qop + " method " + method);
         String A1, HashA1, A2, HashA2;
         A1 = username + ":" + realm + ":" + password;
         HashA1 = generateHash(A1,algorithm);

@@ -16,22 +16,27 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.http.client.mechanism;
-
-import org.wildfly.security.mechanism.AuthenticationMechanismException;
+package org.wildfly.security.http.client.utils;
 
 import java.net.URI;
-import java.net.http.HttpRequest;
 
 /**
  * Elytron client for HTTP authentication
  *
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
-public interface ElytronHttpClientAuthMechanism {
+public class ElytronHttpClientCredentialUtils {
 
-    /**
-     * Add required header to request object based on authentication type and return it.
-     */
-    HttpRequest evaluateMechanism(URI uri) throws AuthenticationMechanismException;
+    private HttpMechClientConfigUtil httpMechClientConfigUtil = new HttpMechClientConfigUtil();
+
+    public String getUserName(URI uri){
+        return httpMechClientConfigUtil.getUsername(uri);
+    }
+
+    public String getPassword(URI uri){
+        return httpMechClientConfigUtil.getPassword(uri);
+    }
+    public String getToken(URI uri) {
+        return httpMechClientConfigUtil.getToken(uri);
+    }
 }

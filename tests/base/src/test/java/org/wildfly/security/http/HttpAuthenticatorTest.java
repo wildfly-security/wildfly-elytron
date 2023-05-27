@@ -76,7 +76,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
             + "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
 
     private CallbackHandler callbackHandler() {
-        return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life");
+        return getCallbackHandler("Mufasa", "http-auth@example.org", "Circle of Life", null);
     }
 
     private void testOneOfThree() throws Exception {

@@ -18,11 +18,10 @@
 package org.wildfly.security.http.client;
 
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
-import org.wildfly.security.http.client.mechanism.ElytronHttpClientAuthMechanism;
 import org.wildfly.security.http.client.mechanism.basic.ElytronHttpClientBasicAuthMechanism;
+import org.wildfly.security.http.client.mechanism.bearer.ElytronHttpClientBearerAuthMechanism;
 import org.wildfly.security.http.client.mechanism.digest.ElytronHttpClientDigestAuthMechanism;
 import org.wildfly.security.http.client.utils.ElytronMessages;
-import org.wildfly.security.http.client.utils.HttpMechClientConfigUtil;
 
 import static org.wildfly.security.http.HttpConstants.OK;
 
@@ -43,8 +42,7 @@ import java.util.Map;
 public class ElytronHttpClient {
 
     private final HttpClient httpClient;
-    private ElytronHttpClientAuthMechanism elytronHttpClientAuthMechanism;
-    private HttpMechClientConfigUtil httpMechClientConfigUtil = new HttpMechClientConfigUtil();
+
     public ElytronHttpClient() {
         this.httpClient = HttpClient.newHttpClient();
     }
@@ -68,7 +66,6 @@ public class ElytronHttpClient {
     public HttpResponse connect(String uri) throws IOException, InterruptedException, URISyntaxException {
 
         URI uriPath = new URI(uri);
-        String token = httpMechClientConfigUtil.getToken(uriPath);
         HttpRequest request = evaluateNoAuthMechanism(uriPath);
         HttpResponse response = getResponse(request);
 
@@ -82,14 +79,22 @@ public class ElytronHttpClient {
             throw new ElytronHttpClientException(ElytronMessages.log.responseHeaderExtractionFailed());
         }
 
-        if (authHeader.toLowerCase().startsWith("basic")) {
-            elytronHttpClientAuthMechanism = new ElytronHttpClientBasicAuthMechanism();
-        } else if (authHeader.toLowerCase().startsWith("digest")) {
-            elytronHttpClientAuthMechanism = new ElytronHttpClientDigestAuthMechanism(authHeader);
-        } else if(authHeader.toLowerCase().startsWith("bearer")){
+        String authType = authHeader.split(" ")[0].toLowerCase();
 
+        switch (authType){
+            case "basic" :
+                request = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(uriPath);
+                break;
+            case "digest" :
+                request = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uriPath, authHeader);
+                break;
+            case "bearer" :
+                request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uriPath);
+                break;
+            default:
+                request = evaluateNoAuthMechanism(uriPath);
         }
-        request = elytronHttpClientAuthMechanism.evaluateMechanism(uriPath);
+
         response = getResponse(request);
         return response;
     }

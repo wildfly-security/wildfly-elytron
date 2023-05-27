@@ -18,9 +18,8 @@
 
 package org.wildfly.security.http.client.mechanism.digest;
 
-import org.wildfly.security.http.client.mechanism.ElytronHttpClientAuthMechanism;
 import org.wildfly.security.http.client.mechanism.digest.util.DigestHttpMechanismUtil;
-import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialProvider;
+import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialUtils;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 import java.net.URI;
@@ -31,18 +30,13 @@ import java.net.http.HttpRequest;
  *
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
-public class ElytronHttpClientDigestAuthMechanism implements ElytronHttpClientAuthMechanism {
-    private String authHeader;
-    private ElytronHttpClientCredentialProvider elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialProvider();
+public class ElytronHttpClientDigestAuthMechanism {
 
-    public ElytronHttpClientDigestAuthMechanism(String authHeader){
-        this.authHeader = authHeader;
-    }
+    private static ElytronHttpClientCredentialUtils elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialUtils();
 
-    @Override
-    public HttpRequest evaluateMechanism(URI uri) throws AuthenticationMechanismException {
+    public static HttpRequest evaluateMechanism(URI uri, String authHeader) throws AuthenticationMechanismException {
         String userName = elytronHttpClientCredentialProvider.getUserName(uri);
         String password = elytronHttpClientCredentialProvider.getPassword(uri);
-        return DigestHttpMechanismUtil.createDigestRequest(uri,userName,password,authHeader);
+        return DigestHttpMechanismUtil.createDigestRequest(uri, userName, password, authHeader);
     }
 }

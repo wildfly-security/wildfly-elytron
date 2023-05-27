@@ -62,8 +62,10 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpExchangeSpi;
@@ -438,7 +440,7 @@ public class AbstractBaseHttpTest {
         }
     }
 
-    protected CallbackHandler getCallbackHandler(String username, String realm, String password) {
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token) {
         return callbacks -> {
             for(Callback callback : callbacks) {
                 if (callback instanceof AvailableRealmsCallback) {
@@ -459,22 +461,34 @@ public class AbstractBaseHttpTest {
                         throw new IllegalStateException(e);
                     }
                 } else if (callback instanceof EvidenceVerifyCallback) {
-                    PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
-                    ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
-                    evidence.destroy();
+                    if(((EvidenceVerifyCallback) callback).getEvidence() instanceof PasswordGuessEvidence){
+                        PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
+                        evidence.destroy();
+                    }else{
+                        BearerTokenEvidence evidence = (BearerTokenEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(evidence.getToken().equals(token));
+                    }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
                     Credential credential = ((IdentityCredentialCallback) callback).getCredential();
-                    MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
-                    ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
-                    Assert.assertNotNull(clearPwdCredential);
-                    Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
-                } else if (callback instanceof AuthorizeCallback) {
-                    if(username.equalsIgnoreCase("unauthorizedUser")){
-                        ((AuthorizeCallback) callback).setAuthorized(false);
+                    if (credential instanceof PasswordCredential){
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
+                        ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
+                        Assert.assertNotNull(clearPwdCredential);
+                        Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
+                    } else if(credential instanceof BearerTokenCredential){
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(BearerTokenCredential.class));
+                        String bearerToken = ((BearerTokenCredential) credential).getToken();
+                        Assert.assertEquals(bearerToken, token);
                     }
-                    else if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                } else if (callback instanceof AuthorizeCallback) {
+                    if (username.equalsIgnoreCase("unauthorizedUser")){
+                        ((AuthorizeCallback) callback).setAuthorized(false);
+                    } else if (username.equalsIgnoreCase("authorizedUser")){
+                        ((AuthorizeCallback) callback).setAuthorized(true);
+                    } else if (username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
                        username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
                         ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {

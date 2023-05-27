@@ -48,6 +48,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 41002, value = "Response Header Extraction Failed.")
     ElytronHttpClientException responseHeaderExtractionFailed();
 
-    @Message(id = 41003, value = "Provided Algorithm Not Available.")
+    @Message(id = 41003, value = "Credential Callback Handling Unsuccessful.")
+    ElytronHttpClientException credentialCallbackHandlingFailed();
+
+    @Message(id = 41004, value = "Provided Algorithm Not Available.")
     ElytronHttpClientException digestAuthenticationAlgorithmNotAvailable();
+
 }

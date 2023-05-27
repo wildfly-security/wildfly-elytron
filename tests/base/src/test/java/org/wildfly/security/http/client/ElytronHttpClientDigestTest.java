@@ -59,7 +59,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
             WildFlyElytronPasswordProvider.getInstance()
     };
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
-    private ElytronHttpClientDigestAuthMechanism elytronHttpClientDigestAuthMechanism;
+
     ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
 
     @Test
@@ -82,12 +82,11 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 URI uri = new URI("http://localhost:8080/hello");
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password1"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password1", null));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                elytronHttpClientDigestAuthMechanism = new ElytronHttpClientDigestAuthMechanism(response.getAuthenticateHeader());
-                HttpRequest request2 = elytronHttpClientDigestAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -110,12 +109,11 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 URI uri = new URI("http://localhost:8080/hello");
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("unauthorizedUser", "RealmUsersRoles", "password"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("unauthorizedUser", "RealmUsersRoles", "password", null));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                elytronHttpClientDigestAuthMechanism = new ElytronHttpClientDigestAuthMechanism(response.getAuthenticateHeader());
-                HttpRequest request2 = elytronHttpClientDigestAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -147,12 +145,11 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 URI uri = new URI("http://localhost:8080/hello");
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST", props,getCallbackHandler("user1", "RealmUsersRoles", "password", null));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                elytronHttpClientDigestAuthMechanism = new ElytronHttpClientDigestAuthMechanism(response.getAuthenticateHeader());
-                HttpRequest request2 = elytronHttpClientDigestAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -184,12 +181,11 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 props.put(CONFIG_REALM, "RealmUsersRoles");
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 URI uri = new URI("http://localhost:8080/hello");
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST-SHA-256", props,getCallbackHandler("user1", "RealmUsersRoles", "password1"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST-SHA-256", props,getCallbackHandler("user1", "RealmUsersRoles", "password1", null));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                elytronHttpClientDigestAuthMechanism = new ElytronHttpClientDigestAuthMechanism(response.getAuthenticateHeader());
-                HttpRequest request2 = elytronHttpClientDigestAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -221,12 +217,11 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 props.put("org.wildfly.security.http.validate-digest-uri", "false");
                 URI uri = new URI("http://localhost:8080/hello");
                 Security.addProvider(new WildFlyElytronDigestProvider());
-                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST-SHA-512-256", props,getCallbackHandler("user1", "RealmUsersRoles", "password1"));
+                HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism("DIGEST-SHA-512-256", props,getCallbackHandler("user1", "RealmUsersRoles", "password1", null));
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                elytronHttpClientDigestAuthMechanism = new ElytronHttpClientDigestAuthMechanism(response.getAuthenticateHeader());
-                HttpRequest request2 = elytronHttpClientDigestAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});

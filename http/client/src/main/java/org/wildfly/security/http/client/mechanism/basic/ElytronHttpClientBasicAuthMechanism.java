@@ -18,8 +18,7 @@
 
 package org.wildfly.security.http.client.mechanism.basic;
 
-import org.wildfly.security.http.client.mechanism.ElytronHttpClientAuthMechanism;
-import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialProvider;
+import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialUtils;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -30,12 +29,11 @@ import java.util.Base64;
  *
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
-public class ElytronHttpClientBasicAuthMechanism implements ElytronHttpClientAuthMechanism {
+public class ElytronHttpClientBasicAuthMechanism {
     private static final String AUTHORIZATION = "Authorization";
-    private ElytronHttpClientCredentialProvider elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialProvider();
+    private static ElytronHttpClientCredentialUtils elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialUtils();
 
-    @Override
-    public HttpRequest evaluateMechanism(URI uri) {
+    public static HttpRequest evaluateMechanism(URI uri) {
         String userName = elytronHttpClientCredentialProvider.getUserName(uri);
         String password = elytronHttpClientCredentialProvider.getPassword(uri);
         HttpRequest request = HttpRequest
@@ -46,7 +44,7 @@ public class ElytronHttpClientBasicAuthMechanism implements ElytronHttpClientAut
         return request;
     }
 
-    private String basicAuth(String username, String password) {
+    private static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
     }
 }
