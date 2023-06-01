@@ -553,11 +553,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-<<<<<<< HEAD
                                     <version>2.1.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
-=======
-                                    <version>1.20.4.Final</version> <!-- When updating to next release, clear all exclusions. -->
->>>>>>> 1.x
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>
