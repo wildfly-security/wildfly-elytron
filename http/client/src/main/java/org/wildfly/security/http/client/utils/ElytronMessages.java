@@ -54,4 +54,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 41004, value = "Provided Algorithm Not Available.")
     ElytronHttpClientException digestAuthenticationAlgorithmNotAvailable();
 
+    @Message(id = 41005, value = "Unable to obtain SSL Context.")
+    ElytronHttpClientException unableToObtainSslContext();
 }

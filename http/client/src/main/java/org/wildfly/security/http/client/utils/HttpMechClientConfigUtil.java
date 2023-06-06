@@ -24,6 +24,7 @@ import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
 import static org.wildfly.security.http.client.utils.ElytronMessages.log;
 
+import javax.net.ssl.SSLContext;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -32,6 +33,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import java.io.IOException;
 import java.net.URI;
 import java.security.AccessController;
+import java.security.GeneralSecurityException;
 import java.security.PrivilegedAction;
 
 /**
@@ -85,6 +87,14 @@ public class HttpMechClientConfigUtil {
             return token.getToken();
         } catch (IOException | UnsupportedCallbackException e) {
             throw new ElytronHttpClientException(log.credentialCallbackHandlingFailed());
+        }
+    }
+
+    public SSLContext getSSLContext(URI uri) {
+        try {
+            return AUTH_CONTEXT_CLIENT.getSSLContext(uri, AuthenticationContext.captureCurrent());
+        } catch (GeneralSecurityException e) {
+            throw new ElytronHttpClientException(log.unableToObtainSslContext());
         }
     }
 }

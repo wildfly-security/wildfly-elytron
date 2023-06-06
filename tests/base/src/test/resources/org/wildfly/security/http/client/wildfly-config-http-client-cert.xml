@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    JBoss, Home of Professional Open Source
+    Copyright 2023, Red Hat, Inc. and/or its affiliates, and individual
+    contributors by the @authors tag. See the copyright.txt in the
+    distribution for a full listing of individual contributors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    <http-mechanism-selector selector="BASIC"/>
+-->
+<configuration>
+    <authentication-client xmlns="urn:elytron:client:1.8">
+        <key-stores>
+            <key-store name="keystore1" type="JKS">
+                <file name="target/keystores/client1.keystore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+            <key-store name="truststore1" type="JKS">
+                <file name="target/keystores/client1.truststore.jks"/>
+                <key-store-clear-password password="secret"/>
+            </key-store>
+        </key-stores>
+        <ssl-contexts>
+            <ssl-context name="client-context1">
+                <providers>
+                    <global/>
+                </providers>
+                <trust-store key-store-name="truststore1"/>
+                <key-store-ssl-certificate key-store-name="keystore1">
+                    <key-store-clear-password password="secret"/>
+                </key-store-ssl-certificate>
+            </ssl-context>
+        </ssl-contexts>
+        <ssl-context-rules>
+            <rule use-ssl-context="client-context1">
+                <match-host name="localhost"/>
+                <match-port number="10001"/>
+            </rule>
+        </ssl-context-rules>
+    </authentication-client>
+</configuration>

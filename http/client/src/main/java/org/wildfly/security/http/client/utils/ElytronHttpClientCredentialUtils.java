@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.client.utils;
 
+import javax.net.ssl.SSLContext;
 import java.net.URI;
 
 /**
@@ -36,7 +37,12 @@ public class ElytronHttpClientCredentialUtils {
     public String getPassword(URI uri){
         return httpMechClientConfigUtil.getPassword(uri);
     }
+
     public String getToken(URI uri) {
         return httpMechClientConfigUtil.getToken(uri);
+    }
+
+    public SSLContext getSSLContext(URI uri){
+        return httpMechClientConfigUtil.getSSLContext(uri);
     }
 }
