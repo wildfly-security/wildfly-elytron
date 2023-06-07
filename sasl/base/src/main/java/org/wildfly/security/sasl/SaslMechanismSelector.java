@@ -864,12 +864,12 @@ public abstract class SaslMechanismSelector {
 
         Supplier<String> doCreateSupplier(final LinkedHashSet<String> set, final SSLSession sslSession) {
             final Supplier<String> prevSupplier = prev.doCreateSupplier(set, sslSession);
-            final Iterator<String> iterator = set.iterator();
             return () -> {
                 String name = prevSupplier.get();
                 if (name != null) {
                     return name;
                 }
+                final Iterator<String> iterator = set.iterator();
                 while (iterator.hasNext()) {
                     name = iterator.next();
                     if (predicate.test(name, sslSession)) try {
