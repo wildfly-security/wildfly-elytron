@@ -1,5 +1,5 @@
-FROM ruby:2-slim
-ENV BUNDLER_VERSION 2.0.2
+FROM ruby:3-slim
+ENV BUNDLER_VERSION 2.4.13
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
         bats \
@@ -11,7 +11,7 @@ RUN apt-get update && \
         shellcheck \
         git-all \
         rsync \
-    && gem install bundler:2.0.2 \
+    && gem install bundler:$BUNDLER_VERSION \
     && bundle config --global silence_root_warning 1
 
 COPY entrypoint.sh /
