@@ -22,6 +22,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
+
 import static org.wildfly.security.http.client.utils.ElytronMessages.log;
 
 import javax.net.ssl.SSLContext;
@@ -45,7 +46,7 @@ public class HttpMechClientConfigUtil {
 
     static final AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT = AccessController.doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
 
-    public String getUsername(URI uri) throws ElytronHttpClientException {
+    public static String getUsername(URI uri) throws ElytronHttpClientException {
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
         NameCallback nameCallback = new NameCallback("user name");
         try {
@@ -56,7 +57,7 @@ public class HttpMechClientConfigUtil {
         }
     }
 
-    public String getPassword(URI uri) throws ElytronHttpClientException {
+    public static String getPassword(URI uri) throws ElytronHttpClientException {
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
         PasswordCallback passwordCallback = new PasswordCallback("password", false);
         try {
@@ -71,11 +72,11 @@ public class HttpMechClientConfigUtil {
         }
     }
 
-    public String getHttpAuthenticationType(URI uri) throws ElytronHttpClientException {
+    public static String getHttpAuthenticationType(URI uri) throws ElytronHttpClientException {
         return AUTH_CONTEXT_CLIENT.getHttpMechanismType(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
     }
 
-    public String getToken(URI uri){
+    public static String getToken(URI uri) {
         final CallbackHandler callbackHandler = AUTH_CONTEXT_CLIENT.getCallbackHandler(AUTH_CONTEXT_CLIENT.getAuthenticationConfiguration(uri, AuthenticationContext.captureCurrent()));
         final CredentialCallback credentialCallback = new CredentialCallback(BearerTokenCredential.class);
         try {
@@ -90,7 +91,7 @@ public class HttpMechClientConfigUtil {
         }
     }
 
-    public SSLContext getSSLContext(URI uri) {
+    public static SSLContext getSSLContext(URI uri) {
         try {
             return AUTH_CONTEXT_CLIENT.getSSLContext(uri, AuthenticationContext.captureCurrent());
         } catch (GeneralSecurityException e) {

@@ -72,7 +72,7 @@ public class ElytronHttpClientBearerTest extends AbstractBaseHttpTest {
             try {
                 URI uri = new URI("http://localhost:8080/hello");
                 HttpServerAuthenticationMechanism mechanism = bearerFactory.createAuthenticationMechanism("BEARER_TOKEN", new HashMap<>(),getCallbackHandler("authorizedUser", "RealmUsersRoles", "password", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"));
-                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri, "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
@@ -101,7 +101,7 @@ public class ElytronHttpClientBearerTest extends AbstractBaseHttpTest {
             try {
                 URI uri = new URI("http://localhost:8080/hello");
                 HttpServerAuthenticationMechanism mechanism = bearerFactory.createAuthenticationMechanism("BEARER_TOKEN", new HashMap<>(),getCallbackHandler("unauthorizedUser", "RealmUsersRoles", "password", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"));
-                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri, "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});
@@ -131,7 +131,7 @@ public class ElytronHttpClientBearerTest extends AbstractBaseHttpTest {
             try {
                 URI uri = new URI("http://localhost:8080/hello");
                 HttpServerAuthenticationMechanism mechanism = bearerFactory.createAuthenticationMechanism("BEARER_TOKEN", new HashMap<>(),getCallbackHandler("unauthorizedUser", "RealmUsersRoles", "password", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBzt"));
-                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri);
+                HttpRequest request = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uri, "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request.headers().allValues("Authorization").get(0)});

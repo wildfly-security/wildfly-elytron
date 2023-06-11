@@ -86,7 +86,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -113,7 +113,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -149,7 +149,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -185,7 +185,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -221,7 +221,7 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader());
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});

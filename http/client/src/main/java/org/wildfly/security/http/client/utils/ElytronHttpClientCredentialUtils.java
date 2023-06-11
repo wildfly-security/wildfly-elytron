@@ -28,21 +28,19 @@ import java.net.URI;
  */
 public class ElytronHttpClientCredentialUtils {
 
-    private HttpMechClientConfigUtil httpMechClientConfigUtil = new HttpMechClientConfigUtil();
-
-    public String getUserName(URI uri){
-        return httpMechClientConfigUtil.getUsername(uri);
+    public static String getUserName(URI uri) {
+        return HttpMechClientConfigUtil.getUsername(uri);
     }
 
-    public String getPassword(URI uri){
-        return httpMechClientConfigUtil.getPassword(uri);
+    public static String getPassword(URI uri) {
+        return HttpMechClientConfigUtil.getPassword(uri);
     }
 
-    public String getToken(URI uri) {
-        return httpMechClientConfigUtil.getToken(uri);
+    public static String getToken(URI uri) {
+        return HttpMechClientConfigUtil.getToken(uri);
     }
 
-    public SSLContext getSSLContext(URI uri){
-        return httpMechClientConfigUtil.getSSLContext(uri);
+    public static SSLContext getSSLContext(URI uri) {
+        return HttpMechClientConfigUtil.getSSLContext(uri);
     }
 }

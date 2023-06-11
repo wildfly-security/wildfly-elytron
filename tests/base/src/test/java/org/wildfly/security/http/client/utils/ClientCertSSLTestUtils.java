@@ -1,7 +1,26 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2023 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.wildfly.security.http.client.utils;
 
 import org.junit.Assert;
+import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
+import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 import javax.net.ssl.KeyManager;
@@ -24,7 +43,11 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
+/**
+ * @author Diana Krepinska
+ * */
 public class ClientCertSSLTestUtils {
 
     private static final String CLIENT_ALIAS = "client";
@@ -36,11 +59,10 @@ public class ClientCertSSLTestUtils {
     private static char[] PASSWORD = "secret".toCharArray();
     private static File KEYSTORES_DIR = new File("./target/keystores");
 
-    private static String CLIENT1_KEYSTORE_FILENAME =  "client1.keystore.jks";
-    private static String CLIENT1_TRUSTSTORE_FILENAME ="client1.truststore.jks";
+    private static String CLIENT1_KEYSTORE_FILENAME = "client1.keystore.jks";
+    private static String CLIENT1_TRUSTSTORE_FILENAME = "client1.truststore.jks";
     private static String SERVER1_KEYSTORE_FILENAME = "server1.keystore.jks";
     private static String SERVER1_TRUSTSTORE_FILENAME = "server1.truststore.jks";
-
 
     public static SSLContext createSSLContext(String keystorePath, String truststorePath, String password) {
         try {
@@ -111,6 +133,9 @@ public class ClientCertSSLTestUtils {
                 .setPublicKey(serverPublicKey)
                 .setSerialNumber(new BigInteger("4"))
                 .addExtension(new BasicConstraintsExtension(false, false, -1))
+                .addExtension(new SubjectAlternativeNamesExtension(
+                        true,
+                        Arrays.asList(new GeneralName.DNSName(LOCALHOST_ALIAS))))
                 .build();
         serverKeyStore.setKeyEntry(LOCALHOST_ALIAS, serverSigningKey, PASSWORD, new X509Certificate[]{serverCertificate});
 
@@ -131,7 +156,7 @@ public class ClientCertSSLTestUtils {
         KeyStore serverTrustStore = KeyStore.getInstance(KEYSTORE_TYPE);
         serverTrustStore.load(null, null);
         clientTrustStore.setCertificateEntry(LOCALHOST_ALIAS, serverKeyStore.getCertificate(LOCALHOST_ALIAS));
-        serverTrustStore.setCertificateEntry(CLIENT_ALIAS, clientKeyStore.getCertificate(CLIENT_ALIAS) );
+        serverTrustStore.setCertificateEntry(CLIENT_ALIAS, clientKeyStore.getCertificate(CLIENT_ALIAS));
 
         File clientTrustFile = new File(KEYSTORES_DIR, clientTruststoreFilename);
         try (FileOutputStream clientStream = new FileOutputStream(clientTrustFile)) {
@@ -153,7 +178,9 @@ public class ClientCertSSLTestUtils {
 
     public static void deleteKeystores() {
         new File(KEYSTORES_DIR, CLIENT1_KEYSTORE_FILENAME).delete();
-
+        new File(KEYSTORES_DIR, CLIENT1_TRUSTSTORE_FILENAME).delete();
+        new File(KEYSTORES_DIR, SERVER1_KEYSTORE_FILENAME).delete();
+        new File(KEYSTORES_DIR, SERVER1_TRUSTSTORE_FILENAME).delete();
         KEYSTORES_DIR.delete();
     }
 }

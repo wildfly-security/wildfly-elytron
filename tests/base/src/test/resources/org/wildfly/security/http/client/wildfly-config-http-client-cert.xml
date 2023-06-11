@@ -20,11 +20,11 @@
     <authentication-client xmlns="urn:elytron:client:1.8">
         <key-stores>
             <key-store name="keystore1" type="JKS">
-                <file name="target/keystores/client1.keystore.jks"/>
+                <file name="./target/keystores/client1.keystore.jks"/>
                 <key-store-clear-password password="secret"/>
             </key-store>
             <key-store name="truststore1" type="JKS">
-                <file name="target/keystores/client1.truststore.jks"/>
+                <file name="./target/keystores/client1.truststore.jks"/>
                 <key-store-clear-password password="secret"/>
             </key-store>
         </key-stores>

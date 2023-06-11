@@ -19,6 +19,7 @@ package org.wildfly.security.http.client.exception;
 
 /**
  * General client configuration exception
+ *
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
 public class ElytronHttpClientException extends RuntimeException {

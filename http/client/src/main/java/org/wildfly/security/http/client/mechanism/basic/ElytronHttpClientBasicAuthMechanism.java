@@ -18,11 +18,15 @@
 
 package org.wildfly.security.http.client.mechanism.basic;
 
+import org.wildfly.security.http.client.utils.ElytronHttpClientConstants;
 import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialUtils;
+import org.wildfly.security.http.client.utils.ElytronHttpClientRequestBuilder;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Elytron client for HTTP authentication
@@ -30,17 +34,16 @@ import java.util.Base64;
  * @author <a href="mailto:kekumar@redhat.com">Keshav Kumar</a>
  */
 public class ElytronHttpClientBasicAuthMechanism {
-    private static final String AUTHORIZATION = "Authorization";
     private static ElytronHttpClientCredentialUtils elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialUtils();
 
-    public static HttpRequest evaluateMechanism(URI uri) {
+    public static HttpRequest evaluateMechanism(URI uri, String method, String body, Map<String, String> headers) {
         String userName = elytronHttpClientCredentialProvider.getUserName(uri);
         String password = elytronHttpClientCredentialProvider.getPassword(uri);
-        HttpRequest request = HttpRequest
-                .newBuilder()
-                .uri(uri)
-                .header(AUTHORIZATION, basicAuth(userName, password))
-                .build();
+        if(headers == null){
+            headers = new HashMap<>();
+        }
+        headers.put(ElytronHttpClientConstants.AUTHORIZATION, basicAuth(userName, password));
+        HttpRequest request = ElytronHttpClientRequestBuilder.buildRequest(uri, method, body, headers);
         return request;
     }
 

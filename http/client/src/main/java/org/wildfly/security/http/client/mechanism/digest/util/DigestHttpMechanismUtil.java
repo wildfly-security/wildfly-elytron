@@ -20,6 +20,8 @@ package org.wildfly.security.http.client.mechanism.digest.util;
 
 import org.wildfly.security.digest.WildFlyElytronDigestProvider;
 import org.wildfly.security.http.client.exception.ElytronHttpClientException;
+import org.wildfly.security.http.client.utils.ElytronHttpClientConstants;
+import org.wildfly.security.http.client.utils.ElytronHttpClientRequestBuilder;
 import org.wildfly.security.http.client.utils.ElytronMessages;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.sasl.digest._private.DigestUtil;
@@ -43,11 +45,8 @@ import java.util.Map;
  */
 public class DigestHttpMechanismUtil {
 
-    private static final String AUTHORIZATION = "Authorization";
-    private static final String CHALLENGE_PREFIX = "Digest ";
-
-    public static HttpRequest createDigestRequest(URI uri, String userName, String password, String authHeader) throws AuthenticationMechanismException {
-        Map<String,String> authParams = updateAuthParams(authHeader);
+    public static HttpRequest createDigestRequest(URI uri, String userName, String password, String authHeader, String method, String body, Map<String, String> headers) throws AuthenticationMechanismException {
+        Map<String, String> authParams = updateAuthParams(authHeader);
         String realm = authParams.getOrDefault("realm", null);
         String nonce = authParams.getOrDefault("nonce", null);
         String opaque = authParams.getOrDefault("opaque", null);
@@ -55,12 +54,12 @@ public class DigestHttpMechanismUtil {
         String qop = authParams.getOrDefault("qop", "qop");
         String uriPath = getUriPath(uri);
         String cnonce = generateCNonce();
-        String nc = new String(DigestUtil.convertToHexBytesWithLeftPadding(Integer.parseInt(authParams.getOrDefault("nc","0")),8));
+        String nc = new String(DigestUtil.convertToHexBytesWithLeftPadding(Integer.parseInt(authParams.getOrDefault("nc", "0")), 8));
         String resp;
         if (qop == null) {
-            resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, "GET");
+            resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, method);
         } else {
-            resp = computeDigestWithQop(uriPath, nonce, cnonce, nc, userName, password, algorithm, realm, qop, "GET");
+            resp = computeDigestWithQop(uriPath, nonce, cnonce, nc, userName, password, algorithm, realm, qop, method);
         }
 
         StringBuilder requestAuthHeader = new StringBuilder();
@@ -76,23 +75,23 @@ public class DigestHttpMechanismUtil {
         requestAuthHeader.append("opaque=\"").append(opaque).append("\", ");
         requestAuthHeader.append("algorithm=").append(algorithm);
 
-        HttpRequest request = HttpRequest
-                .newBuilder()
-                .uri(uri)
-                .header(AUTHORIZATION, requestAuthHeader.toString())
-                .build();
+        if(headers == null){
+            headers = new HashMap<>();
+        }
+        headers.put(ElytronHttpClientConstants.AUTHORIZATION, requestAuthHeader.toString());
+        HttpRequest request = ElytronHttpClientRequestBuilder.buildRequest(uri, method, body, headers);
         int updateNonceCount = Integer.parseInt(authParams.getOrDefault("nc", "0")) + 1;
         authParams.put("nc", String.valueOf(updateNonceCount));
         return request;
     }
 
-    private static Map<String,String> updateAuthParams(String authHeader) throws AuthenticationMechanismException {
-        byte[] rawHeader = authHeader.substring(CHALLENGE_PREFIX.length()).getBytes(UTF_8);
-        HashMap<String, byte[]> authval = parseResponse(rawHeader, UTF_8,false, log);
-        Map<String,String> authParams = new HashMap<>();
-        for(String headerKey : authval.keySet()){
-            String headerValue = new String(authval.get(headerKey),UTF_8);
-            authParams.put(headerKey,headerValue);
+    private static Map<String, String> updateAuthParams(String authHeader) throws AuthenticationMechanismException {
+        byte[] rawHeader = authHeader.substring(ElytronHttpClientConstants.CHALLENGE_PREFIX.length()).getBytes(UTF_8);
+        HashMap<String, byte[]> authval = parseResponse(rawHeader, UTF_8, false, log);
+        Map<String, String> authParams = new HashMap<>();
+        for (String headerKey : authval.keySet()) {
+            String headerValue = new String(authval.get(headerKey), UTF_8);
+            authParams.put(headerKey, headerValue);
         }
         return authParams;
     }
@@ -101,12 +100,12 @@ public class DigestHttpMechanismUtil {
             password, String algorithm, String realm, String method) {
         String A1, HashA1, A2, HashA2;
         A1 = username + ":" + realm + ":" + password;
-        HashA1 = generateHash(A1,algorithm);
+        HashA1 = generateHash(A1, algorithm);
         A2 = method + ":" + uri;
-        HashA2 = generateHash(A2,algorithm);
+        HashA2 = generateHash(A2, algorithm);
         String combo, finalHash;
         combo = HashA1 + ":" + nonce + ":" + HashA2;
-        finalHash = generateHash(combo,algorithm);
+        finalHash = generateHash(combo, algorithm);
         return finalHash;
     }
 
@@ -115,23 +114,22 @@ public class DigestHttpMechanismUtil {
 
         String A1, HashA1, A2, HashA2;
         A1 = username + ":" + realm + ":" + password;
-        HashA1 = generateHash(A1,algorithm);
+        HashA1 = generateHash(A1, algorithm);
         A2 = method + ":" + uri;
-        HashA2 = generateHash(A2,algorithm);
+        HashA2 = generateHash(A2, algorithm);
 
         String combo, finalHash;
         combo = HashA1 + ":" + nonce + ":" + nc + ":" + cnonce + ":" + qop + ":" + HashA2;
-        finalHash = generateHash(combo,algorithm);
+        finalHash = generateHash(combo, algorithm);
         return finalHash;
     }
 
-    private static String generateHash(String value,String algorithm) {
+    private static String generateHash(String value, String algorithm) {
         try {
             MessageDigest messageDigest;
-            if(algorithm.equals("SHA-512-256")){
+            if (algorithm.equals("SHA-512-256")) {
                 messageDigest = MessageDigest.getInstance(algorithm, WildFlyElytronDigestProvider.getInstance());
-            }
-            else messageDigest = MessageDigest.getInstance(algorithm);
+            } else messageDigest = MessageDigest.getInstance(algorithm);
             messageDigest.update(value.getBytes());
             byte[] digest = messageDigest.digest();
             StringBuilder sb = new StringBuilder();

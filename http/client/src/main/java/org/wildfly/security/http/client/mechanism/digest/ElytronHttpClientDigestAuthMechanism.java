@@ -24,6 +24,7 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.util.Map;
 
 /**
  * Elytron client for HTTP authentication
@@ -32,11 +33,9 @@ import java.net.http.HttpRequest;
  */
 public class ElytronHttpClientDigestAuthMechanism {
 
-    private static ElytronHttpClientCredentialUtils elytronHttpClientCredentialProvider = new ElytronHttpClientCredentialUtils();
-
-    public static HttpRequest evaluateMechanism(URI uri, String authHeader) throws AuthenticationMechanismException {
-        String userName = elytronHttpClientCredentialProvider.getUserName(uri);
-        String password = elytronHttpClientCredentialProvider.getPassword(uri);
-        return DigestHttpMechanismUtil.createDigestRequest(uri, userName, password, authHeader);
+    public static HttpRequest evaluateMechanism(URI uri, String authHeader, String method, String body, Map<String, String> headers) throws AuthenticationMechanismException {
+        String userName = ElytronHttpClientCredentialUtils.getUserName(uri);
+        String password = ElytronHttpClientCredentialUtils.getPassword(uri);
+        return DigestHttpMechanismUtil.createDigestRequest(uri, userName, password, authHeader, method, body, headers);
     }
 }
