@@ -102,6 +102,7 @@ public class Oidc {
     static final String KEYCLOAK_CLIENT_CLUSTER_HOST = "client_cluster_host";
     static final String KEYCLOAK_QUERY_BEARER_TOKEN = "k_query_bearer_token";
     static final String DEFAULT_TOKEN_SIGNATURE_ALGORITHM = "RS256";
+    public static final String DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME = "wildfly.elytron.oidc.disable.typ.claim.validation";
 
 
     // keycloak-specific request parameter used to specify the identifier of the identity provider that should be used to authenticate a user
