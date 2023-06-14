@@ -20,6 +20,7 @@ package org.wildfly.security.http.oidc;
 
 import org.jboss.resteasy.plugins.server.embedded.SimplePrincipal;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.junit.Before;
 import org.junit.Test;
 import org.wildfly.security.auth.SupportLevel;
@@ -71,8 +72,8 @@ public class OidcSecurityRealmTest {
     @Test
     public void testGetRealmIdentityNoRoles() throws RealmUnavailableException {
         // setup
-        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext();
-        securityContext.setCurrentRequestInfo(new OidcClientConfiguration(), null);
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(new OidcClientConfiguration(),
+                null, null, new AccessToken(new JwtClaims()), null, null, null);
         OidcPrincipal principal = new OidcPrincipal("john", securityContext);
 
         // test
@@ -103,6 +104,7 @@ public class OidcSecurityRealmTest {
         final Map<String, Object> resourceAccess = new HashMap<>();
         resourceAccess.put("SomeResource", createRoles("roleA"));
         resourceAccess.put("SpecialResource", createRoles("roleB", "roleC"));
+        // standard roles claim not present
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("realm_access", createRoles("roleC", "roleD"));
 
@@ -131,6 +133,7 @@ public class OidcSecurityRealmTest {
         final JwtClaims jwtClaims = new JwtClaims();
         final Map<String, Object> resourceAccess = new HashMap<>();
         resourceAccess.put("SpecialResource", createRoles("roleB", "roleC"));
+        // standard roles claim not present
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("realm_access", createRoles("roleC", "roleD"));
 
@@ -158,6 +161,7 @@ public class OidcSecurityRealmTest {
         final JwtClaims jwtClaims = new JwtClaims();
         final Map<String, Object> resourceAccess = new HashMap<>();
         resourceAccess.put("SpecialResource", createRoles("roleB", "roleC"));
+        // standard roles claim not present
         jwtClaims.setClaim("resource_access", resourceAccess);
         jwtClaims.setClaim("", new RealmAccessClaim(createRoles("roleC", "roleD")));
 
@@ -201,6 +205,119 @@ public class OidcSecurityRealmTest {
         assertTrue(roles.isEmpty());
     }
 
+    @Test
+    public void testRolesWithEmptyRolesClaim() throws Exception {
+        OidcClientConfiguration clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("rolesClient");
+
+        // use only realm role mappings
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(false);
+        JwtClaims jwtClaims = populateBasicJwtClaims(true); // empty roles claim
+        Attributes.Entry roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(2, roles.size());
+        assertTrue(roles.contains("roleC"));
+        assertTrue(roles.contains("roleD"));
+
+        // use only resource role mappings
+        clientConfiguration.setUseRealmRoleMappings(false);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(true); // empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(2, roles.size());
+        assertTrue(roles.contains("roleB"));
+        assertTrue(roles.contains("roleC"));
+
+        // use both realm role mappings and resource role mappings
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(true); // empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(3, roles.size());
+        assertTrue(roles.contains("roleB"));
+        assertTrue(roles.contains("roleC"));
+        assertTrue(roles.contains("roleD"));
+
+        // neither realm role mappings nor resource role mappings are included in the token
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(true, false); // empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+        assertEquals(0, roles.size());
+    }
+
+    @Test
+    public void testRolesWithNonEmptyRolesClaim() throws Exception {
+        OidcClientConfiguration clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("rolesClient");
+
+        // use only the standard roles claim
+        clientConfiguration.setUseRealmRoleMappings(false);
+        clientConfiguration.setUseResourceRoleMappings(false);
+        JwtClaims jwtClaims = populateBasicJwtClaims(false); // non-empty roles claim
+        Attributes.Entry roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(2, roles.size());
+        assertTrue(roles.contains("roleE"));
+        assertTrue(roles.contains("roleF"));
+
+        // use realm role mappings and the standard roles claim
+        clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("rolesClient");
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(false);
+        jwtClaims = populateBasicJwtClaims(false); // non-empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(4, roles.size());
+        assertTrue(roles.contains("roleC"));
+        assertTrue(roles.contains("roleD"));
+        assertTrue(roles.contains("roleE"));
+        assertTrue(roles.contains("roleF"));
+
+        // use resource role mappings and the standard roles claim
+        clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("rolesClient");
+        clientConfiguration.setUseRealmRoleMappings(false);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(false); // non-empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(4, roles.size());
+        assertTrue(roles.contains("roleB"));
+        assertTrue(roles.contains("roleC"));
+        assertTrue(roles.contains("roleE"));
+        assertTrue(roles.contains("roleF"));
+
+        // use realm role mappings, resource role mappings, and the standard roles claim
+        clientConfiguration = new OidcClientConfiguration();
+        clientConfiguration.setClientId("rolesClient");
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(false); // non-empty roles claim
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(5, roles.size());
+        assertTrue(roles.contains("roleB"));
+        assertTrue(roles.contains("roleC"));
+        assertTrue(roles.contains("roleD"));
+        assertTrue(roles.contains("roleE"));
+        assertTrue(roles.contains("roleF"));
+
+        // neither realm role mappings nor resource role mappings are included in the token
+        clientConfiguration.setUseRealmRoleMappings(true);
+        clientConfiguration.setUseResourceRoleMappings(true);
+        jwtClaims = populateBasicJwtClaims(false, false); // non-empty-roles
+        roles = getRealmIdentityRoles(clientConfiguration, jwtClaims);
+
+        assertEquals(2, roles.size());
+        assertTrue(roles.contains("roleE"));
+        assertTrue(roles.contains("roleF"));
+    }
+
     static Map<String, Object> createRoles(String... roleNames) {
         final ArrayList<String> value = new ArrayList<>();
         for (String role : roleNames) {
@@ -210,4 +327,76 @@ public class OidcSecurityRealmTest {
         roles.put("roles", value);
         return roles;
     }
+
+    private static JwtClaims populateBasicJwtClaims(boolean useEmptyRoles) throws InvalidJwtException {
+        return populateBasicJwtClaims(useEmptyRoles, true);
+    }
+
+    private static JwtClaims populateBasicJwtClaims(boolean useEmptyRoles, boolean includeRealmAndResourcesRoles) throws InvalidJwtException {
+        return JwtClaims.parse("{\n" +
+                "  \"exp\": 1686249550,\n" +
+                "  \"iat\": 1686249490,\n" +
+                "  \"auth_time\": 1686249477,\n" +
+                "  \"jti\": \"8c883880-e9ec-4e96-a2d2-ee32460e0d6c\",\n" +
+                "  \"iss\": \"http://localhost:8080/realms/master\",\n" +
+                "  \"aud\": \"account\",\n" +
+                "  \"sub\": \"4f229262-88d4-4a23-9fa5-2f5a0aadf16c\",\n" +
+                "  \"typ\": \"Bearer\",\n" +
+                "  \"azp\": \"account-console\",\n" +
+                "  \"nonce\": \"50d8b172-15fd-4510-889e-c66c21e13176\",\n" +
+                "  \"session_state\": \"7128671b-3f29-4971-8115-1ee743bbcd55\",\n" +
+                "  \"acr\": \"0\",\n" +
+                getRealmAndResourceRolesClaims(includeRealmAndResourcesRoles) +
+                "  \"scope\": \"openid email profile\",\n" +
+                "  \"sid\": \"7128671b-3f29-4971-8115-1ee743bbcd55\",\n" +
+                "  \"email_verified\": false,\n" +
+                getStandardRolesClaim(useEmptyRoles) +
+                "  \"preferred_username\": \"alice\",\n" +
+                "  \"given_name\": \"\",\n" +
+                "  \"family_name\": \"\"\n" +
+                "}\n");
+    }
+
+    private static String getStandardRolesClaim(boolean useEmptyRoles) {
+        return useEmptyRoles ? "  \"roles\": [\n" +
+                "  ],\n" :
+                "  \"roles\": [\n" +
+                        "    \"roleE\",\n" +
+                        "    \"roleF\"\n" +
+                        "  ],\n";
+    }
+
+    private static String getRealmAndResourceRolesClaims(boolean includeRealmAndResourceRoles) {
+        return includeRealmAndResourceRoles ? "  \"realm_access\": {\n" +
+                "      \"roles\": [\n" +
+                "        \"roleC\",\n" +
+                "        \"roleD\"\n" +
+                "      ]\n" +
+                "  },\n" +
+                "  \"resource_access\": {\n" +
+                "    \"SomeResource\": {\n" +
+                "      \"roles\": [\n" +
+                "        \"roleA\"\n" +
+                "      ]\n" +
+                "    },\n" +
+                "    \"rolesClient\": {\n" +
+                "      \"roles\": [\n" +
+                "        \"roleB\",\n" +
+                "        \"roleC\"\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  },\n" :
+                "";
+    }
+
+    private Attributes.Entry getRealmIdentityRoles(OidcClientConfiguration clientConfiguration, JwtClaims jwtClaims) throws RealmUnavailableException {
+        RefreshableOidcSecurityContext securityContext = new RefreshableOidcSecurityContext(clientConfiguration,
+                null, null, new AccessToken(jwtClaims), null, null, null);
+        OidcPrincipal principal = new OidcPrincipal("john", securityContext);
+
+        RealmIdentity identity = realm.getRealmIdentity(principal);
+        AuthorizationIdentity authorizationIdentity = identity.getAuthorizationIdentity();
+        return authorizationIdentity.getAttributes().get(KEY_ROLES);
+    }
+
 }
