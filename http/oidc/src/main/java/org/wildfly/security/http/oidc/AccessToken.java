@@ -34,6 +34,7 @@ public class AccessToken extends JsonWebToken {
     private static final String ALLOWED_ORIGINS = "allowed-origins";
     private static final String REALM_ACCESS = "realm_access";
     private static final String RESOURCE_ACCESS = "resource_access";
+    private static final String TRUSTED_CERTS = "trusted-certs";
 
     /**
      * Construct a new instance.
@@ -94,5 +95,14 @@ public class AccessToken extends JsonWebToken {
     public RealmAccessClaim getResourceAccessClaim(String resource) {
         Map<String, RealmAccessClaim> realmAccessClaimMap = getResourceAccessClaim();
         return realmAccessClaimMap == null ? null : realmAccessClaimMap.get(resource);
+    }
+
+    /**
+     * Get the trusted-certs claim.
+     *
+     * @return the trusted-certs claim
+     */
+    public List<String> getTrustedCertsClaim() {
+        return getStringListClaimValue(TRUSTED_CERTS);
     }
 }
