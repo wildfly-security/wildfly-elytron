@@ -26,12 +26,12 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSASSASigner;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
-
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 
 import mockit.Mock;
 import mockit.MockUp;
