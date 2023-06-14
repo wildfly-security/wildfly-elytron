@@ -23,6 +23,7 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.wildfly.security.auth.SupportLevel;
@@ -120,6 +121,14 @@ public class OidcSecurityRealm implements SecurityRealm {
             if (realmAccessClaim != null) {
                 roles.addAll(realmAccessClaim.getRoles());
             }
+        }
+        // include roles from the standard "roles" claim if present
+        List<String> rolesClaim = accessToken.getRolesClaim();
+        if (! rolesClaim.isEmpty()) {
+            if (log.isTraceEnabled()) {
+                log.trace("use roles claim");
+            }
+            roles.addAll(rolesClaim);
         }
         if (log.isTraceEnabled()) {
             log.trace("Setting roles: ");

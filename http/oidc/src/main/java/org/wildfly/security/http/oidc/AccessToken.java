@@ -34,6 +34,7 @@ public class AccessToken extends JsonWebToken {
     private static final String ALLOWED_ORIGINS = "allowed-origins";
     private static final String REALM_ACCESS = "realm_access";
     private static final String RESOURCE_ACCESS = "resource_access";
+    private static final String ROLES = "roles";
     private static final String TRUSTED_CERTS = "trusted-certs";
 
     /**
@@ -104,5 +105,14 @@ public class AccessToken extends JsonWebToken {
      */
     public List<String> getTrustedCertsClaim() {
         return getStringListClaimValue(TRUSTED_CERTS);
+    }
+
+    /**
+     * Get the roles claim.
+     *
+     * @return the roles claim
+     */
+    public List<String> getRolesClaim() {
+        return getStringListClaimValue(ROLES);
     }
 }
