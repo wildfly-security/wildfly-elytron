@@ -6,7 +6,7 @@ RUN apt-get update && \
         build-essential \
         ca-certificates \
         curl \
-        libffi7 \
+        libffi8 \
         make \
         shellcheck \
         git-all \
