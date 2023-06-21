@@ -19,7 +19,6 @@
 package org.wildfly.security.http.bearer;
 
 import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN;
-import static org.wildfly.security.http.HttpConstants.BEARER_TOKEN_PATTERN;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -29,6 +28,7 @@ import static org.wildfly.security.mechanism._private.ElytronMessages.httpBearer
 import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -64,6 +64,8 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 final class BearerTokenAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
     private final CallbackHandler callbackHandler;
 
