@@ -20,8 +20,8 @@ package org.wildfly.security.http.oidc;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.common.array.Arrays2.indexOf;
-import static org.wildfly.security.http.HttpConstants.NO_TOKEN;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.wildfly.security.http.oidc.Oidc.NO_TOKEN;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
