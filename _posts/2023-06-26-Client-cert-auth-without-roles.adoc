@@ -1,0 +1,245 @@
+---
+layout: post
+title: 'Using Certificate Based Authentication with Mutual TLS without Roles'
+date: 2023-06-26
+tags: authentication client-cert tls
+synopsis: How to secure a web application deployed to WildFly with mutual TLS and the CLIENT_CERT HTTP authentication mechanism. 
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+Mutual TLS with client certificates is essential 
+for secure and encrypted communication between 
+clients and servers in various applications and systems. 
+It involves a handshake process during which both the client 
+and the server must present their certificate to each other 
+in order to establish a secure connection. This ensures that 
+both parties are authenticated before establishing the connection.  
+
+This example will walk you through how to secure a web application deployed to WildFly with mutual TLS and the CLIENT_CERT HTTP authentication mechanism. In this example we will be using certificates 
+signed by an example CA. We will be making use of the 
+`dynamic-certificates` project.
+
+toc::[]
+
+== Certification Generation
+
+First, clone the `elytron-examples` repo locally:
+
+```
+
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+
+cd elytron-examples
+
+```
+
+Next, let's generate some client and server certificates that will be used in this example to set up two-way SSL between
+
+a server and two clients:
+
+```
+cd dynamic-certificates
+
+mvn clean install exec:java -Dexec.mainClass="org.wildfly.security.examples.CertificateGenerationExample" -Dexec.args="CN=Bob.Smith.123456 CN=Alice.Smith.456789"
+```
+
+The above command generates the following keystores and truststores in the `dynamic-certificates/target` directory:
+
+```
+client1.keystore
+
+client1.truststore
+
+client2.keystore
+
+client2.truststore
+
+server.keystore
+
+server.truststore
+```
+
+*  ```client1.keystore``` contains a certificate with distinguished name: ```CN=Bob.Smith.123456```
+
+*  ```client2.keystore``` contains a certificate with distinguished name: ```CN=Alice.Smith.456789```
+
+* Both client certificates are issued by an example certificate authority with distinguished name: ```CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=elytron@wildfly.org, O=Root Certificate Authority```
+
+*  ```server.truststore``` contains this certificate authority's certificate
+
+Next, convert the client keystores into PKCS12 format and import them into your browser so you can pick which one to 
+present to the server later on:
+
+```
+keytool -importkeystore -srckeystore client1.keystore -srcstoretype jks -destkeystore client1.keystore.pkcs12 -deststoretype pkcs12 -srcstorepass keystorepass -deststorepass keystorepass
+
+keytool -importkeystore -srckeystore client2.keystore -srcstoretype jks -destkeystore client2.keystore.pkcs12 -deststoretype pkcs12 -srcstorepass keystorepass -deststorepass keystorepass
+
+```
+
+Finally, copy the server.keystore and server.truststore files to your WildFly server instance:
+
+```
+
+cp $PATH_TO_ELYTRON_EXAMPLES/dynamic-certificates/target/server.* $WILDFLY_HOME/standalone/configuration
+
+```
+
+== Server Configuration
+
+The following set of instructions are going to be used to configure the WildFly server in order to 
+establish the mutual TLS connection. We will be deploying a simple web application inside the 
+`elytron-examples/client-cert-auth-without-roles/simple-webapp` project.
+
+Please navigate to the elytron server home directory and enter the following command.
+
+```
+
+$SERVER_HOME/bin/jboss-cli.sh --connect 
+
+```
+
+This will connect you to the server, after which you may proceed to configuring the server. 
+
+First we need to create two keystores inside the elytron subsystem:
+
+```
+/subsystem=elytron/key-store=twoWayKS:add(path=/path/to/server.keystore, relative-to=jboss.server.config.dir, credential-reference={clear-text=keystorepass}, type=JKS)
+/subsystem=elytron/key-store=twoWayTS:add(path=/path/to/server.truststore,relative-to=jboss.server.config.dir, credential-reference={clear-text=truststorepass}, type=JKS)
+```
+
+The `relative-to` option specifies that the path that you have entered is relative to the `/standalone/configuration` folder 
+inside your WILDFLY_HOME directory. 
+
+Next, we need to create a `key-manager` and a `trust manager` to point to `twoWayKS` and `twoWayTS`, the previously 
+created keystores using the following commands: 
+```
+/subsystem=elytron/key-manager=twoWayKM:add(key-store=twoWayKS,credential-reference={clear-text=keystorepass})
+
+/subsystem=elytron/trust-manager=twoWayTM:add(key-store=twoWayTS)
+```
+
+Next, we need to configure our `server-ssl-context`. Since the `applicationSSC` server-SSL-context already exists in the default configuration, 
+we will not be adding one. Instead, we will be editing its properties using the `write-attribute` command: 
+
+```
+/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=key-manager, value=twoWayKM)
+/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=trust-manager, value=twoWayTM)
+/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=need-client-auth, value=true)
+```
+
+Now, when WildFly receives an HTTPS request, elytron will make use of this SSL context when handling the request. 
+Setting `need-client-auth` to true indicates that a client needs to be authenticated in order to establish a connection. 
+
+Next, we will configure a principal transformer that will map an X.509 certificate to a generic user name. To do this, 
+we will make use of a `chained-principal-transformer` that consists of an `x500-attribute-principal-decoder` and a `regex-principal-transformer`.
+The `x500-attribute-principal-decoder` is used to obtain the first segment from the CN value from an X.509 certificate.
+The `regex-principal-transformer` checks if the CN value matches a specific pattern and if so maps the principal to client-cert-user.
+`client-cert-user` is a user without any roles.
+
+```
+/subsystem=elytron/x500-attribute-principal-decoder=cnDecoder:add(attribute-name=CN, maximum-segments=1)
+/subsystem=elytron/regex-principal-transformer=myRegexTransformer:add(pattern="[a-zA-Z]+\\.[a-zA-Z]+\\.[0-9]+", replacement="client-cert-user")
+/subsystem=elytron/chained-principal-transformer=myChainedTransformer:add(principal-transformers=[cnDecoder, myRegexTransformer])
+```
+
+Next, we'll create a security domain that references a filesystem realm containing out `client-cert-user` identity.
+The filesystem realm would help us map our user to `client-cert-user`. 
+```
+/subsystem=elytron/filesystem-realm=idsRealm:add(path=ids, relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=idsRealm:add-identity(identity=client-cert-user)
+/subsystem=elytron/security-domain=clientCertDomain:add(realms=[{realm=idsRealm}], default-realm=idsRealm, pre-realm-principal-transformer=myChainedTransformer, permission-mapper=default-permission-mapper)
+```
+
+Afterwards, use the following commands to configure the CLIENT_CERT HTTP mechanism:
+```
+/subsystem=elytron/configurable-http-server-mechanism-factory=configuredCert:add(http-server-mechanism-factory=global, properties={org.wildfly.security.http.skip-certificate-verification=true})
+/subsystem=elytron/http-authentication-factory=clientCertAuth:add(http-server-mechanism-factory=configuredCert, security-domain=clientCertDomain , mechanism-configurations=[{mechanism-name=CLIENT_CERT}])
+```
+
+And finally, we need to configure the undertow subsystem to make use of our `http-authentication-factory`. Please run the following commands
+in a batch as specified below to avoid unnecessary warnings: 
+```
+batch
+#configure the undertow subsystem	
+/subsystem=undertow/application-security-domain=other:undefine-attribute(name=security-domain)
+/subsystem=undertow/application-security-domain=other:write-attribute(name=http-authentication-factory,value=clientCertAuth)
+/subsystem=undertow/application-security-domain=other:write-attribute(name=override-deployment-config,value=true)
+run-batch
+```
+
+And to apply all these changes, please type in `reload` into the same terminal. Now that we have configured the server, we are ready to deploy and test our application.
+
+== Deploying the application
+  
+We’re going to make use of the ```simple-webapp``` project. It can be deployed using the following commands:
+
+```
+cd $PATH_TO_ELYTRON_EXAMPLES/client-cert-auth-without-roles/simple-webapp
+
+mvn clean install wildfly:deploy
+```
+
+*Note:* There is also a repository called `elytron-examples/simple-webapp`. But we will not be using that. Instead, we will be deploying a slightly modified version of that web application located inside this repository.
+
+== Import the Certificate into Your Browser
+
+Before you access the application, you must import the _client1.keystore.pkcs12_, which holds the client certificate, into your browser.
+
+=== Import the Certificate into Google Chrome
+
+ - Click the Chrome menu icon (3 dots) in the upper right on the browser toolbar and choose *Settings*. This takes you to `link:`chrome://settings/`.
+
+- Click on *Privacy and security* and then on *Security*.
+
+- Scroll down to the *Advanced* section and on the *Manage certificates* screen, select the *Your Certificates* tab and click on the *Import* button.
+
+- Select the *client1.keystore.pkcs12* file. You will be prompted to enter the password: `keystorepass`.
+
+- The client certificate is now installed in the Google Chrome browser.
+
+You can follow the same instructions to import `client2.keystore.pkcs12` into your browser. 
+
+=== Import the Certificate into Mozilla Firefox
+
+- Click the *Edit* menu item on the browser menu and choose *Settings*.
+
+- A new window will open. Click on *Privacy & Security* and scroll down to the *Certificates* section.
+
+- Click the *View Certificates* button.
+
+- A new window will open. Select the *Your Certificates* tab and click the *Import* button.
+
+- Select the *client1.keystore.pkcs12* file. You will be prompted to enter the password: `keystorepass`.
+
+- The certificate is now installed in the Mozilla Firefox browser.
+
+You can follow the same instructions to import `client2.keystore.pkcs12` into your browser. 
+
+== Accessing the application
+
+Try accessing the application using https://localhost:8443/simple-webapp.
+
+Note that since the server's certificate won't be trusted by your browser, you'll need to manually confirm that
+this certificate is trusted or configure your browser to trust it.
+
+Select the certificate for Bob.Smith.123456 and then click on
+“Access Secured Servlet”. This will authenticate the client and will recognize that Bob accessed the web application and print "Login Successful". 
+If you imported `client2.keystore.pkcs12`, you will be able to access the web app with Alice's certificate as well. 
+
+Once you are ready to restore your server back to what it was, please enter the following on you terminal: 
+
+```
+
+$SERVER_HOME/bin/jboss-cli.sh --connect --file=$PATH_TO_ELYTRON_EXAMPLES/client-cert-auth-without-roles/restore-elytron-configuration.cli
+
+```
+
+Alteratively, you can keep a backup of your `standalone.sh` file and replace it with the backup once you want to go back. 
+
+This example has demonstrated how to secure a web application deployed to WildFly using the CLIENT_CERT HTTP authentication
+mechanism with two-way SSL. It has also demonstrated that individual client certificates do not need
+to be stored in either the server’s truststore or in its security realm.
