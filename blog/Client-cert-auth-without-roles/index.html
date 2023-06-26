@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Using Certificate Based Authentication with Mutual TLS without Roles</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Using Certificate Based Authentication with Mutual TLS without Roles | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Using Certificate Based Authentication with Mutual TLS without Roles" />
+<meta name="author" content="Prarthona Paul" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Mutual TLS with client certificates is essential for secure and encrypted communication between clients and servers in various applications and systems. It involves a handshake process during which both the client and the server must present their certificate to each other in order to establish a secure connection. This ensures that both parties are authenticated before establishing the connection." />
+<meta property="og:description" content="Mutual TLS with client certificates is essential for secure and encrypted communication between clients and servers in various applications and systems. It involves a handshake process during which both the client and the server must present their certificate to each other in order to establish a secure connection. This ensures that both parties are authenticated before establishing the connection." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-06-26T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Using Certificate Based Authentication with Mutual TLS without Roles" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Prarthona Paul"},"dateModified":"2023-06-26T00:00:00+00:00","datePublished":"2023-06-26T00:00:00+00:00","description":"Mutual TLS with client certificates is essential for secure and encrypted communication between clients and servers in various applications and systems. It involves a handshake process during which both the client and the server must present their certificate to each other in order to establish a secure connection. This ensures that both parties are authenticated before establishing the connection.","headline":"Using Certificate Based Authentication with Mutual TLS without Roles","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Using Certificate Based Authentication with Mutual TLS without Roles</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/6ed81e314d6074bbf734abe812f33b05">
+        
+        <p class="byline">
+          By <a href="https://github.com/PrarthonaPaul">Prarthona Paul</a> | June 26, 2023
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/authentication"> #authentication</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/client-cert"> #client-cert</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/tls"> #tls</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/&title=Using Certificate Based Authentication with Mutual TLS without Roles" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Using Certificate Based Authentication with Mutual TLS without Roles&url=https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Using Certificate Based Authentication with Mutual TLS without Roles&amp;body=Using Certificate Based Authentication with Mutual TLS without Roles https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Mutual TLS with client certificates is essential
+for secure and encrypted communication between
+clients and servers in various applications and systems.
+It involves a handshake process during which both the client
+and the server must present their certificate to each other
+in order to establish a secure connection. This ensures that
+both parties are authenticated before establishing the connection.</p>
+</div>
+<div class="paragraph">
+<p>This example will walk you through how to secure a web application deployed to WildFly with mutual TLS and the CLIENT_CERT HTTP authentication mechanism. In this example we will be using certificates
+signed by an example CA. We will be making use of the
+<code>dynamic-certificates</code> project.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#certification-generation">Certification Generation</a></li>
+<li><a href="#server-configuration">Server Configuration</a></li>
+<li><a href="#deploying-the-application">Deploying the application</a></li>
+<li><a href="#import-the-certificate-into-your-browser">Import the Certificate into Your Browser</a>
+<ul class="sectlevel2">
+<li><a href="#import-the-certificate-into-google-chrome">Import the Certificate into Google Chrome</a></li>
+<li><a href="#import-the-certificate-into-mozilla-firefox">Import the Certificate into Mozilla Firefox</a></li>
+</ul>
+</li>
+<li><a href="#accessing-the-application">Accessing the application</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="certification-generation"><a class="anchor" href="#certification-generation"></a>Certification Generation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First, clone the <code>elytron-examples</code> repo locally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone https://github.com/wildfly-security-incubator/elytron-examples
+
+cd elytron-examples</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, let&#8217;s generate some client and server certificates that will be used in this example to set up two-way SSL between</p>
+</div>
+<div class="paragraph">
+<p>a server and two clients:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd dynamic-certificates
+
+mvn clean install exec:java -Dexec.mainClass="org.wildfly.security.examples.CertificateGenerationExample" -Dexec.args="CN=Bob.Smith.123456 CN=Alice.Smith.456789"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above command generates the following keystores and truststores in the <code>dynamic-certificates/target</code> directory:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">client1.keystore
+
+client1.truststore
+
+client2.keystore
+
+client2.truststore
+
+server.keystore
+
+server.truststore</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code><code>client1.keystore</code></code> contains a certificate with distinguished name: <code><code>CN=Bob.Smith.123456</code></code></p>
+</li>
+<li>
+<p><code><code>client2.keystore</code></code> contains a certificate with distinguished name: <code><code>CN=Alice.Smith.456789</code></code></p>
+</li>
+<li>
+<p>Both client certificates are issued by an example certificate authority with distinguished name: <code><code>CN=Elytron CA, ST=Elytron, C=UK, EMAILADDRESS=<a href="mailto:elytron@wildfly.org">elytron@wildfly.org</a>, O=Root Certificate Authority</code></code></p>
+</li>
+<li>
+<p><code><code>server.truststore</code></code> contains this certificate authority&#8217;s certificate</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Next, convert the client keystores into PKCS12 format and import them into your browser so you can pick which one to
+present to the server later on:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">keytool -importkeystore -srckeystore client1.keystore -srcstoretype jks -destkeystore client1.keystore.pkcs12 -deststoretype pkcs12 -srcstorepass keystorepass -deststorepass keystorepass
+
+keytool -importkeystore -srckeystore client2.keystore -srcstoretype jks -destkeystore client2.keystore.pkcs12 -deststoretype pkcs12 -srcstorepass keystorepass -deststorepass keystorepass</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, copy the server.keystore and server.truststore files to your WildFly server instance:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cp $PATH_TO_ELYTRON_EXAMPLES/dynamic-certificates/target/server.* $WILDFLY_HOME/standalone/configuration</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="server-configuration"><a class="anchor" href="#server-configuration"></a>Server Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following set of instructions are going to be used to configure the WildFly server in order to
+establish the mutual TLS connection. We will be deploying a simple web application inside the
+<code>elytron-examples/client-cert-auth-without-roles/simple-webapp</code> project.</p>
+</div>
+<div class="paragraph">
+<p>Please navigate to the elytron server home directory and enter the following command.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">$SERVER_HOME/bin/jboss-cli.sh --connect</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will connect you to the server, after which you may proceed to configuring the server.</p>
+</div>
+<div class="paragraph">
+<p>First we need to create two keystores inside the elytron subsystem:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-store=twoWayKS:add(path=/path/to/server.keystore, relative-to=jboss.server.config.dir, credential-reference={clear-text=keystorepass}, type=JKS)
+/subsystem=elytron/key-store=twoWayTS:add(path=/path/to/server.truststore,relative-to=jboss.server.config.dir, credential-reference={clear-text=truststorepass}, type=JKS)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>relative-to</code> option specifies that the path that you have entered is relative to the <code>/standalone/configuration</code> folder
+inside your WILDFLY_HOME directory.</p>
+</div>
+<div class="paragraph">
+<p>Next, we need to create a <code>key-manager</code> and a <code>trust manager</code> to point to <code>twoWayKS</code> and <code>twoWayTS</code>, the previously
+created keystores using the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/key-manager=twoWayKM:add(key-store=twoWayKS,credential-reference={clear-text=keystorepass})
+
+/subsystem=elytron/trust-manager=twoWayTM:add(key-store=twoWayTS)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we need to configure our <code>server-ssl-context</code>. Since the <code>applicationSSC</code> server-SSL-context already exists in the default configuration,
+we will not be adding one. Instead, we will be editing its properties using the <code>write-attribute</code> command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=key-manager, value=twoWayKM)
+/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=trust-manager, value=twoWayTM)
+/subsystem=elytron/server-ssl-context=applicationSSC:write-attribute(name=need-client-auth, value=true)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, when WildFly receives an HTTPS request, elytron will make use of this SSL context when handling the request.
+Setting <code>need-client-auth</code> to true indicates that a client needs to be authenticated in order to establish a connection.</p>
+</div>
+<div class="paragraph">
+<p>Next, we will configure a principal transformer that will map an X.509 certificate to a generic user name. To do this,
+we will make use of a <code>chained-principal-transformer</code> that consists of an <code>x500-attribute-principal-decoder</code> and a <code>regex-principal-transformer</code>.
+The <code>x500-attribute-principal-decoder</code> is used to obtain the first segment from the CN value from an X.509 certificate.
+The <code>regex-principal-transformer</code> checks if the CN value matches a specific pattern and if so maps the principal to client-cert-user.
+<code>client-cert-user</code> is a user without any roles.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/x500-attribute-principal-decoder=cnDecoder:add(attribute-name=CN, maximum-segments=1)
+/subsystem=elytron/regex-principal-transformer=myRegexTransformer:add(pattern="[a-zA-Z]+\\.[a-zA-Z]+\\.[0-9]+", replacement="client-cert-user")
+/subsystem=elytron/chained-principal-transformer=myChainedTransformer:add(principal-transformers=[cnDecoder, myRegexTransformer])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we&#8217;ll create a security domain that references a filesystem realm containing out <code>client-cert-user</code> identity.
+The filesystem realm would help us map our user to <code>client-cert-user</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/filesystem-realm=idsRealm:add(path=ids, relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=idsRealm:add-identity(identity=client-cert-user)
+/subsystem=elytron/security-domain=clientCertDomain:add(realms=[{realm=idsRealm}], default-realm=idsRealm, pre-realm-principal-transformer=myChainedTransformer, permission-mapper=default-permission-mapper)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Afterwards, use the following commands to configure the CLIENT_CERT HTTP mechanism:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">/subsystem=elytron/configurable-http-server-mechanism-factory=configuredCert:add(http-server-mechanism-factory=global, properties={org.wildfly.security.http.skip-certificate-verification=true})
+/subsystem=elytron/http-authentication-factory=clientCertAuth:add(http-server-mechanism-factory=configuredCert, security-domain=clientCertDomain , mechanism-configurations=[{mechanism-name=CLIENT_CERT}])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, we need to configure the undertow subsystem to make use of our <code>http-authentication-factory</code>. Please run the following commands
+in a batch as specified below to avoid unnecessary warnings:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">batch
+#configure the undertow subsystem
+/subsystem=undertow/application-security-domain=other:undefine-attribute(name=security-domain)
+/subsystem=undertow/application-security-domain=other:write-attribute(name=http-authentication-factory,value=clientCertAuth)
+/subsystem=undertow/application-security-domain=other:write-attribute(name=override-deployment-config,value=true)
+run-batch</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And to apply all these changes, please type in <code>reload</code> into the same terminal. Now that we have configured the server, we are ready to deploy and test our application.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploying-the-application"><a class="anchor" href="#deploying-the-application"></a>Deploying the application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We’re going to make use of the <code><code>simple-webapp</code></code> project. It can be deployed using the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd $PATH_TO_ELYTRON_EXAMPLES/client-cert-auth-without-roles/simple-webapp
+
+mvn clean install wildfly:deploy</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> There is also a repository called <code>elytron-examples/simple-webapp</code>. But we will not be using that. Instead, we will be deploying a slightly modified version of that web application located inside this repository.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="import-the-certificate-into-your-browser"><a class="anchor" href="#import-the-certificate-into-your-browser"></a>Import the Certificate into Your Browser</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before you access the application, you must import the <em>client1.keystore.pkcs12</em>, which holds the client certificate, into your browser.</p>
+</div>
+<div class="sect2">
+<h3 id="import-the-certificate-into-google-chrome"><a class="anchor" href="#import-the-certificate-into-google-chrome"></a>Import the Certificate into Google Chrome</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Click the Chrome menu icon (3 dots) in the upper right on the browser toolbar and choose <strong>Settings</strong>. This takes you to <code>link:`chrome://settings/</code>.</p>
+</li>
+<li>
+<p>Click on <strong>Privacy and security</strong> and then on <strong>Security</strong>.</p>
+</li>
+<li>
+<p>Scroll down to the <strong>Advanced</strong> section and on the <strong>Manage certificates</strong> screen, select the <strong>Your Certificates</strong> tab and click on the <strong>Import</strong> button.</p>
+</li>
+<li>
+<p>Select the <strong>client1.keystore.pkcs12</strong> file. You will be prompted to enter the password: <code>keystorepass</code>.</p>
+</li>
+<li>
+<p>The client certificate is now installed in the Google Chrome browser.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can follow the same instructions to import <code>client2.keystore.pkcs12</code> into your browser.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="import-the-certificate-into-mozilla-firefox"><a class="anchor" href="#import-the-certificate-into-mozilla-firefox"></a>Import the Certificate into Mozilla Firefox</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Click the <strong>Edit</strong> menu item on the browser menu and choose <strong>Settings</strong>.</p>
+</li>
+<li>
+<p>A new window will open. Click on <strong>Privacy &amp; Security</strong> and scroll down to the <strong>Certificates</strong> section.</p>
+</li>
+<li>
+<p>Click the <strong>View Certificates</strong> button.</p>
+</li>
+<li>
+<p>A new window will open. Select the <strong>Your Certificates</strong> tab and click the <strong>Import</strong> button.</p>
+</li>
+<li>
+<p>Select the <strong>client1.keystore.pkcs12</strong> file. You will be prompted to enter the password: <code>keystorepass</code>.</p>
+</li>
+<li>
+<p>The certificate is now installed in the Mozilla Firefox browser.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can follow the same instructions to import <code>client2.keystore.pkcs12</code> into your browser.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="accessing-the-application"><a class="anchor" href="#accessing-the-application"></a>Accessing the application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Try accessing the application using <a href="https://localhost:8443/simple-webapp" class="bare">https://localhost:8443/simple-webapp</a>.</p>
+</div>
+<div class="paragraph">
+<p>Note that since the server&#8217;s certificate won&#8217;t be trusted by your browser, you&#8217;ll need to manually confirm that
+this certificate is trusted or configure your browser to trust it.</p>
+</div>
+<div class="paragraph">
+<p>Select the certificate for Bob.Smith.123456 and then click on
+“Access Secured Servlet”. This will authenticate the client and will recognize that Bob accessed the web application and print "Login Successful".
+If you imported <code>client2.keystore.pkcs12</code>, you will be able to access the web app with Alice&#8217;s certificate as well.</p>
+</div>
+<div class="paragraph">
+<p>Once you are ready to restore your server back to what it was, please enter the following on you terminal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">$SERVER_HOME/bin/jboss-cli.sh --connect --file=$PATH_TO_ELYTRON_EXAMPLES/client-cert-auth-without-roles/restore-elytron-configuration.cli</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alteratively, you can keep a backup of your <code>standalone.sh</code> file and replace it with the backup once you want to go back.</p>
+</div>
+<div class="paragraph">
+<p>This example has demonstrated how to secure a web application deployed to WildFly using the CLIENT_CERT HTTP authentication
+mechanism with two-way SSL. It has also demonstrated that individual client certificates do not need
+to be stored in either the server’s truststore or in its security realm.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 26 Jun 2023 15:42:47 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 26 Jun 2023 16:38:18 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using Certificate Based Authentication with Mutual TLS without Roles</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/
+            </link>
+            <description>
+                Mutual TLS with client certificates is essential for secure and encrypted communication between clients and servers in various applications and systems. It involves a handshake process during which both the client and the server must present their certificate to each other in order to establish a secure connection. This ensures...
+            </description>
+            <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/
+            </guid>
+        </item>
         
         <item>
             <title>Configuring the Digest mechanism to make use of additional algorithms</title>
@@ -130,20 +144,6 @@
             <pubDate>Fri, 14 Oct 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Hacktoberfest Has Started</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Fri, 07 Oct 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/
             </guid>
         </item>
         
