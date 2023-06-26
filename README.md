@@ -58,10 +58,16 @@ To write a blog post:
         - If you haven't done so already, generate a fine-grained GitHub token following the instructions
           [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token). Use this value to add a `PUSH_GITHUB_TOKEN` secret to your
           repository secrets (i.e., https://github.com/<YOUR_GITHUB_USERNAME>/wildfly-elytron/settings/secrets/actions).
-          - You should set the **Resource owner** to your user account, and **Repository access** to "Only select repositories", and then your fork of `wildfly-elytron`. The only repository permissions needed are **Read and write access to _Contents_** (this also enables **Read access to _Metadata_**, which is required).
+          - You should set the **Resource owner** to your user account, and **Repository access** to "Only select repositories" and then your fork of `wildfly-elytron`. The only **Repository permissions** needed are "Access: Read and write" for _Contents_ and _Actions_ (this also enables "Access: Read" for _Metadata_, which is required).
         - Simply push your changes to the `develop` branch on your `wildfly-elytron` fork. This will trigger a website
           build that will get pushed to the `gh-pages` branch on your fork. Then browse to
           http://<YOUR_GITHUB_USERNAME>.github.io/wildfly-elytron/blog and click on your post.
+          - The `gh-pages` branch must already exist in your fork before you can build the site. You can copy it from this repo by running these commands locally:
+            ```bash
+            git fetch upstream
+            git checkout gh-pages # This should include a message that the branch is tracking upstream/gh-pages
+            git push origin gh-pages
+            ```
     - To view your blog post locally, first follow the instructions [above](https://github.com/wildfly-security/wildfly-elytron/tree/develop#installation) to build the Elytron website
       locally. Then browse to http://localhost:4000/wildfly-elytron/blog and click on your post.
 - Submit a pull request against the `wildfly-elytron` `develop` branch
