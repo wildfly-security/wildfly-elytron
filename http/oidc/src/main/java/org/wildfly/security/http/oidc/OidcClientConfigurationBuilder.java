@@ -100,6 +100,9 @@ public class OidcClientConfigurationBuilder {
         if (oidcJsonConfiguration.getTokenCookiePath() != null) {
             oidcClientConfiguration.setOidcStateCookiePath(oidcJsonConfiguration.getTokenCookiePath());
         }
+        if (oidcJsonConfiguration.getScope() != null) {
+            oidcClientConfiguration.setScope(oidcJsonConfiguration.getScope());
+        }
         if (oidcJsonConfiguration.getPrincipalAttribute() != null) oidcClientConfiguration.setPrincipalAttribute(oidcJsonConfiguration.getPrincipalAttribute());
 
         oidcClientConfiguration.setResourceCredentials(oidcJsonConfiguration.getCredentials());
