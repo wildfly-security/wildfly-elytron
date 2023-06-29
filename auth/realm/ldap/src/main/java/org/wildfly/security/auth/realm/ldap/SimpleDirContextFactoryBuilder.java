@@ -64,7 +64,7 @@ public class SimpleDirContextFactoryBuilder {
     private static final String READ_TIMEOUT = "com.sun.jndi.ldap.read.timeout";
     private static final String SOCKET_FACTORY = "java.naming.ldap.factory.socket";
 
-    private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
+    private static final int DEFAULT_CONNECT_TIMEOUT = 10000; // ms
     private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
     private static final String LDAPS_SCHEME = "ldaps";
 
