@@ -48,6 +48,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.AuthenticationConfigurationCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -862,6 +863,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         return new CallbackHandler() {
             private SSLConnection sslConnection;
             private X509Certificate[] peerCerts;
+            private boolean saslSkipCertificateVerification;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -893,7 +895,16 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                         if (stateRef.get().canVerifyEvidence()) {
                             if (peerCerts != null) {
                                 log.tracef("Authentication ID is null but SSL peer certificates are available. Trying to authenticate peer");
-                                verifyEvidence(new X509PeerCertificateChainEvidence(peerCerts));
+                                // if SASL mechanism is used with skip-certificate-verification property then do not verifyEvidence against the security realm
+                                if (saslSkipCertificateVerification) {
+                                    // Since evidence verification is being skipped here, ensure evidence decoding still takes place
+                                    X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerCerts);
+                                    setDecodedEvidencePrincipal(evidence);
+                                    stateRef.get().setPrincipal(evidence.getDecodedPrincipal(), false);
+                                }
+                                else {
+                                    verifyEvidence(new X509PeerCertificateChainEvidence(peerCerts));
+                                }
                             }
                         }
                     }
@@ -1147,7 +1158,12 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     log.tracef("Handling PrincipalAuthorizeCallback: principal = %s  authorized = %b", principal, authorized);
                     authorizeCallback.setAuthorized(authorized);
                     handleOne(callbacks, idx + 1);
-                } else {
+                } else if (callback instanceof AuthenticationConfigurationCallback) {
+                    AuthenticationConfigurationCallback authenticationConfigurationCallback = (AuthenticationConfigurationCallback) callback;
+                    saslSkipCertificateVerification = authenticationConfigurationCallback.getSaslSkipCertificateVerification();
+                    handleOne(callbacks, idx + 1);
+                }
+                else {
                     CallbackUtil.unsupported(callback);
                     handleOne(callbacks, idx + 1);
                 }
@@ -1374,7 +1390,7 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         }
 
         public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector,
-                MechanismInformation mechanismInformation, IdentityCredentials privateCredentials, IdentityCredentials publicCredentials, Attributes runtimeAttributes) {
+                             MechanismInformation mechanismInformation, IdentityCredentials privateCredentials, IdentityCredentials publicCredentials, Attributes runtimeAttributes) {
             this.capturedIdentity = capturedIdentity;
             this.mechanismConfigurationSelector = mechanismConfigurationSelector;
             this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
