@@ -85,7 +85,10 @@ import org.wildfly.security.http.external.ExternalMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
 import mockit.Mock;
 import mockit.MockUp;
@@ -446,10 +449,18 @@ public class AbstractBaseHttpTest {
     }
 
     protected CallbackHandler getCallbackHandler(String username, String realm, String password) {
-        return getCallbackHandler(username, realm, password, null);
+        return getCallbackHandler(username, realm, password, null, false);
     }
 
     protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token) {
+        return getCallbackHandler(username, realm, password, token, false);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, boolean useDigestPassword) {
+        return getCallbackHandler(username, realm, password, null, useDigestPassword);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token, boolean useDigestPassword) {
         return callbacks -> {
             for (Callback callback : callbacks) {
                 if (callback instanceof AvailableRealmsCallback) {
@@ -459,15 +470,30 @@ public class AbstractBaseHttpTest {
                 } else if (callback instanceof NameCallback) {
                     Assert.assertEquals(username, ((NameCallback) callback).getDefaultName());
                 } else if (callback instanceof CredentialCallback) {
-                    if (!ClearPassword.ALGORITHM_CLEAR.equals(((CredentialCallback) callback).getAlgorithm())) {
-                        throw new UnsupportedCallbackException(callback);
-                    }
-                    try {
-                        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
-                        Password pass = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
-                        ((CredentialCallback) callback).setCredential(new PasswordCredential(pass));
-                    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                        throw new IllegalStateException(e);
+                    if (useDigestPassword) {
+                        if (! DigestPassword.ALGORITHM_DIGEST_SHA_256.equals(((CredentialCallback) callback).getAlgorithm())) {
+                            throw new UnsupportedCallbackException(callback);
+                        }
+                        try {
+                            PasswordFactory factory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_256, ELYTRON_PASSWORD_PROVIDERS);
+                            DigestPasswordAlgorithmSpec algorithmSpec = new DigestPasswordAlgorithmSpec(username, realm);
+                            EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password.toCharArray(), algorithmSpec);
+                            DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);
+                            ((CredentialCallback) callback).setCredential(new PasswordCredential(digestPassword));
+                        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    } else {
+                        if (!ClearPassword.ALGORITHM_CLEAR.equals(((CredentialCallback) callback).getAlgorithm())) {
+                            throw new UnsupportedCallbackException(callback);
+                        }
+                        try {
+                            PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS);
+                            Password pass = factory.generatePassword(new ClearPasswordSpec(password.toCharArray()));
+                            ((CredentialCallback) callback).setCredential(new PasswordCredential(pass));
+                        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                            throw new IllegalStateException(e);
+                        }
                     }
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     if (((EvidenceVerifyCallback) callback).getEvidence() instanceof PasswordGuessEvidence) {
