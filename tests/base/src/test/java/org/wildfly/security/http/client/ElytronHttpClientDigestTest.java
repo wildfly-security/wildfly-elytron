@@ -60,11 +60,8 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
     };
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
 
-    ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
-
     @Test
     public void testElytonHttpClientDigestAuthenticationMechanism() {
-
         AuthenticationContextConfigurationClient AUTH_CONTEXT_CLIENT =
                 doPrivileged((PrivilegedAction<AuthenticationContextConfigurationClient>) AuthenticationContextConfigurationClient::new);
 
@@ -86,7 +83,10 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .build();
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(response.getAuthenticateHeader(), request);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -113,7 +113,10 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .build();
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(response.getAuthenticateHeader(), request);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -149,7 +152,10 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .build();
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(response.getAuthenticateHeader(), request);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -185,7 +191,10 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .build();
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(response.getAuthenticateHeader(), request);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});
@@ -221,7 +230,10 @@ public class ElytronHttpClientDigestTest extends AbstractBaseHttpTest {
                 TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
                 mechanism.evaluateRequest(request1);
                 TestingHttpServerResponse response = request1.getResponse();
-                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uri, response.getAuthenticateHeader(), "GET", null, null);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .build();
+                HttpRequest request2 = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(response.getAuthenticateHeader(), request);
 
                 //Test successful authentication
                 TestingHttpServerRequest testingHttpServerRequest = new TestingHttpServerRequest(new String[]{request2.headers().allValues("Authorization").get(0)});

@@ -21,9 +21,7 @@ import org.wildfly.security.http.client.exception.ElytronHttpClientException;
 import org.wildfly.security.http.client.mechanism.basic.ElytronHttpClientBasicAuthMechanism;
 import org.wildfly.security.http.client.mechanism.bearer.ElytronHttpClientBearerAuthMechanism;
 import org.wildfly.security.http.client.mechanism.digest.ElytronHttpClientDigestAuthMechanism;
-import org.wildfly.security.http.client.utils.ElytronHttpClientConstants;
 import org.wildfly.security.http.client.utils.ElytronHttpClientCredentialUtils;
-import org.wildfly.security.http.client.utils.ElytronHttpClientRequestBuilder;
 import org.wildfly.security.http.client.utils.ElytronMessages;
 
 import javax.net.ssl.SSLContext;
@@ -54,6 +52,51 @@ public class ElytronHttpClient {
         this.httpClient = HttpClient.newHttpClient();
     }
 
+    /**
+     * Used to connect to the secured uri and return the response based on that.
+     */
+    public HttpResponse connect(HttpRequest httpRequest) throws IOException, InterruptedException, URISyntaxException {
+        addSSLContextToHttpClient(httpRequest.uri());
+
+        HttpResponse response = getResponse(httpRequest);
+        if (response.statusCode() == OK) {
+            return response;
+        }
+
+        String authenticateHeader = getAuthenticateHeader(response);
+        if (authenticateHeader == null) {
+            throw new ElytronHttpClientException(ElytronMessages.log.responseHeaderExtractionFailed());
+        }
+        HttpRequest authRequest = null;
+
+        String challenge = getFirstChallenge(authenticateHeader);
+        String mechanismType = getMechanismType(challenge);
+
+        switch (mechanismType) {
+            case "basic":
+                authRequest = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(httpRequest);
+                break;
+            case "digest":
+                authRequest = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(authenticateHeader, httpRequest);
+                break;
+            case "bearer":
+                authRequest = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(httpRequest);
+                break;
+        }
+
+        if (authRequest != null) {
+            response = getResponse(authRequest);
+        }
+        return response;
+    }
+
+    public HttpResponse connect(String uri) throws URISyntaxException, IOException, InterruptedException {
+        URI uriPath = new URI(uri);
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(uriPath)
+                .build();
+        return connect(httpRequest);
+    }
     private HttpResponse getResponse(HttpRequest request) throws IOException, InterruptedException {
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
@@ -67,62 +110,13 @@ public class ElytronHttpClient {
         }
     }
 
-    /**
-     * Used to connect to the secured uri and return the response based on that.
-     */
-    public HttpResponse connect(String uri, String method, String body, Map<String, String> headers) throws IOException, InterruptedException, URISyntaxException {
-        URI uriPath = new URI(uri);
-        addSSLContextToHttpClient(uriPath);
-
-        HttpRequest request = ElytronHttpClientRequestBuilder.buildRequest(uriPath, method, body, headers);
-        HttpResponse response = getResponse(request);
-
-        if (response.statusCode() == OK) {
-            return response;
-        }
-
-        String authHeader = getAuthHeader(response);
-
-        if (authHeader == null) {
-            throw new ElytronHttpClientException(ElytronMessages.log.responseHeaderExtractionFailed());
-        }
+    private String getFirstChallenge(String authHeader){
         String[] authChallenges = authHeader.split(",");
-        HttpRequest authRequest = null;
-
         String challenge = authChallenges[0];
-
-        String authType = getAuthType(challenge);
-
-        switch (authType) {
-            case "basic":
-                authRequest = ElytronHttpClientBasicAuthMechanism.evaluateMechanism(uriPath, method, body, headers);
-                break;
-            case "digest":
-                authRequest = ElytronHttpClientDigestAuthMechanism.evaluateMechanism(uriPath, authHeader, method, body, headers);
-                break;
-            case "bearer":
-                authRequest = ElytronHttpClientBearerAuthMechanism.evaluateMechanism(uriPath, method, body, headers);
-                break;
-            default:
-                authRequest = ElytronHttpClientRequestBuilder.buildRequest(uriPath, method, body, headers);
-        }
-
-        if (authRequest != null) {
-            response = getResponse(authRequest);
-            return response;
-        }
-
-        // If none of the authentication mechanisms succeeded, fallback to the initial request
-        response = getResponse(request);
-        return response;
+        return challenge;
     }
 
-    public HttpResponse connect(String uri) throws IOException, InterruptedException, URISyntaxException {
-        HttpResponse response = connect(uri, ElytronHttpClientConstants.GET, null, null);
-        return response;
-    }
-
-    private String getAuthHeader(HttpResponse response) {
+    private String getAuthenticateHeader(HttpResponse response) {
         String authHeader = null;
         Map<String, List<String>> allHeaderValues = response.headers().map();
         for (String headerKey : allHeaderValues.keySet()) {
@@ -133,7 +127,7 @@ public class ElytronHttpClient {
         return authHeader;
     }
 
-    private String getAuthType(String challenge) {
+    private String getMechanismType(String challenge) {
         return challenge.trim().split(" ")[0].toLowerCase();
     }
 }

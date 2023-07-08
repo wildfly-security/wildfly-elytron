@@ -45,7 +45,7 @@ import static java.security.AccessController.doPrivileged;
 public class ElytronHttpClientCertTest {
     static final String RESOURCES = "./target/keystores/";
     private static SSLServerSocketTestInstance sslServerSocketTestInstancePort10001;
-    private ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
+    ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
 
     @BeforeClass
     public static void before() throws NoSuchAlgorithmException, KeyStoreException, IOException, CertificateException {
@@ -67,7 +67,6 @@ public class ElytronHttpClientCertTest {
     public void testElytronHttpClientCertAuth(){
         getAuthenticationContext("wildfly-config-http-client-cert.xml").run(() -> {
            try {
-//               URI uri = new URI("https://localhost:10001");
                String uri = "https://localhost:10001";
                HttpResponse httpResponse = elytronHttpClient.connect(uri);
                Assert.assertEquals(200,httpResponse.statusCode());

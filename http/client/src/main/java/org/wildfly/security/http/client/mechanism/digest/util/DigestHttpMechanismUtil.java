@@ -45,29 +45,29 @@ import java.util.Map;
  */
 public class DigestHttpMechanismUtil {
 
-    public static HttpRequest createDigestRequest(URI uri, String userName, String password, String authHeader, String method, String body, Map<String, String> headers) throws AuthenticationMechanismException {
+    public static HttpRequest createDigestRequest(URI uri, String userName, String password, String authHeader, HttpRequest httpRequest) throws AuthenticationMechanismException {
         Map<String, String> authParams = updateAuthParams(authHeader);
         String realm = authParams.getOrDefault("realm", null);
         String nonce = authParams.getOrDefault("nonce", null);
         String opaque = authParams.getOrDefault("opaque", null);
         String algorithm = authParams.getOrDefault("algorithm", "MD5");
-        String qop = authParams.getOrDefault("qop", "qop");
+        String qop = authParams.getOrDefault("qop", "auth");
         String uriPath = getUriPath(uri);
         String cnonce = generateCNonce();
         String nc = new String(DigestUtil.convertToHexBytesWithLeftPadding(Integer.parseInt(authParams.getOrDefault("nc", "0")), 8));
         String resp;
         if (qop == null) {
-            resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, method);
+            resp = computeDigestWithoutQop(uriPath, nonce, userName, password, algorithm, realm, httpRequest.method());
         } else {
-            resp = computeDigestWithQop(uriPath, nonce, cnonce, nc, userName, password, algorithm, realm, qop, method);
+            resp = computeDigestWithQop(uriPath, nonce, cnonce, nc, userName, password, algorithm, realm, qop, httpRequest.method());
         }
 
         StringBuilder requestAuthHeader = new StringBuilder();
-        requestAuthHeader.append("Digest ");
+        requestAuthHeader.append(ElytronHttpClientConstants.CHALLENGE_PREFIX + " ");
         requestAuthHeader.append("username=\"").append(userName).append("\", ");
-        requestAuthHeader.append("realm=\"").append(realm).append("\", ");
-        requestAuthHeader.append("nonce=\"").append(nonce).append("\", ");
-        requestAuthHeader.append("uri=\"").append(uriPath).append("\", ");
+        if(realm != null) requestAuthHeader.append("realm=\"").append(realm).append("\", ");
+        if(nonce != null) requestAuthHeader.append("nonce=\"").append(nonce).append("\", ");
+        if(opaque != null) requestAuthHeader.append("uri=\"").append(uriPath).append("\", ");
         requestAuthHeader.append("qop=\"").append(qop).append("\", ");
         requestAuthHeader.append("nc=\"").append(nc).append("\", ");
         requestAuthHeader.append("cnonce=\"").append(cnonce).append("\", ");
@@ -75,11 +75,9 @@ public class DigestHttpMechanismUtil {
         requestAuthHeader.append("opaque=\"").append(opaque).append("\", ");
         requestAuthHeader.append("algorithm=").append(algorithm);
 
-        if(headers == null){
-            headers = new HashMap<>();
-        }
+        Map<String, String> headers = new HashMap<>();
         headers.put(ElytronHttpClientConstants.AUTHORIZATION, requestAuthHeader.toString());
-        HttpRequest request = ElytronHttpClientRequestBuilder.buildRequest(uri, method, body, headers);
+        HttpRequest request = ElytronHttpClientRequestBuilder.buildRequest(httpRequest, headers);
         int updateNonceCount = Integer.parseInt(authParams.getOrDefault("nc", "0")) + 1;
         authParams.put("nc", String.valueOf(updateNonceCount));
         return request;
