@@ -40,6 +40,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -213,13 +214,19 @@ public class ExternalSaslClientTest {
     /**
      * Test failing (as we only authenticate "admin") authn for unsupported data "test" from client.
      */
-    @Test(expected = SaslException.class)
-    public void testWrongServerChallenge() throws Exception {
+    @Test
+    public void testWrongServerChallenge() {
         final SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
-        final SaslClient saslClient = factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, ADMIN, "test", "localhost", setProps(),
-                null);
-        assertFalse(saslClient.isComplete());
-        saslClient.evaluateChallenge("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            final SaslClient saslClient = factory.createSaslClient(MECHANISMS_EXTERNAL_ONLY, ADMIN, "test", "localhost", setProps(),
+                    null);
+            assertFalse(saslClient.isComplete());
+            Assert.assertThrows(SaslException.class,()->{
+                saslClient.evaluateChallenge("test".getBytes(StandardCharsets.UTF_8));
+            });
+        }catch(SaslException saslException){
+            fail("Failed to create SaslClient Instance");
+        }
     }
 
     @Test
