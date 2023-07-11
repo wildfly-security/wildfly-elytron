@@ -132,7 +132,7 @@
 30000 - 30999
 # Reserved For master / Elytron 2
 40000 - 40999 wildfly-elytron-ssh-util
-41000 - 41999 master
+41000 - 41999 wildfly-elytron-http-client
 42000 - 42999 master
 43000 - 43999 master
 44000 - 44999 master

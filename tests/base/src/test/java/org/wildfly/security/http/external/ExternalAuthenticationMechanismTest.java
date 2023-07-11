@@ -57,7 +57,7 @@ public class ExternalAuthenticationMechanismTest extends AbstractBaseHttpTest {
 
     @Test
     public void testExternalAuthenticationMechanism() throws Exception {
-        HttpServerAuthenticationMechanism mechanism = externalFactory.createAuthenticationMechanism(EXTERNAL_NAME, Collections.emptyMap(), getCallbackHandler("remoteUser", "testrealm@host.com", null));
+        HttpServerAuthenticationMechanism mechanism = externalFactory.createAuthenticationMechanism(EXTERNAL_NAME, Collections.emptyMap(), getCallbackHandler("remoteUser", "testrealm@host.com", null, null));
 
         //Test no authentication in progress (no remote user passed in externally)
         TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);

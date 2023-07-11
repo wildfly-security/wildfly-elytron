@@ -166,6 +166,7 @@ public final class AuthenticationConfiguration {
     private static final int SET_SASL_PROTOCOL = 20;
     private static final int SET_FWD_AUTHZ_NAME_DOMAIN = 21;
     private static final int SET_WEBSERVICES_PROPS = 22;
+    private static final int SET_HTTP_MECHANISM_SELECTOR = 23;
 
     private static final String JBOSS_LOCAL_USER_QUIET_AUTH = "wildfly.sasl.local-user.quiet-auth";
     private static final String JBOSS_LOCAL_USER_LEGACY_QUIET_AUTH = "jboss.sasl.local-user.quiet-auth";
@@ -229,6 +230,7 @@ public final class AuthenticationConfiguration {
     final Predicate<Callback> callbackIntercept;
     final String saslProtocol;
     final Map<String, ?> webServicesProperties;
+    final String httpMechanismSelector;
 
     // constructors
 
@@ -260,6 +262,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = null;
         this.saslProtocol = null;
         this.webServicesProperties = null;
+        this.httpMechanismSelector = null;
     }
 
     /**
@@ -296,6 +299,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = what == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value : original.callbackIntercept;
         this.saslProtocol = what == SET_SASL_PROTOCOL ? (String) value : original.saslProtocol;
         this.webServicesProperties = what == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value : original.webServicesProperties;
+        this.httpMechanismSelector = what == SET_HTTP_MECHANISM_SELECTOR ? (String) value : original.httpMechanismSelector;
         sanitazeOnMutation(what);
     }
 
@@ -335,6 +339,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : original.callbackIntercept;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : original.saslProtocol;
         this.webServicesProperties = what1 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value1 : what2 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value2 : original.webServicesProperties;
+        this.httpMechanismSelector = what1 == SET_HTTP_MECHANISM_SELECTOR ? (String) value1 : what2 == SET_HTTP_MECHANISM_SELECTOR ? (String) value2 : original.httpMechanismSelector;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
     }
@@ -376,6 +381,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = what1 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value1 : what2 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value2 : what3 == SET_CALLBACK_INTERCEPT ? (Predicate<Callback>) value3 : original.callbackIntercept;
         this.saslProtocol = what1 == SET_SASL_PROTOCOL ? (String) value1 : what2 == SET_SASL_PROTOCOL ? (String) value2 : what3 == SET_SASL_PROTOCOL ? (String) value3 : original.saslProtocol;
         this.webServicesProperties = what1 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value1 : what2 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value2 : what3 == SET_WEBSERVICES_PROPS ? (Map<String, ?>) value3 : original.webServicesProperties;
+        this.httpMechanismSelector = what1 ==SET_HTTP_MECHANISM_SELECTOR ? (String) value1 : what2 == SET_HTTP_MECHANISM_SELECTOR ? (String) value2 : what3 == SET_HTTP_MECHANISM_SELECTOR ? (String) value3 : original.httpMechanismSelector;
         sanitazeOnMutation(what1);
         sanitazeOnMutation(what2);
         sanitazeOnMutation(what3);
@@ -412,6 +418,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = original.callbackIntercept;
         this.saslProtocol = original.saslProtocol;
         this.webServicesProperties = original.webServicesProperties;
+        this.httpMechanismSelector = original.httpMechanismSelector;
     }
 
     private AuthenticationConfiguration(final AuthenticationConfiguration original, final AuthenticationConfiguration other) {
@@ -439,6 +446,7 @@ public final class AuthenticationConfiguration {
         this.callbackIntercept = other.callbackIntercept == null ? original.callbackIntercept : original.callbackIntercept == null ? other.callbackIntercept : other.callbackIntercept.or(original.callbackIntercept);
         this.saslProtocol =  getOrDefault(other.saslProtocol, original.saslProtocol);
         this.webServicesProperties =  getOrDefault(other.webServicesProperties, original.webServicesProperties);
+        this.httpMechanismSelector = getOrDefault(other.httpMechanismSelector, original.httpMechanismSelector);
         sanitazeOnMutation(SET_USER_CBH);
     }
 
@@ -493,6 +501,10 @@ public final class AuthenticationConfiguration {
             }
         }
         return null;
+    }
+
+    String getHttpMechanismType(){
+        return httpMechanismSelector;
     }
 
     // internal actions
@@ -1153,6 +1165,17 @@ public final class AuthenticationConfiguration {
         return new AuthenticationConfiguration(this, SET_WEBSERVICES_PROPS, optimizeMap(newMap));
     }
 
+    public AuthenticationConfiguration useHttpMechanism(String httpMechanismSelector) {
+        if (httpMechanismSelector == null || httpMechanismSelector.isEmpty()) {
+            httpMechanismSelector = null;
+        }
+        if (Objects.equals(this.httpMechanismSelector, httpMechanismSelector)) {
+            return this;
+        } else {
+            return new AuthenticationConfiguration(this, SET_HTTP_MECHANISM_SELECTOR, httpMechanismSelector);
+        }
+    }
+
     /**
      * Create a new configuration which is the same as this configuration, but which connects to a different port.
      *
@@ -1600,7 +1623,8 @@ public final class AuthenticationConfiguration {
             && Objects.equals(trustManagerFactory, other.trustManagerFactory)
             && Objects.equals(saslMechanismProperties, other.saslMechanismProperties)
             && Objects.equals(saslProtocol, other.saslProtocol)
-            && Objects.equals(webServicesProperties, other.webServicesProperties);
+            && Objects.equals(webServicesProperties, other.webServicesProperties)
+            && Objects.equals(httpMechanismSelector, other.httpMechanismSelector);
     }
 
     /**
@@ -1615,7 +1639,7 @@ public final class AuthenticationConfiguration {
                 principal, setHost, setProtocol, setRealm, setAuthzPrincipal, authenticationNameForwardSecurityDomain,
                 authenticationCredentialsForwardSecurityDomain, authorizationNameForwardSecurityDomain, userCallbackHandler, credentialSource,
                 providerSupplier, keyManagerFactory, saslMechanismSelector, principalRewriter, saslClientFactorySupplier, parameterSpecs, trustManagerFactory,
-                saslMechanismProperties, saslProtocol, webServicesProperties) * 19 + setPort;
+                saslMechanismProperties, saslProtocol, webServicesProperties, httpMechanismSelector) * 19 + setPort;
             if (hashCode == 0) {
                 hashCode = 1;
             }
@@ -1654,6 +1678,7 @@ public final class AuthenticationConfiguration {
             if (trustManagerFactory != null) b.append("trust-manager-factory=").append(trustManagerFactory).append(',');
             if (! saslMechanismProperties.isEmpty()) b.append("mechanism-properties=").append(saslMechanismProperties).append(',');
             if (webServicesProperties != null && ! webServicesProperties.isEmpty()) b.append("webservices-properties=").append(webServicesProperties).append(',');
+            if(httpMechanismSelector != null) b.append("http-mechanism-selector=").append(httpMechanismSelector).append(',');
             b.setLength(b.length() - 1);
             this.toString = b.toString();
             return this.toString;
