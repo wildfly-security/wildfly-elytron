@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.net.ssl.SSLSession;
@@ -62,8 +63,10 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpExchangeSpi;
@@ -75,6 +78,7 @@ import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.http.Scope;
 import org.wildfly.security.http.basic.BasicMechanismFactory;
+import org.wildfly.security.http.bearer.BearerMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.digest.NonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
@@ -92,14 +96,16 @@ public class AbstractBaseHttpTest {
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected final HttpServerAuthenticationMechanismFactory bearerFactory = new BearerMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory statefulBasicFactory = new org.wildfly.security.http.sfbasic.BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
 
-    protected void mockDigestNonce(final String nonce){
-        new MockUp<NonceManager>(){
+    protected void mockDigestNonce(final String nonce) {
+        new MockUp<NonceManager>() {
             @Mock
             String generateNonce(byte[] salt) {
                 return nonce;
             }
+
             @Mock
             boolean useNonce(final String nonce, byte[] salt, int nonceCount) {
                 return true;
@@ -113,6 +119,7 @@ public class AbstractBaseHttpTest {
             public Principal getPrincipal() {
                 return p;
             }
+
             @Mock
             public Roles getRoles() {
                 return Roles.NONE;
@@ -375,7 +382,7 @@ public class AbstractBaseHttpTest {
             throw new IllegalStateException();
         }
 
-        public void setRemoteUser (String remoteUser) {
+        public void setRemoteUser(String remoteUser) {
             this.remoteUser = remoteUser;
         }
 
@@ -439,8 +446,12 @@ public class AbstractBaseHttpTest {
     }
 
     protected CallbackHandler getCallbackHandler(String username, String realm, String password) {
+        return getCallbackHandler(username, realm, password, null);
+    }
+
+    protected CallbackHandler getCallbackHandler(String username, String realm, String password, String token) {
         return callbacks -> {
-            for(Callback callback : callbacks) {
+            for (Callback callback : callbacks) {
                 if (callback instanceof AvailableRealmsCallback) {
                     ((AvailableRealmsCallback) callback).setRealmNames(realm);
                 } else if (callback instanceof RealmCallback) {
@@ -459,27 +470,43 @@ public class AbstractBaseHttpTest {
                         throw new IllegalStateException(e);
                     }
                 } else if (callback instanceof EvidenceVerifyCallback) {
-                    PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
-                    ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
-                    evidence.destroy();
+                    if (((EvidenceVerifyCallback) callback).getEvidence() instanceof PasswordGuessEvidence) {
+                        PasswordGuessEvidence evidence = (PasswordGuessEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Arrays.equals(evidence.getGuess(), password.toCharArray()));
+                        evidence.destroy();
+                    } else if (((EvidenceVerifyCallback) callback).getEvidence() instanceof BearerTokenEvidence) {
+                        BearerTokenEvidence evidence = (BearerTokenEvidence) ((EvidenceVerifyCallback) callback).getEvidence();
+                        ((EvidenceVerifyCallback) callback).setVerified(Objects.equals(token, evidence.getToken()));
+                    }
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     // NO-OP
                 } else if (callback instanceof IdentityCredentialCallback) {
                     Credential credential = ((IdentityCredentialCallback) callback).getCredential();
-                    MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
-                    ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
-                    Assert.assertNotNull(clearPwdCredential);
-                    Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
+                    if (token != null) {
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(BearerTokenCredential.class));
+                        String obtainedToken = ((BearerTokenCredential) credential).getToken();
+                        Assert.assertNotNull(obtainedToken);
+                        Assert.assertEquals(obtainedToken, token);
+                    } else {
+                        MatcherAssert.assertThat(credential, CoreMatchers.instanceOf(PasswordCredential.class));
+                        ClearPassword clearPwdCredential = ((PasswordCredential) credential).getPassword().castAs(ClearPassword.class);
+                        Assert.assertNotNull(clearPwdCredential);
+                        Assert.assertArrayEquals(password.toCharArray(), clearPwdCredential.getPassword());
+                    }
                 } else if (callback instanceof AuthorizeCallback) {
-                    if(username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
-                       username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                    if (token != null) {
                         ((AuthorizeCallback) callback).setAuthorized(true);
                     } else {
-                        ((AuthorizeCallback) callback).setAuthorized(false);
+                        if (username.equals(((AuthorizeCallback) callback).getAuthenticationID()) &&
+                                username.equals(((AuthorizeCallback) callback).getAuthorizationID())) {
+                            ((AuthorizeCallback) callback).setAuthorized(true);
+                        } else {
+                            ((AuthorizeCallback) callback).setAuthorized(false);
+                        }
                     }
                 } else if (callback instanceof CachedIdentityAuthorizeCallback) {
                     CachedIdentityAuthorizeCallback ciac = (CachedIdentityAuthorizeCallback) callback;
-                    if(ciac.getAuthorizationPrincipal() != null &&
+                    if (ciac.getAuthorizationPrincipal() != null &&
                             username.equals(ciac.getAuthorizationPrincipal().getName())) {
                         ciac.setAuthorized(mockSecurityIdentity(ciac.getAuthorizationPrincipal()));
                     } else if (ciac.getIdentity() != null && username.equals(ciac.getIdentity().getPrincipal().getName())) {

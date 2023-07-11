@@ -64,7 +64,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
             "       qop=auth,\n" +
             "       response=\"8ca523f5e9506fed4657c9700eebdbec\",\n" +
             "       opaque=\"FQhe/qaU925kfnzjCev0ciny7QMkPqMAFRtzCUYo5tdS\"";
-    private final String digestSha256Header  = "Digest username=\"Mufasa\",\n"
+    private final String digestSha256Header = "Digest username=\"Mufasa\",\n"
             + "       realm=\"http-auth@example.org\",\n"
             + "       uri=\"/dir/index.html\",\n"
             + "       algorithm=SHA-256,\n"
@@ -180,7 +180,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
         return mechanisms;
     }
 
-    public void prepareSilentBasicWithDigestMechanisms() throws Exception{
+    public void prepareSilentBasicWithDigestMechanisms() throws Exception {
         List<HttpServerAuthenticationMechanism> mechanisms = prepareBasicSilentMechanisms();
         Map<String, Object> digestProps = new HashMap<>();
         digestProps.put(CONFIG_REALM, "http-auth@example.org");
@@ -219,7 +219,7 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
     }
 
     @Test
-    public void testBasicSilentWithDigest() throws Exception{
+    public void testBasicSilentWithDigest() throws Exception {
         // authenticate using only DIGEST mechanism
         prepareSilentBasicWithDigestMechanisms();
         authenticateWithDigestMD5();
@@ -255,5 +255,4 @@ public class HttpAuthenticatorTest extends AbstractBaseHttpTest {
 
         authenticateWithDigestMD5();
     }
-
 }
