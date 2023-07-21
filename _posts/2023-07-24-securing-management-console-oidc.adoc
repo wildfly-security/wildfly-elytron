@@ -1,0 +1,116 @@
+---
+layout: post
+title: 'Securing the WildFly Management Console with OpenID Connect'
+date: 2023-07-24
+tags: oidc management console keycloak
+synopsis: An overview of how to secure the WildFly management console with the Keycloak OpenID provider.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 29 Final, which was just released last week, includes the ability to secure the WildFly Management Console
+with OpenID Connect using the Keycloak OpenID provider. This blog post gives an overview of how to configure this.
+
+toc::[]
+
+== OpenID Connect
+
+https://openid.net/connect/[OpenID Connect] (OIDC) is an identity layer on top of the OAuth 2.0 protocol.
+OpenID Connect makes it possible for a client to verify a user's identity based on authentication
+that's performed by an OpenID provider.
+
+== Securing the WildFly Management Console with the Keycloak OpenID Provider
+
+When the WildFly Management Console is secured using OIDC, this means that when a user attempts to
+access the console, they will be redirected to the Keycloak OpenID provider's login page. Upon successful
+authentication, the user will then be redirected back to the WildFly Management Console.
+
+To secure the WildFly Management Console with OIDC, there is configuration that needs to be added
+on the Keycloak side and in the `elytron-oidc-client` subsystem configuration.
+
+=== Keycloak Configuration
+
+==== IMPORTANT: Supported Keycloak versions
+Currently, the ability to secure the WildFly Management Console with the Keycloak OpenID provider requires
+Keycloak 21.1.2 or earlier to be used. It will be possible to use Keycloak 22 or later in a future WildFly release.
+
+==== Set up
+
+It's easy to set up Keycloak using Docker. Follow the steps in Keycloak's https://www.keycloak.org/getting-started/getting-started-docker[getting started guide]
+to start Keycloak and create a realm called `wildfly-infra`.
+
+Now, we're going to create a client called `wildfly-console`. Set the `Valid Redirect URIs` using the URI used to access
+the WildFly Management Console. Since we will use a port offset of 10 when starting WildFly in this post, we will
+set the `Valid Redirect URIs` to `http://localhost:10000/console/*`. Similarly, we can also set `Web Origins`
+using the management port for our WildFly instance, e.g., `http://localhost:10000`.
+
+Next, create a second client called `wildfly-management`. This will be a bearer-only client so in the `Capability` configuration,
+be sure to uncheck the `Standard flow` and `Direct access grants`.
+
+Finally, create a user called `alice`.
+
+==== Optional Role Configuration
+
+If you want to configure WildFly to use https://github.com/wildfly/wildfly/blob/a8d101306ce672e6c0b44eb2ce750953f8cdb239/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/RBAC.adoc#rbac-roles[Role Based Access Control] (RBAC),
+you can create a new `Realm role` (e.g., `Administrator`) and assign this role to `alice`.
+
+Steps for assigning roles can be found in the https://www.keycloak.org/docs/latest/server_admin/#proc-assigning-role-mappings_server_administration_guide[Keycloak documentation].
+
+=== Elytron OIDC Client Subsystem Configuration
+
+Now that we've configured our OpenID provider, there are a couple things that need to be configured in the
+`elytron-oidc-client` subsystem to secure the WildFly Management Console with OIDC.
+
+First, we need to add a `secure-deployment` resource that references the `wildfly-management` client that was created in the previous section.
+
+A `secure-server` that references the `wildfly-console` client is also needed.
+
+We can use the following commands to add the required configuration:
+
+First, we need to start our WildFly server instance. Notice that we're specifying a port offset here
+since our Keycloak instance is already exposed on port 8080:
+
+[source]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10
+----
+
+Next, we can connect to the WildFly CLI and then execute the commands below:
+
+[source]
+----
+./bin/jboss-cli.sh --connect --controller=localhost:10000
+----
+
+[source,shell]
+----
+# Configure the Keycloak provider
+/subsystem=elytron-oidc-client/provider=keycloak:add(provider-url=http://localhost:8080/realms/wildfly-infra)
+
+# Create a secure-deployment in order to secure the management interface with bearer token authentication
+/subsystem=elytron-oidc-client/secure-deployment=wildfly-management:add(provider=keycloak,client-id=wildfly-management,principal-attribute=preferred_username,bearer-only=true,ssl-required=EXTERNAL)
+
+# (Optional) Enable RBAC where roles are obtained from the identity
+/core-service=management/access=authorization:write-attribute(name=provider,value=rbac)
+/core-service=management/access=authorization:write-attribute(name=use-identity-roles,value=true)
+
+# Create a secure-server to ensure that the WildFly Management Console will redirect to the Keycloak OpenID provider for log in
+/subsystem=elytron-oidc-client/secure-server=wildfly-console:add(provider=keycloak,client-id=wildfly-console,public-client=true)
+
+# reload
+reload
+----
+
+=== Accessing the WildFly Management Console
+
+With the above configuration now in place, let's access http://localhost:10000/console. We will be redirected to
+the Keycloak login page. We can log in using the `alice` user that we created earlier. Upon successful authentication,
+we will be redirected back to the WildFly
+Management Console.
+
+== Summary
+
+This blog post has given an overview of how to secure the WildFly Management Console with OIDC using the
+Elytron OIDC Client subsystem.
