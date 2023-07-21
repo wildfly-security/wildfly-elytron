@@ -74,7 +74,7 @@ public class OidcBaseTest extends AbstractBaseHttpTest {
     public static final int CLIENT_PORT = 5002;
     public static final String CLIENT_APP = "clientApp";
     public static final String CLIENT_PAGE_TEXT = "Welcome page!";
-    public static final String CLIENT_HOST_NAME = "localhost";
+    public static final String CLIENT_HOST_NAME = "127.0.0.1";
     public static MockWebServer client; // to simulate the application being secured
 
     protected HttpServerAuthenticationMechanismFactory oidcFactory;
