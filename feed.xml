@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 26 Jun 2023 17:05:30 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 24 Jul 2023 20:30:14 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing the WildFly Management Console with OpenID Connect</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-management-console-oidc/
+            </link>
+            <description>
+                WildFly 29 Final, which was just released last week, includes the ability to secure the WildFly Management Console with OpenID Connect using the Keycloak OpenID provider. This blog post gives an overview of how to configure this. OpenID Connect Securing the WildFly Management Console with the Keycloak OpenID Provider Keycloak...
+            </description>
+            <pubDate>Mon, 24 Jul 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-management-console-oidc/
+            </guid>
+        </item>
         
         <item>
             <title>Using Certificate Based Authentication with Mutual TLS without Roles</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 31 Oct 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-recap/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Open Source Day 2022 Recap</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/
-            </link>
-            <description>
-                Last month, the WildFly Elytron team had the great pleasure of participating in Open Source Day, an all-day hackathon that took place as a pre-event before the 2022 Grace Hopper Celebration. This was the WildFly Elytron team&#8217;s third time participating in this event, after having participated in the Summer Open...
-            </description>
-            <pubDate>Fri, 14 Oct 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-open-source-day-recap/
             </guid>
         </item>
         
