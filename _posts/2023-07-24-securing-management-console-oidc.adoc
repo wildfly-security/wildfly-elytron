@@ -53,7 +53,7 @@ Finally, create a user called `alice`.
 
 ==== Optional Role Configuration
 
-If you want to configure WildFly to use https://github.com/wildfly/wildfly/blob/a8d101306ce672e6c0b44eb2ce750953f8cdb239/docs/src/main/asciidoc/_admin-guide/subsystem-configuration/RBAC.adoc#rbac-roles[Role Based Access Control] (RBAC),
+If you want to configure WildFly to use https://docs.wildfly.org/29/Admin_Guide.html#RBAC[Role Based Access Control] (RBAC),
 you can create a new `Realm role` (e.g., `Administrator`) and assign this role to `alice`.
 
 Steps for assigning roles can be found in the https://www.keycloak.org/docs/latest/server_admin/#proc-assigning-role-mappings_server_administration_guide[Keycloak documentation].
