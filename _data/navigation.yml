@@ -12,3 +12,5 @@
   link: /blog/
 - name: GitHub
   link: https://github.com/wildfly-security/wildfly-elytron
+- name: CVE Reporting
+  link: /security/
