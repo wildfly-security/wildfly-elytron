@@ -83,6 +83,13 @@ mvn clean install -Dtest=TestClassName
 ```
 Note: Some tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
 
+To generate a report on test coverage, use:
+
+```bash
+mvn clean install -Ptest-coverage org.openclover:clover-maven-plugin:aggregate org.openclover:clover-maven-plugin:clover
+```
+The generated report is at `target/site/clover` and to access it start by opening `index.html` in the directory with a browser of choice.
+
 For more information, including details on how WildFly Elytron is integrated in WildFly Core and WildFly, check out our [developer guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/).
 
 ## Contributing Guidelines

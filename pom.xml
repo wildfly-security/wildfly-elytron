@@ -99,6 +99,7 @@
         <version.io.rest-assured>4.3.3</version.io.rest-assured>
         <version.net.sourceforge.htmlunit.htmlunit>2.40.0</version.net.sourceforge.htmlunit.htmlunit>
         <version.org.apache.santuario>2.3.0</version.org.apache.santuario>
+        <version.org.openclover>4.5.2</version.org.openclover>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -1237,10 +1238,54 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/org.openclover/clover-maven-plugin -->
+            <dependency>
+                <groupId>org.openclover</groupId>
+                <artifactId>clover-maven-plugin</artifactId>
+                <version>${version.org.openclover}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
     <profiles>
+        <profile>
+<!--To generate a report on test coverage run
+mvn clean install -Ptest-coverage org.openclover:clover-maven-plugin:aggregate org.openclover:clover-maven-plugin:clover
+-->
+            <id>test-coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openclover</groupId>
+                        <artifactId>clover-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>clover-setup</id>
+                                <phase>process-sources</phase>
+                                <goals>
+                                    <goal>setup</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>modularizedJdk</id>
             <activation>
