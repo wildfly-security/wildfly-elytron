@@ -1,0 +1,188 @@
+---
+layout: post
+title: 'Deploying an OpenID Secured WildFly Application on OpenShift'
+date: 2023-08-04
+tags: oidc authentication OpenShift
+synopsis: How to secure a web application deployed to WildFly with OpenID Connect and deploy it on OpenShift
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+A future release of WildFly will include the ability to add additional scope values when securing applications using OpenID Connect. This blog post demonstrates how to secure a WildFly application using OpenID Connect and configure scope values to request additional claims using a pre-release version of the feature. We will also walk through how to deploy it on the cloud using https://developers.redhat.com/developer-sandbox[Red Hat OpenShift]. 
+
+toc::[]
+
+== OpenID Connect
+https://openid.net/developers/how-connect-works/[OpenID Connect] is an identity layer on top of the OAuth 2.0 protocol that makes it possible for a client to verify a user’s identity based on authentication that’s performed by an OpenID provider. A future release of WildFly will allow the user to configure additional scope values to request specific claim values.
+
+== Setting up your environment
+For this walkthrough, we will be making use of the https://github.com/PrarthonaPaul/elytron-examples/tree/elytron-oidc-client-scope/elytron-oidc-client-scope[elytron-oidc-client-scope] project which makes use of the ability to configure additional scope values for OpenID Connect. First, clone the `elytron-example` repo locally and navigate to the `elytron-oidc-client-scope` project:
+```
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples/elytron-oidc-client-scope
+```
+We can deploy this application using Red Hat OpenShift https://developers.redhat.com/developer-sandbox[Developer Sandbox]. There are other https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it[options] available for running OpenShift. Please refer to this https://docs.wildfly.org/29/Getting_Started_on_OpenShift.html[getting started guide] to learn more about WildFly on OpenShift. We will be making use of the following tools for this walkthrough: 
+
+* https://docs.docker.com/[Docker] (you can also use https://docs.podman.io/en/latest/[Podman])  
+* https://developers.redhat.com/developer-sandbox[Developer Sandbox]
+* https://docs.openshift.com/container-platform/4.11/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://quay.io/repository/[Quay]
+* https://helm.sh/[Helm]
+
+=== Logging into OpenShift CLI
+
+If you are not logged into OpenShift on your cli, navigate to Developer Sandbox, click on your username at the top right corner, copy your login command and paste it on your terminal. 
+
+Once you have your environment set up with the required tools, we can move on to the next step to build and deploy our application on OpenShift. 
+
+== Setting up Red Hat Single Sign On 
+Developer Sandbox gives us access to the enterprise version of Red Hat's OpenID provider, Red Hat Single Sign On (RH-SSO). On the topology view of OpenShift, click on the `Add to Project` button at the top left and add the version of RH-SSO that is compatible with the version of OpehShift you are running and wait for it to finish deploying. Please refer to the https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.2/html/red_hat_single_sign-on_for_openshift/introduction[RH-SSO for OpenShift Documentation] to learn more about it.
+
+Next, click on the `Open URL` button on the pod to be redirected to the RH-SSO landing page and click on `Administration Console`. You will be able to sign in using the admin username and password that is specified in the yaml configuration of the RH-SSO pod. 
+
+From here, create a realm called `myrealm`, and a client called `myclient`. 
+
+After registering our client, `myclient`, we also need to configure `valid redirect URIs`. Once we have our application deployed on OpenShift, we will assign the URL from our application to the `Valid Redirect URIs` field. 
+
+Navigate to the `Client Scopes` tab for `myclient`. Here you will see that some scope values are under `Assigned Default Client Scopes` field and some others are under `Assigned Optional Client Scopes` field. When client scopes are added to `Default`, the claims associated with them are automatically added to the access token you receive without the need to configure them. Changing it to `Optional` ensures that they are not included by default and you will only get access to claims if you configure the corresponding scope values. This list of scope values you see here are the values that RH-SSO allows and it varies for different OpenID providers. RH-SSO also allows you to create new scopes, but we will not be doing that for this blog. 
+
+Now, click on `Roles` and create two roles, `user` and `admin`.
+
+Finally, create a user called `alice` whose `First Name` is Alice and `Last Name` is Smith and assign her the `user` and `admin` roles. Next, navigate to the `Credentials` tab and create a password for Alice. Toggle the `Temporary` switch off so you are not prompted to update the password after the first login. 
+
+== Building Container Image for WildFly
+
+Normally to use WildFly features that have been released, we just need to add the WildFly Helm release using the chart that is already available on OpenShift. However, since we are making use of a feature that is not released yet, we will need to build our own image of WildFly from the source code and deploy our application on that. 
+
+First we need to clone the `WildFly` and the `WildFly-Elytron` projects with the branches that contain the OIDC scope feature: 
+```
+git clone https://github.com/PrarthonaPaul/wildfly.git
+git checkout WFLY-16532
+```
+Next, go back to the directory that contains the `WildFly-Elytron` project and clone the `WildFly-Elytron` project: 
+```
+git clone https://github.com/PrarthonaPaul/wildfly-elytron.git
+git checkout WFLY-16532
+```
+Notice that we are not using `WildFly/WildFly` repo. Instead, we are using a forked version of the project. Next, we need to build these projects to use the local version of the code. To do this, we will specify the SNAPSHOT versions of `Elytron` and `WildFly-core`: 
+```
+cd wildfly-elytron
+mvn clean install 
+
+cd ../wildfly-core
+mvn clean install -Dversion.org.wildfly.elytron=<insert_SNAPSHOT_VERSION_OF_ELYTRON> 
+
+cd ../wildfly
+mvn clean install -Dversion.org.wildfly.core=<insert_SNAPSHOT_VERSION_OF_WILDFLY-CORE>
+```
+
+In order to deploy our application on OpenShift, we need to first create a container image of the application using Docker or Podman. In this post we are using Docker, but you can also use Podman using the `podman` keyword, or using an alias.  
+
+Navigate to the `WildFly` project and create a `Dockerfile` inside the root directory of the project. We will be creating an image of the current version of WildFly using the `wildfly-runtime-jdk` image on Quay. Quay is a repository for building and storing container images of your projects. 
+
+Head over to https://quay.io/repository/[Quay.io] and create a repositories called `wildfly`. For more information on how to create one, visit the https://docs.quay.io/guides/create-repo.html#:~:text=via%20the%20UI-,To%20create%20a%20repository%20in%20the%20Quay.io%20UI%2C%20click,the%20'Create%20Repository'%20button[Quay documentation].
+
+Now we can create the container image for our WildFly project. Enter the following commands inside your Dockerfile: 
+```
+FROM quay.io/wildfly/wildfly-runtime-jdk11:latest
+COPY --chown=jboss:root dist/target/wildfly-29.0.0.Final-SNAPSHOT $JBOSS_HOME
+RUN chmod -R ug+rwX $JBOSS_HOME
+```
+Now run the following commands on your terminal from the WildFly directory to create an image and push it to your repository: 
+```
+docker build -t quay.io/<your-quay-username>/wildfly:wildfly-app .
+docker push quay.io/<your-quay-username>/wildfly:wildfly-app
+```
+Replace `<your-quay-username>` with your username for Quay. The `-t` command indicates that we are specifying a tag, which in this case is `wildfly-app`. The tag is used to identify different images inside the same repository. Using this image, we can ensure that we are running your local version of WildFly, as opposed to the version of WildFly that is present on OpenShift. 
+
+== Building and deploying the App 
+
+Now that we have our WildFly container image, we can use it to deploy our application on it. Navigate to the `elytron-examples/elytron-oidc-client-scope` directory and create a deployment file for your application using this command: 
+```
+mvn package
+```
+This will create a `simple-webapp-oidc.war` file inside the `target` directory. 
+
+Next, create a new `Dockerfile` inside the `elytron-oidc-client-scope` project with the following commands inside it: 
+```
+FROM quay.io/<your-quay-username>/wildfly:wildfly-app
+ADD target/simple-webapp-oidc.war /opt/server/standalone/deployments/
+```
+Here, we are making use of the container image of WildFly we made earlier and copying over the deployment file to the container image so we can deploy it on OpenShift by running the server. Next, build and push a new image of your application using the following commands: 
+```
+docker build -t quay.io/<your-quay-username>/wildfly:latest .
+docker push quay.io/<your-quay-username>/wildfly:latest
+```
+=== Configuring Image Pull Secret
+
+In order to pull the image from Quay, you will need to configure a pull secret and connect it to your helm release. If you have already configured a pull secret for Quay, then you can skip this step.
+
+Navigate to your Quay console, click on `Account Settings`, `Generate Encrypted Password` and log in. Under the `Kubernetes Secret` tab you will be able to download the yaml file for your Kubernetes secret. Upload it to your OpenShift Secrets by going to the `Secret` tab on Developer Sandbox, clicking on `Create`, `From Yaml` and replacing it with the contents of your Kubernetes Secret. 
+
+Alternatively you can link your pull secret so OpenShift can automatically use your pull secret to obtain the image when needed. You can learn more about handling secrets on OpenShift on https://docs.openshift.com/container-platform/4.10/openshift_images/managing_images/using-image-pull-secrets.html[their documentation]. 
+
+=== Creating a Helm Release 
+
+Lastly, we will be creating a helm release of our local WildFly image and deploying our application on it using a helm chart. Navigate to `charts` directory and open the `helm.yaml` file. The contents of the file will be as follows: 
+```
+image: 
+  name: quay.io/<Username>/wildfly
+build:
+  enabled: false
+deploy:
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: 'https://sso-some-user.apps.sandbox-m4.g2pi.p1.openshiftapps.com'
+    - name: WILDFLY_OVERRIDING_ENV_VARS
+      value: "1"
+    - name: SUBSYSTEM_LOGGING_PATTERN_FORMATTER_COLOR_PATTERN__PATTERN
+      value: "[redhat-openshift] %-5p %s%e%n"
+```
+There are three fields that we have specified: image, build and deploy. 
+
+Using the image tag, we are specifying that we want the pod to use the image of our application that we just built. Notice that we did not specify the tag. This is because when the helm chart uploads, the `latest` tag is appended to it by default, which is why we tagged our application image as that. If you want to use a different tag, then you can edit this by clicking on the pod, click on `Edit Deployment` and changing it under `Image Name`. 
+
+We have also added some environment variables. Notice the `OIDC_PROVIDER_URL`. The value of this will be the url for your RH-SSO pod, which can be found by clicking on the `Open URL` button on the pod. So, copy that link and paste it as the `value`. The `OIDC_PROVIDER_URL` variable is being used by the `oidc.json` file inside the `WEB-INF` directory when specifying the `provider-url`.
+
+Change the image name on the `charts/helm.yaml` file to `quay.io/<your-quay-username>/wildfly` and use the following commands to create a cloud instance for your webapp using the wildfly helm chart: 
+```
+helm repo add wildfly https://docs.wildfly.org/wildfly-charts/
+helm install simple-webapp-oidc -f charts/helm.yaml wildfly/wildfly
+```
+Click on the three dots beside the pod's name and click on `Edit Deployment`. Under `Show advanced image options`, set the `Pull Secret` to be the one you configured in the last section and click `Save`. 
+
+Your application is now deploying. Click on the `simple-webapp-oidc` pod and under the `resources` tab, you should see the status of your deployment. 
+
+== Accessing the App
+
+Just like RH-SSO, you can find the url for your webapp by clicking on `Open URL` which will redirect you to the WildFly landing page. Copy this link and go back to the admin console for RH-SSO and add `<Simple-webapp-oidc-url>/simple-webapp-oidc/*` to the `Valid Redirect URIs` field. Notice that the link starts with `https`. We will be changing it to `http` since we have not performed any ssl configuration. 
+
+Now, let’s try accessing our application using <Simple-webapp-oidc-url>/simple-webapp-oidc. 
+
+Click on "Access Secured Servlet".
+
+Now, you’ll be redirected to RH-SSO's login page. If you click on the url on the search bar, you will see the scope values specified in the `redirect-uri` field with the different scope values separated by a `+`. You will also notice that a new scope value: `openid`. This indicates that we are going to be using OpenID Connect to authenticate the user. 
+
+Log in with `Alice` and the password that you set when configuring RH-SSO.
+
+Next, you’ll be redirected back to our application and you should see the "Secured Servlet" page. That means that we were able to successfully log in to our application using the RH-SSO OpenID provider!
+
+This page will display the Current Principal, and a list of claim values obtained using the scope values you configured. This is what it will look like: 
+```
+Secured Servlet
+
+Current Principal 'alice'
+Claims received using additional scope values:
+Using the "profile" scope, we got User's name: Alice Smith
+Using the "email" scope, we got email verified: true
+Using the "microprofile-jwt" scope, we got the user's groups: [default-roles-myrealm, offline_access, admin, uma_authorization, user]
+```
+
+Note that the value for Current Principal may be different, since that is the client secret. 
+
+Notice that there are no claims obtained using the `offline_access` scope. To learn more about what this scope value does, please refer to the https://openid.net/specs/openid-connect-core-1_0.html#OfflineAccess[ OpenID Documentation]. 
+
+== Conclusion
+This post demonstrated how to deploy an OIDC secured WildFly application on OpenShift using Developer Sandbox. We also looked into how to configure additional scope values to request specific claim values. For more details on the elytron-oidc-client subsystem, please check out the https://docs.wildfly.org/29/Admin_Guide.html#Elytron_OIDC_Client[documentation]. Details on the `scope` attribute will be available once the feature is released. For more details on WildFly on OpenShift, you can check out https://cloud.redhat.com/blog/getting-started-with-wildfly[this guide].
