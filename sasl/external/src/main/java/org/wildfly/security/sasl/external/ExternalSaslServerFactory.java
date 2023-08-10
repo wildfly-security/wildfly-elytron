@@ -31,6 +31,8 @@ import org.wildfly.common.array.Arrays2;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
+import static org.wildfly.security.sasl.WildFlySasl.SASL_SKIP_CERTIFICATE_VERIFICATION;
+
 /**
  * Implementation of the SASL {@code EXTERNAL} server mechanism.  See <a href="https://tools.ietf.org/html/rfc4422#appendix-A">RFC 4422
  * appendix A</a> for more information about the {@code EXTERNAL} mechanism.
@@ -41,7 +43,9 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 public final class ExternalSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return mechanism.equals(SaslMechanismInformation.Names.EXTERNAL) && getMechanismNames(props, false).length != 0 ? new ExternalSaslServer(cbh) : null;
+        Object skipCertVerificationProp = props == null ? null : props.get(SASL_SKIP_CERTIFICATE_VERIFICATION);
+        String skipCertVerification = skipCertVerificationProp instanceof String ? (String) skipCertVerificationProp : null;
+        return mechanism.equals(SaslMechanismInformation.Names.EXTERNAL) && getMechanismNames(props, false).length != 0 ? new ExternalSaslServer(cbh, Boolean.parseBoolean(skipCertVerification)) : null;
     }
 
     private String[] getMechanismNames(final Map<String, ?> props, boolean query) {
