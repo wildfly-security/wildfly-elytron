@@ -319,7 +319,8 @@
                             ${project.basedir}/sasl/otp/src/main/java/;
                             ${project.basedir}/sasl/plain/src/main/java/;
                             ${project.basedir}/sasl/scram/src/main/java/;
-                            ${project.basedir}/ssl/src/main/java/;
+                            ${project.basedir}/ssl/base/src/main/java/;
+                            ${project.basedir}/ssl/domain/src/main/java/;
                             ${project.basedir}/tests/base/src/main/java/;
                             ${project.basedir}/tests/common/src/main/java/;
                             ${project.basedir}/tool/src/main/java/;
@@ -788,6 +789,18 @@
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron-ssl</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-ssl-base</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wildfly.security</groupId>
+                <artifactId>wildfly-elytron-ssl-base</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.wildfly.security</groupId>
@@ -1423,7 +1436,8 @@
         <module>sasl/otp</module>
         <module>sasl/plain</module>
         <module>sasl/scram</module>
-        <module>ssl</module>
+        <module>ssl/base</module>
+        <module>ssl/domain</module>
         <module>ssh/util</module>
         <module>tool</module>
         <module>util</module>
