@@ -172,4 +172,11 @@ public final class WildFlySasl {
      */
     public static final String SKIP_NORMALIZATION = "org.wildfly.sasl.skip-normalization";
 
+    /**
+     * A property used to disable certificate verification against the security realm when using SASL.
+     *
+     * Note: This is a server only property and is not used on the client side.
+     */
+    public static final String SASL_SKIP_CERTIFICATE_VERIFICATION = "org.wildfly.security.sasl.skip-certificate-verification";
+
 }

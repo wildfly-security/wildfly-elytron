@@ -19,7 +19,6 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
-import static org.wildfly.security.http.oidc.Oidc.SLASH;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
 
@@ -139,7 +138,7 @@ public class OidcClientConfigurationBuilder {
         oidcClientConfiguration.setVerifyTokenAudience(oidcJsonConfiguration.isVerifyTokenAudience());
 
         if (realmKeyPem == null && oidcJsonConfiguration.isBearerOnly()
-                && (oidcJsonConfiguration.getAuthServerUrl() == null || oidcJsonConfiguration.getProviderUrl() == null)) {
+                && (oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getProviderUrl() == null)) {
             throw log.invalidConfigurationForBearerAuth();
         }
         if ((oidcJsonConfiguration.getAuthServerUrl() == null && oidcJsonConfiguration.getProviderUrl() == null) && (!oidcClientConfiguration.isBearerOnly() || realmKeyPem == null)) {
@@ -147,7 +146,7 @@ public class OidcClientConfigurationBuilder {
         }
         oidcClientConfiguration.setClient(createHttpClientProducer(oidcJsonConfiguration));
         oidcClientConfiguration.setAuthServerBaseUrl(oidcJsonConfiguration);
-        oidcClientConfiguration.setProviderUrl(sanitizeProviderUrl(oidcJsonConfiguration.getProviderUrl()));
+        oidcClientConfiguration.setProviderUrl(oidcJsonConfiguration.getProviderUrl());
         if (oidcJsonConfiguration.getTurnOffChangeSessionIdOnLogin() != null) {
             oidcClientConfiguration.setTurnOffChangeSessionIdOnLogin(oidcJsonConfiguration.getTurnOffChangeSessionIdOnLogin());
         }
@@ -155,13 +154,6 @@ public class OidcClientConfigurationBuilder {
         oidcClientConfiguration.setTokenSignatureAlgorithm(oidcJsonConfiguration.getTokenSignatureAlgorithm());
 
         return oidcClientConfiguration;
-    }
-
-    private static String sanitizeProviderUrl(String providerUrl) {
-        if (providerUrl != null && providerUrl.endsWith(SLASH)) {
-            return providerUrl.substring(0, providerUrl.length() - 1);
-        }
-        return providerUrl;
     }
 
     private Callable<HttpClient> createHttpClientProducer(final OidcJsonConfiguration oidcJsonConfiguration) {

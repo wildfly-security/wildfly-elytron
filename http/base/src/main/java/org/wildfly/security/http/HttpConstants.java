@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.http;
 
+import java.util.regex.Pattern;
+
 import org.ietf.jgss.GSSManager;
 
 /**
@@ -120,6 +122,7 @@ public class HttpConstants {
     public static final String NEGOTIATE = "Negotiate";
     public static final String NEXT_NONCE = "nextnonce";
     public static final String NONCE = "nonce";
+    public static final String PARTIAL = "partial/";
     public static final String OPAQUE = "opaque";
     public static final String QOP = "qop";
     public static final String REALM = "realm";
@@ -129,16 +132,30 @@ public class HttpConstants {
     public static final String URI = "uri";
     public static final String USERNAME = "username";
     public static final String USERNAME_STAR = "username*";
+    public static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 
     /*
      * Header Names
      */
 
+    public static final String ACCEPT = "Accept";
     public static final String AUTHENTICATION_INFO = "Authentication-Info";
     public static final String AUTHORIZATION = "Authorization";
+    public static final String FACES_REQUEST = "Faces-Request";
     public static final String HOST = "Host";
     public static final String LOCATION = "Location";
+    public static final String SOAP_ACTION = "SOAPAction";
     public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+    public static final String X_REQUESTED_WITH = "X-Requested-With";
+
+    /**
+     * Errors
+     */
+    public static final String ERROR = "error";
+    public static final String ERROR_DESCRIPTION = "error_description";
+    public static final String INVALID_TOKEN = "invalid_token";
+    public static final String STALE_TOKEN = "Stale token";
+    public static final String NO_TOKEN = "no_token";
 
     /*
      * Mechanism Names
@@ -171,6 +188,7 @@ public class HttpConstants {
      */
 
     public static final String POST = "POST";
+    public static final String OPTIONS = "OPTIONS";
 
     /*
      * Algorithms
@@ -186,5 +204,13 @@ public class HttpConstants {
 
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
+
+    /**
+     * Bearer token pattern.
+     * The Bearer token authorization header is of the form "Bearer", followed by optional whitespace, followed by
+     * the token itself, followed by optional whitespace. The token itself must be one or more characters and must
+     * not contain any whitespace.
+     */
+    public static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
 }

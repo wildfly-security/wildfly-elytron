@@ -22,6 +22,7 @@ import static org.wildfly.security.http.oidc.ElytronMessages.log;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_CLIENT_CONTEXT_KEY;
 import static org.wildfly.security.http.oidc.Oidc.AuthOutcome;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
+import static org.wildfly.security.http.oidc.Oidc.OPTIONS;
 
 import java.util.Map;
 
@@ -73,7 +74,8 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
 
         RequestAuthenticator authenticator = createRequestAuthenticator(httpFacade, oidcClientConfiguration);
         httpFacade.getTokenStore().checkCurrentToken();
-        if (oidcClientConfiguration.getAuthServerBaseUrl() != null && keycloakPreActions(httpFacade, oidcClientContext)) {
+        if ((oidcClientConfiguration.getAuthServerBaseUrl() != null && keycloakPreActions(httpFacade, oidcClientConfiguration))
+                || preflightCors(httpFacade, oidcClientConfiguration)) {
             log.debugf("Pre-actions has aborted the evaluation of [%s]", request.getRequestURI());
             httpFacade.authenticationInProgress();
             return;
@@ -117,10 +119,49 @@ final class OidcAuthenticationMechanism implements HttpServerAuthenticationMecha
         return 8443;
     }
 
-    private boolean keycloakPreActions(OidcHttpFacade httpFacade, OidcClientContext deploymentContext) {
+    private boolean keycloakPreActions(OidcHttpFacade httpFacade, OidcClientConfiguration oidcClientConfiguration) {
         NodesRegistrationManagement nodesRegistrationManagement = new NodesRegistrationManagement();
-        nodesRegistrationManagement.tryRegister(httpFacade.getOidcClientConfiguration());
+        nodesRegistrationManagement.tryRegister(oidcClientConfiguration);
         return false;
+    }
+
+    private boolean preflightCors(OidcHttpFacade httpFacade, OidcClientConfiguration oidcClientConfiguration) {
+        String requestUri = httpFacade.getRequest().getURI();
+        log.debugv("adminRequest {0}", requestUri);
+        if (! oidcClientConfiguration.isCors()) {
+            return false;
+        }
+        log.debugv("checkCorsPreflight {0}", httpFacade.getRequest().getURI());
+        if (! httpFacade.getRequest().getMethod().equalsIgnoreCase(OPTIONS)) {
+            return false;
+        }
+        String origin = httpFacade.getRequest().getHeader(CorsHeaders.ORIGIN);
+        if (origin == null) {
+            log.debug("checkCorsPreflight: no origin header");
+            return false;
+        }
+        log.debug("Preflight request returning");
+        httpFacade.getResponse().setStatus(HttpStatus.SC_OK);
+        httpFacade.getResponse().setHeader(CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+        httpFacade.getResponse().setHeader(CorsHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+        String requestMethods = httpFacade.getRequest().getHeader(CorsHeaders.ACCESS_CONTROL_REQUEST_METHOD);
+        if (requestMethods != null) {
+            if (oidcClientConfiguration.getCorsAllowedMethods() != null) {
+                requestMethods = oidcClientConfiguration.getCorsAllowedMethods();
+            }
+            httpFacade.getResponse().setHeader(CorsHeaders.ACCESS_CONTROL_ALLOW_METHODS, requestMethods);
+        }
+        String allowHeaders = httpFacade.getRequest().getHeader(CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
+        if (allowHeaders != null) {
+            if (oidcClientConfiguration.getCorsAllowedHeaders() != null) {
+                allowHeaders = oidcClientConfiguration.getCorsAllowedHeaders();
+            }
+            httpFacade.getResponse().setHeader(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, allowHeaders);
+        }
+        if (oidcClientConfiguration.getCorsMaxAge() > -1) {
+            httpFacade.getResponse().setHeader(CorsHeaders.ACCESS_CONTROL_MAX_AGE, Integer.toString(oidcClientConfiguration.getCorsMaxAge()));
+        }
+        return true;
     }
 
 }

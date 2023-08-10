@@ -44,9 +44,12 @@ import org.wildfly.security.jose.util.JsonSerialization;
  */
 public class Oidc {
 
+    public static final String ACCEPT = "Accept";
     public static final String OIDC_NAME = "OIDC";
     public static final String JSON_CONTENT_TYPE = "application/json";
-    public static final String HTML_CONTEXT_TYPE = "text/html";
+    public static final String HTML_CONTENT_TYPE = "text/html";
+    public static final String WILDCARD_CONTENT_TYPE = "*/*";
+    public static final String TEXT_CONTENT_TYPE = "text/*";
     public static final String DISCOVERY_PATH = ".well-known/openid-configuration";
     public static final String KEYCLOAK_REALMS_PATH = "realms/";
     public static final String JSON_CONFIG_CONTEXT_PARAM = "org.wildfly.security.http.oidc.json.config";
@@ -58,20 +61,31 @@ public class Oidc {
     public static final String CLIENT_ID = "client_id";
     public static final String CODE = "code";
     public static final String ERROR = "error";
+    public static final String ERROR_DESCRIPTION = "error_description";
+    public static final String FACES_REQUEST = "Faces-Request";
     public static final String GRANT_TYPE = "grant_type";
+    public static final String INVALID_TOKEN = "invalid_token";
     public static final String LOGIN_HINT = "login_hint";
     public static final String MAX_AGE = "max_age";
+    public static final String NO_TOKEN = "no_token";
+    public static final String OPTIONS = "OPTIONS";
+    public static final String PARTIAL = "partial/";
+    public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
+    public static final String USERNAME = "username";
     public static final String OIDC_SCOPE = "openid";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE = "response_type";
     public static final String SESSION_STATE = "session_state";
+    public static final String SOAP_ACTION = "SOAPAction";
+    public static final String STALE_TOKEN = "Stale token";
     public static final String STATE = "state";
     public static final int INVALID_ISSUED_FOR_CLAIM = -1;
     public static final int INVALID_AT_HASH_CLAIM = -2;
+    public static final int INVALID_TYPE_CLAIM = -3;
     static final String OIDC_CLIENT_CONFIG_RESOLVER = "oidc.config.resolver";
     static final String OIDC_CONFIG_FILE_LOCATION = "oidc.config.file";
     static final String OIDC_JSON_FILE = "/WEB-INF/oidc.json";
@@ -97,6 +111,17 @@ public class Oidc {
     static final String KEYCLOAK_CLIENT_CLUSTER_HOST = "client_cluster_host";
     static final String KEYCLOAK_QUERY_BEARER_TOKEN = "k_query_bearer_token";
     static final String DEFAULT_TOKEN_SIGNATURE_ALGORITHM = "RS256";
+    public static final String DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME = "wildfly.elytron.oidc.disable.typ.claim.validation";
+    public static final String X_REQUESTED_WITH = "X-Requested-With";
+    public static final String XML_HTTP_REQUEST = "XMLHttpRequest";
+
+    /**
+     * Bearer token pattern.
+     * The Bearer token authorization header is of the form "Bearer", followed by optional whitespace, followed by
+     * the token itself, followed by optional whitespace. The token itself must be one or more characters and must
+     * not contain any whitespace.
+     */
+    public static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer *([^ ]+) *$", Pattern.CASE_INSENSITIVE);
 
 
     // keycloak-specific request parameter used to specify the identifier of the identity provider that should be used to authenticate a user
