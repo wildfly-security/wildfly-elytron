@@ -19,6 +19,8 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
+import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationFormat.REQUEST_TYPE_OAUTH2;
 import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
 import static org.wildfly.security.http.oidc.Oidc.TokenStore;
 
@@ -99,6 +101,32 @@ public class OidcClientConfigurationBuilder {
         }
         if (oidcJsonConfiguration.getTokenCookiePath() != null) {
             oidcClientConfiguration.setOidcStateCookiePath(oidcJsonConfiguration.getTokenCookiePath());
+        }
+        if (oidcJsonConfiguration.getAuthenticationRequestFormat() != null) {
+            oidcClientConfiguration.setAuthenticationRequestFormat(oidcJsonConfiguration.getAuthenticationRequestFormat());
+        } else {
+            oidcClientConfiguration.setAuthenticationRequestFormat(REQUEST_TYPE_OAUTH2.getValue());
+        }
+        if (oidcJsonConfiguration.getRequestSignatureAlgorithm() != null) {
+            oidcClientConfiguration.setRequestSignatureAlgorithm(oidcJsonConfiguration.getRequestSignatureAlgorithm());
+        } else {
+            oidcClientConfiguration.setRequestSignatureAlgorithm(NONE);
+        }
+        if (oidcJsonConfiguration.getRequestEncryptAlgorithm() != null && oidcJsonConfiguration.getRequestContentEncryptionMethod() != null) { //both are required to encrypt the request object
+            oidcClientConfiguration.setRequestEncryptAlgorithm(oidcJsonConfiguration.getRequestEncryptAlgorithm());
+            oidcClientConfiguration.setRequestContentEncryptionMethod(oidcJsonConfiguration.getRequestContentEncryptionMethod());
+        }
+        if (oidcJsonConfiguration.getRequestObjectSigningKeyStoreFile() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeystorePassword() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeyPassword() != null
+                && oidcJsonConfiguration.getRequestObjectSigningKeyAlias() != null) {
+            oidcClientConfiguration.setRequestObjectSigningKeystoreFile(oidcJsonConfiguration.getRequestObjectSigningKeyStoreFile());
+            oidcClientConfiguration.setRequestObjectSigningKeyStorePassword(oidcJsonConfiguration.getRequestObjectSigningKeystorePassword());
+            oidcClientConfiguration.setRequestObjectSigningKeyPassword(oidcJsonConfiguration.getRequestObjectSigningKeyPassword());
+            oidcClientConfiguration.setRequestObjectSigningKeyAlias(oidcJsonConfiguration.getRequestObjectSigningKeyAlias());
+            if (oidcJsonConfiguration.getRequestObjectSigningKeystoreType() != null) {
+                oidcClientConfiguration.setRequestObjectSigningKeystoreType(oidcJsonConfiguration.getRequestObjectSigningKeystoreType());
+            }
         }
         if (oidcJsonConfiguration.getPrincipalAttribute() != null) oidcClientConfiguration.setPrincipalAttribute(oidcJsonConfiguration.getPrincipalAttribute());
 
@@ -189,7 +217,6 @@ public class OidcClientConfigurationBuilder {
         }
         return adapterConfig;
     }
-
 
     public static OidcClientConfiguration build(OidcJsonConfiguration oidcJsonConfiguration) {
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);

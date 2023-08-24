@@ -18,10 +18,29 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jose4j.jws.AlgorithmIdentifiers.NONE;
+import static org.jose4j.jws.AlgorithmIdentifiers.RSA_USING_SHA256;
+import static org.jose4j.jws.AlgorithmIdentifiers.RSA_USING_SHA512;
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA256;
+import static org.jose4j.jws.AlgorithmIdentifiers.HMAC_SHA512;
+import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.KEYSTORE_CLASSPATH;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.KEYSTORE_PASS;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.PKCS12_KEYSTORE_TYPE;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.RSA1_5;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.RSA_OAEP;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.RSA_OAEP_256;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.A128CBC_HS256;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.A192CBC_HS384;
+import static org.wildfly.security.http.oidc.KeycloakConfiguration.A256CBC_HS512;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import static org.wildfly.security.http.oidc.Oidc.OIDC_NAME;
+import static org.wildfly.security.http.oidc.Oidc.OIDC_SCOPE;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationFormat.REQUEST_TYPE_OAUTH2;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationFormat.REQUEST_TYPE_REQUEST;
+import static org.wildfly.security.http.oidc.Oidc.AuthenticationFormat.REQUEST_TYPE_REQUEST_URI;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -30,6 +49,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import org.apache.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,8 +61,6 @@ import com.gargoylesoftware.htmlunit.TextPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 import io.restassured.RestAssured;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.QueueDispatcher;
 
 /**
  * Tests for the OpenID Connect authentication mechanism.
@@ -163,8 +182,102 @@ public class OidcTest extends OidcBaseTest {
     }
 
     // Note: The tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
+    @Test
+    public void testOpenIDWithOauth2Request() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_OAUTH2.getValue(), "", "", ""), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithPlaintextRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), NONE, "", ""), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithPlaintextEncryptedRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), NONE, RSA_OAEP, A128CBC_HS256), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithRsaSignedAndEncryptedRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), RSA_USING_SHA512, RSA_OAEP, A192CBC_HS384, KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithPsSignedAndRsaEncryptedRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), RSA_PSS_USING_SHA256, RSA_OAEP_256, A256CBC_HS512, KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithInvalidSignAlgorithm() throws Exception {
+        //RSNULL is a valid signature algorithm, but not one of the ones supported by keycloak
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), "RSNULL", RSA_OAEP_256, A256CBC_HS512, KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT, true);
+    }
+
+    @Test
+    public void testOpenIDWithRsaSignedRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), RSA_USING_SHA256, "", "", KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithPsSignedRequest() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), RSA_PSS_USING_SHA256, "", "", KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+    @Test
+    public void testOpenIDWithInvalidRequestEncryptionAlgorithm() throws Exception {
+        // None is not a valid algorithm for encrypting jwt's and RSA-OAEP is not a valid algorithm for signing
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), RSA1_5, NONE, NONE, KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT, true);
+    }
+
+    @Test
+    public void testOpenIDWithPlaintextRequestUri() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST_URI.getValue(), NONE, "", ""), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithHmacRequestUri() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), HMAC_SHA256, "", ""), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithHmacEncryptedRequestUri() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST.getValue(), HMAC_SHA512, RSA_OAEP, A128CBC_HS256), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
+    @Test
+    public void testOpenIDWithSignedAndEncryptedRequestUri() throws Exception {
+        performAuthentication(getOidcConfigurationInputStreamWithRequestParameter(REQUEST_TYPE_REQUEST_URI.getValue(), RSA_USING_SHA256, RSA_OAEP_256, A256CBC_HS512, KEYSTORE_CLASSPATH + KeycloakConfiguration.RSA_KEYSTORE_FILE_NAME, KeycloakConfiguration.KEYSTORE_ALIAS, PKCS12_KEYSTORE_TYPE), KeycloakConfiguration.ALICE, KeycloakConfiguration.ALICE_PASSWORD,
+                true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
+    }
+
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, null, false);
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, expectedScope, checkInvalidScopeError, false);
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText, boolean checkInvalidRequestAlgorithm) throws Exception {
+        performAuthentication(oidcConfig, username, password, loginToKeycloak, expectedDispatcherStatusCode, expectedLocation, clientPageText, null, false, checkInvalidRequestAlgorithm);
+    }
+
+    private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
+                                       int expectedDispatcherStatusCode, String expectedLocation, String clientPageText, String expectedScope, boolean checkInvalidScopeError, boolean checkInvalidRequestAlgorithm) throws Exception {
         try {
             Map<String, Object> props = new HashMap<>();
             OidcClientConfiguration oidcClientConfiguration = OidcClientConfigurationBuilder.build(oidcConfig);
@@ -176,10 +289,29 @@ public class OidcTest extends OidcBaseTest {
 
             URI requestUri = new URI(getClientUrl());
             TestingHttpServerRequest request = new TestingHttpServerRequest(null, requestUri);
-            mechanism.evaluateRequest(request);
+            try {
+                mechanism.evaluateRequest(request);
+            } catch (Exception e) {
+                if (checkInvalidRequestAlgorithm) {
+                    assertTrue(e.getMessage().contains("java.io.IOException: ELY23058"));
+                    return; //Expected to get an exception and ignore the rest
+                } else {
+                    throw e;
+                }
+            }
             TestingHttpServerResponse response = request.getResponse();
             assertEquals(loginToKeycloak ? HttpStatus.SC_MOVED_TEMPORARILY : HttpStatus.SC_FORBIDDEN, response.getStatusCode());
             assertEquals(Status.NO_AUTH, request.getResult());
+            if (expectedScope != null) {
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("scope=" + expectedScope));
+            }
+            if (oidcClientConfiguration.getAuthenticationRequestFormat().contains(REQUEST_TYPE_REQUEST_URI.getValue())) {
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("scope=" + OIDC_SCOPE));
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("request_uri="));
+            } else if (oidcClientConfiguration.getAuthenticationRequestFormat().contains(REQUEST_TYPE_REQUEST.getValue())) {
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("scope=" + OIDC_SCOPE));
+                assertTrue(response.getFirstResponseHeaderValue("Location").contains("request="));
+            }
 
             if (loginToKeycloak) {
                 client.setDispatcher(createAppResponse(mechanism, expectedDispatcherStatusCode, expectedLocation, clientPageText));
@@ -291,4 +423,44 @@ public class OidcTest extends OidcBaseTest {
                 "}";
         return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
     }
+
+    private InputStream getOidcConfigurationInputStreamWithRequestParameter(String requestParameter, String signAlgorithm, String encryptAlgorithm, String encMethod){
+        String oidcConfig = "{\n" +
+                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
+                "    \"request-object-signing-algorithm\" : \"" + signAlgorithm + "\",\n" +
+                "    \"request-object-encryption-algorithm\" : \"" + encryptAlgorithm + "\",\n" +
+                "    \"request-object-content-encryption-algorithm\" : \"" + encMethod + "\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InputStream getOidcConfigurationInputStreamWithRequestParameter(String requestParameter, String signAlgorithm, String encryptAlgorithm, String encMethod, String keyStorePath, String alias, String keyStoreType){
+        String oidcConfig = "{\n" +
+                "    \"client-id\" : \"" + CLIENT_ID + "\",\n" +
+                "    \"provider-url\" : \"" + KEYCLOAK_CONTAINER.getAuthServerUrl() + "/realms/" + TEST_REALM + "/" + "\",\n" +
+                "    \"public-client\" : \"false\",\n" +
+                "    \"ssl-required\" : \"EXTERNAL\",\n" +
+                "    \"authentication-request-format\" : \"" + requestParameter + "\",\n" +
+                "    \"request-object-signing-algorithm\" : \"" + signAlgorithm + "\",\n" +
+                "    \"request-object-encryption-algorithm\" : \"" + encryptAlgorithm + "\",\n" +
+                "    \"request-object-content-encryption-algorithm\" : \"" + encMethod + "\",\n" +
+                "    \"request-object-signing-keystore-file\" : \"" + keyStorePath + "\",\n" +
+                "    \"request-object-signing-keystore-type\" : \"" + keyStoreType + "\",\n" +
+                "    \"request-object-signing-keystore-password\" : \"" + KEYSTORE_PASS + "\",\n" +
+                "    \"request-object-signing-key-password\" : \"" + KEYSTORE_PASS + "\",\n" +
+                "    \"request-object-signing-key-alias\" : \"" + alias + "\",\n" +
+                "    \"credentials\" : {\n" +
+                "        \"secret\" : \"" + CLIENT_SECRET + "\"\n" +
+                "    }\n" +
+                "}";
+        return new ByteArrayInputStream(oidcConfig.getBytes(StandardCharsets.UTF_8));
+    }
 }
+

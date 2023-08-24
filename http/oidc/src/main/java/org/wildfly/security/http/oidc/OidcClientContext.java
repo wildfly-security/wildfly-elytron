@@ -525,6 +525,107 @@ public class OidcClientContext {
         public void setTokenSignatureAlgorithm(String tokenSignatureAlgorithm) {
             delegate.setTokenSignatureAlgorithm(tokenSignatureAlgorithm);
         }
+
+        @Override
+        public String getAuthenticationRequestFormat() {
+            return delegate.getAuthenticationRequestFormat();
+        }
+
+        @Override
+        public void setAuthenticationRequestFormat(String authFormat) {
+            delegate.setAuthenticationRequestFormat(authFormat);
+        }
+
+        @Override
+        public String getRequestSignatureAlgorithm() {
+            return delegate.getRequestSignatureAlgorithm();
+        }
+
+        @Override
+        public void setRequestSignatureAlgorithm(String requestSignature) {
+            delegate.setRequestSignatureAlgorithm(requestSignature);
+        }
+
+        @Override
+        public String getRequestEncryptAlgorithm() {
+            return delegate.getRequestEncryptAlgorithm();
+        }
+
+        @Override
+        public void setRequestEncryptAlgorithm(String algorithm) {
+            delegate.setRequestEncryptAlgorithm(algorithm);
+        }
+
+        @Override
+        public String getRequestContentEncryptionMethod() {
+            return delegate.requestContentEncryptionMethod;
+        }
+
+        @Override
+        public void setRequestContentEncryptionMethod (String enc) {
+            delegate.requestContentEncryptionMethod = enc;
+        }
+
+        @Override
+        public String getRequestObjectSigningKeystoreFile() {
+            return delegate.requestObjectSigningKeystoreFile;
+        }
+
+        @Override
+        public void setRequestObjectSigningKeystoreFile(String keyStoreFile) {
+            delegate.requestObjectSigningKeystoreFile = keyStoreFile;
+        }
+
+        @Override
+        public String getRequestObjectSigningKeyStorePassword() {
+            return delegate.requestObjectSigningKeyStorePass;
+        }
+
+        @Override
+        public void setRequestObjectSigningKeyStorePassword(String pass) {
+            delegate.requestObjectSigningKeyStorePass = pass;
+        }
+
+        @Override
+        public String getRequestObjectSigningKeyPassword() {
+            return delegate.requestObjectSigningKeyPass;
+        }
+
+        @Override
+        public void setRequestObjectSigningKeyPassword(String pass) {
+            delegate.requestObjectSigningKeyPass = pass;
+        }
+
+        @Override
+        public String getRequestObjectSigningKeystoreType() {
+            return delegate.requestObjectSigningKeystoreType;
+        }
+
+        @Override
+        public void setRequestObjectSigningKeystoreType(String type) {
+            delegate.requestObjectSigningKeystoreType = type;
+        }
+
+        @Override
+        public String getRequestObjectSigningKeyAlias() {
+            return delegate.requestObjectSigningKeyAlias;
+        }
+
+        @Override
+        public void setRequestObjectSigningKeyAlias(String alias) {
+            delegate.requestObjectSigningKeyAlias = alias;
+        }
+
+        @Override
+        public boolean getRequestParameterSupported() {
+            return delegate.requestParameterSupported;
+        }
+
+        @Override
+        public boolean getRequestUriParameterSupported() {
+            return delegate.requestUriParameterSupported;
+        }
+
     }
 
     protected String getAuthServerBaseUrl(OidcHttpFacade facade, String base) {

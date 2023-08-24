@@ -73,6 +73,8 @@ public class Oidc {
     public static final String PARTIAL = "partial/";
     public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
+    public static final String REQUEST = "request";
+    public static final String REQUEST_URI = "request_uri";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
     public static final String USERNAME = "username";
@@ -197,6 +199,27 @@ public class Oidc {
     public enum TokenStore {
         SESSION,
         COOKIE
+    }
+
+    public enum AuthenticationFormat {
+        REQUEST_TYPE_OAUTH2("oauth2"),
+        REQUEST_TYPE_REQUEST("request"),
+        REQUEST_TYPE_REQUEST_URI("request_uri");
+
+        private final String value;
+
+        AuthenticationFormat(String value) {
+            this.value = value;
+        }
+
+        /**
+         * Get the string value for this referral mode.
+         *
+         * @return the string value for this referral mode
+         */
+        public String getValue() {
+            return value;
+        }
     }
 
     public enum ClientCredentialsProviderType {

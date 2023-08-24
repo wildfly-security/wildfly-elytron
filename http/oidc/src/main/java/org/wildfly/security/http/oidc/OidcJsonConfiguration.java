@@ -38,15 +38,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "resource", "public-client", "credentials",
         "use-resource-role-mappings", "use-realm-role-mappings",
         "enable-cors", "cors-max-age", "cors-allowed-methods", "cors-exposed-headers",
-        "expose-token", "bearer-only", "autodetect-bearer-only",
-        "connection-pool-size",
+        "expose-token", "bearer-only", "autodetect-bearer-only", "connection-pool-size",
         "allow-any-hostname", "disable-trust-manager", "truststore", "truststore-password",
-        "client-keystore", "client-keystore-password", "client-key-password",
-        "always-refresh-token",
-        "register-node-at-startup", "register-node-period", "token-store", "adapter-state-cookie-path", "principal-attribute",
-        "proxy-url", "turn-off-change-session-id-on-login", "token-minimum-time-to-live",
-        "min-time-between-jwks-requests", "public-key-cache-ttl",
-        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm"
+        "client-keystore", "client-keystore-password", "request-object-signing-keystore-file",
+        "request-object-signing-keystore-password","request-object-signing-key-password", "request-object-signing-key-alias", "request-object-signing-keystore-type",
+        "always-refresh-token", "register-node-at-startup", "register-node-period", "token-store",
+        "adapter-state-cookie-path", "principal-attribute", "proxy-url", "turn-off-change-session-id-on-login",
+        "token-minimum-time-to-live", "min-time-between-jwks-requests", "public-key-cache-ttl",
+        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm",
+        "authentication-request-format", "request-object-signing-algorithm", "request-object-encryption-algorithm",
+        "request-object-content-encryption-algorithm"
 })
 public class OidcJsonConfiguration {
 
@@ -62,8 +63,16 @@ public class OidcJsonConfiguration {
     protected String clientKeystore;
     @JsonProperty("client-keystore-password")
     protected String clientKeystorePassword;
-    @JsonProperty("client-key-password")
-    protected String clientKeyPassword;
+    @JsonProperty("request-object-signing-keystore-file")
+    protected String requestObjectSigningKeyStoreFile;
+    @JsonProperty("request-object-signing-keystore-password")
+    protected String requestObjectSigningKeystorePassword;
+    @JsonProperty("request-object-signing-key-password")
+    protected String requestObjectSigningKeyPassword;
+    @JsonProperty("request-object-signing-key-alias")
+    protected String requestObjectSigningKeyAlias;
+    @JsonProperty("request-object-signing-keystore-type")
+    protected String requestObjectSigningKeystoreType;
     @JsonProperty("connection-pool-size")
     protected int connectionPoolSize = 20;
     @JsonProperty("always-refresh-token")
@@ -140,6 +149,18 @@ public class OidcJsonConfiguration {
     @JsonProperty("token-signature-algorithm")
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 
+    @JsonProperty("authentication-request-format")
+    protected String authenticationRequestFormat;
+
+    @JsonProperty("request-object-signing-algorithm")
+    protected String requestSignatureAlgorithm;
+
+    @JsonProperty("request-object-encryption-algorithm")
+    protected String requestEncryptAlgorithm;
+
+    @JsonProperty("request-object-content-encryption-algorithm")
+    protected String requestContentEncryptionMethod;
+
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
      */
@@ -178,12 +199,35 @@ public class OidcJsonConfiguration {
         this.truststorePassword = truststorePassword;
     }
 
+    public String getRequestObjectSigningKeyStoreFile() {
+        return requestObjectSigningKeyStoreFile;
+    }
+
+    public void setRequestObjectSigningKeyStoreFile(String requestObjectSigningKeyStoreFile) {
+        this.requestObjectSigningKeyStoreFile = requestObjectSigningKeyStoreFile;
+    }
     public String getClientKeystore() {
         return clientKeystore;
     }
 
     public void setClientKeystore(String clientKeystore) {
         this.clientKeystore = clientKeystore;
+    }
+
+    public String getRequestObjectSigningKeystoreType() {
+        return requestObjectSigningKeystoreType;
+    }
+
+    public void setRequestObjectSigningKeystoreType(String type) {
+        this.requestObjectSigningKeystoreType = type;
+    }
+
+    public String getRequestObjectSigningKeyAlias() {
+        return requestObjectSigningKeyAlias;
+    }
+
+    public void setRequestObjectSigningKeyAlias(String alias) {
+        this.requestObjectSigningKeyAlias = alias;
     }
 
     public String getClientKeystorePassword() {
@@ -194,12 +238,20 @@ public class OidcJsonConfiguration {
         this.clientKeystorePassword = clientKeystorePassword;
     }
 
-    public String getClientKeyPassword() {
-        return clientKeyPassword;
+    public String getRequestObjectSigningKeyPassword() {
+        return requestObjectSigningKeyPassword;
     }
 
-    public void setClientKeyPassword(String clientKeyPassword) {
-        this.clientKeyPassword = clientKeyPassword;
+    public String getRequestObjectSigningKeystorePassword() {
+        return requestObjectSigningKeystorePassword;
+    }
+
+    public void setRequestObjectSigningKeystorePassword(String requestObjectSigningKeystorePassword) {
+        this.requestObjectSigningKeystorePassword = requestObjectSigningKeystorePassword;
+    }
+
+    public void setRequestObjectSigningKeyPassword(String requestObjectSigningKeyPassword) {
+        this.requestObjectSigningKeyPassword = requestObjectSigningKeyPassword;
     }
 
     public int getConnectionPoolSize() {
@@ -511,5 +563,36 @@ public class OidcJsonConfiguration {
         this.tokenSignatureAlgorithm = tokenSignatureAlgorithm;
     }
 
+    public String getAuthenticationRequestFormat() {
+        return authenticationRequestFormat;
+    }
+
+    public void setAuthenticationRequestFormat(String authenticationRequestFormat) {
+        this.authenticationRequestFormat = authenticationRequestFormat;
+    }
+
+    public String getRequestSignatureAlgorithm() {
+        return requestSignatureAlgorithm;
+    }
+
+    public void setRequestSignatureAlgorithm(String requestSignatureAlgorithm) {
+        this.requestSignatureAlgorithm = requestSignatureAlgorithm;
+    }
+
+    public String getRequestEncryptAlgorithm() {
+        return requestEncryptAlgorithm;
+    }
+
+    public void setRequestEncryptAlgorithm(String requestSignatureAlgorithm) {
+        this.requestEncryptAlgorithm = requestSignatureAlgorithm;
+    }
+
+    public String getRequestContentEncryptionMethod() {
+        return requestContentEncryptionMethod;
+    }
+
+    public void setRequestContentEncryptionMethod (String requestContentEncryptionMethod) {
+        this.requestContentEncryptionMethod = requestContentEncryptionMethod;
+    }
 }
 
