@@ -114,6 +114,9 @@ public class OidcProviderMetadata {
     @JsonProperty("request_uri_parameter_supported")
     private Boolean requestUriParameterSupported;
 
+    @JsonProperty("pushed_authorization_request_endpoint")
+    private String pushedAuthorizationRequestEndpoint;
+
     @JsonProperty("revocation_endpoint")
     private String revocationEndpoint;
 
@@ -141,6 +144,12 @@ public class OidcProviderMetadata {
     // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
     @JsonProperty("tls_client_certificate_bound_access_tokens")
     private Boolean tlsClientCertificateBoundAccessTokens;
+
+    @JsonProperty("request_object_encryption_enc_values_supported")
+    private List<String> requestObjectEncryptionEncValuesSupported;
+
+    @JsonProperty("request_object_encryption_alg_values_supported")
+    private List<String> requestObjectEncryptionAlgValuesSupported;
 
     protected Map<String, Object> otherClaims = new HashMap<String, Object>();
 
@@ -409,6 +418,30 @@ public class OidcProviderMetadata {
     // https://tools.ietf.org/html/draft-ietf-oauth-mtls-08#section-6.2
     public Boolean getTlsClientCertificateBoundAccessTokens() {
         return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public List<String> getRequestObjectEncryptionAlgValuesSupported() {
+        return requestObjectEncryptionAlgValuesSupported;
+    }
+
+    public void setRequestObjectEncryptionAlgValuesSupported(List<String> requestObjectEncryptionAlgValuesSupported) {
+        this.requestObjectEncryptionAlgValuesSupported = requestObjectEncryptionAlgValuesSupported;
+    }
+
+    public List<String> getRequestObjectEncryptionEncValuesSupported() {
+        return requestObjectEncryptionEncValuesSupported;
+    }
+
+    public void setRequestObjectEncryptionEncValuesSupported(List<String> requestObjectEncryptionEncValuesSupported) {
+        this.requestObjectEncryptionEncValuesSupported = requestObjectEncryptionEncValuesSupported;
+    }
+
+    public String getPushedAuthorizationRequestEndpoint() {
+        return pushedAuthorizationRequestEndpoint;
+    }
+
+    public void setPushedAuthorizationRequestEndpoint (String url) {
+        this.pushedAuthorizationRequestEndpoint = url;
     }
 
     @JsonAnyGetter

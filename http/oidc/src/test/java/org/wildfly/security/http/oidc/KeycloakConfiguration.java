@@ -18,20 +18,45 @@
 
 package org.wildfly.security.http.oidc;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.jose4j.lang.JoseException;
+import org.keycloak.protocol.oidc.OIDCAdvancedConfigWrapper;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.KeyStoreConfig;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.RolesRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-
 import io.restassured.RestAssured;
+
+import static org.wildfly.security.http.oidc.Oidc.KEYSTORE_PASS;
 
 /**
  * Keycloak configuration for testing.
@@ -47,6 +72,11 @@ public class KeycloakConfiguration {
     private static final String BOB = "bob";
     private static final String BOB_PASSWORD = "bob123+";
     public static final String ALLOWED_ORIGIN = "http://somehost";
+    public static final boolean EMAIL_VERIFIED = false;
+    public static final String RSA_KEYSTORE_FILE_NAME = "jwt.keystore";
+    public static final String EC_KEYSTORE_FILE_NAME = "jwtEC.keystore";
+    public static final String KEYSTORE_ALIAS = "jwtKeystore";
+    public static String KEYSTORE_CLASSPATH;
 
     /**
      * Configure RealmRepresentation as follows:
@@ -60,14 +90,14 @@ public class KeycloakConfiguration {
      * </ul>
      */
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
-                                                             String clientHostName, int clientPort, String clientApp) {
+                                                             String clientHostName, int clientPort, String clientApp) throws JoseException, GeneralSecurityException, IOException, OperatorCreationException {
         return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp);
     }
 
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
                                                              String clientHostName, int clientPort, String clientApp,
                                                              boolean directAccessGrantEnabled, String bearerOnlyClientId,
-                                                             String corsClientId) {
+                                                             String corsClientId) throws JoseException, GeneralSecurityException, IOException, OperatorCreationException {
         return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId);
     }
 
@@ -102,14 +132,14 @@ public class KeycloakConfiguration {
     }
 
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
-                                                   String clientHostName, int clientPort, String clientApp) {
+                                                   String clientHostName, int clientPort, String clientApp) throws JoseException, GeneralSecurityException, IOException, OperatorCreationException {
         return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null);
     }
 
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
                                                    String clientHostName, int clientPort, String clientApp,
                                                    boolean directAccessGrantEnabled, String bearerOnlyClientId,
-                                                   String corsClientId) {
+                                                   String corsClientId) throws GeneralSecurityException, IOException, OperatorCreationException {
         RealmRepresentation realm = new RealmRepresentation();
 
         realm.setRealm(name);
@@ -140,15 +170,16 @@ public class KeycloakConfiguration {
 
         realm.getUsers().add(createUser(ALICE, ALICE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
         realm.getUsers().add(createUser(BOB, BOB_PASSWORD, Arrays.asList(USER_ROLE)));
+
         return realm;
     }
 
-    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp, boolean directAccessGrantEnabled) {
+    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp, boolean directAccessGrantEnabled) throws GeneralSecurityException, IOException, OperatorCreationException {
         return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null);
     }
 
     private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
-                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin) {
+                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin) throws GeneralSecurityException, IOException, OperatorCreationException {
         ClientRepresentation client = new ClientRepresentation();
         client.setClientId(clientId);
         client.setPublicClient(false);
@@ -157,10 +188,58 @@ public class KeycloakConfiguration {
         client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
         client.setEnabled(true);
         client.setDirectAccessGrantsEnabled(directAccessGrantEnabled);
+
         if (allowedOrigin != null) {
             client.setWebOrigins(Collections.singletonList(allowedOrigin));
         }
+        OIDCAdvancedConfigWrapper oidcAdvancedConfigWrapper = OIDCAdvancedConfigWrapper.fromClientRepresentation(client);
+        oidcAdvancedConfigWrapper.setUseJwksUrl(false);
+        KEYSTORE_CLASSPATH = Objects.requireNonNull(KeycloakConfiguration.class.getClassLoader().getResource("")).getPath();
+        String rsaCert = generateKeyStoreFileAndGetCertificate("Rsa", 2048, KEYSTORE_CLASSPATH + RSA_KEYSTORE_FILE_NAME, "SHA256WITHRSA");
+        client.getAttributes().put("jwt.credential.certificate", rsaCert);
         return client;
+    }
+
+    static String generateKeyStoreFileAndGetCertificate(String algorithm, int keySize, String keystorePath, String certSignAlg) throws GeneralSecurityException, IOException, OperatorCreationException {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
+        keyGen.initialize(keySize);
+        KeyPair keys = keyGen.generateKeyPair();
+        X509Certificate cert = createCertificate(keys, certSignAlg);
+        KeyStore keystore = createKeyStore(cert, keys.getPrivate());
+        try (FileOutputStream fileOutputStream = new FileOutputStream(keystorePath)) {
+            keystore.store(fileOutputStream, KEYSTORE_PASS.toCharArray());
+        }
+
+        KeyStoreConfig keyStoreConfig = new KeyStoreConfig();
+        keyStoreConfig.setKeyAlias(KEYSTORE_ALIAS);
+        keyStoreConfig.setStorePassword(KEYSTORE_PASS);
+        keyStoreConfig.setKeyPassword(KEYSTORE_PASS);
+        keyStoreConfig.setRealmCertificate(true);
+        return Base64.getEncoder().encodeToString(cert.getEncoded());
+    }
+
+    private static KeyStore createKeyStore(X509Certificate certificate, PrivateKey privateKey) throws IOException, GeneralSecurityException {
+        KeyStore keyStore = createEmptyKeyStore();
+        keyStore.setCertificateEntry("jwtKeystore", certificate);
+        keyStore.setKeyEntry("jwtKeystore", privateKey, "password".toCharArray(), new Certificate[]{certificate});
+        return keyStore;
+    }
+
+    private static KeyStore createEmptyKeyStore() throws IOException, GeneralSecurityException {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(null,null);
+        return keyStore;
+    }
+
+    private static X509Certificate createCertificate(KeyPair keyPair, String certSignAlg) throws GeneralSecurityException, OperatorCreationException {
+        X500Name subject = new X500Name("cn=localhost");
+        Date startDate = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);    //1 day before now
+        Date endDate = new Date(System.currentTimeMillis() + (long) 2 * 365 * 24 * 60 * 60 * 1000); //2 years from now
+        X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(subject, BigInteger.valueOf(System.currentTimeMillis()), startDate, endDate, subject, keyPair.getPublic());
+        final ContentSigner contentSigner = new JcaContentSignerBuilder(certSignAlg).build(keyPair.getPrivate());
+
+        return new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider())
+                .getCertificate(certGen.build(contentSigner));
     }
 
     private static ClientRepresentation createBearerOnlyClient(String clientId) {

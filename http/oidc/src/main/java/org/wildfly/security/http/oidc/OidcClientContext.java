@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.utils.URIBuilder;
+import org.jose4j.jwk.JsonWebKeySet;
 
 /**
  *
@@ -525,6 +526,97 @@ public class OidcClientContext {
         public void setTokenSignatureAlgorithm(String tokenSignatureAlgorithm) {
             delegate.setTokenSignatureAlgorithm(tokenSignatureAlgorithm);
         }
+
+        @Override
+        public String getAuthenticationRequestFormat() {
+            return delegate.getAuthenticationRequestFormat();
+        }
+
+        @Override
+        public void setAuthenticationRequestFormat(String authFormat) {
+            delegate.setAuthenticationRequestFormat(authFormat);
+        }
+
+        @Override
+        public String getRequestSignatureAlgorithm() {
+            return delegate.getRequestSignatureAlgorithm();
+        }
+
+        @Override
+        public void setRequestSignatureAlgorithm(String requestSignature) {
+            delegate.setRequestSignatureAlgorithm(requestSignature);
+        }
+
+        @Override
+        public String getRequestEncryptAlgorithm() {
+            return delegate.getRequestEncryptAlgorithm();
+        }
+
+        @Override
+        public void setRequestEncryptAlgorithm(String algorithm) {
+            delegate.setRequestEncryptAlgorithm(algorithm);
+        }
+
+        @Override
+        public String getRequestEncryptEncValue() {
+            return delegate.requestEncryptEncValue;
+        }
+
+        @Override
+        public void setRequestEncryptEncValue (String enc) {
+            delegate.requestEncryptEncValue = enc;
+        }
+
+        @Override
+        public String getRealmKey () {
+            return delegate.realmKey;
+        }
+
+        @Override
+        public void setRealmKey(String key) {
+            delegate.realmKey = key;
+        }
+
+        @Override
+        public JsonWebKeySet getrealmKeySet() {
+            return delegate.realmKeySet;
+        }
+
+        @Override
+        public String getClientKeystoreType() {
+            return delegate.clientKeystoreType;
+        }
+
+        @Override
+        public void setClientKeystoreType(String type) {
+            delegate.clientKeystoreType = type;
+        }
+
+        @Override
+        public String getClientKeyAlias() {
+            return delegate.clientKeyAlias;
+        }
+
+        @Override
+        public void setClientKeyAlias(String alias) {
+            delegate.clientKeyAlias = alias;
+        }
+
+        @Override
+        public void setrealmKeySet(JsonWebKeySet keySet) {
+            delegate.realmKeySet = keySet;
+        }
+
+        @Override
+        public boolean getRequestParameterSupported() {
+            return delegate.requestParameterSupported;
+        }
+
+        @Override
+        public boolean getRequestUriParameterSupported() {
+            return delegate.requestUriParameterSupported;
+        }
+
     }
 
     protected String getAuthServerBaseUrl(OidcHttpFacade facade, String base) {

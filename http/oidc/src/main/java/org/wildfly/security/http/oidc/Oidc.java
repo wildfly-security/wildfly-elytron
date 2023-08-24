@@ -52,10 +52,14 @@ public class Oidc {
     public static final String TEXT_CONTENT_TYPE = "text/*";
     public static final String DISCOVERY_PATH = ".well-known/openid-configuration";
     public static final String KEYCLOAK_REALMS_PATH = "realms/";
+    public static final String KEYSTORE_PASS = "password";
+    public static final String JKS_KEYSTORE_TYPE = "JKS";
     public static final String JSON_CONFIG_CONTEXT_PARAM = "org.wildfly.security.http.oidc.json.config";
     static final String ACCOUNT_PATH = "account";
     public static final String CLIENTS_MANAGEMENT_REGISTER_NODE_PATH = "clients-managements/register-node";
     public static final String CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH = "clients-managements/unregister-node";
+    public static final String ADMIN_CONSOLE_PATH = "admin/master/console/#";
+    public static final String REALM_SETTING_KEYS_PATH = "realm-settings/keys";
     public static final String SLASH = "/";
     public static final String OIDC_CLIENT_CONTEXT_KEY = OidcClientContext.class.getName();
     public static final String CLIENT_ID = "client_id";
@@ -73,12 +77,17 @@ public class Oidc {
     public static final String PARTIAL = "partial/";
     public static final String PASSWORD = "password";
     public static final String PROMPT = "prompt";
+    public static final String REQUEST = "request";
+    public static final String REQUEST_URI = "request_uri";
     public static final String SCOPE = "scope";
     public static final String UI_LOCALES = "ui_locales";
     public static final String USERNAME = "username";
     public static final String OIDC_SCOPE = "openid";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
+    public static final String REQUEST_TYPE_OAUTH2 = "oauth2";
+    public static final String REQUEST_TYPE_REQUEST = "request";
+    public static final String REQUEST_TYPE_REQUEST_URI = "request_uri";
     public static final String RESPONSE_TYPE = "response_type";
     public static final String SESSION_STATE = "session_state";
     public static final String SOAP_ACTION = "SOAPAction";
@@ -115,6 +124,35 @@ public class Oidc {
     public static final String DISABLE_TYP_CLAIM_VALIDATION_PROPERTY_NAME = "wildfly.elytron.oidc.disable.typ.claim.validation";
     public static final String X_REQUESTED_WITH = "X-Requested-With";
     public static final String XML_HTTP_REQUEST = "XMLHttpRequest";
+
+    /* Accepted Request Object Signing Algorithms for KeyCloak*/
+    public static final String NONE = "none";
+    public static final String RS_256 = "RS256";
+    public static final String HS_256 = "HS256";
+    public static final String HS_384 = "HS384";
+    public static final String HS_512 = "HS512";
+    public static final String ES_256 = "ES256";
+    public static final String ES_384 = "ES384";
+    public static final String ES_512 = "ES512";
+    public static final String ES_256K = "ES256K";
+    public static final String RS_384 = "RS384";
+    public static final String RS_512 = "RS512";
+    public static final String PS_256 = "PS256";
+    public static final String PS_384 = "PS384";
+    public static final String PS_512 = "PS512";
+
+    /* Accepted Request Object Encrypting Algorithms for KeyCloak*/
+    public static final String RSA_OAEP = "RSA-OAEP";
+    public static final String RSA_OAEP_256 = "RSA-OAEP-256";
+    public static final String RSA1_5 = "RSA1_5";
+
+    /* Accepted Request Object Encryption Methods for KeyCloak*/
+    public static final String A256GCM = "A256GCM";
+    public static final String A192GCM = "A192GCM";
+    public static final String A128GCM = "A128GCM";
+    public static final String A128CBC_HS256 = "A128CBC-HS256";
+    public static final String A192CBC_HS384 = "A192CBC-HS384";
+    public static final String A256CBC_HS512 = "A256CBC-HS512";
 
     /**
      * Bearer token pattern.
@@ -276,6 +314,8 @@ public class Oidc {
                 return ES384;
             case AlgorithmIdentifiers.ECDSA_USING_P521_CURVE_AND_SHA512:
                 return ES512;
+            case AlgorithmIdentifiers.NONE:
+                return NONE;
             default:
                 throw log.unknownAlgorithm(algorithm);
         }

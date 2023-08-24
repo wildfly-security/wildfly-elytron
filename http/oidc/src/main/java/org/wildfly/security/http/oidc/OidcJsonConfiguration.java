@@ -41,12 +41,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "expose-token", "bearer-only", "autodetect-bearer-only",
         "connection-pool-size",
         "allow-any-hostname", "disable-trust-manager", "truststore", "truststore-password",
-        "client-keystore", "client-keystore-password", "client-key-password",
+        "client-keystore-file", "client-keystore-password", "client-key-password", "client-key-alias", "client-keystore-type",
         "always-refresh-token",
         "register-node-at-startup", "register-node-period", "token-store", "adapter-state-cookie-path", "principal-attribute",
         "proxy-url", "turn-off-change-session-id-on-login", "token-minimum-time-to-live",
         "min-time-between-jwks-requests", "public-key-cache-ttl",
-        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm"
+        "ignore-oauth-query-parameter", "verify-token-audience", "token-signature-algorithm",
+        "authentication-request-format", "request-object-signing-algorithm", "request-object-encryption-algorithm", "request-object-content-encryption-algorithm"
 })
 public class OidcJsonConfiguration {
 
@@ -58,12 +59,16 @@ public class OidcJsonConfiguration {
     protected String truststore;
     @JsonProperty("truststore-password")
     protected String truststorePassword;
-    @JsonProperty("client-keystore")
+    @JsonProperty("client-keystore-file")
     protected String clientKeystore;
     @JsonProperty("client-keystore-password")
     protected String clientKeystorePassword;
     @JsonProperty("client-key-password")
     protected String clientKeyPassword;
+    @JsonProperty("client-key-alias")
+    protected String clientKeyAlias;
+    @JsonProperty("client-keystore-type")
+    protected String clientKeystoreType;
     @JsonProperty("connection-pool-size")
     protected int connectionPoolSize = 20;
     @JsonProperty("always-refresh-token")
@@ -140,6 +145,18 @@ public class OidcJsonConfiguration {
     @JsonProperty("token-signature-algorithm")
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
 
+    @JsonProperty("authentication-request-format")
+    protected String authenticationRequestFormat;
+
+    @JsonProperty("request-object-signing-algorithm")
+    protected String requestSignatureAlgorithm;
+
+    @JsonProperty("request-object-encryption-algorithm")
+    protected String requestEncryptAlgorithm;
+
+    @JsonProperty("request-object-content-encryption-algorithm")
+    protected String requestEncryptEncValue;
+
     /**
      * The Proxy url to use for requests to the auth-server, configurable via the adapter config property {@code proxy-url}.
      */
@@ -184,6 +201,22 @@ public class OidcJsonConfiguration {
 
     public void setClientKeystore(String clientKeystore) {
         this.clientKeystore = clientKeystore;
+    }
+
+    public String getClientKeystoreType() {
+        return clientKeystoreType;
+    }
+
+    public void setClientKeystoreType(String type) {
+        this.clientKeystoreType = type;
+    }
+
+    public String getClientKeyAlias() {
+        return clientKeyAlias;
+    }
+
+    public void setClientKeyAlias(String alias) {
+        this.clientKeyAlias = alias;
     }
 
     public String getClientKeystorePassword() {
@@ -511,5 +544,36 @@ public class OidcJsonConfiguration {
         this.tokenSignatureAlgorithm = tokenSignatureAlgorithm;
     }
 
+    public String getAuthenticationRequestFormat() {
+        return authenticationRequestFormat;
+    }
+
+    public void setAuthenticationRequestFormat(String requestType) {
+        this.authenticationRequestFormat = requestType;
+    }
+
+    public String getRequestSignatureAlgorithm() {
+        return requestSignatureAlgorithm;
+    }
+
+    public void setRequestSignatureAlgorithm(String algorithm) {
+        this.requestSignatureAlgorithm = algorithm;
+    }
+
+    public String getRequestEncryptAlgorithm() {
+        return requestEncryptAlgorithm;
+    }
+
+    public void setRequestEncryptAlgorithm(String algorithm) {
+        this.requestEncryptAlgorithm = algorithm;
+    }
+
+    public String getRequestEncryptEncValue() {
+        return requestEncryptEncValue;
+    }
+
+    public void setRequestEncryptEncValue (String enc) {
+        this.requestEncryptEncValue = enc;
+    }
 }
 

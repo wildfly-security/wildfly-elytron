@@ -156,7 +156,7 @@ public class JWTClientCredentialsProvider implements ClientCredentialsProvider {
         return jwtClaims;
     }
 
-    private static KeyPair loadKeyPairFromKeyStore(String keyStoreFile, String storePassword, String keyPassword, String keyAlias, String keyStoreType) {
+    public static KeyPair loadKeyPairFromKeyStore(String keyStoreFile, String storePassword, String keyPassword, String keyAlias, String keyStoreType) {
         InputStream stream = findFile(keyStoreFile);
         try {
             KeyStore keyStore = KeyStore.getInstance(keyStoreType);

@@ -20,19 +20,17 @@ package org.wildfly.security.http.oidc;
 
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
-import static org.wildfly.security.http.oidc.Oidc.ACCOUNT_PATH;
-import static org.wildfly.security.http.oidc.Oidc.CLIENTS_MANAGEMENT_REGISTER_NODE_PATH;
-import static org.wildfly.security.http.oidc.Oidc.CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH;
-import static org.wildfly.security.http.oidc.Oidc.DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
-import static org.wildfly.security.http.oidc.Oidc.DISCOVERY_PATH;
-import static org.wildfly.security.http.oidc.Oidc.JSON_CONTENT_TYPE;
-import static org.wildfly.security.http.oidc.Oidc.KEYCLOAK_REALMS_PATH;
-import static org.wildfly.security.http.oidc.Oidc.SLASH;
-import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
-import static org.wildfly.security.http.oidc.Oidc.TokenStore;
+import static org.wildfly.security.http.oidc.Oidc.*;
+import static org.wildfly.security.jose.util.JsonSerialization.readValue;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -41,7 +39,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.wildfly.security.jose.util.JsonSerialization;
+import org.jose4j.jwk.JsonWebKeySet;
 
 /**
  * The OpenID Connect (OIDC) configuration for a client application. This class is based on
@@ -80,7 +78,13 @@ public class OidcClientConfiguration {
     protected String unregisterNodeUrl;
     protected String jwksUrl;
     protected String issuerUrl;
+    protected String authorizationEndpoint;
     protected String principalAttribute = "sub";
+    protected List<String> requestObjectSigningAlgValuesSupported;
+    protected List<String> requestObjectEncryptionEncValuesSupported;
+    protected List<String> requestObjectEncryptionAlgValuesSupported;
+    protected boolean requestParameterSupported;
+    protected boolean requestUriParameterSupported;
 
     protected String resource;
     protected String clientId;
@@ -126,6 +130,19 @@ public class OidcClientConfiguration {
     protected boolean verifyTokenAudience = false;
 
     protected String tokenSignatureAlgorithm = DEFAULT_TOKEN_SIGNATURE_ALGORITHM;
+    protected String authenticationRequestFormat;
+    protected String requestSignatureAlgorithm;
+    protected String requestEncryptAlgorithm;
+    protected String requestEncryptEncValue;
+    protected String pushedAuthorizationRequestEndpoint;
+    protected String clientKeyStoreFile;
+    protected String clientKeyStorePass;
+    protected String clientKeyPass;
+    protected String clientKeyAlias;
+    protected String clientKeystoreType;
+
+    protected String realmKey;
+    protected JsonWebKeySet realmKeySet = new JsonWebKeySet();
 
     public OidcClientConfiguration() {
     }
@@ -223,6 +240,15 @@ public class OidcClientConfiguration {
                     tokenUrl = config.getTokenEndpoint();
                     logoutUrl = config.getLogoutEndpoint();
                     jwksUrl = config.getJwksUri();
+                    authorizationEndpoint = config.getAuthorizationEndpoint();
+                    requestParameterSupported = config.getRequestParameterSupported();
+                    requestObjectSigningAlgValuesSupported = config.getRequestObjectSigningAlgValuesSupported();
+                    requestObjectEncryptionEncValuesSupported = config.getRequestObjectEncryptionEncValuesSupported();
+                    requestObjectEncryptionAlgValuesSupported = config.getRequestObjectEncryptionAlgValuesSupported();
+                    requestUriParameterSupported = config.getRequestUriParameterSupported();
+                    realmKeySet = createrealmKeySet();
+                    pushedAuthorizationRequestEndpoint = config.getPushedAuthorizationRequestEndpoint();
+
                     if (authServerBaseUrl != null) {
                         // keycloak-specific properties
                         accountUrl = getUrl(issuerUrl, ACCOUNT_PATH);
@@ -237,6 +263,26 @@ public class OidcClientConfiguration {
         }
     }
 
+    private JsonWebKeySet createrealmKeySet() throws Exception{
+        HttpGet request = new HttpGet(jwksUrl);
+        request.addHeader(ACCEPT, JSON_CONTENT_TYPE);
+        HttpResponse response = getClient().execute(request);
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            EntityUtils.consumeQuietly(response.getEntity());
+            throw new Exception(response.getStatusLine().getReasonPhrase());
+        }
+        InputStream inputStream = response.getEntity().getContent();
+        StringBuilder textBuilder = new StringBuilder();
+        try (Reader reader = new BufferedReader(new InputStreamReader
+                (inputStream, StandardCharsets.UTF_8))) {
+            int c = 0;
+            while ((c = reader.read()) != -1) {
+                textBuilder.append((char) c);
+            }
+        }
+        return new JsonWebKeySet(textBuilder.toString());
+    }
+
     protected OidcProviderMetadata getOidcProviderMetadata(String discoveryUrl) throws Exception {
         HttpGet request = new HttpGet(discoveryUrl);
         request.addHeader(ACCEPT, JSON_CONTENT_TYPE);
@@ -246,7 +292,7 @@ public class OidcClientConfiguration {
                 EntityUtils.consumeQuietly(response.getEntity());
                 throw new Exception(response.getStatusLine().getReasonPhrase());
             }
-            return JsonSerialization.readValue(response.getEntity().getContent(), OidcProviderMetadata.class);
+            return readValue(response.getEntity().getContent(), OidcProviderMetadata.class);
         } finally {
             request.releaseConnection();
         }
@@ -327,6 +373,22 @@ public class OidcClientConfiguration {
     public String getIssuerUrl() {
         resolveUrls();
         return issuerUrl;
+    }
+
+    public List<String> getRequestObjectSigningAlgValuesSupported() {
+        return requestObjectSigningAlgValuesSupported;
+    }
+
+    public boolean getRequestParameterSupported() {
+        return requestParameterSupported;
+    }
+
+    public boolean getRequestUriParameterSupported() {
+        return requestUriParameterSupported;
+    }
+
+    public String getAuthorizationEndpoint() {
+        return authorizationEndpoint;
     }
 
     public void setResource(String resource) {
@@ -651,4 +713,99 @@ public class OidcClientConfiguration {
         return tokenSignatureAlgorithm;
     }
 
+    public String getAuthenticationRequestFormat() {
+        return authenticationRequestFormat;
+    }
+
+    public void setAuthenticationRequestFormat(String requestObjectType ) {
+        this.authenticationRequestFormat = requestObjectType;
+    }
+
+    public String getRequestSignatureAlgorithm() {
+        return requestSignatureAlgorithm;
+    }
+
+    public void setRequestSignatureAlgorithm(String algorithm) {
+        this.requestSignatureAlgorithm = algorithm;
+    }
+
+    public String getRequestEncryptAlgorithm() {
+        return requestEncryptAlgorithm;
+    }
+
+    public void setRequestEncryptAlgorithm(String algorithm) {
+        this.requestEncryptAlgorithm = algorithm;
+    }
+
+    public String getRequestEncryptEncValue() {
+        return requestEncryptEncValue;
+    }
+
+    public void setRequestEncryptEncValue (String enc) {
+        this.requestEncryptEncValue = enc;
+    }
+
+    public String getRealmKey () {
+        return realmKey;
+    }
+
+    public void setRealmKey(String key) {
+        this.realmKey = key;
+    }
+
+    public String getClientKeyStore () {
+        return clientKeyStoreFile;
+    }
+
+    public void setClientKeyStore(String keyStoreFile) {
+        this.clientKeyStoreFile = keyStoreFile;
+    }
+
+    public String getClientKeyStorePassword () {
+        return clientKeyStorePass;
+    }
+
+    public void setClientKeyStorePassword(String pass) {
+        this.clientKeyStorePass = pass;
+    }
+
+    public String getClientKeyPassword () {
+        return clientKeyPass;
+    }
+
+    public void setClientKeyPassword(String pass) {
+        this.clientKeyPass = pass;
+    }
+
+    public String getClientKeystoreType() {
+        return clientKeystoreType;
+    }
+
+    public void setClientKeystoreType(String type) {
+        this.clientKeystoreType = type;
+    }
+
+    public String getClientKeyAlias() {
+        return clientKeyAlias;
+    }
+
+    public void setClientKeyAlias(String alias) {
+        this.clientKeyAlias = alias;
+    }
+
+    public JsonWebKeySet getrealmKeySet() {
+        return realmKeySet;
+    }
+
+    public void setrealmKeySet(JsonWebKeySet keySet) {
+        this.realmKeySet = keySet;
+    }
+
+    public String getPushedAuthorizationRequestEndpoint() {
+        return pushedAuthorizationRequestEndpoint;
+    }
+
+    public void setPushedAuthorizationRequestEndpoint(String url) {
+        this.pushedAuthorizationRequestEndpoint = url;
+    }
 }

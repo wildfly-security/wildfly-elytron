@@ -19,8 +19,7 @@
 package org.wildfly.security.http.oidc;
 
 import static org.wildfly.security.http.oidc.ElytronMessages.log;
-import static org.wildfly.security.http.oidc.Oidc.SSLRequired;
-import static org.wildfly.security.http.oidc.Oidc.TokenStore;
+import static org.wildfly.security.http.oidc.Oidc.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,6 +98,30 @@ public class OidcClientConfigurationBuilder {
         }
         if (oidcJsonConfiguration.getTokenCookiePath() != null) {
             oidcClientConfiguration.setOidcStateCookiePath(oidcJsonConfiguration.getTokenCookiePath());
+        }
+        if (oidcJsonConfiguration.getAuthenticationRequestFormat() != null) {
+            oidcClientConfiguration.setAuthenticationRequestFormat(oidcJsonConfiguration.getAuthenticationRequestFormat());
+        } else {
+            oidcClientConfiguration.setAuthenticationRequestFormat(REQUEST_TYPE_OAUTH2);
+        }
+        if (oidcJsonConfiguration.getRequestSignatureAlgorithm() != null) {
+            oidcClientConfiguration.setRequestSignatureAlgorithm(oidcJsonConfiguration.getRequestSignatureAlgorithm());
+        } else {
+            oidcClientConfiguration.setRequestSignatureAlgorithm(NONE);
+        }
+        if (oidcJsonConfiguration.getRequestEncryptAlgorithm() != null && oidcJsonConfiguration.getRequestEncryptEncValue() != null) { //both are required to encrypt the request object
+            oidcClientConfiguration.setRequestEncryptAlgorithm(oidcJsonConfiguration.getRequestEncryptAlgorithm());
+            oidcClientConfiguration.setRequestEncryptEncValue(oidcJsonConfiguration.getRequestEncryptEncValue());
+        }
+        if (oidcJsonConfiguration.getClientKeystore() != null && oidcJsonConfiguration.getClientKeystorePassword() != null &&
+                oidcJsonConfiguration.getClientKeyPassword() != null && oidcJsonConfiguration.getClientKeyAlias() != null) {
+            oidcClientConfiguration.setClientKeyStore(oidcJsonConfiguration.getClientKeystore());
+            oidcClientConfiguration.setClientKeyStorePassword(oidcJsonConfiguration.getClientKeystorePassword());
+            oidcClientConfiguration.setClientKeyPassword(oidcJsonConfiguration.getClientKeyPassword());
+            oidcClientConfiguration.setClientKeyAlias(oidcJsonConfiguration.getClientKeyAlias());
+            if (oidcJsonConfiguration.getClientKeystoreType() != null) {
+                oidcClientConfiguration.setClientKeystoreType(oidcJsonConfiguration.getClientKeystoreType());
+            }
         }
         if (oidcJsonConfiguration.getPrincipalAttribute() != null) oidcClientConfiguration.setPrincipalAttribute(oidcJsonConfiguration.getPrincipalAttribute());
 
@@ -189,7 +212,6 @@ public class OidcClientConfigurationBuilder {
         }
         return adapterConfig;
     }
-
 
     public static OidcClientConfiguration build(OidcJsonConfiguration oidcJsonConfiguration) {
         return new OidcClientConfigurationBuilder().internalBuild(oidcJsonConfiguration);
