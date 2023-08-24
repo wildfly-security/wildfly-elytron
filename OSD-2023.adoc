@@ -1,14 +1,14 @@
 ---
-layout: OSD-2022
+layout: OSD
 title: Open Source Day 2022
-permalink: /OSD-2022/
+permalink: /OSD/
 image:
   path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDayProject2022.png
 ---
 :page-liquid:
 
 
-Welcome Open Source Day participants! We're glad to have you join us for the hackathon.
+The WildFly Elytron project welcomes new contributors! Come join us.
 
 == Getting Started
 

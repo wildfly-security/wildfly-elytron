@@ -6,7 +6,7 @@ permalink: /contribute/
 :page-liquid:
 
 
-The WildFly Elytron project welcomes new contributors! Come join us.
+Welcome, Open Source Day participants! We are glad you have joined us!
 
 == Getting Started
 

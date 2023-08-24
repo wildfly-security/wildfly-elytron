@@ -442,14 +442,14 @@ table code {
   color: $yellow;
 }
 
-.blog-page, .post-page, .getting-started-page, .documentation, .OSD-2022-page, .hacktoberfest-page, .contribute-page, .guides-page, .setup-elytron {
+.blog-page, .post-page, .getting-started-page, .documentation, .OSD-2023-page, .hacktoberfest-page, .guides-page, .setup-elytron {
   padding: 10px 20px;
   a, p {
     font-size: 18px;
   }
 }
 
-.getting-started-page, .setup-elytron, .OSD-2022-page, .hacktoberfest-page, .contribute-page, .documentation {
+.getting-started-page, .setup-elytron, .OSD-2023-page, .hacktoberfest-page, .documentation {
    h1 {
        color: $title-colour;
        font-size: 35px;
@@ -473,7 +473,7 @@ table code {
    font-family: "Titillium Web", sans-serif;
 }
 
-.OSD-2022-page, .hacktoberfest-page, .contribute-page {
+.OSD-2022-page, .hacktoberfest-page {
   strong>a {
     font-weight: bold;
   }
