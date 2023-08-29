@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 28 Aug 2023 17:18:48 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 29 Aug 2023 19:19:10 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Begin your Open Source Journey with the WildFly Elytron Project at Open Source Day</title>
+            <link>
+                https://www.youtube.com/watch?v=vUWGPTCNl4I
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Tue, 29 Aug 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=vUWGPTCNl4I
+            </guid>
+        </item>
         
         <item>
             <title>Securing the WildFly Management Console with OpenID Connect</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 10 Nov 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Grace Hopper Celebration Recap</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-recap/
-            </link>
-            <description>
-                Last month, I had the opportunity to attend and speak at the 2022 Grace Hopper Celebration. This was my very first time attending this conference in person after attending virtually last year. This was the largest conference I have ever been to and it definitely had a lasting impact on...
-            </description>
-            <pubDate>Mon, 31 Oct 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc22-recap/
             </guid>
         </item>
         
