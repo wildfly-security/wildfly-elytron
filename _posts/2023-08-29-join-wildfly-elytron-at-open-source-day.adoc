@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Begin your Open Source Journey with the WildFly Elytron Project at Open Source Day'
+date: 2023-08-29
+tags: ghc ghc23 osd opensourceday
+synopsis: Check out this 2 minute video to learn why joining the WildFly Elytron project at Open Source Day could be the perfect opportunity for you.
+author: fjuma
+link: https://www.youtube.com/watch?v=vUWGPTCNl4I
+---
