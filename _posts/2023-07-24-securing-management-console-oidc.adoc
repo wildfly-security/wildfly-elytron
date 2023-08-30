@@ -31,11 +31,6 @@ To secure the WildFly Management Console with OIDC, there is configuration that 
 on the Keycloak side and in the `elytron-oidc-client` subsystem configuration.
 
 === Keycloak Configuration
-
-==== IMPORTANT: Supported Keycloak versions
-Currently, the ability to secure the WildFly Management Console with the Keycloak OpenID provider requires
-Keycloak 21.1.2 or earlier to be used. It will be possible to use Keycloak 22 or later in a future WildFly release.
-
 ==== Set up
 
 It's easy to set up Keycloak using Docker. Follow the steps in Keycloak's https://www.keycloak.org/getting-started/getting-started-docker[getting started guide]
