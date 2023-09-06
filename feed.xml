@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 30 Aug 2023 15:41:59 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 06 Sep 2023 15:25:04 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Join us at Open Source Day, No Prior Experience Needed</title>
+            <link>
+                https://www.youtube.com/watch?v=PAcqCa8u0Z8
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 06 Sep 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=PAcqCa8u0Z8
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Begin your Open Source Journey with the WildFly Elytron Project at Open Source Day</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 10 Nov 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=v5d6x3kT7lU
-            </guid>
-        </item>
-        
-        <item>
-            <title>Enabling Integrity on Filesystem realms</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/
-            </link>
-            <description>
-                Previously, any data in the filesystem realm was not verified, this meant that anyone with access to the identity files, could tamper with the data without any way of knowing. WildFly 27 adds support for filesystem integrity checking by adding signatures to identity files. This is done using a public-private...
-            </description>
-            <pubDate>Thu, 10 Nov 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/
             </guid>
         </item>
         
