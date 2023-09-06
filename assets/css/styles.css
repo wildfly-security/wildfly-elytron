@@ -370,6 +370,14 @@ table code {
   background-color: transparent;
 }
 
+ol.arabic {
+  font-size: 17px;
+}
+
+div.colist.arabic {
+  font-size: 17px;
+}
+
 .hljs {
   display: inline;
   overflow: inherit;

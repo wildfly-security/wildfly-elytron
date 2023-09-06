@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing WildFly Apps with SAML on OpenShift</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Securing WildFly Apps with SAML on OpenShift | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Securing WildFly Apps with SAML on OpenShift" />
+<meta name="author" content="Farah Juma" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Starting with WildFly 29, you can use Galleon to add Keycloak&#8217;s SAML adapter to your WildFly installation using the new Keycloak SAML Adapter feature pack. In this guide, we&#8217;ll show how to secure an application deployed to WildFly on OpenShift with SAML." />
+<meta property="og:description" content="Starting with WildFly 29, you can use Galleon to add Keycloak&#8217;s SAML adapter to your WildFly installation using the new Keycloak SAML Adapter feature pack. In this guide, we&#8217;ll show how to secure an application deployed to WildFly on OpenShift with SAML." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-09-06T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Securing WildFly Apps with SAML on OpenShift" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Farah Juma"},"dateModified":"2023-09-06T00:00:00+00:00","datePublished":"2023-09-06T00:00:00+00:00","description":"Starting with WildFly 29, you can use Galleon to add Keycloak&#8217;s SAML adapter to your WildFly installation using the new Keycloak SAML Adapter feature pack. In this guide, we&#8217;ll show how to secure an application deployed to WildFly on OpenShift with SAML.","headline":"Securing WildFly Apps with SAML on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button OSD 2023-menuitem" href="/wildfly-elytron/OSD/">OSD 2023</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar OSD 2023-menuitem" href="/wildfly-elytron/OSD/">OSD 2023</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing WildFly Apps with SAML on OpenShift</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | September 06, 2023
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/saml"> #saml</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/openshift"> #openshift</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/keycloak"> #keycloak</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/adapter"> #adapter</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/galleon-pack"> #galleon-pack</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/&title=Securing WildFly Apps with SAML on OpenShift" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Apps with SAML on OpenShift&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing WildFly Apps with SAML on OpenShift&amp;body=Securing WildFly Apps with SAML on OpenShift https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>Starting with WildFly 29, you can use Galleon to add <a href="https://www.keycloak.org/docs/latest/securing_apps/#using-saml-to-secure-applications-and-services">Keycloak&#8217;s SAML adapter</a> to your WildFly
+installation using the new Keycloak SAML Adapter feature pack. In this guide, we&#8217;ll show how
+to secure an application deployed to WildFly on OpenShift with SAML.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#example-application">Example Application</a></li>
+<li><a href="#log-into-the-openshift-cluster">Log Into the OpenShift Cluster</a></li>
+<li><a href="#start-keycloak">Start Keycloak</a>
+<ul class="sectlevel2">
+<li><a href="#openshift-cli">OpenShift CLI</a></li>
+<li><a href="#openshift-web-console">OpenShift Web Console</a></li>
+</ul>
+</li>
+<li><a href="#configure-keycloak">Configure Keycloak</a></li>
+<li><a href="#download-the-saml-keys">Download the SAML Keys</a></li>
+<li><a href="#download-and-edit-the-keycloak-adapter-configuration-file">Download and Edit the Keycloak Adapter Configuration File</a></li>
+<li><a href="#add-helm-configuration">Add Helm Configuration</a></li>
+<li><a href="#deploy-the-example-application-to-wildfly-on-openshift">Deploy the Example Application to WildFly on OpenShift</a>
+<ul class="sectlevel2">
+<li><a href="#behind-the-scenes">Behind the Scenes</a></li>
+</ul>
+</li>
+<li><a href="#get-the-application-url">Get the Application URL</a></li>
+<li><a href="#finish-configuring-keycloak">Finish Configuring Keycloak</a></li>
+<li><a href="#access-the-application">Access the Application</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide, you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Roughly 15 minutes</p>
+</li>
+<li>
+<p>An IDE</p>
+</li>
+<li>
+<p>Access to an OpenShift cluster (try the <a href="https://developers.redhat.com/developer-sandbox">Red Hat Developer Sandbox</a> for free)</p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/29/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-application"><a class="anchor" href="#example-application"></a>Example Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using a simple web application in this guide that consists of a single <a href="https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-saml/src/main/java/org/wildfly/security/examples/SecuredServlet.java">servlet</a>. We will secure
+this servlet using SAML.</p>
+</div>
+<div class="paragraph">
+<p>You&#8217;ll need to fork and then clone this Git repository: <a href="https://github.com/wildfly-security-incubator/elytron-examples.git" class="bare">https://github.com/wildfly-security-incubator/elytron-examples.git</a></p>
+</div>
+<div class="paragraph">
+<p>We will be using the example in the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-saml">simple-webapp-saml</a> directory in this repo.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="log-into-the-openshift-cluster"><a class="anchor" href="#log-into-the-openshift-cluster"></a>Log Into the OpenShift Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we can deploy our application, we need to log into an OpenShift cluster. You can log in via the <a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login -u myUserName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can log in using an API token:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login --token=myToken --server=myServerUrl</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can request the token via the <strong>Copy Login Command</strong> link in the OpenShift web console.</p>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t already have a project created, you can create one using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc new-project myProjectName</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="start-keycloak"><a class="anchor" href="#start-keycloak"></a>Start Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using Keycloak for our SAML identity provider.</p>
+</div>
+<div class="paragraph">
+<p>To start a Keycloak server in your project on OpenShift, use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc process -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/openshift/keycloak.yaml \
+    -p KEYCLOAK_ADMIN=admin \                 <i class="conum" data-value="1"></i><b>(1)</b>
+    -p KEYCLOAK_ADMIN_PASSWORD=admin \        <i class="conum" data-value="2"></i><b>(2)</b>
+    -p NAMESPACE=myNameSpace \                <i class="conum" data-value="3"></i><b>(3)</b>
+| oc create -f -</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Replace <code>admin</code> with the user name you would like to use when accessing the Keycloak Administration Console.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Replace <code>admin</code> with the password you would like to use when accessing the Keycloak Administration Console.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Replace <code>myNameSpace</code> with your project name.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>After running the above command, you should see the following output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">service/keycloak created
+route.route.openshift.io/keycloak created
+deploymentconfig.apps.openshift.io/keycloak created.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will take a few minutes for OpenShift to provision the Keycloak pod and its related resources.</p>
+</div>
+<div class="paragraph">
+<p>You can use the OpenShift CLI or the OpenShift web console, depending on your preference,
+to check if your Keycloak server has been provisioned.</p>
+</div>
+<div class="sect2">
+<h3 id="openshift-cli"><a class="anchor" href="#openshift-cli"></a>OpenShift CLI</h3>
+<div class="paragraph">
+<p>To make sure your Keycloak server has been provisioned using the OpenShift CLI, run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get pods</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After a little while, check for a message similar to the following message that indicates the pod is ready:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">NAME                READY     STATUS      RESTARTS   AGE
+keycloak-1-deploy   0/1       Completed   0          1h
+keycloak-1-l9kdx    1/1       Running     0          1h</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the Keycloak server has been provisioned, use the following command to find the URL for your Keycloak instance&#8217;s
+Admin Console:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">KEYCLOAK_URL=https://$(oc get route keycloak --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="openshift-web-console"><a class="anchor" href="#openshift-web-console"></a>OpenShift Web Console</h3>
+<div class="paragraph">
+<p>To make sure your Keycloak server has been provisioned using the OpenShift web console,
+navigate to the <strong>Topology</strong> view in the <strong>Developer</strong> perspective. You can click on your <strong>keycloak</strong> app
+to check its status. Once it is running, you can click on <strong>Open URL</strong> and then access Keycloak&#8217;s <strong>Administration Console</strong>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-keycloak"><a class="anchor" href="#configure-keycloak"></a>Configure Keycloak</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log into the Keycloak Admin Console using the username and password you specified earlier.</p>
+</li>
+<li>
+<p>Create a new realm called <strong>myrealm</strong>. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_realm">create a realm</a>.</p>
+</li>
+<li>
+<p>Add a role called <strong>user</strong>. This role will be required to access our simple web application. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#assigning-permissions-using-roles-and-groups">create a role</a>.</p>
+</li>
+<li>
+<p>Add a new user named <strong>alice</strong>. Set an <strong>email</strong> address for this new user, we&#8217;ll use <strong>alice@example.org</strong>. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_user">create a user</a>.</p>
+</li>
+<li>
+<p>Once the new user has been created, set a password for this new user from the <strong>Credentials</strong> tab.</p>
+</li>
+<li>
+<p>From the <strong>Role Mapping</strong> tab, assign <strong>alice</strong> the <strong>user</strong> role. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#proc-assigning-role-mappings_server_administration_guide">assign a role</a> to a user.</p>
+</li>
+<li>
+<p>Create a new client as follows:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Client type</strong> (or <strong>Client Protocol</strong>, depending on your Keycloak version): <strong>saml</strong></p>
+</li>
+<li>
+<p><strong>Client ID</strong>: <strong>simple-webapp-saml</strong></p>
+<div class="paragraph">
+<p>For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#_client-saml-configuration">create a SAML client</a>.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Once the new client has been created, in the <strong>Settings</strong> tab, scroll down to the <strong>SAML capabilities</strong> section and
+set the <strong>Name ID format</strong> to <strong>email</strong>. When accessing
+our servlet later on, we will see that this results in <code>HttpServletRequest.getUserPrincipal().getName()</code> returning
+the logged in user&#8217;s email address.</p>
+</li>
+<li>
+<p>Then set <strong>Force name ID format</strong> to <strong>On</strong>. Then click on <strong>Save</strong>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="download-the-saml-keys"><a class="anchor" href="#download-the-saml-keys"></a>Download the SAML Keys</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>From your <strong>simple-webapp-saml</strong> client in the Keycloak Admin Console, click on the <strong>Keys</strong> tab.</p>
+</li>
+<li>
+<p>Click on the <strong>Export</strong> button in the <strong>Signing keys config</strong> to export the SAML keys to a keystore.</p>
+</li>
+<li>
+<p>Set the <strong>Key alias</strong> to <strong>simple-webapp-saml</strong>, the <strong>Key password</strong> to <strong>password</strong>,
+the <strong>Realm certificate alias</strong> to <strong>myrealm</strong>, and the <strong>Store password</strong> to <strong>password</strong>.</p>
+<div class="paragraph">
+<p>Take note of the aliases and passwords that you specify here since these will be used
+when updating the <code>keycloak-saml.xml</code> file.</p>
+</div>
+</li>
+<li>
+<p>Click on <strong>Export</strong> to download the corresponding <code>keystore.jks</code> file.</p>
+</li>
+<li>
+<p>Create an OpenShift secret using this keystore by running the following command:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc create secret generic simple-webapp-saml-secret --from-file=/PATH/TO/keystore.jks</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="download-and-edit-the-keycloak-adapter-configuration-file"><a class="anchor" href="#download-and-edit-the-keycloak-adapter-configuration-file"></a>Download and Edit the Keycloak Adapter Configuration File</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>From your <strong>simple-webapp-saml</strong> client in the Keycloak Admin Console, click on the <strong>Action</strong> dropdown in the top right corner
+and select <strong>Download Adapter Config</strong>.</p>
+</li>
+<li>
+<p>For the <strong>Format option</strong>, select the <strong>Keycloak SAML Adapter keycloak-saml.xml</strong>, and download the file and place it in the example
+application&#8217;s <code>WEB-INF</code> directory, i.e., place the <code>keycloak-saml.xml</code> file in
+<code>/PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/src/main/webapp/WEB-INF</code>.</p>
+</li>
+<li>
+<p>Update the <code>keycloak-saml.xml</code> file as follows:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Set the <strong>SP</strong> <strong>entityID</strong> to <strong>"simple-webapp-saml"</strong></p>
+</li>
+<li>
+<p>Set the <strong>SP</strong> <strong>logoutPage</strong> to <strong>"/simple-webapp-saml"</strong></p>
+</li>
+<li>
+<p>Replace the <strong>SP</strong> <strong>Keys</strong> configuration with the following configuration, being sure to use the aliases
+and passwords you specified when exporting the SAML keys to the <code>keystore.jks</code> file:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">&lt;Keys&gt;
+    &lt;Key signing="true"&gt;
+        &lt;KeyStore password="password" file="/etc/keycloak-saml-secret-volume/keystore.jks"&gt;
+            &lt;PrivateKey alias="simple-webapp-saml" password="password"/&gt;
+            &lt;Certificate alias="myrealm"/&gt;
+        &lt;/KeyStore&gt;
+    &lt;/Key&gt;
+&lt;/Keys&gt;</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Push this new file to the <code>simple-webapp-saml</code> directory in your <code>elytron-examples</code> fork, making
+sure to push the changes to your fork&#8217;s default branch.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml
+git add src/main/webapp/WEB-INF/keycloak-saml.xml
+git commit -m "Added Keycloak adapter deployment descriptor file"
+git push origin main</code></pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="add-helm-configuration"><a class="anchor" href="#add-helm-configuration"></a>Add Helm Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s switch to the <code>charts</code> directory in our <code>simple-webapp-saml</code> example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice there&#8217;s a <code>helm.yaml</code> file in this directory with the following content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">build:
+  uri: https://github.com/YOUR_GITHUB_USERNAME/elytron-examples
+  contextDir: simple-webapp-saml
+deploy:
+  volumes:
+    - name: saml-keystore-volume
+      secret:
+        secretName: simple-webapp-saml-secret
+  volumeMounts:
+    - name: saml-keystore-volume
+      mountPath: /etc/keycloak-saml-secret-volume
+      readOnly: true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Replace <strong>YOUR_GITHUB_USERNAME</strong> in the <strong>build</strong> <strong>uri</strong> with your own GitHub username.</p>
+</div>
+<div class="paragraph">
+<p>The <code>helm.yaml</code> file specifies the Git repository that contains our application&#8217;s source code.</p>
+</div>
+<div class="paragraph">
+<p>Because we have modified the application&#8217;s source code by adding a <code>keycloak-saml.xml</code> file, you need
+to set the <strong>build</strong> <strong>uri</strong> in the <code>helm.yaml</code> file to point to your own fork.</p>
+</div>
+<div class="paragraph">
+<p>Notice that our <code>helm.yaml</code> file also refers to the OpenShift secret, <code>simple-webapp-saml-secret</code> we
+created earlier. This will be used to mount the <code>keystore.jks</code> file on our WildFly server pod.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploy-the-example-application-to-wildfly-on-openshift"><a class="anchor" href="#deploy-the-example-application-to-wildfly-on-openshift"></a>Deploy the Example Application to WildFly on OpenShift</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We can deploy our example application to WildFly on OpenShift using the WildFly Helm Chart:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm install saml-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts/helm.yaml wildfly/wildfly</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that this command specifies the file we updated, <code>helm.yaml</code>, that contains the values
+needed to build and deploy our application.</p>
+</div>
+<div class="paragraph">
+<p>The application will now begin to build. This will take a couple of minutes.</p>
+</div>
+<div class="paragraph">
+<p>The build can be observed using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get build -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once complete, you can follow the deployment of the application using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get deployment saml-app -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can check status directly from the OpenShift web console.</p>
+</div>
+<div class="sect2">
+<h3 id="behind-the-scenes"><a class="anchor" href="#behind-the-scenes"></a>Behind the Scenes</h3>
+<div class="paragraph">
+<p>While our application is building, let&#8217;s take a closer look at our application&#8217;s <a href="https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-saml/pom.xml">pom.xml</a> file.
+Notice that it contains the following <strong>wildfly-maven-plugin</strong> configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">&lt;plugin&gt;
+    &lt;groupId&gt;org.wildfly.plugins&lt;/groupId&gt;
+    &lt;artifactId&gt;wildfly-maven-plugin&lt;/artifactId&gt;
+    &lt;version&gt;${version.wildfly.plugin}&lt;/version&gt;
+    &lt;configuration&gt;
+        &lt;feature-packs&gt;
+            &lt;feature-pack&gt;
+                &lt;location&gt;org.wildfly:wildfly-galleon-pack:${version.wildfly}&lt;/location&gt;
+            &lt;/feature-pack&gt;
+            &lt;feature-pack&gt;
+                &lt;location&gt;org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}&lt;/location&gt;
+            &lt;/feature-pack&gt;
+            &lt;feature-pack&gt;
+                &lt;location&gt;org.keycloak:keycloak-saml-adapter-galleon-pack:${version.keycloak}&lt;/location&gt;
+            &lt;/feature-pack&gt;
+        &lt;/feature-packs&gt;
+        &lt;layers&gt;
+            &lt;layer&gt;cloud-server&lt;/layer&gt;
+            &lt;layer&gt;keycloak-client-saml&lt;/layer&gt;
+        &lt;/layers&gt;
+    &lt;/configuration&gt;
+    &lt;executions&gt;
+        &lt;execution&gt;
+            &lt;goals&gt;
+                &lt;goal&gt;package&lt;/goal&gt;
+            &lt;/goals&gt;
+        &lt;/execution&gt;
+    &lt;/executions&gt;
+ &lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This configuration is used to provision a WildFly server with the specified layers and with our application deployed.</p>
+</div>
+<div class="paragraph">
+<p>The <strong>keycloak-client-saml</strong> layer automatically adds the Keycloak SAML adapter to our WildFly installation.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="get-the-application-url"><a class="anchor" href="#get-the-application-url"></a>Get the Application URL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once the WildFly server has been provisioned, use the following command to find the URL for your example
+application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">SIMPLE_WEBAPP_SAML_URL=https://$(oc get route saml-app --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Application URL:              $SIMPLE_WEBAPP_SAML_URL/simple-webapp-saml" &amp;&amp;
+echo "Master SAML Processing URL:   $SIMPLE_WEBAPP_SAML_URL/simple-webapp-saml/saml" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll make use of these URLs in the next two sections.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finish-configuring-keycloak"><a class="anchor" href="#finish-configuring-keycloak"></a>Finish Configuring Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your <strong>simple-webapp-saml</strong> client in the Keycloak Administration Console,
+In the client settings, set <strong>Master SAML Processing URL</strong> to the <strong>Master SAML Processing URL</strong> that was output
+in the previous section and then click <strong>Save</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-application"><a class="anchor" href="#access-the-application"></a>Access the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your browser, navigate to the <strong>Application URL</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Click on <strong>Access Secured Servlet</strong>.</p>
+</div>
+<div class="paragraph">
+<p>You will be redirected to Keycloak to log in.</p>
+</div>
+<div class="paragraph">
+<p>Log in using the <strong>alice</strong> user we created earlier.</p>
+</div>
+<div class="paragraph">
+<p>Upon successful authentication, you will be redirected back to the example application.</p>
+</div>
+<div class="paragraph">
+<p>The example application simply outputs the email address associated with our logged in user.</p>
+</div>
+<div class="paragraph">
+<p>You should see the following output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Current Principal 'alice@example.org'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This indicates that we have successfully logged into our application!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide has shown how to secure an application deployed to WildFly on OpenShift with SAML. For additional
+information, feel free to check out the resources linked below.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.wildfly.org/29/Getting_Started_on_OpenShift.html">Getting Started with WildFly on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/29/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/getting-started/getting-started-openshift">Getting started with Keycloak on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/server_admin/index.html">Keycloak Server Administration Guide</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/securing_apps/#using-saml-to-secure-applications-and-services">Using SAML to secure applications and services</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
