@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Join us at Open Source Day, No Prior Experience Needed'
+date: 2023-09-06
+tags: ghc ghc23 osd opensourceday
+synopsis: Check out this 1 minute video to learn why anyone can contribute to the WildFly Elytron project, regardless of prior experience.
+author: dvilkola
+link: https://www.youtube.com/watch?v=PAcqCa8u0Z8
+---
