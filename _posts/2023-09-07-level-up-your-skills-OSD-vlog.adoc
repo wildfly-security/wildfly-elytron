@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Join us at Open Source Day and Level Up Your Skills'
+date: 2023-09-07
+tags: ghc ghc23 osd opensourceday
+synopsis: Check out this 1 minute video to learn how you can contribute to the WildFly Elytron project and level up your skills in Java, git and more!
+author: prarthonapaul
+link: https://www.youtube.com/watch?v=9i_MiK0W2n4
+---
