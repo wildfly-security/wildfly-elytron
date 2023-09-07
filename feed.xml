@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 06 Sep 2023 17:49:38 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 07 Sep 2023 15:06:33 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Join us at Open Source Day and Level Up Your Skills</title>
+            <link>
+                https://www.youtube.com/watch?v=9i_MiK0W2n4
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Thu, 07 Sep 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=9i_MiK0W2n4
+            </guid>
+        </item>
         
         <item>
             <title>Securing WildFly Apps with SAML on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 14 Dec 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Filesystem Realm Integrity</title>
-            <link>
-                https://www.youtube.com/watch?v=Tzd9GTr8kwE
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 07 Dec 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=Tzd9GTr8kwE
             </guid>
         </item>
         
