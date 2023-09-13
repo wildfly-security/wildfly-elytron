@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 07 Sep 2023 15:06:33 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 13 Sep 2023 13:57:57 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Join us at Open Source Day on September 22, 2023 and Make Meaningful Contributions</title>
+            <link>
+                https://www.youtube.com/watch?v=nevZyt2TkzI
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 13 Sep 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=nevZyt2TkzI
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Join us at Open Source Day and Level Up Your Skills</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 22 Dec 2022 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything-recap/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Ask Me Anything with the WildFly Elytron Team</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything/
-            </link>
-            <description>
-                The WildFly Elytron team will be having an Ask Me Anything (AMA) session on Monday Dec. 19th on chat. This is your chance to ask any questions about: Contributing to the WildFly Elytron project How to use WildFly Elytron General questions about contributing to open source projects The AMA session...
-            </description>
-            <pubDate>Wed, 14 Dec 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything/
             </guid>
         </item>
         
