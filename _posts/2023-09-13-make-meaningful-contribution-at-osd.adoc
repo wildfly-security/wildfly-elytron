@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Join us at Open Source Day on September 22, 2023 and Make Meaningful Contributions'
+date: 2023-09-13
+tags: ghc ghc23 osd opensourceday
+synopsis: Check out this short video to learn how you can join the WildFly Elytron project and make meaningful contributions to the open source community!
+author: szaldana
+link: https://www.youtube.com/watch?v=nevZyt2TkzI
+---
