@@ -340,7 +340,10 @@ git config --global user.name "&lt;Your Name&gt;"</code></pre>
 <p>Now go to your fork of the repository, the URL will be <strong><a href="https://github.com//wildfly-elytron" class="bare">https://github.com//wildfly-elytron</a></strong>. Replace <code>&lt;USERNAME&gt;</code> with your GitHub username.</p>
 </li>
 <li>
-<p>At the top right, you&#8217;ll see there is a green "Code" button. Click on that, and for the easiest setup choose the "HTTPS" tab. Click on the button next to the URL to copy it.</p>
+<p>At this point, you can follow the GitHub guide for <a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account?platform=mac">adding a new SSH key to your GitHub account</a> to set up an SSH key so you can clone your repository.</p>
+</li>
+<li>
+<p>At the top right, you will see there is a green "Code" button. Click on that and choose the "SSH" tab. Click on the button next to the url to copy it.</p>
 <div class="imageblock responsive-img_capped text-center">
 <div class="content">
 <img src="../../assets/images/setup-elytron/setup-elytron_github-clone.png" alt="Screenshot of options under &quot;Code&quot; button, under HTTPS tab.Default URL is https://github.com//wildfly-elytron.git">
@@ -348,7 +351,7 @@ git config --global user.name "&lt;Your Name&gt;"</code></pre>
 </div>
 </li>
 <li>
-<p>Open your terminal and navigate to the directory where you want to clone this project. Then enter <code>git clone [URL]</code> and replace <code>[URL]</code> with the URL you copied in step 4. Now you should see a directory called <code>wildfly-elytron</code> that contains the code for the WildFly Elytron project.</p>
+<p>Open your terminal and navigate to the directory where you want to clone this project. Then enter <code>git clone [URL]</code> and replace <code>[URL]</code> with the URL you copied in step 6. Now you should see a directory called <code>wildfly-elytron</code> that contains the code for the WildFly Elytron project.</p>
 </li>
 <li>
 <p>Next, add a remote reference to upstream, for pulling future updates from the source repository. Execute the following command in the terminal:</p>
