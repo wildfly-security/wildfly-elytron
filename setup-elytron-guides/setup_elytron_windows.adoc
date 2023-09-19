@@ -101,12 +101,13 @@ image::setup-elytron_fork-repo.png['Screenshot of buttons at top of wildfly-elyt
 
 
 . Now go to your fork of the repository, the URL will be *https://github.com/<USERNAME>/wildfly-elytron*. Replace `<USERNAME>` with your GitHub username.
-. At the top right, you'll see there is a green "Code" button. Click on that, and for the easiest setup choose the "HTTPS" tab. Click on the button next to the URL to copy it.
+. At this point, you can follow the GitHub guide for https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account?platform=windows[adding a new SSH key to your GitHub account] to set up an SSH key so you can clone your repository.
+. At the top right, you will see there is a green "Code" button. Click on that and choose the "SSH" tab. Click on the button next to the url to copy it.
 +
 [.responsive-img_capped.text-center]
 image::setup-elytron_github-clone.png['Screenshot of options under "Code" button, under HTTPS tab. Default URL is https://github.com/<USERNAME>/wildfly-elytron.git']
 
-. Open your terminal and navigate to the directory where you want to clone this project. Then enter `git clone [URL]` and replace `[URL]` with the URL you copied in step 4. Now you should see a directory called `wildfly-elytron` that contains the code for the WildFly Elytron project.
+. Open your terminal and navigate to the directory where you want to clone this project. Then enter `git clone [URL]` and replace `[URL]` with the URL you copied in step 6. Now you should see a directory called `wildfly-elytron` that contains the code for the WildFly Elytron project.
 . Next, add a remote reference to upstream, for pulling future updates from the source repository. Execute the following command in the terminal:
 +
 [source,bash]
