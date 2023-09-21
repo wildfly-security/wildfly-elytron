@@ -29,24 +29,34 @@ toc::[]
 
     .. If you run `brew -v` and you get an error, you need to add Homebrew to your path. The output of the Homebrew installation will give you the commands needed to add to your path.
 . Install Java: `brew install java11`
-. Create a symbolic link at _/Library/Java/JavaVirtualMachines/openjdk.jdk_:
+. Now run the following command to check if the Java installation was successful:
 +
 [source,zsh]
 ----
-sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+brew search java
 ----
+    .. Look for `java11` listed under the `Formulae` section with a green checkmark next to it.
 
-. Configure `JAVA_HOME` and `PATH` environment variables for Java  (or link:../restoring-configuration/#temporary-environment-variable-configuration[use a temporary configuration]):
-    .. Open the configuration file for your shell, which you can identify by typing `echo $0`. If the response is `zsh`, open the file _~/.zshrc_, and if it is `sh`, edit _~/.profile_. You can look up config files for other shells by searching the name of the shell, followed by "config file" (ex. "bash config file").
-    .. Go to the end of the config file, and add the following lines:
+. Next we need to create a symbolic link so the system java wrappers can find it and add the path to `JAVA_HOME` to the environment variables. To do that, first run the following command:
 +
 [source,zsh]
 ----
-export JAVA_HOME=$(/usr/libexec/java_home)
-export PATH=$JAVA_HOME/bin:$PATH
+brew info java11
 ----
+    .. The output will be something like this:
++
+[source,zsh]
+----
+For the system Java wrappers to find this JDK, symlink it with
+sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+openjdk@11 is keg-only, which means it was not symlinked into /usr/local,
+because this is an alternate version of another formula.
+If you need to have openjdk@11 first in your PATH, run:
+echo ‘export PATH=”/usr/local/opt/openjdk@11/bin:$PATH”’ >> ~/.zshrc
+----
+    .. Follow the instructions from the output you receive to create the symbolic link and add the path to the environment variables.
 
-    .. Run `source <config file>`, substituting in your config file, to load the changes into the terminal.
+    .. Lastly, run `source <config file>`, substituting in your config file, to load the changes into the terminal.
 . Now run `java --version` again. You should now successfully see the Java 11 version that was installed.
 
 == Installing Maven
