@@ -1147,10 +1147,7 @@ public final class AuthenticationConfiguration {
     }
 
     public AuthenticationConfiguration useWebServices(Map<String, ?> webservicesProperties) {
-        final HashMap<String, Object> newMap = new HashMap<>();
-        newMap.putAll(webservicesProperties);
-        newMap.values().removeIf(Objects::isNull);
-        return new AuthenticationConfiguration(this, SET_WEBSERVICES_PROPS, optimizeMap(newMap));
+        return useWebServicesProperties(webServicesProperties);
     }
 
     /**
