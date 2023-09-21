@@ -208,31 +208,47 @@
 <p>Install Java: <code>brew install java11</code></p>
 </li>
 <li>
-<p>Create a symbolic link at <em>/Library/Java/JavaVirtualMachines/openjdk.jdk</em>:</p>
+<p>Now run the following command to check if the Java installation was successful:</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk</code></pre>
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">brew search java</code></pre>
 </div>
 </div>
-</li>
-<li>
-<p>Configure <code>JAVA_HOME</code> and <code>PATH</code> environment variables for Java  (or <a href="../restoring-configuration/#temporary-environment-variable-configuration">use a temporary configuration</a>):</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Open the configuration file for your shell, which you can identify by typing <code>echo $0</code>. If the response is <code>zsh</code>, open the file <em>~/.zshrc</em>, and if it is <code>sh</code>, edit <em>~/.profile</em>. You can look up config files for other shells by searching the name of the shell, followed by "config file" (ex. "bash config file").</p>
+<p>Look for <code>java11</code> listed under the <code>Formulae</code> section with a green checkmark next to it.</p>
+</li>
+</ol>
+</div>
 </li>
 <li>
-<p>Go to the end of the config file, and add the following lines:</p>
+<p>Next we need to create a symbolic link so the system java wrappers can find it and add the path to <code>JAVA_HOME</code> to the environment variables. To do that, first run the following command:</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">export JAVA_HOME=$(/usr/libexec/java_home)
-export PATH=$JAVA_HOME/bin:$PATH</code></pre>
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">brew info java11</code></pre>
+</div>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>The output will be something like this:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-zsh hljs" data-lang="zsh">For the system Java wrappers to find this JDK, symlink it with
+sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+openjdk@11 is keg-only, which means it was not symlinked into /usr/local,
+because this is an alternate version of another formula.
+If you need to have openjdk@11 first in your PATH, run:
+echo ‘export PATH=”/usr/local/opt/openjdk@11/bin:$PATH”’ &gt;&gt; ~/.zshrc</code></pre>
 </div>
 </div>
 </li>
 <li>
-<p>Run <code>source &lt;config file&gt;</code>, substituting in your config file, to load the changes into the terminal.</p>
+<p>Follow the instructions from the output you receive to create the symbolic link and add the path to the environment variables.</p>
+</li>
+<li>
+<p>Lastly, run <code>source &lt;config file&gt;</code>, substituting in your config file, to load the changes into the terminal.</p>
 </li>
 </ol>
 </div>
