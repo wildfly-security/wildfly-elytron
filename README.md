@@ -39,6 +39,11 @@ Our [contribution guide](https://github.com/wildfly-security/wildfly-elytron/blo
  
 For more details, check out our [getting started guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/) for developers.
 
+Example Feature Demos
+---------------------
+
+Our [elytron-examples](https://github.com/wildfly-security-incubator/elytron-examples) repository contains example demos of WildFly Elytron features.
+
 Get Help
 --------
 There are a couple ways to get in touch with us.
