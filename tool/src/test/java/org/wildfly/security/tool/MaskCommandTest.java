@@ -65,7 +65,7 @@ public class MaskCommandTest extends AbstractCommandTest {
         String[] retValLines = retVal.split(LINE_SEPARATOR);
 
         assertTrue("Message about invalid salt parameter must be present", retValLines[0].contains("Invalid \"salt\" parameter. Generated value"));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.", retValLines[1]);
         assertTrue("Message about invalid salt parameter must be present", retValLines[2].contains("MASK-"));
     }
 
