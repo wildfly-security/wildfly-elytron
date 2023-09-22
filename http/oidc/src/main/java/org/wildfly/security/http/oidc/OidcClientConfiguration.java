@@ -419,10 +419,7 @@ public class OidcClientConfiguration {
     }
 
     public boolean isSSLEnabled() {
-        if (SSLRequired.NONE == sslRequired) {
-            return false;
-        }
-        return true;
+        return SSLRequired.NONE != sslRequired;
     }
 
     public int getConfidentialPort() {
