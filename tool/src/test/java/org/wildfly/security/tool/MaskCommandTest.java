@@ -52,7 +52,7 @@ public class MaskCommandTest extends AbstractCommandTest {
 
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
         String retValNoNewLine = retVal.substring(0, retVal.indexOf(LINE_SEPARATOR));
-        assertTrue("output has to be the as pre-generated one", ("MASK-" + pbGenerated + ";" + "ASDF1234" + ";" + 123).equals(retValNoNewLine));
+        assertEquals("output has to be the as pre-generated one", "MASK-" + pbGenerated + ";" + "ASDF1234" + ";" + 123, retValNoNewLine);
     }
 
     @Test
