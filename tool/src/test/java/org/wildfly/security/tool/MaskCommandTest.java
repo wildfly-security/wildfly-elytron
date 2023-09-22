@@ -147,9 +147,9 @@ public class MaskCommandTest extends AbstractCommandTest {
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
         String[] retValLines = retVal.split(LINE_SEPARATOR);
 
-        assertTrue("IllegalArgumentException must be present", ("java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive").equals(retValLines[0]));
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[1]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[2]));
+        assertEquals("IllegalArgumentException must be present", "java.lang.IllegalArgumentException: ELYTOOL00007: Invalid \"iteration\" value. Must be an integer between 1 and 2147483647, inclusive", retValLines[0]);
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.", retValLines[1]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[2]);
     }
 
     @Test
