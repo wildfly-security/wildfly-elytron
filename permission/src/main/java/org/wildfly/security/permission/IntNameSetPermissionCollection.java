@@ -33,10 +33,6 @@ final class IntNameSetPermissionCollection extends NameSetPermissionCollection {
         super(sourcePermission, nameEnumeration);
     }
 
-    private Permission permissionFor(int id) {
-        return ((AbstractNamedPermission<?>)getSourcePermission()).withName(getNameEnumeration().nameOf(id));
-    }
-
     protected void doAdd(final AbstractPermission<?> permission) {
         int setBits= getBitsForName(permission);
         final AtomicInteger bitSet = this.bitSet;
@@ -112,6 +108,10 @@ final class IntNameSetPermissionCollection extends NameSetPermissionCollection {
 
         public Permission next() {
             return nextElement();
+        }
+
+        private Permission permissionFor(int id) {
+            return ((AbstractNamedPermission<?>)getSourcePermission()).withName(getNameEnumeration().nameOf(id));
         }
     }
 
