@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.tool;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.tool.Params.LINE_SEPARATOR;
 
@@ -80,8 +81,9 @@ public class MaskCommandTest extends AbstractCommandTest {
         String retVal = executeCommandAndCheckStatusAndGetOutput(args);
         String[] retValLines = retVal.split(LINE_SEPARATOR);
 
-        assertTrue("Message about invalid iteration parameter must be present", ("Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.").equals(retValLines[0]));
-        assertTrue("Output has to be the as pre-generated one", ("MASK-" + pregenerated + ";" + salt + ";" + defaultIteration).equals(retValLines[1]));
+        assertEquals("Message about invalid iteration parameter must be present", "Invalid \"iteration\" parameter. Default value \"" + defaultIteration + "\" will be used.",
+                retValLines[0]);
+        assertEquals("Output has to be the as pre-generated one", "MASK-" + pregenerated + ";" + salt + ";" + defaultIteration, retValLines[1]);
     }
 
     @Test
