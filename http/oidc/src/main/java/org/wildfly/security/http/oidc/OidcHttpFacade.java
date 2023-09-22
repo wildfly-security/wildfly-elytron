@@ -121,8 +121,7 @@ public class OidcHttpFacade {
                 SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
                 IdentityCredentialCallback credentialCallback = new IdentityCredentialCallback(new BearerTokenCredential(OidcPrincipal.class.cast(principal).getOidcSecurityContext().getTokenString()), true);
                 callbackHandler.handle(new Callback[]{credentialCallback, AuthenticationCompleteCallback.SUCCEEDED, securityIdentityCallback});
-                SecurityIdentity securityIdentity = securityIdentityCallback.getSecurityIdentity();
-                return securityIdentity;
+                return securityIdentityCallback.getSecurityIdentity();
            }
         } catch (UnsupportedCallbackException | IOException e) {
             throw new RuntimeException(e);
