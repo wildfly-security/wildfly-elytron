@@ -134,6 +134,16 @@ public class DistributedSecurityRealmTest {
     }
 
     @Test
+    public  void testVerifyEvidence() throws Exception {
+
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("user1"));
+        Assert.assertTrue(identity.verifyEvidence(new PasswordGuessEvidence(pass1)));
+        Assert.assertFalse(identity.verifyEvidence(new PasswordGuessEvidence(pass2)));
+        Assert.assertFalse(identity.verifyEvidence(new PasswordGuessEvidence(pass3)));
+        identity.dispose();
+    }
+
+    @Test
     public void testEvidence() throws Exception {
         RealmIdentity identity = realm.getRealmIdentity(new SimpleEvidence("evidenceUser", true));
         Assert.assertTrue(identity.exists());
