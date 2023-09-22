@@ -17,12 +17,7 @@
  */
 package org.wildfly.security.ssl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.wildfly.security.ssl.test.util.CAGenerationTool.SIGNATURE_ALGORTHM;
 import static org.wildfly.security.x500.X500.OID_AD_OCSP;
 import static org.wildfly.security.x500.X500.OID_KP_OCSP_SIGNING;
@@ -863,10 +858,10 @@ public class SSLAuthenticationTest {
                 }
 
                 if (oneWay) {
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default (ELY-1917)
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol());// since TLS 1.3 is not enabled by default (ELY-1917)
                 } else {
-                    assertFalse(serverSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
-                    assertFalse(clientSocket.getSession().getProtocol().equals("TLSv1.3")); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", serverSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
+                    assertNotEquals("TLSv1.3", clientSocket.getSession().getProtocol()); // since TLS 1.3 is not enabled by default
                 }
                 return received;
             } catch (Exception e) {
