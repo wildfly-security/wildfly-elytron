@@ -50,9 +50,7 @@ public class OidcPrincipal<T extends OidcSecurityContext> implements Principal, 
 
         OidcPrincipal that = (OidcPrincipal) o;
 
-        if (! name.equals(that.name)) return false;
-
-        return true;
+        return name.equals(that.name);
     }
 
     @Override
