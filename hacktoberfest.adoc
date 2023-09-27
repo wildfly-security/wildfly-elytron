@@ -3,7 +3,7 @@ layout: hacktoberfest
 title: Hacktoberfest
 permalink: /hacktoberfest/
 image:
-  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/hacktoberfest2022.png
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/hacktoberfest2023.png
 ---
 :page-liquid:
 
@@ -18,7 +18,7 @@ https://hacktoberfest.com/[Hacktoberfest] takes places annually during the month
 
 2. Submit 4 approved PRs against participating project repositories during the month of October
 
-3. Choose whether you’d like to receive a Hacktoberfest t-shirt or have a tree planted in your name
+3. You'll have the option to have a tree planted in your name and you can obtain a unique digital reward. Visit the https://hacktoberfest.com/participation/[Hacktoberfest site] for more information.
 
 == Getting Started
 
