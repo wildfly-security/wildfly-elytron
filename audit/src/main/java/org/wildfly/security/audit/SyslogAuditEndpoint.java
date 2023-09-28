@@ -66,7 +66,13 @@ public class SyslogAuditEndpoint implements AuditEndpoint {
      */
     SyslogAuditEndpoint(Builder builder) throws IOException {
         maxReconnectAttempts = builder.maxReconnectAttempts;
-        protocol = builder.ssl ? Protocol.SSL_TCP : builder.tcp ? Protocol.TCP : Protocol.UDP;
+        if (builder.ssl) {
+            protocol = Protocol.SSL_TCP;
+        } else if (builder.tcp) {
+            protocol = Protocol.TCP;
+        } else {
+            protocol = Protocol.UDP;
+        }
         syslogHandler = new SyslogHandler(checkNotNullParam("serverAddress", builder.serverAddress), builder.port, Facility.SECURITY,
                 builder.format, protocol, checkNotNullParam("hostName", builder.hostName));
 
