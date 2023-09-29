@@ -1,0 +1,327 @@
+---
+layout: post
+title: 'Sending OpenID Connect Authentication Requests Using Request Parameters'
+date: 2023-09-29
+tags: oidc Keycloak JWT encryption authentication
+synopsis: How to send requests using JWTs on an application deployed on WildFly and secured using OpenID Connect.
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+A future release of WildFly includes the ability to configure request parameters to send authentication requests as JWTs
+using either `request` a `request_uri`. The feature also includes the ability to sign and/or encrypt the JWT for
+added security.
+
+== OpenID Connect
+https://openid.net/developers/how-connect-works/[OpenID Connect] is an identity layer on top of the OAuth 2.0 protocol
+that makes it possible for a client to verify a user’s identity based on authentication that’s performed by an OpenID
+provider. The OAuth 2.0 request syntax sends the Request Object in the request by adding them directly to the URL.
+However, OpenID Connect allows the Request Object to be sent as a JWT using the
+https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests[request parameter], which can be signed and optionally
+encrypted. This adds an added layer of protection, as the parameters are no longer human-readable.
+
+Note: This example demonstrates how to configure the server in two different ways:
+
+* Deployment Configuration
+
+* Subsystem Configuration
+
+== Setting up the KeyPairs
+
+In order for us to sign the JWTs, we will need to use key pairs corresponding to the algorithms specified. These are
+tokens communicated between the client and the server and are used to sign and encrypt JWTs.
+
+=== About Key Pairs
+
+Typically key pairs have 3 components: 
+
+* Private Key: This is used to sign the JWT. In this case, we will create the key pair have access to the private key.
+Private keys are also used to decrypt JWT's. Keycloak also communicates part of some keyPairs to us and they will be
+using the private keys of those keyPairs to decrypt the JWT's we send.
+
+* Public Key: This is used to encrypt the JWT. We use the public key that Keycloak shares with us to encrypt our JWT's.
+Public keys can be extracted from the certificate.
+
+* Certificate: This is used to verify the signatures. This is communicated to the Keycloak sever. Certificate contains
+the public key.
+
+Some keys are symmetric, meaning they only have 1 secret key that is used by both the client and the server. An example
+of a symmetric algorithm is HS256, where the same key is used to sign a JWT and verify the signature.
+
+=== Generating Key Pairs
+
+We can use the `keytool` tool in the cli to generate our keys. We can genetate keystore files of type `JKS` and `PKCS12`
+for our application. The general format for doing this is as follows:
+```
+keytool -genkeypair -alias <keystore_alias> -keyalg <algorithm> -keysize <key_size> -validity <validity_in_days>
+-keystore <keystore_name> -dname "<distinguished_name>" -keypass <private_key_password> -storepass <keystore_password>
+```
+
+==== Generating JKS Keystore
+
+Let us first create a JKS file with 2 different keys. Let's first generate an RSA keyPair: 
+```
+keytool -genkey -alias rsaKey -keyalg RSA -validity 365 -keystore server.keystore -storetype JKS -storepass password -keypass password
+```
+You will see some prompts, for which you can press `enter` to leave them blank. For more information visit
+https://access.redhat.com/documentation/en-us/red_hat_jboss_data_virtualization/6.2/html/security_guide/create_a_privatepublic_key_pair_with_keytool[here].
+
+To generate an elliptical curve key, enter the following commands: 
+```
+keytool -genkey -alias rsaKey -keyalg RSA -validity 365 -keystore server.keystore -storetype JKS -storepass password -keypass password
+```
+
+==== Generating PKCS12 Keystore
+
+For RSA, please use the following commands: 
+```
+keytool -genkeypair -alias rsaKey -keyalg RSA -keysize 2048 -validity 365 -keystore Keycloak.keystore.pkcs12 -dname "CN=client" -keypass password -storepass password
+```
+And for Elliptical Curve keys, use the following commands: 
+```
+keytool -genkeypair -alias ecKey -keyalg EC -groupname secp256r1 -validity 365 -keystore Keycloak.keystore.pkcs12 -dname "CN=client" -keypass password -storepass password
+``` 
+Note that in this case, we have specified the key size for the RSA keys, and the groupname for Elliptical Curve keys.
+For the RSA keys, the same keysize can be used for RSA algorithms with different SHA values (i.e. RSA256, RSA512).
+However, this is not the case for Elliptical Curve keys. For ES256 algorithms, you need to use `-groupname secp256r1`
+and for ES384, use `-groupname secp384r1` and so on.
+
+== Setting up Keycloak OpenID Provider
+
+It’s easy to set up Keycloak using Docker. Follow the steps in Keycloak’s
+https://www.Keycloak.org/getting-started/getting-started-docker[getting started guide] to start Keycloak, create a realm
+called `myrealm`, and a client called `myclient`. When registering the client, toggle the `Client authentication` option
+to `on`.
+
+After registering our client, `myclient`, we also need to configure `valid redirect URIs`. Simply click on `Clients` and
+then on `myclient`. In the `Valid Redirect URIs` field, enter http://localhost:8090/simple-webapp-oidc/*. Once you hit
+`Save`, you should see a new tab called `Keys` appear.
+
+Navigate to that tab and click on `Import`. Under `Archive format`, choose `PKCS12` from the dropdown. Under `Key alias`,
+enter the alias of the RSA key you just created, under `Store password`, enter the password of the keystore you created
+and click on the `Browse` button to import the keystore file. Note that when we created the keystore, we specified a key
+password and a keystore password. Here, we are only using the keystore password. While we set them both to be the same,
+they do not have to be.
+
+Finally, create a user called `alice` whose `First name` is Alice and `Last name` is Smith. 
+
+Next, navigate to the `Credentials` tab and create a password for Alice. Toggle the `Temporary` switch off, so you are
+not prompted to update the password after the first login.
+
+== Server Configuration
+
+First clone the `elytron-example` repo locally and navigate to the `elytron-oidc-request` project:
+```
+    git clone https://github.com/wildfly-security-incubator/elytron-examples
+    cd elytron-examples/elytron-oidc-request
+```
+
+In order to secure an application using OpenID Connect, we need to either configure the server using the
+`elytron-oidc-client` subsystem or add deployment settings to the application itself. This example will show you the
+steps for both.
+
+=== Deployment Configuration
+
+The configuration required to secure an application with OpenID Connect can be specified in the deployment. We will
+first be sending a unsigned(plaintext) request, signified by the "none" algorithm.
+
+The first step is to set up the deployment configuration using the `oidc.json` file in the `WEB-INF` directory of this
+project. The following will be the contents of the `oidc.json` file once we have specified the scope values:
+```
+{
+    "client-id" : "myclient",
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm",
+    "public-client" : "false",
+    "authentication-request-format" : "request",
+    "request-object-signing-algorithm" : "none",
+    "principal-attribute" : "preferred_username",
+    "ssl-required" : "EXTERNAL"
+    "credentials" : {
+    	"secret" : "<INSERT CLIENT SECRET>"
+    }
+}
+```
+
+Note that we have specified the `authentication-request-format` to be `request`, meaning, we are sending it by value. We
+have specified the signing algorithm to be `none`. Alternatively, we could not have specified it too, since the default
+value is already `none`. Since we are not signing the JWT, we don't need to configure the keystore. Go to the Keycloak
+admin console to find the client secret and add it to the `secret` field.
+
+Next, navigate to the OIDC application's `web.xml` file and look for the following command: 
+```
+<login-config>
+    <auth-method>OIDC</auth-method>
+</login-config>
+```
+
+This tells her WildFly server that we will be using OpenID Connect to authenticate and authorize our user.
+
+If you would like to configure the `elytron-oidc-client` subsystem instead, then follow the steps outlines in the next
+section.
+
+Note that if you have both the subsystem and the deployment configured, then the `elytron-oidc-client` subsystem
+configuration will override the deployment configuration.
+
+=== Subsystem Configuration
+
+To configure the server using the `elytron-oidc-client` subsystem, we will be making use of the `WILDFLY_HOME` project. 
+
+First start the server. We will be using a port offset of 10 since our Keycloak instance is already exposed on port 8080.  
+```
+    WILDFLY_HOME/bin/standalone.sh -Djboss.socket.binding.port-offset=10
+```
+
+Open a new terminal, navigate to the `WILDFLY_HOME` directory and enter the following commands:
+```
+    ./bin/jboss-cli.sh --connect --controller=127.0.0.1:10000
+```
+
+We are specifying the port here because of the port offset we used earlier. Once you have established a connection, type
+in the following commands:
+
+```
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:add(client-id=myclient, provider-url=http://localhost:8080/realms/myrealm, authentication-request-format=request, request-object-signing-algorithm=none, public-client=false)
+
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war/credential=mySecret:add(secret=<INSERT CLIENT SECRET>)
+
+    reload
+```
+You should see the following result when you run the script:
+
+```$xslt
+    {"outcome" => "success"}
+```
+
+== Deploying and Accessing the Application
+
+Now we are ready to deploy the web app using WildFly. From the `elytron-oidc-client-scope` directory run the following
+commands:
+```
+    mvn wildfly:deploy -Dwildfly.port=10000
+```
+
+Now, let’s try accessing our application using http://localhost:8090/simple-webapp-oidc/.
+
+Click on "Access Secured Servlet".
+
+Now, you’ll be redirected to Keycloak's login page. If you click on the url on the search bar, you will see the request
+value specified in the URL along with `client-id`, `response_type`, `redirect_uri` and the `openid` scope. These
+parameters are required to be included in the auth request according to the OAuth2 specifications.
+
+Log in with `Alice` and the password that you set when configuring Keycloak.
+
+Next, you’ll be redirected back to our application, and you should see the "Secured Servlet" page. That means that we
+were able to successfully log in to our application using the Keycloak OpenID provider!
+
+=== Sending the JWT by Reference 
+
+Now try changing the value for `authentication-request-format` to `request_uri` and keep everything else the same. You
+can do this either in the deployment configuration by editing the `oidc.json` file or in the subsystem configuration by
+typing in the following commands:
+```
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=authentication-request-format, value=request_uri)
+    reload
+```
+
+Save the oidc.json file and deploy the application again. If you are using the subsystem configuration, please type in
+`reload` to apply the changes and access http://localhost:8090/simple-webapp-oidc/. You will now see the request_uri
+appear in the url. The `request_uri` parameter is used to send the JWT by reference. The Elytron client sends a PAR
+request to the Pushed Authorization Request Endpoint (http://localhost:8080/realms/myrealm/protocol/openid-connect/ext/par/request),
+which creates the request_uri given the JWT Request Object. Once the reference has been made it is only valid for a
+certain amount of time specified in the structure returned by the PAR request. After which the request_uri needs to be
+regenerated. To learn more about the specifications of the Request Object, read the
+https://openid.net/specs/openid-connect-core-1_0.html#RequestUriParameter[OpenID documentation] on passing a Request
+Object by reference.
+
+
+=== Sending a Signed and Encrypted Request 
+
+==== Deployment configuration 
+
+Lastly, lets try to send a signed and encrypted request. For this, please update the `oidc.json` file to have the
+following contents:
+```
+{
+    "client-id" : "myclient",
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm",
+    "public-client" : "false",
+    "authentication-request-format" : "request_uri",
+    "request-object-signing-algorithm" : "RS512",
+    "client-keystore-file" : "/path/to/server.keystore",
+    "client-keystore-password" : "password",
+    "client-key-password" : "password",
+    "client-key-alias" : "rsakey",
+    "client-keystore-type" : "JKS",
+    "ssl-required" : "EXTERNAL", 
+    "credentials" : {
+    	"secret" : "<INSERT CLIENT SECRET>"
+    }
+}
+```
+You will need to edit the secret field to add the client secret for your client. On the Keycloak console, navigate to
+`myclient`, and under the `Credentials` tab, go to `Client secret` and copy that to your clipboard and place it here as
+the value for "secret". Save the file and deploy it again.
+
+==== Subsystem Configuration
+
+To use subsystem configuration, you can run the following commands to configure the server as well: 
+```
+    #Change the signing algorithm
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=request-object-signing-algorithm, value=RS256)
+
+    #add an encryption and content encryption algorithm
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=request-object-encryption-algorithm, value=RSA-OAEP)
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=request-object-content-encryption-algorithm, value=A256GCM)
+
+    #configure the keystore. Change the path to the actual path before running these commands
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=client-keystore-file, value="path/to/jwt.keystore")
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=client-key-password, value=password)
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=client-keystore-password, value=password)
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=client-key-alias, value=rsaKey)
+    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp-oidc.war:write-attribute(name=client-keystore-type, value=JKS)
+    reload
+```
+
+This time, we are using the keyPairs we created earlier to sign the JWT. The JWT will be signed first and then encrypted
+using the public key that Keycloak shared with us. To see what this key looks like, you can either go to
+http://localhost:8080/realms/myrealm/protocol/openid-connect/certs or you can go to the Keycloak console and under the
+`Realm settings` tab, click on the `keys` tab. You will see that there console includes 2 other keys in additional to
+the ones on the link. These are the symmetric keys provided by Keycloak which are used by both the client and the server
+to sign/verify and encrypt/decrypt.
+
+=== Note about Keystores
+
+You can follow the same instructions to configure your server to use a PKCS12 type keystore. For Keycloak, the signing
+algorithms available are "PS384", "ES384", "RS384", "HS256", "HS512", "ES256", "RS256", "HS384", "ES512","PS256",
+"PS512", "RS512" and "none". If you use algorithms that start with "RS" and "PS" to sign the JWT, you will need to use
+an RSA key pair. For "ES" type keys, use Elliptical curve keys and as mentioned above, adjust the group name for the
+PKCS12 keystore keys to match the SHA value of the algorithms. "none" does not require a keystore and lastly, "HS" keys
+require a symmetric key, where the same secret hash is used by the client and the server to sign and verify respectively.
+
+"HS256", "HS384" and "HS512" algorithms use symmetric keys. As mentioned above, these keys do not have a private and
+public key. Instead, there is a single secret that is shared between the client and the server. In cases where we want
+to sign the JWT using a symmetric key, we do not need to configure a keystore for the client. We will simply be using
+the client secret to sign the JWT.
+
+=== Restoring the server 
+
+Once you are ready to restore your server back to what it was, please enter the following on your terminal: 
+```
+    /subsystem=elytron-oidc-client/secure-deployment=oidc.war:remove
+    reload
+```
+
+For deployment configuration, you can undeploy the application using the following commands:
+```
+    mvn wildfly:undeploy -Dwildfly.port=10000
+```
+== Conclusion
+
+This example has demonstrated how to secure a web application deployed to WildFly and how to send the request parameters
+as a JWT. For more details on the `elytron-oidc-client` subsystem, please check out the
+https://docs.wildfly.org/29/Admin_Guide.html#Elytron_OIDC_Client[documentation] and for more details on OpenID Connect,
+checkout the https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests[OpenID documentation] and the
+documentation of your OpenID provider. To learn more about the `keytool` commands and how to generate keys, visit their
+https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html[documentation].
