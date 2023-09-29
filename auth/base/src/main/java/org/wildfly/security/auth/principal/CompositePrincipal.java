@@ -62,7 +62,13 @@ public final class CompositePrincipal implements Principal, Serializable, Iterab
     }
 
     private CompositePrincipal(Principal[] principals, boolean clone) {
-        p = principals.length == 0 ? NO_PRINCIPALS : clone ? principals.clone() : principals;
+        if (principals.length == 0) {
+            p = NO_PRINCIPALS;
+        } else if (clone) {
+            p = principals.clone();
+        } else {
+            p = principals;
+        }
         for (int i = 0; i < p.length; i++) {
             Assert.checkNotNullArrayParam("principals", i, p[i]);
         }
