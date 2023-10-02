@@ -91,7 +91,9 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
         if (protParam != null) {
             throw log.keyCannotBeProtected(alias);
         }
-        HashMap<String, PasswordEntry> map, newMap;
+        HashMap<String, PasswordEntry> map;
+        HashMap<String, PasswordEntry> newMap;
+
         do {
             map = pwRef.get();
             if (map == null) {
