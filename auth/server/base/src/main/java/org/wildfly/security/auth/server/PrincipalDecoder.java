@@ -74,8 +74,8 @@ public interface PrincipalDecoder extends Function<Principal, String> {
     }
 
     /**
-     * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
-     * matches the credential; this result will be returned.
+     * Create an aggregated principal decoder.  The aggregated decoder will check each principal decoder until one
+     * matches the principal; this result will be returned.
      *
      * @param decoders the constituent decoders
      * @return the aggregated decoder
