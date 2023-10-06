@@ -259,6 +259,41 @@ public class RoleMappingTest {
         assertEquals(1, count);
     }
 
+    @Test
+    public void testIntersectionMappedRoles() {
+        Roles roles = createRoles("foo", "joe");
+
+        Map<String, Set<String>> mappingMap1 = new HashMap<>();
+        mappingMap1.put("foo", createSet("bar", "role"));
+
+        RoleMapper mapper1 = new MappedRoleMapper.Builder()
+                .setRoleMap(mappingMap1).build();
+
+        Map<String, Set<String>> mappingMap2 = new HashMap<>();
+        mappingMap2.put("foo", createSet("bar", "test"));
+
+        RoleMapper mapper2 = new MappedRoleMapper.Builder()
+                .setRoleMap(mappingMap2).build();
+
+        RoleMapper mapper3 = mapper1.and(mapper2);
+
+        Roles mappedRoles = mapper3.mapRoles(roles);
+
+        assertTrue(mappedRoles.contains("bar"));
+        assertFalse(mappedRoles.contains("role"));
+        assertFalse(mappedRoles.contains("test"));
+        assertFalse(mappedRoles.contains("foo"));
+        assertFalse(mappedRoles.contains("joe"));
+
+        Iterator<String> iterator = mappedRoles.iterator();
+        int count = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
+            count++;
+        }
+        assertEquals(1, count);
+    }
+
     private Set<String> createSet(String... values) {
         HashSet<String> set = new HashSet<>();
         for (String s : values) set.add(s);
