@@ -92,8 +92,8 @@ import static org.wildfly.security.tool.Params.SUMMARY_PARAM;
  */
 class CredentialStoreCommand extends Command {
 
-    public static int ACTION_NOT_DEFINED = 5;
-    public static int ALIAS_NOT_FOUND = 6;
+    public static final int ACTION_NOT_DEFINED = 5;
+    public static final int ALIAS_NOT_FOUND = 6;
 
     public static final String RSA_ALGORITHM = "RSA";
     public static final String DSA_ALGORITHM = "DSA";
