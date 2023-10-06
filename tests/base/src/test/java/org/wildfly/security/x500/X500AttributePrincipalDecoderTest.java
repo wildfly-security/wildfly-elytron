@@ -63,7 +63,7 @@ public class X500AttributePrincipalDecoderTest {
 
     @Test
     public void testDecodeWithConcatenation() {
-        X500Principal principal; new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
+        X500Principal principal;
         PrincipalDecoder dcDecoder, dcDecoder1,  cnDecoder, ouDecoder, concatenatingDecoder;
         principal = new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
         dcDecoder = new X500AttributePrincipalDecoder(X500.OID_DC);
