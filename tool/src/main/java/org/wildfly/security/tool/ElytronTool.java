@@ -36,11 +36,11 @@ public class ElytronTool {
     /**
      * status code for unrecognized command
      */
-    public static int ElytronToolExitStatus_unrecognizedCommand = 1;
+    public static final int ElytronToolExitStatus_unrecognizedCommand = 1;
     /**
      * status code for no problems
      */
-    public static int ElytronToolExitStatus_OK = 0;
+    public static final int ElytronToolExitStatus_OK = 0;
 
     private Map<String, Command> commandRegistry = new HashMap<>();
     /**
