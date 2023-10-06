@@ -1099,6 +1099,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             streamWriter.writeEndDocument();
         }
 
+        @Override
         public void dispose() {
             // Release the lock for this realm identity
             IdentityLock identityLock = lock;
