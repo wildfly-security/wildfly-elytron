@@ -1000,7 +1000,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             }
         }
 
-        private Version requiredVersion(final LoadedIdentity identityToWrite) {
+        private Version requiredVersion() {
             // As new functionality is added we will identify if we need to use a later version
             // if new functionality is used then use the required schema version otherwise fallback
             // to an older version.
@@ -1018,7 +1018,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, C
             streamWriter.writeStartDocument();
             streamWriter.writeCharacters("\n");
             streamWriter.writeStartElement("identity");
-            streamWriter.writeDefaultNamespace(requiredVersion(newIdentity).getNamespace());
+            streamWriter.writeDefaultNamespace(requiredVersion().getNamespace());
 
             if (integrityEnabled) {
                 streamWriter.writeCharacters("\n    ");
