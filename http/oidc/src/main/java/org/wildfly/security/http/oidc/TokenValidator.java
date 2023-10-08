@@ -274,6 +274,18 @@ public class TokenValidator {
             }
             return null;
         }
+
+        private static String getAccessTokenHash(String accessTokenString, String jwsAlgorithm) throws NoSuchAlgorithmException {
+            byte[] inputBytes = accessTokenString.getBytes(StandardCharsets.UTF_8);
+            String javaAlgName = getJavaAlgorithmForHash(jwsAlgorithm);
+            MessageDigest md = MessageDigest.getInstance(javaAlgName);
+            md.update(inputBytes);
+            byte[] hash = md.digest();
+            int hashLength = hash.length / 2;
+            byte[] hashInput = Arrays.copyOf(hash, hashLength); // leftmost half of the hash
+            return ByteIterator.ofBytes(hashInput).base64Encode(BASE64_URL, false).drainToString();
+        }
+
     }
 
     private static class TypeValidator implements ErrorCodeValidator {
@@ -295,17 +307,6 @@ public class TokenValidator {
             }
             return null;
         }
-    }
-
-    private static String getAccessTokenHash(String accessTokenString, String jwsAlgorithm) throws NoSuchAlgorithmException {
-        byte[] inputBytes = accessTokenString.getBytes(StandardCharsets.UTF_8);
-        String javaAlgName = getJavaAlgorithmForHash(jwsAlgorithm);
-        MessageDigest md = MessageDigest.getInstance(javaAlgName);
-        md.update(inputBytes);
-        byte[] hash = md.digest();
-        int hashLength = hash.length / 2;
-        byte[] hashInput = Arrays.copyOf(hash, hashLength); // leftmost half of the hash
-        return ByteIterator.ofBytes(hashInput).base64Encode(BASE64_URL, false).drainToString();
     }
 
     public static class VerifiedTokens {
