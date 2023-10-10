@@ -29,7 +29,7 @@ $ mvn clean install
 Issue Tracking
 --------------
 
-Bugs and features are tracked within the Elytron Jira project at https://issues.jboss.org/browse/ELY
+Bugs and features are tracked within the Elytron Jira project at https://issues.redhat.com/browse/ELY
 
 Contributions
 -------------
