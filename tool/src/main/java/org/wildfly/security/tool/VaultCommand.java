@@ -85,6 +85,7 @@ public class VaultCommand extends Command {
     public static final String VAULT_COMMAND = "vault";
 
     public static final String FAIL_IF_EXIST_PARAM = "fail-if-exist";
+    public static final String MASK_PREFIX = "MASK-";
 
     // convert options
     public static final String KEYSTORE_PASSWORD_PARAM = "keystore-password";
@@ -391,7 +392,7 @@ public class VaultCommand extends Command {
     }
 
     private CredentialSourceProtectionParameter getCredentialStoreProtectionParameter(final String vaultPassword, final String salt, final int iterationCount) throws GeneralSecurityException {
-        char[] password = vaultPassword.startsWith("MASK-") ? decodeMaskedPassword(vaultPassword.substring("MASK-".length()), salt, iterationCount)
+        char[] password = vaultPassword.startsWith(MASK_PREFIX) ? decodeMaskedPassword(vaultPassword.substring(MASK_PREFIX.length()), salt, iterationCount)
                 : vaultPassword.toCharArray();
         return new CredentialStore.CredentialSourceProtectionParameter(
                 IdentityCredentials.NONE.withCredential(
@@ -399,7 +400,7 @@ public class VaultCommand extends Command {
     }
 
     private CredentialSourceProtectionParameter getVaultCredentialStoreProtectionParameter(final String keyStoreURL, final String vaultPassword, final String salt, final int iterationCount, final String secretKeyAlias) throws GeneralSecurityException, IOException {
-        char[] password = vaultPassword.startsWith("MASK-") ? decodeMaskedPassword(vaultPassword.substring("MASK-".length()), salt, iterationCount)
+        char[] password = vaultPassword.startsWith(MASK_PREFIX) ? decodeMaskedPassword(vaultPassword.substring(MASK_PREFIX.length()), salt, iterationCount)
                 : vaultPassword.toCharArray();
         final KeyStore keyStore = KeyStore.getInstance(defaultKeyStoreType);
         try (FileInputStream in = new FileInputStream(new File(keyStoreURL))) {
@@ -445,7 +446,7 @@ public class VaultCommand extends Command {
         if (keystorePassword != null) {
             password = keystorePassword;
             if (salt != null && iterationCount > -1) {
-                password = keystorePassword.startsWith("MASK-") ? keystorePassword + ";" + salt + ";" + String.valueOf(iterationCount)
+                password = keystorePassword.startsWith(MASK_PREFIX) ? keystorePassword + ";" + salt + ";" + String.valueOf(iterationCount)
                         : MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
             }
         }
