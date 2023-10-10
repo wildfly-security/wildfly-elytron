@@ -134,7 +134,7 @@ public class FailoverSecurityRealm implements SecurityRealm {
         protected RealmIdentity delegate;
         protected boolean failed = false;
 
-        public FailoverRealmIdentity(final RealmIdentity identity) {
+        protected FailoverRealmIdentity(final RealmIdentity identity) {
             this.delegate = identity;
         }
 
