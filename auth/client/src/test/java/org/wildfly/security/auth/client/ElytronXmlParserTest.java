@@ -167,8 +167,8 @@ public class ElytronXmlParserTest {
         Assert.assertNotNull(node);
         String wsHttpMechanism  = node.getConfiguration().getWsHttpMechanism();
         String wsSecurityType = node.getConfiguration().getWsSecurityType();
-        Assert.assertEquals(wsHttpMechanism, "BASIC");
-        Assert.assertEquals(wsSecurityType, "UsernameToken");
+        Assert.assertEquals("BASIC", wsHttpMechanism);
+        Assert.assertEquals("UsernameToken", wsSecurityType);
     }
 
     @Test
