@@ -215,7 +215,7 @@ public class ScramServerCompatibilityTest {
         assertEquals("v=xzTfS758LckdRoQKN/ZFY/Bauxo=", new String(message, StandardCharsets.UTF_8));
 
         assertTrue(saslServer.isComplete());
-        assertEquals(saslServer.getAuthorizationID(), "user");
+        assertEquals("user", saslServer.getAuthorizationID());
     }
 
     /**
