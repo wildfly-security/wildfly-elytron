@@ -92,46 +92,22 @@ public class BasicScramSelfTest {
 
     @Test
     public void testAuthenticationSha1ClearPassword() throws Exception {
-        final SaslServer saslServer =
-                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("user")
-                        .setPassword("pencil".toCharArray())
-                        .build();
-        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
-        testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+        performAuthenticationTest("user", "pencil", "user", "pencil");
     }
 
     @Test(expected = SaslException.class)
     public void testAuthenticationSha1ClearPasswordBadUsername() throws Exception {
-        final SaslServer saslServer =
-                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("user")
-                        .setPassword("pencil".toCharArray())
-                        .build();
-        CallbackHandler clientHandler = createClientCallbackHandler("wrong", "pencil".toCharArray());
-        testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+        performAuthenticationTest("user", "pencil", "wrong", "pencil");
     }
 
     @Test(expected = SaslException.class)
     public void testAuthenticationSha1ClearPasswordBadPassword() throws Exception {
-        final SaslServer saslServer =
-                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("user")
-                        .setPassword("pencil".toCharArray())
-                        .build();
-        CallbackHandler clientHandler = createClientCallbackHandler("user", "wrong".toCharArray());
-        testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+        performAuthenticationTest("user", "pencil", "user", "wrong");
     }
 
     @Test
     public void testAuthenticationSha1ClearCredentialPassword() throws Exception {
-        final SaslServer saslServer =
-                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("user")
-                        .setPassword("pencil".toCharArray())
-                        .build();
-        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
-        testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+        performAuthenticationTest("user", "pencil", "user", "pencil");
     }
 
     @Test
@@ -263,6 +239,17 @@ public class BasicScramSelfTest {
         } catch (SaslException cause) {
             assertTrue(cause.getMessage().contains("server-does-not-support-channel-binding"));
         }
+    }
+
+    private void performAuthenticationTest(String username, String password, String clientUsername, String clientPassword) throws Exception {
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName(username)
+                        .setPassword(password.toCharArray())
+                        .build();
+        CallbackHandler clientHandler = createClientCallbackHandler(clientUsername, clientPassword.toCharArray());
+
+        testAuthentication(SaslMechanismInformation.Names.SCRAM_SHA_1, saslServer, clientHandler, username, EMPTY);
     }
 
     private void testAuthentication(String mechanism, SaslServer saslServer, CallbackHandler clientHandler, String authorizationId, Map<String, ?> clientProps) throws Exception {
