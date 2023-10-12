@@ -446,7 +446,7 @@ public class VaultCommand extends Command {
         if (keystorePassword != null) {
             password = keystorePassword;
             if (salt != null && iterationCount > -1) {
-                password = keystorePassword.startsWith(MASK_PREFIX) ? keystorePassword + ";" + salt + ";" + String.valueOf(iterationCount)
+                password = keystorePassword.startsWith(MASK_PREFIX) ? keystorePassword + ";" + salt + ";" + iterationCount
                         : MaskCommand.computeMasked(keystorePassword, salt, iterationCount);
             }
         }

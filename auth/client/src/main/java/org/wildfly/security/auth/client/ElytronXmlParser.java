@@ -714,13 +714,10 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getLocalName()) {
-                    case "certificate-revocation-list": {
-                        parseCertificateRevocationList(reader, builder, xmlVersion, true);
-                        break;
-                    }
-                    default:
-                        throw reader.unexpectedElement();
+                if (reader.getLocalName().equals("certificate-revocation-list")) {
+                    parseCertificateRevocationList(reader, builder, xmlVersion, true);
+                } else {
+                    throw reader.unexpectedElement();
                 }
             } else if (tag != END_ELEMENT) {
                 throw reader.unexpectedContent();
