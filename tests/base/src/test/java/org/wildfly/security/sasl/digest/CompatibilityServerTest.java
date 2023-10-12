@@ -743,4 +743,28 @@ public class CompatibilityServerTest {
         assertEquals("chris", server.getAuthorizationID());
     }
 
+    @Test
+    public void testIncorrectResponseField() throws Exception {
+        mockNonce("OA6MG9tEQGm2hh");
+
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("imap").setServerName("elwood.innosoft.com")
+                        .addMechanismRealm("elwood.innosoft.com")
+                        .build();
+        assertFalse(server.isComplete());
+
+        byte[] message = server.evaluateResponse(new byte[0]);
+        assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",charset=utf-8,algorithm=md5-sess", new String(message, "UTF-8"));
+        assertFalse(server.isComplete());
+
+        byte[] invalidMessage = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=incorrectResponse,qop=auth".getBytes(StandardCharsets.UTF_8);
+        try {
+            server.evaluateResponse(invalidMessage);
+        } catch (SaslException e) {
+            assertTrue(e.getMessage().contains("invalid proof"));
+        }
+    }
 }
