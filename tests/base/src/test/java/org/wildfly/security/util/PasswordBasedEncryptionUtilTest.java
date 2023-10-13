@@ -183,9 +183,9 @@ public class PasswordBasedEncryptionUtilTest {
         String crossDecrypted = new String(decryptUtil.decodeAndDecrypt(pbGenerated));
         String decrypted = new String(decryptUtil.decodeAndDecrypt(encrypted));
 
-        Assert.assertTrue("Elytron in PB compatible mode failed", decrypted.equals(secret));
-        Assert.assertTrue("PicketBox encrypted, Elytron decrypted in compatible mode, failed", crossDecrypted.equals(secret));
-        Assert.assertTrue("Elytron in compatible mode encrypted, PicketBox encrypted must be the same", pbGenerated.equals(encrypted));
+        Assert.assertEquals("Elytron in PB compatible mode failed", secret, decrypted);
+        Assert.assertEquals("PicketBox encrypted, Elytron decrypted in compatible mode, failed", secret, crossDecrypted);
+        Assert.assertEquals("Elytron in compatible mode encrypted, PicketBox encrypted must be the same", encrypted, pbGenerated);
 
     }
 
