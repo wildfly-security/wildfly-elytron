@@ -217,10 +217,9 @@ class X509EvidenceVerifier implements EvidenceVerifier {
             try {
                 for (int i = 0; i < size; i++) {
                     Object attrCertificate = attribute.get(i);
-                    if (attrCertificate != null){
-                        if (MessageDigest.isEqual(certificate.getEncoded(), (byte[]) attrCertificate)) {
-                            return true;
-                        }
+                    if (attrCertificate != null
+                            && MessageDigest.isEqual(certificate.getEncoded(), (byte[]) attrCertificate)) {
+                        return true;
                     }
                 }
             } catch (CertificateEncodingException e) {
