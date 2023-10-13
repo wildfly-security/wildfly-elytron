@@ -246,12 +246,10 @@ public final class X500 {
             return false;
         }
         for (X509Certificate issuerCertificate : issuerCertificates) {
-            if (issuedBy(firstCertificate, issuerCertificate)) {
+            if (issuedBy(firstCertificate, issuerCertificate) && createX509CertificateChain(issuerCertificate, certificateChain, certificatesMap)) {
                 // recurse
-                if (createX509CertificateChain(issuerCertificate, certificateChain, certificatesMap)) {
-                    certificateChain.add(firstCertificate);
-                    return true;
-                }
+                certificateChain.add(firstCertificate);
+                return true;
             }
         }
         return false;
