@@ -921,10 +921,8 @@ public abstract class AcmeClientSpi {
             }
         }
 
-        if (retryAfterMilli == -1) {
-            if (useDefaultIfHeaderNotPresent) {
-                retryAfterMilli = DEFAULT_RETRY_AFTER_MILLI;
-            }
+        if (retryAfterMilli == -1 && useDefaultIfHeaderNotPresent) {
+            retryAfterMilli = DEFAULT_RETRY_AFTER_MILLI;
         }
         return retryAfterMilli;
     }
