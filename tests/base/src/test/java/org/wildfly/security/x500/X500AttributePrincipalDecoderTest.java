@@ -19,6 +19,7 @@
 package org.wildfly.security.x500;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -59,6 +60,37 @@ public class X500AttributePrincipalDecoderTest {
         principal = new X500Principal("dc=com,dc=redhat,dc=jboss,dc=example,ou=people,cn=bob.smith");
         decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 3, true); // reverse order
         assertEquals("jboss.redhat.com", decoder.getName(principal));
+    }
+
+    @Test
+    public void testDecodeWithAggregation() {
+        X500Principal principal = new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
+        PrincipalDecoder dcDecoder = new X500AttributePrincipalDecoder(X500.OID_DC);
+        PrincipalDecoder cnDecoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME, 1);
+        PrincipalDecoder aggregateDecoder = PrincipalDecoder.aggregate(cnDecoder, dcDecoder);
+        assertEquals("bob.smith", aggregateDecoder.getName(principal));
+        aggregateDecoder = PrincipalDecoder.aggregate(dcDecoder, cnDecoder);
+        assertEquals("example.redhat.com", aggregateDecoder.getName(principal));
+
+        principal = new X500Principal("cn=bob.smith,ou=people,dc=example,dc=redhat");
+        cnDecoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME);
+        PrincipalDecoder ouDecoder = new X500AttributePrincipalDecoder(X500.OID_AT_ORGANIZATIONAL_UNIT_NAME, 1);
+        dcDecoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1);
+        PrincipalDecoder dcDecoder1 = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 1);
+        aggregateDecoder = PrincipalDecoder.aggregate(dcDecoder1, dcDecoder, ouDecoder, cnDecoder);
+        assertEquals("redhat", aggregateDecoder.getName(principal));
+        aggregateDecoder = PrincipalDecoder.aggregate(dcDecoder, dcDecoder1, ouDecoder, cnDecoder);
+        assertEquals("example", aggregateDecoder.getName(principal));
+        aggregateDecoder = PrincipalDecoder.aggregate(cnDecoder, dcDecoder1, dcDecoder, ouDecoder);
+        assertEquals("bob.smith", aggregateDecoder.getName(principal));
+
+        principal = new X500Principal("cn=bob.smith,dc=example,dc=redhat");
+        aggregateDecoder = PrincipalDecoder.aggregate(ouDecoder);
+        assertNull(aggregateDecoder.getName(principal));
+        aggregateDecoder = PrincipalDecoder.aggregate(dcDecoder, ouDecoder);
+        assertEquals("example", aggregateDecoder.getName(principal));
+        aggregateDecoder = PrincipalDecoder.aggregate(dcDecoder, ouDecoder, dcDecoder1);
+        assertEquals("example", aggregateDecoder.getName(principal));
     }
 
     @Test
