@@ -128,10 +128,8 @@ public final class SSLUtils {
             return () -> {
                 for (String protocol : supportedProtocols) {
                     List<Provider> providerList = preferredProviderByAlgorithm.getOrDefault(protocol.toUpperCase(Locale.ENGLISH), Collections.emptyList());
-                    if (log.isTraceEnabled()) {
-                        if (providerList.isEmpty()) {
-                            log.tracef("No providers are available for protocol %s", protocol);
-                        }
+                    if (log.isTraceEnabled() && providerList.isEmpty()) {
+                        log.tracef("No providers are available for protocol %s", protocol);
                     }
                     for (Provider provider : providerList) {
                         try {
