@@ -18,7 +18,8 @@
 
 package org.wildfly.security.credential.source.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.assertNotNull;
+import static org.junit.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
