@@ -43,7 +43,7 @@ public class CommandCredentialSourceTest {
         assertNotNull(password);
         final ClearPassword clearPassword = password.castAs(ClearPassword.class, ClearPassword.ALGORITHM_CLEAR);
         assertNotNull(clearPassword);
-        assertEquals(new String(clearPassword.getPassword()), "secret_key_THREE");
+        assertEquals("secret_key_THREE", new String(clearPassword.getPassword()));
     }
 
     private static CommandCredentialSource.Builder getBuilder() {
