@@ -408,15 +408,14 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
                 pathLenConstraint = maxPathLength;
             }
 
-            if (!subject.equals(issuer)) {
-                if (pathLenConstraint < i) {
-                    throw new CertPathValidatorException
-                            ("check failed: pathLenConstraint violated - "
-                                    + "this cert must be the last cert in the "
-                                    + "certification path", null, null, -1,
-                                    PKIXReason.PATH_TOO_LONG);
-                }
+            if (!subject.equals(issuer) && pathLenConstraint < i) {
+                throw new CertPathValidatorException
+                        ("check failed: pathLenConstraint violated - "
+                                + "this cert must be the last cert in the "
+                                + "certification path", null, null, -1,
+                                PKIXReason.PATH_TOO_LONG);
             }
+
             if (pathLenConstraint < maxPathLength)
                 maxPathLength = pathLenConstraint;
         }
