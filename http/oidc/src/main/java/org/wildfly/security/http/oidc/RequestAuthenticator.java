@@ -54,10 +54,8 @@ public class RequestAuthenticator {
 
     public AuthOutcome authenticate() {
         AuthOutcome authenticate = doAuthenticate();
-        if (AuthOutcome.AUTHENTICATED.equals(authenticate)) {
-            if (! facade.isAuthorized()) {
-                return AuthOutcome.FAILED;
-            }
+        if (AuthOutcome.AUTHENTICATED.equals(authenticate) && !facade.isAuthorized()) {
+            return AuthOutcome.FAILED;
         }
         return authenticate;
     }
