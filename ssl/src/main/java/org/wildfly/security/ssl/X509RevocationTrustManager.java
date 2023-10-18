@@ -394,11 +394,9 @@ public class X509RevocationTrustManager extends X509ExtendedTrustManager {
             X500Principal issuer = currCert.getIssuerX500Principal();
 
             int pathLenConstraint = -1;
-            if (currCert.getVersion() < 3) {    // version 1 or version 2
-                if (i == 1) {
-                    if (subject.equals(issuer)) {
-                        pathLenConstraint = Integer.MAX_VALUE;
-                    }
+            if (currCert.getVersion() < 3) { // version 1 or version 2
+                if (i == 1 && subject.equals(issuer)) {
+                    pathLenConstraint = Integer.MAX_VALUE;
                 }
             } else {
                 pathLenConstraint = currCert.getBasicConstraints();
