@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 28 Sep 2023 14:18:51 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 19 Oct 2023 16:14:30 +0000</lastBuildDate>
+        
+        <item>
+            <title>Open Source Day 2023 Recap</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/
+            </link>
+            <description>
+                Last month, the WildFly Elytron team had the great pleasure of participating in Open Source Day, an all-day hackathon that took place as part of the 2023 Grace Hopper Celebration. This was the fourth time that the WildFly Elytron team has participated in this event. It is always an exciting...
+            </description>
+            <pubDate>Thu, 19 Oct 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Join us at Open Source Day on September 22, 2023 and Make Meaningful Contributions</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 25 Apr 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/using-custom-principals-with-elytron/
-            </guid>
-        </item>
-        
-        <item>
-            <title>AMA Recap</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything-recap/
-            </link>
-            <description>
-                The WildFly Elytron team had our very first Ask Me Anything (AMA) session on chat this week. Thanks very much to those who joined! This blog post gives a recap of the session in case you missed it. Q: How can I contribute to Elytron as a person who has...
-            </description>
-            <pubDate>Thu, 22 Dec 2022 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ask-me-anything-recap/
             </guid>
         </item>
         

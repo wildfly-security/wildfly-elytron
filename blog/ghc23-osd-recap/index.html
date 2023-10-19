@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Open Source Day 2023 Recap</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Open Source Day 2023 Recap | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Open Source Day 2023 Recap" />
+<meta name="author" content="Diana Krepinska Vilkolakova" />
+<meta property="og:locale" content="en_US" />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-10-19T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png" />
+<meta property="twitter:title" content="Open Source Day 2023 Recap" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Diana Krepinska Vilkolakova"},"dateModified":"2023-10-19T00:00:00+00:00","datePublished":"2023-10-19T00:00:00+00:00","headline":"Open Source Day 2023 Recap","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Hacktoberfest-menuitem" href="/wildfly-elytron/hacktoberfest/">Hacktoberfest</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Open Source Day 2023 Recap</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/4336bee4b72f539ef5f8cc0d2c6026f5">
+        
+        <p class="byline">
+          By <a href="https://github.com/Skyllarr">Diana Krepinska Vilkolakova</a> | October 19, 2023
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/opensource"> #opensource</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ghc23"> #ghc23</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/opensourceday"> #opensourceday</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/osd"> #osd</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/ghc"> #ghc</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/&title=Open Source Day 2023 Recap" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Open Source Day 2023 Recap&url=https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Open Source Day 2023 Recap&amp;body=Open Source Day 2023 Recap https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="imageblock text-left banner">
+<div class="content">
+<img src="https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OSD2023Banner.png" alt="OSD2023Banner">
+</div>
+</div>
+<div class="paragraph">
+<p>Last month, the <a href="https://wildfly-security.github.io/wildfly-elytron/">WildFly Elytron</a> team had the great pleasure of participating in <a href="https://ghc.anitab.org/awards-programs/open-source-day/">Open Source Day</a>, an all-day hackathon that took place as part of the 2023 <a href="https://ghc.anitab.org/">Grace Hopper Celebration</a>. This was the fourth time that the WildFly Elytron team has participated in this event. It is always an exciting opportunity for us to meet and help others get started with their open source contributions.</p>
+</div>
+<div class="sect1">
+<h2 id="preparation"><a class="anchor" href="#preparation"></a>Preparation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Prior to the day of the event, we created many jira issues and triaged existing ones that would be suitable for new contributors to our project. We tried to make sure that the descriptions of these issues contained a lot of detail and helpful pointers for getting started. We added the label <a href="https://issues.redhat.com/issues/?filter=12364234">"good-first-issue"</a> to the appropriate ones.</p>
+</div>
+<div class="paragraph">
+<p>We also created a <a href="https://wildfly-security.github.io/wildfly-elytron/OSD/">landing page</a> for attendees where they could find all the important resources they needed. We made sure that our <a href="https://wildfly-security.github.io/wildfly-elytron/guides/">setup guides</a> for different environments were still up to date. We added <a href="https://www.youtube.com/playlist?list=PL6SPIctwCod99nvY6faotopjnEEp71I-B">YouTube videos</a> to the WildFly channel to let people know that we were participating in this event and to invite them to join our WildFly Elytron session. We actively promoted this on social media such as LinkedIn and Twitter.</p>
+</div>
+<div class="paragraph">
+<p>Many of the attendees contacted us before the event with their questions about the development environment and about the Jira issues.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="the-day-overall"><a class="anchor" href="#the-day-overall"></a>The Day Overall</h2>
+<div class="sectionbody">
+<div class="imageblock text-center responsive-img">
+<div class="content">
+<img src="https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png" alt="OpenSourceDay2023">
+</div>
+</div>
+<div class="paragraph">
+<p>After the motivational opening speeches by the Grace Hopper Conference speakers, the participants chose the Zoom Room of the project they wanted to participate in. At the beginning of the session, I gave a presentation about the Elytron project and we introduced ourselves. This year we were very happy to have our former interns, Sonia Zaldana Calles and Ashley Abdel-Sayed, join our project as mentors. The presentation also covered some general information on how to contribute to our project. Then it was time to start coding!</p>
+</div>
+<div class="paragraph">
+<p>During the hackathon, WildFly Elytron team and mentors helped participants set up their development environment, answered questions about git and the process of submitting and updating pull requests, helped participants choose and work on their problems, and gave feedback on their pull requests.</p>
+</div>
+<div class="paragraph">
+<p>The hackathon was split into 2 parts, before and after lunch. Many of the OSD attendees switched projects for the afternoon session, so we got some new attendees. The opening speeches and the presentation about our project were part of the afternoon session as well.</p>
+</div>
+<div class="paragraph">
+<p>In total, we received pull requests for 20 of our good first issues from first time contributors that day!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="our-first-time-contributors-experience"><a class="anchor" href="#our-first-time-contributors-experience"></a>Our First Time Contributors' Experience</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Ensuring that our first time contributors have a good experience is the most important part of Open Source Day. Here&#8217;s what some of them had to say about the day:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>It was an immensely enjoyable experience contributing to the WildFly project on Open Source Day. The team and the environment were incredibly warm and welcoming, and I felt genuinely valued for every code commit I made. It was a fantastic learning opportunity, and I remained energetic and enthusiastic throughout the GHC Open Source Day while contributing to the WildFly project. I&#8217;m eager to continue contributing and be an integral part of this wonderful community.</p>
+</div>
+<div class="paragraph">
+<p><strong>-Nidhi Azad</strong></p>
+</div>
+</blockquote>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>One of the standout moments during my time at the Grace Hopper Celebration (GHC) was definitely the Open Source Day event. I had the pleasure of attending the "Open Source Day Project: WildFly Elytron" session, which was a first for me in the world of open source.</p>
+</div>
+<div class="paragraph">
+<p>To be honest, I&#8217;d always wondered how to dive into open source, and the biggest hurdle was figuring out where to start. Thankfully, the community had put together a list of beginner-friendly tasks, which turned out to be a fantastic way to dip my toes into the contribution process.</p>
+</div>
+<div class="paragraph">
+<p>The hosts of the session were fantastic. They created a friendly, welcoming atmosphere where we could ask questions and learn the ropes. We were actively encouraged to return to the project and make further contributions.</p>
+</div>
+<div class="paragraph">
+<p>I want to express my heartfelt thanks to everyone in that session who helped me take that first, albeit modest, step into the world of open source.</p>
+</div>
+<div class="paragraph">
+<p><strong>-Srishti Hegde</strong></p>
+</div>
+</blockquote>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The team was friendly and generally helpful. The task of contributing to open source code seemed much easier after attending the session.</p>
+</div>
+<div class="paragraph">
+<p><strong>-Brinda P</strong></p>
+</div>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="whats-next"><a class="anchor" href="#whats-next"></a>What&#8217;s Next?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The WildFly Elytron project is currently participating in <a href="https://hacktoberfest.digitalocean.com/">Hacktoberfest</a> this month and welcomes your contributions! Check out this <a href="https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/">page</a> for all the details on how to get involved with our project.</p>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
