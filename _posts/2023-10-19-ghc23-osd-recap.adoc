@@ -1,0 +1,71 @@
+---
+layout: post
+title: 'Open Source Day 2023 Recap'
+date: 2023-10-19
+tags: opensource ghc23 opensourceday osd ghc
+synopsis: A recap of the GHC23 Open Source Day.
+author: dvilkola
+image:
+  path: https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png
+---
+
+[.banner]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OSD2023Banner.png[align="left"]
+
+Last month, the https://wildfly-security.github.io/wildfly-elytron/[WildFly Elytron] team had the great pleasure of participating in https://ghc.anitab.org/awards-programs/open-source-day/[Open Source Day], an all-day hackathon that took place as part of the 2023 https://ghc.anitab.org/[Grace Hopper Celebration]. This was the fourth time that the WildFly Elytron team has participated in this event. It is always an exciting opportunity for us to meet and help others get started with their open source contributions.
+
+== Preparation
+
+Prior to the day of the event, we created many jira issues and triaged existing ones that would be suitable for new contributors to our project. We tried to make sure that the descriptions of these issues contained a lot of detail and helpful pointers for getting started. We added the label https://issues.redhat.com/issues/?filter=12364234["good-first-issue"] to the appropriate ones.
+
+We also created a https://wildfly-security.github.io/wildfly-elytron/OSD/[landing page] for attendees where they could find all the important resources they needed. We made sure that our https://wildfly-security.github.io/wildfly-elytron/guides/[setup guides] for different environments were still up to date. We added https://www.youtube.com/playlist?list=PL6SPIctwCod99nvY6faotopjnEEp71I-B[YouTube videos] to the WildFly channel to let people know that we were participating in this event and to invite them to join our WildFly Elytron session. We actively promoted this on social media such as LinkedIn and Twitter.
+
+Many of the attendees contacted us before the event with their questions about the development environment and about the Jira issues.
+
+== The Day Overall
+[.responsive-img]
+image::https://wildfly-security.github.io/wildfly-elytron/assets/images/posts/OpenSourceDay2023.png[align="center"]
+
+After the motivational opening speeches by the Grace Hopper Conference speakers, the participants chose the Zoom Room of the project they wanted to participate in. At the beginning of the session, I gave a presentation about the Elytron project and we introduced ourselves. This year we were very happy to have our former interns, Sonia Zaldana Calles and Ashley Abdel-Sayed, join our project as mentors. The presentation also covered some general information on how to contribute to our project. Then it was time to start coding!
+
+During the hackathon, WildFly Elytron team and mentors helped participants set up their development environment, answered questions about git and the process of submitting and updating pull requests, helped participants choose and work on their problems, and gave feedback on their pull requests.
+
+The hackathon was split into 2 parts, before and after lunch. Many of the OSD attendees switched projects for the afternoon session, so we got some new attendees. The opening speeches and the presentation about our project were part of the afternoon session as well.
+
+In total, we received pull requests for 20 of our good first issues from first time contributors that day!
+
+== Our First Time Contributors' Experience
+
+Ensuring that our first time contributors have a good experience is the most important part of Open Source Day. Here's what some of them had to say about the day:
+
+
+[quote]
+____
+It was an immensely enjoyable experience contributing to the WildFly project on Open Source Day. The team and the environment were incredibly warm and welcoming, and I felt genuinely valued for every code commit I made. It was a fantastic learning opportunity, and I remained energetic and enthusiastic throughout the GHC Open Source Day while contributing to the WildFly project. I'm eager to continue contributing and be an integral part of this wonderful community.
+
+*-Nidhi Azad*
+____
+
+[quote]
+____
+One of the standout moments during my time at the Grace Hopper Celebration (GHC) was definitely the Open Source Day event. I had the pleasure of attending the "Open Source Day Project: WildFly Elytron" session, which was a first for me in the world of open source.
+
+To be honest, I'd always wondered how to dive into open source, and the biggest hurdle was figuring out where to start. Thankfully, the community had put together a list of beginner-friendly tasks, which turned out to be a fantastic way to dip my toes into the contribution process.
+
+The hosts of the session were fantastic. They created a friendly, welcoming atmosphere where we could ask questions and learn the ropes. We were actively encouraged to return to the project and make further contributions.
+
+I want to express my heartfelt thanks to everyone in that session who helped me take that first, albeit modest, step into the world of open source.
+
+*-Srishti Hegde*
+____
+
+[quote]
+____
+The team was friendly and generally helpful. The task of contributing to open source code seemed much easier after attending the session.
+
+*-Brinda P*
+____
+
+== What's Next?
+
+The WildFly Elytron project is currently participating in https://hacktoberfest.digitalocean.com/[Hacktoberfest] this month and welcomes your contributions! Check out this https://wildfly-security.github.io/wildfly-elytron/hacktoberfest/[page] for all the details on how to get involved with our project.
