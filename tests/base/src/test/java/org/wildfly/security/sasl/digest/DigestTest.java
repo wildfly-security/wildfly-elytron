@@ -42,6 +42,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
@@ -146,14 +147,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
         SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
     /**
      * Test a successful exchange using the DIGEST mechanism but the default realm.
@@ -171,15 +165,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
-
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
 
     /**
@@ -201,15 +187,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "OtherProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.UTF_8));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.UTF_8));
-
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
 
     /**
@@ -318,14 +296,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "last\\ ");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
 
     /*
@@ -515,13 +486,7 @@ public class DigestTest {
 
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-
-        message = client.evaluateChallenge(message);
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server,client);
     }
 
     /**
@@ -544,13 +509,7 @@ public class DigestTest {
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        message = client.evaluateChallenge(message);
-
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server,client);
     }
 
     /**
@@ -753,14 +712,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
         SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, null, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
 
     /**
@@ -779,14 +731,7 @@ public class DigestTest {
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
         SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, "", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
-        assertFalse(client.hasInitialResponse());
-        byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
-        message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertEquals("George", server.getAuthorizationID());
+        assertExchange(server, client);
     }
 
     private KeySpec getDigestKeySpec(String username, String password, String realm) throws NoSuchAlgorithmException {
@@ -826,4 +771,14 @@ public class DigestTest {
         assertEquals("TestServer5", server.getNegotiatedProperty(Sasl.BOUND_SERVER_NAME));
     }
 
+    private void assertExchange(SaslServer server, SaslClient client) throws SaslException {
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = client.evaluateChallenge(message);
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
 }
