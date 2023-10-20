@@ -508,7 +508,7 @@ public class VaultCommandTest extends AbstractCommandTest {
 
         String message = "Execution of vault command with arguments {" + String.join(" ", args) + "} should" +
                 (shouldPass? " succeeded ": " failed ") + "but it" + (shouldPass? " failed": " succeeded");
-        Assert.assertTrue(message, passed == shouldPass);
+        Assert.assertEquals(message, shouldPass, passed);
 
         if (expectedOutput != null) {
             Assert.assertTrue("Command output should contain \"" + expectedOutput + "\"", output.contains(expectedOutput));
