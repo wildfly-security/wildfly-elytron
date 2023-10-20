@@ -78,7 +78,7 @@
         <version.jakarta.json.jakarta-json-api>2.0.0</version.jakarta.json.jakarta-json-api>
         <version.jakarta.servlet.jakarta-servlet-api>5.0.0</version.jakarta.servlet.jakarta-servlet-api>
         <version.org.jboss.threads>2.4.0.Final</version.org.jboss.threads>
-        <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
+        <version.org.kohsuke.metainf-services.metainf-services>1.11</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.13.1</version.junit.junit>
         <version.jmockit>1.34</version.jmockit>
         <version.hsqldb>2.4.0</version.hsqldb>
