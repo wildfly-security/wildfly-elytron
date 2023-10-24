@@ -265,6 +265,9 @@ In the following post, replace <code>WILDFLY_HOME</code> with the actual path to
 <li>
 <p><code>--output-location</code>: The directory where the new filesystem realm resides.</p>
 </li>
+<li>
+<p><code>--credential-store</code>: The relative or absolute path to the credential store file that contains the secret key (default: <code>OUTPUT_LOCATION/mycredstore.cs</code>).</p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -274,9 +277,6 @@ In the following post, replace <code>WILDFLY_HOME</code> with the actual path to
 <ul>
 <li>
 <p><code>--realm-name</code>: The name of the new filesystem-realm (default: <code>encrypted-filesystem-realm</code>).</p>
-</li>
-<li>
-<p><code>--credential-store</code>: The relative or absolute path to the credential store file that contains the secret key (default: <code>OUTPUT_LOCATION/mycredstore.cs</code>).</p>
 </li>
 <li>
 <p><code>--secret-key</code>: The alias of the secret key stored in the credential store file (default: <code>key</code>).</p>
@@ -298,11 +298,11 @@ In the following post, replace <code>WILDFLY_HOME</code> with the actual path to
 <div class="sect2">
 <h3 id="command-line"><a class="anchor" href="#command-line"></a>Command Line</h3>
 <div class="paragraph">
-<p>To run in command line mode, specify the 2 mandatory options, and any optional ones applicable to your use case. For example:</p>
+<p>To run in command line mode, specify the mandatory options, and any optional ones applicable to your use case. For example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --input-location fs-unencrypted-realm --output-location fs-encrypted-realm --realm-name new-realm --encoded false --levels 4 --hash-encoding HEX</code></pre>
+<pre class="highlightjs highlight"><code class="language-none hljs">$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-realm-encrypt --input-location fs-unencrypted-realm --output-location fs-encrypted-realm --credential-store myCredStore.cs --realm-name new-realm --encoded false --levels 4 --hash-encoding HEX</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -332,7 +332,7 @@ In the following post, replace <code>WILDFLY_HOME</code> with the actual path to
 <h3 id="bulk-convert"><a class="anchor" href="#bulk-convert"></a>Bulk Convert</h3>
 <div class="paragraph">
 <p>A descriptor file will allow you to convert multiple realms all at once from unencrypted to encrypted filesystem realms.
-To do this you will create a file in a specific format. Enter all the filesystem-encrypt options on a line with a <code>:</code> after with the value you want to set it to. To seperate realms, leave a blank line between the blocks.
+To do this you will create a file in a specific format. Enter all the filesystem-realm-encrypt options on a line with a <code>:</code> after with the value you want to set it to. To seperate realms, leave a blank line between the blocks.
 For example, if you wanted to encrypt 4 realms, the below file could be created. Here it shows setting different levels, hash-charsets, and hash-encodings in the realms.</p>
 </div>
 <div class="paragraph">
@@ -342,21 +342,25 @@ For example, if you wanted to encrypt 4 realms, the below file could be created.
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-none hljs">input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/multiple-credential-types
 output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+credential-store:myCredStore.cs
 realm-name:multiple-credential-types
 levels:1
 
 input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/level-4
 output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+credential-store:myCredStore.cs
 realm-name:level-4
 levels:4
 
 input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/hashcharset
 output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+credential-store:myCredStore.cs
 realm-name:hash-charset
 hash-charset:KOI8-R
 
 input-location:target/test-classes/filesystem-encrypt/fs-unencrypted-realms/hashencoding
 output-location:target/test-classes/filesystem-encrypt/fs-encrypted-realms
+credential-store:myCredStore.cs
 realm-name:hash-encoding
 hash-encoding:hex</code></pre>
 </div>
@@ -366,7 +370,7 @@ hash-encoding:hex</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-encrypt --bulk-convert ./bulk-encryption-conversion-desc</code></pre>
+<pre class="highlightjs highlight"><code class="language-none hljs">$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-realm-encrypt --bulk-convert ./bulk-encryption-conversion-desc</code></pre>
 </div>
 </div>
 </div>
