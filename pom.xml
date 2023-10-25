@@ -58,7 +58,7 @@
         <jdk.min.version>11</jdk.min.version>
         <version.com.fasterxml.jackson>2.15.3</version.com.fasterxml.jackson>
         <version.com.fasterxml.jackson.databind>${version.com.fasterxml.jackson}</version.com.fasterxml.jackson.databind>
-        <version.commons-cli>1.4</version.commons-cli>
+        <version.commons-cli>1.5.0</version.commons-cli>
         <version.jakarta.enterprise>2.0.2</version.jakarta.enterprise>
         <version.org.apache.commons>3.8.1</version.org.apache.commons>
         <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
