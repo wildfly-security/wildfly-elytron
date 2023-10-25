@@ -49,6 +49,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
@@ -68,7 +69,6 @@ import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
-import org.wildfly.security.password.interfaces.DigestPassword;
 
 /**
  * Implementation of the HTTP DIGEST authentication mechanism as defined in RFC 7616.
@@ -326,7 +326,7 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     }
 
     private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String messageRealm) throws AuthenticationMechanismException {
-        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, DigestPassword.ALGORITHM_DIGEST_MD5, messageDigest, providers, null, true, false);
+        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, getMechanismName().toLowerCase(Locale.ROOT), messageDigest, providers, null, true, false);
         return obtainer.handleUserRealmPasswordCallbacks();
     }
 
