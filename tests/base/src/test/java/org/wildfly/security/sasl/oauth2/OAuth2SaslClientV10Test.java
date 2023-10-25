@@ -101,54 +101,12 @@ public class OAuth2SaslClientV10Test {
 
     @Test
     public void testWithResourceOwnerCredentialsUsingConfiguration() throws Exception {
-        URI serverUri = URI.create("protocol://test1.org");
-        SaslClient saslClient = createSaslClientFromConfiguration(serverUri);
-
-        assertNotNull("OAuth2SaslClient is null", saslClient);
-
-        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
-                .setServerName("resourceserver.comn")
-                .setProtocol("imap")
-                .addRealm("oauth-realm", createSecurityRealmMock())
-                .setDefaultRealmName("oauth-realm")
-                .build();
-
-        byte[] message = AbstractSaslParticipant.NO_BYTES;
-
-        do {
-            message = saslClient.evaluateChallenge(message);
-            if (message == null) break;
-            message = saslServer.evaluateResponse(message);
-        } while (message != null);
-
-        assertTrue(saslServer.isComplete());
-        assertTrue(saslClient.isComplete());
+        testWithSaslClientAndServer("protocol://test1.org");
     }
 
     @Test
     public void testWithClientCredentialsUsingConfiguration() throws Exception {
-        URI serverUri = URI.create("protocol://test2.org");
-        SaslClient saslClient = createSaslClientFromConfiguration(serverUri);
-
-        assertNotNull("OAuth2SaslClient is null", saslClient);
-
-        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
-                .setServerName("resourceserver.comn")
-                .setProtocol("imap")
-                .addRealm("oauth-realm", createSecurityRealmMock())
-                .setDefaultRealmName("oauth-realm")
-                .build();
-
-        byte[] message = AbstractSaslParticipant.NO_BYTES;
-
-        do {
-            message = saslClient.evaluateChallenge(message);
-            if (message == null) break;
-            message = saslServer.evaluateResponse(message);
-        } while (message != null);
-
-        assertTrue(saslServer.isComplete());
-        assertTrue(saslClient.isComplete());
+        testWithSaslClientAndServer("protocol://test2.org");
     }
 
     @Test
@@ -204,28 +162,7 @@ public class OAuth2SaslClientV10Test {
 
     @Test
     public void testWithResourceOwnerCredentials() throws Exception {
-        URI serverUri = URI.create("protocol://test5.org");
-        SaslClient saslClient = createSaslClientFromConfiguration(serverUri);
-
-        assertNotNull("OAuth2SaslClient is null", saslClient);
-
-        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
-                .setServerName("resourceserver.comn")
-                .setProtocol("imap")
-                .addRealm("oauth-realm", createSecurityRealmMock())
-                .setDefaultRealmName("oauth-realm")
-                .build();
-
-        byte[] message = AbstractSaslParticipant.NO_BYTES;
-
-        do {
-            message = saslClient.evaluateChallenge(message);
-            if (message == null) break;
-            message = saslServer.evaluateResponse(message);
-        } while (message != null);
-
-        assertTrue(saslServer.isComplete());
-        assertTrue(saslClient.isComplete());
+        testWithSaslClientAndServer("protocol://test5.org");
     }
 
     @Test
@@ -495,5 +432,29 @@ public class OAuth2SaslClientV10Test {
         AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
         AuthenticationConfiguration authenticationConfiguration = contextConfigurationClient.getAuthenticationConfiguration(serverUri, context);
         return contextConfigurationClient.createSaslClient(serverUri, authenticationConfiguration, Arrays.asList(SaslMechanismInformation.Names.OAUTHBEARER));
+    }
+
+    private void testWithSaslClientAndServer(String serverUri) throws Exception {
+        SaslClient saslClient = createSaslClientFromConfiguration(URI.create(serverUri));
+
+        assertNotNull("OAuth2SaslClient is null", saslClient);
+
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.comn")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createSecurityRealmMock())
+                .setDefaultRealmName("oauth-realm")
+                .build();
+
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        do {
+            message = saslClient.evaluateChallenge(message);
+            if (message == null) break;
+            message = saslServer.evaluateResponse(message);
+        } while (message != null);
+
+        assertTrue(saslServer.isComplete());
+        assertTrue(saslClient.isComplete());
     }
 }
