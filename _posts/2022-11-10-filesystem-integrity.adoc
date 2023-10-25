@@ -127,8 +127,8 @@ This command iterates over every identity in the filesystem realm and verifies t
 If you want to update the key pair in the filesystem realm, you can use the following commands:
 [source]
 ----
-/subsystem=elytron/filesystem-realm=keystore:write-attribute(name=key-store, value=newKeystore)
-/subsystem=elytron/filesystem-realm=keystore:write-attribute(name=key-store-alias, value=newKeystoreAlias)
+/subsystem=elytron/filesystem-realm=fsRealm:write-attribute(name=key-store, value=newKeystore)
+/subsystem=elytron/filesystem-realm=fsRealm:write-attribute(name=key-store-alias, value=newKeystoreAlias)
 /subsystem=elytron/filesystem-realm=fsRealm:update-key-pair()
 ----
 
