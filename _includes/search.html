@@ -1,0 +1,20 @@
+<!-- Html Elements for Search -->
+<div id="search-container" class="grid__item">
+
+  <input type="text" id="search-input"  class="search-input" placeholder="Search...">
+
+  <ul id="results-container" class="search-result"></ul>
+  
+</div>
+  
+  <!-- Script pointing to search-script.js -->
+  <script src="{{ '/assets/javascript/search-script.js' | relative_url }}" type="text/javascript"></script>
+  
+  <!-- Configuration -->
+  <script>
+  SimpleJekyllSearch({
+    searchInput: document.getElementById('search-input'),
+    resultsContainer: document.getElementById('results-container'),
+    json: '{{ "" | prepend: site.baseurl | append: "/search.json" }}'
+  })
+  </script>

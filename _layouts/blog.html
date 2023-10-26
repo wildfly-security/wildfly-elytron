@@ -1,6 +1,7 @@
 ---
 layout: default
 ---
+
 <div class="blog-page grid-wrapper">
 
   <div class="grid__item width-12-12"></div>
@@ -8,6 +9,9 @@ layout: default
   <div class="grid__item width-1-12 align-self-center"></div>
 
   <div class="grid__item width-8-12 width-12-12-m">
+
+    {% include search.html %}
+
     {% for post in paginator.posts %}
       {% assign author = site.data.authors[post.author] %}
       <div class="blog-list-item grid-wrapper">
