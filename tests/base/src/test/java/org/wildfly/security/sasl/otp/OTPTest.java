@@ -819,106 +819,18 @@ public class OTPTest {
 
     @Test
     public void testAuthenticationWithLongSeed() throws Exception {
-        final String algorithm = ALGORITHM_OTP_MD5;
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
-        assertNotNull(clientFactory);
-
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-        final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "thisSeedIsTooLong", 500));
-        final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
-        final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
-        try {
-            final SaslServer saslServer = createSaslServer(password, closeableReference, securityDomainReference);
-
-            final CallbackHandler cbh = createClientCallbackHandler("userName", "This is a test.", PASS_PHRASE, algorithm, HEX_RESPONSE);
-            final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
-                    Collections.<String, Object>emptyMap(), cbh);
-
-            byte[] message = saslClient.evaluateChallenge(new byte[0]);
-            try {
-                saslServer.evaluateResponse(message);
-                fail("Expected SaslException not thrown");
-            } catch (SaslException expected) {
-            }
-            saslClient.dispose();
-            saslServer.dispose();
-
-            // The password should remain unchanged
-            checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
-        } finally {
-            closeableReference.getReference().close();
-        }
+        testPasswordRemainsUnchanged("thisSeedIsTooLong", 500);
     }
 
     @Test
     public void testAuthenticationWithNonAlphanumericSeed() throws Exception {
-        final String algorithm = ALGORITHM_OTP_MD5;
-
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
-        assertNotNull(clientFactory);
-
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-        final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "A seed!", 500));
-        final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
-        final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
-        try {
-            final SaslServer saslServer = createSaslServer(password, closeableReference, securityDomainReference);
-
-            final CallbackHandler cbh = createClientCallbackHandler("userName", "This is a test.", PASS_PHRASE, algorithm, HEX_RESPONSE);
-            final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
-                    Collections.<String, Object>emptyMap(), cbh);
-
-            byte[] message = saslClient.evaluateChallenge(new byte[0]);
-            try {
-                saslServer.evaluateResponse(message);
-                fail("Expected SaslException not thrown");
-            } catch (SaslException expected) {
-            }
-            saslClient.dispose();
-            saslServer.dispose();
-
-            // The password should remain unchanged
-            checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
-        } finally {
-            closeableReference.getReference().close();
-        }
+        testPasswordRemainsUnchanged("A seed!", 500);
     }
 
 
     @Test
     public void testAuthenticationWithInvalidSequenceNumber() throws Exception {
-        final String algorithm = ALGORITHM_OTP_MD5;
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
-        assertNotNull(clientFactory);
-
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-        final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
-                "ke1234", 0));
-        final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
-        final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
-        try {
-            final SaslServer saslServer = createSaslServer(password, closeableReference, securityDomainReference);
-
-            final CallbackHandler cbh = createClientCallbackHandler("userName", "This is a test.", PASS_PHRASE, algorithm, HEX_RESPONSE);
-            final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.OTP }, null, "test", "testserver1.example.com",
-                    Collections.<String, Object>emptyMap(), cbh);
-
-            byte[] message = saslClient.evaluateChallenge(new byte[0]);
-            try {
-                saslServer.evaluateResponse(message);
-                fail("Expected SaslException not thrown");
-            } catch (SaslException expected) {
-            }
-            saslClient.dispose();
-            saslServer.dispose();
-
-            // The password should remain unchanged
-            checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
-        } finally {
-            closeableReference.getReference().close();
-        }
+        testPasswordRemainsUnchanged("ke1234", 0);
     }
 
     @Test
@@ -1080,6 +992,40 @@ public class OTPTest {
                                 .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(algorithm)));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
+    }
+
+    private void testPasswordRemainsUnchanged(String seed, int sequenceNumber) throws Exception {
+        final String algorithm = ALGORITHM_OTP_MD5;
+        final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
+        assertNotNull(clientFactory);
+
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+        final Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(CodePointIterator.ofString("505d889f90085847").hexDecode().drain(),
+                seed, sequenceNumber));
+        final SaslServerBuilder.BuilderReference<SecurityDomain> securityDomainReference = new SaslServerBuilder.BuilderReference<>();
+        final SaslServerBuilder.BuilderReference<Closeable> closeableReference = new SaslServerBuilder.BuilderReference<>();
+        try {
+            final SaslServer saslServer = createSaslServer(password, closeableReference, securityDomainReference);
+
+            final CallbackHandler cbh = createClientCallbackHandler("userName", "This is a test.", PASS_PHRASE, algorithm, HEX_RESPONSE);
+            final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
+                    Collections.<String, Object>emptyMap(), cbh);
+
+            byte[] message = saslClient.evaluateChallenge(new byte[0]);
+            try {
+                saslServer.evaluateResponse(message);
+                fail("Expected SaslException not thrown");
+            } catch (SaslException expected) {
+            }
+            saslClient.dispose();
+            saslServer.dispose();
+
+            // The password should remain unchanged
+            checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
+        } finally {
+            closeableReference.getReference().close();
+        }
+
     }
 
     private static final String[] ALTERNATE_DICTIONARY = new String[] {
