@@ -43,40 +43,44 @@ import org.wildfly.security.password.util.ModularCrypt;
 public class SunUnixMD5CryptTest {
 
     @Test
-    public void testParseCryptStringWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01";
-
-        // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(0, password.getIterationCount());
-
-        // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+    public void testParseCryptStringWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException { 
+        testParseCryptString("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01");
     }
 
     @Test
-    public void testParseCryptStringWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1";
-
-        // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(1_000, password.getIterationCount());
-
-        // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+    public void testParseCryptStringWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException { 
+        testParseCryptString("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1");
     }
 
     @Test
-    public void testParseCryptStringWithBareSalt() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.";
+    public void testParseCryptStringWithBareSalt() throws NoSuchAlgorithmException, InvalidKeySpecException { 
+        testParseCryptString("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.");
+    }
 
-        // Get the spec by parsing the crypt string
+    
+    public void testParseCryptString(String cryptString) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        int assertionValue = 0;
+
+        if (cryptString.equals("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01")) {
+            assertionValue = 0;
+        }
+
+        else if (cryptString.equals("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1")) {
+            assertionValue = 1_000;
+        }
+
+        else if (cryptString.equals("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.")) {
+            assertionValue = 1_500;
+        }
+
         SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(1_500, password.getIterationCount());
+        assertEquals(assertionValue, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
         assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+
     }
+
 
     private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
