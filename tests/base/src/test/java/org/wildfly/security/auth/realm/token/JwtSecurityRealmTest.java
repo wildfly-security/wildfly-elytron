@@ -372,22 +372,7 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testUnsecuredJkuEndpoint() throws Exception {
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50832")));
-
-        X509TrustManager tm = getTrustManager();
-        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
-
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName("sub")
-                .validator(JwtValidator.builder()
-                        .issuer("elytron-oauth2-realm")
-                        .audience("my-app-valid")
-                        .useSslContext(sslContext)
-                        .useSslHostnameVerifier((a,b) -> true).build())
-                .build();
-
-        assertIdentityNotExist(securityRealm, evidence);
-
+        checkIdentityDoesNotExist("1", 50832);
     }
 
     @Test
@@ -467,41 +452,12 @@ public class JwtSecurityRealmTest {
 
     @Test
     public void testInvalidJku() throws Exception {
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:80")));
-
-        X509TrustManager tm = getTrustManager();
-        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
-
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName("sub")
-                .validator(JwtValidator.builder()
-                        .issuer("elytron-oauth2-realm")
-                        .audience("my-app-valid")
-                        .useSslContext(sslContext).useSslHostnameVerifier((a,b) -> true).build())
-                .build();
-
-        assertIdentityNotExist(securityRealm, evidence);
-
+        checkIdentityDoesNotExist("1", 80);
     }
 
     @Test
     public void testInvalidKid() throws Exception {
-        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, "badkid", new URI("https://localhost:50831")));
-
-        X509TrustManager tm = getTrustManager();
-        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
-
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .principalClaimName("sub")
-                .validator(JwtValidator.builder()
-                        .issuer("elytron-oauth2-realm")
-                        .audience("my-app-valid")
-                        .useSslContext(sslContext)
-                        .useSslHostnameVerifier((a,b) -> true).build())
-                .build();
-
-        assertIdentityNotExist(securityRealm, evidence);
-
+        checkIdentityDoesNotExist("badkid", 50831);
     }
 
     @Test
@@ -844,5 +800,22 @@ public class JwtSecurityRealmTest {
                 return new MockResponse().setBody(response);
             }
         };
+    }
+
+    private void checkIdentityDoesNotExist(String kid, int port) throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(createJwt(keyPair1, 60, -1, kid, new URI("https://localhost:" + port)));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder().setTrustManager(tm).setClientMode(true).setSessionTimeout(10).build().create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext).useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        assertIdentityNotExist(securityRealm, evidence);
     }
 }

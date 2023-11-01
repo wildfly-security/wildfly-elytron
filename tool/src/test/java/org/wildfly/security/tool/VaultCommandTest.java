@@ -384,7 +384,7 @@ public class VaultCommandTest extends AbstractCommandTest {
         // conversion
         String output = executeCommandAndCheckStatusAndGetOutput(args);
         String[] parts = output.split("converted to credential store");
-        Assert.assertTrue("Three credential stores has to be created", parts.length == 4);
+        Assert.assertEquals("Three credential stores has to be created", 4, parts.length);
         Assert.assertTrue("Check file names must pass", output.indexOf("vault-v1/vault-jceks.keystore") > 0 && output.indexOf("vault-v1-more/vault-jceks.keystore") > 0);
 
         // check result
@@ -508,7 +508,7 @@ public class VaultCommandTest extends AbstractCommandTest {
 
         String message = "Execution of vault command with arguments {" + String.join(" ", args) + "} should" +
                 (shouldPass? " succeeded ": " failed ") + "but it" + (shouldPass? " failed": " succeeded");
-        Assert.assertTrue(message, passed == shouldPass);
+        Assert.assertEquals(message, shouldPass, passed);
 
         if (expectedOutput != null) {
             Assert.assertTrue("Command output should contain \"" + expectedOutput + "\"", output.contains(expectedOutput));
