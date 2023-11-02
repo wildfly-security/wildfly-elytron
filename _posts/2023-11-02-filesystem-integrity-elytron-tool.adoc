@@ -1,0 +1,177 @@
+---
+layout: post
+title: 'Adding Support for Integrity Checking to an Existing 
+Filesystem Realm'
+date: 2023-11-02
+tags: filesystem integrity filesystem-realm tool
+synopsis: How to add Integrity checking to an existing filesystem realm using the Elytron tool. 
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+WildFly 27 included the ability to add integrity checking support to filesystem realms. This uses an asymmetric key pair that has a private and public key to secure the filesystem realm. In the filesystem realm, each identity will be signed using the private key. This makes it possible to verify that identities in the realm haven't been tampered with.
+
+https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity/[A previous blog post] demonstrates how to enable integrity support on a filesystem realm using the Elytron subsystem. This blog post will demonstrate how to take an existing filesystem realm and add integrity checking to it using the WildFly Elytron Tool. In this post we will go through an example of converting an unencrypted filesystem realm to one with integrity enabled and then we will try accessing a web application that is secured with the new filesystem realm.
+
+toc::[]
+
+Clone the elytron-examples repo locally:
+```
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+cd elytron-examples/integrity-filesystem-realm
+```
+
+== Server Configuration
+In the following section, we will configure the server to first create a filesystem realm without integrity checking and then use the Elytron tool to add integrity checking to it. We will first connect to the server using the following command: 
+```
+$ WILDFLY_HOME/bin/jboss-cli.sh --connect
+```
+Let's first create a filesystem realm called `fsRealm` in the server configuration directory. We will add an identity, called quickstartUser to the realm, set a password for the identity and add roles for the identity as well. To do that, we will use the following commands: 
+```
+/subsystem=elytron/filesystem-realm=fsRealm:add(path=fs-realm, relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity(identity=quickstartUser)
+/subsystem=elytron/filesystem-realm=fsRealm:set-password(identity=quickstartUser, digest={password=password123!, realm=fsRealm, algorithm=digest-md5})
+/subsystem=elytron/filesystem-realm=fsRealm:add-identity-attribute(identity=quickstartUser, name=Roles, value=["Admin", "Guest"])
+``` 
+Now if we navigate to the server configuration directory, we will see a new directory created, called `fs-realm`, which contains files relevant to the filesystem realm we just created. If you navigate to the xml file inside the folder, you will see that the details related to the identity we added are all human readable. Additionally, the name of the principal appears in the name of the xml file. An example of the contents of the xml file for a filesystem without integrity checking can be seen below: 
+
+```
+<principal name="quickstartUser"/>
+    <credentials>
+        <password algorithm="digest-md5" format="base64">Ag5xdWlja3N0YXJ0VXNlcgdmc1JlYWxt4Y4F7KmGKSCPrtzjzHD8Hg==</password>
+    </credentials>
+    <attributes>
+        <attribute name="Roles" value="Admin"/>
+        <attribute name="Roles" value="Guest"/>
+    </attributes>
+```
+
+We then create a new security domain which will make use of our filesystem realm as follows:
+```
+/subsystem=elytron/security-domain=fsDomain:add(realms=[{realm=fsRealm}], default-realm=fsRealm,permission-mapper=default-permission-mapper)
+```
+And lastly, update our security domain mapping in the Undertow subsystem:
+```
+/subsystem=undertow/application-security-domain=other:write-attribute(name=security-domain, value=fsDomain)
+```
+Now we can deploy and access the application and log in using the credentials for quickstartUser. However, without any integrity checking, anyone with access to the contents of the filesystem realm can tamper with it. So, let's add integrity checking for this filesystem realm. 
+
+== Adding Integrity Checking
+To create a new filesystem realm based off our existing one but with the integrity support enabled, we can use the following Elytron Tool command:
+
+```
+./bin/elytron-tool.sh filesystem-realm-integrity --input-location WILDFLY_HOME/standalone/configuration/fs-realm --output-location WILDFLY_HOME/standalone/configuration/fsRealmWithIntegrity  --keystore PATH/TO/KEYSTORE/FILE --password password --key-pair key --summary
+```
+
+Here the `input-location` option refers to the path to the existing filesystem, the `output-location` refers to the new filesystem realm to be created. The `keystore` option specifies the location for the keystore file, `password` refers to the password for the keystore and `key-pair` refers to the alias of the key that uniquely identifies the key pair we are looking for inside the keystore. The `summary` option is added so that when the new filesystem is created, we can see the details of what is being done. The keystore can be created in one of two ways: 
+
+=== Generating Keystore Using Keytool
+Keystore can be generated using `keytool` on the linux terminal. The commands needed for this is as follows: 
+```
+$ keytool -genkeypair -alias key -keyalg RSA -keysize 2048 -validity 365 -keystore fsKeystore.keystore.pkcs12 -dname "CN=quickstartUser" -keypass password -storepass password
+```
+You can see the contents of the keystore using the following command: 
+```
+keytool -list -keystore fsKeystore.keystore.pkcs12
+```
+
+=== Generating Keystore Using the Elytron Subsystem
+To generate a keystore using the Elytron Subsystem, you can connect to the server again and enter the following commands: 
+```
+/subsystem=elytron/key-store=keystore:add(path=fsKeystore.keystore.pkcs12, relative-to=jboss.server.config.dir, type=JKS, credential-reference={clear-text=password})
+/subsystem=elytron/key-store=keystore:generate-key-pair(alias=key,algorithm=RSA,key-size=2048,validity=365,distinguished-name="CN=quickstartUser")
+/subsystem=elytron/key-store=keystore:store()
+```
+
+Once the conversion is completed, you will the summary of the processes that took place. Here is an example of what to expect: 
+```
+Creating filesystem realm with integrity verification for: WILDFLY_HOME/standalone/configuration/fs-realm
+----------------------------------------------------------------------------------------------------
+Summary for execution of Elytron Tool command filesystem-realm-integrity
+----------------------------------------------------------------------------------------------------
+Options were specified via CLI, converting single users-roles combination
+Configured script for WildFly named filesystem-realm-with-integrity.cli at WILDFLY_HOME/standalone/configuration/fsRealmWithIntegrity.
+Name of filesystem-realm: filesystem-realm-with-integrity
+----------------------------------------------------------------------------------------------------
+End of summary
+----------------------------------------------------------------------------------------------------
+```
+If you navigate to the server configuration directory, you should see a new folder created with the name of the new filesystem realm. You will see a new cli script created for you with contents similar to this: 
+```
+/subsystem=elytron/key-store=mykeystore1:add(path=WILDFLY_HOME/standalone/configuration/keycloak.keystore, credential-reference={clear-text="password"})
+/subsystem=elytron/filesystem-realm=filesystem-realm-with-integrity:add(path=WILDFLY_HOME/standalone/configuration/fsRealmWithIntegrity/filesystem-realm-with-integrity, key-store=mykeystore1, key-store-alias=key)
+```
+You can use this cli script to add a keystore and the filesystem to your server configuration. Please note that if you are using domain mode, then the cli script will need to be edited accordingly. You can use this cli script to add the new filesystem  realm: 
+```
+./bin/jboss-cli.sh --connect --file=standalone/configuration/fsRealmWithIntegrity/filesystem-realm-with-integrity.cli
+```
+
+We can now use the following commands to update the security domain and the application security domain: 
+```
+/subsystem=elytron/security-domain=fsDomainWithIntegrity:add(realms=[{realm=filesystem-realm-with-integrity}], default-realm=filesystem-realm-with-integrity, permission-mapper=default-permission-mapper)
+/subsystem=undertow/application-security-domain=other:write-attribute(name=security-domain, value=fsDomainWithIntegrity)
+```
+
+== Deploy and Access the application
+
+From the root directory of the https://github.com/wildfly-security-incubator/elytron-examples/blob/master/integrity-filesystem-realm/[example application] run the following command the deploy the web application to wildfly
+```
+mvn clean install wildfly:deploy
+```
+
+Now you may navigate to http://localhost:8080/integrity-filesystem, and when it prompts you to enter a username and password, put in the credentials we specified earlier, quickstartUser, and password123!. This should authenticate you to a page that shows you the principal you’re logged in with.
+
+The successful login indicates that integrity has been configured correctly.
+
+In order to further verify that these features are being used correctly we can navigate to the identity file and check the contents. The file should be located at WILDFLY_HOME/standalone/configuration/fsRealmWithIntegrity/filesystem-realm-with-integrity/q/u/quickstartuser-<hashed username>.xml if the same filesystem realm and identity configuration was used.
+
+In the identity we can see there is now a <principal /> tag specifying the principal name, to ensure it matches with the file name, as well as a <Signature> tag.
+
+The format for the signature tag should look like the following
+
+```
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>lR6gGN09hcSuuQVJsLBl78sr8GXipwmQ02jBUkAIByw=</DigestValue></Reference></SignedInfo><SignatureValue>RAxcBIF6nffK4zagIqOE1PkpnbrIndRIF9nCwtpK6J4sqzzBS+9lysHLoLS12UTh6jxUroG4BhIo&#13;
+ODXvpN01Dgp74KjrbIvh9411HAndwEY/K9JVytrJYjgFm1wOS5q7CSRqeB9d2++CbVUxVFf2VrLD&#13;
+eoFGkN4hGyElPpPeL9yELTp3eZ71R/99H5jFLf21JHll/zqV3b1qreukdyuUUblBQ39/cYNMZxfX&#13;
+X813x7RDKE57HfkTdf/2Jv/se01vnMvvB36SL3UJ6GBcOz2IpCUyZ7CKGUptXBbUllSplYB4SyHv&#13;
+m9OOWBLuCIDbifdNrMmnxkVZRg+CPQy9c98bhA==</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>jj2pFiphnnkRssxcuinzz+qMlY9wgbMo7T0fXh/I2SQKOlbBjC1YJk0RJMCcmE1ITZbYk7JS5aiM&#13;
+fsY0qe6KNVLZLZcmp0vCruCTaIkNxKExfszezMxPN/NpyuxOPu+rhyX8Q4TkdYkIZZECuXUrocqf&#13;
+JiZHimuA7tmYaLOhJgN8ZspHITeKkp3hSiZIr61lz8DPWiR1P4+/LhzE4J/URphTOzh/y8tY6ySU&#13;
+3DPMDPjRHXUfkWbttd0HmzB+m5g8ZkT/9bB54HaP9FQHy6ynrywVKBS6+sm6RX/cTPeh1yoBkuyv&#13;
+IDHhPpbWb9nHrfDV10EF5N/MHBZEpThYXVIiyQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue></KeyInfo></Signature></identity>
+```
+
+You can verify the integrity of the realm using the verify-integrity function: 
+```
+/subsystem=elytron/filesystem-realm=filesystem-realm-with-integrity:verify-integrity()
+```
+
+== Bulk Conversion for Filesystem Realms
+
+The Elytron tool also supports converting multiple filesystem realms at once. This can be done using the following command: 
+```
+$ WILDFLY_HOME/bin/elytron-tool.sh filesystem-realm-integrity --bulk-convert <descriptor> --summary
+```
+where `<descriptor>` refers to a descriptor file with details about the filesystems to be converted. 
+Here is an example descriptor file that converts 2 filesystem realms, `unsigned-realm-one` and `unsigned-realm-two` to add integrity checking. Note that we have specified the name of the new realm using the `realm-name` option to avoid getting assigned the default name. 
+```
+input-location:standalone/configuration/unsigned-realm-one
+output-location:standalone/configuration/signed
+keystore:myKeyStore
+password:myPassword
+key-pair:myKeyPair
+realm-name:realm-one
+
+input-location:standalone/configuration/unsigned-realm-two
+output-location:standalone/configuration/signed
+keystore:myKeyStore
+password:myPassword
+key-pair:myKeyPair
+realm-name:realm-two
+```
+
+== Summary
+
+This blog post has shown how to add integrity checking to an existing filesystem realm using an asymmetrical key pair and the WildFly Elytron tool. We also looked at how we can convert multiple filesystem realms using the `bulk-convert` option. Please note that in addition to elytron-tool.sh, WildFly also ships with `elytron-tool.bat` and `elytron-tool.ps1` scripts. For more information on the different options available for the elytron-tool, you can use the `--help` option. To learn more about the filesystem security realm, please refer to the https://docs.wildfly.org/30/WildFly_Elytron_Security.html#filesystem-security-realm[WildFly documentation]. 
