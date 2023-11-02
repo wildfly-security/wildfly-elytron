@@ -44,37 +44,23 @@ public class SunUnixMD5CryptTest {
 
     @Test
     public void testParseCryptStringWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException { 
-        testParseCryptString("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01");
+        testParseCryptString("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01", 0);
     }
 
     @Test
     public void testParseCryptStringWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException { 
-        testParseCryptString("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1");
+        testParseCryptString("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1", 1_000);
     }
 
     @Test
     public void testParseCryptStringWithBareSalt() throws NoSuchAlgorithmException, InvalidKeySpecException { 
-        testParseCryptString("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.");
+        testParseCryptString("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.", 1_500);
     }
 
     
-    public void testParseCryptString(String cryptString) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        int assertionValue = 0;
-
-        if (cryptString.equals("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01")) {
-            assertionValue = 0;
-        }
-
-        else if (cryptString.equals("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1")) {
-            assertionValue = 1_000;
-        }
-
-        else if (cryptString.equals("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.")) {
-            assertionValue = 1_500;
-        }
-
+    public void testParseCryptString(String cryptString, int iterCount) throws NoSuchAlgorithmException, InvalidKeySpecException {
         SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(assertionValue, password.getIterationCount());
+        assertEquals(iterCount, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
         assertEquals(cryptString, ModularCrypt.encodeAsString(password));
