@@ -46,7 +46,11 @@ cam-rod:
   name: "Cameron Rodriguez"
   emailhash: "aba64bbfde66646d5b5bc40d23b7e0de"
   bio: "https://github.com/cam-rod"
-prarthonapaul: 
+keshav-kumar:
+  name: "Keshav Kumar"
+  emailhash: "29444c12226e2d0638ca49e594c1bd30"
+  bio: "https://github.com/keshav-redhat"
+prarthonapaul:
   name: "Prarthona Paul"
   emailhash: "6ed81e314d6074bbf734abe812f33b05"
   bio: "https://github.com/PrarthonaPaul"

@@ -1,0 +1,128 @@
+---
+layout: post
+title: "Upcoming client side HTTP authentication mechanisms support"
+date: 2023-07-12
+tags: http authentication client
+synopsis: The implementation of client side HTTP authentication mechanisms in Elytron is in progress.
+author: keshav-kumar
+---
+
+
+:toc: macro
+:toc-title:
+
+
+This feature will introduce a significant enhancement to WildFly Elytron - the addition of client-side HTTP authentication mechanism support. With this new feature, WildFly Elytron will provide a client-side framework for HTTP authentication mechanisms, allowing for secure and seamless communication with secured server.
+
+
+toc::[]
+
+
+== Steps for using Elytron HTTP authentication client
+Elytron HTTP client is planned to be used as follows :
+
+
+=== Configuring SSL for Secure Communication:
+All the possible configs are in this link related to SSL Configuration : https://docs.wildfly.org/28/Client_Guide.html
+
+
+Configure SSL in Wildfly Elytron: Update the Wildfly Elytron configuration file (e.g., wildfly-config.xml) to include the SSL configuration.
+
+
+=== Adding Required Credentials
+Inside Wildfly Elytron configuration file add required credential for authorizing the request
+
+
+==== Basic Authentication Mechanism and Digest Authentication Mechanism
+For Basic Authentication Mechanism, add username and password inside the configuration file
+
+
+For example :
+[source,xml]
+----
+<set-user-name name="user1"/>
+<credentials>
+   <clear-password password="password1"/>
+</credentials>
+----
+
+* The credentials will be used by the Elytron HTTP client to add a required headers when making a connection to the secured server.
+
+* Note: Clear password is not recommended in production environment. You can use a credential store instead of the clear text password in production.
+
+==== Bearer Authentication Mechanism
+For Bearer Authentication Mechanism, either add bearer token inside config file
+
+
+For example :
+[source,xml]
+----
+<credentials>
+   <bearer-token value="dummy-bearer-token"/>
+</credentials>
+----
+or, you can provide the uri with required credential which will be used to get token from that.
+
+
+For example :
+[source,xml]
+----
+<credentials>
+   <oauth2-bearer-token token-endpoint-uri="http://localhost:8080/http-auth/token">
+       <resource-owner-credentials name="user" password="dont_tell_me"/>
+       <client-credentials client-id="elytron-client" client-secret="client_secret=dont_tell_me"/>
+   </oauth2-bearer-token>
+</credentials>
+----
+* Elytron HTTP client will add this token to the Authorization header.
+
+=== Code Integration
+
+
+1. Set up the Wildfly Elytron module: Ensure that the "wildfly-elytron-http-client" module is included in your project dependencies. This module contains the necessary classes and utilities to enable client-side HTTP authentication.
+[source,xml]
+----
+<dependency>
+   <groupId>org.wildfly.security</groupId>
+   <artifactId>wildfly-elytron-http-client</artifactId>
+</dependency>
+----
+2. Create an instance of org.wildfly.security.http.client.ElytronHttpClient : In your client application code, instantiate an object of the "ElytronHttpClient" class. This will serve as the main interface for sending authenticated HTTP requests.
+
+
+[source,java]
+----
+ElytronHttpClient elytronHttpClient = new ElytronHttpClient();
+----
+3. Build and send authenticated requests: Use the "connect()" methods of the "ElytronHttpClient" class to send HTTP requests to the server. The method signature allows flexibility based on your needs:
+
+
+* If you want to send a GET request with no request body or custom headers, you can simply call connect(uri).
+
+
+For example :
+[source,java]
+----
+URI uri = new URI("http://localhost:8080/wildfly-elytron/http-auth");
+HttpResponse httpResponse = elytronHttpClient.connect(uri);
+----
+
+
+
+
+* For more advanced scenarios where you need to customize the request, you can follow these steps:
+Build an instance of HttpRequest using the HttpRequest.newBuilder() method. Set the URI, request method, request body (if applicable), and custom headers.
+Call connect(request) to send the authenticated request, passing the HttpRequest object as a parameter.
+
+
+For example :
+[source,java]
+----
+URI uri = new URI("http://localhost:8080/wildfly-elytron/http-auth");
+HttpRequest request = HttpRequest.newBuilder()
+     .uri(uri)
+     .method("POST")
+     .build();
+HttpResponse httpResponse = elytronHttpClient.connect(request);
+----
+
