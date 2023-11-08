@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Elytron: Vlog: Securing a WildFly Application with OpenID Connect on OpenShift</title>
+    <title>Elytron: Securing WildFly Apps with OIDC on OpenShift</title>
     <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
 
     <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
@@ -26,22 +26,22 @@
         gtag('config', 'UA-135301155-1');
     </script>
     <!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>Vlog: Securing a WildFly Application with OpenID Connect on OpenShift | WildFly Elytron</title>
+<title>Securing WildFly Apps with OIDC on OpenShift | WildFly Elytron</title>
 <meta name="generator" content="Jekyll v4.3.2" />
-<meta property="og:title" content="Vlog: Securing a WildFly Application with OpenID Connect on OpenShift" />
-<meta name="author" content="Farah Juma" />
+<meta property="og:title" content="Securing WildFly Apps with OIDC on OpenShift" />
+<meta name="author" content="Ashwin Mehendale" />
 <meta property="og:locale" content="en_US" />
 <link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" />
 <meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" />
 <meta property="og:site_name" content="WildFly Elytron" />
 <meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2022-03-29T00:00:00+00:00" />
+<meta property="article:published_time" content="2023-11-08T00:00:00+00:00" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
-<meta property="twitter:title" content="Vlog: Securing a WildFly Application with OpenID Connect on OpenShift" />
+<meta property="twitter:title" content="Securing WildFly Apps with OIDC on OpenShift" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Farah Juma"},"dateModified":"2022-03-29T00:00:00+00:00","datePublished":"2022-03-29T00:00:00+00:00","headline":"Vlog: Securing a WildFly Application with OpenID Connect on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Ashwin Mehendale"},"dateModified":"2023-11-08T00:00:00+00:00","datePublished":"2023-11-08T00:00:00+00:00","headline":"Securing WildFly Apps with OIDC on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"}</script>
 <!-- End Jekyll SEO tag -->
 
 </head>
@@ -158,15 +158,15 @@
             <div class="content">
                 <div class="post-page grid-wrapper">
   <div class="grid__item width-12-12 width-12-12-m doc-content">
-    <h1>Vlog: Securing a WildFly Application with OpenID Connect on OpenShift</h1>
+    <h1>Securing WildFly Apps with OIDC on OpenShift</h1>
     <div class="grid-wrapper">
       <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
         
         
-          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+          <img class="headshot" src="https://www.gravatar.com/avatar/e792a4261507d430e9ac7d1f8abcdcc1">
         
         <p class="byline">
-          By <a href="https://github.com/fjuma">Farah Juma</a> | March 29, 2022
+          By <a href="https://github.com/theashiot">Ashwin Mehendale</a> | November 08, 2023
           <br>
           
             
@@ -174,17 +174,21 @@
             
               <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/openshift"> #openshift</a>
             
-              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/vlog"> #vlog</a>
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/keycloak"> #keycloak</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/adapter"> #adapter</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/galleon-pack"> #galleon-pack</a>
             
           
         </p>
       </div>
       
       <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
-  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/&title=Vlog: Securing a WildFly Application with OpenID Connect on OpenShift" rel="nofollow" target="_blank" title="Share on LinkedIn">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/&title=Securing WildFly Apps with OIDC on OpenShift" rel="nofollow" target="_blank" title="Share on LinkedIn">
     <i class="fab fa-linkedin"></i>
   </a>
-  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Vlog: Securing a WildFly Application with OpenID Connect on OpenShift&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Apps with OIDC on OpenShift&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
     <i class="fab fa-twitter-square"></i>
   </a>
   <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" rel="nofollow" target="_blank" title="Share on Facebook">
@@ -193,13 +197,591 @@
   <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
     <i class="fab fa-reddit-square"></i>
   </a>
-  <a class="share-email" href="mailto:?subject=Vlog: Securing a WildFly Application with OpenID Connect on OpenShift&amp;body=Vlog: Securing a WildFly Application with OpenID Connect on OpenShift https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" title="Share via Email" >
+  <a class="share-email" href="mailto:?subject=Securing WildFly Apps with OIDC on OpenShift&amp;body=Securing WildFly Apps with OIDC on OpenShift https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" title="Share via Email" >
     <i class="fas fa-envelope-square"></i>
   </a>
 </div>
 </div>
       <div class="grid__item width-12-12">
-          
+          <div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide, you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Roughly 15 minutes</p>
+</li>
+<li>
+<p>Access to an OpenShift cluster (try the <a href="https://developers.redhat.com/developer-sandbox">Red Hat Developer Sandbox</a> for free)</p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://helm.sh/docs/intro/install/">Helm Chart</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-application"><a class="anchor" href="#example-application"></a>Example Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will use a simple web application in this guide that consists of a single <a href="https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-oidc/src/main/java/org/wildfly/security/examples/SecuredServlet.java">servlet</a>. We will secure this servlet using OIDC.</p>
+</div>
+<div class="paragraph">
+<p>We will use the example in the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-oidc">simple-webapp-oidc</a> directory in this repo.</p>
+</div>
+<div class="paragraph">
+<p>To obtain this example, clone the elytron-examples repository to your local machine:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone git@github.com:wildfly-security-incubator/elytron-examples.git</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="log-into-the-openshift-cluster"><a class="anchor" href="#log-into-the-openshift-cluster"></a>Log Into the OpenShift Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we can deploy our application, we need to log in to an OpenShift cluster. You can log in via the <a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login -u myUserName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can log in using an API token:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login --token=myToken --server=myServerUrl</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can request the token via the <strong>Copy Login Command</strong> link in the OpenShift web console.</p>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t already have a project created, you can create one using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc new-project myProjectName</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="start-keycloak"><a class="anchor" href="#start-keycloak"></a>Start Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using Keycloak as our OIDC identity provider.</p>
+</div>
+<div class="paragraph">
+<p>To start a Keycloak server in your project on OpenShift, use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc process -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/latest/openshift/keycloak.yaml \
+    -p KEYCLOAK_ADMIN=admin                  \<i class="conum" data-value="1"></i><b>(1)</b>
+    -p KEYCLOAK_ADMIN_PASSWORD=admin         \<i class="conum" data-value="2"></i><b>(2)</b>
+    -p NAMESPACE=&lt;PROJECT_NAME&gt;                \<i class="conum" data-value="3"></i><b>(3)</b>
+| oc create -f -</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Replace <code>admin</code> with the user name you would like to use when accessing the Keycloak Administration Console.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Replace <code>admin</code> with the password you would like to use when accessing the Keycloak Administration Console.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Replace <code>&lt;PROJECT_NAME&gt;</code> with your project name.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>After running the above command, you should see the following output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">service/keycloak created
+route.route.openshift.io/keycloak created
+Warning: apps.openshift.io/v1 DeploymentConfig is deprecated in v4.14+, unavailable in v4.10000+
+deploymentconfig.apps.openshift.io/keycloak created.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will take a few minutes for OpenShift to provision the Keycloak pod and its related resources.</p>
+</div>
+<div class="paragraph">
+<p>You can use the OpenShift CLI or the OpenShift web console, depending on your preference, to check if your Keycloak server has been provisioned.</p>
+</div>
+<div class="sect2">
+<h3 id="openshift-cli"><a class="anchor" href="#openshift-cli"></a>OpenShift CLI</h3>
+<div class="paragraph">
+<p>To make sure your Keycloak server has been provisioned using the OpenShift CLI, run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get pods</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After a little while, check for a message similar to the following message that indicates the pod is ready:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">NAME                READY     STATUS      RESTARTS   AGE
+keycloak-1-deploy   0/1       Completed   0          1h
+keycloak-1-l9kdx    1/1       Running     0          1h</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the Keycloak server has been provisioned, use the following command to find the URL for your Keycloak instance&#8217;s
+Admin Console:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">KEYCLOAK_URL=https://$(oc get route keycloak --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Keycloak Admin Console:   $KEYCLOAK_URL/admin" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="openshift-web-console"><a class="anchor" href="#openshift-web-console"></a>OpenShift Web Console</h3>
+<div class="paragraph">
+<p>To make sure your Keycloak server has been provisioned using the OpenShift web console,
+navigate to the <strong>Topology</strong> view in the <strong>Developer</strong> perspective. You can click on your <strong>keycloak</strong> app
+to check its status. Once it is running, you can click on <strong>Open URL</strong> and then access Keycloak&#8217;s <strong>Administration Console</strong>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-keycloak"><a class="anchor" href="#configure-keycloak"></a>Configure Keycloak</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log into the Keycloak Admin Console using the username and password you specified earlier.</p>
+</li>
+<li>
+<p>Create a new realm called <strong>myrealm</strong>. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_realm">create a realm</a>.</p>
+</li>
+<li>
+<p>Add a role called <strong>user</strong>. This role will be required to access our simple web application. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#assigning-permissions-using-roles-and-groups">create a role</a>.</p>
+</li>
+<li>
+<p>Add a new user named <strong>alice</strong>. Set an <strong>email</strong> address for this new user, we&#8217;ll use <strong>alice@example.org</strong>. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_user">create a user</a>.</p>
+</li>
+<li>
+<p>Once the new user has been created, set a password for this new user from the <strong>Credentials</strong> tab.</p>
+</li>
+<li>
+<p>From the <strong>Role Mapping</strong> tab, assign <strong>alice</strong> the <strong>user</strong> role. For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#proc-assigning-role-mappings_server_administration_guide">assign a role</a> to a user.</p>
+</li>
+<li>
+<p>Create a new client as follows:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>General Settings</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Client type</strong> (or <strong>Client Protocol</strong>, depending on your Keycloak version): <strong>OpenID Connect</strong></p>
+</li>
+<li>
+<p><strong>Client ID</strong>: <strong>myclient</strong></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Capability config</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Authentication flow</strong>: <strong>Standard flow</strong>, <strong>Direct access grants</strong></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Login settings</strong>: Leave the fields blank for now.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For more information, see the Keycloak documentation on how to <a href="https://www.keycloak.org/docs/latest/server_admin/index.html#_oidc_clients">Managing OpenID Connect clients</a>.</p>
+</div>
+</li>
+<li>
+<p>Click <strong>Save</strong> to save the client.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="add-helm-configuration"><a class="anchor" href="#add-helm-configuration"></a>Add Helm Configuration</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Obtain the URL for Keycloak.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">KEYCLOAK_URL=https://$(oc get route keycloak --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Keycloak URL:   $KEYCLOAK_URL" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Switch to the <code>charts</code> directory in the <code>simple-webapp-oidc</code> example.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice there&#8217;s a <code>helm.yaml</code> file in this directory with the following content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: simple-webapp-oidc
+deploy:
+  replicas: 1
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: &lt;KEYCLOAK_URL&gt;    <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Replace &lt;KEYCLOAK_URL&gt; with the Keycloak URL obtained in the previous command.</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploy-the-example-application-to-wildfly-on-openshift"><a class="anchor" href="#deploy-the-example-application-to-wildfly-on-openshift"></a>Deploy the Example Application to WildFly on OpenShift</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you haven&#8217;t already installed the WildFly Helm chart, install it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo add wildfly https://docs.wildfly.org/wildfly-charts/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you&#8217;ve already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo update</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can deploy our example application to WildFly on OpenShift using the WildFly Helm Chart:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts/helm.yaml wildfly/wildfly</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that this command specifies the file we updated, <code>helm.yaml</code>, that contains the values
+needed to build and deploy our application.</p>
+</div>
+<div class="paragraph">
+<p>The application will now begin to build. This will take a couple of minutes.</p>
+</div>
+<div class="paragraph">
+<p>The build can be observed using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get build -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once complete, you can follow the deployment of the application using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get deployment oidc-app -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can check status directly from the OpenShift web console.</p>
+</div>
+<div class="sect2">
+<h3 id="behind-the-scenes"><a class="anchor" href="#behind-the-scenes"></a>Behind the Scenes</h3>
+<div class="paragraph">
+<p>While our application is building, let&#8217;s take a closer look at our application.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Examine the  <a href="https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-oidc/pom.xml">pom.xml</a> file.</p>
+<div class="paragraph">
+<p>Notice that it contains an <strong>openshift</strong> profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The <strong>openshift</strong> profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on OpenShift.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;profiles&gt;
+    &lt;profile&gt;
+        &lt;id&gt;openshift&lt;/id&gt;
+        &lt;build&gt;
+            &lt;plugins&gt;
+                &lt;plugin&gt;
+                    &lt;groupId&gt;org.wildfly.plugins&lt;/groupId&gt;
+                    &lt;artifactId&gt;wildfly-maven-plugin&lt;/artifactId&gt;         <i class="conum" data-value="1"></i><b>(1)</b>
+                    &lt;version&gt;${version.wildfly.maven.plugin}&lt;/version&gt;
+                    &lt;configuration&gt;
+                        &lt;feature-packs&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly:wildfly-galleon-pack:${version.wildfly}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                        &lt;/feature-packs&gt;
+                        &lt;layers&gt;
+                            &lt;layer&gt;cloud-server&lt;/layer&gt;
+                            &lt;layer&gt;elytron-oidc-client&lt;/layer&gt;           <i class="conum" data-value="2"></i><b>(2)</b>
+                        &lt;/layers&gt;
+                        &lt;filename&gt;simple-webapp-oidc.war&lt;/filename&gt;
+                    &lt;/configuration&gt;
+                    &lt;executions&gt;
+                        &lt;execution&gt;
+                            &lt;goals&gt;
+                                &lt;goal&gt;package&lt;/goal&gt;
+                            &lt;/goals&gt;
+                        &lt;/execution&gt;
+                    &lt;/executions&gt;
+                &lt;/plugin&gt;
+            &lt;/plugins&gt;
+        &lt;/build&gt;
+    &lt;/profile&gt;
+&lt;/profiles&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>wildfly-maven-plugin</strong> provisions a WildFly server with the specified layers with our application deployed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>elytron-oidc-client</strong> automatically adds the native OIDC client subsystem to our WildFly installation.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/web.xml">web.xml</a>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight nowrap"><code class="language-xml hljs" data-lang="xml">...
+    &lt;login-config&gt;
+        &lt;auth-method&gt;OIDC&lt;/auth-method&gt;  <i class="conum" data-value="1"></i><b>(1)</b>
+    &lt;/login-config&gt;
+...</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>When <strong>elytron-oidc-client</strong> subsystem sees <strong>auth-method</strong> is set to <strong>OIDC</strong>, it enables OIDC authentication mechanism for the application.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/oidc.json">oidc.json</a> file. The <code>oidc.json</code> is used to configure the native OIDC client subsystem.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight nowrap"><code class="language-none hljs">{
+    "client-id" : "myclient",                                                         <i class="conum" data-value="1"></i><b>(1)</b>
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm", <i class="conum" data-value="2"></i><b>(2)</b>
+    "public-client" : "true",                                                         <i class="conum" data-value="3"></i><b>(3)</b>
+    "principal-attribute" : "preferred_username",                                     <i class="conum" data-value="4"></i><b>(4)</b>
+    "ssl-required" : "EXTERNAL"                                                       <i class="conum" data-value="5"></i><b>(5)</b>
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This is the client we created in Keycloak.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The provider URL, which is the URL for the realm <strong>myrealm</strong> that we created, is specified as an environment variable. We will set its value in the helm configuration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>When <strong>public-client</strong> set to <strong>true</strong>, client credentials are not sent when communicating with the OpenID provider.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>We specify that the user name of the identity, which in our case is <strong>alice</strong>, is to be used as the principal for the identity.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>When <strong>ssl-required</strong> is set to <strong>EXTERNAL</strong>, only the communication with external clients happens over HTTPs</td>
+</tr>
+</table>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="get-the-application-url"><a class="anchor" href="#get-the-application-url"></a>Get the Application URL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once the WildFly server has been provisioned, use the following command to find the URL for your example
+application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">SIMPLE_WEBAPP_OIDC_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Application URL: $SIMPLE_WEBAPP_OIDC_URL/simple-webapp-oidc"  &amp;&amp;
+echo "Valid redirect URI: $SIMPLE_WEBAPP_OIDC_URL/simple-webapp-oidc/secured/*" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll make use of these URLs in the next two sections.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finish-configuring-keycloak"><a class="anchor" href="#finish-configuring-keycloak"></a>Finish Configuring Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your <strong>myclient</strong> client in the Keycloak Administration Console,
+in the client settings, set <strong>Valid Redirect URI</strong> to the Valid redirect URI that was output in the previous section and then click <strong>Save</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-application"><a class="anchor" href="#access-the-application"></a>Access the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your browser, navigate to the <strong>Application URL</strong> that was output in the previous section.</p>
+</div>
+<div class="paragraph">
+<p>Click on <strong>Access Secured Servlet</strong>.</p>
+</div>
+<div class="paragraph">
+<p>You will be redirected to Keycloak to log in.</p>
+</div>
+<div class="paragraph">
+<p>Log in using the <strong>alice</strong> user we created earlier.</p>
+</div>
+<div class="paragraph">
+<p>Upon successful authentication, you will be redirected back to the example application.</p>
+</div>
+<div class="paragraph">
+<p>The example application simply outputs the name of the logged in user.</p>
+</div>
+<div class="paragraph">
+<p>You should see the following output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Secured Servlet
+
+Current Principal 'alice'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This indicates that we have successfully logged into our application!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide has shown how to secure an application deployed to WildFly on OpenShift with OIDC. For additional
+information, feel free to check out the resources linked below.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html">Getting Started with WildFly on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/getting-started/getting-started-openshift">Getting started with Keycloak on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/server_admin/index.html">Keycloak Server Administration Guide</a></p>
+</li>
+<li>
+<p><a href="https://www.keycloak.org/docs/latest/securing_apps/#_oidc">Using OpenID Connect to secure applications and services</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
       </div>
     </div>
   </div>
