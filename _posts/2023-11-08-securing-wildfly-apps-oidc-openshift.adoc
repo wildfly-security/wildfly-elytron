@@ -9,11 +9,9 @@ author: theashiot
 
 :toc: macro
 :toc-title:
-
-
-= Securing WildFly Apps with OIDC on OpenShift
-
 You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider.
+
+toc::[]
 
 == Prerequisites
 
