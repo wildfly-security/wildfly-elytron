@@ -31,6 +31,8 @@
 <meta property="og:title" content="Securing WildFly Apps with OIDC on OpenShift" />
 <meta name="author" content="Ashwin Mehendale" />
 <meta property="og:locale" content="en_US" />
+<meta name="description" content="You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider." />
+<meta property="og:description" content="You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider." />
 <link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" />
 <meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/" />
 <meta property="og:site_name" content="WildFly Elytron" />
@@ -41,7 +43,7 @@
 <meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
 <meta property="twitter:title" content="Securing WildFly Apps with OIDC on OpenShift" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Ashwin Mehendale"},"dateModified":"2023-11-08T00:00:00+00:00","datePublished":"2023-11-08T00:00:00+00:00","headline":"Securing WildFly Apps with OIDC on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Ashwin Mehendale"},"dateModified":"2023-11-08T00:00:00+00:00","datePublished":"2023-11-08T00:00:00+00:00","description":"You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider.","headline":"Securing WildFly Apps with OIDC on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/"}</script>
 <!-- End Jekyll SEO tag -->
 
 </head>
@@ -203,12 +205,34 @@
 </div>
 </div>
       <div class="grid__item width-12-12">
-          <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
+          <div class="paragraph">
 <p>You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider.</p>
 </div>
-</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#example-application">Example Application</a></li>
+<li><a href="#log-into-the-openshift-cluster">Log Into the OpenShift Cluster</a></li>
+<li><a href="#start-keycloak">Start Keycloak</a>
+<ul class="sectlevel2">
+<li><a href="#openshift-cli">OpenShift CLI</a></li>
+<li><a href="#openshift-web-console">OpenShift Web Console</a></li>
+</ul>
+</li>
+<li><a href="#configure-keycloak">Configure Keycloak</a></li>
+<li><a href="#add-helm-configuration">Add Helm Configuration</a></li>
+<li><a href="#deploy-the-example-application-to-wildfly-on-openshift">Deploy the Example Application to WildFly on OpenShift</a>
+<ul class="sectlevel2">
+<li><a href="#behind-the-scenes">Behind the Scenes</a></li>
+</ul>
+</li>
+<li><a href="#get-the-application-url">Get the Application URL</a></li>
+<li><a href="#finish-configuring-keycloak">Finish Configuring Keycloak</a></li>
+<li><a href="#access-the-application">Access the Application</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
 </div>
 <div class="sect1">
 <h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>

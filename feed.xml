@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 08 Nov 2023 17:03:36 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 09 Nov 2023 20:17:58 +0000</lastBuildDate>
         
         <item>
             <title>Securing WildFly Apps with OIDC on OpenShift</title>
@@ -13,7 +13,7 @@
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/
             </link>
             <description>
-                You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider. Prerequisites To follow...
+                You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Keycloak as the OIDC provider. Prerequisites Example Application...
             </description>
             <pubDate>Wed, 08 Nov 2023 00:00:00 +0000</pubDate>
             <guid>
