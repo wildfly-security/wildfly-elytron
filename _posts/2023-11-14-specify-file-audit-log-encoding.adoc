@@ -1,0 +1,89 @@
+---
+layout: post
+title: 'Change the default encoding of the audit log file in WildFly 29'
+date: 2023-11-14
+tags: audit-logging encoding
+synopsis:  An overview of how to change the default encoding of the audit log file.
+author: ivassile
+---
+
+The default encoding used for the audit log file is UTF-8. You can change the default encoding by specifying `encoding` attribute in `file-audit-log`, `periodic-rotating-file-audit-log` or `size-rotating-file-audit-log` elements in the Elytron subsystem. 
+Possible values are: `UTF-8`, `UTF-16BE`, `UTF-16LE`, `UTF-16`, `US-ASCII` or `ISO-8859-1`.
+
+[source,xml]
+----
+<file-audit-log name="local-file" path="audit.log" relative-to="jboss.server.log.dir" synchronized="false" autoflush="true" format="JSON" encoding="UTF-16"/>
+...
+<periodic-rotating-file-audit-log name="periodic-rotating" path="audit.log" relative-to="jboss.server.log.dir" format="JSON" encoding="US-ASCII" suffix="y-M-d"/>
+...
+<size-rotating-file-audit-log name="size-rotating" path="audit.log" relative-to="jboss.server.log.dir" format="JSON" encoding="ISO-8859-1" max-backup-index="5" rotate-on-boot="true" rotate-size="5" suffix="y-M-d"/>
+----
+
+== Example
+
+This example will show how to deploy a simple web application, update the security domain configuration to enable audit logging and inspect the resulting file.
+We will use the simple-webapp example which can be found https://github.com/wildfly-security-incubator/elytron-examples/tree/main[here].
+
+*Clone the `elytron-examples` repo locally:*
+
+```
+git clone https://github.com/wildfly-security-incubator/elytron-examples
+
+cd elytron-examples
+
+```
+
+=== Server configuration
+
+The following set of instructions will update the security domain configuration to enable audit logging in WildFly server. We will be deploying a simple web application from `elytron-examples/simple-webapp`.
+
+Navigate to the server home directory and enter the following command.
+This will connect to the server, after which you can proceed to configuring the server.
+```
+
+$SERVER_HOME/bin/jboss-cli.sh --connect 
+
+```
+
+The following CLI command adds a new audit log file with `UTF-16` encoding:
+```
+
+/subsystem=elytron/file-audit-log=local-file-UTF-16:add(path="audit-UTF-16.log", relative-to="jboss.server.log.dir", format="JSON", synchronized="false", encoding="UTF-16")
+
+reload
+
+```
+
+Add the file audit log to a security domain:
+```
+
+/subsystem=elytron/security-domain=ApplicationDomain:write-attribute(name=security-event-listener , value="local-file-UTF-16")
+
+```
+
+
+=== Deploying the application
+  
+We’re going to make use of the `simple-webapp` project. It can be deployed using the following commands:
+
+```
+
+cd $PATH_TO_ELYTRON_EXAMPLES/simple-webapp
+
+mvn clean install wildfly:deploy
+
+```
+
+=== Accessing the application
+
+Try accessing the application using `https://localhost:8443/simple-webapp` .
+Select `Access Secured Servlet` link and try to sing in using invalid credentials. 
+
+=== Review the audit log file for new events
+
+Stop the server and open `$SERVER_HOME/standalone/log/audit-UTF-16.log` file which is `UTF-16` encoded. You should find `SecurityAuthenticationFailedEvent` log entry. 
+
+
+== Summary
+
+You can change the default encoding of the audit log file in the WildFly server.
