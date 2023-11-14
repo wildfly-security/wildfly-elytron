@@ -1,0 +1,430 @@
+---
+layout: post
+title: 'Identity Propagation with OIDC'
+date: 2023-11-15
+tags: oidc identity propagation ejb
+synopsis: Learn how to propagate identities within a deployment and across deployments when securing WildFly apps with OIDC.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+When securing an application with OpenID Connect (OIDC), WildFly https://docs.wildfly.org/30/Admin_Guide.html#virtual-security-2[automatically]
+creates and makes use of a virtual security domain across the deployment. If the application invokes an EJB, additional configuration
+might be required in order to propagate the security identity from the virtual security domain. The configuration that's needed
+depends on how the EJB that's being invoked is secured. This guide covers the different use cases for propagating an identity
+from a virtual security domain.
+
+toc::[]
+
+== Prerequisites
+
+To follow along with this guide, you will need:
+
+* Roughly 15 minutes
+* https://www.keycloak.org/guides#getting-started[Keycloak]
+* https://www.wildfly.org/[WildFly]
+
+== Overview of Identity Propagation with OIDC
+
+Additional configuration might be needed in order to propagate a security identity from a virtual security domain depending
+on how the EJB that's being invoked is secured.
+
+=== Securing an EJB using the Same OIDC Virtual Security Domain
+
+==== Within the Same Deployment
+
+If a web application secured with OIDC invokes an EJB within the same deployment (e.g., within the same WAR or EAR) and you'd
+like to secure the EJB using the same virtual security domain as the web application, no additional configuration is required.
+
+Both of examples that we'll be going through cover this use case.
+
+==== Across Deployments
+
+If a web application secured with OIDC invokes an EJB in a separate deployment (e.g., across EARs) and you'd like
+to secure the EJB using the same virtual security domain as the web application, the following configuration is needed:
+
+* A `virtual-security-domain` resource needs to be added in the Elytron subsystem.
+* The EJB being invoked needs to be updated with a `@SecurityDomain` annotation that references the `virtual-security-domain`.
+
+For a guided step by step example of how to configure this use case, see https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-oidc-identity-propagation/#secure-an-ejb-invoked-by-an-oidc-app-using-the-same-virtual-security-domain[Secure an EJB Invoked by an OIDC App using the Same Virtual Security Domain].
+
+=== Securing an EJB using a Different Security Domain
+
+If a web application secured with OIDC invokes an EJB (either in the same deployment or in a separate deployment) and
+you'd like to secure the EJB using a different security domain from the web application, the following configuration is
+needed:
+
+* A `virtual-security-domain` resource needs to be added in the Elytron subsystem.
+** This indicates the list of
+security domains that a virtual security domain should automatically outflow its security identities to.
+* A `trusted-virtual-security-domains` attribute needs to be configured for the `security-domain` that is being
+used to secure the EJB being invoked.
+** This indicates that the `security-domain` should trust any security identities
+that have been established by the specified virtual security domains.
+
+For a guided step by step example of how to configure this use case, see https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-oidc-identity-propagation/#secure-an-ejb-invoked-by-an-oidc-app-using-a-different-security-domain[Securing an EJB using a Different Security Domain].
+
+== Example Applications
+
+We will use some simple web applications in this guide that consist of a servlet secured using OIDC. The servlet will invoke an EJB
+within the same deployment (i.e., invocation within the same EAR). This EJB will then invoke another EJB located in a different deployment
+(i.e., invocation across EARs).
+
+We will use the `oidc-with-identity-propagation` and `oidc-with-identity-propagation-same-domain` examples from the elytron-examples repository:
+
+* https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation[oidc-with-identity-propagation]
+* https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation-same-domain[oidc-with-identity-propagation-same-domain]
+
+To obtain the examples, clone the elytron-examples repository to your local machine:
+
+[source, shell]
+----
+git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+----
+
+== Start Keycloak
+
+We will be using Keycloak as our OIDC identity provider.
+
+To start a Keycloak server in your environment, follow the appropriate guide from Keycloak's https://www.keycloak.org/guides#getting-started[Getting
+Started] page.
+
+== Configure Keycloak
+
+. Log into the Keycloak Admin Console.
+
+. Create a new realm called *myrealm*. For more information, see the Keycloak documentation on how to https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_realm[create a realm].
+
+. Add a role called *User*. For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#assigning-permissions-using-roles-and-groups[create a role].
+
+. Add a new user named *alice*. For more information, see the Keycloak documentation on how to https://www.keycloak.org/getting-started/getting-started-openshift#_create_a_user[create a user].
+
+. Once the new user has been created, set a password for this new user from the *Credentials* tab.
+
+. From the *Role Mapping* tab, assign *alice* the *User* role. For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#proc-assigning-role-mappings_server_administration_guide[assign a role] to a user.
+
+. Create a new client as follows:
+* *General Settings*:
+** *Client type* (or *Client Protocol*, depending on your Keycloak version): *OpenID Connect*
+** *Client ID*: *myclient*
+* *Capability config*:
+** *Authentication flow*: *Standard flow*, *Direct access grants*
+* *Login settings*: Leave the fields blank for now.
+
++
+For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#_oidc_clients[Managing OpenID Connect clients].
+
+. Click *Save* to save the client. 
+
+== Secure an EJB Invoked by an OIDC App using a Different Security Domain
+
+For this use case, we'll be using the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation[oidc-with-identity-propagation] example.
+
+=== Inspect the Example Applications
+
+Let's take a closer look at our example.
+
+* This example consists of two EARs when built: `virtual-security-domain-to-domain.ear` and `ejb-basic.ear`.
+
+* Notice that `virtual-security-domain-to-domain.ear` contains a https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation/virtual-security-domain-to-domain/web/src/main/java/org/wildfly/security/examples/virtual_security_domain_to_domain/web/SecuredServlet.java[servlet]
+that invokes an EJB, https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation/virtual-security-domain-to-domain/ejb/src/main/java/org/wildfly/security/examples/virtual_security_domain_to_domain/ejb/EntryBean.java[EntryBean],
+that's also contained in the same EAR. This EJB doesn't have any explicit security domain configuration. Thus, this EJB will automatically be secured using the same virtual security domain as the servlet.
+
+* The `EntryBean` invokes another EJB, https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation/ejb-basic/ejb/src/main/java/org/wildfly/security/examples/ejb_basic/ejb/ManagementBean.java[ManagementBean], that's part of `ejb-basic.ear`.
+Notice that `ManagementBean` has a `@SecurityDomain("BusinessDomain")` annotation.
+
+* Because the `ManagementBean` is being secured using a security domain that's different from the virtual security domain that's being
+used to secure the web application, we'll need to add configuration to propagate security identities from the virtual security domain to
+the `BusinessDomain`.
+
+=== Start WildFly
+
+First, we need to start our WildFly instance. We'll specify a port offset since our Keycloak instance is exposed on
+port 8080:
+
+[source,shell]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10
+----
+
+=== Configure the Security Domain that will be used to Secure the EJB (BusinessDomain)
+
+We're going to secure the EJB being invoked with a security domain called `BusinessDomain`. To create this security domain,
+we'll connect to the WildFly CLI and execute the CLI commands shown below.
+
+[source,shell]
+----
+./bin/jboss-cli.sh --connect --controller=localhost:10000
+----
+
+[source,shell]
+----
+
+# Add a filesystem realm called BusinessRealm in the jboss.server.config directory
+/subsystem=elytron/filesystem-realm=BusinessRealm:add(path=business-realm-users,relative-to=jboss.server.config.dir)
+
+# Add user alice with Admin role
+/subsystem=elytron/filesystem-realm=BusinessRealm:add-identity(identity=alice)
+/subsystem=elytron/filesystem-realm=BusinessRealm:add-identity-attribute(identity=alice, name=Roles, value=["Admin"])
+
+# Add a security domain that references our newly created realm
+/subsystem=elytron/security-domain=BusinessDomain:add(realms=[{realm=BusinessRealm}],default-realm=BusinessRealm,permission-mapper=default-permission-mapper)
+
+# Update the application security domain mapping in the EJB3 subsystem
+/subsystem=ejb3/application-security-domain=BusinessDomain:add(security-domain=BusinessDomain)
+
+reload
+----
+
+=== Configure Identity Propagation
+
+First, let's configure a `virtual-security-domain` in the Elytron subsystem to specify that we want to automatically
+outflow any security identities established by the virtual security domain to the `BusinessDomain`:
+
+[source]
+----
+/subsystem=elytron/virtual-security-domain=virtual-security-domain-to-domain.ear:add(outflow-security-domains=[BusinessDomain])
+----
+
+Next, let's update the `BusinessDomain` to specify that we want to trust any security identities established by the virtual
+security domain associated with `virtual-security-domain-to-domain.ear`:
+
+[source]
+----
+/subsystem=elytron/security-domain=BusinessDomain:write-attribute(name=trusted-virtual-security-domains, value=[virtual-security-domain-to-domain.ear])
+----
+
+Finally, let's execute a reload:
+
+[source]
+----
+reload
+----
+
+=== Deploy the Example Application to WildFly
+
+We're now going to build and deploy our example.
+
+From the `elytron-examples` directory, run the following commands to build and deploy the `ejb-basic.ear` and `virtual-security-domain-to-domain.ear`:
+
+[source,shell]
+----
+cd YOUR_PATH_TO_ELYTRON_EXAMPLES/oidc-with-identity-propagation/ejb-basic
+mvn clean install wildfly:deploy -Dwildfly.port=10000
+----
+
+[source,shell]
+----
+cd YOUR_PATH_TO_ELYTRON_EXAMPLES/oidc-with-identity-propagation/virtual-security-domain-to-domain
+mvn clean install wildfly:deploy -Dwildfly.port=10000
+----
+
+=== Finish Configuring Keycloak
+
+From your *myclient* client in the Keycloak Administration Console,
+in the client settings, set *Valid Redirect URI* to `http://localhost:8090/virtual-security-domain-to-domain/secured` and then click *Save*.
+
+=== Access the Application
+
+From your browser, navigate to `http://localhost:8090/virtual-security-domain-to-domain`.
+
+Click on *Access Secured Servlet*.
+
+You will be redirected to Keycloak to log in.
+
+Log in using the *alice* user we created earlier.
+
+Upon successful authentication, you will be redirected back to the example application.
+
+The example application outputs information about the user.
+
+You should see the following output:
+
+```
+Successfully logged into Secured Servlet with OIDC
+
+Identity as visible to servlet.
+
+Principal : alice
+
+Authentication Type : OIDC
+
+Caller Has Role 'User'=true
+
+Caller Has Role 'Admin'=false
+
+Identity as visible to EntryBean.
+
+Principal : alice
+
+Caller Has Role 'User'=true
+
+Caller Has Role 'Admin'=false
+
+Identity as visible to ManagementBean.
+
+Principal : alice
+
+Caller Has Role 'User'=false
+
+Caller Has Role 'Admin'=true
+```
+
+Notice the following things:
+
+* The identity as visible to the servlet and the EJB within `virtual-security-domain-to-domain.ear` is `alice` with `User` role. This
+shows that the identity from the virtual security domain was successfully propagated to the EJB within the same EAR.
+
+* The identity as visible to the EJB within `ejb-basic.ear` is `alice` with `Admin` role. This shows that the identity
+from the virtual security domain was successfully propagated to the `BusinessDomain` that's used to secure the EJB
+in a separate deployment.
+
+== Secure an EJB Invoked by an OIDC App using the Same Virtual Security Domain
+
+For this use case, we'll be using the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/oidc-with-identity-propagation-same-domain[oidc-with-identity-propagation-same-domain] example.
+
+=== Inspect the Example Applications
+
+Let's take a closer look at our example.
+
+* This example consists of two EARs when built: `same-virtual-domain.ear` and `ejb-same-domain.ear`.
+
+* Notice that `same-virtual-domain.ear` contains a https://github.com/wildfly-security-incubator/elytron-examples/blob/main/oidc-with-identity-propagation-same-domain/same-virtual-domain/web/src/main/java/org/wildfly/security/examples/same_virtual_domain/web/WhoAmIServlet.java[servlet]
+that invokes an EJB, https://github.com/wildfly-security-incubator/elytron-examples/blob/main/oidc-with-identity-propagation-same-domain/same-virtual-domain/ejb/src/main/java/org/wildfly/security/examples/same_virtual_domain/ejb/EntryBean.java[EntryBean],
+that's also contained in the same EAR. This EJB doesn't have any explicit security domain configuration. Thus, this EJB will automatically be secured using the same virtual security domain as the servlet.
+
+* The `EntryBean` invokes another EJB, https://github.com/wildfly-security-incubator/elytron-examples/blob/main/oidc-with-identity-propagation-same-domain/ejb-same-domain/ejb/src/main/java/org/wildfly/security/examples/ejb_same_domain/ejb/WhoAmIBean.java[WhoAmIBean], that's part of `ejb-same-domain.ear`.
+
+* Because we want to secure the `WhoAmIBean` with the same virtual security domain that's being
+used to secure the web application, we'll need to add configuration to accomplish this.
+
+=== Start WildFly
+
+First, we need to start our WildFly instance. We'll specify a port offset since our Keycloak instance is exposed on
+port 8080:
+
+[source,shell]
+----
+./bin/standalone.sh -Djboss.socket.binding.port-offset=10
+----
+
+=== Configure the Virtual Security Domain that will be used to Secure the EJB
+
+We're going to secure the EJB being invoked with the same virtual security domain that's being used
+to secure the web application with OIDC. We first need to connect to the WildFly CLI and add a `virtual-security-domain`
+resource in the Elytron subsystem as follows:
+
+[source,shell]
+----
+./bin/jboss-cli.sh --connect --controller=localhost:10000
+----
+
+[source,shell]
+----
+# Add a virtual security domain resource for the same-virtual-domain.ear application
+/subsystem=elytron/virtual-security-domain=same-virtual-domain.ear:add()
+----
+
+=== Configure Identity Propagation
+
+Next, let's update the `WhoAmIBean` to indicate that we want to secure it using the same virtual domain
+that's being used to secure `same-virtual-domain.ear`:
+
+[source,java]
+----
+@SecurityDomain("same-virtual-domain.ear")
+public class WhoAmIBean implements WhoAmI {
+    ...
+}
+----
+
+=== Deploy the Example Application to WildFly
+
+We're going to build and deploy our example.
+
+From the `elytron-examples` directory, run the following commands to build and deploy the `ejb-same-domain.ear` and `same-virtual-domain.ear`:
+
+[source,shell]
+----
+cd YOUR_PATH_TO_ELYTRON_EXAMPLES/oidc-with-identity-propagation-same-domain/ejb-same-domain
+mvn clean install wildfly:deploy -Dwildfly.port=10000
+----
+
+[source,shell]
+----
+cd YOUR_PATH_TO_ELYTRON_EXAMPLES/oidc-with-identity-propagation-same-domain/same-virtual-domain
+mvn clean install wildfly:deploy -Dwildfly.port=10000
+----
+
+=== Finish Configuring Keycloak
+
+From your *myclient* client in the Keycloak Administration Console,
+in the client settings, set *Valid Redirect URI* to `http://localhost:8090/same-virtual-domain/secured` and then click *Save*.
+
+=== Access the Application
+
+From your browser, navigate to `http://localhost:8090/same-virtual-domain`.
+
+Click on *Access Secured Servlet*.
+
+You will be redirected to Keycloak to log in.
+
+Log in using the *alice* user we created earlier.
+
+Upon successful authentication, you will be redirected back to the example application.
+
+The example application outputs information about the user.
+
+You should see the following output:
+
+```
+Successfully logged into Secured Servlet with OIDC
+
+Identity as visible to servlet.
+
+Principal : alice
+
+Authentication Type : OIDC
+
+Caller Has Role 'User'=true
+
+Caller Has Role 'Admin'=false
+
+Identity as visible to EntryBean.
+
+Principal : alice
+
+Caller Has Role 'User'=true
+
+Caller Has Role 'Admin'=false
+
+Identity as visible to ManagementBean.
+
+Principal : alice
+
+Caller Has Role 'User'=true
+
+Caller Has Role 'Admin'=false
+```
+
+Notice the following things:
+
+* The identity as visible to the servlet and the EJB within `same-virutal-domain.ear` is `alice` with `User` role. This
+shows that the identity from the virtual security domain was successfully propagated to the EJB within the same EAR.
+
+* The identity as visible to the EJB within `ejb-same-domain.ear` is `alice` with `User` role. This shows that the identity
+from the virtual security domain was successfully propagated to the EJB in a separate deployment.
+
+== Summary
+
+This guide shown how to propagate security identities established by a virtual security domain within a deployment
+and across deployments when securing a web application with OIDC. For additional information, feel free to check out the resources linked below.
+
+== Resources
+
+* https://docs.wildfly.org/30/Admin_Guide.html#identity_propagation[OIDC Identity Propagation]
+* https://www.keycloak.org/docs/latest/server_admin/index.html[Keycloak Server Administration Guide]
+* https://www.keycloak.org/docs/latest/securing_apps/#_oidc[Using OpenID Connect to secure applications and services]
+* https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-oidc-openshift/[Securing WildFly Apps with OIDC on OpenShift]
+
