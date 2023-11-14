@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Thu, 09 Nov 2023 20:17:58 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 14 Nov 2023 17:31:43 +0000</lastBuildDate>
+        
+        <item>
+            <title>Change the default encoding of the audit log file in WildFly 29</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/specify-file-audit-log-encoding/
+            </link>
+            <description>
+                The default encoding used for the audit log file is UTF-8. You can change the default encoding by specifying encoding attribute in file-audit-log, periodic-rotating-file-audit-log or size-rotating-file-audit-log elements in the Elytron subsystem. Possible values are: UTF-8, UTF-16BE, UTF-16LE, UTF-16, US-ASCII or ISO-8859-1. &lt;file-audit-log name="local-file" path="audit.log" relative-to="jboss.server.log.dir" synchronized="false" autoflush="true" format="JSON" encoding="UTF-16"/&gt; ......
+            </description>
+            <pubDate>Tue, 14 Nov 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/specify-file-audit-log-encoding/
+            </guid>
+        </item>
         
         <item>
             <title>Securing WildFly Apps with OIDC on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Mon, 24 Jul 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-management-console-oidc/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Using Certificate Based Authentication with Mutual TLS without Roles</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/
-            </link>
-            <description>
-                Mutual TLS with client certificates is essential for secure and encrypted communication between clients and servers in various applications and systems. It involves a handshake process during which both the client and the server must present their certificate to each other in order to establish a secure connection. This ensures...
-            </description>
-            <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/Client-cert-auth-without-roles/
             </guid>
         </item>
         
