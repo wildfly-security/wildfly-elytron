@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Identity Propagation with OIDC'
+title: 'Identity Propagation with OpenID Connect'
 date: 2023-11-15
 tags: oidc identity propagation ejb
-synopsis: Learn how to propagate identities within a deployment and across deployments when securing WildFly apps with OIDC.
+synopsis: Learn how to propagate identities within a deployment and across deployments when securing WildFly apps with OpenID Connect.
 author: fjuma
 ---
 
