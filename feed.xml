@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 14 Nov 2023 17:31:43 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 15 Nov 2023 16:13:54 +0000</lastBuildDate>
+        
+        <item>
+            <title>Identity Propagation with OIDC</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-oidc-identity-propagation/
+            </link>
+            <description>
+                When securing an application with OpenID Connect (OIDC), WildFly automatically creates and makes use of a virtual security domain across the deployment. If the application invokes an EJB, additional configuration might be required in order to propagate the security identity from the virtual security domain. The configuration that&#8217;s needed depends...
+            </description>
+            <pubDate>Wed, 15 Nov 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-oidc-identity-propagation/
+            </guid>
+        </item>
         
         <item>
             <title>Change the default encoding of the audit log file in WildFly 29</title>
@@ -130,20 +144,6 @@
             <pubDate>Tue, 29 Aug 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=vUWGPTCNl4I
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing the WildFly Management Console with OpenID Connect</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-management-console-oidc/
-            </link>
-            <description>
-                WildFly 29 Final, which was just released last week, includes the ability to secure the WildFly Management Console with OpenID Connect using the Keycloak OpenID provider. This blog post gives an overview of how to configure this. OpenID Connect Securing the WildFly Management Console with the Keycloak OpenID Provider Keycloak...
-            </description>
-            <pubDate>Mon, 24 Jul 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-management-console-oidc/
             </guid>
         </item>
         
