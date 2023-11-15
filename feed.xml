@@ -5,10 +5,10 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 15 Nov 2023 16:13:54 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 15 Nov 2023 17:04:08 +0000</lastBuildDate>
         
         <item>
-            <title>Identity Propagation with OIDC</title>
+            <title>Identity Propagation with OpenID Connect</title>
             <link>
                 https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-oidc-identity-propagation/
             </link>
