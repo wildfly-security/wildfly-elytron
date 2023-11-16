@@ -5,7 +5,7 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 15 Nov 2023 17:04:08 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 16 Nov 2023 16:34:09 +0000</lastBuildDate>
         
         <item>
             <title>Identity Propagation with OpenID Connect</title>
@@ -22,12 +22,12 @@
         </item>
         
         <item>
-            <title>Change the default encoding of the audit log file in WildFly 29</title>
+            <title>Change the default encoding of the audit log file in WildFly</title>
             <link>
                 https://wildfly-security.github.io/wildfly-elytron/blog/specify-file-audit-log-encoding/
             </link>
             <description>
-                The default encoding used for the audit log file is UTF-8. You can change the default encoding by specifying encoding attribute in file-audit-log, periodic-rotating-file-audit-log or size-rotating-file-audit-log elements in the Elytron subsystem. Possible values are: UTF-8, UTF-16BE, UTF-16LE, UTF-16, US-ASCII or ISO-8859-1. &lt;file-audit-log name="local-file" path="audit.log" relative-to="jboss.server.log.dir" synchronized="false" autoflush="true" format="JSON" encoding="UTF-16"/&gt; ......
+                The default encoding used for the audit log file is UTF-8. Starting from WildFly 29, you can change the default encoding by specifying encoding attribute in file-audit-log, periodic-rotating-file-audit-log or size-rotating-file-audit-log elements in the Elytron subsystem. Possible values are: UTF-8, UTF-16BE, UTF-16LE, UTF-16, US-ASCII or ISO-8859-1. &lt;file-audit-log name="local-file" path="audit.log" relative-to="jboss.server.log.dir" synchronized="false"...
             </description>
             <pubDate>Tue, 14 Nov 2023 00:00:00 +0000</pubDate>
             <guid>
