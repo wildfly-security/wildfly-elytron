@@ -1,13 +1,13 @@
 ---
 layout: post
-title: 'Change the default encoding of the audit log file in WildFly 29'
+title: 'Change the default encoding of the audit log file in WildFly'
 date: 2023-11-14
 tags: audit-logging encoding
 synopsis:  An overview of how to change the default encoding of the audit log file.
 author: ivassile
 ---
 
-The default encoding used for the audit log file is UTF-8. You can change the default encoding by specifying `encoding` attribute in `file-audit-log`, `periodic-rotating-file-audit-log` or `size-rotating-file-audit-log` elements in the Elytron subsystem. 
+The default encoding used for the audit log file is UTF-8. Starting from WildFly 29, you can change the default encoding by specifying `encoding` attribute in `file-audit-log`, `periodic-rotating-file-audit-log` or `size-rotating-file-audit-log` elements in the Elytron subsystem. 
 Possible values are: `UTF-8`, `UTF-16BE`, `UTF-16LE`, `UTF-16`, `US-ASCII` or `ISO-8859-1`.
 
 [source,xml]
