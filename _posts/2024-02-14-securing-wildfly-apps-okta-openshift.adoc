@@ -1,0 +1,267 @@
+---
+layout: post
+title: 'Securing WildFly Applications Using Okta on OpenShift'
+date: 2024-02-14
+tags: oidc OpenShift auth0
+synopsis: A step by step guide on how to secure a WildFly application using Okta's OpenID Provider and deploy it to OpenShift. 
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The `elytron-oidc-client` subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application deployed to WildFly on OpenShift using https://www.okta.com/[Okta] as the OpenID Provider. 
+
+toc::[] 
+
+== Prerequisites 
+To follow along this guide you will need: 
+
+* Roughly 15 minutes
+* Access to an OpenShift cluster (try the https://developers.redhat.com/developer-sandbox[Red Hat Developer Sandbox] for free)
+* https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://helm.sh/docs/intro/install/[Helm Chart]
+* https://www.okta.com/[Okta OpenID Provider]
+
+== Example application 
+
+We will use a simple web application in this guide that consists of a single https://github.com/PrarthonaPaul/elytron-examples/blob/simple-webapp-okta/simple-webapp-okta/src/main/java/org/wildfly/security/examples/SecuredServlet.java[servlet]. We will use the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-okta[simple-webapp-okta] application in this repository.
+
+We will need to first fork, and then clone the https://github.com/wildfly-security-incubator/elytron-examples[elytron-examples] repository. We will be using the `simple-webapp-okta` directory in this repo:
+```
+git clone git@github.com:<your_github_username>/elytron-examples.git
+cd simple-webapp-okta
+```
+
+== Log Into the OpenShift Cluster
+Before we can deploy our application, we need to log into an OpenShift cluster. You can log in via the https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]:
+```
+oc login -u myUserName
+```
+Alternatively, you can log in using the API token:
+```
+oc login --token=myToken --server=myServerUrl
+```
+You can request the token via the *Copy Login Command* link in the OpenShift web console.
+
+If you don’t already have a project created, you can create one using:
+```
+oc new-project myProjectName
+```
+
+Once you have your environment set up with the required tools, we can move on to the next step to build and deploy our application on OpenShift.
+
+== Configure Okta 
+For this guide, we will be using Okta as out OpenID provider. In order to secure the application, we will need to access the Okta web console and register our application as a client. 
+
+. Log in to the https://www.okta.com/free-trial/[Okta dashboard] to get started. 
+. At the top right corner, click on *Admin* to be redirected to the admin dashboard. 
+. On the left hand panel, from the *Applications* drop down, click on *Applications* and then *Create App Integration*. Choose *OIDC - OpenID Connect* under *Sign-in method* and *Web Application* for *Application type* and click *Next*. 
+. Under *General Settings* add the following configurations: 
+* `App integration name:` *simple-webapp-okta*
+* `Grant type:` Leave it as is, with `Authorization Code` checked. 
+* `Sign-in redirect URIs`: Leave it as is for now. We will edit it later.
+* Under the `Assignments` tab, for `Controlled access`, select *Skip group assignment for now*. 
+* Click `Save`
+. Navigate to the *Directory* drop down on the left panel and click *People*. Click *Add person* and add a person with: 
+* First name: *Alice*
+* Last name: *Smith*
+* Email: *alice@example.org*
+* User Name: *alice@example.org* 
+* From the dropdown list for _Password_, choose _Set by admin_ and set a password that fits the password requirements. 
+* Uncheck _User must change password on first login_ and hit `Save`. For more information about how to add a user manually https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-add-users.htm[click here].
+. Click on the _Applications_ tab on the left hand side. Navigate to _Applications_ and click on _simple-webapp-okta_. Under the _Assignments_ tab, click on *Assign*, then click on *Assign to People* and select *Alice*. For more information about how to assign a user to an application, please see https://support.okta.com/help/s/article/How-To-Assign-An-User-To-An-Application?language=en_US[here].
+
+=== Advanced OpenID Configuration
+In order to extract the user information through the id token, we will need to configure a custom authorization server. Follow the steps below for this:
+
+. Under the *Security* dropdown, select *API* and click on the edit button next to the *Default* server. 
+. Under the *Claims* tab, click on the *Add Claim* button and to add a claim with the following configurations: 
+* Name: *IDTClaim*
+* Include in token type: *ID Token* and keep it at always. 
+* Value type: *Expression*
+* Value: *appuser.userName* and hit `Save`. 
+You can learn more about Expression Language Reference for Okta https://developer.okta.com/reference/okta_expression_language/[here].
+. Now go back to the _API_ menu and copy the *Issuer URI* for the _Default_ server. 
+. This will be used as the provider url when configuring our WildFly application.
+
+== Add Helm Configuration
+. Keep the URL obtained from the last step. 
+. Switch to the `charts` directory in the `simple-webapp-okta` example.
+```
+cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-okta/charts
+```
+Notice there’s a helm.yaml file in this directory with the following content:
+```
+build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: simple-webapp-okta
+deploy:
+  replicas: 1
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: <okta_URL>         <1>
+    - name: OIDC_CLIENT_ID
+      value: <client_id>        <2>
+    - name: OIDC_CLIENT_SECRET
+      value: <client_secret>    <3>
+```
+We will need to make the following changes locally to the helm chart: 
+
+<1> Replace *OKTA_URL* with the *provider url* you copied in the last step.
+<2> Replace *client_id* with the *Client ID* listed on the Okta console. Navigate to the _General_ tab for our application on the Okta admin console and copy the _Client Id_ and add it beside the `client-id` attribute. 
+<3> Replace *client_secret* with your *Client Secret* for this application listed on Okta. 
+
+Save this file and close it.
+
+== Configure the Deployment Settings
+We can use the resources under 'elytron-oidc-client' to configure the WildFly server. We can do this in two different ways: 
+
+. Using deployment configuration by specifying the attribute values inside `oidc.json` 
+. or using the `elytron-oidc-client` subsystem.
+
+This guide uses the deployment configuration, but you can use the same attributes to configure the `elytron-oidc-client` subsystem. You can view the resources defined by navigating to the *oidc.json* file. Note that we are making use of the environment variables we defined in the helm chart.
+
+Now that we have added the required changes, we can deploy our application, the helm chart will specify the location for this example application and pull information needed for our deployment specified in the `oidc.json` file. 
+
+== Deploy the Example Application to WildFly on OpenShift
+
+If you have not already installed the WildFly Helm chart, you can install it using the following commands:
+```
+helm repo add wildfly https://docs.wildfly.org/wildfly-charts/
+```
+If you have it installed already, be sure to update it to ensure you have the latest one:
+```
+helm repo update
+```
+We can deploy our example application to WildFly on OpenShift using the wildfly Helm Chart:
+```
+helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts/helm.yaml wildfly/wildfly
+```
+The application will now begin to build. This will take a couple of minutes.
+The build can be observed using:
+```
+oc get build -w
+```
+Once complete, you can follow the deployment of the application using:
+```
+oc get deployment oidc-app -w
+```
+Alternatively, you can check status directly from the OpenShift web console.
+
+=== Behind the scenes
+While our application is building, let’s take a closer look at our application.
+
+. Examine the https://github.com/PrarthonaPaul/elytron-examples/blob/simple-webapp-okta/simple-webapp-okta/pom.xml[pom.xml] file. Notice that it contains an openshift profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The openshift profile in this example defines a configuration that will be used by the wildfly Helm Chart when provisioning the WildFly server on OpenShift.
+
+```
+<profiles>
+        <profile>
+            <id>openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.wildfly.plugins</groupId>
+                        <artifactId>wildfly-maven-plugin</artifactId>
+                        <version>${version.wildfly.maven.plugin}</version>          <1>
+                        <configuration>
+                            <feature-packs>
+                                <feature-pack>
+                                    <location>org.wildfly:wildfly-galleon-pack:${version.wildfly}</location>
+                                </feature-pack>
+                                <feature-pack>
+                                    <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}</location>
+                                </feature-pack>
+                            </feature-packs>
+                            <layers>
+                                <layer>cloud-server</layer>
+                                <layer>elytron-oidc-client</layer>          <2>
+                            </layers>
+                            <filename>simple-webapp-okta.war</filename>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+```
+
+<1> *wildfly-maven-plugin* provisions a WildFly server with the specified layers with our application deployed.
+<2> *elytron-oidc-client* automatically adds the native OIDC client subsystem to our WildFly installation.
+
+. Examine the https://github.com/PrarthonaPaul/elytron-examples/blob/simple-webapp-okta/simple-webapp-okta/src/main/webapp/WEB-INF/web.xml[web.xml] file.
+```
+... <login-config> <auth-method>OIDC</auth-method> (1) </login-config> ...
+```
+When *elytron-oidc-client* subsystem sees *auth-method* is set to *OIDC*, it enables OIDC authentication mechanism for the application.
+
+. Examine the https://github.com/PrarthonaPaul/elytron-examples/blob/simple-webapp-okta/simple-webapp-okta/src/main/webapp/WEB-INF/oidc.json[oidc.json] file. The oidc.json is used to configure the native OIDC client subsystem.
+```
+{
+    "client-id" : "${env.CLIENT_ID}",
+    "provider-url" : "${env.OIDC_PROVIDER_URL}",
+    "public-client" : "false",
+    "principal-attribute" : "IDTClaim",
+    "ssl-required" : "EXTERNAL",
+    "credentials" : {
+        "secret" : "${env.CLIENT_SECRET}"
+    }
+}
+```
+* Client_ID is the unique identifier for our client used by the Okta OpenID provider. Usually for Keycloak, you can create your own client, but for Okta, you are assigned an id. As a result, we are using environment variables to specify this. We will set the value in 
+* The provider URL, which is the URL for the authorization server that we created, is specified as an environment variable. We will set its value in the helm configuration.
+* When public-client set to false, client credentials are sent when communicating with the OpenID provider.
+* We specify that the user name of the identity, which in our case is alice, is to be used as the principal for the identity. We are extracting this information here using a custom claim in the ID token.
+* When ssl-required is set to EXTERNAL, only the communication with external clients happens over HTTPs
+
+== Get the Application URL
+
+Once the WildFly server has been provisioned, use the following command to find the URL for your example application:
+
+```
+SIMPLE_WEBAPP_OKTA_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &&
+echo "" &&
+echo "Application URL: $SIMPLE_WEBAPP_OKTA_URL/simple-webapp-okta"  &&
+echo "Valid redirect URI: $SIMPLE_WEBAPP_OKTA_URL/simple-webapp-okta/secured/" &&
+echo ""
+```
+We’ll make use of these URLs in the next two sections.
+
+== Finish Configuring Okta
+
+Go back to the _General Settings_ for your application and click on _Edit_.  add the `Valid redirect URI` under the `Sign-in redirect URIs` and check the `Allow wildcard * in login URI redirect` field and hit Save.
+
+== Access the App
+Now we can access our application using the *Application Url* from the previous section. 
+Click on "Access Secured Servlet". 
+
+Now you will be redirected to the login page for Okta. Login using Alice. You will be prompted for the username. Although we set the username to be *alice@example.org*, we can just input alice here. You will be presented with three options for loggin in. Choose `Password` and enter the password you selected for Alice. 
+
+Once you have entered the correct password, you will be prompted to perform 2 factor authentication using the Okta Verify mobile application. You can go ahead and follow the instructions to set it up and once you complete the 2 factor authentication, you will be redirected to the secured page. 
+
+// == Disabling 2 Factor Authentication
+// Okta also allows you to skip the 2 factor authentication and use only password to allow users to log in. In order to do this, navigate to the `Security` tab on the left hand panel, and under *Authentication*, click on *Add New Password Policy*. You can name it something like *2FA skipped* and click *Save*. Click on the *Add rule* button and Add a name for the rule, like *password-only*. Beside *User must authenticate with*, choose *Password* and hit *Save*.  
+
+// Navigate back to your application and under the `Sign On` tab, go to *User authentication* and change the *Authentication policy* to the one you just created and click `Save`. 
+
+// Now try to access the application again and you will be prompted to log in using your password only. Once you enter the correct password and log in, you will be redirected to the secured page for your application. https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-app-sign-on-policies.htm[Click here] to learn more about Okta's authentication policies. 
+
+== Summary 
+This guide demonstrates how to use an OpenID provider other than Keycloak to secure an application deployed to WildFly. There are other OpenID providers that can be used to secure WildFly applications as well. And while the specific terms may be slightly different, the overall process should be similar. Please refer to documentations by your OpenID provider for more information. 
+
+== Resources
+* https://help.okta.com/oie/en-us/content/topics/identity-engine/oie-index.htm[Okta Documentation]
+* https://docs.wildfly.org/30/wildscribe/subsystem/elytron-oidc-client/index.html[Elytron-oidc-client subsystem]
+* https://docs.wildfly.org/30/Admin_Guide.html#Elytron_OIDC_Client[elytron-oidc-client docs]
+* https://openid.net/specs/openid-connect-core-1_0.html#[OpenID Specifications]
+* https://developer.okta.com/docs/guides/#integrate-authentication-into-your-app[Guides Related on Configuring Okta]
+* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html[Getting Started with WildFly on OpenShift]
+* https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts[WildFly Helm Charts]
