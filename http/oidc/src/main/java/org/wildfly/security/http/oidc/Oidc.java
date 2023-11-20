@@ -351,4 +351,18 @@ public class Oidc {
         }
     }
 
+    protected static boolean checkCachedAccountMatchesRequest(OidcAccount account, OidcClientConfiguration deployment) {
+        if (deployment.getRealm() != null
+                && ! deployment.getRealm().equals(account.getOidcSecurityContext().getRealm())) {
+            log.debug("Account in session belongs to a different realm than for this request.");
+            return false;
+        }
+        if (deployment.getProviderUrl() != null
+                && ! deployment.getProviderUrl().equals(account.getOidcSecurityContext().getOidcClientConfiguration().getProviderUrl())) {
+            log.debug("Account in session belongs to a different provider than for this request.");
+            return false;
+        }
+        return true;
+    }
+
 }
