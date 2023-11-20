@@ -1,0 +1,100 @@
+---
+layout: post
+title: 'Using distributed realm ignore-unavailable-realms attribute in Elytron'
+date: 2023-11-20
+tags: distributed-realm filesystem-realm ldap
+synopsis: An example of distributed realm ignore-unavailable-realms attribute usage in WildFly.
+author: lvydra
+---
+
+A `distributed-realm` is made up of a list of realms. Each realm in the list is sequentially attempted until we either find the user or run out of realms. If a realm happens to be unavailable, by default search is stopped altogether. With the introduction of the `ignore-unavailable-realms` boolean attribute to a `distributed-realm`, user is allowed to specify that the search should continue to the next realm if a realm happens to be unavailable.
+
+== Add a distributed realm with ignore-unavailable-realms attribute
+
+You can configure a `distributed-realm` to continue to the next realm if a realm happens to be unavailable by adding the `ignore-unavailable-realms` boolean attribute next to specifying the list of realms to combine.
+
+* `realms` list of realms in the order they should be queried
+* `ignore-unavailable-realms` whether subsequent realms should be checked after an unavailable realm is reached. The default value is false.
+
+```
+/subsystem=elytron/distributed-realm=distributedRealmExample:add(realms=securityRealm1,securityRealm2,...,securityRealmN], ignore-unavailable-realms=true)
+```
+
+If a security realm becomes unavailable for some reason and if `ignore-unavailable-realms` is true, any subsequent realms will still be checked.
+If `ignore-unavailable-realms` is true and the searched identity happens to be stored in the unavailable realm, authentication fails, and we will receive a `401` response.
+
+== Example
+
+In the following example, we will add two separate filesystem security realms with different users and one unavailable LDAP security realm between them combined in the distributed realm.
+
+[source]
+----
+# Add first filesystem realm with user1
+/subsystem=elytron/filesystem-realm=FsRealm1:add(path=demofs-realm-users1,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity(identity=user1)
+/subsystem=elytron/filesystem-realm=FsRealm1:set-password(identity=user1,clear={password="passwordUser1"})
+/subsystem=elytron/filesystem-realm=FsRealm1:add-identity-attribute(identity=user1,name=Roles, value=["Admin"])
+
+# Add second filesystem realm with user2
+/subsystem=elytron/filesystem-realm=FsRealm2:add(path=demofs-realm-users2,relative-to=jboss.server.config.dir)
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity(identity=user2)
+/subsystem=elytron/filesystem-realm=FsRealm2:set-password(identity=user2,clear={password="passwordUser2"})
+/subsystem=elytron/filesystem-realm=FsRealm2:add-identity-attribute(identity=user2,name=Roles, value=["Admin"])
+
+# Add LDAP realm
+/subsystem=elytron/dir-context=exampleDC:add(url="ldap://172.17.0.2:389",principal="cn=admin,dc=wildfly,dc=org",credential-reference={clear-text="admin"})
+/subsystem=elytron/ldap-realm=LdapRealm:add(dir-context=exampleDC,identity-mapping={search-base-dn="ou=Users,dc=wildfly,dc=org",rdn-identifier="uid",user-password-mapper={from="userPassword"},attribute-mapping=[{filter-base-dn="ou=Roles,dc=wildfly,dc=org",filter="(&(objectClass=groupOfNames)(member={1}))",from="cn",to="Roles"}]})
+
+# Add distributed realm that combines both filesystem realms and set ignore-unavailable-realms attribute to true
+/subsystem=elytron/distributed-realm=distributedRealm:add(realms=[FsRealm1, LdapRealm, FsRealm2], ignore-unavailable-realms=true)
+----
+
+Next we will add security domain that uses this distributed realm:
+
+[source]
+----
+# Add security domain distributedSD that uses distributedRealm
+/subsystem=elytron/security-domain=distributedSD:add(default-realm=distributedRealm,permission-mapper=default-permission-mapper,realms=[{realm=distributedRealm}])
+----
+
+As you can see accessing both `user1` and `user2` is possible even if LDAP security realm is unavailable:
+[source]
+----
+/subsystem=elytron/security-domain=distributedSD:read-identity(name=user1)
+
+{
+    "outcome" => "success",
+    "result" => {
+        "name" => "user1",
+        "attributes" => {"Roles" => ["Admin"]},
+        "roles" => ["Admin"]
+    }
+}
+
+/subsystem=elytron/security-domain=distributedSD:read-identity(name=user2)
+
+{
+    "outcome" => "success",
+    "result" => {
+        "name" => "user2",
+        "attributes" => {"Roles" => ["Admin"]},
+        "roles" => ["Admin"]
+    }
+}
+----
+
+Undertow can also be configured to use this security domain to secure deployed applications.
+
+
+[source]
+----
+# Configure undertow to use distributedSD security domain
+/subsystem=undertow/application-security-domain=httpSD:add(security-domain=distributedSD)
+----
+
+When you deploy an application that uses this security domain, users from both realms can successfully authorize to access it. To see an example with simple secured servlet that uses above distributed realm you can take a look here: https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm-ignore-unavailable-realms.
+
+== Summary
+
+This blog post has given an overview of configuring `distributed-realm` in Elytron subsystem to ignore unavailable realms.
+You can take a look at a following example https://github.com/wildfly-security-incubator/elytron-examples/tree/master/distributed-realm-ignore-unavailable-realms for more information.
