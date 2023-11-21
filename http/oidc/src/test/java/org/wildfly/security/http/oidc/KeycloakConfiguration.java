@@ -18,6 +18,9 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.wildfly.security.http.oidc.OidcBaseTest.TENANT1_REALM;
+import static org.wildfly.security.http.oidc.OidcBaseTest.TENANT2_REALM;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +51,16 @@ public class KeycloakConfiguration {
     private static final String BOB_PASSWORD = "bob123+";
     public static final String ALLOWED_ORIGIN = "http://somehost";
 
+    // the users below are for multi-tenancy tests specifically
+    public static final String TENANT1_USER = "tenant1_user";
+    public static final String TENANT1_PASSWORD = "tenant1_password";
+    public static final String TENANT2_USER = "tenant2_user";
+    public static final String TENANT2_PASSWORD = "tenant2_password";
+    public static final String CHARLIE = "charlie";
+    public static final String CHARLIE_PASSWORD =" charlie123+";
+    public static final String DAN = "dan";
+    public static final String DAN_PASSWORD =" dan123+";
+
     /**
      * Configure RealmRepresentation as follows:
      * <ul>
@@ -62,6 +75,12 @@ public class KeycloakConfiguration {
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
                                                              String clientHostName, int clientPort, String clientApp) {
         return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp);
+    }
+
+    public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
+                                                             String clientHostName, int clientPort, String clientApp, int accessTokenLifespan,
+                                                             int ssoSessionMaxLifespan, boolean multiTenancyApp) {
+        return createRealm(realmName, clientId, clientSecret, clientHostName, clientPort, clientApp, accessTokenLifespan, ssoSessionMaxLifespan, multiTenancyApp);
     }
 
     public static RealmRepresentation getRealmRepresentation(final String realmName, String clientId, String clientSecret,
@@ -107,17 +126,29 @@ public class KeycloakConfiguration {
     }
 
     private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
+                                                   String clientHostName, int clientPort, String clientApp, int accessTokenLifeSpan, int ssoSessionMaxLifespan,
+                                                   boolean multiTenancyApp) {
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, false, null, null, accessTokenLifeSpan, ssoSessionMaxLifespan, multiTenancyApp);
+    }
+
+    private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
                                                    String clientHostName, int clientPort, String clientApp,
                                                    boolean directAccessGrantEnabled, String bearerOnlyClientId,
                                                    String corsClientId) {
-        RealmRepresentation realm = new RealmRepresentation();
+        return createRealm(name, clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, bearerOnlyClientId, corsClientId, 3, 3, false);
+    }
 
+    private static RealmRepresentation createRealm(String name, String clientId, String clientSecret,
+                                                   String clientHostName, int clientPort, String clientApp,
+                                                   boolean directAccessGrantEnabled, String bearerOnlyClientId,
+                                                   String corsClientId, int accessTokenLifespan, int ssoSessionMaxLifespan, boolean multiTenancyApp) {
+        RealmRepresentation realm = new RealmRepresentation();
         realm.setRealm(name);
         realm.setEnabled(true);
         realm.setUsers(new ArrayList<>());
         realm.setClients(new ArrayList<>());
-        realm.setAccessTokenLifespan(3);
-        realm.setSsoSessionMaxLifespan(3);
+        realm.setAccessTokenLifespan(accessTokenLifespan);
+        realm.setSsoSessionMaxLifespan(ssoSessionMaxLifespan);
 
         RolesRepresentation roles = new RolesRepresentation();
         List<RoleRepresentation> realmRoles = new ArrayList<>();
@@ -128,33 +159,53 @@ public class KeycloakConfiguration {
         realm.getRoles().getRealm().add(new RoleRepresentation("user", null, false));
         realm.getRoles().getRealm().add(new RoleRepresentation("admin", null, false));
 
-        realm.getClients().add(createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled));
+        realm.getClients().add(createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, multiTenancyApp));
 
         if (bearerOnlyClientId != null) {
             realm.getClients().add(createBearerOnlyClient(bearerOnlyClientId));
         }
 
         if (corsClientId != null) {
-            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN));
+            realm.getClients().add(createWebAppClient(corsClientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, ALLOWED_ORIGIN, multiTenancyApp));
         }
 
-        realm.getUsers().add(createUser(ALICE, ALICE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
-        realm.getUsers().add(createUser(BOB, BOB_PASSWORD, Arrays.asList(USER_ROLE)));
+        if (name.equals(TENANT1_REALM)) {
+            realm.getUsers().add(createUser(TENANT1_USER, TENANT1_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(CHARLIE, CHARLIE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(DAN, DAN_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+        } else if (name.equals(TENANT2_REALM)) {
+            realm.getUsers().add(createUser(TENANT2_USER, TENANT2_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(CHARLIE, CHARLIE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(DAN, DAN_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+        } else {
+            realm.getUsers().add(createUser(ALICE, ALICE_PASSWORD, Arrays.asList(USER_ROLE, ADMIN_ROLE)));
+            realm.getUsers().add(createUser(BOB, BOB_PASSWORD, Arrays.asList(USER_ROLE)));
+        }
         return realm;
     }
 
-    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp, boolean directAccessGrantEnabled) {
-        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null);
+    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort, String clientApp,
+                                                           boolean directAccessGrantEnabled, boolean multiTenancyApp) {
+        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, null, multiTenancyApp);
     }
 
     private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
                                                            String clientApp, boolean directAccessGrantEnabled, String allowedOrigin) {
+        return createWebAppClient(clientId, clientSecret, clientHostName, clientPort, clientApp, directAccessGrantEnabled, allowedOrigin, false);
+    }
+
+    private static ClientRepresentation createWebAppClient(String clientId, String clientSecret, String clientHostName, int clientPort,
+                                                           String clientApp, boolean directAccessGrantEnabled, String allowedOrigin, boolean multiTenancyApp) {
         ClientRepresentation client = new ClientRepresentation();
         client.setClientId(clientId);
         client.setPublicClient(false);
         client.setSecret(clientSecret);
         //client.setRedirectUris(Arrays.asList("*"));
-        client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
+        if (multiTenancyApp) {
+            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp + "/*"));
+        } else {
+            client.setRedirectUris(Arrays.asList("http://" + clientHostName + ":" + clientPort + "/" + clientApp));
+        }
         client.setEnabled(true);
         client.setDirectAccessGrantsEnabled(directAccessGrantEnabled);
         if (allowedOrigin != null) {

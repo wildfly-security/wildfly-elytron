@@ -137,6 +137,7 @@ public class AbstractBaseHttpTest {
         private List<HttpServerCookie> cookies;
         private String requestMethod = "GET";
         private Map<String, List<String>> requestHeaders = new HashMap<>();
+        private Map<String, Object> sessionScopeAttachments = new HashMap<>();
 
         public TestingHttpServerRequest(String[] authorization) {
             if (authorization != null) {
@@ -153,6 +154,16 @@ public class AbstractBaseHttpTest {
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String[] authorization, URI requestURI, Map<String, Object> sessionScopeAttachments) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+            this.sessionScopeAttachments = sessionScopeAttachments;
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
@@ -356,12 +367,18 @@ public class AbstractBaseHttpTest {
 
                 @Override
                 public void setAttachment(String key, Object value) {
-                    // no-op
+                    if (scope.equals(Scope.SESSION)) {
+                        sessionScopeAttachments.put(key, value);
+                    }
                 }
 
                 @Override
                 public Object getAttachment(String key) {
-                    return null;
+                    if (scope.equals(Scope.SESSION)) {
+                        return sessionScopeAttachments.get(key);
+                    } else {
+                        return null;
+                    }
                 }
 
             };
@@ -382,6 +399,10 @@ public class AbstractBaseHttpTest {
         @Override
         public String getRemoteUser() {
             return remoteUser;
+        }
+
+        public Map<String, Object> getSessionScopeAttachments() {
+            return sessionScopeAttachments;
         }
     }
 
