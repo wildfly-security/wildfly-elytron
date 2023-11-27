@@ -208,7 +208,7 @@ We can deploy our example application to WildFly on OpenShift using the WildFly 
 
 [source]
 ----
-helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts/helm.yaml wildfly/wildfly
+helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts/helm.yaml wildfly/wildfly
 ----
 
 Notice that this command specifies the file we updated, `helm.yaml`, that contains the values
@@ -370,4 +370,3 @@ information, feel free to check out the resources linked below.
 * https://www.keycloak.org/getting-started/getting-started-openshift[Getting started with Keycloak on OpenShift]
 * https://www.keycloak.org/docs/latest/server_admin/index.html[Keycloak Server Administration Guide]
 * https://www.keycloak.org/docs/latest/securing_apps/#_oidc[Using OpenID Connect to secure applications and services]
-* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts[WildFly Helm Chart]
