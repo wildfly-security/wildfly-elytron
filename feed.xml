@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 27 Nov 2023 21:27:19 +0000</lastBuildDate>
+        <lastBuildDate>Tue, 28 Nov 2023 17:34:51 +0000</lastBuildDate>
+        
+        <item>
+            <title>Using distributed realm ignore-unavailable-realms attribute in Elytron</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm-ignore-unavailable-realms/
+            </link>
+            <description>
+                A distributed-realm is made up of a list of realms. Each realm in the list is sequentially attempted until we either find the user or run out of realms. If a realm happens to be unavailable, by default search is stopped altogether. With the introduction of the ignore-unavailable-realms boolean attribute...
+            </description>
+            <pubDate>Mon, 20 Nov 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/distributed-realm-ignore-unavailable-realms/
+            </guid>
+        </item>
         
         <item>
             <title>Identity Propagation with OpenID Connect</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 06 Sep 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=PAcqCa8u0Z8
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Begin your Open Source Journey with the WildFly Elytron Project at Open Source Day</title>
-            <link>
-                https://www.youtube.com/watch?v=vUWGPTCNl4I
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Tue, 29 Aug 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=vUWGPTCNl4I
             </guid>
         </item>
         
