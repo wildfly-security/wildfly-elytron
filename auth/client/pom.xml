@@ -76,7 +76,10 @@
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-ssh-util</artifactId>
         </dependency>
-                                
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -86,7 +89,7 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <scope>provided</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
@@ -138,6 +141,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <environmentVariables>
+                        <CREDSTORE_PATH_ENV>PATH/TO/ELYTRON/CLIENT/DIR/target/credstore/mycredstore.cs</CREDSTORE_PATH_ENV>
+                    </environmentVariables>
+                </configuration>
                 <executions>
                     <execution>
                         <id>default-test</id>

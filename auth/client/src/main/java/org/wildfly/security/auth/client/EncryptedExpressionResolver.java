@@ -1,0 +1,252 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2024 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.wildfly.security.auth.client;
+
+import org.jboss.as.controller.OperationFailedException;
+import org.jboss.as.controller.OperationContext;
+import org.jboss.as.controller.extension.ExpressionResolverExtension;
+import org.wildfly.common.function.ExceptionBiConsumer;
+import org.wildfly.security.credential.SecretKeyCredential;
+import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreException;
+
+import javax.crypto.SecretKey;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.Map;
+
+import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
+import static org.wildfly.security.encryption.CipherUtil.decrypt;
+import static org.wildfly.security.encryption.CipherUtil.encrypt;
+
+
+/**
+ * A class used to resolve encrypted expressions using secret key within credential stores.
+ *
+ * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
+ */
+
+public class EncryptedExpressionResolver implements ExpressionResolverExtension {
+    private static final String CREDENTIAL_STORE_API_CAPABILITY = "org.wildfly.security.credential-store-api";
+    private volatile boolean initialised = false;
+    private final ThreadLocal<String> initialisingFor = new ThreadLocal<>();
+    private volatile OperationFailedException firstFailure = null;
+
+    private final ExceptionBiConsumer<EncryptedExpressionResolver, OperationContext, OperationFailedException> configurator;
+
+    private volatile String prefix;
+    private volatile String completePrefix;
+    private volatile String defaultResolver;
+    private volatile Map<String, ResolverConfiguration> resolverConfigurations;
+
+    public EncryptedExpressionResolver(ExceptionBiConsumer<EncryptedExpressionResolver, OperationContext, OperationFailedException> configurator) {
+        this.configurator = configurator;
+    }
+
+    @Override
+    public void initialize(OperationContext context) throws OperationFailedException {
+        ensureInitialised(null, context);
+    }
+
+    @Override
+    public String resolveExpression(String expression, OperationContext context) {
+        checkNotNullParam("expression", expression);
+        checkNotNullParam("context", context);
+        return resolveExpressionInternal(expression, context, null);
+    }
+
+    public String resolveExpression(String expression, EncryptedExpressionConfig config) {
+        checkNotNullParam("expression", expression);
+        checkNotNullParam("encrypted expression configuration", config);
+        return resolveExpressionInternal(expression, null, config);
+    }
+
+    public Map<String, ResolverConfiguration> getResolverConfiguration() {
+        return resolverConfigurations;
+    }
+
+    private String resolveExpressionInternal(String fullExpression, OperationContext operationContext, EncryptedExpressionConfig config) {
+        assert operationContext == null || config == null;
+        assert operationContext != null || config != null;
+
+        if (fullExpression.length() > 3) {
+            String expression = fullExpression.substring(2, fullExpression.length() - 1);
+
+            if (expression.startsWith(completePrefix)) {
+                int delimiter = expression.indexOf(':', completePrefix.length());
+                String resolver = delimiter > 0 ? expression.substring(completePrefix.length(), delimiter) : defaultResolver;
+                if (resolver == null) {
+                    throw xmlLog.expressionResolutionWithoutResolver(fullExpression);
+                }
+
+                ResolverConfiguration resolverConfiguration = resolverConfigurations.get(resolver);
+                if (resolverConfiguration == null) {
+                    throw xmlLog.invalidResolver(fullExpression);
+                }
+
+                xmlLog.tracef("Attempting to decrypt expression '%s' using credential store '%s' and alias '%s'.",
+                        fullExpression, resolverConfiguration.credentialStore, resolverConfiguration.alias);
+                CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolver).getCredentialStore());
+                SecretKey secretKey;
+                try {
+                    SecretKeyCredential credential = credentialStore.retrieve(resolverConfiguration.getAlias(),
+                            SecretKeyCredential.class);
+                    secretKey = credential.getSecretKey();
+                } catch (CredentialStoreException e) {
+                    throw xmlLog.unableToLoadCredential(e);
+                }
+
+                String token = expression.substring(expression.lastIndexOf(':') + 1);
+
+                try {
+                    return decrypt(token, secretKey);
+                } catch (GeneralSecurityException e) {
+                    throw xmlLog.unableToDecryptExpression(fullExpression, e);
+                }
+            }
+        }
+        return null;
+    }
+
+    public String createExpression(final String resolver, final String clearText, EncryptedExpressionConfig config) throws OperationFailedException {
+        String resolvedResolver = resolver != null ? resolver : defaultResolver;
+        if (resolvedResolver == null) {
+            throw xmlLog.noResolverSpecifiedAndNoDefault();
+        }
+
+        ResolverConfiguration resolverConfiguration = resolverConfigurations.get(resolvedResolver);
+        if (resolverConfiguration == null) {
+            throw xmlLog.noResolverWithSpecifiedName(resolvedResolver);
+        }
+
+        CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolver).getCredentialStore());
+        SecretKey secretKey;
+        try {
+            SecretKeyCredential credential = credentialStore.retrieve(resolverConfiguration.getAlias(), SecretKeyCredential.class);
+            if (credential == null) {
+                throw xmlLog.credentialDoesNotExist(resolverConfiguration.getAlias(), SecretKeyCredential.class.getSimpleName());
+            }
+            secretKey = credential.getSecretKey();
+        } catch (CredentialStoreException e) {
+            throw new OperationFailedException(xmlLog.unableToLoadCredential(e));
+        }
+
+        String cipherTextToken;
+        try {
+            cipherTextToken = encrypt(clearText, secretKey);
+        } catch (GeneralSecurityException e) {
+            throw xmlLog.unableToEncryptClearText(e);
+        }
+
+        String expression = resolver == null ? String.format("${%s::%s}", prefix, cipherTextToken)
+                : String.format("${%s::%s:%s}", prefix, resolvedResolver, cipherTextToken);
+
+        return expression;
+    }
+
+    public EncryptedExpressionResolver setPrefix(final String prefix) {
+        this.prefix = prefix;
+        this.completePrefix = prefix + "::";
+        return this;
+    }
+
+    public EncryptedExpressionResolver setDefaultResolver(final String defaultResolver) {
+        this.defaultResolver = defaultResolver;
+        return this;
+    }
+
+    public EncryptedExpressionResolver setResolverConfigurations(final Map<String, ResolverConfiguration> resolverConfigurations) {
+        this.resolverConfigurations = Collections.unmodifiableMap(resolverConfigurations);
+
+        return this;
+    }
+
+    // Package-protected so ExpressionResolverRuntimeHandler can initialize
+    // on behalf of the add op that adds the /subsystem=elytron/expression=encryption resource
+    void ensureInitialised(String initialisingFor, OperationContext context) throws OperationFailedException {
+        if (initialised == false) {
+
+            if (firstFailure != null) {
+                // We wrap the original OperationFaileException to ensure we have an appropriate stack trace on the
+                // subsequent error. Wrap with IllegalStateException as we don't want to repeatedly
+                // treat this failure as a user mistake; the user mistake was reported with the throw
+                // of the initial OFE. Don't wrap with ResolverExtensionException because that
+                // is only used if we tried to resolve an expression we know is appropriate for us,
+                // and this method is called before we know that.
+                throw xmlLog.expressionResolverInitialisationAlreadyFailed(firstFailure);
+            }
+
+            if (initialisingFor != null) {
+                String existingInitialisation = this.initialisingFor.get();
+                if (existingInitialisation != null) {
+                    throw xmlLog.cycleDetectedInitialisingExpressionResolver(existingInitialisation,
+                            existingInitialisation);
+                }
+            }
+
+            synchronized (this) {
+                if (initialised == false) {
+                    try {
+                        this.initialisingFor.set(initialisingFor);
+                        if (context == null) {
+                            // If a caller that can't provide an OperationContext needs to initialize,
+                            // there's a programming bug as this object should be initialized
+                            // before any call paths are executed that don't come through
+                            // the OperationStepHandlers that provide a context.
+                            throw xmlLog.illegalNonManagementInitialization(getClass());
+                        }
+                        configurator.accept(this, context);
+                        initialised = true;
+                    } catch (OperationFailedException e) {
+                        firstFailure = e;
+                        throw e;
+                    } finally {
+                        this.initialisingFor.set(null);
+                    }
+                }
+            }
+        }
+    }
+
+    public static class ResolverConfiguration {
+
+        private final String resolverName;
+        private final String credentialStore;
+        private final String alias;
+
+        public ResolverConfiguration(final String resolverName, final String credentialStore, final String alias) {
+            this.resolverName = checkNotNullParam("resolverName", resolverName);
+            this.credentialStore = checkNotNullParam("credentialStore", credentialStore);
+            this.alias = checkNotNullParam("alias", alias);
+        }
+
+        public String getCredentialStore() {
+            return credentialStore;
+        }
+
+        public String getAlias() {
+            return alias;
+        }
+
+        public String getResolverName() {
+            return resolverName;
+        }
+    }
+}

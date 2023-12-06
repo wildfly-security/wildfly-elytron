@@ -27,6 +27,9 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
 
+import org.jboss.as.controller.ExpressionResolver.ExpressionResolutionUserException;
+import org.jboss.as.controller.ExpressionResolver.ExpressionResolutionServerException;
+import org.jboss.as.controller.OperationFailedException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -213,4 +216,50 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14008, value = "WildFlyElytronClientDefaultSSLContextProvider could not obtain client default SSLContext")
     NoSuchAlgorithmException couldNotObtainClientDefaultSSLContext();
+
+    @Message(id = 14009, value = "The resolver does not exist.")
+    IllegalArgumentException resolverNotFound();
+
+    @Message(id = 14010, value = "The expression '%s' does not specify a resolver and no default is defined.")
+    ExpressionResolutionUserException expressionResolutionWithoutResolver(String expression);
+
+    @Message(id = 14011, value = "The expression '%s' specifies a resolver configuration which does not exist.")
+    ExpressionResolutionUserException invalidResolver(String expression);
+
+    @Message(id = 14012, value = "Unable to load credential from credential store.")
+    ExpressionResolutionUserException unableToLoadCredential(@Cause Throwable cause);
+
+    @Message(id = 14013, value = "Unable to decrypt expression '%s'.")
+    ExpressionResolutionUserException unableToDecryptExpression(String expression, @Cause Throwable cause);
+
+    @Message(id = 14014, value = "Resolution of credential store expressions is not supported in the MODEL stage of operation execution.")
+    ExpressionResolutionServerException modelStageResolutionNotSupported(@Cause IllegalStateException cause);
+
+    @Message(id = 14015, value = "Unable to initialize CredentialStore %s -- %s")
+    ExpressionResolutionUserException unableToInitializeCredentialStore(String storeName, String details, @Cause Exception cause);
+
+    @Message(id = 14016, value = "Unable to resolve CredentialStore %s -- %s")
+    ExpressionResolutionServerException unableToResolveCredentialStore(String storeName, String details, @Cause Exception cause);
+
+    @Message(id = 14017, value = "The name of the resolver to use was not specified and no default-resolver has been defined.")
+    OperationFailedException noResolverSpecifiedAndNoDefault();
+
+    @Message(id = 14018, value = "No expression resolver has been defined with the name '%s'.")
+    OperationFailedException noResolverWithSpecifiedName(String name);
+
+    @Message(id = 14019, value = "Credential alias '%s' of credential type '%s' does not exist in the store")
+    OperationFailedException credentialDoesNotExist(String alias, String credentialType);
+
+    @Message(id = 14020, value = "Unable to encrypt the supplied clear text.")
+    OperationFailedException unableToEncryptClearText(@Cause Throwable cause);
+
+    @Message(id = 14021, value = "Expression resolver initialisation has already failed.")
+    ExpressionResolutionUserException expressionResolverInitialisationAlreadyFailed(@Cause Throwable cause);
+
+    @Message(id = 14022, value = "A cycle has been detected initialising the expression resolver for '%s' and '%s'.")
+    ExpressionResolutionUserException cycleDetectedInitialisingExpressionResolver(String firstExpression, String secondExpression);
+
+    @Message(id = 14023, value = "Initialisation of an %s without an active management OperationContext is not allowed.")
+    ExpressionResolutionServerException illegalNonManagementInitialization(Class<?> initialzingClass);
+
 }
