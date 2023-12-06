@@ -22,6 +22,14 @@ import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security.util.XMLParserUtils.isSet;
+import static org.wildfly.security.util.XMLParserUtils.setBit;
+import static org.wildfly.security.util.XMLParserUtils.checkAttributeNamespace;
+import static org.wildfly.security.util.XMLParserUtils.requireNoAttributes;
+import static org.wildfly.security.util.XMLParserUtils.requireSingleAttribute;
+import static org.wildfly.security.util.XMLParserUtils.requireSingleURIAttribute;
+import static org.wildfly.security.util.XMLParserUtils.missingAttribute;
+import static org.wildfly.security.util.XMLParserUtils.andThenOp;
 import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
@@ -74,6 +82,7 @@ import javax.xml.stream.Location;
 
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
+import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -105,6 +114,7 @@ import org.wildfly.security.credential.source.impl.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreFactory;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.KeyStoreUtil;
@@ -130,6 +140,7 @@ import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509RevocationTrustManager;
 import org.wildfly.security.ssh.util.SshUtil;
+import org.wildfly.security.util.ModuleLoader;
 
 /**
  * A parser for the Elytron XML schema.
@@ -222,7 +233,7 @@ public final class ElytronXmlParser {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance(uri);
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(KNOWN_NAMESPACES.keySet())) {
             if (streamReader != null) {
-                xmlLog.tracef("Parsig configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
+                xmlLog.tracef("Parsing configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
                 return parseAuthenticationClientConfiguration(streamReader);
             } else {
                 if (xmlLog.isTraceEnabled()) {
@@ -1219,7 +1230,12 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 12)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 12);
                         final String moduleName = parseModuleRefType(reader);
-                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
+                        final ClassLoader classLoader;
+                        try {
+                            classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(moduleName);
+                        } catch (ModuleLoadException e){
+                            throw xmlLog.xmlNoModuleFound(reader, e, moduleName);
+                        }
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(classLoader)));
                         break;
                     }
@@ -1275,9 +1291,14 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 2);
                         final String moduleName = parseModuleRefType(reader);
-                        Supplier<Provider[]> serviceLoaderSupplier = (moduleName == null) ?
-                                ELYTRON_PROVIDER_SUPPLIER :
-                                new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(reader, moduleName));
+                        Supplier<Provider[]> serviceLoaderSupplier;
+                        try {
+                            serviceLoaderSupplier = (moduleName == null) ?
+                                    ELYTRON_PROVIDER_SUPPLIER :
+                                    new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(moduleName));
+                        } catch (ModuleLoadException e) {
+                            throw xmlLog.xmlNoModuleFound(reader, e, moduleName);
+                        }
                         providerSupplier = providerSupplier == null ? serviceLoaderSupplier : ProviderUtil.aggregate(providerSupplier, serviceLoaderSupplier);
                         break;
                     }
@@ -1430,18 +1451,6 @@ public final class ElytronXmlParser {
         if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
         if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedElement();
         return name == null && authority == null ? rule : rule.matchAbstractType(name, authority);
-    }
-
-    private static boolean isSet(int var, int bit) {
-        return (var & 1 << bit) != 0;
-    }
-
-    private static int setBit(int var, int bit) {
-        return var | 1 << bit;
-    }
-
-    private static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
-        return t -> second.apply(first.apply(t));
     }
 
     private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final Version xmlVersion, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Supplier<Provider[]> providers) throws ConfigXMLParseException {
@@ -2378,7 +2387,8 @@ public final class ElytronXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 if (!credentialStoresMap.containsKey(name)) {
-                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location, credentialSourceSupplier, providersSupplier);
+                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory;
+                    credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location, credentialSourceSupplier, providersSupplier);
                     credentialStoresMap.put(name, credentialStoreSecurityFactory);
                 } else {
                     throw xmlLog.duplicateCredentialStoreName(reader, name);
@@ -2579,7 +2589,12 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 final String resourceName = name;
-                final ClassLoader classLoader = module != null ? ModuleLoader.getClassLoaderFromModule(reader, module) : Thread.currentThread().getContextClassLoader();
+                final ClassLoader classLoader;
+                try {
+                    classLoader = module != null ? ModuleLoader.getClassLoaderFromModule(module) : Thread.currentThread().getContextClassLoader();
+                } catch (ModuleLoadException e) {
+                    throw xmlLog.xmlNoModuleFound(reader, e, module);
+                }
                 return () -> {
                     ClassLoader actualClassLoader = classLoader != null ? classLoader : ElytronXmlParser.class.getClassLoader();
                     final InputStream stream = actualClassLoader.getResourceAsStream(resourceName);
@@ -2848,6 +2863,11 @@ public final class ElytronXmlParser {
             selector = selector.add(name);
         }
         return selector;
+    }
+
+
+    static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
+        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
     /**
@@ -3497,51 +3517,6 @@ public final class ElytronXmlParser {
         if (! xmlVersion.namespace.equals(reader.getNamespaceURI())) {
             throw reader.unexpectedElement();
         }
-    }
-
-    private static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
-        final String attributeNamespace = reader.getAttributeNamespace(idx);
-        if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-            throw reader.unexpectedAttribute(idx);
-        }
-    }
-
-    private static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
-            throw reader.unexpectedAttribute(0);
-        }
-    }
-
-    private static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
-        return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValueResolved(0));
-    }
-
-    private static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
-        return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValueResolved(0));
-    }
-
-    private static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount < 1) {
-            throw reader.missingRequiredAttribute("", attributeName);
-        }
-        checkAttributeNamespace(reader, 0);
-        if (! reader.getAttributeLocalName(0).equals(attributeName)) {
-            throw reader.unexpectedAttribute(0);
-        }
-        if (attributeCount > 1) {
-            throw reader.unexpectedAttribute(1);
-        }
-        return attributeFunction.get();
-    }
-
-    private static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
-        return reader.missingRequiredAttribute(null, name);
-    }
-
-    private static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
-        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
     static final class KeyStoreCreateFactory implements ExceptionSupplier<KeyStore, ConfigXMLParseException> {

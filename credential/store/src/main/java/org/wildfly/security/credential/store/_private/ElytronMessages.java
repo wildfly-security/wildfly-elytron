@@ -31,12 +31,16 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Param;
 import org.jboss.logging.annotations.ValidIdRange;
 import org.jboss.logging.annotations.ValidIdRanges;
+import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
+
+import javax.xml.stream.Location;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -158,5 +162,8 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 20004, value = "Can not load SecretKey for '%s'.")
     CredentialStoreException canNotLoadSecretKey(String alias, @Cause Throwable cause);
+
+    @Message(id = 20005, value = "Failed to create credential store")
+    ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
 }
