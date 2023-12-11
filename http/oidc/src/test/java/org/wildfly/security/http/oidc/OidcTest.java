@@ -162,6 +162,7 @@ public class OidcTest extends OidcBaseTest {
                 true, HttpStatus.SC_MOVED_TEMPORARILY, getClientUrl(), CLIENT_PAGE_TEXT);
     }
 
+    // Note: The tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
     private void performAuthentication(InputStream oidcConfig, String username, String password, boolean loginToKeycloak,
                                        int expectedDispatcherStatusCode, String expectedLocation, String clientPageText) throws Exception {
         try {

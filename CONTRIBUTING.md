@@ -81,6 +81,8 @@ To run only a specific test, use:
 ```bash
 mvn clean install -Dtest=TestClassName
 ```
+Note: Some tests will fail if `localhost` is not listed first in `/etc/hosts` file for the loopback addresses (IPv4 and IPv6).
+
 For more information, including details on how WildFly Elytron is integrated in WildFly Core and WildFly, check out our [developer guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/).
 
 ## Contributing Guidelines
