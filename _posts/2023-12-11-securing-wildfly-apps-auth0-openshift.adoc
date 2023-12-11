@@ -1,0 +1,303 @@
+---
+layout: post
+title: 'Securing WildFly Apps with Auth0 on OpenShift'
+date: 2023-12-11
+tags: oidc openshift auth0
+synopsis: Learn how to secure applications deployed to WildFly on OpenShift with the Auth0 OpenID provider.
+author: fjuma
+---
+
+:toc: macro
+:toc-title:
+You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using https://auth0.com/[Auth0] as the OIDC provider.
+
+toc::[]
+
+== Prerequisites
+
+To follow along with this guide, you will need:
+
+* Roughly 15 minutes
+* Access to an OpenShift cluster (try the https://developers.redhat.com/developer-sandbox[Red Hat Developer Sandbox] for free)
+* https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://helm.sh/docs/intro/install/[Helm Chart]
+* Access to https://auth0.com/[Auth0]
+
+== Example Application
+
+We will use a simple web application in this guide that consists of a single https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/java/org/wildfly/security/examples/SecuredServlet.java[servlet]. We will secure this servlet using OIDC.
+
+We will use the example in the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-auth0[simple-webapp-auth0] directory in this repo.
+
+To obtain this example, clone the elytron-examples repository to your local machine:
+
+[source]
+----
+git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+----
+
+== Log Into the OpenShift Cluster
+
+Before we can deploy our application, we need to log in to an OpenShift cluster. You can log in via the https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]:
+
+[source]
+----
+oc login -u myUserName
+----
+
+Alternatively, you can log in using an API token:
+
+[source]
+----
+oc login --token=myToken --server=myServerUrl
+----
+
+You can request the token via the *Copy Login Command* link in the OpenShift web console.
+
+If you don't already have a project created, you can create one using:
+
+[source]
+----
+oc new-project myProjectName
+----
+
+== Configure Auth0
+
+We will be using Auth0 as our OpenID provider.
+
+. Log into the Auth0 Dashboard.
+
+. Create an application called *OIDC App*. For the application type, select *Regular Web Applications* and then click on *Create*. For more information, see the Auth0 documentation on how to https://auth0.com/docs/get-started/auth0-overview/create-applications[create applications].
+
+. Once the application has been created, we'll see the *Domain*, *Client ID*, and *Client Secret* in the *Basic Information* section. We'll make use of these values when https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/#add-helm-configuration[adding Helm configuration] in a bit.
+
+. Using the sidebar menu on the left side of the Dashboard, navigate to the *APIs* page and copy the *API Audience* value.
+
+. Using the sidebar menu on the left side of the Dashboard, navigate to the *Settings* page and scroll down to the *API Authorization Settings*. Paste the API Audience value you just copied into the *Default Audience* field and then click on *Save*.
+
++
+This will allow us to receive access tokens that are JWTs from Auth0. In the future, we're hoping to add the ability
+to handle opaque access tokens as well to WildFly's Elytron OIDC Client subsystem.
+
+. Using the sidebar menu on the left side of the Dashboard, click on *User Management* and then *Users*. You can then
+create a new user by clicking on *Create User*. You'll need to specify the new user's email, we'll use *user@example.com*. You'll also need to set a password for the user.
++
+Once the user has been created, you'll see the user's *user_id* at the top of the page.
++
+For more information, see Auth0's documentation on how to https://auth0.com/docs/manage-users/user-accounts/create-users[create users].
+
+== Add Helm Configuration
+
+. Switch to the `charts` directory in the `simple-webapp-auth0` example.
++
+[source]
+----
+cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-auth0/charts
+----
++
+Notice there's a `helm.yaml` file in this directory with the following content:
++
+[source]
+----
+build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: simple-webapp-auth0
+deploy:
+  env:
+    - name: DOMAIN
+      value: <AUTH0_DOMAIN>             <1>
+    - name: CLIENT_ID
+      value: <AUTH0_CLIENT_ID>          <2>
+    - name: CLIENT_SECRET
+      value: <AUTH0_CLIENT_SECRET>      <3>
+----
+You need to update the environment variable values here using the information we saw earlier in the Auth0 Dashboard,
+as described below.
++
+<1> Replace <AUTH0_DOMAIN> with the *Domain* value from your OIDC App's *Basic Information* section in the Auth0 Dashboard.
+<2> Replace <AUTH0_CLIENT_ID> with the *Client ID* value from your OIDC App's *Basic Information* section in the Auth0 Dashboard.
+<3> Replace <AUTH0_CLIENT_SECRET> with the *Client Secret* value from your OIDC App's *Basic Information* section in the Auth0 Dashboard.
+
+== Deploy the Example Application to WildFly on OpenShift
+
+If you haven't already installed the WildFly Helm chart, install it:
+
+[source]
+----
+helm repo add wildfly https://docs.wildfly.org/wildfly-charts/
+----
+
+If you've already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:
+
+[source]
+----
+helm repo update
+----
+
+We can deploy our example application to WildFly on OpenShift using the WildFly Helm Chart:
+
+[source]
+----
+helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-auth0/charts/helm.yaml wildfly/wildfly
+----
+
+Notice that this command specifies the file we updated, `helm.yaml`, that contains the values
+needed to build and deploy our application.
+
+The application will now begin to build. This will take a couple of minutes.
+
+The build can be observed using:
+
+[source]
+----
+oc get build -w
+----
+
+Once complete, you can follow the deployment of the application using:
+
+[source]
+----
+oc get deployment oidc-app -w
+----
+
+Alternatively, you can check status directly from the OpenShift web console.
+
+=== Behind the Scenes
+
+While our application is building, let's take a closer look at our application.
+
+* Examine the  https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-auth0/pom.xml[pom.xml] file.
++
+Notice that it contains an *openshift* profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The *openshift* profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on OpenShift.
++
+[source,xml]
+----
+<profiles>
+    <profile>
+        <id>openshift</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.wildfly.plugins</groupId>
+                    <artifactId>wildfly-maven-plugin</artifactId>         <!--1-->
+                    <version>${version.wildfly.maven.plugin}</version>
+                    <configuration>
+                        <feature-packs>
+                            <feature-pack>
+                                <location>org.wildfly:wildfly-galleon-pack:${version.wildfly}</location>
+                            </feature-pack>
+                            <feature-pack>
+                                <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}</location>
+                            </feature-pack>
+                        </feature-packs>
+                        <layers>
+                            <layer>cloud-server</layer>
+                            <layer>elytron-oidc-client</layer>            <!--2-->
+                        </layers>
+                        <filename>simple-webapp-auth0.war</filename>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+</profiles>
+----
+<1> *wildfly-maven-plugin* provisions a WildFly server with the specified layers with our application deployed.
+<2> *elytron-oidc-client* automatically adds the native OIDC client subsystem to our WildFly installation.
+
+* Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/webapp/WEB-INF/web.xml[web.xml].
++
+[source,xml]
+----
+...
+    <login-config>
+        <auth-method>OIDC</auth-method>  <1>
+    </login-config>
+...
+----
++
+<1> When the *elytron-oidc-client* subsystem sees the *auth-method* is set to *OIDC*, it enables the OIDC authentication mechanism for the application.
+
+* Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/webapp/WEB-INF/oidc.json[oidc.json] file. The `oidc.json` is used to configure the native OIDC client subsystem.
++
+[source]
+----
+{
+    "client-id" : "${env.CLIENT_ID}",                       <1>
+    "provider-url" : "https://${env.DOMAIN}",               <2>
+    "ssl-required" : "EXTERNAL",                            <3>
+    "credentials" : {
+        "secret" : "${env.CLIENT_SECRET}"                   <4>
+    }
+}
+----
++
+<1> The client ID, which is specified using the *CLIENT_ID* environment variable we defined in the Helm configuration.
+<2> The provider URL, which is specified using the *DOMAIN* environment variable. We defined its value in the Helm configuration.
+<3> When *ssl-required* is set to *EXTERNAL*, communication with external clients happens over HTTPs.
+<4> The client secret is needed to communicate with Auth0. This refers to the *CLIENT_SECRET* environment variable that we defined in the Helm configuration.
+
+== Get the Application URL
+
+Once the WildFly server has been provisioned, use the following command to find the URL for your example
+application:
+
+[source]
+----
+SIMPLE_WEBAPP_AUTH0_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &&
+echo "" &&
+echo "Application URL: $SIMPLE_WEBAPP_AUTH0_URL/simple-webapp-auth0"  &&
+echo "Allowed Callback URL: $SIMPLE_WEBAPP_AUTH0_URL/simple-webapp-auth0/secured/*" &&
+echo ""
+----
+
+We'll make use of these URLs in the next two sections.
+
+== Finish Configuring Auth0
+
+From your *OIDC App* in the Auth0 Dashboard, scroll down to the *Application URIs* section and set
+*Allowed Callback URLs* to the Allowed Callback URL that was output in the previous section. Then click on *Save Changes*.
+
+== Access the Application
+
+From your browser, navigate to the *Application URL* that was output in the previous section.
+
+Click on *Access Secured Servlet*.
+
+You will be redirected to Auth0 to log in.
+
+Log in using the *user@example.com* user we created earlier.
+
+Upon successful authentication, you will be redirected back to the example application.
+
+The example application simply outputs the *user_id* of the logged in user.
+
+You should see output similar to the following:
+
+```
+Secured Servlet
+
+Current Principal 'auth0|6544f9aa427fb9f276240d55'
+```
+
+Notice the *user_id* for our *user@example.com* user is displayed. This indicates that we have successfully logged into our application!
+
+== Summary
+
+This guide has shown how to secure an application deployed to WildFly on OpenShift using the Auth0 OpenID provider. For additional
+information, feel free to check out the resources linked below.
+
+== Resources
+
+* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html[Getting Started with WildFly on OpenShift]
+* https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html[OpenShift CLI]
+* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts[WildFly Helm Chart]
+* https://auth0.com/docs/get-started[Getting started with Auth0]
+
