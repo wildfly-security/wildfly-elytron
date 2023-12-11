@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Tue, 28 Nov 2023 17:34:51 +0000</lastBuildDate>
+        <lastBuildDate>Mon, 11 Dec 2023 15:27:35 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing WildFly Apps with Auth0 on OpenShift</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/
+            </link>
+            <description>
+                You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Auth0 as the OIDC provider. Prerequisites Example Application...
+            </description>
+            <pubDate>Mon, 11 Dec 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/
+            </guid>
+        </item>
         
         <item>
             <title>Using distributed realm ignore-unavailable-realms attribute in Elytron</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 06 Sep 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Join us at Open Source Day, No Prior Experience Needed</title>
-            <link>
-                https://www.youtube.com/watch?v=PAcqCa8u0Z8
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 06 Sep 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=PAcqCa8u0Z8
             </guid>
         </item>
         

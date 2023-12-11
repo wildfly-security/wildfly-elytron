@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing WildFly Apps with Auth0 on OpenShift</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Securing WildFly Apps with Auth0 on OpenShift | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Securing WildFly Apps with Auth0 on OpenShift" />
+<meta name="author" content="Farah Juma" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Auth0 as the OIDC provider." />
+<meta property="og:description" content="You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Auth0 as the OIDC provider." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-12-11T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Securing WildFly Apps with Auth0 on OpenShift" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Farah Juma"},"dateModified":"2023-12-11T00:00:00+00:00","datePublished":"2023-12-11T00:00:00+00:00","description":"You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using Auth0 as the OIDC provider.","headline":"Securing WildFly Apps with Auth0 on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing WildFly Apps with Auth0 on OpenShift</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/e07a676199f6ad0af96a61a691b114b3">
+        
+        <p class="byline">
+          By <a href="https://github.com/fjuma">Farah Juma</a> | December 11, 2023
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/openshift"> #openshift</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/auth0"> #auth0</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/&title=Securing WildFly Apps with Auth0 on OpenShift" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Apps with Auth0 on OpenShift&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing WildFly Apps with Auth0 on OpenShift&amp;body=Securing WildFly Apps with Auth0 on OpenShift https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>You can secure your WildFly applications deployed on OpenShift with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on OpenShift with OIDC using <a href="https://auth0.com/">Auth0</a> as the OIDC provider.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#example-application">Example Application</a></li>
+<li><a href="#log-into-the-openshift-cluster">Log Into the OpenShift Cluster</a></li>
+<li><a href="#configure-auth0">Configure Auth0</a></li>
+<li><a href="#add-helm-configuration">Add Helm Configuration</a></li>
+<li><a href="#deploy-the-example-application-to-wildfly-on-openshift">Deploy the Example Application to WildFly on OpenShift</a>
+<ul class="sectlevel2">
+<li><a href="#behind-the-scenes">Behind the Scenes</a></li>
+</ul>
+</li>
+<li><a href="#get-the-application-url">Get the Application URL</a></li>
+<li><a href="#finish-configuring-auth0">Finish Configuring Auth0</a></li>
+<li><a href="#access-the-application">Access the Application</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along with this guide, you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Roughly 15 minutes</p>
+</li>
+<li>
+<p>Access to an OpenShift cluster (try the <a href="https://developers.redhat.com/developer-sandbox">Red Hat Developer Sandbox</a> for free)</p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://helm.sh/docs/intro/install/">Helm Chart</a></p>
+</li>
+<li>
+<p>Access to <a href="https://auth0.com/">Auth0</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-application"><a class="anchor" href="#example-application"></a>Example Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will use a simple web application in this guide that consists of a single <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/java/org/wildfly/security/examples/SecuredServlet.java">servlet</a>. We will secure this servlet using OIDC.</p>
+</div>
+<div class="paragraph">
+<p>We will use the example in the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-auth0">simple-webapp-auth0</a> directory in this repo.</p>
+</div>
+<div class="paragraph">
+<p>To obtain this example, clone the elytron-examples repository to your local machine:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone git@github.com:wildfly-security-incubator/elytron-examples.git</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="log-into-the-openshift-cluster"><a class="anchor" href="#log-into-the-openshift-cluster"></a>Log Into the OpenShift Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we can deploy our application, we need to log in to an OpenShift cluster. You can log in via the <a href="https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login -u myUserName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can log in using an API token:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login --token=myToken --server=myServerUrl</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can request the token via the <strong>Copy Login Command</strong> link in the OpenShift web console.</p>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t already have a project created, you can create one using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc new-project myProjectName</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-auth0"><a class="anchor" href="#configure-auth0"></a>Configure Auth0</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using Auth0 as our OpenID provider.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log into the Auth0 Dashboard.</p>
+</li>
+<li>
+<p>Create an application called <strong>OIDC App</strong>. For the application type, select <strong>Regular Web Applications</strong> and then click on <strong>Create</strong>. For more information, see the Auth0 documentation on how to <a href="https://auth0.com/docs/get-started/auth0-overview/create-applications">create applications</a>.</p>
+</li>
+<li>
+<p>Once the application has been created, we&#8217;ll see the <strong>Domain</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong> in the <strong>Basic Information</strong> section. We&#8217;ll make use of these values when <a href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-auth0-openshift/#add-helm-configuration">adding Helm configuration</a> in a bit.</p>
+</li>
+<li>
+<p>Using the sidebar menu on the left side of the Dashboard, navigate to the <strong>APIs</strong> page and copy the <strong>API Audience</strong> value.</p>
+</li>
+<li>
+<p>Using the sidebar menu on the left side of the Dashboard, navigate to the <strong>Settings</strong> page and scroll down to the <strong>API Authorization Settings</strong>. Paste the API Audience value you just copied into the <strong>Default Audience</strong> field and then click on <strong>Save</strong>.</p>
+<div class="paragraph">
+<p>This will allow us to receive access tokens that are JWTs from Auth0. In the future, we&#8217;re hoping to add the ability
+to handle opaque access tokens as well to WildFly&#8217;s Elytron OIDC Client subsystem.</p>
+</div>
+</li>
+<li>
+<p>Using the sidebar menu on the left side of the Dashboard, click on <strong>User Management</strong> and then <strong>Users</strong>. You can then
+create a new user by clicking on <strong>Create User</strong>. You&#8217;ll need to specify the new user&#8217;s email, we&#8217;ll use <strong>user@example.com</strong>. You&#8217;ll also need to set a password for the user.</p>
+<div class="paragraph">
+<p>Once the user has been created, you&#8217;ll see the user&#8217;s <strong>user_id</strong> at the top of the page.</p>
+</div>
+<div class="paragraph">
+<p>For more information, see Auth0&#8217;s documentation on how to <a href="https://auth0.com/docs/manage-users/user-accounts/create-users">create users</a>.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="add-helm-configuration"><a class="anchor" href="#add-helm-configuration"></a>Add Helm Configuration</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Switch to the <code>charts</code> directory in the <code>simple-webapp-auth0</code> example.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-auth0/charts</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice there&#8217;s a <code>helm.yaml</code> file in this directory with the following content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: simple-webapp-auth0
+deploy:
+  env:
+    - name: DOMAIN
+      value: &lt;AUTH0_DOMAIN&gt;             <i class="conum" data-value="1"></i><b>(1)</b>
+    - name: CLIENT_ID
+      value: &lt;AUTH0_CLIENT_ID&gt;          <i class="conum" data-value="2"></i><b>(2)</b>
+    - name: CLIENT_SECRET
+      value: &lt;AUTH0_CLIENT_SECRET&gt;      <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You need to update the environment variable values here using the information we saw earlier in the Auth0 Dashboard,
+as described below.</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Replace &lt;AUTH0_DOMAIN&gt; with the <strong>Domain</strong> value from your OIDC App&#8217;s <strong>Basic Information</strong> section in the Auth0 Dashboard.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Replace &lt;AUTH0_CLIENT_ID&gt; with the <strong>Client ID</strong> value from your OIDC App&#8217;s <strong>Basic Information</strong> section in the Auth0 Dashboard.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Replace &lt;AUTH0_CLIENT_SECRET&gt; with the <strong>Client Secret</strong> value from your OIDC App&#8217;s <strong>Basic Information</strong> section in the Auth0 Dashboard.</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploy-the-example-application-to-wildfly-on-openshift"><a class="anchor" href="#deploy-the-example-application-to-wildfly-on-openshift"></a>Deploy the Example Application to WildFly on OpenShift</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you haven&#8217;t already installed the WildFly Helm chart, install it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo add wildfly https://docs.wildfly.org/wildfly-charts/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you&#8217;ve already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo update</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can deploy our example application to WildFly on OpenShift using the WildFly Helm Chart:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-auth0/charts/helm.yaml wildfly/wildfly</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice that this command specifies the file we updated, <code>helm.yaml</code>, that contains the values
+needed to build and deploy our application.</p>
+</div>
+<div class="paragraph">
+<p>The application will now begin to build. This will take a couple of minutes.</p>
+</div>
+<div class="paragraph">
+<p>The build can be observed using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get build -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once complete, you can follow the deployment of the application using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get deployment oidc-app -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can check status directly from the OpenShift web console.</p>
+</div>
+<div class="sect2">
+<h3 id="behind-the-scenes"><a class="anchor" href="#behind-the-scenes"></a>Behind the Scenes</h3>
+<div class="paragraph">
+<p>While our application is building, let&#8217;s take a closer look at our application.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Examine the  <a href="https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-auth0/pom.xml">pom.xml</a> file.</p>
+<div class="paragraph">
+<p>Notice that it contains an <strong>openshift</strong> profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The <strong>openshift</strong> profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on OpenShift.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;profiles&gt;
+    &lt;profile&gt;
+        &lt;id&gt;openshift&lt;/id&gt;
+        &lt;build&gt;
+            &lt;plugins&gt;
+                &lt;plugin&gt;
+                    &lt;groupId&gt;org.wildfly.plugins&lt;/groupId&gt;
+                    &lt;artifactId&gt;wildfly-maven-plugin&lt;/artifactId&gt;         <i class="conum" data-value="1"></i><b>(1)</b>
+                    &lt;version&gt;${version.wildfly.maven.plugin}&lt;/version&gt;
+                    &lt;configuration&gt;
+                        &lt;feature-packs&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly:wildfly-galleon-pack:${version.wildfly}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                            &lt;feature-pack&gt;
+                                &lt;location&gt;org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}&lt;/location&gt;
+                            &lt;/feature-pack&gt;
+                        &lt;/feature-packs&gt;
+                        &lt;layers&gt;
+                            &lt;layer&gt;cloud-server&lt;/layer&gt;
+                            &lt;layer&gt;elytron-oidc-client&lt;/layer&gt;            <i class="conum" data-value="2"></i><b>(2)</b>
+                        &lt;/layers&gt;
+                        &lt;filename&gt;simple-webapp-auth0.war&lt;/filename&gt;
+                    &lt;/configuration&gt;
+                    &lt;executions&gt;
+                        &lt;execution&gt;
+                            &lt;goals&gt;
+                                &lt;goal&gt;package&lt;/goal&gt;
+                            &lt;/goals&gt;
+                        &lt;/execution&gt;
+                    &lt;/executions&gt;
+                &lt;/plugin&gt;
+            &lt;/plugins&gt;
+        &lt;/build&gt;
+    &lt;/profile&gt;
+&lt;/profiles&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>wildfly-maven-plugin</strong> provisions a WildFly server with the specified layers with our application deployed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>elytron-oidc-client</strong> automatically adds the native OIDC client subsystem to our WildFly installation.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/webapp/WEB-INF/web.xml">web.xml</a>.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">...
+    &lt;login-config&gt;
+        &lt;auth-method&gt;OIDC&lt;/auth-method&gt;  <i class="conum" data-value="1"></i><b>(1)</b>
+    &lt;/login-config&gt;
+...</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>When the <strong>elytron-oidc-client</strong> subsystem sees the <strong>auth-method</strong> is set to <strong>OIDC</strong>, it enables the OIDC authentication mechanism for the application.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-auth0/src/main/webapp/WEB-INF/oidc.json">oidc.json</a> file. The <code>oidc.json</code> is used to configure the native OIDC client subsystem.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+    "client-id" : "${env.CLIENT_ID}",                       <i class="conum" data-value="1"></i><b>(1)</b>
+    "provider-url" : "https://${env.DOMAIN}",               <i class="conum" data-value="2"></i><b>(2)</b>
+    "ssl-required" : "EXTERNAL",                            <i class="conum" data-value="3"></i><b>(3)</b>
+    "credentials" : {
+        "secret" : "${env.CLIENT_SECRET}"                   <i class="conum" data-value="4"></i><b>(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The client ID, which is specified using the <strong>CLIENT_ID</strong> environment variable we defined in the Helm configuration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The provider URL, which is specified using the <strong>DOMAIN</strong> environment variable. We defined its value in the Helm configuration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>When <strong>ssl-required</strong> is set to <strong>EXTERNAL</strong>, communication with external clients happens over HTTPs.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The client secret is needed to communicate with Auth0. This refers to the <strong>CLIENT_SECRET</strong> environment variable that we defined in the Helm configuration.</td>
+</tr>
+</table>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="get-the-application-url"><a class="anchor" href="#get-the-application-url"></a>Get the Application URL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once the WildFly server has been provisioned, use the following command to find the URL for your example
+application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">SIMPLE_WEBAPP_AUTH0_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Application URL: $SIMPLE_WEBAPP_AUTH0_URL/simple-webapp-auth0"  &amp;&amp;
+echo "Allowed Callback URL: $SIMPLE_WEBAPP_AUTH0_URL/simple-webapp-auth0/secured/*" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll make use of these URLs in the next two sections.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finish-configuring-auth0"><a class="anchor" href="#finish-configuring-auth0"></a>Finish Configuring Auth0</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your <strong>OIDC App</strong> in the Auth0 Dashboard, scroll down to the <strong>Application URIs</strong> section and set
+<strong>Allowed Callback URLs</strong> to the Allowed Callback URL that was output in the previous section. Then click on <strong>Save Changes</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-application"><a class="anchor" href="#access-the-application"></a>Access the Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From your browser, navigate to the <strong>Application URL</strong> that was output in the previous section.</p>
+</div>
+<div class="paragraph">
+<p>Click on <strong>Access Secured Servlet</strong>.</p>
+</div>
+<div class="paragraph">
+<p>You will be redirected to Auth0 to log in.</p>
+</div>
+<div class="paragraph">
+<p>Log in using the <strong>user@example.com</strong> user we created earlier.</p>
+</div>
+<div class="paragraph">
+<p>Upon successful authentication, you will be redirected back to the example application.</p>
+</div>
+<div class="paragraph">
+<p>The example application simply outputs the <strong>user_id</strong> of the logged in user.</p>
+</div>
+<div class="paragraph">
+<p>You should see output similar to the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Secured Servlet
+
+Current Principal 'auth0|6544f9aa427fb9f276240d55'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice the <strong>user_id</strong> for our <strong>user@example.com</strong> user is displayed. This indicates that we have successfully logged into our application!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide has shown how to secure an application deployed to WildFly on OpenShift using the Auth0 OpenID provider. For additional
+information, feel free to check out the resources linked below.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html">Getting Started with WildFly on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Chart</a></p>
+</li>
+<li>
+<p><a href="https://auth0.com/docs/get-started">Getting started with Auth0</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
