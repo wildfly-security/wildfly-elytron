@@ -55,6 +55,9 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
  */
 public final class SaslMechanismInformation {
 
+    /**
+     * The class providing Sasl Mechanism Names.
+     */
     public static final class Names {
         public static final String CRAM_MD5 = "CRAM-MD5";
         public static final String DIGEST_MD5 = "DIGEST-MD5";
