@@ -65,6 +65,7 @@ import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.credential.store.impl.PropertiesCredentialStore;
 import org.wildfly.security.encryption.CipherUtil;
 import org.wildfly.security.encryption.SecretKeyUtil;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.pem.Pem;
 
@@ -123,6 +124,7 @@ class CredentialStoreCommand extends Command {
     public static final String KEY_PARAM = "key";
     public static final String ENCRYPT = "encrypt";
     public static final String CLEAR_TEXT = "clear-text";
+    public static final String ENTRY = "entry";
 
     private static final List<String> filebasedKeystoreTypes = Collections.unmodifiableList(Arrays.asList("JKS", "JCEKS", "PKCS12"));
 
@@ -195,11 +197,19 @@ class CredentialStoreCommand extends Command {
                 .argName("key")
                 .desc(ElytronToolMessages.msg.key())
                 .build());
+
+        // This pair (clear-text and entry) are mutually exclusive but we will check later.
         options.addOption(Option.builder()
                 .longOpt(CLEAR_TEXT)
                 .hasArg()
                 .argName("clear text")
                 .desc(ElytronToolMessages.msg.clearText())
+                .build());
+        options.addOption(Option.builder()
+                .longOpt(ENTRY)
+                .hasArg()
+                .argName(ALIAS_ARGUMENT)
+                .desc(ElytronToolMessages.msg.cmdLineEntryDesc())
                 .build());
 
         OptionGroup og = new OptionGroup(); // Mutually Exclusive Options (Actions)
@@ -467,7 +477,7 @@ class CredentialStoreCommand extends Command {
 
             } else if (cmdLine.hasOption(ALIASES_PARAM) || cmdLine.hasOption(CHECK_ALIAS_PARAM) ) {
                 com.append("/subsystem=elytron/credential-store=test:read-aliases()");
-            } else if (cmdLine.hasOption(ENCRYPT)) {
+            } else if (cmdLine.hasOption(ENCRYPT) && cipherTextToken != null) {
                 getUseExpressionExample(com, cipherTextToken);
             } else if (cmdLine.hasOption(CREATE_CREDENTIAL_STORE_PARAM)){
                 if (PropertiesCredentialStore.NAME.equals(csType)) {
@@ -771,7 +781,27 @@ class CredentialStoreCommand extends Command {
             final SecretKey secretKey = credentialStore.retrieve(alias, SecretKeyCredential.class).getSecretKey();
 
             String clearText = cmdLine.getOptionValue(CLEAR_TEXT);
-            if (clearText == null) {
+            String entry = cmdLine.getOptionValue(ENTRY);
+            if (clearText != null && entry != null) {
+                throw ElytronToolMessages.msg.mutuallyExclusiveOptions(CLEAR_TEXT, ENTRY);
+            }
+
+            if (entry != null) {
+                if (credentialStore.exists(entry, PasswordCredential.class)) {
+                    final Password password = credentialStore.retrieve(entry, PasswordCredential.class).getPassword();
+                    if (password instanceof ClearPassword) {
+                        clearText = new String(((ClearPassword) password).getPassword());
+                    } else {
+                        setStatus(ALIAS_NOT_FOUND);
+                        System.out.println(ElytronToolMessages.msg.passwordCredentialNotClearText());
+                        return null;
+                    }
+                } else {
+                    setStatus(ALIAS_NOT_FOUND);
+                    System.out.println(ElytronToolMessages.msg.aliasDoesNotExist(alias));
+                    return null;
+                }
+            } else if (clearText == null) {
                 clearText = prompt(false, ElytronToolMessages.msg.clearTextToImport(), true, ElytronToolMessages.msg.clearTextToImportAgain());
             }
 
