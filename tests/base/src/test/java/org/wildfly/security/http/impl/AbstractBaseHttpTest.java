@@ -192,50 +192,9 @@ public class AbstractBaseHttpTest {
             if (cookie != null) {
                 final String cookieName = cookie.substring(0, cookie.indexOf('='));
                 final String cookieValue = cookie.substring(cookie.indexOf('=') + 1);
-                cookies.add(new HttpServerCookie() {
-                    @Override
-                    public String getName() {
-                        return cookieName;
-                    }
-
-                    @Override
-                    public String getValue() {
-                        return cookieValue;
-                    }
-
-                    @Override
-                    public String getDomain() {
-                        return null;
-                    }
-
-                    @Override
-                    public int getMaxAge() {
-                        return -1;
-                    }
-
-                    @Override
-                    public String getPath() {
-                        return "/";
-                    }
-
-                    @Override
-                    public boolean isSecure() {
-                        return false;
-                    }
-
-                    @Override
-                    public int getVersion() {
-                        return 0;
-                    }
-
-                    @Override
-                    public boolean isHttpOnly() {
-                        return true;
-                    }
-                });
+                cookies.add(HttpServerCookie.getInstance(cookieName, cookieValue, null, -1, "/", false, 0, true));
             }
         }
-
 
         public Status getResult() {
             return result;
