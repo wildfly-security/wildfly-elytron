@@ -1,0 +1,9 @@
+---
+layout: post
+title: 'Vlog: Securing WildFly Apps with Auth0 on OpenShift'
+date: 2023-12-20
+tags: oidc openshift auth0
+synopsis: Learn how to secure applications deployed to WildFly on OpenShift with the Auth0 OpenID provider.
+author: fjuma
+link: https://www.youtube.com/watch?v=uoQoCPGyAik
+---
