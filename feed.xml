@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Mon, 11 Dec 2023 15:27:35 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 20 Dec 2023 16:52:06 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Securing WildFly Apps with Auth0 on OpenShift</title>
+            <link>
+                https://www.youtube.com/watch?v=uoQoCPGyAik
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Wed, 20 Dec 2023 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=uoQoCPGyAik
+            </guid>
+        </item>
         
         <item>
             <title>Securing WildFly Apps with Auth0 on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 07 Sep 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=9i_MiK0W2n4
-            </guid>
-        </item>
-        
-        <item>
-            <title>Securing WildFly Apps with SAML on OpenShift</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/
-            </link>
-            <description>
-                Starting with WildFly 29, you can use Galleon to add Keycloak&#8217;s SAML adapter to your WildFly installation using the new Keycloak SAML Adapter feature pack. In this guide, we&#8217;ll show how to secure an application deployed to WildFly on OpenShift with SAML. Prerequisites Example Application Log Into the OpenShift Cluster...
-            </description>
-            <pubDate>Wed, 06 Sep 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-saml-openshift/
             </guid>
         </item>
         
