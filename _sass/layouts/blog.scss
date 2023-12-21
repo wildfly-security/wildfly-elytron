@@ -118,3 +118,13 @@ body.post {
     width: auto;
 }
 
+.search-input {
+  width: 100%;
+}
+
+.search-result {        
+  margin-top: 0;
+  list-style-type: none;
+  list-style-position: unset;
+  min-width: 50%;
+}

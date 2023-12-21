@@ -1,0 +1,141 @@
+<script src="{{ '/assets/javascript/lunr.js' | relative_url }}"></script>
+
+<script>
+    {% assign counter = 0 %}
+
+    var documents = [{% for page in site.posts %}{
+        "id": {{counter}},
+        "url": "{{ site.baseurl }}{{ page.url }}",
+        "link": "{{ page.link }}",
+        "title": "{{ page.title }}",
+        "author": "{{ page.author }}",
+        "postDate": "{{ page.date | date: '%B %d, %Y'}}",
+        "body": "{{ page.content | markdownify | replace: '.', '. ' | replace: '</h2>', ': ' | replace: '</h3>', ': ' | replace: '</h4>', ': ' | replace: '</p>', ' ' | strip_html | strip_newlines | replace: '  ', ' ' | replace: '"', ' ' }}" 
+        {% assign counter = counter | plus: 1 %}
+    } {% if forloop.last %} {% else %}, {% endif %} {% endfor %}];
+
+    var idx = lunr(function () {
+        this.ref('id')
+        this.field('title')
+        this.field('body')
+        documents.forEach(function (doc) {
+            this.add(doc)
+        }, this)
+    });
+
+    function lunr_search(terms) {
+
+        document.getElementById('lunrsearchresults').innerHTML = '<div></div>';
+
+        if (terms) {
+
+            document.getElementById('lunrsearchresults').innerHTML = document.getElementById('lunrsearchresults').innerHTML + "<p>Search results for '" + terms + "'</p>";
+            document.getElementById('lunrsearchresults').innerHTML = document.getElementById('lunrsearchresults').innerHTML + "<ul class=search-result></ul>";
+
+            mountResultHtml(terms);
+        } else {
+            location.assign(window.location.pathname);
+        }
+
+        return false;
+    }
+
+    function getLunrSearchQuery(query) {
+        const searchTerms = query.split(" ");
+        if(searchTerms.length === 1) {
+            return query;
+        }
+
+        query = "";
+        
+        for(const term of searchTerms) {
+            query += ` +${term}`
+        }
+
+        return query.trim();
+    }
+
+    function mountResultHtml(terms) {
+
+        const originalQuery = terms;
+
+        var query = getLunrSearchQuery(originalQuery);
+
+        var results = idx.search(query);
+
+        results = results.length ? results : query != originalQuery ? idx.search(originalQuery) : []
+
+        if (results.length > 0) {
+
+            for (var i = 0; i < results.length; i++) {
+
+                var ref = results[i]['ref'];
+                var url = documents[ref]['url'];
+                var title = documents[ref]['title'];
+                var link = documents[ref]['link'];
+                var body = documents[ref]['body'].substring(0, 75) + '...';
+                var postDate = documents[ref]['postDate'];
+                var realUrl = link == '' ? url : link;
+
+                document.querySelectorAll('#lunrsearchresults ul')[0].innerHTML = document.querySelectorAll('#lunrsearchresults ul')[0].innerHTML +
+                    "<div class='lunrsearchresult'>" +
+                    "<span class='post-title grid__item width-12-12'>" +
+                    "<a href= '" + realUrl + "'>" + title + "</a>" +
+                    "</span>" +
+                    "</div>";
+
+                document.querySelector("#posts-div").innerHTML = "";
+            }
+        } else {
+            document.querySelectorAll('#lunrsearchresults ul')[0].innerHTML = "<li class='lunrsearchresult'>No results found...</li>";
+        }
+    }
+
+    function checkSearchTerm(term) {
+        if (term == "") {
+            location.assign(window.location.pathname);
+        }
+    }
+
+</script>
+
+<style>
+    #lunrsearchresults {
+        padding-top: 0.2rem;
+    }
+
+    .lunrsearchresult {
+        padding-bottom: 1rem;
+    }
+
+    .lunrsearchresult .title {
+        color: #d9230f;
+    }
+
+    .lunrsearchresult .url {
+        color: silver;
+    }
+
+    .lunrsearchresult a {
+        display: block;
+        color: #777;
+    }
+
+    .lunrsearchresult a:hover,
+    .lunrsearchresult a:focus {
+        text-decoration: none;
+    }
+
+    .lunrsearchresult a:hover .title {
+        text-decoration: underline;
+    }
+</style>
+
+
+<form onSubmit="return lunr_search(document.getElementById('lunrsearch').value);" class="grid__item">
+    <p><input type="text" class="form-control search-input" onkeyup="checkSearchTerm(this.value)" id="lunrsearch"
+            name="q" value="" placeholder="Search..." /></p>
+</form>
+<div id="lunrsearchresults">
+    <ul id="search-result" name="search-result" class="search-result"></ul>
+</div>
