@@ -17,6 +17,9 @@ package org.wildfly.security.ssl;
 
 import javax.net.ssl.SSLContext;
 
+/**
+ * A class that uses the provided SNIContextMatcher to determine the SSLContext to be used for the connection.
+ */
 public class SNISSLContext extends SSLContext {
 
     public SNISSLContext(SNIContextMatcher matcher) {
