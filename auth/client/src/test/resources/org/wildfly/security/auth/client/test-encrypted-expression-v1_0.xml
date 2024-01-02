@@ -22,7 +22,7 @@
             <credential-store name="my-credential-store">
                 <attributes>
                     <attribute name="keyStoreType" value="JCEKS"/>
-                    <attribute name="location" value="./target/keystore/mycredstore.cs"/>
+                    <attribute name="location" value="/home/ppaul/wildfly-git/wildfly-elytron/auth/client/target/credstore/mycredstore.cs"/>
                 </attributes>
                 <protection-parameter-credentials>
                     <clear-password password="password"/>
