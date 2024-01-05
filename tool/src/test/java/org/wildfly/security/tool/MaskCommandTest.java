@@ -189,4 +189,18 @@ public class MaskCommandTest extends AbstractCommandTest {
         Assert.assertTrue(output.contains("Option \"secret\" specified more than once. Only the first occurrence will be used."));
         Assert.assertFalse(output.contains("Option \"iteration\" specified more than once. Only the first occurrence will be used"));
     }
+
+    @Test
+    public void testDecryptMasked() throws Exception {
+        final String originalSecret = "super_secret";
+        final String salt = "ASDF1234";
+        final int iterationCount = 123;
+        final String preGeneratedMaskedPassword = "MASK-088WUKotOwu7VOS8xRj.Rr;ASDF1234;123";
+
+        char[] decryptedSecret = MaskCommand.decryptMasked(preGeneratedMaskedPassword);
+
+        Assert.assertNotNull("Decrypted secret should not be null", decryptedSecret);
+        Assert.assertEquals("Decrypted secret should match the original secret", originalSecret, new String(decryptedSecret));
+    }
+
 }
