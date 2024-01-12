@@ -17,7 +17,7 @@
       ~ limitations under the License.
     -->
 
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xss="http://www.w3.org/2001/XMLSchema"
             targetNamespace="urn:encrypted:expression:1.0"
             xmlns="urn:encrypted:expression:1.0"
             elementFormDefault="qualified"
@@ -30,13 +30,12 @@
     <xsd:complexType name="encrypted-expression-type">
         <xsd:annotation>
             <xsd:documentation>
-                Configuration for encrypted expressions and resolvers to be used across different client configurations.
+                Configuration for encrypted expressions and expression-resolvers to be used across different client configurations.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:all>
             <xsd:element name="credential-stores" type="credential-stores-type" minOccurs="1" maxOccurs="1"/>
-            <xsd:element name="resolvers" type="resolvers-type" minOccurs="1" maxOccurs="1"/>
-            <xsd:element name="default-resolver" type="default-resolver-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="expression-resolvers" type="expression-resolvers-type" minOccurs="1" maxOccurs="1"/>
         </xsd:all>
     </xsd:complexType>
 
@@ -44,7 +43,7 @@
     <xsd:complexType name="credential-stores-type">
         <xsd:annotation>
             <xsd:documentation>
-                Complex type to contain the definitions of all the credential stores used to back the resolvers configured.
+                Complex type to contain the definitions of all the credential stores used to back the expression-resolvers configured.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:sequence>
@@ -55,7 +54,7 @@
     <xsd:complexType name="credential-store-type">
         <xsd:annotation>
             <xsd:documentation>
-                An individual credential store definition used to back one or more resolver(s).
+                An individual credential store definition used to back one or more expression-resolver(s).
             </xsd:documentation>
         </xsd:annotation>
 
@@ -190,35 +189,43 @@
         </xsd:attribute>
     </xsd:complexType>
 
-    <!--    resolver attributes     -->
-    <xsd:complexType name="resolvers-type">
+    <!--    expression-resolver attributes     -->
+    <xsd:complexType name="expression-resolvers-type">
         <xsd:annotation>
             <xsd:documentation>
-                List of all the resolvers used in encrypted expressions.
+                List of all the expression-resolvers used in encrypted expressions.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
-            <xsd:element name="resolver" type="resolver-type"/>
+            <xsd:element name="expression-resolver" type="expression-resolver-type"/>
         </xsd:choice>
+
+        <xsd:attribute name="default-resolver" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The name of the default resolver that would be used to resolve an expression if one is not specified.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
     </xsd:complexType>
 
-    <xsd:complexType name="resolver-type">
+    <xsd:complexType name="expression-resolver-type">
         <xsd:annotation>
             <xsd:documentation>
-                Individual resolver used to handle encrypted expressions.
+                Individual expression-resolver used to handle encrypted expressions.
             </xsd:documentation>
         </xsd:annotation>
         <xsd:attribute name="name" type="xsd:string" use="required">
             <xsd:annotation>
                 <xsd:documentation>
-                    Name of the resolver.
+                    Name of the expression-resolver.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
         <xsd:attribute name="credential-store-name" type="xsd:string" use="required">
             <xsd:annotation>
                 <xsd:documentation>
-                    The keystore used to back this resolver.
+                    The keystore used to back this expression-resolver.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>
@@ -226,21 +233,6 @@
             <xsd:annotation>
                 <xsd:documentation>
                     Alias for the key used to handle the encrypted expression.
-                </xsd:documentation>
-            </xsd:annotation>
-        </xsd:attribute>
-    </xsd:complexType>
-
-    <xsd:complexType name="default-resolver-type">
-        <xsd:annotation>
-            <xsd:documentation>
-                The default resolver to be used if the resolver for an encrypted expression is not defined.
-            </xsd:documentation>
-        </xsd:annotation>
-        <xsd:attribute name="name" type="xsd:string">
-            <xsd:annotation>
-                <xsd:documentation>
-                    Name of the default resolver to be used if the resolver for an encrypted expression is not defined.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>

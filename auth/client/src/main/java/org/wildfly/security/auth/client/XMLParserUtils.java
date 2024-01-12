@@ -113,11 +113,11 @@ public class XMLParserUtils {
         return value;
     }
 
-    public static void configureExpressionResolver(EncryptedExpressionConfig encryptedExpressionConfig, EncryptedExpressionResolver expressionResolver) {
+    public static void configureExpressionResolver(EncryptedExpressionConfig encryptedExpressionConfig, EncryptedExpressionResolver resolver) {
         String defaultResolver = encryptedExpressionConfig.defaultResolverName;
 
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurations = new HashMap<>();
-        for (Map.Entry<String, EncryptedExpressionResolver.ResolverConfiguration > currentResolver : encryptedExpressionConfig.getResolverMap().entrySet() ) {
+        for (Map.Entry<String, EncryptedExpressionResolver.ResolverConfiguration > currentResolver : resolver.getResolverConfiguration().entrySet() ) {
             String name = currentResolver.getValue().getResolverName();
             String credentialStoreName = currentResolver.getValue().getCredentialStore();
             String alias = currentResolver.getValue().getAlias();
@@ -125,7 +125,7 @@ public class XMLParserUtils {
             resolverConfigurations.put(name, new EncryptedExpressionResolver.ResolverConfiguration(name, credentialStoreName, alias));
         }
 
-        expressionResolver.setPrefix(PREFIX)
+        encryptedExpressionConfig.encryptedExpressionResolver.setPrefix(PREFIX)
                 .setDefaultResolver(defaultResolver)
                 .setResolverConfigurations(resolverConfigurations);
     }

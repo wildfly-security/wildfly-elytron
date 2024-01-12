@@ -16,7 +16,6 @@
 
 package org.wildfly.security.auth.client;
 
-import org.jboss.as.controller.OperationFailedException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -29,9 +28,11 @@ import java.util.Map;
 
 import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.createCredentialStore;
 import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.getProvidersSupplier;
-import static org.wildfly.security.auth.client.XMLParserUtils.configureExpressionResolver;
+//import static org.wildfly.security.auth.client.XMLParserUtils.configureExpressionResolver;
 
 /**
+ * A test class to tests for functionalities within the {@link EncryptedExpressionConfig} and the
+ * {@link EncryptedExpressionContext} classes.
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 public class EncryptedExpressionContextTest {
@@ -41,6 +42,7 @@ public class EncryptedExpressionContextTest {
     private static final String TEST_CRED_STORE_1_NAME = "testcredstore1";
     private static final String TEST_CRED_STORE_2_NAME = "testcredstore2";
     private static final String TEST_RESOLVER_1_NAME = "testresolver1";
+    private static final String TEST_RESOLVER_2_NAME = "testresolver2";
     private final EncryptedExpressionConfig config1
             = EncryptedExpressionConfig.empty();
 
@@ -60,7 +62,7 @@ public class EncryptedExpressionContextTest {
     }
 
     @AfterClass
-    public static void removeCredStores() {
+    public static void deleteCredStores() {
         Assert.assertTrue("Test credential Store 1 deleted", new File(CRED_STORE_DIR, TEST_CRED_STORE_FILENAME_1).delete());
         Assert.assertTrue("Test credential Store 2 deleted", new File(CRED_STORE_DIR, TEST_CRED_STORE_FILENAME_2).delete());
         Assert.assertTrue("Credential store directory deleted", CRED_STORE_DIR.delete());
@@ -74,7 +76,6 @@ public class EncryptedExpressionContextTest {
 
     @Test
     public void removeCredentialStore() {
-
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(TEST_CRED_STORE_1_NAME, credentialStore1, config1);
         ctx = EncryptedExpressionContext.empty().withOut(TEST_CRED_STORE_1_NAME, ctx.encryptedExpressionConfig);
         Assert.assertNull(ctx.encryptedExpressionConfig.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
@@ -92,16 +93,17 @@ public class EncryptedExpressionContextTest {
     }
 
     @Test
-    public void setResolverAndTestEncryptionAndDecryption() throws OperationFailedException {
+    public void setResolverAndTestEncryptionAndDecryption() {
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(TEST_CRED_STORE_1_NAME, credentialStore1, config1);
         EncryptedExpressionConfig config = ctx.encryptedExpressionConfig;
-        EncryptedExpressionResolver resolver = new EncryptedExpressionResolver(
-                (e, c) -> configureExpressionResolver(config, e));
-        resolver.setDefaultResolver(TEST_RESOLVER_1_NAME);
-        resolver.setPrefix("ENC");
+        EncryptedExpressionResolver resolver = new EncryptedExpressionResolver();
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurationMap = new HashMap<>();
         resolverConfigurationMap.put(TEST_RESOLVER_1_NAME, new EncryptedExpressionResolver.ResolverConfiguration(TEST_RESOLVER_1_NAME, TEST_CRED_STORE_1_NAME, "secretkey1"));
+        resolverConfigurationMap.put(TEST_RESOLVER_2_NAME, new EncryptedExpressionResolver.ResolverConfiguration(TEST_RESOLVER_2_NAME, TEST_CRED_STORE_2_NAME, "secretkey1"));
         resolver.setResolverConfigurations(resolverConfigurationMap);
+        resolver.setPrefix("ENC")
+                .setResolverConfigurations(resolverConfigurationMap)
+                .setDefaultResolver(TEST_RESOLVER_1_NAME);
         ctx = ctx.with(resolver, config);
         Assert.assertEquals(resolver, ctx.encryptedExpressionConfig.encryptedExpressionResolver);
         Assert.assertEquals(resolverConfigurationMap, ctx.encryptedExpressionConfig.encryptedExpressionResolver.getResolverConfiguration());

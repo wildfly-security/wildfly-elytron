@@ -18,14 +18,11 @@
 
 package org.wildfly.security.auth.client;
 
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
 import org.wildfly.common.Assert;
-import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.SecurityFactory;
@@ -57,9 +54,7 @@ import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.security.auth.client.ElytronXmlParser.parseModuleRefType;
 import static org.wildfly.security.auth.client.XMLParserUtils.checkAttributeNamespace;
-import static org.wildfly.security.auth.client.XMLParserUtils.configureExpressionResolver;
 import static org.wildfly.security.auth.client.XMLParserUtils.requireNoAttributes;
-import static org.wildfly.security.auth.client.XMLParserUtils.resolveElytronClientDir;
 import static org.wildfly.security.auth.client.XMLParserUtils.missingAttribute;
 import static org.wildfly.security.auth.client.XMLParserUtils.isSet;
 import static org.wildfly.security.auth.client.XMLParserUtils.setBit;
@@ -187,7 +182,6 @@ public class EncryptedExpressionsXmlParser {
         Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap = new HashMap<>();
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap = new HashMap<>();
         final ElytronXmlParser.DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(DEFAULT_PROVIDER_SUPPLIER);
-        final ExceptionBiConsumer<EncryptedExpressionResolver, OperationContext, OperationFailedException> configurator;
         String defaultResolverName = null;
         boolean netAuthenticator = false;
         int foundBits = 0;
@@ -202,16 +196,10 @@ public class EncryptedExpressionsXmlParser {
                         parseCredentialStoresType(reader, xmlVersion, credentialStoresMap, providersSupplier);
                         break;
                     }
-                    case "resolvers": {
+                    case "expression-resolvers": {
                         if (isSet(foundBits, 1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 1);
-                        parseResolversType(reader, xmlVersion, resolverMap);
-                        break;
-                    }
-                    case "default-resolver": {
-                        if (isSet(foundBits, 2)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 2);
-                        defaultResolverName = parseDefaultResolverType(reader, resolverMap);
+                        defaultResolverName = parseResolversType(reader, xmlVersion, resolverMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -222,13 +210,18 @@ public class EncryptedExpressionsXmlParser {
                     Authenticator.setDefault(new ElytronAuthenticator());
                 }
                 EncryptedExpressionConfig encryptedExpressionConfig = new EncryptedExpressionConfig();
+
                 // validate key and credential stores...
                 for (Map.Entry<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> supplier : credentialStoresMap.entrySet()) {
                     encryptedExpressionConfig.credentialStoreMap.put(supplier.getKey(), supplier.getValue().get());
                 }
+
+                // configure resolvers for the encrypted expressions
                 encryptedExpressionConfig.setResolverMap(resolverMap);
-                encryptedExpressionConfig.encryptedExpressionResolver = new EncryptedExpressionResolver(
-                        (e, c) -> configureExpressionResolver(encryptedExpressionConfig, e));
+                encryptedExpressionConfig.encryptedExpressionResolver = new EncryptedExpressionResolver()
+                        .setPrefix(PREFIX)
+                        .setDefaultResolver(defaultResolverName)
+                        .setResolverConfigurations(resolverMap);
                 encryptedExpressionConfig.setDefaultResolverName(defaultResolverName);
                 return () -> new EncryptedExpressionContext(encryptedExpressionConfig);
             } else {
@@ -411,7 +404,7 @@ public class EncryptedExpressionsXmlParser {
                 case "value": {
                     if (value != null) throw reader.unexpectedAttribute(i);
                     value = reader.getAttributeValueResolved(i);
-                    value = resolveElytronClientDir(value, reader);
+//                    value = resolveElytronClientDir(value, reader);
                     break;
                 }
                 default:
@@ -612,10 +605,27 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    static void parseResolversType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
+    static String parseResolversType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
-            throw missingAttribute(reader, "resolver");
+        String defaultResolver = null;
+
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            switch (reader.getAttributeLocalName(i)) {
+                case "default-resolver": {
+                    if (defaultResolver != null) throw reader.unexpectedAttribute(i);
+                    defaultResolver = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (defaultResolver == null) {
+            throw missingAttribute(reader, "default-resolver");
         }
 
         while (reader.hasNext()) {
@@ -623,18 +633,19 @@ public class EncryptedExpressionsXmlParser {
             if (tag == START_ELEMENT) {
                 checkElementNamespace(reader, xmlVersion);
                 switch (reader.getLocalName()) {
-                    case "resolver": {
+                    case "expression-resolver": {
                         parseResolverType(reader, resolverMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                return;
+                return defaultResolver;
             } else {
                 throw reader.unexpectedContent();
             }
         }
+        throw reader.unexpectedContent();
     }
 
     private static void parseResolverType(ConfigurationXMLStreamReader reader, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
@@ -694,44 +705,44 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedContent();
     }
 
-    private static String parseDefaultResolverType(ConfigurationXMLStreamReader reader, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        String name = null;
-
-        for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNameSpace = reader.getAttributeNamespace(i);
-            if (attributeNameSpace != null && !attributeNameSpace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
-            switch (reader.getAttributeLocalName(i)) {
-                case "name": {
-                    if (name!= null) throw reader.unexpectedAttribute(i);
-                    name = reader.getAttributeValueResolved(i);
-                    break;
-                }
-                default: {
-                    throw reader.unexpectedAttribute(i);
-                }
-            }
-        }
-        if (name == null) {
-            throw missingAttribute(reader, "name");
-        }
-        if (reader.hasNext()) {
-            final int tag = reader.nextTag();
-            if (tag == START_ELEMENT) {
-                throw reader.unexpectedElement();
-            } else if (tag == END_ELEMENT) {
-                if (resolverMap.containsKey(name)) {
-                    return name;
-                } else {
-                    throw xmlLog.resolverNotFound();
-                }
-            }
-            throw reader.unexpectedContent();
-        }
-        throw reader.unexpectedContent();
-    }
+//    private static String parseDefaultResolverType(ConfigurationXMLStreamReader reader, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
+//        final int attributeCount = reader.getAttributeCount();
+//        String name = null;
+//
+//        for (int i = 0; i < attributeCount; i ++) {
+//            final String attributeNameSpace = reader.getAttributeNamespace(i);
+//            if (attributeNameSpace != null && !attributeNameSpace.isEmpty()) {
+//                throw reader.unexpectedAttribute(i);
+//            }
+//            switch (reader.getAttributeLocalName(i)) {
+//                case "name": {
+//                    if (name!= null) throw reader.unexpectedAttribute(i);
+//                    name = reader.getAttributeValueResolved(i);
+//                    break;
+//                }
+//                default: {
+//                    throw reader.unexpectedAttribute(i);
+//                }
+//            }
+//        }
+//        if (name == null) {
+//            throw missingAttribute(reader, "name");
+//        }
+//        if (reader.hasNext()) {
+//            final int tag = reader.nextTag();
+//            if (tag == START_ELEMENT) {
+//                throw reader.unexpectedElement();
+//            } else if (tag == END_ELEMENT) {
+//                if (resolverMap.containsKey(name)) {
+//                    return name;
+//                } else {
+//                    throw xmlLog.resolverNotFound();
+//                }
+//            }
+//            throw reader.unexpectedContent();
+//        }
+//        throw reader.unexpectedContent();
+//    }
 
     private static void checkElementNamespace(final ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion) throws ConfigXMLParseException {
         if (! xmlVersion.namespace.equals(reader.getNamespaceURI())) {

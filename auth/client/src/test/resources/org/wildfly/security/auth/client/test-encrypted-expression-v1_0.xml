@@ -21,17 +21,13 @@
         <credential-stores>
             <credential-store name="my-credential-store" type="PropertiesCredentialStore">
                 <attributes>
-                    <attribute name="location" value="${credstore-path.env}"/>
+                    <attribute name="location" value="${credstore-path.prop}"/>
                 </attributes>
-                <protection-parameter-credentials>
-                    <clear-password password="password"/>
-                </protection-parameter-credentials>
             </credential-store>
         </credential-stores>
-        <resolvers>
-            <resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
-            <resolver name="my-resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
-        </resolvers>
-        <default-resolver name="my-resolver2"/>
+        <expression-resolvers default-resolver="my-resolver">
+            <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
+            <expression-resolver name="my-resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
+        </expression-resolvers>
     </encrypted-expression>
 </configuration>
