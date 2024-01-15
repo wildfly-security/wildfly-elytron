@@ -30,7 +30,9 @@ import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -63,6 +65,7 @@ import org.wildfly.security.auth.callback.PrincipalAuthorizeCallback;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
+import org.wildfly.security.auth.callback.RequestInformationCallback;
 import org.wildfly.security.auth.callback.SSLCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
@@ -1160,6 +1163,16 @@ public final class ServerAuthenticationContext implements AutoCloseable {
                     AuthenticationConfigurationCallback authenticationConfigurationCallback = (AuthenticationConfigurationCallback) callback;
                     saslSkipCertificateVerification = authenticationConfigurationCallback.getSaslSkipCertificateVerification();
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof RequestInformationCallback) {
+                    HashMap<String, Object> props = ((RequestInformationCallback) callback).getProperties();
+                    Attributes runtimeAttributes = new MapAttributes();
+                    for (Map.Entry<String, Object> entry : props.entrySet()) {
+                        if (entry.getValue() != null) {
+                            runtimeAttributes.addFirst(entry.getKey(), entry.getValue().toString());
+                        }
+                    }
+                    addRuntimeAttributes(runtimeAttributes);
+                    handleOne(callbacks, idx + 1);
                 }
                 else {
                     CallbackUtil.unsupported(callback);
@@ -2106,13 +2119,56 @@ public final class ServerAuthenticationContext implements AutoCloseable {
         void fail(final boolean requireInProgress) {
             final SecurityIdentity capturedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
-            if (! stateRef.compareAndSet(this, FAILED)) {
+            if (!stateRef.compareAndSet(this, FAILED)) {
                 stateRef.get().fail(requireInProgress);
                 return;
             }
-            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
+            SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(getRealmIdentityWithRuntimeAttributes(), null, null));
             SecurityDomain.safeHandleSecurityEvent(capturedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(capturedIdentity, realmIdentity.getRealmIdentityPrincipal()));
             realmIdentity.dispose();
+        }
+
+        private RealmIdentity getRealmIdentityWithRuntimeAttributes() {
+            return new RealmIdentity() {
+                @Override
+                public Principal getRealmIdentityPrincipal() {
+                    return realmIdentity.getRealmIdentityPrincipal();
+                }
+
+                @Override
+                public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                    return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
+                }
+
+                @Override
+                public <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+                    return realmIdentity.getCredential(credentialType);
+                }
+
+                @Override
+                public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                    return realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+                }
+
+                @Override
+                public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                    return realmIdentity.verifyEvidence(evidence);
+                }
+
+                @Override
+                public boolean exists() throws RealmUnavailableException {
+                    return realmIdentity.exists();
+                }
+
+                @Override
+                public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                    if (realmIdentity.exists()) {
+                        return AuthorizationIdentity.basicIdentity(realmIdentity.getAuthorizationIdentity(), runtimeAttributes);
+                    } else {
+                        return AuthorizationIdentity.basicIdentity(AuthorizationIdentity.EMPTY, runtimeAttributes);
+                    }
+                }
+            };
         }
 
         @Override
