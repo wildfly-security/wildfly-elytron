@@ -17,10 +17,13 @@
  */
 package org.wildfly.security.tool;
 
+import java.awt.Desktop;
 import java.io.IOException;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,6 +90,9 @@ class CredentialStoreCommand extends Command {
 
     public static final String CREDENTIAL_STORE_COMMAND = "credential-store";
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/WildFly_Elytron_Security.html";
+
     public static final String STORE_LOCATION_PARAM = "location";
     public static final String IMPLEMENTATION_PROPERTIES_PARAM = "properties";
     public static final String CREDENTIAL_STORE_PASSWORD_PARAM = "password";
@@ -108,6 +114,7 @@ class CredentialStoreCommand extends Command {
     public static final String DEBUG_PARAM = "debug";
     public static final String CUSTOM_CREDENTIAL_STORE_PROVIDER_PARAM = "credential-store-provider";
     public static final String SIZE_PARAM = "size";
+    public static final String WEB_PARAM = "web";
 
     public static final String GENERATE_KEY_PAIR_PARAM = "generate-key-pair";
     public static final String ALGORITHM_PARAM = "algorithm";
@@ -171,6 +178,9 @@ class CredentialStoreCommand extends Command {
         options.addOption("j", SIZE_PARAM, true, ElytronToolMessages.msg.cmdLineKeySizeDesc());
         options.addOption("k", ALGORITHM_PARAM, true, ElytronToolMessages.msg.cmdLineKeyAlgorithmDesc());
         options.addOption("kp", KEY_PASSPHRASE_PARAM, true, ElytronToolMessages.msg.cmdLineKeyPassphraseDesc());
+
+        opt = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
+        options.addOption(opt);
 
         OptionGroup privateKP = new OptionGroup();
         Option privateString = new Option("pvk", PRIVATE_KEY_STRING_PARAM, true, ElytronToolMessages.msg.cmdLinePrivateKeyStringDesc());
@@ -342,6 +352,23 @@ class CredentialStoreCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI + "#CredentialStore"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
 
         printDuplicatesWarning(cmdLine);

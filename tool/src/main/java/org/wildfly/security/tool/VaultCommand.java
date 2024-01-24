@@ -20,11 +20,14 @@ package org.wildfly.security.tool;
 import static org.wildfly.security.credential.store.CredentialStore.CredentialSourceProtectionParameter;
 import static org.wildfly.security.credential.store.CredentialStore.getInstance;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -70,6 +73,9 @@ public class VaultCommand extends Command {
 
     public static final String VAULT_COMMAND = "vault";
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/WildFly_Elytron_Security.html";
+
     public static final String STORE_LOCATION_PARAM = "location";
     public static final String PRINT_SUMMARY_PARAM = "summary";
     public static final String FAIL_IF_EXIST_PARAM = "fail-if-exist";
@@ -86,6 +92,7 @@ public class VaultCommand extends Command {
     public static final String ALIAS_PARAM = "alias";
     public static final String HELP_PARAM = "help";
     public static final String DEBUG_PARAM = "debug";
+    public static final String WEB_PARAM = "web";
 
     private static final class Descriptor {
         String keyStoreURL;
@@ -151,6 +158,8 @@ public class VaultCommand extends Command {
         options.addOption(h);
         options.addOption(d);
 
+        o = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
+        options.addOption(o);
     }
 
     @Override
@@ -162,6 +171,23 @@ public class VaultCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI + "#Migrating_Existing_Vaults"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
 
         boolean printSummary = cmdLine.hasOption(PRINT_SUMMARY_PARAM);

@@ -17,6 +17,10 @@
  */
 package org.wildfly.security.tool;
 
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 
@@ -43,11 +47,15 @@ class MaskCommand extends Command {
      */
     public static final String MASK_COMMAND = "mask";
 
+    private static final String DOCS_VERSION = "27";
+    private static final String DOCS_URI = "https://docs.wildfly.org/" + DOCS_VERSION + "/";
+
     static final String SALT_PARAM = "salt";
     static final String ITERATION_PARAM = "iteration";
     static final String SECRET_PARAM = "secret";
     static final String HELP_PARAM = "help";
     static final String DEBUG_PARAM = "debug";
+    static final String WEB_PARAM = "web";
 
     private final int defaultIterationCount = 10000;
 
@@ -61,6 +69,7 @@ class MaskCommand extends Command {
         Option h = new Option("h", HELP_PARAM, false, ElytronToolMessages.msg.cmdLineHelp());
         Option x = new Option("x", SECRET_PARAM, true, ElytronToolMessages.msg.cmdMaskSecretDesc());
         Option d = new Option("d", DEBUG_PARAM, false, ElytronToolMessages.msg.cmdLineDebug());
+        Option web = Option.builder().longOpt(WEB_PARAM).desc(ElytronToolMessages.msg.cmdWebDesc()).build();
         x.setArgName("to encrypt");
         options = new Options();
         options.addOption(x);
@@ -68,6 +77,7 @@ class MaskCommand extends Command {
         options.addOption(salt);
         options.addOption(iteration);
         options.addOption(d);
+        options.addOption(web);
     }
 
     @Override
@@ -83,6 +93,23 @@ class MaskCommand extends Command {
             help();
             setStatus(ElytronTool.ElytronToolExitStatus_OK);
             return;
+        }
+        if (cmdLine.hasOption(WEB_PARAM)) {
+            if (Desktop.isDesktopSupported()){
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        desktop.browse(new URI(DOCS_URI + "Migration_Guide.html#credential-store-creation"));
+                        setStatus(ElytronTool.ElytronToolExitStatus_OK);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        setStatus(GENERAL_CONFIGURATION_ERROR);
+                        throw ElytronToolMessages.msg.unableToOpenBrowser();
+                    }
+                }
+            }
+            setStatus(GENERAL_CONFIGURATION_ERROR);
+            throw ElytronToolMessages.msg.unableToOpenBrowser();
         }
 
         printDuplicatesWarning(cmdLine);
