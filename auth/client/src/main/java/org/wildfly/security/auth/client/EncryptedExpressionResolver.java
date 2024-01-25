@@ -107,6 +107,10 @@ public class EncryptedExpressionResolver {
         return null;
     }
 
+    public String createExpression(final String clearText, EncryptedExpressionConfig config) {
+        return createExpression(null, clearText, config);
+    }
+
     public String createExpression(final String resolver, final String clearText, EncryptedExpressionConfig config) {
         String resolvedResolver = resolver != null ? resolver : defaultResolver;
         if (resolvedResolver == null) {
@@ -118,7 +122,7 @@ public class EncryptedExpressionResolver {
             throw xmlLog.noResolverWithSpecifiedName(resolvedResolver);
         }
 
-        CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolver).getCredentialStore());
+        CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolvedResolver).getCredentialStore());
         SecretKey secretKey;
         try {
             SecretKeyCredential credential = credentialStore.retrieve(resolverConfiguration.getAlias(), SecretKeyCredential.class);
@@ -137,7 +141,7 @@ public class EncryptedExpressionResolver {
             throw xmlLog.unableToEncryptClearText(e);
         }
 
-        String expression = resolver == null ? String.format("${%s::%s}", prefix, cipherTextToken)
+        String expression = resolver == null ? String.format("${%s::%s:%s}", prefix, defaultResolver, cipherTextToken)
                 : String.format("${%s::%s:%s}", prefix, resolvedResolver, cipherTextToken);
 
         return expression;

@@ -28,7 +28,6 @@ import java.util.Map;
 
 import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.createCredentialStore;
 import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.getProvidersSupplier;
-//import static org.wildfly.security.auth.client.XMLParserUtils.configureExpressionResolver;
 
 /**
  * A test class to tests for functionalities within the {@link EncryptedExpressionConfig} and the

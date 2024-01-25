@@ -38,8 +38,6 @@ import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 public class XMLParserUtils {
 
-    public static final String ELYTRON_CLIENT_DIR = "PATH/TO/ELYTRON/CLIENT/DIR";
-
     public static boolean isSet(int var, int bit) {
         return (var & 1 << bit) != 0;
     }
@@ -47,6 +45,7 @@ public class XMLParserUtils {
     public static int setBit(int var, int bit) {
         return var | 1 << bit;
     }
+
     public static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
         final String attributeNamespace = reader.getAttributeNamespace(idx);
         if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
@@ -92,25 +91,8 @@ public class XMLParserUtils {
         return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
-
     public static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
         return t -> second.apply(first.apply(t));
-    }
-
-    public static String resolveElytronClientDir(String value, ConfigurationXMLStreamReader reader) {
-        if (value.contains(ELYTRON_CLIENT_DIR)) {
-            String readerLocation = reader.getLocation().getUri().toString();
-            if (readerLocation.contains("file:")) {
-                readerLocation = readerLocation.replace("file:", "");
-            }
-            if (readerLocation.contains(".xml")) {
-                int lastIndex = readerLocation.lastIndexOf("/target");
-                String subStr = readerLocation.substring(lastIndex);
-                readerLocation = readerLocation.replace(subStr, "");
-                value = value.replace(ELYTRON_CLIENT_DIR, readerLocation);
-            }
-        }
-        return value;
     }
 
     public static void configureExpressionResolver(EncryptedExpressionConfig encryptedExpressionConfig, EncryptedExpressionResolver resolver) {

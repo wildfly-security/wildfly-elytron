@@ -19,13 +19,21 @@
 package org.wildfly.security.auth.client;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.provider.util.ProviderFactory;
+import org.wildfly.security.x500.TrustedAuthority;
 
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import java.io.IOException;
 import java.security.Provider;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -42,7 +50,12 @@ public final class EncryptedExpressionConfig {
     private static final int REMOVE_CREDENTIAL_STORE = 3;
     private static final int SET_RESOLVER = 4;
     private static final int SET_DEFAULT_RESOLVER = 5;
+    private static final int SET_USER_CALLBACK_HANDLER = 6;
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderFactory.getDefaultProviderSupplier(EncryptedExpressionConfig.class.getClassLoader());
+
+    public EncryptedExpressionConfig(CallbackHandler userCallbackHandler) {
+        this.userCallbackHandler = userCallbackHandler;
+    }
 
     public static EncryptedExpressionConfig empty() {
         return new EncryptedExpressionConfig();
@@ -51,12 +64,14 @@ public final class EncryptedExpressionConfig {
     Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap;
     String defaultResolverName;
     EncryptedExpressionResolver encryptedExpressionResolver;
+    CallbackHandler userCallbackHandler;
 
     EncryptedExpressionConfig() {
         this.credentialStoreMap = new HashMap<>();
         this.resolverMap = new HashMap<>();
         this.defaultResolverName = null;
         this.encryptedExpressionResolver = null;
+        this.userCallbackHandler = null;
     }
 
     private EncryptedExpressionConfig(final EncryptedExpressionConfig original, final int what, final Object value) {
@@ -90,10 +105,18 @@ public final class EncryptedExpressionConfig {
          } else {
              this.defaultResolverName = original.defaultResolverName;
          }
+         if (what == SET_USER_CALLBACK_HANDLER) {
+             this.userCallbackHandler = (CallbackHandler) value;
+         } else {
+             this.userCallbackHandler = original.userCallbackHandler;
+         }
     }
 
     private EncryptedExpressionConfig(final EncryptedExpressionConfig original, final EncryptedExpressionConfig other) {
         this.credentialStoreMap = other.credentialStoreMap;
+        this.resolverMap = other.resolverMap;
+        this.defaultResolverName = other.defaultResolverName;
+        this.userCallbackHandler = other.userCallbackHandler;
     }
 
     private static <T> T getOrDefault(T value, T defVal) {
@@ -188,5 +211,35 @@ public final class EncryptedExpressionConfig {
         resolverConfigurationMap.putAll(resolver.getResolverConfiguration());
         EncryptedExpressionConfig config = new EncryptedExpressionConfig(this, SET_RESOLVER, resolver);
         return config;
+    }
+
+    CallbackHandler getCallbackHandler() {
+        return userCallbackHandler;
+    }
+
+    CallbackHandler createCallbackHandler() {
+        return new EncryptedExpressionConfig.ClientCallbackHandler(this);
+    }
+
+    static class ClientCallbackHandler implements CallbackHandler {
+        private final EncryptedExpressionConfig config;
+        private final CallbackHandler userCallbackHandler;
+        private List<TrustedAuthority> trustedAuthorities;
+
+        ClientCallbackHandler(final EncryptedExpressionConfig config) {
+            this.config = config;
+            this.userCallbackHandler = config.getCallbackHandler();
+        }
+
+        public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+            final EncryptedExpressionConfig config = this.config;
+            final ArrayList<Callback> userCallabacks = new ArrayList<Callback>(callbacks.length);
+
+            for (final Callback callback : callbacks) {
+                if (callback instanceof CredentialCallback) {
+                    //
+                }
+            }
+        }
     }
 }

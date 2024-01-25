@@ -200,7 +200,7 @@
             <xsd:element name="expression-resolver" type="expression-resolver-type"/>
         </xsd:choice>
 
-        <xsd:attribute name="default-resolver" type="xsd:string" use="required">
+        <xsd:attribute name="default-resolver" type="xsd:string" use="optional">
             <xsd:annotation>
                 <xsd:documentation>
                     The name of the default resolver that would be used to resolve an expression if one is not specified.

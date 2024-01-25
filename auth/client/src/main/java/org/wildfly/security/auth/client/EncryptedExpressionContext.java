@@ -41,7 +41,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
 
     static {
         Version.getVersion();
-        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> EncryptedExpressionContext.EMPTY);
+        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultEncryptedExpressionContextProvider.DEFAULT);
     }
 
     EncryptedExpressionConfig encryptedExpressionConfig = new EncryptedExpressionConfig();
