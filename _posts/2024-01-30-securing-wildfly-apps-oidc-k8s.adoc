@@ -1,0 +1,368 @@
+---
+layout: post
+title: 'Securing WildFly Apps with OIDC on Kubernetes'
+date: 2024-01-30
+tags: oidc kubernetes keycloak adapter galleon-pack
+synopsis: Learn how to secure applications deployed to WildFly on Kubernetes with OIDC.
+author: theashiot
+---
+
+:toc: macro
+:toc-title:
+
+
+You can secure your WildFly applications deployed on Kubernetes with OpenID Connect (OIDC). By using OIDC to secure applications, you delegate authentication to OIDC providers. This guide shows how to secure an example application deployed to WildFly on Kubernetes with OIDC using Keycloak as the OIDC provider.
+
+toc::[]
+
+== Prerequisites
+
+To follow along with this guide, you will need:
+
+* Roughly 15 minutes.
+* https://docs.docker.com/engine/install/[Docker] or https://podman.io/docs/installation[Podman].
+* A Kubernetes cluster.
++
+You can use a local Kubernetes cluster such as link:https://minikube.sigs.k8s.io/docs/[minikube], or https://kind.sigs.k8s.io/[kind].
+
+* Kubernetes command-line tool, https://kubernetes.io/docs/tasks/tools/[kubectl].
+
+* A public container registry to host your application's Docker image.
++
+For example, https://hub.docker.com/[Docker
+Hub], or https://quay.io/repository/[Quay.io].
+* https://helm.sh/docs/intro/install/[Helm Chart].
+
+
+== Example Application
+
+We will use a simple web application in this guide that consists of a single https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-oidc/src/main/java/org/wildfly/security/examples/SecuredServlet.java[servlet]. We will secure this servlet using OIDC. We will use the example in the https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-oidc[simple-webapp-oidc] directory in the https://github.com/wildfly-security/elytron-examples[elytron-examples] repository.
+
+To obtain this example, clone the elytron-examples repository to your local machine:
+
+[source]
+----
+git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+----
+
+== Start Keycloak
+
+We will be using Keycloak as our OIDC identity provider.
+
+Follow the instructions, till "Log in to the Admin Console", provided in the https://www.keycloak.org/getting-started/getting-started-kube[Get started with Keycloak on Kubernetes] guide.
+
+== Configure Keycloak
+
+. Log into the Keycloak Admin Console using the username and password you specified earlier.
+
+. Create a new realm called *myrealm*. For more information, see the Keycloak documentation on how to https://www.keycloak.org/getting-started/getting-started-kube#_create_a_realm[create a realm].
+
+. Add a role called *user*. This role will be required to access our simple web application. For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#assigning-permissions-using-roles-and-groups[create a role].
+
+. Add a new user named *alice*. Set an *email* address for this new user, we'll use *alice@example.org*. For more information, see the Keycloak documentation on how to https://www.keycloak.org/getting-started/getting-started-kube#_create_a_user[create a user].
+
+. Once the new user has been created, set a password for this new user from the *Credentials* tab.
+
+. From the *Role Mapping* tab, assign *alice* the *user* role. For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#proc-assigning-role-mappings_server_administration_guide[assign a role] to a user.
+
+. Create a new client as follows:
+* *General Settings*:
+** *Client type* (or *Client Protocol*, depending on your Keycloak version): *OpenID Connect*
+** *Client ID*: *myclient*
+* *Capability config*:
+** *Authentication flow*: *Standard flow*, *Direct access grants*
+* *Login settings*: Leave the fields blank for now.
+
++
+For more information, see the Keycloak documentation on how to https://www.keycloak.org/docs/latest/server_admin/index.html#_oidc_clients[Managing OpenID Connect clients].
+
+. Click *Save* to save the client.
+
+== Build a docker image of the application
+
+. Navigate to the application's directory.
+ 
+
+. Use the `wildfly-maven-plugin` plugin to create a docker image.
++
+[source,options="nowrap"]
+----
+$ mvn package wildfly:image -Popenshift
+ ...
+[INFO] Successfully tagged localhost/simple-webapp-oidc:latest
+[INFO] acd8c6c41788a99c5b22d2c6b2e42ce024a89e2eb4fe5b4d721f9b56796e95bc
+[INFO] Successfully built application image simple-webapp-oidc:latest
+
+----
+
+. Verify that you see the image in Docker images.
++
+[source,options="nowrap"]
+----
+$ docker images
+...
+REPOSITORY                       TAG         IMAGE ID      CREATED        SIZE
+localhost/simple-webapp-oidc     latest      acd8c6c41788  3 minutes ago  690 MB
+----
+
+== Push the just created image to a container registry
+
+. Log in to the container registry.
++
+[source,options="nowrap",subs=+quotes]
+----
+$ docker login __CONTAINER_REGISTRY__ 
+----
++
+Substitute __CONTAINER_REGISTRY__ as follows:
+
+* For Quay, use `quay.io`.
+* For Docker Hub, use `docker.io`.
+
+. Create a new tag for your image.
++
+[source,options="nowrap"]
+----
+$ docker tag simple-webapp-oidc __TAGGED_IMAGE__
+----
++
+Substitute __TAGGED_IMAGE__ as follows:
+
+* For Quay, use the form `quay.io/__USERNAME__/simple-webapp-oidc`.
+* For Docker Hub, use `__USERNAME__/simple-webapp-oidc`.
+
+. Verify that you see the tagged image in Docker images.
++
+[source,options="nowrap"]
+----
+$ docker images
+...
+REPOSITORY                           TAG         IMAGE ID      CREATED         SIZE
+localhost/ashiot/simple-webapp-oidc  latest      acd8c6c41788  20 minutes ago  690 MB
+----
+
+. Push the image to your container registry.
++
+[source,options="nowrap"]
+----
+$ docker push __TAGGED_IMAGE__:latest
+----
++
+Substitute __TAGGED_IMAGE__ as follows:
+
+* For Quay, use the form `quay.io/__USERNAME__/simple-webapp-oidc`.
+* For Docker Hub, use `__USERNAME__/simple-webapp-oidc`.
+
+
+== Add Helm Configuration
+
+. Obtain the URL for Keycloak.
++
+[source]
+----
+KEYCLOAK_URL=http://$(minikube ip):$(kubectl get services/keycloak -o go-template='{{(index .spec.ports 0).nodePort}}') &&
+echo "" &&
+echo "Keycloak URL:   $KEYCLOAK_URL" &&
+echo ""
+----
+
+. Switch to the `charts` directory in the `simple-webapp-oidc` example.
++
+[source]
+----
+cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts
+----
+
+. Create a file `values.yml`.
++
+[source,yaml]
+----
+image:
+  name: __IMAGE_NAME__ # change it with the image you have just pushed
+build:
+  enabled: false # The build part is not needed since we have already built our application with the wildfly-maven-plugin plugin
+deploy:
+  route:
+    enabled: false # the route can be enabled, but only for OpenShift clusters
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: <KEYCLOAK_URL>    <1>
+----
+
+<1> Replace <KEYCLOAK_URL> with the Keycloak URL obtained in the previous command.
+
+== Deploy the Example Application to Kubernetes
+
+If you haven't already installed the WildFly Helm chart, install it:
+
+[source]
+----
+helm repo add wildfly https://docs.wildfly.org/wildfly-charts/
+----
+
+If you've already installed the WildFly Helm Chart, be sure to update it to ensure you have the latest one:
+
+[source]
+----
+helm repo update
+----
+
+We can deploy our example application to WildFly on Kubernetes using the WildFly Helm Chart:
+
+[source]
+----
+helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-oidc/charts/values.yaml wildfly/wildfly
+----
+
+Notice that this command specifies the file we updated, `values.yaml`, that contains the values needed to build and deploy our application.
+
+The application will now begin to build. This will take a couple of minutes.
+
+The build can be observed using:
+
+[source]
+----
+oc get build -w
+----
+
+Once complete, you can follow the deployment of the application using:
+
+[source]
+----
+oc get deployment oidc-app -w
+----
+
+
+=== Behind the Scenes
+
+While our application is building, let's take a closer look at our application.
+
+* Examine the  https://github.com/wildfly-security/elytron-examples/blob/main/simple-webapp-oidc/pom.xml[pom.xml] file.
++
+Notice that it contains an *openshift* profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The *openshift* profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on Kubernetes.
++
+[source,xml]
+----
+<profiles>
+    <profile>
+        <id>openshift</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.wildfly.plugins</groupId>
+                    <artifactId>wildfly-maven-plugin</artifactId>         <!--1-->
+                    <version>${version.wildfly.maven.plugin}</version>
+                    <configuration>
+                        <feature-packs>
+                            <feature-pack>
+                                <location>org.wildfly:wildfly-galleon-pack:${version.wildfly}</location>
+                            </feature-pack>
+                            <feature-pack>
+                                <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}</location>
+                            </feature-pack>
+                        </feature-packs>
+                        <layers>
+                            <layer>cloud-server</layer>
+                            <layer>elytron-oidc-client</layer>           <!--2-->
+                        </layers>
+                        <filename>simple-webapp-oidc.war</filename>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+</profiles>
+----
+<1> *wildfly-maven-plugin* provisions a WildFly server with the specified layers with our application deployed.
+<2> *elytron-oidc-client* automatically adds the native OIDC client subsystem to our WildFly installation.
+
+* Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/web.xml[web.xml].
++
+[source,xml,options="nowrap"]
+----
+...
+    <login-config>
+        <auth-method>OIDC</auth-method>  <1>
+    </login-config>
+...
+----
+<1> When *elytron-oidc-client* subsystem sees *auth-method* is set to *OIDC*, it enables OIDC authentication mechanism for the application.
+
+* Examine the https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-oidc/src/main/webapp/WEB-INF/oidc.json[oidc.json] file. The `oidc.json` is used to configure the native OIDC client subsystem.
++
+[source,options="nowrap"]
+----
+{
+    "client-id" : "myclient",                                                         <1>
+    "provider-url" : "${env.OIDC_PROVIDER_URL:http://localhost:8080}/realms/myrealm", <2>
+    "public-client" : "true",                                                         <3>
+    "principal-attribute" : "preferred_username",                                     <4>
+    "ssl-required" : "EXTERNAL"                                                       <5>
+}
+----
+<1> This is the client we created in Keycloak.
+<2> The provider URL, which is the URL for the realm *myrealm* that we created, is specified as an environment variable. We will set its value in the helm configuration.
+<3> When *public-client* set to *true*, client credentials are not sent when communicating with the OpenID provider.
+<4> We specify that the user name of the identity, which in our case is *alice*, is to be used as the principal for the identity.
+<5> When *ssl-required* is set to *EXTERNAL*, only the communication with external clients happens over HTTPs
+////
+TODO
+== Get the Application URL
+
+Once the WildFly server has been provisioned, use the following command to find the URL for your example
+application:
+
+[source]
+----
+----
+
+We'll make use of these URLs in the next two sections.
+////
+
+== Finish Configuring Keycloak
+
+From your *myclient* client in the Keycloak Administration Console, in the client settings, set *Valid Redirect URI* to `http://localhost:8080/simple-webapp-oidc/secured/pass:[*]` then click *Save*.
+
+== Access the Application
+
+. From your browser, navigate to http://localhost:8080/simple-webapp-oidc. 
+
+. Click on *Access Secured Servlet*.
++
+You will be redirected to Keycloak to log in.
+
+. Log in using the *alice* user we created earlier.
+
+Upon successful authentication, you will be redirected back to the example application.
+
+The example application simply outputs the name of the logged in user.
+
+You should see the following output:
+
+```
+Secured Servlet
+
+Current Principal 'alice'
+```
+
+This indicates that we have successfully logged into our application!
+
+== Summary
+
+This guide has shown how to secure an application deployed to WildFly on Kubernetes with OIDC. For additional
+information, feel free to check out the resources linked below.
+
+== Resources
+
+* https://www.wildfly.org/news/2023/06/16/deploy-on-kubernetes-with-helm/[Deploy on Kubernetes with Helm]
+* https://docs.wildfly.org/30/Getting_Started_on_OpenShift.html#helm-charts[WildFly Helm Chart]
+https://www.keycloak.org/getting-started/getting-started-kube[Get started with Keycloak on Kubernetes]
+* https://www.keycloak.org/docs/latest/server_admin/index.html[Keycloak Server Administration Guide]
+* https://www.keycloak.org/docs/latest/securing_apps/#_oidc[Using OpenID Connect to secure applications and services]
