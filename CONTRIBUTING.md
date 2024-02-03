@@ -85,6 +85,33 @@ Note: Some tests will fail if `localhost` is not listed first in `/etc/hosts` fi
 
 For more information, including details on how WildFly Elytron is integrated in WildFly Core and WildFly, check out our [developer guide](https://wildfly-security.github.io/wildfly-elytron/getting-started-for-developers/).
 
+## Code Style and Conventions
+
+We follow a specific set of code style and conventions in our project. Please adhere to the following guidelines:
+
+- **Indentation:** Use four spaces for indentation.
+- **Naming Conventions:** Follow camelCase for variable and method names.
+- ...
+
+Before submitting your pull request, make sure your code aligns with these conventions.
+
+## Testing
+
+Ensure that your changes are thoroughly tested before submitting a pull request. Follow these testing guidelines:
+
+- Run the existing unit tests using Maven: `mvn clean test`
+- Include new unit tests for your code changes.
+- ...
+
+If applicable, provide instructions on how to run integration tests or any additional testing procedures.
+
+## Documentation
+
+Contributors are encouraged to keep documentation up-to-date along with code changes. If your changes impact user-facing features, update the relevant documentation files in the `docs/` directory.
+
+If there are specific guidelines for documentation changes, please follow them closely.
+
+
 ## Contributing Guidelines
 
 When submitting a PR, please keep the following guidelines in mind:
@@ -98,4 +125,5 @@ When submitting a PR, please keep the following guidelines in mind:
 For an example of a properly formatted PR, take a look at https://github.com/wildfly-security/wildfly-elytron/pull/1532
 
 ## Community
+
 For more information on how to get involved with WildFly Elytron, check out our [community](https://wildfly-security.github.io/wildfly-elytron/community/) page.
