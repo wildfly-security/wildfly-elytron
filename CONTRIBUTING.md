@@ -93,7 +93,6 @@ For more information, including details on how WildFly Elytron is integrated in 
 ## Contributing Guidelines
 
 ### Testing
-
 Ensure that your changes are thoroughly tested before submitting a pull request. Follow these testing guidelines:
 
 - Run the existing unit tests using Maven: `mvn clean test`
@@ -101,12 +100,7 @@ Ensure that your changes are thoroughly tested before submitting a pull request.
 
 If applicable, provide instructions on how to run integration tests or any additional testing procedures.
 
-### Documentation
-Contributors are encouraged to keep documentation up-to-date along with code changes. If your changes impact user-facing features, update the relevant documentation files in directory.
-
-If there are specific guidelines for documentation changes, please follow them closely.
-
-### Pull Request Guidelines
+### Pull Request Process
 When submitting a PR, please keep the following guidelines in mind:
 
 1. In general, it's good practice to squash all of your commits into a single commit. For larger changes, it's ok to have multiple meaningful commits. If you need help with squashing your commits, feel free to ask us how to do this on your pull request. We're more than happy to help!
@@ -117,35 +111,12 @@ When submitting a PR, please keep the following guidelines in mind:
 
 For an example of a properly formatted PR, take a look at https://github.com/wildfly-security/wildfly-elytron/pull/1532
 
+### Documentation
+Contributors are encouraged to keep documentation up-to-date along with code changes. If your changes impact user-facing features, update the relevant documentation files in directory.
+Community documentation can be found in the [wildfly repository](https://github.com/wildfly/wildfly/tree/main/docs)
+
 ## FAQ for New Contributors
-
-### Q: How do I find good first issues to work on?
-A: You can find issues labeled as `good-first-issue` in our [JIRA project](https://issues.redhat.com/browse/WFLY-18776?filter=12364234). These are specifically curated for new contributors to get started.
-
-### Q: What is the process for assigning an issue to myself?
-A: To assign an issue to yourself, navigate to the issue on our [JIRA](https://issues.redhat.com/projects/ELY) and click on "Start Progress." This will automatically assign the issue to you.
-
-### Q: How should I name my feature branch?
-A: It is recommended to use a branch name that includes the JIRA issue number. For example, if you are working on [ELY-1234](https://issues.redhat.com/browse/ELY-1234), your branch name could be `ELY-1234-feature-description`.
-
-### Q: Can I work on multiple issues simultaneously?
-A: Yes, you can work on multiple issues simultaneously by creating separate feature branches for each issue. This allows you to have multiple pull requests open for different issues.
-
-### Q: I find the existing codebase complex. How can I understand it better?
-A: Take your time to explore the code gradually. Start by focusing on specific modules or components. Don't hesitate to ask questions on [communication channels](https://wildfly-security.github.io/wildfly-elytron/community/) if something is unclear.
-
-### Q: What should I do if I encounter build or test failures?
-A: Run 'mvn clean test' to identify and address build or test failures. If needed, seek help on community channels, and include details about the issue you're facing.
-
-### Q: How do I run tests before submitting a pull request?
-A: To run tests, use the following Maven command: `mvn clean test`. Additionally, include new unit tests for your code changes.
-
-### Q: How should I handle feedback on my contributions?
-A: Embrace feedback as a learning opportunity. Review and address comments provided by maintainers or community members, and consider it a collaborative effort to improve your contributions.
-Remember, we value your contributions and are here to support you throughout the process. Don't hesitate to seek assistance and enjoy your journey as a contributor!
-
-### Q: What should I do if I encounter issues during the contribution process?
-A: If you encounter any issues or have questions, feel free to reach out to the community on our [communication channels](https://wildfly-security.github.io/wildfly-elytron/community/). We are here to help!
+Check out our [Frequently Asked Questions](https://fjuma.github.io/wildfly-elytron/blog/frequently-asked-questions-new-contributors/) for New Contributors.
 
 ## Community
 For more information on how to get involved with WildFly Elytron, check out our [community](https://wildfly-security.github.io/wildfly-elytron/community/) page.
