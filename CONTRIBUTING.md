@@ -148,4 +148,4 @@ Remember, we value your contributions and are here to support you throughout the
 A: If you encounter any issues or have questions, feel free to reach out to the community on our [communication channels](https://wildfly-security.github.io/wildfly-elytron/community/). We are here to help!
 
 ## Community
-For more information on how to get involved with WildFly Elytron, check out our [community](https://wildfly-security.github.io/wildfly-elytron/community/) page.6
+For more information on how to get involved with WildFly Elytron, check out our [community](https://wildfly-security.github.io/wildfly-elytron/community/) page.
