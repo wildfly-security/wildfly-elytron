@@ -24,10 +24,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
-import static org.wildfly.security.auth.client.EncryptedExpressionsXmlParser.PREFIX;
 import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 /**
@@ -93,22 +90,5 @@ public class XMLParserUtils {
 
     public static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
         return t -> second.apply(first.apply(t));
-    }
-
-    public static void configureExpressionResolver(EncryptedExpressionConfig encryptedExpressionConfig, EncryptedExpressionResolver resolver) {
-        String defaultResolver = encryptedExpressionConfig.defaultResolverName;
-
-        Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurations = new HashMap<>();
-        for (Map.Entry<String, EncryptedExpressionResolver.ResolverConfiguration > currentResolver : resolver.getResolverConfiguration().entrySet() ) {
-            String name = currentResolver.getValue().getResolverName();
-            String credentialStoreName = currentResolver.getValue().getCredentialStore();
-            String alias = currentResolver.getValue().getAlias();
-
-            resolverConfigurations.put(name, new EncryptedExpressionResolver.ResolverConfiguration(name, credentialStoreName, alias));
-        }
-
-        encryptedExpressionConfig.encryptedExpressionResolver.setPrefix(PREFIX)
-                .setDefaultResolver(defaultResolver)
-                .setResolverConfigurations(resolverConfigurations);
     }
 }

@@ -34,6 +34,6 @@ public class WildFlyClientResolverProvider implements ResolverProvider{
     @Override
     public String resolveExpression(String expression) {
         EncryptedExpressionContext context = EncryptedExpressionContext.captureCurrent();
-        return context.encryptedExpressionConfig.encryptedExpressionResolver.resolveExpression(expression, context.encryptedExpressionConfig);
+        return context.encryptedExpressionConfiguration.encryptedExpressionResolver.resolveExpression(expression, context.encryptedExpressionConfiguration);
     }
 }

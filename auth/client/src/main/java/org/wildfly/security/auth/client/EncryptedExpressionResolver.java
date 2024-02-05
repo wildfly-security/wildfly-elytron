@@ -41,21 +41,15 @@ import static org.wildfly.security.encryption.CipherUtil.encrypt;
  */
 
 public class EncryptedExpressionResolver {
-    private static final String CREDENTIAL_STORE_API_CAPABILITY = "org.wildfly.security.credential-store-api";
-    private volatile boolean initialised = false;
-    private final ThreadLocal<String> initialisingFor = new ThreadLocal<>();
-    private volatile ExpressionResolutionException firstFailure = null;
-
     private volatile String prefix;
     private volatile String completePrefix;
     private volatile String defaultResolver;
     private volatile Map<String, ResolverConfiguration> resolverConfigurations;
 
     public EncryptedExpressionResolver() {
-//        this.configurator = configurator;
     }
 
-    public String resolveExpression(String expression, EncryptedExpressionConfig config) {
+    public String resolveExpression(String expression, EncryptedExpressionConfiguration config) {
         checkNotNullParam("expression", expression);
         checkNotNullParam("encrypted expression configuration", config);
         return resolveExpressionInternal(expression, config);
@@ -65,7 +59,7 @@ public class EncryptedExpressionResolver {
         return resolverConfigurations;
     }
 
-    private String resolveExpressionInternal(String fullExpression, EncryptedExpressionConfig config) {
+    private String resolveExpressionInternal(String fullExpression, EncryptedExpressionConfiguration config) {
         assert config != null;
 
         if (fullExpression.length() > 3) {
@@ -107,11 +101,11 @@ public class EncryptedExpressionResolver {
         return null;
     }
 
-    public String createExpression(final String clearText, EncryptedExpressionConfig config) {
+    public String createExpression(final String clearText, EncryptedExpressionConfiguration config) {
         return createExpression(null, clearText, config);
     }
 
-    public String createExpression(final String resolver, final String clearText, EncryptedExpressionConfig config) {
+    public String createExpression(final String resolver, final String clearText, EncryptedExpressionConfiguration config) {
         String resolvedResolver = resolver != null ? resolver : defaultResolver;
         if (resolvedResolver == null) {
             throw xmlLog.noResolverSpecifiedAndNoDefault();
@@ -186,10 +180,6 @@ public class EncryptedExpressionResolver {
 
         public String getAlias() {
             return alias;
-        }
-
-        public String getResolverName() {
-            return resolverName;
         }
     }
 }

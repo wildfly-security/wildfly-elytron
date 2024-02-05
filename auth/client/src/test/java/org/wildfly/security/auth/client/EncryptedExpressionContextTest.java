@@ -30,7 +30,7 @@ import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.
 import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.getProvidersSupplier;
 
 /**
- * A test class to tests for functionalities within the {@link EncryptedExpressionConfig} and the
+ * A test class to tests for functionalities within the {@link EncryptedExpressionConfiguration} and the
  * {@link EncryptedExpressionContext} classes.
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
@@ -42,8 +42,8 @@ public class EncryptedExpressionContextTest {
     private static final String TEST_CRED_STORE_2_NAME = "testcredstore2";
     private static final String TEST_RESOLVER_1_NAME = "testresolver1";
     private static final String TEST_RESOLVER_2_NAME = "testresolver2";
-    private final EncryptedExpressionConfig config1
-            = EncryptedExpressionConfig.empty();
+    private final EncryptedExpressionConfiguration config1
+            = EncryptedExpressionConfiguration.empty();
 
     public static CredentialStore credentialStore1;
     public static CredentialStore credentialStore2;
@@ -70,14 +70,14 @@ public class EncryptedExpressionContextTest {
     @Test
     public void addCredentialStore() {
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(TEST_CRED_STORE_1_NAME, credentialStore1, config1);
-        Assert.assertNotNull(ctx.encryptedExpressionConfig.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
+        Assert.assertNotNull(ctx.encryptedExpressionConfiguration.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
     }
 
     @Test
     public void removeCredentialStore() {
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(TEST_CRED_STORE_1_NAME, credentialStore1, config1);
-        ctx = EncryptedExpressionContext.empty().withOut(TEST_CRED_STORE_1_NAME, ctx.encryptedExpressionConfig);
-        Assert.assertNull(ctx.encryptedExpressionConfig.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
+        ctx = EncryptedExpressionContext.empty().withOut(TEST_CRED_STORE_1_NAME, ctx.encryptedExpressionConfiguration);
+        Assert.assertNull(ctx.encryptedExpressionConfiguration.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
     }
 
     @Test
@@ -86,15 +86,15 @@ public class EncryptedExpressionContextTest {
         credentialStoreMap.put(TEST_CRED_STORE_1_NAME, credentialStore1);
         credentialStoreMap.put(TEST_CRED_STORE_2_NAME, credentialStore2);
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(credentialStoreMap, config1);
-        Assert.assertNotNull(ctx.encryptedExpressionConfig.credentialStoreMap);
-        Assert.assertNotNull(ctx.encryptedExpressionConfig.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
-        Assert.assertNotNull(ctx.encryptedExpressionConfig.credentialStoreMap.get(TEST_CRED_STORE_2_NAME));
+        Assert.assertNotNull(ctx.encryptedExpressionConfiguration.credentialStoreMap);
+        Assert.assertNotNull(ctx.encryptedExpressionConfiguration.credentialStoreMap.get(TEST_CRED_STORE_1_NAME));
+        Assert.assertNotNull(ctx.encryptedExpressionConfiguration.credentialStoreMap.get(TEST_CRED_STORE_2_NAME));
     }
 
     @Test
     public void setResolverAndTestEncryptionAndDecryption() {
         EncryptedExpressionContext ctx = EncryptedExpressionContext.empty().with(TEST_CRED_STORE_1_NAME, credentialStore1, config1);
-        EncryptedExpressionConfig config = ctx.encryptedExpressionConfig;
+        EncryptedExpressionConfiguration config = ctx.encryptedExpressionConfiguration;
         EncryptedExpressionResolver resolver = new EncryptedExpressionResolver();
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurationMap = new HashMap<>();
         resolverConfigurationMap.put(TEST_RESOLVER_1_NAME, new EncryptedExpressionResolver.ResolverConfiguration(TEST_RESOLVER_1_NAME, TEST_CRED_STORE_1_NAME, "secretkey1"));
@@ -104,12 +104,12 @@ public class EncryptedExpressionContextTest {
                 .setResolverConfigurations(resolverConfigurationMap)
                 .setDefaultResolver(TEST_RESOLVER_1_NAME);
         ctx = ctx.with(resolver, config);
-        Assert.assertEquals(resolver, ctx.encryptedExpressionConfig.encryptedExpressionResolver);
-        Assert.assertEquals(resolverConfigurationMap, ctx.encryptedExpressionConfig.encryptedExpressionResolver.getResolverConfiguration());
+        Assert.assertEquals(resolver, ctx.encryptedExpressionConfiguration.encryptedExpressionResolver);
+        Assert.assertEquals(resolverConfigurationMap, ctx.encryptedExpressionConfiguration.encryptedExpressionResolver.getResolverConfiguration());
 
         String clearText = "password";
-        String encryptedExpression = ctx.encryptedExpressionConfig.encryptedExpressionResolver.createExpression(TEST_RESOLVER_1_NAME, clearText, ctx.encryptedExpressionConfig);
-        String decryptedExpression = ctx.encryptedExpressionConfig.encryptedExpressionResolver.resolveExpression(encryptedExpression, ctx.encryptedExpressionConfig);
+        String encryptedExpression = ctx.encryptedExpressionConfiguration.encryptedExpressionResolver.createExpression(TEST_RESOLVER_1_NAME, clearText, ctx.encryptedExpressionConfiguration);
+        String decryptedExpression = ctx.encryptedExpressionConfiguration.encryptedExpressionResolver.resolveExpression(encryptedExpression, ctx.encryptedExpressionConfiguration);
         Assert.assertEquals(clearText, decryptedExpression);
     }
 }

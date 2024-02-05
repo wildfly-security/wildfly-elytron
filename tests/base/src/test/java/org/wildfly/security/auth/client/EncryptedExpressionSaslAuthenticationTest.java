@@ -148,7 +148,7 @@ public class EncryptedExpressionSaslAuthenticationTest {
 
         //Preparing the encrypted expression as a system property
         EncryptedExpressionContext encContext = EncryptedExpressionContext.getContextManager().get();
-        String encryptedExpression = encContext.encryptedExpressionConfig.encryptedExpressionResolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.encryptedExpressionConfig);
+        String encryptedExpression = encContext.encryptedExpressionConfiguration.encryptedExpressionResolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.encryptedExpressionConfiguration);
         System.setProperty("ENC_EXP_PROP", encryptedExpression);
 
         //Creating SASL client from XML configuration file
@@ -188,8 +188,8 @@ public class EncryptedExpressionSaslAuthenticationTest {
                 .setPrefix("ENC");
 
         //Preparing the encrypted expression config
-        EncryptedExpressionConfig encConfig =
-                EncryptedExpressionConfig.empty()
+        EncryptedExpressionConfiguration encConfig =
+                EncryptedExpressionConfiguration.empty()
                         .addCredentialStore("myCredentialStore", credentialStore)
                         .addEncryptedExpressionResolver(resolver);
 

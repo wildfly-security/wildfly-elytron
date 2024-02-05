@@ -44,7 +44,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
         CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultEncryptedExpressionContextProvider.DEFAULT);
     }
 
-    EncryptedExpressionConfig encryptedExpressionConfig = new EncryptedExpressionConfig();
+    EncryptedExpressionConfiguration encryptedExpressionConfiguration = new EncryptedExpressionConfiguration();
 
     static final EncryptedExpressionContext EMPTY = new EncryptedExpressionContext();
 
@@ -52,8 +52,8 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
         this(null);
     }
 
-    EncryptedExpressionContext(EncryptedExpressionConfig encryptionConfig) {
-        this.encryptedExpressionConfig = encryptionConfig;
+    EncryptedExpressionContext(EncryptedExpressionConfiguration encryptionConfig) {
+        this.encryptedExpressionConfiguration = encryptionConfig;
     }
 
     /**
@@ -84,7 +84,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      */
     public EncryptedExpressionContext with(EncryptedExpressionContext other, Boolean replaceDefaultResolver) {
         if (other == null) return this;
-        return new EncryptedExpressionContext().with(other.encryptedExpressionConfig, replaceDefaultResolver);
+        return new EncryptedExpressionContext().with(other.encryptedExpressionConfiguration, replaceDefaultResolver);
     }
 
     /**
@@ -94,14 +94,14 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param config the other encryptedExpression context
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(EncryptedExpressionConfig config, Boolean replaceDefaultResolver) {
+    public EncryptedExpressionContext with(EncryptedExpressionConfiguration config, Boolean replaceDefaultResolver) {
         if (config == null) return this;
         for (Map.Entry<String, CredentialStore> entry : config.getCredentialStoreMap().entrySet()) {
-            this.encryptedExpressionConfig.addCredentialStore(entry.getKey(), entry.getValue());
+            this.encryptedExpressionConfiguration.addCredentialStore(entry.getKey(), entry.getValue());
         }
-        this.encryptedExpressionConfig.addEncryptedExpressionResolver(config.encryptedExpressionResolver);
+        this.encryptedExpressionConfiguration.addEncryptedExpressionResolver(config.encryptedExpressionResolver);
         if (replaceDefaultResolver) {
-            this.encryptedExpressionConfig.setDefaultResolverName(config.defaultResolverName);
+            this.encryptedExpressionConfiguration.setDefaultResolverName(config.defaultResolverName);
         }
         return this;
     }
@@ -115,7 +115,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(Object object, EncryptedExpressionConfig configuration) {
+    public EncryptedExpressionContext with(Object object, EncryptedExpressionConfiguration configuration) {
         return with(null, object, configuration);
     }
 
@@ -128,7 +128,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(String name, Object object, EncryptedExpressionConfig configuration) {
+    public EncryptedExpressionContext with(String name, Object object, EncryptedExpressionConfiguration configuration) {
         if (configuration == null || object == null) return this;
         if (object instanceof CredentialStore) {
             configuration = configuration.addCredentialStore(name, (CredentialStore) object);
@@ -149,7 +149,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext withOut(String name, EncryptedExpressionConfig configuration) {
+    public EncryptedExpressionContext withOut(String name, EncryptedExpressionConfiguration configuration) {
         if (configuration == null || name == null) return this;
         if (configuration.getCredentialStoreMap() == null ||
                 configuration.getCredentialStoreMap().isEmpty() ||

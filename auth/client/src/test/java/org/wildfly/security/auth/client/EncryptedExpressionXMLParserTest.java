@@ -49,7 +49,7 @@ public class EncryptedExpressionXMLParserTest {
 
     @Test
     public void testEncryptedExpressionClient() throws Exception {
-        URL config = getClass().getResource("test-encrypted-expression-v1_0.xml");
+        URL config = getClass().getResource("test-encrypted-expressions-v1_0.xml");
         System.setProperty("wildfly.config.url", config.getPath());
 
         SecurityFactory<EncryptedExpressionContext> clientConfiguration = EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration(config.toURI());
@@ -63,13 +63,15 @@ public class EncryptedExpressionXMLParserTest {
         System.setProperty("wildfly.config.url", config.getPath());
 
         SecurityFactory<EncryptedExpressionContext> clientConfiguration = EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration(config.toURI());
-        EncryptedExpressionConfig encExpConfig = clientConfiguration.create().encryptedExpressionConfig;
+        EncryptedExpressionConfiguration encExpConfig = clientConfiguration.create().encryptedExpressionConfiguration;
         String encryptedExpression = encExpConfig.encryptedExpressionResolver.createExpression("password", encExpConfig);
 
         //expression is encrypted during runtime, so it cannot be statically defined in client config file
         System.setProperty("ENC_EXP_PROP", encryptedExpression);
 
         SecurityFactory<AuthenticationContext> authClientConfiguration = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        AuthenticationContext authContext = authClientConfiguration.create();
+
         Assert.assertNotNull(clientConfiguration);
         Assert.assertNotNull(authClientConfiguration);
 

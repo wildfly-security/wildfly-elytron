@@ -209,7 +209,7 @@ public class EncryptedExpressionsXmlParser {
                 if (netAuthenticator) {
                     Authenticator.setDefault(new ElytronAuthenticator());
                 }
-                EncryptedExpressionConfig encryptedExpressionConfig = new EncryptedExpressionConfig();
+                EncryptedExpressionConfiguration encryptedExpressionConfig = new EncryptedExpressionConfiguration();
 
                 // validate key and credential stores...
                 for (Map.Entry<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> supplier : credentialStoresMap.entrySet()) {

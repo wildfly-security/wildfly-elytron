@@ -25,7 +25,7 @@ package org.wildfly.security.auth.client;
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
-public class InvalidEncryptedExpressionConfigurationException extends Throwable {
+public class InvalidEncryptedExpressionConfigurationException extends IllegalArgumentException {
     private static final long serialVersionUID = -6795326356890031539L;
 
 

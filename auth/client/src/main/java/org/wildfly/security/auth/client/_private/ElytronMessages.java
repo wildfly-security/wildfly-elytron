@@ -215,31 +215,28 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 14008, value = "WildFlyElytronClientDefaultSSLContextProvider could not obtain client default SSLContext")
     NoSuchAlgorithmException couldNotObtainClientDefaultSSLContext();
 
-    @Message(id = 14009, value = "The resolver does not exist.")
-    IllegalArgumentException resolverNotFound();
-
-    @Message(id = 14010, value = "The expression '%s' does not specify a resolver and no default is defined.")
+    @Message(id = 14009, value = "The expression '%s' does not specify a resolver and no default is defined.")
     ExpressionResolutionException expressionResolutionWithoutResolver(String expression);
 
-    @Message(id = 14011, value = "The expression '%s' specifies a resolver configuration which does not exist.")
+    @Message(id = 14010, value = "The expression '%s' specifies a resolver configuration which does not exist.")
     ExpressionResolutionException invalidResolver(String expression);
 
-    @Message(id = 14012, value = "Unable to load credential from credential store.")
+    @Message(id = 14011, value = "Unable to load credential from credential store.")
     ExpressionResolutionException unableToLoadCredential(@Cause Throwable cause);
 
-    @Message(id = 14013, value = "Unable to decrypt expression '%s'.")
+    @Message(id = 14012, value = "Unable to decrypt expression '%s'.")
     ExpressionResolutionException unableToDecryptExpression(String expression, @Cause Throwable cause);
 
-    @Message(id = 14014, value = "The name of the resolver to use was not specified and no default-resolver has been defined.")
+    @Message(id = 14013, value = "The name of the resolver to use was not specified and no default-resolver has been defined.")
     ExpressionResolutionException noResolverSpecifiedAndNoDefault();
 
-    @Message(id = 14015, value = "No expression resolver has been defined with the name '%s'.")
+    @Message(id = 14014, value = "No expression resolver has been defined with the name '%s'.")
     ExpressionResolutionException noResolverWithSpecifiedName(String name);
 
-    @Message(id = 14016, value = "Credential alias '%s' of credential type '%s' does not exist in the store")
+    @Message(id = 14015, value = "Credential alias '%s' of credential type '%s' does not exist in the store")
     ExpressionResolutionException credentialDoesNotExist(String alias, String credentialType);
 
-    @Message(id = 14017, value = "Unable to encrypt the supplied clear text.")
+    @Message(id = 14016, value = "Unable to encrypt the supplied clear text.")
     ExpressionResolutionException unableToEncryptClearText(@Cause Throwable cause);
 
 }

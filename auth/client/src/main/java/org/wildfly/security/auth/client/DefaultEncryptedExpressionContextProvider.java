@@ -38,11 +38,7 @@ class DefaultEncryptedExpressionContextProvider {
             try {
                 return EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration().create();
             } catch (Throwable t) {
-                try {
-                    throw new InvalidEncryptedExpressionConfigurationException(t);
-                } catch (InvalidEncryptedExpressionConfigurationException e) {
-                    throw new RuntimeException(e);
-                }
+                throw new InvalidEncryptedExpressionConfigurationException(t);
             }
         });
     }

@@ -19,21 +19,14 @@
 package org.wildfly.security.auth.client;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.provider.util.ProviderFactory;
-import org.wildfly.security.x500.TrustedAuthority;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import java.io.IOException;
 import java.security.Provider;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -43,7 +36,7 @@ import java.util.function.Supplier;
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 
-public final class EncryptedExpressionConfig {
+public final class EncryptedExpressionConfiguration {
 
     private static final int SET_CREDENTIAL_STORE = 0;
     private static final int ADD_CREDENTIAL_STORE = 1;
@@ -51,14 +44,14 @@ public final class EncryptedExpressionConfig {
     private static final int SET_RESOLVER = 4;
     private static final int SET_DEFAULT_RESOLVER = 5;
     private static final int SET_USER_CALLBACK_HANDLER = 6;
-    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderFactory.getDefaultProviderSupplier(EncryptedExpressionConfig.class.getClassLoader());
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderFactory.getDefaultProviderSupplier(EncryptedExpressionConfiguration.class.getClassLoader());
 
-    public EncryptedExpressionConfig(CallbackHandler userCallbackHandler) {
+    public EncryptedExpressionConfiguration(CallbackHandler userCallbackHandler) {
         this.userCallbackHandler = userCallbackHandler;
     }
 
-    public static EncryptedExpressionConfig empty() {
-        return new EncryptedExpressionConfig();
+    public static EncryptedExpressionConfiguration empty() {
+        return new EncryptedExpressionConfiguration();
     }
     Map<String, CredentialStore> credentialStoreMap;
     Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap;
@@ -66,7 +59,7 @@ public final class EncryptedExpressionConfig {
     EncryptedExpressionResolver encryptedExpressionResolver;
     CallbackHandler userCallbackHandler;
 
-    EncryptedExpressionConfig() {
+    EncryptedExpressionConfiguration() {
         this.credentialStoreMap = new HashMap<>();
         this.resolverMap = new HashMap<>();
         this.defaultResolverName = null;
@@ -74,7 +67,7 @@ public final class EncryptedExpressionConfig {
         this.userCallbackHandler = null;
     }
 
-    private EncryptedExpressionConfig(final EncryptedExpressionConfig original, final int what, final Object value) {
+    private EncryptedExpressionConfiguration(final EncryptedExpressionConfiguration original, final int what, final Object value) {
 
          if (what == SET_CREDENTIAL_STORE) {
             if (value == null || ((Map<String, CredentialStore>) value).isEmpty()) {return;}
@@ -112,7 +105,7 @@ public final class EncryptedExpressionConfig {
          }
     }
 
-    private EncryptedExpressionConfig(final EncryptedExpressionConfig original, final EncryptedExpressionConfig other) {
+    private EncryptedExpressionConfiguration(final EncryptedExpressionConfiguration original, final EncryptedExpressionConfiguration other) {
         this.credentialStoreMap = other.credentialStoreMap;
         this.resolverMap = other.resolverMap;
         this.defaultResolverName = other.defaultResolverName;
@@ -131,12 +124,12 @@ public final class EncryptedExpressionConfig {
         return credentialStoreMap;
     }
 
-    public EncryptedExpressionConfig useCredential(Credential credential) {
+    public EncryptedExpressionConfiguration useCredential(Credential credential) {
         if (credential == null) return this;
         if (getCredentialStoreMap().isEmpty()) {
-            return new EncryptedExpressionConfig(this, SET_CREDENTIAL_STORE, IdentityCredentials.NONE.withCredential(credential));
+            return new EncryptedExpressionConfiguration(this, SET_CREDENTIAL_STORE, IdentityCredentials.NONE.withCredential(credential));
         } else {
-            return new EncryptedExpressionConfig(this, ADD_CREDENTIAL_STORE, IdentityCredentials.NONE.withCredential(credential));
+            return new EncryptedExpressionConfiguration(this, ADD_CREDENTIAL_STORE, IdentityCredentials.NONE.withCredential(credential));
         }
     }
 
@@ -164,12 +157,12 @@ public final class EncryptedExpressionConfig {
      * @param credentialStore the credential store to add (must not be {@code null})
      * @return the new configuration
      */
-    public EncryptedExpressionConfig addCredentialStore(String credentialStoreName, CredentialStore credentialStore) {
+    public EncryptedExpressionConfiguration addCredentialStore(String credentialStoreName, CredentialStore credentialStore) {
         Assert.checkNotNullParam("name", credentialStoreName);
         Assert.checkNotNullParam("credentialStore", credentialStore);
         Map<String, CredentialStore> credentialStorePair = new HashMap<>();
         credentialStorePair.put(credentialStoreName, credentialStore);
-        EncryptedExpressionConfig config = new EncryptedExpressionConfig(this, ADD_CREDENTIAL_STORE, credentialStorePair);
+        EncryptedExpressionConfiguration config = new EncryptedExpressionConfiguration(this, ADD_CREDENTIAL_STORE, credentialStorePair);
         return config;
     }
 
@@ -180,9 +173,9 @@ public final class EncryptedExpressionConfig {
      * @param credentialStoreMap the map of the credential store to use in place of the current ones (must not be {@code null})
      * @return the new configuration
      */
-    public EncryptedExpressionConfig useCredentialStoreMap(Map<String, CredentialStore> credentialStoreMap) {
+    public EncryptedExpressionConfiguration useCredentialStoreMap(Map<String, CredentialStore> credentialStoreMap) {
         if (credentialStoreMap == null || credentialStoreMap.isEmpty()) { return this; }
-        return new EncryptedExpressionConfig(this, SET_CREDENTIAL_STORE, credentialStoreMap);
+        return new EncryptedExpressionConfiguration(this, SET_CREDENTIAL_STORE, credentialStoreMap);
     }
 
     /**
@@ -192,9 +185,9 @@ public final class EncryptedExpressionConfig {
      * @param credentialStoreName the name of the credential store to add (must not be {@code null})
      * @return the new configuration
      */
-    public EncryptedExpressionConfig removeCredentialStore(String credentialStoreName) {
+    public EncryptedExpressionConfiguration removeCredentialStore(String credentialStoreName) {
         Assert.checkNotNullParam("name", credentialStoreName);
-        EncryptedExpressionConfig config = new EncryptedExpressionConfig(this, REMOVE_CREDENTIAL_STORE, credentialStoreName);
+        EncryptedExpressionConfiguration config = new EncryptedExpressionConfiguration(this, REMOVE_CREDENTIAL_STORE, credentialStoreName);
         return config;
     }
 
@@ -205,41 +198,11 @@ public final class EncryptedExpressionConfig {
      * @param resolver the Encrypted Expression Resolver to add (must not be {@code null})
      * @return the new configuration
      */
-    public EncryptedExpressionConfig addEncryptedExpressionResolver(EncryptedExpressionResolver resolver) {
+    public EncryptedExpressionConfiguration addEncryptedExpressionResolver(EncryptedExpressionResolver resolver) {
         Assert.checkNotNullParam("encrypted expression resolver", resolver);
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurationMap = new HashMap<>();
         resolverConfigurationMap.putAll(resolver.getResolverConfiguration());
-        EncryptedExpressionConfig config = new EncryptedExpressionConfig(this, SET_RESOLVER, resolver);
+        EncryptedExpressionConfiguration config = new EncryptedExpressionConfiguration(this, SET_RESOLVER, resolver);
         return config;
-    }
-
-    CallbackHandler getCallbackHandler() {
-        return userCallbackHandler;
-    }
-
-    CallbackHandler createCallbackHandler() {
-        return new EncryptedExpressionConfig.ClientCallbackHandler(this);
-    }
-
-    static class ClientCallbackHandler implements CallbackHandler {
-        private final EncryptedExpressionConfig config;
-        private final CallbackHandler userCallbackHandler;
-        private List<TrustedAuthority> trustedAuthorities;
-
-        ClientCallbackHandler(final EncryptedExpressionConfig config) {
-            this.config = config;
-            this.userCallbackHandler = config.getCallbackHandler();
-        }
-
-        public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            final EncryptedExpressionConfig config = this.config;
-            final ArrayList<Callback> userCallabacks = new ArrayList<Callback>(callbacks.length);
-
-            for (final Callback callback : callbacks) {
-                if (callback instanceof CredentialCallback) {
-                    //
-                }
-            }
-        }
     }
 }
