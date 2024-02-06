@@ -17,7 +17,7 @@
       ~ limitations under the License.
 -->
 <configuration>
-    <encrypted-expression xmlns="urn:encrypted:expression:1.0">
+    <encryption-client xmlns="urn:encryption:client:1.0">
         <credential-stores>
             <credential-store name="my-credential-store" type="PropertiesCredentialStore">
                 <attributes>
@@ -29,7 +29,7 @@
             <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
             <expression-resolver name="my-resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
         </expression-resolvers>
-    </encrypted-expression>
+    </encryption-client>
     <authentication-client xmlns="urn:elytron:client:1.7">
         <authentication-rules>
             <rule use-configuration="default-config"/>
@@ -38,7 +38,7 @@
             <configuration name="default-config">
                 <set-user-name name="quickstartUser"/>
                 <credentials>
-                    <clear-password password="${enc.exp.prop}"/>
+                    <clear-password password="${ENC::my-resolver:InV4LidT0k3NTh4tC4nn0tb3d3crYpt3D=}"/>
                 </credentials>
                 <sasl-mechanism-selector selector="SCRAM-SHA-512"/>
                 <providers>

@@ -34,26 +34,26 @@ import static java.security.AccessController.doPrivileged;
  *
  * @author <a href="mailto:p.paul@redhat.com">Prarthona Paul</a>
  */
-public final class EncryptedExpressionContext implements Contextual<EncryptedExpressionContext>{
-    private static final ContextManager<EncryptedExpressionContext> CONTEXT_MANAGER = new ContextManager<EncryptedExpressionContext>(EncryptedExpressionContext.class);
+public final class EncryptionClientContext implements Contextual<EncryptionClientContext>{
+    private static final ContextManager<EncryptionClientContext> CONTEXT_MANAGER = new ContextManager<EncryptionClientContext>(EncryptionClientContext.class);
 
-    private static final Supplier<EncryptedExpressionContext> SUPPLIER = doPrivileged((PrivilegedAction<Supplier<EncryptedExpressionContext>>) CONTEXT_MANAGER::getPrivilegedSupplier);
+    private static final Supplier<EncryptionClientContext> SUPPLIER = doPrivileged((PrivilegedAction<Supplier<EncryptionClientContext>>) CONTEXT_MANAGER::getPrivilegedSupplier);
 
     static {
         Version.getVersion();
-        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultEncryptedExpressionContextProvider.DEFAULT);
+        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultEncryptionClientContextProvider.DEFAULT);
     }
 
-    EncryptedExpressionConfiguration encryptedExpressionConfiguration = new EncryptedExpressionConfiguration();
+    EncryptionClientConfiguration encryptionClientConfiguration = new EncryptionClientConfiguration();
 
-    static final EncryptedExpressionContext EMPTY = new EncryptedExpressionContext();
+    static final EncryptionClientContext EMPTY = new EncryptionClientContext();
 
-    EncryptedExpressionContext() {
+    EncryptionClientContext() {
         this(null);
     }
 
-    EncryptedExpressionContext(EncryptedExpressionConfiguration encryptionConfig) {
-        this.encryptedExpressionConfiguration = encryptionConfig;
+    EncryptionClientContext(EncryptionClientConfiguration encryptionConfig) {
+        this.encryptionClientConfiguration = encryptionConfig;
     }
 
     /**
@@ -61,16 +61,16 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      *
      * @return the new encrypted expression context.
      */
-    public static EncryptedExpressionContext empty() {
+    public static EncryptionClientContext empty() {
         return EMPTY;
     }
 
     /**
-     * Get the current thread's captured authentication context.
+     * Get the current thread's captured encryption client context.
      *
-     * @return the current thread's captured authentication context
+     * @return the current thread's captured encryption client context
      */
-    public static EncryptedExpressionContext captureCurrent() {
+    public static EncryptionClientContext captureCurrent() {
         return SUPPLIER.get();
     }
 
@@ -82,9 +82,9 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param other the other encryptedExpression context
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(EncryptedExpressionContext other, Boolean replaceDefaultResolver) {
+    public EncryptionClientContext with(EncryptionClientContext other, Boolean replaceDefaultResolver) {
         if (other == null) return this;
-        return new EncryptedExpressionContext().with(other.encryptedExpressionConfiguration, replaceDefaultResolver);
+        return new EncryptionClientContext().with(other.encryptionClientConfiguration, replaceDefaultResolver);
     }
 
     /**
@@ -94,14 +94,14 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param config the other encryptedExpression context
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(EncryptedExpressionConfiguration config, Boolean replaceDefaultResolver) {
+    public EncryptionClientContext with(EncryptionClientConfiguration config, Boolean replaceDefaultResolver) {
         if (config == null) return this;
         for (Map.Entry<String, CredentialStore> entry : config.getCredentialStoreMap().entrySet()) {
-            this.encryptedExpressionConfiguration.addCredentialStore(entry.getKey(), entry.getValue());
+            this.encryptionClientConfiguration.addCredentialStore(entry.getKey(), entry.getValue());
         }
-        this.encryptedExpressionConfiguration.addEncryptedExpressionResolver(config.encryptedExpressionResolver);
+        this.encryptionClientConfiguration.addEncryptedExpressionResolver(config.encryptedExpressionResolver);
         if (replaceDefaultResolver) {
-            this.encryptedExpressionConfiguration.setDefaultResolverName(config.defaultResolverName);
+            this.encryptionClientConfiguration.setDefaultResolverName(config.defaultResolverName);
         }
         return this;
     }
@@ -115,7 +115,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(Object object, EncryptedExpressionConfiguration configuration) {
+    public EncryptionClientContext with(Object object, EncryptionClientConfiguration configuration) {
         return with(null, object, configuration);
     }
 
@@ -128,15 +128,15 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext with(String name, Object object, EncryptedExpressionConfiguration configuration) {
+    public EncryptionClientContext with(String name, Object object, EncryptionClientConfiguration configuration) {
         if (configuration == null || object == null) return this;
         if (object instanceof CredentialStore) {
             configuration = configuration.addCredentialStore(name, (CredentialStore) object);
-            return new EncryptedExpressionContext(configuration);
+            return new EncryptionClientContext(configuration);
         } else if (object instanceof Map) {
-            return new EncryptedExpressionContext(configuration.useCredentialStoreMap((Map<String, CredentialStore>) object));
+            return new EncryptionClientContext(configuration.useCredentialStoreMap((Map<String, CredentialStore>) object));
         } else if (object instanceof EncryptedExpressionResolver) {
-            return new EncryptedExpressionContext(configuration.addEncryptedExpressionResolver((EncryptedExpressionResolver) object));
+            return new EncryptionClientContext(configuration.addEncryptedExpressionResolver((EncryptedExpressionResolver) object));
         }
         return this;
     }
@@ -149,7 +149,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
      * @param configuration the configuration to select
      * @return the combined encryptedExpression context
      */
-    public EncryptedExpressionContext withOut(String name, EncryptedExpressionConfiguration configuration) {
+    public EncryptionClientContext withOut(String name, EncryptionClientConfiguration configuration) {
         if (configuration == null || name == null) return this;
         if (configuration.getCredentialStoreMap() == null ||
                 configuration.getCredentialStoreMap().isEmpty() ||
@@ -157,7 +157,7 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
             return this;
         }
         configuration = configuration.removeCredentialStore(name);
-        return new EncryptedExpressionContext(configuration);
+        return new EncryptionClientContext(configuration);
     }
 
     /**
@@ -171,11 +171,11 @@ public final class EncryptedExpressionContext implements Contextual<EncryptedExp
         return runAction(action);
     }
 
-    public ContextManager<EncryptedExpressionContext> getInstanceContextManager() {
+    public ContextManager<EncryptionClientContext> getInstanceContextManager() {
         return getContextManager();
     }
 
-    public static ContextManager<EncryptedExpressionContext> getContextManager() {
+    public static ContextManager<EncryptionClientContext> getContextManager() {
         return CONTEXT_MANAGER;
     }
 

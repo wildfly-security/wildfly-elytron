@@ -49,7 +49,7 @@ public class EncryptedExpressionResolver {
     public EncryptedExpressionResolver() {
     }
 
-    public String resolveExpression(String expression, EncryptedExpressionConfiguration config) {
+    public String resolveExpression(String expression, EncryptionClientConfiguration config) {
         checkNotNullParam("expression", expression);
         checkNotNullParam("encrypted expression configuration", config);
         return resolveExpressionInternal(expression, config);
@@ -59,7 +59,7 @@ public class EncryptedExpressionResolver {
         return resolverConfigurations;
     }
 
-    private String resolveExpressionInternal(String fullExpression, EncryptedExpressionConfiguration config) {
+    private String resolveExpressionInternal(String fullExpression, EncryptionClientConfiguration config) {
         assert config != null;
 
         if (fullExpression.length() > 3) {
@@ -101,11 +101,11 @@ public class EncryptedExpressionResolver {
         return null;
     }
 
-    public String createExpression(final String clearText, EncryptedExpressionConfiguration config) {
+    public String createExpression(final String clearText, EncryptionClientConfiguration config) {
         return createExpression(null, clearText, config);
     }
 
-    public String createExpression(final String resolver, final String clearText, EncryptedExpressionConfiguration config) {
+    public String createExpression(final String resolver, final String clearText, EncryptionClientConfiguration config) {
         String resolvedResolver = resolver != null ? resolver : defaultResolver;
         if (resolvedResolver == null) {
             throw xmlLog.noResolverSpecifiedAndNoDefault();

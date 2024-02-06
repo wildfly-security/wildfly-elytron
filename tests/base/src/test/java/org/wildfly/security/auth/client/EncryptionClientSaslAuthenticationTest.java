@@ -64,7 +64,7 @@ import static org.wildfly.security.auth.client.MaskedPasswordSaslAuthenticationT
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 
-public class EncryptedExpressionSaslAuthenticationTest {
+public class EncryptionClientSaslAuthenticationTest {
     private static final File CREDSTORE_DIR = new File("./target/credstore");
     private static final String CONFIG_FILE = "wildfly-encrypted-expression-ssl-config-v1_7.xml";
     private static final String CRED_STORE_FILE = "mycredstore.cs";
@@ -105,7 +105,7 @@ public class EncryptedExpressionSaslAuthenticationTest {
     static void createCredentialStore(CredentialStore credentialStore) throws GeneralSecurityException {
         Map<String, String> credentialStoreAttributes = new HashMap<>();
         credentialStoreAttributes.put("create", Boolean.TRUE.toString());
-        credentialStoreAttributes.put("location", EncryptedExpressionSaslAuthenticationTest.CREDSTORE_DIR + EncryptedExpressionSaslAuthenticationTest.CRED_STORE_FILE);
+        credentialStoreAttributes.put("location", CREDSTORE_DIR + CRED_STORE_FILE);
         credentialStoreAttributes.put("modifiable", Boolean.TRUE.toString());
         credentialStore.initialize(credentialStoreAttributes);
 

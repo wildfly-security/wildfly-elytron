@@ -46,37 +46,48 @@ public class EncryptedExpressionXMLParserTest {
 
     private static final File CREDSTORE_DIR = new File("./target/credstore");
     private static final String CLIENT_CREDSTORE_FILENAME = "/mycredstore.cs";
+    private static final String PASSWORD = "password";
 
     @Test
     public void testEncryptedExpressionClient() throws Exception {
-        URL config = getClass().getResource("test-encrypted-expressions-v1_0.xml");
+        URL config = getClass().getResource("test-encryption-client-v1_0.xml");
         System.setProperty("wildfly.config.url", config.getPath());
 
-        SecurityFactory<EncryptedExpressionContext> clientConfiguration = EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration(config.toURI());
+        SecurityFactory<EncryptionClientContext> clientConfiguration = EncryptionClientXmlParser.parseEncryptionClientConfiguration(config.toURI());
         Assert.assertNotNull(clientConfiguration);
         System.clearProperty("wildfly.config.url");
     }
 
     @Test
     public void testEncryptedExpressionWithAuthClient() throws Exception {
-        URL config = getClass().getResource("test-encrypted-expression-auth-client-v1_0.xml");
+        URL config = getClass().getResource("test-encryption-auth-client-v1_0.xml");
         System.setProperty("wildfly.config.url", config.getPath());
 
-        SecurityFactory<EncryptedExpressionContext> clientConfiguration = EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration(config.toURI());
-        EncryptedExpressionConfiguration encExpConfig = clientConfiguration.create().encryptedExpressionConfiguration;
-        String encryptedExpression = encExpConfig.encryptedExpressionResolver.createExpression("password", encExpConfig);
+        SecurityFactory<EncryptionClientContext> clientConfiguration = EncryptionClientXmlParser.parseEncryptionClientConfiguration(config.toURI());
+        EncryptionClientConfiguration encExpConfig = clientConfiguration.create().encryptionClientConfiguration;
+        String encryptedExpression = encExpConfig.encryptedExpressionResolver.createExpression(PASSWORD, encExpConfig);
+        Assert.assertEquals(PASSWORD, encExpConfig.encryptedExpressionResolver.resolveExpression(encryptedExpression, encExpConfig));
 
         //expression is encrypted during runtime, so it cannot be statically defined in client config file
         System.setProperty("ENC_EXP_PROP", encryptedExpression);
-
         SecurityFactory<AuthenticationContext> authClientConfiguration = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
-        AuthenticationContext authContext = authClientConfiguration.create();
 
         Assert.assertNotNull(clientConfiguration);
         Assert.assertNotNull(authClientConfiguration);
 
         System.clearProperty("wildfly.config.url");
         System.clearProperty("ENC_EXP_PROP");
+    }
+
+    @Test
+    public void testUnableToDecryptWithAuthClient() throws Exception {
+        URL config = getClass().getResource("test-invalid-encryption-auth-client-v1_7.xml");
+        System.setProperty("wildfly.config.url", config.getPath());
+        try {
+            SecurityFactory<AuthenticationContext> authClientConfiguration = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        } catch (ExpressionResolutionException e) {
+            Assert.assertTrue(e.getMessage().contains("Unable to decrypt expression"));
+        }
     }
 
     @BeforeClass

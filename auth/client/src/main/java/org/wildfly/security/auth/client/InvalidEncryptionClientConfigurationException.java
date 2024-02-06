@@ -19,13 +19,13 @@
 package org.wildfly.security.auth.client;
 
 /**
- * An exception thrown to indicate that the client encrypted expression
+ * An exception thrown to indicate that the encryption client
  * configuration is invalid.  Examine the cause for more information
  * about the problem.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
-public class InvalidEncryptedExpressionConfigurationException extends IllegalArgumentException {
+public class InvalidEncryptionClientConfigurationException extends IllegalArgumentException {
     private static final long serialVersionUID = -6795326356890031539L;
 
 
@@ -33,7 +33,7 @@ public class InvalidEncryptedExpressionConfigurationException extends IllegalArg
      * Constructs a new {@code InvalidEncryptedExpressionConfigurationException} instance.  The message is left blank ({@code
      * null}), and no cause is specified.
      */
-    public InvalidEncryptedExpressionConfigurationException() {
+    public InvalidEncryptionClientConfigurationException() {
     }
 
 
@@ -44,7 +44,7 @@ public class InvalidEncryptedExpressionConfigurationException extends IllegalArg
      *
      * @param cause the cause
      */
-    public InvalidEncryptedExpressionConfigurationException(final Throwable cause) {
+    public InvalidEncryptionClientConfigurationException(final Throwable cause) {
         super(cause);
     }
 }

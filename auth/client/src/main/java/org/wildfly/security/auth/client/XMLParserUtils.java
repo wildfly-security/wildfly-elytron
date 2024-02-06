@@ -28,44 +28,44 @@ import java.net.URI;
 import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 /**
- * An interface to get and check information about attributes in XML file.
+ * A utility class to get and check information about attributes in XML file.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 
 public class XMLParserUtils {
 
-    public static boolean isSet(int var, int bit) {
+    protected static boolean isSet(int var, int bit) {
         return (var & 1 << bit) != 0;
     }
 
-    public static int setBit(int var, int bit) {
+    protected static int setBit(int var, int bit) {
         return var | 1 << bit;
     }
 
-    public static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
+    protected static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
         final String attributeNamespace = reader.getAttributeNamespace(idx);
         if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
             throw reader.unexpectedAttribute(idx);
         }
     }
 
-    public static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    protected static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
         }
     }
 
-    public static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+    protected static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
         return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValueResolved(0));
     }
 
-    public static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+    protected static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
         return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValueResolved(0));
     }
 
-    public static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
+    protected static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount < 1) {
             throw reader.missingRequiredAttribute("", attributeName);
@@ -80,15 +80,15 @@ public class XMLParserUtils {
         return attributeFunction.get();
     }
 
-    public static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
+    protected static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
         return reader.missingRequiredAttribute(null, name);
     }
 
-    public static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
+    protected static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
         return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
-    public static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
+    protected static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
         return t -> second.apply(first.apply(t));
     }
 }

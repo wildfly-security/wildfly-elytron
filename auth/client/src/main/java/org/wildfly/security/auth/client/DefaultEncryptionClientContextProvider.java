@@ -24,21 +24,21 @@ import java.security.PrivilegedAction;
 
 /**
  * A lazily-initialized holder for the default encrypted expression context.
- * If an error occurs setting up the default identity
+ * If an error occurs setting up the default encryption client
  * context, the empty context is used.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
-class DefaultEncryptedExpressionContextProvider {
+class DefaultEncryptionClientContextProvider {
 
-    static final EncryptedExpressionContext DEFAULT;
+    static final EncryptionClientContext DEFAULT;
 
     static {
-        DEFAULT = doPrivileged((PrivilegedAction<EncryptedExpressionContext>) () -> {
+        DEFAULT = doPrivileged((PrivilegedAction<EncryptionClientContext>) () -> {
             try {
-                return EncryptedExpressionsXmlParser.parseEncryptedExpressionClientConfiguration().create();
+                return EncryptionClientXmlParser.parseEncryptionClientConfiguration().create();
             } catch (Throwable t) {
-                throw new InvalidEncryptedExpressionConfigurationException(t);
+                throw new InvalidEncryptionClientConfigurationException(t);
             }
         });
     }

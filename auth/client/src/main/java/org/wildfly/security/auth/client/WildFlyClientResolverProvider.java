@@ -33,7 +33,11 @@ public class WildFlyClientResolverProvider implements ResolverProvider{
 
     @Override
     public String resolveExpression(String expression) {
-        EncryptedExpressionContext context = EncryptedExpressionContext.captureCurrent();
-        return context.encryptedExpressionConfiguration.encryptedExpressionResolver.resolveExpression(expression, context.encryptedExpressionConfiguration);
+        EncryptionClientContext context = EncryptionClientContext.captureCurrent();
+        if (context != null) {
+            return context.encryptionClientConfiguration.encryptedExpressionResolver.resolveExpression(expression, context.encryptionClientConfiguration);
+        } else {
+            throw new ExpressionResolutionException("Encryption client configuration could not be found");
+        }
     }
 }

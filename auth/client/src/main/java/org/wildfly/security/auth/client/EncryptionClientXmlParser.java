@@ -65,14 +65,14 @@ import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDER
 import org.wildfly.security.credential.PasswordCredential;
 
 /**
- * A parser for the Encrypted Expression XML schema.
+ * A parser for the Encryption Client XML schema.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 
-public class EncryptedExpressionsXmlParser {
+public class EncryptionClientXmlParser {
 
-    private static final Supplier<Provider[]> PROVIDER_SUPPLIER = ProviderFactory.getElytronProviderSupplier(EncryptedExpressionsXmlParser.class.getClassLoader());
+    private static final Supplier<Provider[]> PROVIDER_SUPPLIER = ProviderFactory.getElytronProviderSupplier(EncryptionClientXmlParser.class.getClassLoader());
 
     private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
 
@@ -81,7 +81,7 @@ public class EncryptedExpressionsXmlParser {
 
     private enum Version {
 
-        VERSION_1_0("urn:encrypted:expression:1.0", null);
+        VERSION_1_0("urn:encryption:client:1.0", null);
         final String namespace;
         final Version parent;
 
@@ -99,69 +99,69 @@ public class EncryptedExpressionsXmlParser {
         KNOWN_NAMESPACES = Collections.unmodifiableMap(knownNamespaces);
     }
 
-    private EncryptedExpressionsXmlParser() {
+    private EncryptionClientXmlParser() {
     }
 
     /**
-     * Parse an Encrypted Expression client configuration from a configuration discovered using the default wildfly-client-config discovery rules.
+     * Parse an Encryption Client configuration from a configuration discovered using the default wildfly-client-config discovery rules.
      *
-     * @return the Encrypted expression context factory
+     * @return the Encryption Client Context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<EncryptedExpressionContext> parseEncryptedExpressionClientConfiguration() throws ConfigXMLParseException {
+    public static SecurityFactory<EncryptionClientContext> parseEncryptionClientConfiguration() throws ConfigXMLParseException {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(KNOWN_NAMESPACES.keySet())) {
             if (streamReader != null) {
                 xmlLog.tracef("Parsing configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
-                return parseEncryptedExpressionClientConfiguration(streamReader);
+                return parseEncryptionClientConfiguration(streamReader);
             } else {
                 if (xmlLog.isTraceEnabled()) {
                     xmlLog.tracef("No configuration found for known namespaces '%s'", namespacesToString());
                 }
             }
         }
-        xmlLog.trace("Falling back to no encrypted expression configuration.");
-        return () -> EncryptedExpressionContext.empty();
+        xmlLog.trace("Falling back to no encryption client configuration.");
+        return () -> EncryptionClientContext.empty();
     }
 
     /**
-     * Parse an encrypted expression client configuration from a resource located at a specified {@link URI}.
+     * Parse an encryption client configuration from a resource located at a specified {@link URI}.
      *
      * @param uri the {@link URI} of the configuration.
-     * @return the encrypted expression context factory
+     * @return the encryption client context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<EncryptedExpressionContext> parseEncryptedExpressionClientConfiguration(URI uri) throws ConfigXMLParseException {
+    public static SecurityFactory<EncryptionClientContext> parseEncryptionClientConfiguration(URI uri) throws ConfigXMLParseException {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance(uri);
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(KNOWN_NAMESPACES.keySet())) {
             if (streamReader != null) {
                 xmlLog.tracef("Parsing configuration from %s for namespace %s", streamReader.getUri(), streamReader.getNamespaceURI());
-                return parseEncryptedExpressionClientConfiguration(streamReader);
+                return parseEncryptionClientConfiguration(streamReader);
             } else {
                 if (xmlLog.isTraceEnabled()) {
                     xmlLog.tracef("No configuration found for known namespaces '%s'", namespacesToString());
                 }
             }
         }
-        xmlLog.trace("Falling back to no encrypted expression configuration.");
-        return () -> EncryptedExpressionContext.empty();
+        xmlLog.trace("Falling back to no encryption client configuration.");
+        return () -> EncryptionClientContext.empty();
     }
 
     /**
-     * Parse an encrypted expression configuration from a configuration XML reader.
+     * Parse an encryption client configuration from a configuration XML reader.
      *
      * @param reader the XML stream reader
-     * @return the Encrypted Expression context factory
+     * @return the Encryption Client Context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static SecurityFactory<EncryptedExpressionContext> parseEncryptedExpressionClientConfiguration(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static SecurityFactory<EncryptionClientContext> parseEncryptionClientConfiguration(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         if (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_ELEMENT: {
-                    EncryptedExpressionsXmlParser.Version xmlVersion = KNOWN_NAMESPACES.get(checkGetElementNamespace(reader));
+                    EncryptionClientXmlParser.Version xmlVersion = KNOWN_NAMESPACES.get(checkGetElementNamespace(reader));
                     switch (reader.getLocalName()) {
-                        case "encrypted-expression": {
-                            return parseEncryptedExpressionType(reader, xmlVersion);
+                        case "encryption-client": {
+                            return parseEncryptionClientType(reader, xmlVersion);
                         }
                         default: {
                             throw reader.unexpectedElement();
@@ -173,11 +173,11 @@ public class EncryptedExpressionsXmlParser {
                 }
             }
         }
-        xmlLog.trace("No encrypted expression element found, all sensitive information will need to be specified as clear text.");
-        return EncryptedExpressionContext::empty;
+        xmlLog.trace("No encryption client element found, all sensitive information will need to be specified as clear text.");
+        return EncryptionClientContext::empty;
     }
 
-    static SecurityFactory<EncryptedExpressionContext> parseEncryptedExpressionType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion) throws ConfigXMLParseException {
+    static SecurityFactory<EncryptionClientContext> parseEncryptionClientType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion) throws ConfigXMLParseException {
         requireNoAttributes(reader);
         Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap = new HashMap<>();
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap = new HashMap<>();
@@ -205,11 +205,11 @@ public class EncryptedExpressionsXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                assert reader.getLocalName().equals("encrypted-expression");
+                assert reader.getLocalName().equals("encryption-client");
                 if (netAuthenticator) {
                     Authenticator.setDefault(new ElytronAuthenticator());
                 }
-                EncryptedExpressionConfiguration encryptedExpressionConfig = new EncryptedExpressionConfiguration();
+                EncryptionClientConfiguration encryptedExpressionConfig = new EncryptionClientConfiguration();
 
                 // validate key and credential stores...
                 for (Map.Entry<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> supplier : credentialStoresMap.entrySet()) {
@@ -223,7 +223,7 @@ public class EncryptedExpressionsXmlParser {
                         .setDefaultResolver(defaultResolverName)
                         .setResolverConfigurations(resolverMap);
                 encryptedExpressionConfig.setDefaultResolverName(defaultResolverName);
-                return () -> new EncryptedExpressionContext(encryptedExpressionConfig);
+                return () -> new EncryptionClientContext(encryptedExpressionConfig);
             } else {
                 throw reader.unexpectedContent();
             }
@@ -231,7 +231,7 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    private static void parseCredentialStoresType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    private static void parseCredentialStoresType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -263,7 +263,7 @@ public class EncryptedExpressionsXmlParser {
      * @param xmlVersion the version of parsed XML
      * @param credentialStoresMap the map of  credential stores to fill  @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    private static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    private static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, final Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final XMLLocation location = reader.getLocation();
         final int attributeCount = reader.getAttributeCount();
         String name = null;
@@ -354,7 +354,7 @@ public class EncryptedExpressionsXmlParser {
      * @param attributesMap the map to put attributes to.
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    private static void parseAttributesType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, String> attributesMap) throws ConfigXMLParseException {
+    private static void parseAttributesType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion, final Map<String, String> attributesMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -495,7 +495,7 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Supplier<Provider[]> providers) throws ConfigXMLParseException {
+    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Supplier<Provider[]> providers) throws ConfigXMLParseException {
         ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> function = parent -> CredentialSource.NONE;
         requireNoAttributes(reader);
         while (reader.hasNext()) {
@@ -523,7 +523,7 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    static Supplier<Provider[]> parseProvidersType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion) throws ConfigXMLParseException {
+    static Supplier<Provider[]> parseProvidersType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion) throws ConfigXMLParseException {
         requireNoAttributes(reader);
 
         Supplier<Provider[]> providerSupplier = null;
@@ -605,7 +605,7 @@ public class EncryptedExpressionsXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    static String parseResolversType(ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
+    static String parseResolversType(ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String defaultResolver = null;
 
@@ -744,7 +744,7 @@ public class EncryptedExpressionsXmlParser {
 //        throw reader.unexpectedContent();
 //    }
 
-    private static void checkElementNamespace(final ConfigurationXMLStreamReader reader, final EncryptedExpressionsXmlParser.Version xmlVersion) throws ConfigXMLParseException {
+    private static void checkElementNamespace(final ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion) throws ConfigXMLParseException {
         if (! xmlVersion.namespace.equals(reader.getNamespaceURI())) {
             throw reader.unexpectedElement();
         }
