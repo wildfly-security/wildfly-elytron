@@ -1,0 +1,166 @@
+---
+layout: post
+title: 'Encrypted Expressions for WildFly Client'
+date: 2024-01-31
+tags: encryption client aes expression
+synopsis: How to use encrypted expressions on the client side to specify sensitive information for client configurations. 
+author: prarthonapaul
+---
+
+:toc: macro
+:toc-title:
+
+WildFly's management model already supports encrypted expressions on the server side, which can be used to specify any sensitive information for server configuration using encrypted expressions. A future version of WildFly will include support for encrypted expressions on the client side. This post describes the steps to use this new feature to encrypt clear-text information and use it for client configuration. 
+
+toc::[]
+
+== Introduction
+
+A previous blog post on https://wildfly-security.github.io/wildfly-elytron/blog/wildfly-encrypted-expressions/[WildFly Encrypted Expression Support] explains how credential-stores can used to generate encrypted expressions. A similar approach is also taken on the client side, but without the use of the management console. 
+
+While client side configurations have support for masked password and credential-store reference, the uses for these elements are limited, as they can be used only for some of the elements. Additionally, encrypted expressions are more secure than masked passwords, which makes it a better choice for sensitive information. 
+
+Encrypted expressions use secret keys from credential stores to encrypt clear-text and in order to decrypt, we use a resolver, which is backed by the same secret key. When specifying the value for an attribute using encrypted expression, the name of the resolver to be used is specified, so that when the client configuration is being parsed, the parser can pull the corresponding resolver to decrypt the expression. 
+
+This blog post builds on a previous one that demonstrates how to https://wildfly-security.github.io/wildfly-elytron/blog/ejb-over-tls/[secure Jakarta Enterprise Beans with mutual TLS authentication]. However, there were a few sensitive information that were defined in plaintext, which we will replace with encrypted expressions in this blog post using the newly supported encrypted expression configurations for client configuration. 
+
+== Generating the Client Certificate 
+
+In order for the client to use a certificate, it must be signed by a server-trusted entity. For the purposes of this demonstration, we will self-sign a certificate and then import it into the server’s truststore. However, such certificates are generally treated as insecure since the identity cannot be externally verified. To use a certificate signed by a trusted Certificate Authority, take a look at this blog post.
+
+We will begin by generating a 2048-bit key pair, and saving it to a local file with the alias client. Using the Java keytool, we store it in a PKCS #12 keystore:
+
+```
+    keytool -genkeypair -alias client -keyalg RSA -keysize 2048 -validity 365 -keystore /PATH/TO/tlsClient.keystore -dname "CN=client" -storepass clientKeySecret
+```
+
+Note that we have also set the common name on the key to client (using the option -dname "CN=client"). Once the key pair is created, we export the certificate to a file:
+
+```
+    keytool -exportcert -keystore /PATH/TO/tlsClient.keystore -alias client -storepass clientKeySecret -file /PATH/TO/tlsClient.cer
+```
+
+== Example Application 
+
+For this blog post, we will be using the `client-side-encryption` example application from `elytron-examples`. Clone the repository if you have not already: 
+```
+    git clone https://github.com/wildfly-security-incubator/elytron-examples.git
+    cd client-side-encryption
+```
+
+== Configuring the Server
+
+We will be using a CLI script inside the `client-side-encryption` project to configure the server. Navigate to the script and review the commands inside it. We will be replacing the following command to update the path to the client certificate keystore: 
+```
+    /subsystem=elytron/key-store=tlsTrustStore:import-certificate(alias=client,path=/PATH/TO/tlsClient.cer,credential-reference={clear-text=serverTrustSecret},trust-cacerts=true,validate=false)
+```
+
+We will now perform a similar configuration for the WildFly server. Start the server, and then in another terminal connect to it using the management CLI:
+
+```shell
+    $ WILDFLY_HOME/bin/jboss-cli.sh --connect --file=configure-elytron.cli
+```
+(Note: In this post, replace WILDFLY_HOME with the actual path to your WildFly installation.)
+
+With the server now setup, we return to the client. Open a new terminal and navigate to the root folder of this example. We use the keytool once again, identify the server’s certificate by its alias and importing it into a client truststore:
+
+```
+$ keytool -importcert -keystore /PATH/TO/tlsClient.truststore -storepass clientTrustSecret -alias localhost -trustcacerts -file /WILDFLY_HOME/standalone/configuration/tlsServer.cer -noprompt
+```
+Now we can move to configuring the credential stores and defining attribute values using encrypted expressions. 
+
+== Configuring the Credential Store
+
+We will now set ip the credential store that will hold the secret keys that will be used to encrypt out clear-texts. We will be making use of the WildFly-Elytron tool to do that: 
+```
+    WILDFLY_HOME/bin/elytron-tool.sh credential-store --create --location mycredstore.cs --type PropertiesCredentialStore
+```
+
+Next, we can generate a secret key that will be used to encrypt and decrypt: 
+```
+    WILDFLY_HOME/bin/elytron-tool.sh credential-store --generate-secret-key=secretkey --location mycredstore.cs --type=PropertiesCredentialStore
+```
+We can use the same secret key for all our expressions, or use a different key for each expression. In the second case, you can add the secret keys using the same command above, but with unique aliases for each. For this blog post we will be using the same secret key for all. 
+
+== Encrypting Clear-text Values 
+We will be encrypting the following 3 clear-text values: 
+ * Password for the `tlsClientTrustStore` keystore
+ * Password for the `tlsClientKeyStore` keystore
+ * Password for `example_user` user
+
+We will use the same secret-key to encrypt them all using the following commands: 
+```
+    WILDFLY_HOME/bin/elytron-tool.sh credential-store --location PATH/TO/mycredstore.cs --type PropertiesCredentialStore --encrypt secretkey
+    Clear text value:
+    Confirm clear text value:
+    Clear text encrypted to token 'RUxZAUMQvGzk6Vaadp2cahhZ6rlPhHOZcWyjXALlAthrENvRTvQ=' using alias 'secretkey'.
+```
+
+For each of the values listed above, we will enter them when prompted for the clear-text value. Please note that the token generated will be different than what is displayed above. Now we can use them in the client configuration. 
+
+== Replacing Clear-text Passwords with Encrypted Expressions
+
+Navigate to the `wildfly-config.xml` file located inside the resources folder for this project. There are 4 fields where we will be making changes. 
+
+* Currently, the password for the `tlsClientTrustStore` keystore is specified as clear-text, which we encrypted in the previous step. This can be used to replace the clear-text password as follows: 
+```
+    <key-store-clear-password password="${ENC::my-resolver:<Insert token for clientTrustSecret>}"/>
+```
+
+* The password for the `tlsClientKeyStore` keystore can be used to replace the clear-text password as follows: 
+```
+    <key-store-clear-password password="${ENC::my-resolver:<Insert token for clientKeySecret>}"/>
+```
+
+* The password for the `example_user` user can be specified as follows: 
+```
+    <clear-password password="${ENC::my-resolver:<Insert token for examplePwd1!>}"/>
+```
+
+* Step 2 can be followed again with the same expression for the password for the `tlsClientKeyStore` keystore under the `ssl-contexts` element. Note that if you encrypt the same clear-text using the same secret key multiple times, each token will be unique, but the clear-text underneath it will still be the same. 
+
+== Configure the Encrypted-Expressions client
+
+In order for the parser to be able to decrypt the expression, we need to configure the `encrypted-expressions` client with the credential-store we created in step 1 as well as a resolver that will be used to decrypt the expression. The resolver is backed by the same secret key that is used to encrypt the clear-text values. 
+
+Inside the wildfly-config.xml file, the encrypted-expressions client is configured as follows: 
+```
+    <encrypted-expressions xmlns="urn:encrypted:expression:1.0">
+        <credential-stores>
+            <credential-store name="my-credential-store" type="PropertiesCredentialStore">
+                <attributes>
+                    <attribute name="location" value="path/to/mycredstore.cs"/>
+                </attributes>
+            </credential-store>
+        </credential-stores>
+        <expression-resolvers default-resolver="my-resolver">
+            <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey"/>
+        </expression-resolvers>
+    </encrypted-expressions>
+```
+Replace the value for the location for the credential-store with the actual path to the credential-store. 
+
+== Build and Deploy the Deploy App
+Make sure you start the WildFly server as described above. Now we can open a new terminal and navigate to the root directory of this example.And lastly, type the following command to build the artifacts.
+```shell
+    $ mvn clean install wildfly:deploy
+```
+
+This deploys the `client-side-encryption/target/client-side-encryption.jar` to the running instance of the server.
+
+You should see a message in the server log indicating that the archive deployed successfully.
+
+== Run the Client
+Before you run the client, make sure you have successfully deployed the EJBs to the server in
+the previous step and that your terminal is still in the root directory of this example.
+
+Run this command to execute the client:
+```shell
+    $ mvn exec:exec
+```
+
+The console messages should indicate successful authentication. 
+
+== Summary 
+
+This blog post demonstrated how to use encrypted expressions to avoid specifying any client configuration attribute values. Although this blogposts focuses on using encrypted expressions for passwords on authentication client, this feature can be used for any attributes whose value is of type `xsd:string` and for any clients specified inside the wildfly-config.xml file. For more information on WildFly Client configuration, please refer to the https://docs.wildfly.org/31/Client_Guide.html[community documentations]. 
