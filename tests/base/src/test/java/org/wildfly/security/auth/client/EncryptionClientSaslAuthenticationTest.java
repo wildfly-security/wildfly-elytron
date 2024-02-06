@@ -66,7 +66,7 @@ import static org.wildfly.security.auth.client.MaskedPasswordSaslAuthenticationT
 
 public class EncryptionClientSaslAuthenticationTest {
     private static final File CREDSTORE_DIR = new File("./target/credstore");
-    private static final String CONFIG_FILE = "wildfly-encrypted-expression-ssl-config-v1_7.xml";
+    private static final String CONFIG_FILE = "wildfly-encryption-client-ssl-config-v1_7.xml";
     private static final String CRED_STORE_FILE = "mycredstore.cs";
     private static final String DEFAULT_RESOLVER = "my-resolver";
     private static final String PLAIN = "PLAIN";
@@ -147,8 +147,8 @@ public class EncryptionClientSaslAuthenticationTest {
                 .build();
 
         //Preparing the encrypted expression as a system property
-        EncryptedExpressionContext encContext = EncryptedExpressionContext.getContextManager().get();
-        String encryptedExpression = encContext.encryptedExpressionConfiguration.encryptedExpressionResolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.encryptedExpressionConfiguration);
+        EncryptionClientContext encContext = EncryptionClientContext.getContextManager().get();
+        String encryptedExpression = encContext.encryptionClientConfiguration.encryptedExpressionResolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.encryptionClientConfiguration);
         System.setProperty("ENC_EXP_PROP", encryptedExpression);
 
         //Creating SASL client from XML configuration file
@@ -188,8 +188,8 @@ public class EncryptionClientSaslAuthenticationTest {
                 .setPrefix("ENC");
 
         //Preparing the encrypted expression config
-        EncryptedExpressionConfiguration encConfig =
-                EncryptedExpressionConfiguration.empty()
+        EncryptionClientConfiguration encConfig =
+                EncryptionClientConfiguration.empty()
                         .addCredentialStore("myCredentialStore", credentialStore)
                         .addEncryptedExpressionResolver(resolver);
 
@@ -198,7 +198,7 @@ public class EncryptionClientSaslAuthenticationTest {
                 AuthenticationConfiguration.empty()
                         .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(PLAIN))
                         .useName(USERNAME)
-                        .usePassword(resolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encConfig));
+                        .decryptAndUsePassword(resolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encConfig));
 
         AuthenticationContext context = AuthenticationContext.empty();
         context = context.with(MatchRule.ALL.matchHost("masked"), authWithEncConfig);
