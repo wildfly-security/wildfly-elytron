@@ -212,7 +212,21 @@ public class CachingSecurityRealm implements SecurityRealm {
                 if (evidence instanceof PasswordGuessEvidence) {
                     if (credentials.canVerify(evidence)) {
                         log.tracef("verifyEvidence For principal='%s' using cached credential", principal);
-                        return credentials.verify(evidence);
+                        boolean credentialsVerified = credentials.verify(evidence);
+                        if (!credentialsVerified) {
+                            // since verification failed then verify evidence directly on an identity
+                            log.tracef("verifyEvidence for principal='%1$s' using cached credential failed, so trying verifyEvidence for principal='%1$s' using underlying security realm", principal);
+                            char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
+                            Password password = ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, guess);
+                            if (identity.verifyEvidence(evidence)) {
+                                credentials = credentials.without(PasswordCredential.class);
+                                credentials = credentials.withCredential(new PasswordCredential(password));
+                                attributes = null;
+                                authorizationIdentity = null;
+                                return true;
+                            }
+                        }
+                        return credentialsVerified;
                     }
                     Credential credential = identity.getCredential(PasswordCredential.class);
                     if (credential != null) {
