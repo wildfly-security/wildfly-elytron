@@ -24,12 +24,12 @@ package org.wildfly.security.auth.client;
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
 
-public class ExpressionResolutionException extends RuntimeException {
-    public ExpressionResolutionException(String msg) {
+public class EncryptedExpressionResolutionException extends RuntimeException {
+    public EncryptedExpressionResolutionException(String msg) {
         super(msg);
     }
 
-    public ExpressionResolutionException(String msg, Throwable cause) {
+    public EncryptedExpressionResolutionException(String msg, Throwable cause) {
         super(msg, cause);
     }
 }

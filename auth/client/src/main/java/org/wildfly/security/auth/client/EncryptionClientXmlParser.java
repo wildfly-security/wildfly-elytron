@@ -705,45 +705,6 @@ public class EncryptionClientXmlParser {
         throw reader.unexpectedContent();
     }
 
-//    private static String parseDefaultResolverType(ConfigurationXMLStreamReader reader, final Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap) throws ConfigXMLParseException {
-//        final int attributeCount = reader.getAttributeCount();
-//        String name = null;
-//
-//        for (int i = 0; i < attributeCount; i ++) {
-//            final String attributeNameSpace = reader.getAttributeNamespace(i);
-//            if (attributeNameSpace != null && !attributeNameSpace.isEmpty()) {
-//                throw reader.unexpectedAttribute(i);
-//            }
-//            switch (reader.getAttributeLocalName(i)) {
-//                case "name": {
-//                    if (name!= null) throw reader.unexpectedAttribute(i);
-//                    name = reader.getAttributeValueResolved(i);
-//                    break;
-//                }
-//                default: {
-//                    throw reader.unexpectedAttribute(i);
-//                }
-//            }
-//        }
-//        if (name == null) {
-//            throw missingAttribute(reader, "name");
-//        }
-//        if (reader.hasNext()) {
-//            final int tag = reader.nextTag();
-//            if (tag == START_ELEMENT) {
-//                throw reader.unexpectedElement();
-//            } else if (tag == END_ELEMENT) {
-//                if (resolverMap.containsKey(name)) {
-//                    return name;
-//                } else {
-//                    throw xmlLog.resolverNotFound();
-//                }
-//            }
-//            throw reader.unexpectedContent();
-//        }
-//        throw reader.unexpectedContent();
-//    }
-
     private static void checkElementNamespace(final ConfigurationXMLStreamReader reader, final EncryptionClientXmlParser.Version xmlVersion) throws ConfigXMLParseException {
         if (! xmlVersion.namespace.equals(reader.getNamespaceURI())) {
             throw reader.unexpectedElement();

@@ -22,7 +22,7 @@ import org.kohsuke.MetaInfServices;
 import org.wildfly.client.config.ResolverProvider;
 
 /**
- * Implementation of the ResolverProvider interfact that allows another project
+ * Implementation of the ResolverProvider interface that allows another project
  * to use Functions from Encrypted Expression Resolver without adding an
  * Elytron dependency.
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
@@ -34,10 +34,10 @@ public class WildFlyClientResolverProvider implements ResolverProvider{
     @Override
     public String resolveExpression(String expression) {
         EncryptionClientContext context = EncryptionClientContext.captureCurrent();
-        if (context != null) {
+        if (context.encryptionClientConfiguration != null) {
             return context.encryptionClientConfiguration.encryptedExpressionResolver.resolveExpression(expression, context.encryptionClientConfiguration);
         } else {
-            throw new ExpressionResolutionException("Encryption client configuration could not be found");
+            throw new EncryptedExpressionResolutionException("Encryption client configuration could not be found.");
         }
     }
 }

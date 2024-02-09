@@ -97,14 +97,6 @@ public final class EncryptionClientConfiguration {
         this.defaultResolverName = other.defaultResolverName;
     }
 
-    private static <T> T getOrDefault(T value, T defVal) {
-        return value != null ? value : defVal;
-    }
-
-    private static int getOrDefault(int value, int defVal) {
-        return value != -1 ? value : defVal;
-    }
-
     Map<String, CredentialStore> getCredentialStoreMap() {
         return credentialStoreMap;
     }

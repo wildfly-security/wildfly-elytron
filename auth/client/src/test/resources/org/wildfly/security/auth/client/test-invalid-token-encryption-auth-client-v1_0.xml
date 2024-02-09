@@ -25,9 +25,9 @@
                 </attributes>
             </credential-store>
         </credential-stores>
-        <expression-resolvers default-resolver="my-resolver">
-            <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
-            <expression-resolver name="my-resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
+        <expression-resolvers default-resolver="resolver1">
+            <expression-resolver name="resolver1" credential-store-name="my-credential-store" alias="secretkey1"/>
+            <expression-resolver name="resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
         </expression-resolvers>
     </encryption-client>
     <authentication-client xmlns="urn:elytron:client:1.7">
@@ -38,7 +38,7 @@
             <configuration name="default-config">
                 <set-user-name name="quickstartUser"/>
                 <credentials>
-                    <clear-password password="${ENC::my-resolver:InV4LidT0k3NTh4tC4nn0tb3d3crYpt3D=}"/>
+                    <clear-password password="${ENC::resolver1:InV4LidT0k3NTh4tC4nn0tb3d3crYpt3D=}"/>
                 </credentials>
                 <sasl-mechanism-selector selector="SCRAM-SHA-512"/>
                 <providers>

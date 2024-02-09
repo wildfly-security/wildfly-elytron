@@ -25,9 +25,9 @@
                 </attributes>
             </credential-store>
         </credential-stores>
-        <expression-resolvers default-resolver="my-resolver">
-            <expression-resolver name="my-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
-            <expression-resolver name="my-resolver2" credential-store-name="my-credential-store" alias="secretkey2"/>
+        <expression-resolvers default-resolver="first-resolver">
+            <expression-resolver name="first-resolver" credential-store-name="my-credential-store" alias="secretkey1"/>
+            <expression-resolver name="second-resolver" credential-store-name="my-credential-store" alias="secretkey2"/>
         </expression-resolvers>
     </encryption-client>
 </configuration>

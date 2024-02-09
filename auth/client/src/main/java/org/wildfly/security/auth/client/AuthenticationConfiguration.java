@@ -759,7 +759,7 @@ public final class AuthenticationConfiguration {
     public AuthenticationConfiguration decryptAndUsePassword(String encryptedPassword) {
         EncryptionClientContext ctx = EncryptionClientContext.captureCurrent();
         if (ctx.encryptionClientConfiguration == null) {
-            throw new ExpressionResolutionException("No encryption client configuration available");
+            throw new EncryptedExpressionResolutionException("No encryption client configuration available");
         }
         String password = ctx.encryptionClientConfiguration.encryptedExpressionResolver.resolveExpression(encryptedPassword, ctx.encryptionClientConfiguration);
         return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray()));
