@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.wildfly.security.auth.realm.token._private.ElytronMessages.log;
 
@@ -53,17 +54,19 @@ class JwkManager {
     private final Map<URL, CacheEntry> keys = new LinkedHashMap<>();
     private final SSLContext sslContext;
     private final HostnameVerifier hostnameVerifier;
+    private final Set<String> allowedJkuValues;
 
     private final long updateTimeout;
     private final int minTimeBetweenRequests;
 
     private static final int CONNECTION_TIMEOUT = 2000;//2s
 
-    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int minTimeBetweenRequests) {
+    JwkManager(SSLContext sslContext, HostnameVerifier hostnameVerifier, long updateTimeout, int minTimeBetweenRequests, Set<String> allowedJkuValues) {
         this.sslContext = sslContext;
         this.hostnameVerifier = hostnameVerifier;
         this.updateTimeout = updateTimeout;
         this.minTimeBetweenRequests = minTimeBetweenRequests;
+        this.allowedJkuValues = allowedJkuValues;
     }
 
     /**
