@@ -50,6 +50,10 @@
             <!-- scope is compile ELY-1153 -->
         </dependency>
         <dependency>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <scope>provided</scope>
@@ -74,6 +78,11 @@
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.modules</groupId>
+            <artifactId>jboss-modules</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

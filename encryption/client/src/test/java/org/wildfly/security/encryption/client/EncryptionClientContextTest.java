@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -26,8 +26,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.createCredentialStore;
-import static org.wildfly.security.auth.client.EncryptedExpressionXMLParserTest.getProvidersSupplier;
+import static org.wildfly.security.encryption.client.EncryptedExpressionXMLParserTest.createCredentialStore;
+import static org.wildfly.security.encryption.client.EncryptedExpressionXMLParserTest.getProvidersSupplier;
 
 /**
  * A test class to tests for functionalities within the {@link EncryptionClientConfiguration} and the

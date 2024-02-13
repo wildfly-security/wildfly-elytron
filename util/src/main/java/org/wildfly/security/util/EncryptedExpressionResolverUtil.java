@@ -16,30 +16,25 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
-
-import static java.security.AccessController.doPrivileged;
-
-import java.security.PrivilegedAction;
+package org.wildfly.security.util;
 
 /**
- * A lazily-initialized holder for the default encrypted expression context.
- * If an error occurs setting up the default encryption client
- * context, the empty context is used.
+ * Utilities for resolving and creating encrypted expressions.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
-class DefaultEncryptionClientContextProvider {
 
-    static final EncryptionClientContext DEFAULT;
+public class EncryptedExpressionResolverUtil {
+//    public Object setPrefix(Object resolver, final String prefix) {
+//        if (resolver instanceof EncryptedExpressionResolver) {
+//            ((EncryptedExpressionResolver) resolver).prefix = prefix;
+//            resolver.completePrefix = prefix + "::";
+//            return resolver;
+//        } else if (resolver instanceof ElytronExpressionResolver) {
+//            ((EncryptedExpressionResolver) resolver).prefix = prefix;
+//            resolver.completePrefix = prefix + "::";
+//            return resolver;
+//        }
+//    }
 
-    static {
-        DEFAULT = doPrivileged((PrivilegedAction<EncryptionClientContext>) () -> {
-            try {
-                return EncryptionClientXmlParser.parseEncryptionClientConfiguration().create();
-            } catch (Throwable t) {
-                throw new InvalidEncryptionClientConfigurationException(t);
-            }
-        });
-    }
 }

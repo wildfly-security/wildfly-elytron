@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
+import org.wildfly.security.encryption.client._private.ElytronMessages;
 
 import javax.crypto.SecretKey;
 import java.security.GeneralSecurityException;
@@ -28,10 +28,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 import static org.wildfly.security.encryption.CipherUtil.decrypt;
 import static org.wildfly.security.encryption.CipherUtil.encrypt;
-
 
 /**
  * A class used to resolve encrypted expressions using secret key within credential stores.
@@ -69,15 +67,15 @@ public class EncryptedExpressionResolver {
                 int delimiter = expression.indexOf(':', completePrefix.length());
                 String resolver = delimiter > 0 ? expression.substring(completePrefix.length(), delimiter) : defaultResolver;
                 if (resolver == null) {
-                    throw xmlLog.expressionResolutionWithoutResolver(fullExpression);
+                    throw ElytronMessages.xmlLog.expressionResolutionWithoutResolver(fullExpression);
                 }
 
                 ResolverConfiguration resolverConfiguration = resolverConfigurations.get(resolver);
                 if (resolverConfiguration == null) {
-                    throw xmlLog.invalidResolver(fullExpression);
+                    throw ElytronMessages.xmlLog.invalidResolver(fullExpression);
                 }
 
-                xmlLog.tracef("Attempting to decrypt expression '%s' using credential store '%s' and alias '%s'.",
+                ElytronMessages.xmlLog.tracef("Attempting to decrypt expression '%s' using credential store '%s' and alias '%s'.",
                         fullExpression, resolverConfiguration.credentialStore, resolverConfiguration.alias);
                 CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolver).getCredentialStore());
                 SecretKey secretKey;
@@ -86,7 +84,7 @@ public class EncryptedExpressionResolver {
                             SecretKeyCredential.class);
                     secretKey = credential.getSecretKey();
                 } catch (CredentialStoreException e) {
-                    throw xmlLog.unableToLoadCredential(e);
+                    throw ElytronMessages.xmlLog.unableToLoadCredential(e);
                 }
 
                 String token = expression.substring(expression.lastIndexOf(':') + 1);
@@ -94,7 +92,7 @@ public class EncryptedExpressionResolver {
                 try {
                     return decrypt(token, secretKey);
                 } catch (GeneralSecurityException e) {
-                    throw xmlLog.unableToDecryptExpression(fullExpression, e);
+                    throw ElytronMessages.xmlLog.unableToDecryptExpression(fullExpression, e);
                 }
             }
         }
@@ -108,12 +106,12 @@ public class EncryptedExpressionResolver {
     public String createExpression(final String resolver, final String clearText, EncryptionClientConfiguration config) {
         String resolvedResolver = resolver != null ? resolver : defaultResolver;
         if (resolvedResolver == null) {
-            throw xmlLog.noResolverSpecifiedAndNoDefault();
+            throw ElytronMessages.xmlLog.noResolverSpecifiedAndNoDefault();
         }
 
         ResolverConfiguration resolverConfiguration = resolverConfigurations.get(resolvedResolver);
         if (resolverConfiguration == null) {
-            throw xmlLog.noResolverWithSpecifiedName(resolvedResolver);
+            throw ElytronMessages.xmlLog.noResolverWithSpecifiedName(resolvedResolver);
         }
 
         CredentialStore credentialStore = config.getCredentialStoreMap().get(getResolverConfiguration().get(resolvedResolver).getCredentialStore());
@@ -121,18 +119,18 @@ public class EncryptedExpressionResolver {
         try {
             SecretKeyCredential credential = credentialStore.retrieve(resolverConfiguration.getAlias(), SecretKeyCredential.class);
             if (credential == null) {
-                throw xmlLog.credentialDoesNotExist(resolverConfiguration.getAlias(), SecretKeyCredential.class.getSimpleName());
+                throw ElytronMessages.xmlLog.credentialDoesNotExist(resolverConfiguration.getAlias(), SecretKeyCredential.class.getSimpleName());
             }
             secretKey = credential.getSecretKey();
         } catch (CredentialStoreException e) {
-            throw xmlLog.unableToLoadCredential(e);
+            throw ElytronMessages.xmlLog.unableToLoadCredential(e);
         }
 
         String cipherTextToken;
         try {
             cipherTextToken = encrypt(clearText, secretKey);
         } catch (GeneralSecurityException e) {
-            throw xmlLog.unableToEncryptClearText(e);
+            throw ElytronMessages.xmlLog.unableToEncryptClearText(e);
         }
 
         String expression = resolver == null ? String.format("${%s::%s:%s}", prefix, defaultResolver, cipherTextToken)

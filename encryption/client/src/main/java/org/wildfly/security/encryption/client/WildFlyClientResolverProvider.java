@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.client.config.ResolverProvider;

@@ -16,20 +16,30 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
+
+import static java.security.AccessController.doPrivileged;
+
+import java.security.PrivilegedAction;
 
 /**
- * An exception class that is thrown when an issues related to the expression resolution are encountered.
+ * A lazily-initialized holder for the default encrypted expression context.
+ * If an error occurs setting up the default encryption client
+ * context, the empty context is used.
  *
  * @author <a href="mailto:prpaul@redhat.com">Prarthona Paul</a>
  */
+class DefaultEncryptionClientContextProvider {
 
-public class EncryptedExpressionResolutionException extends RuntimeException {
-    public EncryptedExpressionResolutionException(String msg) {
-        super(msg);
-    }
+    static final EncryptionClientContext DEFAULT;
 
-    public EncryptedExpressionResolutionException(String msg, Throwable cause) {
-        super(msg, cause);
+    static {
+        DEFAULT = doPrivileged((PrivilegedAction<EncryptionClientContext>) () -> {
+            try {
+                return EncryptionClientXmlParser.parseEncryptionClientConfiguration().create();
+            } catch (Throwable t) {
+                throw new InvalidEncryptionClientConfigurationException(t);
+            }
+        });
     }
 }

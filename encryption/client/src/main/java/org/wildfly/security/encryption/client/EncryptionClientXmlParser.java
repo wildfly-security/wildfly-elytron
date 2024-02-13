@@ -15,9 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.wildfly.security.encryption.client;
 
-package org.wildfly.security.auth.client;
-
+import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -27,9 +27,9 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.server.IdentityCredentials;
-import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -38,7 +38,6 @@ import org.wildfly.security.provider.util.ProviderFactory;
 import org.wildfly.security.provider.util.ProviderServiceLoaderSupplier;
 import org.wildfly.security.provider.util.ProviderUtil;
 
-import java.net.Authenticator;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -48,21 +47,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Supplier;
 import java.util.Map;
-import static org.wildfly.security.auth.client.ElytronXmlParser.DeferredSupplier;
+
+import static org.wildfly.common.Assert.checkNotNullParam;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
-import static org.wildfly.security.auth.client.ElytronXmlParser.parseModuleRefType;
-import static org.wildfly.security.auth.client.XMLParserUtils.checkAttributeNamespace;
-import static org.wildfly.security.auth.client.XMLParserUtils.requireNoAttributes;
-import static org.wildfly.security.auth.client.XMLParserUtils.missingAttribute;
-import static org.wildfly.security.auth.client.XMLParserUtils.isSet;
-import static org.wildfly.security.auth.client.XMLParserUtils.setBit;
-import static org.wildfly.security.auth.client.XMLParserUtils.andThenOp;
-import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
-import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.wildfly.security.util.XMLParserUtils.checkAttributeNamespace;
+import static org.wildfly.security.util.XMLParserUtils.requireNoAttributes;
+import static org.wildfly.security.util.XMLParserUtils.missingAttribute;
+import static org.wildfly.security.util.XMLParserUtils.isSet;
+import static org.wildfly.security.util.XMLParserUtils.setBit;
+import static org.wildfly.security.util.XMLParserUtils.andThenOp;
+import static org.wildfly.security.encryption.client._private.ElytronMessages.xmlLog;
 
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.util.ModuleLoader;
 
 /**
  * A parser for the Encryption Client XML schema.
@@ -74,7 +73,7 @@ public class EncryptionClientXmlParser {
 
     private static final Supplier<Provider[]> PROVIDER_SUPPLIER = ProviderFactory.getElytronProviderSupplier(EncryptionClientXmlParser.class.getClassLoader());
 
-    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(PROVIDER_SUPPLIER, INSTALLED_PROVIDERS);
+    private static final Supplier<Provider[]> DEFAULT_PROVIDER_SUPPLIER = ProviderUtil.aggregate(PROVIDER_SUPPLIER, ProviderUtil.INSTALLED_PROVIDERS);
 
     static final Map<String, Version> KNOWN_NAMESPACES;
     static final String PREFIX = "ENC";
@@ -181,9 +180,8 @@ public class EncryptionClientXmlParser {
         requireNoAttributes(reader);
         Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap = new HashMap<>();
         Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverMap = new HashMap<>();
-        final ElytronXmlParser.DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(DEFAULT_PROVIDER_SUPPLIER);
+        final DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(DEFAULT_PROVIDER_SUPPLIER);
         String defaultResolverName = null;
-        boolean netAuthenticator = false;
         int foundBits = 0;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
@@ -206,9 +204,6 @@ public class EncryptionClientXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 assert reader.getLocalName().equals("encryption-client");
-                if (netAuthenticator) {
-                    Authenticator.setDefault(new ElytronAuthenticator());
-                }
                 EncryptionClientConfiguration encryptedExpressionConfig = new EncryptionClientConfiguration();
 
                 // validate key and credential stores...
@@ -301,7 +296,7 @@ public class EncryptionClientXmlParser {
         final Map<String, String> attributesMap = new HashMap<>();
         int foundBits = 0;
         ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
-        ElytronXmlParser.DeferredSupplier<Provider[]> providersSupplier = new ElytronXmlParser.DeferredSupplier<>(providers);
+        DeferredSupplier<Provider[]> providersSupplier = new DeferredSupplier<>(providers);
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -538,16 +533,21 @@ public class EncryptionClientXmlParser {
                         if (isSet(foundBits, 1)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 1);
                         parseEmptyType(reader);
-                        providerSupplier = providerSupplier == null ? INSTALLED_PROVIDERS : ProviderUtil.aggregate(providerSupplier, INSTALLED_PROVIDERS);
+                        providerSupplier = providerSupplier == null ? ProviderUtil.INSTALLED_PROVIDERS : ProviderUtil.aggregate(providerSupplier, ProviderUtil.INSTALLED_PROVIDERS);
                         break;
                     }
                     case "use-service-loader": {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 2);
                         final String moduleName = parseModuleRefType(reader);
-                        Supplier<Provider[]> serviceLoaderSupplier = (moduleName == null) ?
-                                PROVIDER_SUPPLIER :
-                                new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(reader, moduleName));
+                        Supplier<Provider[]> serviceLoaderSupplier;
+                        try {
+                            serviceLoaderSupplier = (moduleName == null) ?
+                                    PROVIDER_SUPPLIER :
+                                    new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(moduleName));
+                        } catch (ModuleLoadException e) {
+                            throw xmlLog.xmlNoModuleFound(reader, e, moduleName);
+                        }
                         providerSupplier = providerSupplier == null ? serviceLoaderSupplier : ProviderUtil.aggregate(providerSupplier, serviceLoaderSupplier);
                         break;
                     }
@@ -555,6 +555,40 @@ public class EncryptionClientXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 return providerSupplier;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code module-ref-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return the corresponding module name
+     * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
+     */
+    static String parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String moduleName = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "module-name": {
+                    moduleName = reader.getAttributeValueResolved(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return moduleName;
             } else {
                 throw reader.unexpectedContent();
             }
@@ -727,5 +761,27 @@ public class EncryptionClientXmlParser {
         }
 
         return namespaces.toString();
+    }
+
+    static final class DeferredSupplier<T>  implements Supplier<T> {
+
+        private volatile Supplier<T> supplier;
+        private T value;
+
+        DeferredSupplier(Supplier<T> supplier) {
+            checkNotNullParam("supplier", supplier);
+            this.supplier = supplier;
+        }
+
+        void setSupplier(Supplier<T> supplier) {
+            checkNotNullParam("supplier", supplier);
+            this.supplier = supplier;
+        }
+
+        @Override
+        public T get() {
+            return supplier.get();
+        }
+
     }
 }

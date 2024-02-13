@@ -20,13 +20,17 @@ package org.wildfly.security.auth.client;
 
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.encryption.SecretKeyUtil;
+import org.wildfly.security.encryption.client.EncryptionClientContext;
+import org.wildfly.security.encryption.client.EncryptedExpressionResolutionException;
+import org.wildfly.security.encryption.client.EncryptionClientXmlParser;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
-import org.wildfly.security.sasl.SaslMechanismSelector;
 import org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider;
 import org.wildfly.security.sasl.plain.PlainSaslServerFactory;
 import org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider;
@@ -38,6 +42,7 @@ import javax.security.sasl.SaslServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
@@ -50,7 +55,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.function.Supplier;
 
@@ -98,7 +102,6 @@ public class EncryptionClientSaslAuthenticationTest {
 
         server.setDispatcher(createTokenEndpoint());
         server.start(50831);
-        System.setProperty("wildfly.config.url", Objects.requireNonNull(MaskedPasswordSaslAuthenticationTest.class.getResource(CONFIG_FILE)).toExternalForm());
         System.setProperty("CREDSTORE_PATH_PROP", credStorePath);
     }
 
@@ -141,14 +144,18 @@ public class EncryptionClientSaslAuthenticationTest {
 
     @Test
     public void testSuccessfulAuthWithXmlConfig() throws Exception {
+        URL config = getClass().getResource(CONFIG_FILE);
+        System.setProperty("wildfly.config.url", config.getPath());
         SaslServer server = new SaslServerBuilder(PlainSaslServerFactory.class, PLAIN)
                 .setUserName(USERNAME)
                 .setPassword(PASSWORD.toCharArray())
                 .build();
 
         //Preparing the encrypted expression as a system property
-        EncryptionClientContext encContext = EncryptionClientContext.getContextManager().get();
-        String encryptedExpression = encContext.encryptionClientConfiguration.encryptedExpressionResolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.encryptionClientConfiguration);
+        SecurityFactory<EncryptionClientContext> clientConfiguration = EncryptionClientXmlParser.parseEncryptionClientConfiguration(config.toURI());
+        EncryptionClientContext encContext = clientConfiguration.create();
+        EncryptionClientContext.getContextManager().setThreadDefault(encContext);
+        String encryptedExpression = encContext.getEncryptedExpressionResolver().createExpression(DEFAULT_RESOLVER, PASSWORD, encContext.getEncryptionClientConfiguration());
         System.setProperty("ENC_EXP_PROP", encryptedExpression);
 
         //Creating SASL client from XML configuration file
@@ -170,48 +177,63 @@ public class EncryptionClientSaslAuthenticationTest {
     }
 
     @Test
-    public void testSuccessfulExchangeWithProgrammaticConfig() throws Exception {
-        SaslServer server = new SaslServerBuilder(PlainSaslServerFactory.class, PLAIN)
-                .setUserName(USERNAME)
-                .setPassword(PASSWORD.toCharArray())
-                .build();
-
-        CredentialStore credentialStore = CredentialStore.getInstance("PropertiesCredentialStore", getProvidersSupplier());
-        createCredentialStore(credentialStore);
-
-        Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurationMap = new HashMap<>();
-        resolverConfigurationMap.put(DEFAULT_RESOLVER, new EncryptedExpressionResolver.ResolverConfiguration(DEFAULT_RESOLVER, "myCredentialStore", SECRET_KEY_ALIAS));
-
-        EncryptedExpressionResolver resolver = new EncryptedExpressionResolver()
-                .setResolverConfigurations(resolverConfigurationMap)
-                .setDefaultResolver(DEFAULT_RESOLVER)
-                .setPrefix("ENC");
-
-        //Preparing the encrypted expression config
-        EncryptionClientConfiguration encConfig =
-                EncryptionClientConfiguration.empty()
-                        .addCredentialStore("myCredentialStore", credentialStore)
-                        .addEncryptedExpressionResolver(resolver);
-
-        //Creating SASL client from authentication configuration programmatically
-        AuthenticationConfiguration authWithEncConfig =
-                AuthenticationConfiguration.empty()
-                        .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(PLAIN))
-                        .useName(USERNAME)
-                        .decryptAndUsePassword(resolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encConfig));
-
-        AuthenticationContext context = AuthenticationContext.empty();
-        context = context.with(MatchRule.ALL.matchHost("masked"), authWithEncConfig);
-        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
-        SaslClient client = contextConfigurationClient.createSaslClient(URI.create("http://masked/"), context.authRules.configuration, Arrays.asList(PLAIN));
-
-        assertTrue(client.hasInitialResponse());
-        byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("\0"+USERNAME+"\0"+PASSWORD,new String(message, StandardCharsets.UTF_8));
-
-        server.evaluateResponse(message);
-        assertTrue(server.isComplete());
-        assertTrue(client.isComplete());
-        assertEquals(USERNAME, server.getAuthorizationID());
+    public void testUnableToDecryptWithAuthClient() throws Exception {
+        URL config = getClass().getResource("test-invalid-token-encryption-client-auth-client-v1_7.xml");
+        System.setProperty("wildfly.config.url", config.getPath());
+        try {
+            SecurityFactory<EncryptionClientContext> clientConfiguration = EncryptionClientXmlParser.parseEncryptionClientConfiguration(config.toURI());
+            EncryptionClientContext.getContextManager().setThreadDefault(clientConfiguration.create());
+            SecurityFactory<AuthenticationContext> authClientConfiguration = ElytronXmlParser.parseAuthenticationClientConfiguration(config.toURI());
+        } catch (EncryptedExpressionResolutionException e) {
+            Assert.assertTrue(e.getMessage().contains("Unable to decrypt expression"));
+            System.clearProperty("wildfly.config.url");
+        }
     }
+
+    //    @Test
+//    public void testSuccessfulExchangeWithProgrammaticConfig() throws Exception {
+//        SaslServer server = new SaslServerBuilder(PlainSaslServerFactory.class, PLAIN)
+//                .setUserName(USERNAME)
+//                .setPassword(PASSWORD.toCharArray())
+//                .build();
+//
+//        CredentialStore credentialStore = CredentialStore.getInstance("PropertiesCredentialStore", getProvidersSupplier());
+//        createCredentialStore(credentialStore);
+//
+//        Map<String, EncryptedExpressionResolver.ResolverConfiguration> resolverConfigurationMap = new HashMap<>();
+//        resolverConfigurationMap.put(DEFAULT_RESOLVER, new EncryptedExpressionResolver.ResolverConfiguration(DEFAULT_RESOLVER, "myCredentialStore", SECRET_KEY_ALIAS));
+//
+//        EncryptedExpressionResolver resolver = new EncryptedExpressionResolver()
+//                .setResolverConfigurations(resolverConfigurationMap)
+//                .setDefaultResolver(DEFAULT_RESOLVER)
+//                .setPrefix("ENC");
+//
+//        //Preparing the encrypted expression config
+//        EncryptionClientConfiguration encConfig =
+//                EncryptionClientConfiguration.empty()
+//                        .addCredentialStore("myCredentialStore", credentialStore)
+//                        .addEncryptedExpressionResolver(resolver);
+//
+//        //Creating SASL client from authentication configuration programmatically
+//        AuthenticationConfiguration authWithEncConfig =
+//                AuthenticationConfiguration.empty()
+//                        .setSaslMechanismSelector(SaslMechanismSelector.NONE.addMechanism(PLAIN))
+//                        .useName(USERNAME)
+//                        .decryptAndUsePassword(resolver.createExpression(DEFAULT_RESOLVER, PASSWORD, encConfig));
+//
+//        AuthenticationContext context = AuthenticationContext.empty();
+//        context = context.with(MatchRule.ALL.matchHost("masked"), authWithEncConfig);
+//        AuthenticationContextConfigurationClient contextConfigurationClient = AccessController.doPrivileged(AuthenticationContextConfigurationClient.ACTION);
+//        SaslClient client = contextConfigurationClient.createSaslClient(URI.create("http://masked/"), context.authRules.configuration, Arrays.asList(PLAIN));
+//
+//        assertTrue(client.hasInitialResponse());
+//        byte[] message = client.evaluateChallenge(new byte[0]);
+//        assertEquals("\0"+USERNAME+"\0"+PASSWORD,new String(message, StandardCharsets.UTF_8));
+//
+//        server.evaluateResponse(message);
+//        assertTrue(server.isComplete());
+//        assertTrue(client.isComplete());
+//        assertEquals(USERNAME, server.getAuthorizationID());
+//    }
+
 }

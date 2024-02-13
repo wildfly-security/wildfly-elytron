@@ -26,7 +26,7 @@
             version="1.0">
 
     <xsd:import namespace="urn:elytron:client:1.7"
-                schemaLocation="elytron-client-1_7.xsd"/>
+                schemaLocation="../../auth/client/src/main/resources/schema/encryption-client-1_0.xsd"/>
 
     <!-- Encrypted Expression elements -->
     <xsd:element name="encryption-client" type="encryption-client-type"/>

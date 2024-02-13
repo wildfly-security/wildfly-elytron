@@ -15,8 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 import org.wildfly.common.context.ContextManager;
 import org.wildfly.common.context.Contextual;
@@ -54,6 +53,18 @@ public final class EncryptionClientContext implements Contextual<EncryptionClien
 
     EncryptionClientContext(EncryptionClientConfiguration encryptionConfig) {
         this.encryptionClientConfiguration = encryptionConfig;
+    }
+
+    public EncryptionClientConfiguration getEncryptionClientConfiguration() {
+        return encryptionClientConfiguration;
+    }
+
+    public EncryptedExpressionResolver getEncryptedExpressionResolver() {
+        if (getEncryptionClientConfiguration() == null) {
+            throw new InvalidEncryptionClientConfigurationException("Cannot return a resolver because EncryptionClientConfiguration is not initialized");
+        } else {
+            return getEncryptionClientConfiguration().encryptedExpressionResolver;
+        }
     }
 
     /**

@@ -40,7 +40,6 @@ import org.jboss.logging.annotations.ValidIdRanges;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
-import org.wildfly.security.auth.client.EncryptedExpressionResolutionException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -76,11 +75,11 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause Exception e,
-            String moduleIdentifier);
+                                             String moduleIdentifier);
 
     @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue,
-            String attributeName, QName elementName);
+                                                 String attributeName, QName elementName);
 
     @Message(id = 1028, value = "Invalid port number \"%d\"")
     IllegalArgumentException invalidPortNumber(int port);
@@ -118,7 +117,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1134, value = "Duplicate authentication configuration name \"%s\"")
     ConfigXMLParseException xmlDuplicateAuthenticationConfigurationName(String name,
-            @Param ConfigurationXMLStreamReader reader);
+                                                                        @Param ConfigurationXMLStreamReader reader);
 
     @Message(id = 1135, value = "Failed to load keystore data")
     ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
@@ -128,14 +127,14 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
     ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass,
-            Class<?> actualClass);
+                                                        Class<?> actualClass);
 
     @Message(id = 1139, value = "Failed to create credential store")
     ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
     @Message(id = 1140, value = "Wrong PEM content type; expected %s, actually was %s")
     ConfigXMLParseException xmlWrongPemType(@Param ConfigurationXMLStreamReader reader, Class<?> expected,
-            Class<?> actual);
+                                            Class<?> actual);
 
     @Message(id = 1141, value = "No PEM content found")
     ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
@@ -151,11 +150,11 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1163, value = "Mechanism OID conversion from string \"%s\" failed")
     ConfigXMLParseException xmlGssMechanismOidConversionFailed(@Param XMLStreamReader reader, String mechanismOid,
-            @Cause Throwable cause);
+                                                               @Cause Throwable cause);
 
     @Message(id = 1164, value = "Unable to identify provider name=%s, for service type=%s, algorithm=%s")
     ConfigXMLParseException xmlUnableToIdentifyProvider(@Param Location location, String providerName,
-            String serviceType, String algorithm);
+                                                        String serviceType, String algorithm);
 
     @LogMessage(level = WARN)
     @Message(id = 1166, value = "%2$s: Element \"%1$s\" is deprecated")
@@ -214,29 +213,5 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 14008, value = "WildFlyElytronClientDefaultSSLContextProvider could not obtain client default SSLContext")
     NoSuchAlgorithmException couldNotObtainClientDefaultSSLContext();
-
-    @Message(id = 14009, value = "The expression '%s' does not specify a resolver and no default is defined.")
-    EncryptedExpressionResolutionException expressionResolutionWithoutResolver(String expression);
-
-    @Message(id = 14010, value = "The expression '%s' specifies a resolver configuration which does not exist.")
-    EncryptedExpressionResolutionException invalidResolver(String expression);
-
-    @Message(id = 14011, value = "Unable to load credential from credential store.")
-    EncryptedExpressionResolutionException unableToLoadCredential(@Cause Throwable cause);
-
-    @Message(id = 14012, value = "Unable to decrypt expression '%s'.")
-    EncryptedExpressionResolutionException unableToDecryptExpression(String expression, @Cause Throwable cause);
-
-    @Message(id = 14013, value = "The name of the resolver to use was not specified and no default-resolver has been defined.")
-    EncryptedExpressionResolutionException noResolverSpecifiedAndNoDefault();
-
-    @Message(id = 14014, value = "No expression resolver has been defined with the name '%s'.")
-    EncryptedExpressionResolutionException noResolverWithSpecifiedName(String name);
-
-    @Message(id = 14015, value = "Credential alias '%s' of credential type '%s' does not exist in the store")
-    EncryptedExpressionResolutionException credentialDoesNotExist(String alias, String credentialType);
-
-    @Message(id = 14016, value = "Unable to encrypt the supplied clear text.")
-    EncryptedExpressionResolutionException unableToEncryptClearText(@Cause Throwable cause);
 
 }

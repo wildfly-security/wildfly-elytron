@@ -22,15 +22,14 @@ import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.common.Assert.checkMinimumParameter;
 import static org.wildfly.common.Assert.checkNotNullParam;
-import static org.wildfly.security.auth.client.XMLParserUtils.isSet;
-import static org.wildfly.security.auth.client.XMLParserUtils.setBit;
-import static org.wildfly.security.auth.client.XMLParserUtils.checkAttributeNamespace;
-import static org.wildfly.security.auth.client.XMLParserUtils.requireNoAttributes;
-import static org.wildfly.security.auth.client.XMLParserUtils.requireSingleAttribute;
-import static org.wildfly.security.auth.client.XMLParserUtils.requireSingleURIAttribute;
-import static org.wildfly.security.auth.client.XMLParserUtils.missingAttribute;
-import static org.wildfly.security.auth.client.XMLParserUtils.invalidPortNumber;
-import static org.wildfly.security.auth.client.XMLParserUtils.andThenOp;
+import static org.wildfly.security.util.XMLParserUtils.isSet;
+import static org.wildfly.security.util.XMLParserUtils.setBit;
+import static org.wildfly.security.util.XMLParserUtils.checkAttributeNamespace;
+import static org.wildfly.security.util.XMLParserUtils.requireNoAttributes;
+import static org.wildfly.security.util.XMLParserUtils.requireSingleAttribute;
+import static org.wildfly.security.util.XMLParserUtils.requireSingleURIAttribute;
+import static org.wildfly.security.util.XMLParserUtils.missingAttribute;
+import static org.wildfly.security.util.XMLParserUtils.andThenOp;
 import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
@@ -83,6 +82,7 @@ import javax.xml.stream.Location;
 
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.Oid;
+import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -114,6 +114,7 @@ import org.wildfly.security.credential.source.impl.KeyStoreCredentialSource;
 import org.wildfly.security.credential.source.impl.LocalKerberosCredentialSource;
 import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.CredentialStoreFactory;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.KeyStoreUtil;
@@ -139,6 +140,7 @@ import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.ssl.X509RevocationTrustManager;
 import org.wildfly.security.ssh.util.SshUtil;
+import org.wildfly.security.util.ModuleLoader;
 
 /**
  * A parser for the Elytron XML schema.
@@ -1230,7 +1232,12 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 12)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 12);
                         final String moduleName = parseModuleRefType(reader);
-                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
+                        final ClassLoader classLoader;
+                        try {
+                            classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(moduleName);
+                        } catch (ModuleLoadException e){
+                            throw xmlLog.xmlNoModuleFound(reader, e, moduleName);
+                        }
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(classLoader)));
                         break;
                     }
@@ -1286,9 +1293,14 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 2)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 2);
                         final String moduleName = parseModuleRefType(reader);
-                        Supplier<Provider[]> serviceLoaderSupplier = (moduleName == null) ?
-                                ELYTRON_PROVIDER_SUPPLIER :
-                                new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(reader, moduleName));
+                        Supplier<Provider[]> serviceLoaderSupplier;
+                        try {
+                            serviceLoaderSupplier = (moduleName == null) ?
+                                    ELYTRON_PROVIDER_SUPPLIER :
+                                    new ProviderServiceLoaderSupplier(ModuleLoader.getClassLoaderFromModule(moduleName));
+                        } catch (ModuleLoadException e) {
+                            throw xmlLog.xmlNoModuleFound(reader, e, moduleName);
+                        }
                         providerSupplier = providerSupplier == null ? serviceLoaderSupplier : ProviderUtil.aggregate(providerSupplier, serviceLoaderSupplier);
                         break;
                     }
@@ -2377,7 +2389,8 @@ public final class ElytronXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 if (!credentialStoresMap.containsKey(name)) {
-                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location, credentialSourceSupplier, providersSupplier);
+                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory;
+                    credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location, credentialSourceSupplier, providersSupplier);
                     credentialStoresMap.put(name, credentialStoreSecurityFactory);
                 } else {
                     throw xmlLog.duplicateCredentialStoreName(reader, name);
@@ -2578,7 +2591,12 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 final String resourceName = name;
-                final ClassLoader classLoader = module != null ? ModuleLoader.getClassLoaderFromModule(reader, module) : Thread.currentThread().getContextClassLoader();
+                final ClassLoader classLoader;
+                try {
+                    classLoader = module != null ? ModuleLoader.getClassLoaderFromModule(module) : Thread.currentThread().getContextClassLoader();
+                } catch (ModuleLoadException e) {
+                    throw xmlLog.xmlNoModuleFound(reader, e, module);
+                }
                 return () -> {
                     ClassLoader actualClassLoader = classLoader != null ? classLoader : ElytronXmlParser.class.getClassLoader();
                     final InputStream stream = actualClassLoader.getResourceAsStream(resourceName);
@@ -2847,6 +2865,11 @@ public final class ElytronXmlParser {
             selector = selector.add(name);
         }
         return selector;
+    }
+
+
+    static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
+        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
     /**

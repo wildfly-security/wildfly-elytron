@@ -15,8 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -108,6 +107,10 @@ public final class EncryptionClientConfiguration {
         } else {
             return new EncryptionClientConfiguration(this, ADD_CREDENTIAL_STORE, IdentityCredentials.NONE.withCredential(credential));
         }
+    }
+
+    public EncryptedExpressionResolver getEncryptedExpressionResolver() {
+        return encryptedExpressionResolver;
     }
 
     public void setCredentialStoreMap(Map<String, CredentialStore> credentialStoreMap) {

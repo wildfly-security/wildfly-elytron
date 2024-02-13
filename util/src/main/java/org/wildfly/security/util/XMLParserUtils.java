@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.util;
 
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -24,8 +24,6 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 
 import java.net.URI;
-
-import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 /**
  * A utility class to get and check information about attributes in XML file.
@@ -35,37 +33,37 @@ import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
 
 public class XMLParserUtils {
 
-    protected static boolean isSet(int var, int bit) {
+    public static boolean isSet(int var, int bit) {
         return (var & 1 << bit) != 0;
     }
 
-    protected static int setBit(int var, int bit) {
+    public static int setBit(int var, int bit) {
         return var | 1 << bit;
     }
 
-    protected static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
+    public static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
         final String attributeNamespace = reader.getAttributeNamespace(idx);
         if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
             throw reader.unexpectedAttribute(idx);
         }
     }
 
-    protected static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    public static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
         }
     }
 
-    protected static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+    public static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
         return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValueResolved(0));
     }
 
-    protected static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+    public static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
         return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValueResolved(0));
     }
 
-    protected static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
+    public static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount < 1) {
             throw reader.missingRequiredAttribute("", attributeName);
@@ -80,15 +78,11 @@ public class XMLParserUtils {
         return attributeFunction.get();
     }
 
-    protected static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
+    public static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
         return reader.missingRequiredAttribute(null, name);
     }
 
-    protected static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) throws ConfigXMLParseException {
-        return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValueResolved(index), reader.getAttributeLocalName(index), reader.getName());
-    }
-
-    protected static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
+    public static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
         return t -> second.apply(first.apply(t));
     }
 }

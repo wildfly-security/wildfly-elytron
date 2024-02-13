@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.encryption.client;
 
 /**
  * An exception thrown to indicate that the encryption client
@@ -34,6 +34,17 @@ public class InvalidEncryptionClientConfigurationException extends IllegalArgume
      * null}), and no cause is specified.
      */
     public InvalidEncryptionClientConfigurationException() {
+    }
+
+    /**
+     * Constructs a new {@code InvalidAuthenticationConfigurationException} instance with an initial cause.  If a
+     * non-{@code null} cause is specified, its message is used to initialize the message of this {@code
+     * InvalidAuthenticationConfigurationException}; otherwise the message is left blank ({@code null}).
+     *
+     * @param cause the cause
+     */
+    public InvalidEncryptionClientConfigurationException(final String cause) {
+        super(cause);
     }
 
 
