@@ -98,5 +98,9 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 1181, value = "Not sending new request to jwks url \"%s\". Last request time was %d.")
     void avoidingFetchJwks(URL url, long timestamp);
+
+    @LogMessage(level = WARN)
+    @Message(id = 1182, value = "Allowed jku values haven't been configured for the JWT validator. Token validation will fail if the token contains a 'jku' header parameter.")
+    void allowedJkuValuesNotConfigured();
 }
 

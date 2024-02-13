@@ -245,6 +245,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .setJkuTimeout(0) //refresh jwks every time
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -276,6 +277,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(0) // no time betweeen requests
                         .useSslContext(sslContext)
@@ -309,6 +311,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .setJkuTimeout(60000L) // 60s of cache
                         .setJkuMinTimeBetweenRequests(10000) // 10s between calls
                         .useSslContext(sslContext)
@@ -352,6 +355,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .publicKeys(namedKeys)
                         .publicKey(keyPair3.getPublic())
                         .useSslContext(sslContext)
@@ -382,6 +386,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50832")
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -429,6 +434,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .setJkuTimeout(0) //Keys will be downloaded on every request
                         .setJkuMinTimeBetweenRequests(0)
                         .useSslContext(sslContext)
@@ -457,6 +463,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -477,6 +484,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:80")
                         .useSslContext(sslContext).useSslHostnameVerifier((a,b) -> true).build())
                 .build();
 
@@ -496,6 +504,7 @@ public class JwtSecurityRealmTest {
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50831")
                         .useSslContext(sslContext)
                         .useSslHostnameVerifier((a,b) -> true).build())
                 .build();
@@ -720,6 +729,112 @@ public class JwtSecurityRealmTest {
         assertNotNull(realmIdentity);
         assertTrue(realmIdentity.exists());
         assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
+    }
+
+    @Test
+    public void testTokenWithJkuValueAllowed() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                JwtTestUtil.createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder()
+                .setTrustManager(tm)
+                .setClientMode(true)
+                .setSessionTimeout(10)
+                .build()
+                .create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // token validation should succeed
+        assertIdentityExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testTokenWithJkuValueNotAllowed() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                JwtTestUtil.createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50834")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder()
+                .setTrustManager(tm)
+                .setClientMode(true)
+                .setSessionTimeout(10)
+                .build()
+                .create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // token validation should fail
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testAllowedJkuValuesNotConfigured() throws Exception {
+        BearerTokenEvidence evidence = new BearerTokenEvidence(
+                JwtTestUtil.createJwt(keyPair1, 60, -1, "1", new URI("https://localhost:50831")));
+
+        X509TrustManager tm = getTrustManager();
+        SSLContext sslContext = new SSLContextBuilder()
+                .setTrustManager(tm)
+                .setClientMode(true)
+                .setSessionTimeout(10)
+                .build()
+                .create();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .useSslContext(sslContext)
+                        .useSslHostnameVerifier((a,b) -> true).build())
+                .build();
+
+        // token validation should fail
+        assertIdentityNotExist(securityRealm, evidence);
+    }
+
+    @Test
+    public void testTokenWithoutJkuValue() throws Exception {
+        BearerTokenEvidence evidence1 = new BearerTokenEvidence(
+                createJwt(keyPair1, 60, -1, "1", null));
+        BearerTokenEvidence evidence2 = new BearerTokenEvidence(
+                createJwt(keyPair2, 60, -1, "2", null));
+
+        Map<String, PublicKey> namedKeys = new LinkedHashMap<>();
+        namedKeys.put("1", keyPair1.getPublic());
+        namedKeys.put("2", keyPair2.getPublic());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder()
+                        .issuer("elytron-oauth2-realm")
+                        .audience("my-app-valid")
+                        .setAllowedJkuValues("https://localhost:50832", "https://localhost:50831")
+                        .publicKeys(namedKeys)
+                        .build())
+                .build();
+
+        // token validation should succeed
+        assertIdentityExist(securityRealm, evidence1);
+        assertIdentityExist(securityRealm, evidence2);
     }
 
     private void assertIdentityNotExist(SecurityRealm realm, Evidence evidence) throws RealmUnavailableException {
