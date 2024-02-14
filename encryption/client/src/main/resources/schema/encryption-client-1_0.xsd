@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <!--
+      ~ JBoss, Home of Professional Open Source.
+      ~ Copyright 2023 Red Hat, Inc., and individual contributors
+      ~ as indicated by the @author tags.
+      ~
+      ~ Licensed under the Apache License, Version 2.0 (the "License");
+      ~ you may not use this file except in compliance with the License.
+      ~ You may obtain a copy of the License at
+      ~
+      ~     http://www.apache.org/licenses/LICENSE-2.0
+      ~
+      ~ Unless required by applicable law or agreed to in writing, software
+      ~ distributed under the License is distributed on an "AS IS" BASIS,
+      ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      ~ See the License for the specific language governing permissions and
+      ~ limitations under the License.
+    -->
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xss="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="urn:encryption:client:1.0"
+            xmlns="urn:encryption:client:1.0"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            xmlns:elytron="urn:elytron:1.7"
+            version="1.0">
+
+    <xsd:import namespace="urn:elytron:client:1.7"
+                schemaLocation="../../auth/client/src/main/resources/schema/encryption-client-1_0.xsd"/>
+
+    <!-- Encrypted Expression elements -->
+    <xsd:element name="encryption-client" type="encryption-client-type"/>
+
+    <xsd:complexType name="encryption-client-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                Configuration for encrypted expressions and expression-resolvers to be used across different client configurations.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:all>
+            <xsd:element name="credential-stores" type="elytron:credential-stores-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="expression-resolvers" type="expression-resolvers-type" minOccurs="1" maxOccurs="1"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <!--    expression-resolver attributes     -->
+    <xsd:complexType name="expression-resolvers-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                List of all the expression-resolvers used in encrypted expressions.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="expression-resolver" type="expression-resolver-type"/>
+        </xsd:choice>
+
+        <xsd:attribute name="default-resolver" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The name of the default resolver that would be used to resolve an expression if one is not specified.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
+    <xsd:complexType name="expression-resolver-type">
+        <xsd:annotation>
+            <xsd:documentation>
+                Individual expression-resolver used to handle encrypted expressions.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="name" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Name of the expression-resolver.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="credential-store-name" type="xsd:string" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The keystore used to back this expression-resolver.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="alias" type="xsd:string" use="required" >
+            <xsd:annotation>
+                <xsd:documentation>
+                    Alias for the key used to handle the encrypted expression.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>

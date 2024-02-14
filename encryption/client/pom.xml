@@ -19,7 +19,7 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
         <groupId>org.wildfly.security</groupId>
@@ -30,31 +30,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>wildfly-elytron-credential-store</artifactId>
+    <artifactId>wildfly-elytron-encryption-client</artifactId>
 
-    <name>WildFly Elytron - Credential Store</name>
-    <description>WildFly Security Credential Store SPIs and implementaions</description>
+    <name>WildFly Elytron - Encryption Client</name>
+    <description>WildFly Encryption Client</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.wildfly.client</groupId>
-            <artifactId>wildfly-client-config</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-asn1</artifactId>
-        </dependency>    
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth</artifactId>
-        </dependency>    
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-auth-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-base</artifactId>
+            <artifactId>wildfly-elytron-auth-util</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
@@ -62,21 +46,26 @@
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-encryption</artifactId>
+            <artifactId>wildfly-elytron-credential-store</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-permission</artifactId>
+            <artifactId>wildfly-elytron-mechanism</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-util</artifactId>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-x500</artifactId>
-        </dependency>        
-                
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <!-- scope is compile ELY-1153 -->
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-annotations</artifactId>
@@ -86,24 +75,20 @@
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <scope>provided</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <scope>provided</scope>
         </dependency>
 
-        <!--Test scope-->
-        <dependency>
-            <groupId>org.wildfly.security</groupId>
-            <artifactId>wildfly-elytron-password-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!--   test scope     -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -116,5 +101,4 @@
         </dependency>
 
     </dependencies>
-    
 </project>

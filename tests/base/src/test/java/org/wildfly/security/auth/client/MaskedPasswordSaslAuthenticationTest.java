@@ -98,7 +98,7 @@ public class MaskedPasswordSaslAuthenticationTest {
         server.shutdown();
     }
 
-    private static Dispatcher createTokenEndpoint() {
+    protected static Dispatcher createTokenEndpoint() {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest recordedRequest) throws InterruptedException {

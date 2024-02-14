@@ -748,6 +748,23 @@ public final class AuthenticationConfiguration {
         return password == null ? useCredentials(filtered) : useCredentials(filtered).useCredential(new PasswordCredential(password));
     }
 
+//    /**
+//     * Create a new configuration which is the same as this configuration, but which uses the given encrypted
+//     * password to authenticate. The current encryption client configuration is loaded and is used to decrypt
+//     * the encrypted password. If one does not exist, appropriate exception is thrown.
+//     *
+//     * @param encryptedPassword the password to use
+//     * @return the new configuration
+//     */
+//    public AuthenticationConfiguration decryptAndUsePassword(String encryptedPassword) {
+//        EncryptionClientContext ctx = EncryptionClientContext.captureCurrent();
+//        if (ctx.encryptionClientConfiguration == null) {
+//            throw new EncryptedExpressionResolutionException("No encryption client configuration available");
+//        }
+//        String password = ctx.encryptionClientConfiguration.encryptedExpressionResolver.resolveExpression(encryptedPassword, ctx.encryptionClientConfiguration);
+//        return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray()));
+//    }
+
     /**
      * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
      *

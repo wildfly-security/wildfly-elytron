@@ -16,17 +16,11 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.client;
+package org.wildfly.security.util;
 
-import static org.wildfly.security.auth.client._private.ElytronMessages.xmlLog;
-
-import javax.xml.stream.XMLStreamReader;
-
-import org.jboss.logging.annotations.Param;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
-import org.wildfly.client.config.ConfigXMLParseException;
 
 /**
  * Utility class to load a module.
@@ -36,22 +30,18 @@ import org.wildfly.client.config.ConfigXMLParseException;
 
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2017 Red Hat inc.
  */
-class ModuleLoader {
+public class ModuleLoader {
 
     /**
      * Returns the class loader of the given module or throws a {@code ConfigXMLParseException} if the module can not be loaded.
      *
      * @param moduleName the name of the module (can not be {@code null}
      * @return the class loader of the module
-     * @throws ConfigXMLParseException if the module can not be loaded
+     * @throws ModuleLoadException if the module can not be loaded
      *
      */
-    static ClassLoader getClassLoaderFromModule(@Param XMLStreamReader reader, String moduleName) throws ConfigXMLParseException {
+    public static ClassLoader getClassLoaderFromModule(String moduleName) throws ModuleLoadException {
         final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleName);
-        try {
-            return Module.getModuleFromCallerModuleLoader(identifier).getClassLoader();
-        } catch (ModuleLoadException e) {
-            throw xmlLog.xmlNoModuleFound(reader, e, identifier.toString());
-        }
+        return Module.getModuleFromCallerModuleLoader(identifier).getClassLoader();
     }
 }
