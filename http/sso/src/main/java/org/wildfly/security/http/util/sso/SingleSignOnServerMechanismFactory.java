@@ -276,16 +276,16 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                             callbacks[i] = new CachedIdentityAuthorizeCallback(principal, singleSignOnSession) {
                                 @Override
                                 public void setAuthorized(SecurityIdentity securityIdentity) {
-                                    super.setAuthorized(securityIdentity);
                                     delegate.setAuthorized(securityIdentity);
+                                    super.setAuthorized(securityIdentity);
                                 }
                             };
                         } else {
                             callbacks[i] = new CachedIdentityAuthorizeCallback(singleSignOnSession, delegate.isLocalCache()) {
                                 @Override
                                 public void setAuthorized(SecurityIdentity securityIdentity) {
-                                    super.setAuthorized(securityIdentity);
                                     delegate.setAuthorized(securityIdentity);
+                                    super.setAuthorized(securityIdentity);
                                 }
                             };
                         }
