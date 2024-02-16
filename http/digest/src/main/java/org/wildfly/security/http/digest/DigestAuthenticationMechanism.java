@@ -23,6 +23,7 @@ import static org.wildfly.security.http.HttpConstants.AUTH;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 import static org.wildfly.security.http.HttpConstants.CNONCE;
+import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.NC;
 import static org.wildfly.security.http.HttpConstants.QOP;
 import static org.wildfly.security.http.HttpConstants.URI;
@@ -69,6 +70,7 @@ import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.mechanism.digest.PasswordDigestObtainer;
+import org.wildfly.security.password.interfaces.DigestPassword;
 
 /**
  * Implementation of the HTTP DIGEST authentication mechanism as defined in RFC 7616.
@@ -326,8 +328,17 @@ final class DigestAuthenticationMechanism implements HttpServerAuthenticationMec
     }
 
     private byte[] getH_A1(final MessageDigest messageDigest, final String username, final String messageRealm) throws AuthenticationMechanismException {
-        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, getMechanismName().toLowerCase(Locale.ROOT), messageDigest, providers, null, true, false);
+        PasswordDigestObtainer obtainer = new PasswordDigestObtainer(callbackHandler, username, messageRealm, httpDigest, getCredentialAlgorithm(getMechanismName()), messageDigest, providers, null, true, false);
         return obtainer.handleUserRealmPasswordCallbacks();
+    }
+
+    private String getCredentialAlgorithm(String mechanismName) {
+        switch (mechanismName) {
+            case DIGEST_NAME:
+                return DigestPassword.ALGORITHM_DIGEST_MD5;
+            default:
+                return mechanismName.toLowerCase(Locale.ROOT);
+        }
     }
 
     private String convertToken(final String name, final byte[] value) throws AuthenticationMechanismException {

@@ -259,6 +259,38 @@ public class DigestAuthenticationMechanismTest extends AbstractBaseHttpTest {
         Assert.assertEquals(Status.COMPLETE, request2.getResult());
     }
 
+    @Test
+    public void testDigestMD5Password() throws Exception {
+        mockDigestNonce("5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK");
+        Map<String, Object> props = new HashMap<>();
+        props.put(CONFIG_REALM, "api@example.org");
+        props.put("org.wildfly.security.http.validate-digest-uri", "false");
+        HttpServerAuthenticationMechanism mechanism = digestFactory.createAuthenticationMechanism(DIGEST_NAME, props, getCallbackHandler("J\u00E4s\u00F8n Doe", "api@example.org", "Secret, or not?", true));
+
+        TestingHttpServerRequest request1 = new TestingHttpServerRequest(null);
+        mechanism.evaluateRequest(request1);
+        Assert.assertEquals(Status.NO_AUTH, request1.getResult());
+        TestingHttpServerResponse response = request1.getResponse();
+        Assert.assertEquals(UNAUTHORIZED, response.getStatusCode());
+        Assert.assertEquals("Digest realm=\"api@example.org\", nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\", opaque=\"00000000000000000000000000000000\", algorithm=MD5, qop=auth", response.getAuthenticateHeader());
+
+        TestingHttpServerRequest request2 = new TestingHttpServerRequest(new String[] {
+                "Digest username*=UTF-8''J%C3%A4s%C3%B8n%20Doe,\n" +
+                        "       realm=\"api@example.org\",\n" +
+                        "       uri=\"/doe.json\",\n" +
+                        "       algorithm=MD5,\n" +
+                        "       nonce=\"5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK\",\n" +
+                        "       nc=00000001,\n" +
+                        "       cnonce=\"NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v\",\n" +
+                        "       qop=auth,\n" +
+                        "       response=\"" + computeDigest("/doe.json", "5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK", "NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v", "00000001", "J\u00E4s\u00F8n Doe", "Secret, or not?", "MD5", "api@example.org", "auth", "GET") + "\",\n" +
+                        "       opaque=\"00000000000000000000000000000000\",\n" +
+                        "       userhash=false"
+        });
+        mechanism.evaluateRequest(request2);
+        Assert.assertEquals(Status.COMPLETE, request2.getResult());
+    }
+
     private String computeDigest(String uri, String nonce, String cnonce, String nc, String username, String password, String algorithm, String realm, String qop, String method) throws NoSuchAlgorithmException {
         String A1, HashA1, A2, HashA2;
         MessageDigest md = MessageDigest.getInstance(algorithm);

@@ -430,11 +430,13 @@ public class AbstractBaseHttpTest {
                     Assert.assertEquals(username, ((NameCallback) callback).getDefaultName());
                 } else if (callback instanceof CredentialCallback) {
                     if (useDigestPassword) {
-                        if (! DigestPassword.ALGORITHM_DIGEST_SHA_256.equals(((CredentialCallback) callback).getAlgorithm())) {
+                        String credentialAlgorithm = ((CredentialCallback) callback).getAlgorithm();
+                        if (! DigestPassword.ALGORITHM_DIGEST_SHA_256.equals(credentialAlgorithm) &&
+                                ! DigestPassword.ALGORITHM_DIGEST_MD5.equals(credentialAlgorithm)) {
                             throw new UnsupportedCallbackException(callback);
                         }
                         try {
-                            PasswordFactory factory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_256, ELYTRON_PASSWORD_PROVIDERS);
+                            PasswordFactory factory = PasswordFactory.getInstance(credentialAlgorithm, ELYTRON_PASSWORD_PROVIDERS);
                             DigestPasswordAlgorithmSpec algorithmSpec = new DigestPasswordAlgorithmSpec(username, realm);
                             EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password.toCharArray(), algorithmSpec);
                             DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);
