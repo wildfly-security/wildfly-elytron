@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elytron: Securing WildFly Applications Using Okta on OpenShift</title>
+    <script src="/wildfly-elytron/assets/javascript/highlight.pack.js" type="text/javascript"></script>
+
+    <link rel="shortcut icon" type="image/png" href="/wildfly-elytron/favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- We override the colours from this theme manually -->
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/wildfly-elytron/assets/css/styles.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <script src="/wildfly-elytron/assets/javascript/hl.js" type="text/javascript"></script>
+    <link rel="alternate" type="application/rss+xml"  href="/wildfly-elytron/feed.xml" title="WildFly Elytron">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-135301155-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-135301155-1');
+    </script>
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Securing WildFly Applications Using Okta on OpenShift | WildFly Elytron</title>
+<meta name="generator" content="Jekyll v4.3.3" />
+<meta property="og:title" content="Securing WildFly Applications Using Okta on OpenShift" />
+<meta name="author" content="Prarthona Paul" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The elytron-oidc-client subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application deployed to WildFly on OpenShift using Okta as the OpenID Provider." />
+<meta property="og:description" content="WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The elytron-oidc-client subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application deployed to WildFly on OpenShift using Okta as the OpenID Provider." />
+<link rel="canonical" href="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/" />
+<meta property="og:url" content="https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/" />
+<meta property="og:site_name" content="WildFly Elytron" />
+<meta property="og:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-02-21T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg" />
+<meta property="twitter:title" content="Securing WildFly Applications Using Okta on OpenShift" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Prarthona Paul"},"dateModified":"2024-02-21T00:00:00+00:00","datePublished":"2024-02-21T00:00:00+00:00","description":"WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The elytron-oidc-client subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application deployed to WildFly on OpenShift using Okta as the OpenID Provider.","headline":"Securing WildFly Applications Using Okta on OpenShift","image":"https://wildfly-security.github.io/wildfly-elytron/assets/images/wildfly-elytron-logo.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/"},"url":"https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+
+<!-- Always shows a header, even in smaller screens. -->
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+        <div class="mdl-layout__header-row ">
+            <!-- Title -->
+            <span class="mdl-layout-title"><h3>Wild<strong>Fly</strong>  Elytron</h3></span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link highlight-button Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+                    
+                
+                    
+                    
+                    
+                         <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+                    
+                
+            </nav>
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <div class="side-drawer-logo-container"><h3>Wild<strong>Fly</strong>  Elytron</h3></div>
+        <nav class="mdl-navigation">
+            
+            
+            
+            
+                <a class="mdl-navigation__link highlight-sidebar Contribute-menuitem" href="/wildfly-elytron/contribute/">Contribute</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Home-menuitem" href="/wildfly-elytron/">Home</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Guides-menuitem" href="/wildfly-elytron/guides/">Guides</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Docs-menuitem" href="/wildfly-elytron/docs/">Docs</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link Community-menuitem" href="/wildfly-elytron/community/">Community</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link mdl-navigation__link--current Blog-menuitem" href="/wildfly-elytron/blog/">Blog</a>
+            
+            
+            
+            
+            
+                <a class="mdl-navigation__link GitHub-menuitem" href="https://github.com/wildfly-security/wildfly-elytron">GitHub</a>
+            
+            
+            <!-- mdl-navigation__link--current -->
+        </nav>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            
+            <div class="content">
+                <div class="post-page grid-wrapper">
+  <div class="grid__item width-12-12 width-12-12-m doc-content">
+    <h1>Securing WildFly Applications Using Okta on OpenShift</h1>
+    <div class="grid-wrapper">
+      <div class="grid__item width-8-12 width-12-12-m byline-wrapper">
+        
+        
+          <img class="headshot" src="https://www.gravatar.com/avatar/6ed81e314d6074bbf734abe812f33b05">
+        
+        <p class="byline">
+          By <a href="https://github.com/PrarthonaPaul">Prarthona Paul</a> | February 21, 2024
+          <br>
+          
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/oidc"> #oidc</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/openshift"> #openshift</a>
+            
+              <a style="font-size: 0.9em;" href="/wildfly-elytron/blog/tag/okta"> #okta</a>
+            
+          
+        </p>
+      </div>
+      
+      <div class="grid__item width-4-12 width-12-12-m"><div class="share-page">
+  <a class="share-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/&title=Securing WildFly Applications Using Okta on OpenShift" rel="nofollow" target="_blank" title="Share on LinkedIn">
+    <i class="fab fa-linkedin"></i>
+  </a>
+  <a class="share-twitter" href="https://twitter.com/intent/tweet?text=Securing WildFly Applications Using Okta on OpenShift&url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/&via=WildFlyAS&related=WildFlyAS" rel="nofollow" target="_blank" title="Share on Twitter">
+    <i class="fab fa-twitter-square"></i>
+  </a>
+  <a class="share-facebook" href="https://facebook.com/sharer.php?u=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/" rel="nofollow" target="_blank" title="Share on Facebook">
+    <i class="fab fa-facebook-square"></i>
+  </a>
+  <a class="share-reddit" href="http://www.reddit.com/submit?url=https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/" onclick="window.open(this.href, 'pop-up', 'left=20,top=20,width=900,height=500,toolbar=1,resizable=0'); return false;" title="Share on Reddit" >
+    <i class="fab fa-reddit-square"></i>
+  </a>
+  <a class="share-email" href="mailto:?subject=Securing WildFly Applications Using Okta on OpenShift&amp;body=Securing WildFly Applications Using Okta on OpenShift https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/" title="Share via Email" >
+    <i class="fas fa-envelope-square"></i>
+  </a>
+</div>
+</div>
+      <div class="grid__item width-12-12">
+          <div class="paragraph">
+<p>WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The <code>elytron-oidc-client</code> subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application deployed to WildFly on OpenShift using <a href="https://www.okta.com/">Okta</a> as the OpenID Provider.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#example-application">Example application</a></li>
+<li><a href="#log-into-the-openshift-cluster">Log Into the OpenShift Cluster</a></li>
+<li><a href="#configure-okta">Configure Okta</a>
+<ul class="sectlevel2">
+<li><a href="#advanced-openid-configuration">Advanced OpenID Configuration</a></li>
+</ul>
+</li>
+<li><a href="#add-helm-configuration">Add Helm Configuration</a></li>
+<li><a href="#configure-the-deployment-settings">Configure the Deployment Settings</a></li>
+<li><a href="#deploy-the-example-application-to-wildfly-on-openshift">Deploy the Example Application to WildFly on OpenShift</a>
+<ul class="sectlevel2">
+<li><a href="#behind-the-scenes">Behind the scenes</a></li>
+</ul>
+</li>
+<li><a href="#get-the-application-url">Get the Application URL</a></li>
+<li><a href="#finish-configuring-okta">Finish Configuring Okta</a></li>
+<li><a href="#access-the-app">Access the App</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To follow along this guide you will need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Roughly 15 minutes</p>
+</li>
+<li>
+<p>Access to an OpenShift cluster (try the <a href="https://developers.redhat.com/developer-sandbox">Red Hat Developer Sandbox</a> for free)</p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://helm.sh/docs/intro/install/">Helm Chart</a></p>
+</li>
+<li>
+<p><a href="https://www.okta.com/">Okta OpenID Provider</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="example-application"><a class="anchor" href="#example-application"></a>Example application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will use a simple web application in this guide that consists of a single <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-okta/src/main/java/org/wildfly/security/examples/SecuredServlet.java">servlet</a>. We will use the <a href="https://github.com/wildfly-security-incubator/elytron-examples/tree/main/simple-webapp-okta">simple-webapp-okta</a> application in this repository.</p>
+</div>
+<div class="paragraph">
+<p>We will need to first fork, and then clone the <a href="https://github.com/wildfly-security-incubator/elytron-examples">elytron-examples</a> repository. We will be using the <code>simple-webapp-okta</code> directory in this repo:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">git clone git@github.com:wildfly-security-incubator/elytron-examples.git
+cd simple-webapp-okta</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="log-into-the-openshift-cluster"><a class="anchor" href="#log-into-the-openshift-cluster"></a>Log Into the OpenShift Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we can deploy our application, we need to log into an OpenShift cluster. You can log in via the <a href="https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login -u myUserName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can log in using the API token:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc login --token=myToken --server=myServerUrl</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can request the token via the <strong>Copy Login Command</strong> link in the OpenShift web console.</p>
+</div>
+<div class="paragraph">
+<p>If you don’t already have a project created, you can create one using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc new-project myProjectName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once you have your environment set up with the required tools, we can move on to the next step to build and deploy our application on OpenShift.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-okta"><a class="anchor" href="#configure-okta"></a>Configure Okta</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For this guide, we will be using Okta as out OpenID provider. In order to secure the application, we will need to access the Okta web console and register our application as a client.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Log in to the <a href="https://www.okta.com/free-trial/">Okta dashboard</a> to get started.</p>
+</li>
+<li>
+<p>At the top right corner, click on <strong>Admin</strong> to be redirected to the admin dashboard.</p>
+</li>
+<li>
+<p>On the left hand panel, from the <strong>Applications</strong> drop down, click on <strong>Applications</strong> and then <strong>Create App Integration</strong>. Choose <strong>OIDC - OpenID Connect</strong> under <strong>Sign-in method</strong> and <strong>Web Application</strong> for <strong>Application type</strong> and click <strong>Next</strong>.</p>
+</li>
+<li>
+<p>Under <strong>General Settings</strong> add the following configurations:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>App integration name:</code> <strong>simple-webapp-okta</strong></p>
+</li>
+<li>
+<p><code>Grant type:</code> Leave it as is, with <code>Authorization Code</code> checked.</p>
+</li>
+<li>
+<p><code>Sign-in redirect URIs</code>: Leave it as is for now. We will edit it later.</p>
+</li>
+<li>
+<p>Under the <code>Assignments</code> tab, for <code>Controlled access</code>, select <strong>Skip group assignment for now</strong>.</p>
+</li>
+<li>
+<p>Click <code>Save</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Navigate to the <strong>Directory</strong> drop down on the left panel and click <strong>People</strong>. Click <strong>Add person</strong> and add a person with:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>First name: <strong>Alice</strong></p>
+</li>
+<li>
+<p>Last name: <strong>Smith</strong></p>
+</li>
+<li>
+<p>Email: <strong>alice@example.org</strong></p>
+</li>
+<li>
+<p>User Name: <strong>alice@example.org</strong></p>
+</li>
+<li>
+<p>From the dropdown list for <strong>Password</strong>, choose <strong>Set by admin</strong> and set a password that fits the password requirements.</p>
+</li>
+<li>
+<p>Uncheck <strong>User must change password on first login</strong> and hit <code>Save</code>. For more information about how to add a user manually <a href="https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-add-users.htm">click here</a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Click on the <strong>Applications</strong> tab on the left hand side. Navigate to <strong>Applications</strong> and click on <strong>simple-webapp-okta</strong>. Under the <strong>Assignments</strong> tab, click on <strong>Assign</strong>, then click on <strong>Assign to People</strong> and select <strong>Alice</strong>. For more information about how to assign a user to an application, please see <a href="https://support.okta.com/help/s/article/How-To-Assign-An-User-To-An-Application?language=en_US">here</a>.</p>
+</li>
+</ol>
+</div>
+<div class="sect2">
+<h3 id="advanced-openid-configuration"><a class="anchor" href="#advanced-openid-configuration"></a>Advanced OpenID Configuration</h3>
+<div class="paragraph">
+<p>In order to extract the user information through the id token, we will need to configure a custom authorization server. Follow the steps below for this:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Under the <strong>Security</strong> dropdown, select <strong>API</strong> and click on the edit button next to the <strong>Default</strong> server.</p>
+</li>
+<li>
+<p>Under the <strong>Claims</strong> tab, click on the <strong>Add Claim</strong> button and to add a claim with the following configurations:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Name: <strong>IDTClaim</strong></p>
+</li>
+<li>
+<p>Include in token type: <strong>ID Token</strong> and keep it at always.</p>
+</li>
+<li>
+<p>Value type: <strong>Expression</strong></p>
+</li>
+<li>
+<p>Value: <strong>appuser.userName</strong> and hit <code>Save</code>. We will be using this claim later to extract the username of the user who is currently logged in.
+You can learn more about Expression Language Reference for Okta <a href="https://developer.okta.com/reference/okta_expression_language/">here</a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Now go back to the <em>API</em> menu and copy the <strong>Issuer URI</strong> for the <em>Default</em> server.</p>
+</li>
+<li>
+<p>This will be used as the provider url when configuring our WildFly application.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="add-helm-configuration"><a class="anchor" href="#add-helm-configuration"></a>Add Helm Configuration</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Keep the URL obtained from the last step.</p>
+</li>
+<li>
+<p>Switch to the <code>charts</code> directory in the <code>simple-webapp-okta</code> example.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">cd /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-okta/charts</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice there’s a helm.yaml file in this directory with the following content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">build:
+  uri: https://github.com/wildfly-security-incubator/elytron-examples.git
+  contextDir: simple-webapp-okta
+deploy:
+  replicas: 1
+  env:
+    - name: OIDC_PROVIDER_URL
+      value: &lt;OKTA_URL&gt;         <i class="conum" data-value="1"></i><b>(1)</b>
+    - name: OIDC_CLIENT_ID
+      value: &lt;CLIENT_ID&gt;        <i class="conum" data-value="2"></i><b>(2)</b>
+    - name: OIDC_CLIENT_SECRET
+      value: &lt;CLIENT_SECRET&gt;    <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We will need to make the following changes locally to the helm chart:</p>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Replace <strong>OKTA_URL</strong> with the <strong>provider url</strong> you copied in the last step.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Replace <strong>CLIENT_ID</strong> with the <strong>Client ID</strong> listed on the Okta console. Navigate to the <strong>General</strong> tab for our application on the Okta admin console and copy the <strong>Client Id</strong> and add it beside the <em>client-id</em> attribute.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Replace <strong>CLIENT_SECRET</strong> with your <strong>Client Secret</strong> for this application listed on Okta.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Save this file and close it.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configure-the-deployment-settings"><a class="anchor" href="#configure-the-deployment-settings"></a>Configure the Deployment Settings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Applications deployed to WildFly can be secured with OIDC in a couple different ways:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Using deployment configuration by specifying the attribute values inside <code>oidc.json</code></p>
+</li>
+<li>
+<p>or using the <code>elytron-oidc-client</code> subsystem.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>This guide uses the deployment configuration, but you can use the same attributes to configure the <code>elytron-oidc-client</code> subsystem. You can view the deployment configuration used in this example by navigating to the <strong>oidc.json</strong> file. Note that we are making use of the environment variables we defined in the helm chart.</p>
+</div>
+<div class="paragraph">
+<p>Now that we have added the required changes, we can deploy our application, the helm chart will specify the location for this example application and pull information needed for our deployment specified in the <code>oidc.json</code> file.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="deploy-the-example-application-to-wildfly-on-openshift"><a class="anchor" href="#deploy-the-example-application-to-wildfly-on-openshift"></a>Deploy the Example Application to WildFly on OpenShift</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have not already installed the WildFly Helm chart, you can install it using the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo add wildfly https://docs.wildfly.org/wildfly-charts/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you have it installed already, be sure to update it to ensure you have the latest one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm repo update</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can deploy our example application to WildFly on OpenShift using the wildfly Helm Chart:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">helm install oidc-app -f /PATH/TO/ELYTRON/EXAMPLES/simple-webapp-saml/charts/helm.yaml wildfly/wildfly</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The application will now begin to build. This will take a couple of minutes.
+The build can be observed using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get build -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once complete, you can follow the deployment of the application using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">oc get deployment oidc-app -w</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can check status directly from the OpenShift web console.</p>
+</div>
+<div class="sect2">
+<h3 id="behind-the-scenes"><a class="anchor" href="#behind-the-scenes"></a>Behind the scenes</h3>
+<div class="paragraph">
+<p>While our application is building, let’s take a closer look at our application.</p>
+</div>
+<div class="paragraph">
+<p>Examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-okta/pom.xml">pom.xml</a> file. Notice that it contains an openshift profile. A profile in Maven lets you create a set of configuration values to customize your application build for different environments. The openshift profile in this example defines a configuration that will be used by the WildFly Helm Chart when provisioning the WildFly server on OpenShift.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">&lt;profiles&gt;
+        &lt;profile&gt;
+            &lt;id&gt;openshift&lt;/id&gt;
+            &lt;build&gt;
+                &lt;plugins&gt;
+                    &lt;plugin&gt;
+                        &lt;groupId&gt;org.wildfly.plugins&lt;/groupId&gt;
+                        &lt;artifactId&gt;wildfly-maven-plugin&lt;/artifactId&gt;
+                        &lt;version&gt;${version.wildfly.maven.plugin}&lt;/version&gt;          <i class="conum" data-value="1"></i><b>(1)</b>
+                        &lt;configuration&gt;
+                            &lt;feature-packs&gt;
+                                &lt;feature-pack&gt;
+                                    &lt;location&gt;org.wildfly:wildfly-galleon-pack:${version.wildfly}&lt;/location&gt;
+                                &lt;/feature-pack&gt;
+                                &lt;feature-pack&gt;
+                                    &lt;location&gt;org.wildfly.cloud:wildfly-cloud-galleon-pack:${version.wildfly.cloud.galleon.pack}&lt;/location&gt;
+                                &lt;/feature-pack&gt;
+                            &lt;/feature-packs&gt;
+                            &lt;layers&gt;
+                                &lt;layer&gt;cloud-server&lt;/layer&gt;
+                                &lt;layer&gt;elytron-oidc-client&lt;/layer&gt;          <i class="conum" data-value="2"></i><b>(2)</b>
+                            &lt;/layers&gt;
+                            &lt;filename&gt;simple-webapp-okta.war&lt;/filename&gt;
+                        &lt;/configuration&gt;
+                        &lt;executions&gt;
+                            &lt;execution&gt;
+                                &lt;goals&gt;
+                                    &lt;goal&gt;package&lt;/goal&gt;
+                                &lt;/goals&gt;
+                            &lt;/execution&gt;
+                        &lt;/executions&gt;
+                    &lt;/plugin&gt;
+                &lt;/plugins&gt;
+            &lt;/build&gt;
+        &lt;/profile&gt;
+    &lt;/profiles&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><strong>wildfly-maven-plugin</strong> provisions a WildFly server with the specified layers with our application deployed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><strong>elytron-oidc-client</strong> automatically adds the native OIDC client subsystem to our WildFly installation.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now examine the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-okta/src/main/webapp/WEB-INF/web.xml">web.xml</a> file.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">    &lt;login-config&gt;
+        &lt;auth-method&gt;OIDC&lt;/auth-method&gt; <i class="conum" data-value="1"></i><b>(1)</b>
+    &lt;/login-config&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>When <strong>elytron-oidc-client</strong> subsystem sees <strong>auth-method</strong> is set to <strong>OIDC</strong>, it enables OIDC authentication mechanism for the application.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Finally, review the <a href="https://github.com/wildfly-security-incubator/elytron-examples/blob/main/simple-webapp-okta/src/main/webapp/WEB-INF/oidc.json">oidc.json</a> file. The oidc.json is used to configure the native OIDC client subsystem.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">{
+    "client-id" : "${env.CLIENT_ID}",               <i class="conum" data-value="1"></i><b>(1)</b>
+    "provider-url" : "${env.OIDC_PROVIDER_URL}",    <i class="conum" data-value="2"></i><b>(2)</b>
+    "public-client" : "false",                      <i class="conum" data-value="3"></i><b>(3)</b>
+    "principal-attribute" : "IDTClaim",             <i class="conum" data-value="4"></i><b>(4)</b>
+    "ssl-required" : "EXTERNAL",                    <i class="conum" data-value="5"></i><b>(5)</b>
+    "credentials" : {
+        "secret" : "${env.CLIENT_SECRET}"           <i class="conum" data-value="6"></i><b>(6)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Client_ID is the unique identifier for our client used by the Okta OpenID provider. Usually for Keycloak, you can create your own client, but for Okta, you are assigned an id. As a result, we are using environment variables to specify this.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The provider URL, which is the URL for the authorization server that we created, is specified as an environment variable. We set its value previously in the helm configuration.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>When public-client set to false, client credentials are sent when communicating with the OpenID provider.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>We specify that the user name of the identity, which in our case is alice, is to be used as the principal for the identity. We are extracting this information here using a custom claim in the ID token.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>When ssl-required is set to EXTERNAL, only the communication with external clients happens over HTTPs.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Client credentials helps the OIDC server authenticate the client when accepting a request. It is required when <em>public-client</em> is set to <em>false</em>.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="get-the-application-url"><a class="anchor" href="#get-the-application-url"></a>Get the Application URL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once the WildFly server has been provisioned, use the following command to find the URL for your example application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">SIMPLE_WEBAPP_OKTA_URL=https://$(oc get route oidc-app --template='{{ .spec.host }}') &amp;&amp;
+echo "" &amp;&amp;
+echo "Application URL: $SIMPLE_WEBAPP_OKTA_URL/simple-webapp-okta"  &amp;&amp;
+echo "Valid redirect URI: $SIMPLE_WEBAPP_OKTA_URL/simple-webapp-okta/secured/" &amp;&amp;
+echo ""</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We’ll make use of these URLs in the next two sections.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="finish-configuring-okta"><a class="anchor" href="#finish-configuring-okta"></a>Finish Configuring Okta</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Go back to the <strong>General Settings</strong> for your application and click on <strong>Edit</strong>.  add the <code>Valid redirect URI</code> under the <code>Sign-in redirect URIs</code> and check the <code>Allow wildcard * in login URI redirect</code> field and hit Save.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="access-the-app"><a class="anchor" href="#access-the-app"></a>Access the App</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we can access our application using the <strong>Application Url</strong> from the previous section.
+Click on "Access Secured Servlet".</p>
+</div>
+<div class="paragraph">
+<p>Now you will be redirected to the login page for Okta. Login using Alice. You will be prompted for the username. Although we set the username to be <strong>alice@example.org</strong>, we can just input <strong>alice</strong> here. You will be presented with three options for loggin in. Choose <code>Password</code> and enter the password you selected for Alice.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="summary"><a class="anchor" href="#summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide demonstrates how to use an OpenID provider other than Keycloak to secure an application deployed to WildFly. Other OpenID providers can be used to secure WildFly applications as well. And while the specific terms may be slightly different, the overall process should be similar. Please refer to documentations by your OpenID provider for more information.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="resources"><a class="anchor" href="#resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://help.okta.com/oie/en-us/content/topics/identity-engine/oie-index.htm">Okta Documentation</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/31/wildscribe/subsystem/elytron-oidc-client/index.html">Elytron-oidc-client subsystem</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/31/Admin_Guide.html#Elytron_OIDC_Client">elytron-oidc-client docs</a></p>
+</li>
+<li>
+<p><a href="https://openid.net/specs/openid-connect-core-1_0.html#">OpenID Specifications</a></p>
+</li>
+<li>
+<p><a href="https://developer.okta.com/docs/guides/#integrate-authentication-into-your-app">Guides Related on Configuring Okta</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/31/Getting_Started_on_OpenShift.html">Getting Started with WildFly on OpenShift</a></p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html">OpenShift CLI</a></p>
+</li>
+<li>
+<p><a href="https://docs.wildfly.org/31/Getting_Started_on_OpenShift.html#helm-charts">WildFly Helm Charts</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

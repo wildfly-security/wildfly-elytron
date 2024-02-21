@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 20 Dec 2023 17:14:14 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 21 Feb 2024 19:52:39 +0000</lastBuildDate>
+        
+        <item>
+            <title>Securing WildFly Applications Using Okta on OpenShift</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/
+            </link>
+            <description>
+                WildFly applications can be secured using OpenID Connect and deployed to OpenShift. By using OIDC to secure applications, you delegate authentication to OIDC providers. The elytron-oidc-client subsystem can be used to secure an application deployed to WildFly using any OpenID Provider. This guide demonstrates how to secure an example application...
+            </description>
+            <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/securing-wildfly-apps-okta-openshift/
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Securing WildFly Apps with Auth0 on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Wed, 13 Sep 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://www.youtube.com/watch?v=nevZyt2TkzI
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Join us at Open Source Day and Level Up Your Skills</title>
-            <link>
-                https://www.youtube.com/watch?v=9i_MiK0W2n4
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Thu, 07 Sep 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=9i_MiK0W2n4
             </guid>
         </item>
         
