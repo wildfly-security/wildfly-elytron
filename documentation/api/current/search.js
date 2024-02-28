@@ -298,13 +298,13 @@ $(function() {
                     } else if (ui.item.p === "<Unnamed>") {
                         url += ui.item.l + ".html";
                     } else {
-                        url += ui.item.p.replace(/\./g, '/') + "/" + ui.item.l + ".html";
+                        url = ui.item.p.replace(/\./g, '/') + "/" + ui.item.l + ".html";
                     }
                 } else if (ui.item.category === catMembers) {
                     if (ui.item.p === "<Unnamed>") {
                         url += ui.item.c + ".html" + "#";
                     } else {
-                        url += ui.item.p.replace(/\./g, '/') + "/" + ui.item.c + ".html" + "#";
+                        url = ui.item.p.replace(/\./g, '/') + "/" + ui.item.c + ".html" + "#";
                     }
                     if (ui.item.url) {
                         url += ui.item.url;
