@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Wed, 21 Feb 2024 19:52:39 +0000</lastBuildDate>
+        <lastBuildDate>Wed, 28 Feb 2024 14:52:14 +0000</lastBuildDate>
+        
+        <item>
+            <title>Vlog: Securing WildFly Apps with Okta on OpenShift</title>
+            <link>
+                https://www.youtube.com/watch?v=usquALvL2qc
+            </link>
+            <description>
+                
+            </description>
+            <pubDate>Tue, 27 Feb 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://www.youtube.com/watch?v=usquALvL2qc
+            </guid>
+        </item>
         
         <item>
             <title>Securing WildFly Applications Using Okta on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 19 Oct 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Vlog: Join us at Open Source Day on September 22, 2023 and Make Meaningful Contributions</title>
-            <link>
-                https://www.youtube.com/watch?v=nevZyt2TkzI
-            </link>
-            <description>
-                
-            </description>
-            <pubDate>Wed, 13 Sep 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://www.youtube.com/watch?v=nevZyt2TkzI
             </guid>
         </item>
         
