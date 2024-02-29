@@ -61,8 +61,9 @@
         <version.commons-cli>1.6.0</version.commons-cli>
         <version.jakarta.enterprise>4.0.1</version.jakarta.enterprise>
         <version.org.apache.commons>3.14.0</version.org.apache.commons>
-        <version.org.apache.directory.server>2.0.0-M24</version.org.apache.directory.server>
-        <version.org.apache.directory.api>1.0.0</version.org.apache.directory.api>
+        <version.org.apache.directory.server>2.0.0.AM27</version.org.apache.directory.server>
+        <version.org.apache.directory.api>2.1.6</version.org.apache.directory.api>
+        <version.org.apache.kerby>2.0.3</version.org.apache.kerby>
         <version.org.apache.directory.jdbm>2.0.0-M3</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M8</version.org.apache.directory.mavibot>
         <version.org.bouncycastle>1.67</version.org.bouncycastle>
@@ -1073,12 +1074,6 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
-                <artifactId>apacheds-protocol-kerberos</artifactId>
-                <version>${version.org.apache.directory.server}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-protocol-ldap</artifactId>
                 <version>${version.org.apache.directory.server}</version>
                 <scope>test</scope>
@@ -1108,6 +1103,12 @@
                         <artifactId>log4j</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kerby</groupId>
+                <artifactId>kerb-simplekdc</artifactId>
+                <version>${version.org.apache.kerby}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
