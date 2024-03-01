@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.realm;
 
-import static java.lang.System.getSecurityManager;
 import static org.wildfly.security.auth.realm.ElytronMessages.log;
 
 import javax.security.auth.Subject;
@@ -27,28 +26,31 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
-import java.io.IOException;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
+import java.net.URI;
+import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.security.acl.Group;
+import java.security.Security;
+import java.security.URIParameter;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Enumeration;
-import java.util.Set;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.callback.CallbackUtil;
+import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -60,28 +62,74 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
  */
 public class JaasSecurityRealm implements SecurityRealm {
 
-    private final String loginConfiguration;
-
+    private static final String DEFAULT_CONFIGURATION_POLICY_TYPE = "JavaLoginConfig";
+    private final URI jaasConfigFilePath;
+    private final String entry;
     private final CallbackHandler handler;
+    private final ClassLoader classLoader;
 
     /**
      * Construct a new instance.
      *
-     * @param loginConfiguration the login configuration name to use
+     * @param entry JAAS configuration file entry (must not be {@code null})
      */
-    public JaasSecurityRealm(final String loginConfiguration) {
-        this(loginConfiguration, null);
+    public JaasSecurityRealm(final String entry) {
+        this(entry, (String) null);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param loginConfiguration the login configuration name to use
-     * @param handler the JAAS callback handler to use
+     * @param entry       JAAS configuration file entry (must not be {@code null})
+     * @param classLoader classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
      */
-    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
-        this.loginConfiguration = loginConfiguration;
-        this.handler = handler;
+    public JaasSecurityRealm(final String entry, final ClassLoader classLoader) {
+        this(entry, null, classLoader);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param entry       JAAS configuration file entry (must not be {@code null})
+     * @param jaasConfigFilePath path to JAAS configuration file
+     */
+    public JaasSecurityRealm(final String entry, final String jaasConfigFilePath) {
+        this(entry, jaasConfigFilePath, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param entry              JAAS configuration file entry (must not be {@code null})
+     * @param jaasConfigFilePath path to JAAS configuration file
+     * @param classLoader        classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
+     */
+    public JaasSecurityRealm(final String entry, final String jaasConfigFilePath, final ClassLoader classLoader) {
+        this(entry, jaasConfigFilePath, classLoader, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param entry              JAAS configuration file entry (must not be {@code null})
+     * @param jaasConfigFilePath path to JAAS configuration file
+     * @param callbackHandler    callbackHandler to pass to LoginContext
+     * @param classLoader        classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
+     */
+    public JaasSecurityRealm(final String entry, final String jaasConfigFilePath, final ClassLoader classLoader, final CallbackHandler callbackHandler) {
+        Assert.checkNotNullParam("entry", entry);
+        if (jaasConfigFilePath != null) {
+            this.jaasConfigFilePath = Paths.get(jaasConfigFilePath).toUri();
+        } else {
+            this.jaasConfigFilePath = null;
+        }
+        this.entry = entry;
+        this.handler = callbackHandler;
+        if (classLoader != null) {
+            this.classLoader = classLoader;
+        } else {
+            this.classLoader = Thread.currentThread().getContextClassLoader();
+        }
     }
 
     @Override
@@ -103,47 +151,58 @@ public class JaasSecurityRealm implements SecurityRealm {
     @Override
     public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
         Assert.checkNotNullParam("evidenceType", evidenceType);
-        return PasswordGuessEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+        return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
-    private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
-        if (getSecurityManager() != null) {
-            try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<LoginContext>) () -> new LoginContext(loginConfig, subject, handler));
-            } catch (PrivilegedActionException pae) {
-                throw ElytronMessages.log.failedToCreateLoginContext(pae.getCause());
+    /**
+     * @param entry           login configuration file entry
+     * @param subject         classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
+     * @param callbackHandler callbackHandler to pass to LoginContext
+     * @return the instance of LoginContext
+     * @throws RealmUnavailableException
+     */
+    private LoginContext createLoginContext(final String entry, final Subject subject, final CallbackHandler callbackHandler) throws RealmUnavailableException {
+        if (jaasConfigFilePath != null) {
+            File file = new File(this.jaasConfigFilePath);
+            if (!file.exists() && !file.isDirectory()) {
+                throw ElytronMessages.log.failedToLoadJaasConfigFile();
             }
         }
-        else {
-            try {
-                return new LoginContext(loginConfig, subject, handler);
-            } catch (LoginException le) {
-                throw ElytronMessages.log.failedToCreateLoginContext(le);
+        try {
+            if (jaasConfigFilePath == null) {
+                return new LoginContext(entry, subject, callbackHandler);
+            } else {
+                return new LoginContext(entry, subject, callbackHandler, Configuration.getInstance(DEFAULT_CONFIGURATION_POLICY_TYPE, new URIParameter(jaasConfigFilePath)));
             }
+        } catch (LoginException | NoSuchAlgorithmException le) {
+            throw ElytronMessages.log.failedToCreateLoginContext(le);
         }
     }
 
-    private CallbackHandler createCallbackHandler(final Principal principal, final PasswordGuessEvidence evidence) throws RealmUnavailableException {
-        if (handler == null) {
-            return new DefaultCallbackHandler(principal, evidence);
-        }
-        else {
+    private CallbackHandler createCallbackHandler(final Principal principal, final Evidence evidence) {
+        if (handler != null) {
             try {
-                final CallbackHandler callbackHandler = handler.getClass().newInstance();
-                // preserve backwards compatibility: custom handlers were allowed in the past as long as they had a public setSecurityInfo method.
+                final CallbackHandler callbackHandler = handler.getClass().getConstructor().newInstance();
+                // custom handlers were allowed in the past as long as they had a public setSecurityInfo method. Use this method if it exists
                 final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
                 setSecurityInfo.invoke(callbackHandler, principal, evidence);
                 return callbackHandler;
-            } catch (Exception e) {
-                throw ElytronMessages.log.failedToInstantiateCustomHandler(e);
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                // ignore if this method does not exist
+                return handler;
             }
+        } else if (Security.getProperty("auth.login.defaultCallbackHandler") != null) {
+            // security property "auth.login.defaultCallbackHandler" is not null so LoginContext will initialize it itself
+            return null;
+        } else {
+            return new JaasSecurityRealmDefaultCallbackHandler(principal, evidence);
         }
     }
 
     private class JaasRealmIdentity implements RealmIdentity {
 
         private final Principal principal;
-
+        private LoginContext loginContext;
         private Subject subject;
 
         private JaasRealmIdentity(final Principal principal) {
@@ -152,6 +211,10 @@ public class JaasSecurityRealm implements SecurityRealm {
 
         public Principal getRealmIdentityPrincipal() {
             return principal;
+        }
+
+        public Subject getSubject() {
+            return subject;
         }
 
         @Override
@@ -183,31 +246,32 @@ public class JaasSecurityRealm implements SecurityRealm {
         @Override
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
-            if (evidence instanceof PasswordGuessEvidence) {
-                this.subject = null;
-                boolean successfulLogin;
-                final CallbackHandler callbackHandler = createCallbackHandler(principal, (PasswordGuessEvidence) evidence);
-                final Subject subject = new Subject();
-                final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
-
-                log.tracef("Trying to authenticate subject %s using LoginContext %s using JaasSecurityRealm",
-                        principal, context);
-
-                try {
-                    context.login();
-                    successfulLogin = true;
-                    this.subject = subject;
-                } catch (LoginException le) {
-                    ElytronMessages.log.debugJAASAuthenticationFailure(principal, le);
-                    successfulLogin = false;
+            this.subject = null;
+            boolean successfulLogin;
+            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                if (classLoader != null) {
+                    Thread.currentThread().setContextClassLoader(classLoader);
                 }
-                return successfulLogin;
-            } else {
-                return false;
+                final CallbackHandler callbackHandler = createCallbackHandler(principal, evidence);
+                final Subject subject = new Subject();
+                loginContext = createLoginContext(entry, subject, callbackHandler);
+                log.tracef("Trying to authenticate subject %s using LoginContext %s using JaasSecurityRealm", principal, loginContext);
+                try {
+                    loginContext.login();
+                    successfulLogin = true;
+                    this.subject = loginContext.getSubject();
+                } catch (LoginException loginException) {
+                    successfulLogin = false;
+                    ElytronMessages.log.debugInfoJaasAuthenticationFailure(principal, loginException);
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(oldClassLoader);
             }
+            return successfulLogin;
         }
 
-        public boolean exists() throws RealmUnavailableException {
+        public boolean exists() {
             /* we don't really know that the identity exists, but we know that there is always
              * an authorization identity so that's as good as {@code true}
              */
@@ -216,80 +280,138 @@ public class JaasSecurityRealm implements SecurityRealm {
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return new JaasAuthorizationIdentity(this.principal, this.subject);
+            return JaasAuthorizationIdentity.fromSubject(subject);
+        }
+
+        @Override
+        public void dispose() {
+            // call logout in order to empty the subject
+            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                try {
+                    if (classLoader != null) {
+                        Thread.currentThread().setContextClassLoader(classLoader);
+                    }
+                    if (loginContext != null) {
+                        loginContext.logout();
+                    }
+                } catch (LoginException e) {
+                    ElytronMessages.log.debugInfoJaasLogoutFailure(this.principal, e);
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(oldClassLoader);
+            }
         }
     }
 
-    private static class DefaultCallbackHandler implements CallbackHandler {
+    /**
+     * Default CallbackHandler passed to the LoginContext when none is provided to JAAS security realm and none is configured in the "auth.login.defaultCallbackHandler" security property.
+     */
+    private static class JaasSecurityRealmDefaultCallbackHandler implements CallbackHandler {
 
         private final Principal principal;
-        private final PasswordGuessEvidence evidence;
+        private final Object evidence;
 
-        private DefaultCallbackHandler(final Principal principal, final PasswordGuessEvidence evidence) {
+        private JaasSecurityRealmDefaultCallbackHandler(final Principal principal, final Evidence evidence) {
             this.principal = principal;
             this.evidence = evidence;
         }
 
         @Override
-        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+        public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
             Assert.checkNotNullParam("callbacks", callbacks);
-
             for (Callback callback : callbacks) {
                 if (callback instanceof NameCallback) {
-                    NameCallback nameCallback = (NameCallback) callback;
+                    NameCallback nc = (NameCallback) callback;
                     if (principal != null)
-                        nameCallback.setName(this.principal.getName());
-                }
-                else if (callback instanceof PasswordCallback) {
-                    ((PasswordCallback) callback).setPassword(evidence.getGuess());
-                }
-                else {
-                    CallbackUtil.unsupported(callback);
+                        nc.setName(principal.getName());
+                } else if (callback instanceof PasswordCallback) {
+                    if (evidence instanceof PasswordGuessEvidence) {
+                        ((PasswordCallback) callback).setPassword(((PasswordGuessEvidence) evidence).getGuess());
+                    } else {
+                        PasswordCallback pc = (PasswordCallback) callback;
+                        char[] password = getPassword();
+                        if (password != null)
+                            pc.setPassword(password);
+                    }
+                } else if (callback instanceof CredentialCallback && evidence instanceof Credential) {
+                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    Credential credential = (Credential) evidence;
+                    if (credentialCallback.isCredentialSupported(credential)) {
+                        credentialCallback.setCredential(credential);
+                    }
+                } else {
+                    throw ElytronMessages.log.unableToHandleCallback(callback, this.getClass().getName(), callback.getClass().getCanonicalName());
                 }
             }
-        }
-    }
-
-    private static class JaasAuthorizationIdentity implements AuthorizationIdentity {
-
-        private static final String CALLER_PRINCIPAL_GROUP = "CallerPrincipal";
-
-        private final Principal principal;
-        private Principal callerPrincipal;
-        private final Subject subject;
-
-        private JaasAuthorizationIdentity(final Principal principal, final Subject subject) {
-            this.principal = principal;
-            this.subject = subject;
-            // check if the subject has a caller principal group - if it has then we should use that principal.
-            this.callerPrincipal = getCallerPrincipal(subject);
         }
 
         /**
-         * Obtains the caller principal from the specified {@link Subject}. This method looks for a group called {@code
-         * CallerPrincipal} and if it finds one it returns the first {@link java.security.Principal} in the group.
+         * Source: A utility method for obtaining of password taken from
+         * https://github.com/picketbox/picketbox/blob/master/security-jboss-sx/jbosssx/src/main/java/org/jboss/security/auth/callback/JBossCallbackHandler.java
+         * on November 2021
+         * <p>
+         * Try to convert the credential value into a char[] using the
+         * first of the following attempts which succeeds:
+         * <p>
+         * 1. Check for instanceof char[]
+         * 2. Check for instanceof String and then use toCharArray()
+         * 3. See if credential has a toCharArray() method and use it
+         * 4. Use toString() followed by toCharArray().
          *
-         * @param subject the {@link javax.security.auth.Subject} to be inspected.
-         * @return the first {@link java.security.Principal} found in the {@code CallerPrincipal} group or {@code null} if
-         * a caller principal couldn't be found.
+         * @return a char[] representation of the credential.
          */
-        private Principal getCallerPrincipal(Subject subject) {
-            Principal callerPrincipal = null;
-            if (subject != null) {
-                Set<Principal> principals = subject.getPrincipals();
-                if (principals != null && !principals.isEmpty()) {
-                    for (Principal principal : principals) {
-                        if (principal instanceof Group && principal.getName().equals(CALLER_PRINCIPAL_GROUP)) {
-                            Enumeration<? extends Principal> enumeration = ((Group) principal).members();
-                            if (enumeration.hasMoreElements()) {
-                                callerPrincipal = enumeration.nextElement();
-                                break;
-                            }
-                        }
+        private char[] getPassword() {
+            char[] password = null;
+            if (evidence instanceof char[]) {
+                password = (char[]) evidence;
+            } else if (evidence instanceof String) {
+                String s = (String) evidence;
+                password = s.toCharArray();
+            } else {
+                try {
+                    Class<?>[] types = {};
+                    Method m = evidence.getClass().getMethod("toCharArray", types);
+                    Object[] args = {};
+                    password = (char[]) m.invoke(evidence, args);
+                } catch (Exception e) {
+                    if (evidence != null) {
+                        String s = evidence.toString();
+                        password = s.toCharArray();
                     }
                 }
             }
-            return callerPrincipal;
+            return password;
+        }
+    }
+
+    /**
+     * A JAAS realm's authorization identity. Roles are mapped from all Subject's principals with the following rule:
+     * key of the attribute is principal's simple classname and the value is principal's name
+     */
+    private static class JaasAuthorizationIdentity implements AuthorizationIdentity {
+
+        private MapAttributes attributes;
+
+        private static JaasAuthorizationIdentity fromSubject(final Subject subject) {
+            MapAttributes attributes = new MapAttributes();
+            // map all subject's principals to attributes with the following rule:
+            // key of the attribute is principal's simple classname and the value is principal's name
+            if (subject != null) {
+                for (Principal principal : subject.getPrincipals()) {
+                    attributes.addLast(principal.getClass().getSimpleName(), principal.getName());
+                }
+            }
+            return new JaasAuthorizationIdentity(attributes);
+        }
+
+        private JaasAuthorizationIdentity(MapAttributes attributes) {
+            this.attributes = attributes;
+        }
+
+        @Override
+        public Attributes getAttributes() {
+            return attributes;
         }
     }
 }
