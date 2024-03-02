@@ -19,12 +19,15 @@
 package org.wildfly.security.auth.realm.cache;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.auth.server.ServerUtils.ELYTRON_PASSWORD_PROVIDERS;
 
 import java.security.Principal;
+import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +35,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
@@ -64,6 +71,11 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 public class SecurityRealmIdentityCacheTest {
 
     private AtomicInteger realmHitCount = new AtomicInteger();
+
+    @BeforeClass
+    public static void onBefore() {
+        Security.addProvider(WildFlyElytronPasswordProvider.getInstance());
+    }
 
     @Test
     public void testRealmIdentitySimpleJavaMapCache() throws Exception {
@@ -113,6 +125,132 @@ public class SecurityRealmIdentityCacheTest {
         assertAuthenticationAndAuthorization("joe", securityDomain);
         assertAuthenticationAndAuthorization("joe", securityDomain);
         assertEquals(2, realmHitCount.get());
+    }
+
+    @Test
+    public void testPasswordUpdatedExternallyShouldPass() throws Exception {
+        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
+        Map<String, SimpleRealmEntry> users = new HashMap<>();
+        addUser(users, "joe", "User", "originalPassword");
+        realm.setIdentityMap(users);
+
+        CachingSecurityRealm cachingSecurityRealm = getSimpleLRUCachingSecurityRealm(realm);
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", cachingSecurityRealm).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+        ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+        sac.setAuthenticationName("joe");
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray())));
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray())));
+        users = new HashMap<>();
+        addUser(users, "joe", "User", "updatedPassword");
+        realm.setIdentityMap(users);
+        ServerAuthenticationContext secondAuthentication = securityDomain.createNewAuthenticationContext();
+        secondAuthentication.setAuthenticationName("joe");
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray()))); // will pass because old credential is cached
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("updatedPassword".toCharArray()))); // will pass because caching realm will invoke underlying realm when auth fails with cached credential
+    }
+
+    @Test
+    public void testAuthorizationIdentityAndAttributesWereUpdated() throws Exception {
+        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
+        Map<String, SimpleRealmEntry> users = new HashMap<>();
+        addUser(users, "joe", "User", "originalPassword");
+        realm.setIdentityMap(users);
+
+        CachingSecurityRealm cachingSecurityRealm = getSimpleLRUCachingSecurityRealm(realm);
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", cachingSecurityRealm).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+        ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+        sac.setAuthenticationName("joe");
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray())));
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray())));
+        users = new HashMap<>();
+        addUser(users, "joe", Arrays.asList("UpdatedUserRole", "UpdatedUserRole2"), "updatedPassword");
+        realm.setIdentityMap(users);
+        ServerAuthenticationContext secondAuthentication = securityDomain.createNewAuthenticationContext();
+        secondAuthentication.setAuthenticationName("joe");
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("updatedPassword".toCharArray()))); // will pass because caching realm will invoke underlying realm when auth fails with cached credential
+
+        //check that attributes in authorization identity were updated
+        Attributes joeUpdatedAttributes = realm.getRealmIdentity(new NamePrincipal("joe")).getAuthorizationIdentity().getAttributes();
+        assertEquals("Only Roles attribute should be configured", joeUpdatedAttributes.size(), 1); // no attributes other than Roles were configured
+        assertEquals("Attribute were not updated properly", joeUpdatedAttributes.get("Roles").size(), 2);
+        assertEquals("Attribute were not updated properly", joeUpdatedAttributes.get("Roles").get(0), "UpdatedUserRole");
+        assertEquals("Attribute were not updated properly", joeUpdatedAttributes.get("Roles").get(1), "UpdatedUserRole2");
+    }
+
+    @Test
+    public void testPasswordUpdatedExternallyShouldPass2() throws Exception {
+        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
+        Map<String, SimpleRealmEntry> users = new HashMap<>();
+        addUser(users, "joe", "User", "originalPassword");
+        realm.setIdentityMap(users);
+
+        CachingSecurityRealm cachingSecurityRealm = getSimpleLRUCachingSecurityRealm(realm);
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", cachingSecurityRealm).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+        ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+        sac.setAuthenticationName("joe");
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray()))); // will cache credential "originalPassword"
+        users = new HashMap<>();
+        addUser(users, "joe", "User", "updatedPassword");
+        realm.setIdentityMap(users);
+        ServerAuthenticationContext secondAuthentication = securityDomain.createNewAuthenticationContext();
+        secondAuthentication.setAuthenticationName("joe");
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray()))); // will pass because originalPassword credential is still cached
+        assertFalse(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("wrongPassword".toCharArray()))); // wrong password will fail
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("updatedPassword".toCharArray()))); // updated password should pass because caching realm will invoke underlying realm if authentication with cached credential failed
+    }
+
+    @Test
+    public void testUpdatedPasswordWillBeCachedAndOutdatedWillFail() throws Exception {
+        SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
+        Map<String, SimpleRealmEntry> users = new HashMap<>();
+        addUser(users, "joe", "User", "originalPassword");
+        realm.setIdentityMap(users);
+
+        CachingSecurityRealm cachingSecurityRealm = getSimpleLRUCachingSecurityRealm(realm);
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", cachingSecurityRealm).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+        ServerAuthenticationContext sac = securityDomain.createNewAuthenticationContext();
+        sac.setAuthenticationName("joe");
+        assertTrue(sac.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray()))); // will cache credential "originalPassword"
+        users = new HashMap<>();
+        addUser(users, "joe", "User", "updatedPassword");
+        realm.setIdentityMap(users);
+        ServerAuthenticationContext secondAuthentication = securityDomain.createNewAuthenticationContext();
+        secondAuthentication.setAuthenticationName("joe");
+        assertTrue(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("updatedPassword".toCharArray()))); // externally updated will pass
+        assertFalse(secondAuthentication.verifyEvidence(new PasswordGuessEvidence("originalPassword".toCharArray()))); // outdated password will fail because new credential was cached in previous auth
+    }
+
+    private CachingSecurityRealm getSimpleLRUCachingSecurityRealm(SimpleMapBackedSecurityRealm realm) {
+        return new CachingSecurityRealm(new CacheableSecurityRealm() {
+            @Override
+            public void registerIdentityChangeListener(Consumer<Principal> listener) {
+
+            }
+
+            @Override
+            public RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
+                realmHitCount.incrementAndGet();
+                return realm.getRealmIdentity(principal);
+            }
+
+            @Override
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, final AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                return realm.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
+            }
+
+            @Override
+            public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                return getEvidenceVerifySupport(evidenceType, algorithmName);
+            }
+        }, createRealmIdentityLRUCache());
     }
 
     private SecurityRealm createSecurityRealm(RealmIdentityCache cache) {
@@ -174,17 +312,28 @@ public class SecurityRealmIdentityCacheTest {
     }
 
     private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {
+        addUser(securityRealm, userName, roles, null);
+    }
+
+    private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles, String password) {
+        addUser(securityRealm, userName, Collections.singletonList(roles), password);
+    }
+
+    private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, List<String> roles, String password) {
+        if (password == null) {
+            password = "password";
+        }
         List<Credential> credentials;
         try {
             credentials = Collections.singletonList(
                     new PasswordCredential(
                             PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, ELYTRON_PASSWORD_PROVIDERS).generatePassword(
-                                    new ClearPasswordSpec("password".toCharArray()))));
+                                    new ClearPasswordSpec(password.toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         MapAttributes attributes = new MapAttributes();
-        attributes.addAll(RoleDecoder.KEY_ROLES, Collections.singletonList(roles));
+        attributes.addAll(RoleDecoder.KEY_ROLES, roles);
         securityRealm.put(userName, new SimpleRealmEntry(credentials, attributes));
     }
 
