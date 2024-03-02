@@ -18,12 +18,6 @@
 
 package org.wildfly.security.auth.realm;
 
-import org.wildfly.security.auth.principal.AnonymousPrincipal;
-import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.credential.BearerTokenCredential;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.password.interfaces.ClearPassword;
-
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -38,8 +32,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.credential.BearerTokenCredential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.password.interfaces.ClearPassword;
+
 /**
- * A {@link LoginModule} implementation used in the JAAS security realm tests. It uses a static
+ * A {@link javax.security.auth.spi.LoginModule} implementation used in the JAAS security realm tests. It uses a static
  * map of username -> password to determine if a login is successful or not.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>

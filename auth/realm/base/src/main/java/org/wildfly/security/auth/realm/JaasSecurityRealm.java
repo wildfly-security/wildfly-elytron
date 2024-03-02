@@ -154,6 +154,51 @@ public class JaasSecurityRealm implements SecurityRealm {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
+    /**
+     * @param entry           login configuration file entry
+     * @param subject         classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
+     * @param callbackHandler callbackHandler to pass to LoginContext
+     * @return the instance of LoginContext
+     * @throws RealmUnavailableException
+     */
+    private LoginContext createLoginContext(final String entry, final Subject subject, final CallbackHandler callbackHandler) throws RealmUnavailableException {
+        if (jaasConfigFilePath != null) {
+            File file = new File(this.jaasConfigFilePath);
+            if (!file.exists() && !file.isDirectory()) {
+                throw ElytronMessages.log.failedToLoadJaasConfigFile();
+            }
+        }
+        try {
+            if (jaasConfigFilePath == null) {
+                return new LoginContext(entry, subject, callbackHandler);
+            } else {
+                return new LoginContext(entry, subject, callbackHandler, Configuration.getInstance(DEFAULT_CONFIGURATION_POLICY_TYPE, new URIParameter(jaasConfigFilePath)));
+            }
+        } catch (LoginException | NoSuchAlgorithmException le) {
+            throw ElytronMessages.log.failedToCreateLoginContext(le);
+        }
+    }
+
+    private CallbackHandler createCallbackHandler(final Principal principal, final Evidence evidence) {
+        if (handler != null) {
+            try {
+                final CallbackHandler callbackHandler = handler.getClass().getConstructor().newInstance();
+                // custom handlers were allowed in the past as long as they had a public setSecurityInfo method. Use this method if it exists
+                final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
+                setSecurityInfo.invoke(callbackHandler, principal, evidence);
+                return callbackHandler;
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                // ignore if this method does not exist
+                return handler;
+            }
+        } else if (Security.getProperty("auth.login.defaultCallbackHandler") != null) {
+            // security property "auth.login.defaultCallbackHandler" is not null so LoginContext will initialize it itself
+            return null;
+        } else {
+            return new JaasSecurityRealmDefaultCallbackHandler(principal, evidence);
+        }
+    }
+
     private class JaasRealmIdentity implements RealmIdentity {
 
         private final Principal principal;
@@ -257,52 +302,6 @@ public class JaasSecurityRealm implements SecurityRealm {
                 Thread.currentThread().setContextClassLoader(oldClassLoader);
             }
         }
-
-        /**
-         * @param entry           login configuration file entry
-         * @param subject         classLoader to use with LoginContext, this class loader must contain LoginModule CallbackHandler classes
-         * @param callbackHandler callbackHandler to pass to LoginContext
-         * @return the instance of LoginContext
-         * @throws RealmUnavailableException
-         */
-        private LoginContext createLoginContext(final String entry, final Subject subject, final CallbackHandler callbackHandler) throws RealmUnavailableException {
-            if (jaasConfigFilePath != null) {
-                File file = new File(jaasConfigFilePath);
-                if (!file.exists() && !file.isDirectory()) {
-                    throw ElytronMessages.log.failedToLoadJaasConfigFile();
-                }
-            }
-            try {
-                if (jaasConfigFilePath == null) {
-                    return new LoginContext(entry, subject, callbackHandler);
-                } else {
-                    return new LoginContext(entry, subject, callbackHandler, Configuration.getInstance(DEFAULT_CONFIGURATION_POLICY_TYPE, new URIParameter(jaasConfigFilePath)));
-                }
-            } catch (LoginException | NoSuchAlgorithmException le) {
-                throw ElytronMessages.log.failedToCreateLoginContext(le);
-            }
-        }
-
-        private CallbackHandler createCallbackHandler(final Principal principal, final Evidence evidence) {
-            if (handler != null) {
-                try {
-                    final CallbackHandler callbackHandler = handler.getClass().getConstructor().newInstance();
-                    // custom handlers were allowed in the past as long as they had a public setSecurityInfo method. Use this method if it exists
-                    final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
-                    setSecurityInfo.invoke(callbackHandler, principal, evidence);
-                    return callbackHandler;
-                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                    // ignore if this method does not exist
-                    return handler;
-                }
-            } else if (Security.getProperty("auth.login.defaultCallbackHandler") != null) {
-                // security property "auth.login.defaultCallbackHandler" is not null so LoginContext will initialize it itself
-                return null;
-            } else {
-                return new JaasSecurityRealmDefaultCallbackHandler(principal, evidence);
-            }
-        }
-
     }
 
     /**

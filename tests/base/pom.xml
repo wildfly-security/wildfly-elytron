@@ -790,6 +790,11 @@
             <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-credential</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
