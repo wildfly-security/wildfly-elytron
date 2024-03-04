@@ -78,6 +78,7 @@ import org.wildfly.security.http.basic.BasicMechanismFactory;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
 import org.wildfly.security.http.digest.NonceManager;
 import org.wildfly.security.http.external.ExternalMechanismFactory;
+import org.wildfly.security.http.form.FormMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -90,6 +91,7 @@ import mockit.MockUp;
 public class AbstractBaseHttpTest {
 
     protected HttpServerAuthenticationMechanismFactory basicFactory = new BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
+    protected HttpServerAuthenticationMechanismFactory formFactory = new FormMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory digestFactory = new DigestMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected final HttpServerAuthenticationMechanismFactory externalFactory = new ExternalMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
     protected HttpServerAuthenticationMechanismFactory statefulBasicFactory = new org.wildfly.security.http.sfbasic.BasicMechanismFactory(ELYTRON_PASSWORD_PROVIDERS.get());
@@ -153,6 +155,16 @@ public class AbstractBaseHttpTest {
             this.remoteUser = null;
             this.requestURI = requestURI;
             this.cookies = new ArrayList<>();
+        }
+
+        public TestingHttpServerRequest(String requestMethod, String[] authorization, URI requestURI) {
+            if (authorization != null) {
+                requestHeaders.put(AUTHORIZATION, Arrays.asList(authorization));
+            }
+            this.remoteUser = null;
+            this.requestURI = requestURI;
+            this.cookies = new ArrayList<>();
+            this.requestMethod = requestMethod;
         }
 
         public TestingHttpServerRequest(String[] authorization, URI requestURI, List<HttpServerCookie> cookies) {
@@ -308,6 +320,13 @@ public class AbstractBaseHttpTest {
         }
 
         public String getFirstParameterValue(String name) {
+            List<String> key = requestHeaders.get("Authorization");
+            if (name == "j_username"){
+                return key.get(0);
+            }
+            if (name == "j_password"){
+                return key.get(1);
+            }
             throw new IllegalStateException();
         }
 
@@ -434,7 +453,7 @@ public class AbstractBaseHttpTest {
         }
 
         public boolean forward(String path) {
-            throw new IllegalStateException();
+            return false;
         }
     }
 

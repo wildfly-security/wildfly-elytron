@@ -51,6 +51,9 @@ public class FormMechanismFactory implements HttpServerAuthenticationMechanismFa
     public FormMechanismFactory(final Provider provider) {
     }
 
+    public FormMechanismFactory(final Provider... providers) {
+    }
+
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
      */

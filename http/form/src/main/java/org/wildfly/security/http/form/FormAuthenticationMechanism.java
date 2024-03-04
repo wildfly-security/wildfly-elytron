@@ -395,7 +395,9 @@ final class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMe
             sb.append(':').append(port);
         }
         sb.append(contextPath);
-        sb.append(location);
+        if (location != null) {
+            sb.append(location);
+        }
 
         return sb.toString();
     }
