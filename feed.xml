@@ -5,7 +5,21 @@
         <title>WildFly Elytron</title>
         <link>https://wildfly-security.github.io/wildfly-elytron</link>
         <description></description>
-        <lastBuildDate>Fri, 01 Mar 2024 13:10:33 +0000</lastBuildDate>
+        <lastBuildDate>Thu, 07 Mar 2024 20:37:17 +0000</lastBuildDate>
+        
+        <item>
+            <title>Trying Out An Upcoming Security Feature for WildFly on OpenShift</title>
+            <link>
+                https://wildfly-security.github.io/wildfly-elytron/blog/in-progress-wildfly-feature-on-openshift/
+            </link>
+            <description>
+                A future release of WildFly will include the ability to add additional scope values when securing applications using OpenID Connect (OIDC). This blog post demonstrates how to secure a WildFly application using OpenID Connect and configure scope values to request additional claims using an in-progress version of the feature. This...
+            </description>
+            <pubDate>Thu, 07 Mar 2024 00:00:00 +0000</pubDate>
+            <guid>
+                https://wildfly-security.github.io/wildfly-elytron/blog/in-progress-wildfly-feature-on-openshift/
+            </guid>
+        </item>
         
         <item>
             <title>Vlog: Securing WildFly Apps with Okta on OpenShift</title>
@@ -130,20 +144,6 @@
             <pubDate>Thu, 02 Nov 2023 00:00:00 +0000</pubDate>
             <guid>
                 https://wildfly-security.github.io/wildfly-elytron/blog/filesystem-integrity-elytron-tool/
-            </guid>
-        </item>
-        
-        <item>
-            <title>Open Source Day 2023 Recap</title>
-            <link>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/
-            </link>
-            <description>
-                Last month, the WildFly Elytron team had the great pleasure of participating in Open Source Day, an all-day hackathon that took place as part of the 2023 Grace Hopper Celebration. This was the fourth time that the WildFly Elytron team has participated in this event. It is always an exciting...
-            </description>
-            <pubDate>Thu, 19 Oct 2023 00:00:00 +0000</pubDate>
-            <guid>
-                https://wildfly-security.github.io/wildfly-elytron/blog/ghc23-osd-recap/
             </guid>
         </item>
         
