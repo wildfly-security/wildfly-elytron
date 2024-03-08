@@ -233,9 +233,10 @@ public class PeriodicRotatingFileAuditEndpoint extends FileAuditEndpoint {
         public AuditEndpoint build() throws IOException {
             return new PeriodicRotatingFileAuditEndpoint(this);
         }
+
+        private static <T extends Comparable<? super T>> T min(T a, T b) {
+            return a.compareTo(b) <= 0 ? a : b;
+        }
     }
 
-    private static <T extends Comparable<? super T>> T min(T a, T b) {
-        return a.compareTo(b) <= 0 ? a : b;
-    }
 }
