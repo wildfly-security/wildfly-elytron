@@ -97,5 +97,17 @@ When submitting a PR, please keep the following guidelines in mind:
 
 For an example of a properly formatted PR, take a look at https://github.com/wildfly-security/wildfly-elytron/pull/1532
 
+## Code Reviews
+
+All submissions, including submissions by project members, need to be reviewed by at least two WildFly Elytron committers before being merged.
+
+The [GitHub Pull Request Review Process](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews) is followed for every pull request.
+
+## Maintenance Branches
+
+If you are working on a fix that's required for a maintenance branch (e.g., a fix for the 1.15.x or 2.2.x branches), please submit
+your PR directly against the relevant maintenance branch. Once a fix for a maintenance branch is approved and merged, we then
+merge the maintenance branch to the upstream branch to ensure changes are kept in sync.
+
 ## Community
 For more information on how to get involved with WildFly Elytron, check out our [community](https://wildfly-security.github.io/wildfly-elytron/community/) page.
