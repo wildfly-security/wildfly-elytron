@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http.oidc;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 import static org.jboss.logging.annotations.Message.NONE;
@@ -87,11 +88,11 @@ interface ElytronMessages extends BasicLogger {
     @Message(id = 23011, value = "Refresh token failure")
     void refreshTokenFailure(@Cause Throwable cause);
 
-    @LogMessage(level = ERROR)
+    @LogMessage(level = DEBUG)
     @Message(id = 23012, value = "Refresh token failure status: %d %s")
     void refreshTokenFailureStatus(int status, String error);
 
-    @LogMessage(level = ERROR)
+    @LogMessage(level = DEBUG)
     @Message(id = 23013, value = "Failed verification of token: %s")
     void failedVerificationOfToken(String error);
 
