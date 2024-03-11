@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.wildfly.security</groupId>
         <artifactId>wildfly-elytron-parent</artifactId>
-        <version>2.3.1.CR1-SNAPSHOT</version>
+        <version>2.3.2.CR1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -553,7 +553,7 @@
                                 <dependency>
                                     <groupId>org.wildfly.security</groupId>
                                     <artifactId>wildfly-elytron</artifactId>
-                                    <version>2.3.0.Final</version> <!-- When updating to next release, clear all exclusions. -->
+                                    <version>2.3.1.Final</version> <!-- When updating to next release, clear all exclusions. -->
                                     <type>jar</type>
                                 </dependency>
                             </oldVersion>

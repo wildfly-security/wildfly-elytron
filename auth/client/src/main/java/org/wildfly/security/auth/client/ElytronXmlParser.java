@@ -1081,12 +1081,10 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 checkElementNamespace(reader, xmlVersion);
-                switch (reader.getLocalName()) {
-                    case "rule": {
-                        rulesList.add(ruleParseFunction.apply(reader, configurations));
-                        break;
-                    }
-                    default: throw reader.unexpectedElement();
+                if (reader.getLocalName().equals("rule")) {
+                    rulesList.add(ruleParseFunction.apply(reader, configurations));
+                } else {
+                    throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 return () -> {

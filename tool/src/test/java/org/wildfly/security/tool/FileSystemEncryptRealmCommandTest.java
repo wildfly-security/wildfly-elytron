@@ -23,13 +23,17 @@ import static org.wildfly.security.tool.Command.ELYTRON_KS_PASS_PROVIDERS;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
 
 import org.apache.commons.cli.MissingArgumentException;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
@@ -227,6 +231,18 @@ public class FileSystemEncryptRealmCommandTest extends AbstractCommandTest {
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence("password!4".toCharArray())));
         existingIdentity.dispose();
+    }
+
+    @AfterClass
+    public static void cleanup() throws Exception {
+        //cleanup after testBulkWithoutNames test
+        Path bulkWithoutNamesFolderPath = Paths.get(RELATIVE_BASE_DIR + "fs-encrypted-realms/bulk-encryption-conversion-desc-without-names");
+        if (bulkWithoutNamesFolderPath.toFile().exists()) {
+            Files.walk(bulkWithoutNamesFolderPath)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        }
     }
 
     private boolean fileExists(String path) {
