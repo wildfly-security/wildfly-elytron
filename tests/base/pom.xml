@@ -183,46 +183,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0-jboss-1</version>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <release>8</release>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.compileSourceRoots}</compileSourceRoots>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.directory}/jdk-misc.jar</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>compile-java9</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <release>9</release>
-                            <buildDirectory>${project.build.directory}</buildDirectory>
-                            <compileSourceRoots>${project.basedir}/src/main/java9</compileSourceRoots>
-                            <outputDirectory>${project.build.directory}/classes/META-INF/versions/9</outputDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -230,7 +190,6 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Multi-Release>true</Multi-Release>
                             <Jar-Version>${project.version}</Jar-Version>
                             <Jar-Name>${project.artifactId}</Jar-Name>
                         </manifestEntries>
@@ -244,6 +203,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <!-- SOURCES -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -266,17 +226,6 @@
                     <reuseForks>false</reuseForks>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <classesDirectory>${project.build.directory}/classes/META-INF/versions/9</classesDirectory>
-                            <additionalClasspathElements>
-                                <additionalClasspathElement>${project.build.directory}/classes</additionalClasspathElement>
-                            </additionalClasspathElements>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
 
@@ -303,7 +252,7 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${version.jmockit}/jmockit-${version.jmockit}.jar ${modular.jdk.args} ${modular.jdk.props}</argLine>
+                        <argLine>-javaagent:${settings.localRepository}/org/jmockit/jmockit/${version.jmockit}/jmockit-${version.jmockit}.jar</argLine>
                         <!-- See also excludedGroups property in profiles -->
                     </configuration>
                 </plugin>
@@ -792,20 +741,6 @@
 
 
     <profiles>
-        <profile>
-            <id>modularizedJdk</id>
-            <activation>
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.sql --illegal-access=permit</modular.jdk.args>
-                <!-- use version of jboss-logging that works much better with JDK9 -->
-                <modular.jdk.props>-Djdk.attach.allowAttachSelf=true</modular.jdk.props>
-                <!-- 2.20.x doesn't start on JDK10-->
-                <version.surefire.plugin>2.19.1</version.surefire.plugin>
-            </properties>
-        </profile>
         <profile>
             <id>compatibilityCheck</id>
             <activation>

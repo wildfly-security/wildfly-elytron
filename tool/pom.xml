@@ -121,9 +121,6 @@
                                 <transformers>
                                     <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                         <mainClass>org.wildfly.security.tool.ElytronTool</mainClass>
-                                        <manifestEntries>
-                                            <Multi-Release>true</Multi-Release>
-                                        </manifestEntries>
                                     </transformer>
                                 </transformers>
                                 <finalName>${project.artifactId}-shaded-${project.version}</finalName>
@@ -154,7 +151,6 @@
                         </includes>
                         <childDelegation>true</childDelegation>
                         <reuseForks>false</reuseForks>
-                        <argLine>${modular.jdk.args}</argLine>
                     </configuration>
                 </plugin>
 
@@ -318,40 +314,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>modularizedJdk</id>
-            <activation>
-                <jdk>9</jdk>
-            </activation>
-            <properties>
-                <!-- [WFCORE-1431] remove SASL workaround -->
-                <modular.jdk.args>--add-modules java.corba,java.sql --add-exports java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
-                --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED --add-exports jdk.unsupported/sun.reflect=ALL-UNNAMED
-                --add-exports java.base/sun.security.x509=ALL-UNNAMED
-                </modular.jdk.args>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>${version.compiler.plugin}</version>
-                        <configuration>
-                            <!-- fork is needed so compiler args can be used -->
-                            <fork>true</fork>
-                            <compilerArgs>
-                                <arg>-J--add-modules</arg>
-                                <arg>-Jjava.annotations.common</arg>
-                            </compilerArgs>
-                        </configuration>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <repositories>
         <repository>
