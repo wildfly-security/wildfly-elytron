@@ -26,11 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URISyntaxException;
 
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -205,9 +205,10 @@ public class OidcHttpFacade {
             @Override
             public String getURI() {
                 try {
-                    return URLDecoder.decode(request.getRequestURI().toString(), "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    throw log.failedToDecodeRequestUri(e);
+                    URI decode = new URI(request.getRequestURI().toString());
+                    return decode.toString();
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
