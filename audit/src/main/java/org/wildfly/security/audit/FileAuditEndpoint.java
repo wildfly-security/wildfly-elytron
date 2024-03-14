@@ -121,7 +121,7 @@ public class FileAuditEndpoint implements AuditEndpoint {
      * This method is NO-OP by default. It is intended to be overridden by subclasses
      * which need to perform some operation before every writing into the target local file.
      *
-     * This method can be invisFileSeted only in synchronization block surrounding one log message processing.
+     * This method can be invoked only in synchronization block surrounding one log message processing.
      *
      * @param instant time of the message acceptance
      */
