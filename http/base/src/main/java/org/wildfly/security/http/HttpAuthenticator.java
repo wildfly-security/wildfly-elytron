@@ -135,9 +135,12 @@ public class HttpAuthenticator {
 
                     IdentityCache identityCache = getOrCreateIdentityCache();
                     identityCache.put(authorizedIdentity);
-                    logoutHandlerConsumer.accept(identityCache::remove);
+                    if (logoutHandlerConsumer != null) {
+                        logoutHandlerConsumer.accept(identityCache::remove);
+                    }
 
                     httpExchangeSpi.authenticationComplete(authorizedIdentity, mechanismName);
+                    authenticationContext.succeed();
 
                     return authorizedIdentity;
                 } else {
@@ -188,7 +191,9 @@ public class HttpAuthenticator {
                     securityIdentity = authenticationContext.getAuthorizedIdentity();
 
                     httpExchangeSpi.authenticationComplete(securityIdentity, cachedIdentity.getMechanismName());
-                    logoutHandlerConsumer.accept(identityCache::remove);
+                    if (logoutHandlerConsumer != null) {
+                        logoutHandlerConsumer.accept(identityCache::remove);
+                    }
 
                     if (cache) {
                         log.tracef("Replacing cached identity for '%s' against session scope.", cachedIdentity.getName());
