@@ -24,7 +24,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Test;
@@ -43,42 +42,31 @@ import org.wildfly.security.password.util.ModularCrypt;
 public class SunUnixMD5CryptTest {
 
     @Test
-    public void testParseCryptStringWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01";
-
-        // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(0, password.getIterationCount());
-
-        // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+    public void testParseCryptStringWithoutRounds() throws InvalidKeySpecException {
+        testParseCryptString("$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01", 0);
     }
 
     @Test
-    public void testParseCryptStringWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1";
-
-        // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(1_000, password.getIterationCount());
-
-        // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+    public void testParseCryptStringWithRounds() throws InvalidKeySpecException {
+        testParseCryptString("$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1", 1_000);
     }
 
     @Test
-    public void testParseCryptStringWithBareSalt() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String cryptString = "$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.";
+    public void testParseCryptStringWithBareSalt() throws InvalidKeySpecException {
+        testParseCryptString("$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.", 1_500);
+    }
 
-        // Get the spec by parsing the crypt string
+    private static void testParseCryptString(String cryptString, int iterCount) throws InvalidKeySpecException {
         SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
-        assertEquals(1_500, password.getIterationCount());
+        assertEquals(iterCount, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
         assertEquals(cryptString, ModularCrypt.encodeAsString(password));
+
     }
 
-    private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+
+    private static void generateAndVerify(String cryptString, String correctPassword) throws InvalidKeyException, InvalidKeySpecException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
         SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
         final String algorithm = password.getAlgorithm();
@@ -100,49 +88,49 @@ public class SunUnixMD5CryptTest {
     }
 
     @Test
-    public void testHashEmptyPassword() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashEmptyPassword() throws InvalidKeyException, InvalidKeySpecException {
         String password = "";
         String cryptString = "$md5,rounds=10000$saltstring$$uwcsteApj7mCi4AIwYIT5.";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testHashEmptyPasswordWithBareSalt() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashEmptyPasswordWithBareSalt() throws InvalidKeyException, InvalidKeySpecException {
         String password = "";
         String cryptString = "$md5,rounds=10000$saltstring$gWOS3RRZtQ5TiYRg.vBx40";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testHashShortPassword() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashShortPassword() throws InvalidKeyException, InvalidKeySpecException {
         String password = "Hello world!";
         String cryptString = "$md5$saltstringsalt$$MsEJKkfiaflU4ioBHkqWe0";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testHashShortPasswordWithBareSalt() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashShortPasswordWithBareSalt() throws InvalidKeyException, InvalidKeySpecException {
         String password = "Hello world!";
         String cryptString = "$md5$saltstringsalt$uOXM5LLS7ZtN3eYYS54sM/";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testHashLongPassword() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashLongPassword() throws InvalidKeyException, InvalidKeySpecException {
         String password = "This is a very very very long password! This is the 2nd sentence in THE password. This is a test.@$%";
         String cryptString = "$md5,rounds=10000$saltstringsaltstring$$Occfaf7BttKIkRRUARiWU0";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testHashLongPasswordWithBareSalt() throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+    public void testHashLongPasswordWithBareSalt() throws InvalidKeyException, InvalidKeySpecException {
         String password = "This is a very very very long password! This is the 2nd sentence in THE password. This is a test.@$%";
         String cryptString = "$md5,rounds=10000$saltstringsaltstring$0xbVBdJfPIual8oRvkU/f.";
         generateAndVerify(cryptString, password);
     }
 
     @Test
-    public void testKnownCryptStrings() throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+    public void testKnownCryptStrings() throws InvalidKeyException, InvalidKeySpecException {
         // Crypt string with bare salt
         generateAndVerify("$md5$RPgLF6IJ$WTvAlUJ7MqH5xak2FMEwS/", "passwd");
 
