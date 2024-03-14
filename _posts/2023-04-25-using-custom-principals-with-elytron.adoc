@@ -217,6 +217,9 @@ public class MyServlet extends HttpServlet {
 To use this functionality, simply enable a default _Jakarta
 Authorization (JACC)_ policy in Elytron:
 
+_NOTE: This command should only be used in WildFly 28. WildFly 29
+automatically enables a default JACC policy when Jakarta Security is used._
+
 [source,shell]
 ----
 [standalone@localhost:9990 /] /subsystem=elytron/policy=jacc:add(jacc-policy={})
